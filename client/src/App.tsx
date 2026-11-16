@@ -251,9 +251,11 @@ export const PAGE_TITLES: Record<string, string> = {
   '/payables': 'Accounts & Finance',
   '/receivables': 'Accounts & Finance',
   '/reports': 'Accounts & Finance',
+  '/wholesale': 'Wholesale Billing & B2B Tax Invoices',
 };
 
 export const TAB_PAGE_TITLES: Record<string, string> = {
+  'wholesale': 'Wholesale Billing & B2B Tax Invoices',
   'shifts': 'Cashier Shifts & Day-End Closing',
   'inventory': 'Inventory Hub',
   'items': 'Product Catalogue',
@@ -7352,6 +7354,12 @@ export function App() {
                   <span className="stock-transfer-title-short">Stock Transfer</span>
                 </h1>
               </div>
+            ) : displayTab === 'wholesale' || activeTab === 'wholesale' ? (
+              <div className="top-wholesale-header-left">
+                <h1 className="top-wholesale-title" title="Wholesale Billing & B2B Tax Invoices">
+                  Wholesale Billing &amp; B2B Tax Invoices
+                </h1>
+              </div>
             ) : currentHeaderTitle ? (
               <h1 className="top-header-title" title={currentHeaderTitle}>
                 {currentHeaderTitle}
@@ -7767,16 +7775,7 @@ export function App() {
           {/* View Transition Stage (SPA Bento Transition) */}
           <div key={displayTab} className={`app-view-stage ${hideBusinessBar ? 'stage-business-bar-hidden' : ''}`}>
             {/* Tab Headers */}
-            {displayTab === 'wholesale' ? (
-              <header className="content-top-header wholesale-top-header">
-                <div className="content-header-left">
-                  <h1 className="content-page-title wholesale-page-title">
-                    Wholesale Billing &amp; B2B Tax Invoices
-                  </h1>
-                </div>
-              </header>
-            ) : (
-              !hideBusinessBar && displayTab !== 'pos' && displayTab !== 'shifts' && displayTab !== 'sales-analysis' && displayTab !== 'dashboard' && displayTab !== 'stock-transfer' && displayTab !== 'user-management' && activeTab !== 'user-management' && (
+            {!hideBusinessBar && displayTab !== 'pos' && displayTab !== 'shifts' && displayTab !== 'sales-analysis' && displayTab !== 'dashboard' && displayTab !== 'stock-transfer' && displayTab !== 'wholesale' && activeTab !== 'wholesale' && displayTab !== 'user-management' && activeTab !== 'user-management' && (
                 <header className="content-top-header">
                   <div className="content-header-left">
                     <h1 className="content-page-title">
@@ -7856,7 +7855,7 @@ export function App() {
                   </div>
                 </header>
               )
-            )}
+            }
 
             {/* TAB 0: DASHBOARD (TODAY'S LIVE OVERVIEW) */}
             {displayTab === 'dashboard' && user && user.role !== 'cashier' && (

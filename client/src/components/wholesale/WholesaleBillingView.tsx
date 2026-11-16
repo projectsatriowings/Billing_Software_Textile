@@ -483,11 +483,7 @@ export function WholesaleBillingView({
   };
 
   return (
-    <div className="wholesale-billing-container" style={{ padding: '0 0.5rem 3rem' }}>
-      <h1 className="wholesale-page-title">
-        Wholesale Billing &amp; B2B Tax Invoices
-      </h1>
-
+    <div className="wholesale-billing-container" style={{ padding: '0 0 2.5rem' }}>
       {/* Main Grid: 2 Columns (Left: Selection & Cart, Right: Summary & Checkout) */}
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(360px, 1fr)', gap: '1.5rem', alignItems: 'start' }}>
         {/* Left Column: Customer + Product Search + Order Items Table + Logistics */}

@@ -1152,7 +1152,35 @@ body {
   margin-top: 0.2rem;
 }
 
-/* Wholesale Billing Page Header Layout */
+/* Wholesale Billing Top Header Layout */
+.top-wholesale-header-left {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  flex: 0 1 auto;
+}
+
+.top-wholesale-title {
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-main, #1e1b4b);
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  margin: 0;
+  padding: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 768px) {
+  .top-wholesale-title {
+    font-size: 1.25rem;
+    white-space: normal;
+  }
+}
+
 .wholesale-page-title {
   font-size: 1.5rem;
   font-weight: 800;
