@@ -5,8 +5,6 @@ import {
   approveDayClosing,
   reopenDayClosing,
   fetchDayClosingComparison,
-  fetchDayClosingAnalytics,
-  fetchProductProfitability,
   fetchDayClosingHistory,
   type User,
   type Shop,
@@ -34,7 +32,6 @@ import {
   ReceiptIcon,
   Building2Icon,
   FilterIcon,
-  SearchIcon,
   CheckCircleIcon,
   PrinterIcon,
 } from '../inventory/InventoryIcons.tsx';
@@ -47,8 +44,7 @@ interface DayClosingViewProps {
   branches?: any[];
 }
 
-type TabType = 'closing' | 'comparison' | 'analytics' | 'profitability' | 'history';
-type ProfitFilterType = 'top_selling' | 'highest_revenue' | 'highest_profit' | 'lowest_profit' | 'loss_making' | 'most_returned';
+type TabType = 'closing' | 'comparison' | 'history';
 
 export const DayClosingView: React.FC<DayClosingViewProps> = ({
   user,
@@ -56,7 +52,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
   selectedBranch,
   branches,
 }) => {
-  // Navigation
+  // Navigation: 3 clean, focused tabs (no clumsy analytics or product clutter)
   const [activeTab, setActiveTab] = useState<TabType>('closing');
 
   // Branch & Filter states
@@ -80,26 +76,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
   const [comparisonData, setComparisonData] = useState<any | null>(null);
   const [loadingComparison, setLoadingComparison] = useState(false);
 
-  // Tab 3: Custom Date Range Analytics state
-  const [analyticsPreset, setAnalyticsPreset] = useState<string>('this_month');
-  const [analyticsStartDate, setAnalyticsStartDate] = useState<string>(() => {
-    const d = new Date();
-    return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0, 10);
-  });
-  const [analyticsEndDate, setAnalyticsEndDate] = useState<string>(
-    new Date().toISOString().slice(0, 10)
-  );
-  const [comparisonMode, setComparisonMode] = useState<'previous_period' | 'same_period_last_year' | 'none'>('previous_period');
-  const [analyticsData, setAnalyticsData] = useState<any | null>(null);
-  const [loadingAnalytics, setLoadingAnalytics] = useState(false);
-
-  // Tab 4: Product Profitability state
-  const [profitFilter, setProfitFilter] = useState<ProfitFilterType>('top_selling');
-  const [profitSearch, setProfitSearch] = useState<string>('');
-  const [profitData, setProfitData] = useState<any | null>(null);
-  const [loadingProfit, setLoadingProfit] = useState(false);
-
-  // Tab 5: History state
+  // Tab 3: History state
   const [history, setHistory] = useState<any[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
 
@@ -137,9 +114,14 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
         shiftId: selectedShiftId || undefined,
       });
       setPreview(res);
-      const expected = res.cashReconciliation?.expectedClosingCashMinor ?? res.cashDrawer?.expectedClosingCashMinor;
-      if (expected !== undefined && !actualCashStr) {
-        setActualCashStr((expected / 100).toFixed(2));
+      const expected = res.cashReconciliation?.expectedClosingCashMinor ?? 0;
+      if (res.status === 'open' || res.status === 'reopened') {
+        if (!actualCashStr) {
+          setActualCashStr(((expected || 0) / 100).toFixed(2));
+        }
+      } else if (res.closedRecord?.actual_cash_minor != null) {
+        setActualCashStr((res.closedRecord.actual_cash_minor / 100).toFixed(2));
+        setClosingRemarks(res.closedRecord.remarks || '');
       }
     } catch (err: any) {
       setError(err.message || 'Failed to fetch day closing preview');
@@ -151,148 +133,47 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
   const loadComparison = async () => {
     try {
       setLoadingComparison(true);
+      setError(null);
       const res = await fetchDayClosingComparison({
         branchId: activeBranchId,
         date: selectedDate,
       });
       setComparisonData(res);
     } catch (err: any) {
-      console.error('Failed to load comparison', err);
+      setError(err.message || 'Failed to fetch sales comparison');
     } finally {
       setLoadingComparison(false);
-    }
-  };
-
-  const loadAnalytics = async () => {
-    try {
-      setLoadingAnalytics(true);
-      const res = await fetchDayClosingAnalytics({
-        branchId: activeBranchId,
-        startDate: analyticsStartDate,
-        endDate: analyticsEndDate,
-        comparisonMode,
-      });
-      setAnalyticsData(res);
-    } catch (err: any) {
-      console.error('Failed to load analytics', err);
-    } finally {
-      setLoadingAnalytics(false);
-    }
-  };
-
-  const loadProductProfitability = async () => {
-    try {
-      setLoadingProfit(true);
-      const res = await fetchProductProfitability({
-        branchId: activeBranchId,
-        startDate: analyticsStartDate,
-        endDate: analyticsEndDate,
-        filter: profitFilter,
-        limit: 100,
-      });
-      setProfitData(res);
-    } catch (err: any) {
-      console.error('Failed to load product profitability', err);
-    } finally {
-      setLoadingProfit(false);
     }
   };
 
   const loadHistory = async () => {
     try {
       setLoadingHistory(true);
-      const res = await fetchDayClosingHistory({ branchId: activeBranchId, limit: 50 });
-      setHistory(res.records || res.history || []);
+      setError(null);
+      const res = await fetchDayClosingHistory({
+        branchId: activeBranchId,
+        limit: 50,
+      });
+      setHistory(res?.history || []);
     } catch (err: any) {
-      console.error('Failed to load history', err);
+      setError(err.message || 'Failed to fetch closing history');
     } finally {
       setLoadingHistory(false);
     }
   };
 
-  // Trigger loads on relevant dependencies
   useEffect(() => {
-    if (activeTab === 'closing') loadPreview();
-    else if (activeTab === 'comparison') loadComparison();
-    else if (activeTab === 'analytics') loadAnalytics();
-    else if (activeTab === 'profitability') loadProductProfitability();
-    else if (activeTab === 'history') loadHistory();
-  }, [activeTab, activeBranchId, selectedDate, selectedShiftId]);
-
-  useEffect(() => {
-    if (activeTab === 'analytics') loadAnalytics();
-  }, [analyticsStartDate, analyticsEndDate, comparisonMode]);
-
-  useEffect(() => {
-    if (activeTab === 'profitability') loadProductProfitability();
-  }, [profitFilter, analyticsStartDate, analyticsEndDate]);
-
-  // --------------------------------------------------------------------------
-  // Preset Date Handlers for Custom Date Range Analytics
-  // --------------------------------------------------------------------------
-  const handleApplyPreset = (preset: string) => {
-    setAnalyticsPreset(preset);
-    const now = new Date();
-    const todayStr = now.toISOString().slice(0, 10);
-
-    let start = todayStr;
-    let end = todayStr;
-
-    if (preset === 'today') {
-      start = todayStr;
-      end = todayStr;
-    } else if (preset === 'yesterday') {
-      const y = new Date(now.getTime() - 86400000);
-      start = y.toISOString().slice(0, 10);
-      end = start;
-    } else if (preset === 'last_7_days') {
-      const s = new Date(now.getTime() - 6 * 86400000);
-      start = s.toISOString().slice(0, 10);
-      end = todayStr;
-    } else if (preset === 'last_30_days') {
-      const s = new Date(now.getTime() - 29 * 86400000);
-      start = s.toISOString().slice(0, 10);
-      end = todayStr;
-    } else if (preset === 'this_week') {
-      const day = now.getDay() || 7;
-      const s = new Date(now);
-      s.setDate(now.getDate() - day + 1);
-      start = s.toISOString().slice(0, 10);
-      end = todayStr;
-    } else if (preset === 'last_week') {
-      const day = now.getDay() || 7;
-      const e = new Date(now);
-      e.setDate(now.getDate() - day);
-      const s = new Date(e);
-      s.setDate(e.getDate() - 6);
-      start = s.toISOString().slice(0, 10);
-      end = e.toISOString().slice(0, 10);
-    } else if (preset === 'this_month') {
-      start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
-      end = todayStr;
-    } else if (preset === 'last_month') {
-      start = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().slice(0, 10);
-      end = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().slice(0, 10);
-    } else if (preset === 'this_quarter') {
-      const q = Math.floor(now.getMonth() / 3);
-      start = new Date(now.getFullYear(), q * 3, 1).toISOString().slice(0, 10);
-      end = todayStr;
-    } else if (preset === 'last_quarter') {
-      const q = Math.floor(now.getMonth() / 3);
-      start = new Date(now.getFullYear(), (q - 1) * 3, 1).toISOString().slice(0, 10);
-      end = new Date(now.getFullYear(), q * 3, 0).toISOString().slice(0, 10);
-    } else if (preset === 'financial_year') {
-      const fyStartYear = now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1;
-      start = `${fyStartYear}-04-01`;
-      end = todayStr;
+    if (activeTab === 'closing') {
+      loadPreview();
+    } else if (activeTab === 'comparison') {
+      loadComparison();
+    } else if (activeTab === 'history') {
+      loadHistory();
     }
-
-    setAnalyticsStartDate(start);
-    setAnalyticsEndDate(end);
-  };
+  }, [activeBranchId, selectedDate, selectedShiftId, activeTab]);
 
   // --------------------------------------------------------------------------
-  // Closing Actions (Submit, Approve, Reopen, Print)
+  // Action Handlers
   // --------------------------------------------------------------------------
   const handleSubmitClosing = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -317,7 +198,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
       `Expected Cash: ${fmt(expectedCashMinor)}\n` +
       `Counted Cash:  ${fmt(actualCashMinor)}\n` +
       `Difference:    ${diffMinor >= 0 ? '+' : ''}${fmt(diffMinor)}\n\n` +
-      `This will mark the register as SUBMITTED for management approval.`;
+      `This will seal today's transactions and register reconciliation.`;
 
     if (!window.confirm(confirmMsg)) return;
 
@@ -389,7 +270,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
     window.open(`/api/day-closing/${closingId}/print`, '_blank', 'width=950,height=800');
   };
 
-  // Computed values for preview
+  // Computed values from preview
   const sales = preview?.salesSummary || {
     grossSalesMinor: 0,
     totalDiscountsMinor: 0,
@@ -474,9 +355,9 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
             <LockIcon size={24} />
           </div>
           <div>
-            <h1 className="day-closing-title">Day Closing & Business Performance Analytics</h1>
+            <h1 className="day-closing-title">Day Closing & Register Reconciliation</h1>
             <p className="day-closing-subtitle">
-              Audit daily sales, actual profitability, losses, payment collections, cash differences, and branch performance
+              Audit daily sales, returns, cash drawer floats, and seal register transactions
             </p>
           </div>
         </div>
@@ -497,21 +378,19 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
             onClick={() => {
               if (activeTab === 'closing') loadPreview();
               else if (activeTab === 'comparison') loadComparison();
-              else if (activeTab === 'analytics') loadAnalytics();
-              else if (activeTab === 'profitability') loadProductProfitability();
               else if (activeTab === 'history') loadHistory();
             }}
-            disabled={loadingPreview || loadingComparison || loadingAnalytics || loadingProfit}
+            disabled={loadingPreview || loadingComparison || loadingHistory}
             className="day-closing-refresh-btn"
           >
-            <RefreshCwIcon size={14} className={(loadingPreview || loadingComparison) ? 'animate-spin' : ''} />
+            <RefreshCwIcon size={14} className={(loadingPreview || loadingComparison || loadingHistory) ? 'animate-spin' : ''} />
             Refresh
           </button>
         </div>
       </div>
 
       {/* --------------------------------------------------------------------
-          2. Tab Navigation Bar
+          2. Tab Navigation Bar (3 Clean, Uncluttered Tabs)
           -------------------------------------------------------------------- */}
       <div className="day-closing-tabs-bar">
         <button
@@ -528,22 +407,6 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
         >
           <ScaleIcon size={15} />
           Today vs Previous Day Comparison
-        </button>
-
-        <button
-          onClick={() => setActiveTab('analytics')}
-          className={`day-closing-tab-btn ${activeTab === 'analytics' ? 'active' : ''}`}
-        >
-          <BarChart3Icon size={15} />
-          Custom Date Range Analytics
-        </button>
-
-        <button
-          onClick={() => setActiveTab('profitability')}
-          className={`day-closing-tab-btn ${activeTab === 'profitability' ? 'active' : ''}`}
-        >
-          <PackageIcon size={15} />
-          Product-Wise Profitability
         </button>
 
         <button
@@ -704,188 +567,91 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
             </div>
           </div>
 
-          {/* 14 Financial KPI Summary Cards */}
-          <div className="kpi-14-section">
-            <div className="kpi-14-header">
-              <span>Financial Performance Summary</span>
-              <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Accrual Accounting Basis</span>
+          {/* Clean 6-Card Financial KPI Grid */}
+          <div className="financial-kpi-grid">
+            {/* 1. Gross Sales */}
+            <div className="fin-kpi-card blue">
+              <div className="fin-kpi-top">
+                <span className="fin-kpi-label">Gross Sales</span>
+                <div className="fin-kpi-icon"><TrendingUpIcon size={14} /></div>
+              </div>
+              <div className="fin-kpi-val">{fmt(sales.grossSalesMinor)}</div>
+              <span className="fin-kpi-sub">Pre-discount, excl. GST</span>
             </div>
 
-            <div className="kpi-14-grid">
-              {/* 1. Gross Sales */}
-              <div className="kpi-card blue">
-                <div className="kpi-card-top">
-                  <span className="kpi-card-label">1. Gross Sales</span>
-                  <div className="kpi-card-icon"><TrendingUpIcon size={14} /></div>
-                </div>
-                <div className="kpi-card-value">{fmt(sales.grossSalesMinor)}</div>
-                <span className="kpi-card-sub">Pre-discount, excl. GST</span>
+            {/* 2. Sales Returns */}
+            <div className="fin-kpi-card rose">
+              <div className="fin-kpi-top">
+                <span className="fin-kpi-label">Sales Returns</span>
+                <div className="fin-kpi-icon"><RotateCcwIcon size={14} /></div>
               </div>
+              <div className="fin-kpi-val" style={{ color: '#e11d48' }}>-{fmt(sales.returnsTotalMinor)}</div>
+              <span className="fin-kpi-sub">{returns.totalReturnsCount || 0} credit notes issued</span>
+            </div>
 
-              {/* 2. Total Discounts */}
-              <div className="kpi-card amber">
-                <div className="kpi-card-top">
-                  <span className="kpi-card-label">2. Total Discounts</span>
-                  <div className="kpi-card-icon"><TagIcon size={14} /></div>
-                </div>
-                <div className="kpi-card-value">{fmt(sales.totalDiscountsMinor)}</div>
-                <span className="kpi-card-sub">Promos & bill discounts</span>
+            {/* 3. Net Sales (Highlight) */}
+            <div className="fin-kpi-card green highlight">
+              <div className="fin-kpi-top">
+                <span className="fin-kpi-label">Net Sales</span>
+                <div className="fin-kpi-icon"><RupeeIcon size={14} /></div>
               </div>
+              <div className="fin-kpi-val">{fmt(sales.netSalesMinor)}</div>
+              <span className="fin-kpi-sub">Gross - Discounts - Returns</span>
+            </div>
 
-              {/* 3. Sales Returns */}
-              <div className="kpi-card rose">
-                <div className="kpi-card-top">
-                  <span className="kpi-card-label">3. Sales Returns</span>
-                  <div className="kpi-card-icon"><RotateCcwIcon size={14} /></div>
-                </div>
-                <div className="kpi-card-value" style={{ color: '#e11d48' }}>-{fmt(sales.returnsTotalMinor)}</div>
-                <span className="kpi-card-sub">{returns.totalReturnsCount || 0} credit notes issued</span>
+            {/* 4. Gross Profit */}
+            <div className="fin-kpi-card purple">
+              <div className="fin-kpi-top">
+                <span className="fin-kpi-label">Gross Profit</span>
+                <div className="fin-kpi-icon"><TrendingUpIcon size={14} /></div>
               </div>
+              <div className="fin-kpi-val" style={{ color: '#7e22ce' }}>{fmt(profit.grossProfitMinor)}</div>
+              <span className="fin-kpi-sub">{marginPct.toFixed(1)}% Gross Margin</span>
+            </div>
 
-              {/* 4. Net Sales */}
-              <div className="kpi-card green highlight">
-                <div className="kpi-card-top">
-                  <span className="kpi-card-label">4. Net Sales</span>
-                  <div className="kpi-card-icon"><RupeeIcon size={14} /></div>
-                </div>
-                <div className="kpi-card-value">{fmt(sales.netSalesMinor)}</div>
-                <span className="kpi-card-sub">Gross - Discounts - Returns</span>
+            {/* 5. Operating Expenses */}
+            <div className="fin-kpi-card amber">
+              <div className="fin-kpi-top">
+                <span className="fin-kpi-label">Operating Expenses</span>
+                <div className="fin-kpi-icon"><ArrowUpRightIcon size={14} /></div>
               </div>
+              <div className="fin-kpi-val">{fmt(profit.operatingExpensesMinor)}</div>
+              <span className="fin-kpi-sub">Branch petty & overheads</span>
+            </div>
 
-              {/* 5. GST Collected */}
-              <div className="kpi-card indigo">
-                <div className="kpi-card-top">
-                  <span className="kpi-card-label">5. GST Collected</span>
-                  <div className="kpi-card-icon"><ReceiptIcon size={14} /></div>
-                </div>
-                <div className="kpi-card-value">{fmt(sales.gstCollectedMinor)}</div>
-                <span className="kpi-card-sub">CGST + SGST + IGST</span>
+            {/* 6. Operating Profit */}
+            <div className="fin-kpi-card green">
+              <div className="fin-kpi-top">
+                <span className="fin-kpi-label">Operating Profit</span>
+                <div className="fin-kpi-icon"><RupeeIcon size={14} /></div>
               </div>
-
-              {/* 6. COGS */}
-              <div className="kpi-card slate">
-                <div className="kpi-card-top">
-                  <span className="kpi-card-label">6. Net COGS</span>
-                  <div className="kpi-card-icon"><PackageIcon size={14} /></div>
-                </div>
-                <div className="kpi-card-value">{fmt(profit.netCogsMinor)}</div>
-                <span className="kpi-card-sub">Historical stock cost</span>
+              <div className="fin-kpi-val" style={{ color: profit.netProfitMinor >= 0 ? '#15803d' : '#b91c1c' }}>
+                {fmt(profit.netProfitMinor)}
               </div>
-
-              {/* 7. Gross Profit */}
-              <div className="kpi-card purple">
-                <div className="kpi-card-top">
-                  <span className="kpi-card-label">7. Gross Profit</span>
-                  <div className="kpi-card-icon"><TrendingUpIcon size={14} /></div>
-                </div>
-                <div className="kpi-card-value" style={{ color: '#7e22ce' }}>{fmt(profit.grossProfitMinor)}</div>
-                <span className="kpi-card-sub">{marginPct.toFixed(1)}% Gross Margin</span>
-              </div>
-
-              {/* 8. Operating Expenses */}
-              <div className="kpi-card amber">
-                <div className="kpi-card-top">
-                  <span className="kpi-card-label">8. Operating Expenses</span>
-                  <div className="kpi-card-icon"><ArrowUpRightIcon size={14} /></div>
-                </div>
-                <div className="kpi-card-value">{fmt(profit.operatingExpensesMinor)}</div>
-                <span className="kpi-card-sub">Branch petty & overheads</span>
-              </div>
-
-              {/* 9. Operating Profit */}
-              <div className="kpi-card green">
-                <div className="kpi-card-top">
-                  <span className="kpi-card-label">9. Operating Profit</span>
-                  <div className="kpi-card-icon"><RupeeIcon size={14} /></div>
-                </div>
-                <div className="kpi-card-value" style={{ color: profit.netProfitMinor >= 0 ? '#15803d' : '#b91c1c' }}>
-                  {fmt(profit.netProfitMinor)}
-                </div>
-                <span className="kpi-card-sub">{operatingMarginPct.toFixed(1)}% Net Margin</span>
-              </div>
-
-              {/* 10. Total Invoices */}
-              <div className="kpi-card blue">
-                <div className="kpi-card-top">
-                  <span className="kpi-card-label">10. Total Invoices</span>
-                  <div className="kpi-card-icon"><FileTextIcon size={14} /></div>
-                </div>
-                <div className="kpi-card-value">{sales.invoicesCount || 0}</div>
-                <span className="kpi-card-sub">Billed customers</span>
-              </div>
-
-              {/* 11. Average Bill Value */}
-              <div className="kpi-card indigo">
-                <div className="kpi-card-top">
-                  <span className="kpi-card-label">11. Avg Bill Value</span>
-                  <div className="kpi-card-icon"><BarChart3Icon size={14} /></div>
-                </div>
-                <div className="kpi-card-value">{fmt(sales.averageBillValueMinor)}</div>
-                <span className="kpi-card-sub">Revenue per invoice</span>
-              </div>
-
-              {/* 12. Cancelled Invoices */}
-              <div className="kpi-card rose">
-                <div className="kpi-card-top">
-                  <span className="kpi-card-label">12. Cancelled Invoices</span>
-                  <div className="kpi-card-icon"><AlertTriangleIcon size={14} /></div>
-                </div>
-                <div className="kpi-card-value">{sales.cancelledInvoicesCount || 0}</div>
-                <span className="kpi-card-sub">Voided before settlement</span>
-              </div>
-
-              {/* 13. Refunds Paid Out */}
-              <div className="kpi-card rose">
-                <div className="kpi-card-top">
-                  <span className="kpi-card-label">13. Refunds Paid</span>
-                  <div className="kpi-card-icon"><RotateCcwIcon size={14} /></div>
-                </div>
-                <div className="kpi-card-value">{fmt(returns.totalRefundsPaidMinor)}</div>
-                <span className="kpi-card-sub">Cash + UPI customer refunds</span>
-              </div>
-
-              {/* 14. Customer Outstanding Payments */}
-              <div className="kpi-card purple">
-                <div className="kpi-card-top">
-                  <span className="kpi-card-label">14. Credit Dues</span>
-                  <div className="kpi-card-icon"><StoreIcon size={14} /></div>
-                </div>
-                <div className="kpi-card-value">{fmt(sales.customerCreditBalanceMinor)}</div>
-                <span className="kpi-card-sub">Unsettled customer receivables</span>
-              </div>
+              <span className="fin-kpi-sub">{operatingMarginPct.toFixed(1)}% Net Margin</span>
             </div>
           </div>
 
-          {/* Operational Statistics Strip */}
-          <div className="ops-stats-strip">
-            <div className="ops-stat-item">
-              <PackageIcon size={16} style={{ color: '#6366f1' }} />
-              <span>Products Sold: <strong>{sales.totalProductsSold || 0} SKUs</strong></span>
-            </div>
-            <div className="ops-stat-item">
-              <TagIcon size={16} style={{ color: '#059669' }} />
-              <span>Units Sold: <strong>{sales.totalQuantitiesSold || 0} units</strong></span>
-            </div>
-            <div className="ops-stat-item">
-              <BarChart3Icon size={16} style={{ color: '#d97706' }} />
-              <span>Customers Billed: <strong>{sales.totalCustomersBilled || 0}</strong></span>
-            </div>
-            <div className="ops-stat-item">
-              <CheckCircleIcon size={16} style={{ color: '#2563eb' }} />
-              <span>New Customers: <strong>{sales.newCustomersCount || 0}</strong></span>
-            </div>
+          {/* Quick KPI Strip (Subordinate stats in one compact row) */}
+          <div className="quick-kpi-strip">
+            <div>Total Invoices: <strong>{sales.invoicesCount || 0} bills</strong></div>
+            <div>Avg Bill Value: <strong>{fmt(sales.averageBillValueMinor)}</strong></div>
+            <div>GST Collected: <strong>{fmt(sales.gstCollectedMinor)}</strong></div>
+            <div>Discounts Given: <strong>{fmt(sales.totalDiscountsMinor)}</strong></div>
+            <div>Cancelled Invoices: <strong>{sales.cancelledInvoicesCount || 0}</strong></div>
+            <div>Outstanding Credit: <strong style={{ color: '#7e22ce' }}>{fmt(sales.customerCreditBalanceMinor)}</strong></div>
           </div>
 
-          {/* Bento Grid: Tender Collections & Cash Drawer Reconciliation */}
+          {/* Bento Grid: Tender Collections (60%) & Cash Drawer Reconciliation (40%) */}
           <div className="day-closing-bento-grid">
             {/* LEFT 7 COLUMNS: Tender Collections & Returns */}
             <div className="bento-col-7">
-              {/* Section D: Tender Collections */}
+              {/* Tender Collections */}
               <div className="day-closing-card">
                 <div className="day-closing-card-header">
                   <div className="day-closing-card-title-group">
                     <WalletIcon size={18} style={{ color: '#10b981' }} />
-                    <span>Section D: Tender & Settlement Collections</span>
+                    <span>Tender & Settlement Collections</span>
                   </div>
                   <span className="day-closing-card-badge emerald">
                     Payment Channels
@@ -927,12 +693,12 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                 </div>
               </div>
 
-              {/* Sections B & C: Returns, Refunds & Exchanges */}
+              {/* Returns, Refunds & Exchanges */}
               <div className="day-closing-card">
                 <div className="day-closing-card-header">
                   <div className="day-closing-card-title-group">
                     <RotateCcwIcon size={18} style={{ color: '#f43f5e' }} />
-                    <span>Sections B & C: Returns, Refunds & Exchanges</span>
+                    <span>Returns, Refunds & Exchanges</span>
                   </div>
                   <span className="day-closing-card-badge rose">
                     {returns.totalReturnsCount || 0} Return Events
@@ -978,7 +744,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                 <div className="day-closing-card-header">
                   <div className="day-closing-card-title-group">
                     <BanknoteIcon size={18} style={{ color: '#10b981' }} />
-                    <span>Section E: Cash Drawer Reconciliation</span>
+                    <span>Cash Drawer Reconciliation</span>
                   </div>
                   <span className="day-closing-card-badge">
                     Physical Audit
@@ -1147,73 +913,6 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
             </div>
           ) : comparisonData ? (
             <>
-              {/* Comparison Top KPI Cards */}
-              <div className="comparison-kpi-grid">
-                {/* Gross Sales */}
-                <div className="comparison-kpi-card">
-                  <span className="kpi-card-label">Gross Sales Comparison</span>
-                  <div className="comparison-val-row">
-                    <span className="kpi-card-value">{fmt(comparisonData.metrics?.grossSales?.current)}</span>
-                    <span className={`growth-badge ${
-                      (comparisonData.metrics?.grossSales?.growthPct || 0) > 0 ? 'positive' :
-                      (comparisonData.metrics?.grossSales?.growthPct || 0) < 0 ? 'negative' : 'neutral'
-                    }`}>
-                      {(comparisonData.metrics?.grossSales?.growthPct || 0) >= 0 ? '↑ +' : '↓ '}
-                      {(comparisonData.metrics?.grossSales?.growthPct || 0).toFixed(1)}%
-                    </span>
-                  </div>
-                  <span className="kpi-card-sub">Prev Day ({comparisonData.previousDate}): {fmt(comparisonData.metrics?.grossSales?.previous)}</span>
-                </div>
-
-                {/* Net Sales */}
-                <div className="comparison-kpi-card">
-                  <span className="kpi-card-label">Net Sales Comparison</span>
-                  <div className="comparison-val-row">
-                    <span className="kpi-card-value">{fmt(comparisonData.metrics?.netSales?.current)}</span>
-                    <span className={`growth-badge ${
-                      (comparisonData.metrics?.netSales?.growthPct || 0) > 0 ? 'positive' :
-                      (comparisonData.metrics?.netSales?.growthPct || 0) < 0 ? 'negative' : 'neutral'
-                    }`}>
-                      {(comparisonData.metrics?.netSales?.growthPct || 0) >= 0 ? '↑ +' : '↓ '}
-                      {(comparisonData.metrics?.netSales?.growthPct || 0).toFixed(1)}%
-                    </span>
-                  </div>
-                  <span className="kpi-card-sub">Prev Day ({comparisonData.previousDate}): {fmt(comparisonData.metrics?.netSales?.previous)}</span>
-                </div>
-
-                {/* Gross Profit */}
-                <div className="comparison-kpi-card">
-                  <span className="kpi-card-label">Gross Profit Comparison</span>
-                  <div className="comparison-val-row">
-                    <span className="kpi-card-value" style={{ color: '#7e22ce' }}>{fmt(comparisonData.metrics?.grossProfit?.current)}</span>
-                    <span className={`growth-badge ${
-                      (comparisonData.metrics?.grossProfit?.growthPct || 0) > 0 ? 'positive' :
-                      (comparisonData.metrics?.grossProfit?.growthPct || 0) < 0 ? 'negative' : 'neutral'
-                    }`}>
-                      {(comparisonData.metrics?.grossProfit?.growthPct || 0) >= 0 ? '↑ +' : '↓ '}
-                      {(comparisonData.metrics?.grossProfit?.growthPct || 0).toFixed(1)}%
-                    </span>
-                  </div>
-                  <span className="kpi-card-sub">Prev Day ({comparisonData.previousDate}): {fmt(comparisonData.metrics?.grossProfit?.previous)}</span>
-                </div>
-
-                {/* Total Invoices */}
-                <div className="comparison-kpi-card">
-                  <span className="kpi-card-label">Invoices Count Comparison</span>
-                  <div className="comparison-val-row">
-                    <span className="kpi-card-value">{comparisonData.metrics?.invoicesCount?.current || 0}</span>
-                    <span className={`growth-badge ${
-                      (comparisonData.metrics?.invoicesCount?.growthPct || 0) > 0 ? 'positive' :
-                      (comparisonData.metrics?.invoicesCount?.growthPct || 0) < 0 ? 'negative' : 'neutral'
-                    }`}>
-                      {(comparisonData.metrics?.invoicesCount?.growthPct || 0) >= 0 ? '↑ +' : '↓ '}
-                      {(comparisonData.metrics?.invoicesCount?.growthPct || 0).toFixed(1)}%
-                    </span>
-                  </div>
-                  <span className="kpi-card-sub">Prev Day: {comparisonData.metrics?.invoicesCount?.previous || 0} bills</span>
-                </div>
-              </div>
-
               {/* Comprehensive Comparison Table */}
               <div className="day-closing-card">
                 <div className="day-closing-card-header">
@@ -1276,368 +975,13 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                   </table>
                 </div>
               </div>
-
-              {/* 7-Day Trend Bar Visualization */}
-              {comparisonData.last7DaysTrend && comparisonData.last7DaysTrend.length > 0 && (
-                <div className="day-closing-card">
-                  <div className="day-closing-card-header">
-                    <div className="day-closing-card-title-group">
-                      <BarChart3Icon size={18} style={{ color: '#4f46e5' }} />
-                      <span>7-Day Net Sales & Revenue Trend</span>
-                    </div>
-                  </div>
-
-                  <div className="trend-bars-container">
-                    {(() => {
-                      const maxNet = Math.max(
-                        ...comparisonData.last7DaysTrend.map((d: any) => d.netSalesMinor || 0),
-                        1
-                      );
-                      return comparisonData.last7DaysTrend.map((item: any) => {
-                        const hPct = Math.max(8, ((item.netSalesMinor || 0) / maxNet) * 100);
-                        return (
-                          <div key={item.date} className="trend-bar-column">
-                            <span className="trend-bar-val">{fmt(item.netSalesMinor)}</span>
-                            <div className="trend-bar" style={{ height: `${hPct}%` }} title={`${item.date}: Net Sales ${fmt(item.netSalesMinor)}, Profit ${fmt(item.grossProfitMinor)}`} />
-                            <span className="trend-bar-label">{item.date.slice(5)}</span>
-                          </div>
-                        );
-                      });
-                    })()}
-                  </div>
-                </div>
-              )}
             </>
           ) : null}
         </div>
       )}
 
       {/* ====================================================================
-          TAB 3: CUSTOM DATE RANGE ANALYTICS
-          ==================================================================== */}
-      {activeTab === 'analytics' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          {/* Preset buttons & Range selectors */}
-          <div className="day-closing-card">
-            <div className="day-closing-card-header">
-              <div className="day-closing-card-title-group">
-                <BarChart3Icon size={18} style={{ color: '#4f46e5' }} />
-                <span>Custom Date Range Analytics Engine</span>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#64748b' }}>Comparison Mode:</span>
-                <select
-                  value={comparisonMode}
-                  onChange={(e: any) => setComparisonMode(e.target.value)}
-                  className="day-closing-select"
-                >
-                  <option value="previous_period">Previous Period (Equivalent Days)</option>
-                  <option value="same_period_last_year">Same Period Last Year</option>
-                  <option value="none">No Comparison</option>
-                </select>
-              </div>
-            </div>
-
-            {/* 12 Presets */}
-            <div className="preset-pills-container">
-              {[
-                { id: 'today', label: 'Today' },
-                { id: 'yesterday', label: 'Yesterday' },
-                { id: 'last_7_days', label: 'Last 7 Days' },
-                { id: 'last_30_days', label: 'Last 30 Days' },
-                { id: 'this_week', label: 'This Week' },
-                { id: 'last_week', label: 'Last Week' },
-                { id: 'this_month', label: 'This Month' },
-                { id: 'last_month', label: 'Last Month' },
-                { id: 'this_quarter', label: 'This Quarter' },
-                { id: 'last_quarter', label: 'Last Quarter' },
-                { id: 'financial_year', label: 'Financial Year (FY)' },
-                { id: 'custom', label: 'Custom Range' },
-              ].map((p) => (
-                <button
-                  key={p.id}
-                  onClick={() => handleApplyPreset(p.id)}
-                  className={`preset-pill ${analyticsPreset === p.id ? 'active' : ''}`}
-                >
-                  {p.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Start and End date picker row */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '1rem', flexWrap: 'wrap' }}>
-              <div className="day-closing-filter-item">
-                <span>From Date:</span>
-                <input
-                  type="date"
-                  value={analyticsStartDate}
-                  onChange={(e) => {
-                    setAnalyticsStartDate(e.target.value);
-                    setAnalyticsPreset('custom');
-                  }}
-                  className="day-closing-input"
-                />
-              </div>
-
-              <div className="day-closing-filter-item">
-                <span>To Date:</span>
-                <input
-                  type="date"
-                  value={analyticsEndDate}
-                  onChange={(e) => {
-                    setAnalyticsEndDate(e.target.value);
-                    setAnalyticsPreset('custom');
-                  }}
-                  className="day-closing-input"
-                />
-              </div>
-
-              <button
-                onClick={loadAnalytics}
-                disabled={loadingAnalytics}
-                className="day-closing-refresh-btn"
-              >
-                Apply Range Filter
-              </button>
-            </div>
-          </div>
-
-          {/* Analytics Results */}
-          {loadingAnalytics ? (
-            <div style={{ padding: '3rem', textAlign: 'center', background: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
-              <RefreshCwIcon size={32} className="animate-spin" style={{ margin: '0 auto 12px auto', color: '#6366f1' }} />
-              <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#64748b' }}>Aggregating date range performance...</p>
-            </div>
-          ) : analyticsData ? (
-            <>
-              {/* Aggregated KPI Cards */}
-              <div className="comparison-kpi-grid">
-                <div className="comparison-kpi-card">
-                  <span className="kpi-card-label">Period Gross Sales</span>
-                  <span className="kpi-card-value">{fmt(analyticsData.current?.grossSalesMinor)}</span>
-                  <span className="kpi-card-sub">
-                    {comparisonMode !== 'none' && analyticsData.comparison?.grossSalesMinor !== undefined && (
-                      <>Comp: {fmt(analyticsData.comparison.grossSalesMinor)}</>
-                    )}
-                  </span>
-                </div>
-
-                <div className="comparison-kpi-card">
-                  <span className="kpi-card-label">Period Net Sales</span>
-                  <span className="kpi-card-value">{fmt(analyticsData.current?.netSalesMinor)}</span>
-                  <span className="kpi-card-sub">
-                    Returns: -{fmt(analyticsData.current?.returnsMinor)}
-                  </span>
-                </div>
-
-                <div className="comparison-kpi-card">
-                  <span className="kpi-card-label">Period Gross Profit</span>
-                  <span className="kpi-card-value" style={{ color: '#7e22ce' }}>{fmt(analyticsData.current?.grossProfitMinor)}</span>
-                  <span className="kpi-card-sub">
-                    COGS: {fmt(analyticsData.current?.cogsMinor)}
-                  </span>
-                </div>
-
-                <div className="comparison-kpi-card">
-                  <span className="kpi-card-label">Operating Profit</span>
-                  <span className="kpi-card-value" style={{ color: (analyticsData.current?.operatingProfitMinor || 0) >= 0 ? '#15803d' : '#b91c1c' }}>
-                    {fmt(analyticsData.current?.operatingProfitMinor)}
-                  </span>
-                  <span className="kpi-card-sub">
-                    Expenses: {fmt(analyticsData.current?.expensesMinor)}
-                  </span>
-                </div>
-              </div>
-
-              {/* Daily Breakdown Time Series Table */}
-              {analyticsData.dailySeries && analyticsData.dailySeries.length > 0 && (
-                <div className="day-closing-card">
-                  <div className="day-closing-card-header">
-                    <div className="day-closing-card-title-group">
-                      <ClockIcon size={18} style={{ color: '#4f46e5' }} />
-                      <span>Daily Performance Breakdown ({analyticsData.period?.startDate} to {analyticsData.period?.endDate})</span>
-                    </div>
-                    <span className="day-closing-card-badge">
-                      {analyticsData.dailySeries.length} Days in Period
-                    </span>
-                  </div>
-
-                  <div className="data-table-container">
-                    <table className="analytics-table">
-                      <thead>
-                        <tr>
-                          <th>Date</th>
-                          <th>Invoices</th>
-                          <th>Gross Sales</th>
-                          <th>Returns</th>
-                          <th>Net Sales</th>
-                          <th>Gross Profit</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {analyticsData.dailySeries.map((d: any) => (
-                          <tr key={d.date}>
-                            <td style={{ fontWeight: 800, color: '#0f172a' }}>{d.date}</td>
-                            <td>{d.invoicesCount || 0}</td>
-                            <td>{fmt(d.grossSalesMinor)}</td>
-                            <td style={{ color: '#e11d48' }}>-{fmt(d.returnsMinor)}</td>
-                            <td style={{ fontWeight: 700, color: '#15803d' }}>{fmt(d.netSalesMinor)}</td>
-                            <td style={{ fontWeight: 700, color: '#7e22ce' }}>{fmt(d.grossProfitMinor)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-            </>
-          ) : null}
-        </div>
-      )}
-
-      {/* ====================================================================
-          TAB 4: PRODUCT-WISE PROFITABILITY BREAKDOWN
-          ==================================================================== */}
-      {activeTab === 'profitability' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          <div className="day-closing-card">
-            <div className="day-closing-card-header">
-              <div className="day-closing-card-title-group">
-                <PackageIcon size={18} style={{ color: '#4f46e5' }} />
-                <span>Product-Wise Profitability & Performance Breakdown</span>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                  <SearchIcon size={14} style={{ position: 'absolute', left: '10px', color: '#94a3b8' }} />
-                  <input
-                    type="text"
-                    value={profitSearch}
-                    onChange={(e) => setProfitSearch(e.target.value)}
-                    placeholder="Search product or barcode..."
-                    style={{
-                      padding: '0.45rem 0.75rem 0.45rem 2rem',
-                      borderRadius: '8px',
-                      border: '1px solid #cbd5e1',
-                      fontSize: '0.8rem',
-                      outline: 'none',
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Filter Pills */}
-            <div className="profit-filter-pills">
-              {[
-                { id: 'top_selling', label: '🔥 Top Selling (Units)' },
-                { id: 'highest_revenue', label: '💰 Highest Revenue' },
-                { id: 'highest_profit', label: '📈 Highest Profit' },
-                { id: 'lowest_profit', label: '📉 Lowest Profit' },
-                { id: 'loss_making', label: '⚠️ Loss-Making Products' },
-                { id: 'most_returned', label: '🔄 Most Returned' },
-              ].map((f) => (
-                <button
-                  key={f.id}
-                  onClick={() => setProfitFilter(f.id as ProfitFilterType)}
-                  className={`profit-filter-btn ${profitFilter === f.id ? 'active' : ''}`}
-                >
-                  {f.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Product Profitability Table */}
-          {loadingProfit ? (
-            <div style={{ padding: '3rem', textAlign: 'center', background: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
-              <RefreshCwIcon size={32} className="animate-spin" style={{ margin: '0 auto 12px auto', color: '#6366f1' }} />
-              <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#64748b' }}>Analyzing product margins, COGS and return rates...</p>
-            </div>
-          ) : profitData ? (
-            <div className="day-closing-card">
-              <div className="day-closing-card-header">
-                <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#334155' }}>
-                  {profitData.totalProductsCount || (profitData.products || []).length} Products Analyzed
-                </span>
-                <span className="day-closing-card-badge">
-                  Filtered by: {profitFilter.replace(/_/g, ' ').toUpperCase()}
-                </span>
-              </div>
-
-              <div className="data-table-container">
-                <table className="analytics-table">
-                  <thead>
-                    <tr>
-                      <th>Product Name</th>
-                      <th>Category</th>
-                      <th>Qty Sold</th>
-                      <th>Qty Ret</th>
-                      <th>Net Qty</th>
-                      <th>Gross Sales</th>
-                      <th>Returns</th>
-                      <th>Net Revenue</th>
-                      <th>Cost (COGS)</th>
-                      <th>Gross Profit</th>
-                      <th>Margin %</th>
-                      <th>Return Rate</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(profitData.products || [])
-                      .filter((p: any) =>
-                        !profitSearch ||
-                        p.name.toLowerCase().includes(profitSearch.toLowerCase()) ||
-                        (p.barcode && p.barcode.toLowerCase().includes(profitSearch.toLowerCase()))
-                      )
-                      .map((p: any) => {
-                        const isLoss = (p.gross_profit_minor || 0) < 0;
-                        const margin = p.gross_margin_pct || 0;
-                        return (
-                          <tr key={p.id} className={isLoss ? 'loss-row' : ''}>
-                            <td>
-                              <div style={{ fontWeight: 800, color: '#0f172a' }}>{p.name}</div>
-                              {p.barcode && (
-                                <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>SKU: {p.barcode}</div>
-                              )}
-                            </td>
-                            <td>{p.category_name || 'General'}</td>
-                            <td>{p.qty_sold || 0}</td>
-                            <td style={{ color: '#e11d48' }}>{p.qty_returned || 0}</td>
-                            <td style={{ fontWeight: 700 }}>{p.net_qty || 0}</td>
-                            <td>{fmt(p.gross_sales_minor)}</td>
-                            <td style={{ color: '#e11d48' }}>-{fmt(p.returns_minor)}</td>
-                            <td style={{ fontWeight: 700, color: '#15803d' }}>{fmt(p.net_sales_minor)}</td>
-                            <td style={{ color: '#64748b' }}>{fmt(p.cogs_minor)}</td>
-                            <td style={{ fontWeight: 800, color: isLoss ? '#b91c1c' : '#7e22ce' }}>
-                              {fmt(p.gross_profit_minor)}
-                            </td>
-                            <td>
-                              <span className={`margin-pill ${
-                                isLoss ? 'negative' : margin >= 30 ? 'healthy' : margin >= 15 ? 'moderate' : 'slim'
-                              }`}>
-                                {margin.toFixed(1)}%
-                              </span>
-                            </td>
-                            <td>
-                              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: (p.return_rate_pct || 0) > 10 ? '#e11d48' : '#64748b' }}>
-                                {(p.return_rate_pct || 0).toFixed(1)}%
-                              </span>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          ) : null}
-        </div>
-      )}
-
-      {/* ====================================================================
-          TAB 5: CLOSING HISTORY & AUDIT LOGS
+          TAB 3: CLOSING HISTORY & AUDIT LOGS
           ==================================================================== */}
       {activeTab === 'history' && (
         <div className="day-closing-card">
