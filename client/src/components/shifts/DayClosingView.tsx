@@ -39,6 +39,7 @@ import {
   CheckCircleIcon,
   PrinterIcon,
   InfoIcon,
+  UserIcon,
 } from '../inventory/InventoryIcons.tsx';
 import './dayClosing.css';
 
@@ -110,8 +111,13 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
 
   const activeBranchId = selectedBranchId || selectedBranch || 'MAIN';
   const userRole = String(user.role || '').toUpperCase();
+  const isCashierUser = userRole === 'CASHIER';
   const isManagerOrOwner = ['OWNER', 'SUPER_ADMIN', 'STORE_MANAGER', 'MANAGER'].includes(userRole);
   const isOwner = ['OWNER', 'SUPER_ADMIN'].includes(userRole);
+
+  const [selectedCashierId, setSelectedCashierId] = useState<string>(() => {
+    return isCashierUser ? user.id : '';
+  });
 
   const fmt = (minor: number = 0) =>
     `₹${((minor || 0) / 100).toLocaleString('en-IN', {
@@ -130,6 +136,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
         branchId: activeBranchId,
         date: selectedDate,
         shiftId: selectedShiftId || undefined,
+        cashierId: selectedCashierId || undefined,
       });
       setPreview(res);
       const expected = res.cashReconciliation?.expectedClosingCashMinor ?? 0;
@@ -207,7 +214,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
     } else if (activeTab === 'history') {
       loadHistory();
     }
-  }, [activeBranchId, selectedDate, selectedShiftId, activeTab]);
+  }, [activeBranchId, selectedDate, selectedShiftId, selectedCashierId, activeTab]);
 
   const handleApplyPreset = (preset: string) => {
     setAnalyticsPreset(preset);
@@ -555,6 +562,39 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
             </div>
           ) : null}
 
+          {/* Cashier Filter / Context Badge */}
+          {activeTab === 'closing' && (
+            <>
+              {isCashierUser ? (
+                <div className="day-closing-filter-item" title="Logged in as Cashier (Counter Register)">
+                  <UserIcon size={14} style={{ color: '#0284c7' }} />
+                  <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#0f172a' }}>
+                    Cashier: {user.name}
+                  </span>
+                </div>
+              ) : (
+                <div className="day-closing-filter-item">
+                  <UserIcon size={14} style={{ color: '#0284c7' }} />
+                  <select
+                    value={selectedCashierId}
+                    onChange={(e) => setSelectedCashierId(e.target.value)}
+                    className="day-closing-select"
+                    title="Filter by individual Cashier / Counter register"
+                  >
+                    <option value="">All Cashiers (Consolidated)</option>
+                    {preview?.availableCashiers && preview.availableCashiers.length > 0
+                      ? preview.availableCashiers.map((c: any) => (
+                          <option key={c.id} value={c.id}>
+                            Cashier: {c.name} {c.role ? `(${c.role})` : ''}
+                          </option>
+                        ))
+                      : null}
+                  </select>
+                </div>
+              )}
+            </>
+          )}
+
           {activeTab === 'closing' && preview?.availableShifts && preview.availableShifts.length > 0 && (
             <div className="day-closing-filter-item">
               <FilterIcon size={14} style={{ color: '#6366f1' }} />
@@ -883,8 +923,12 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                     <BanknoteIcon size={18} style={{ color: '#10b981' }} />
                     <span>Cash Drawer Reconciliation</span>
                   </div>
-                  <span className="day-closing-card-badge">
-                    Physical Audit
+                  <span className={`day-closing-card-badge ${selectedCashierId || isCashierUser ? 'emerald' : ''}`}>
+                    {selectedCashierId || isCashierUser
+                      ? (preview?.availableCashiers?.find((c: any) => c.id === (selectedCashierId || user.id))?.name
+                          ? `Cashier: ${preview.availableCashiers.find((c: any) => c.id === (selectedCashierId || user.id)).name}`
+                          : `Cashier Register`)
+                      : 'Store Consolidated'}
                   </span>
                 </div>
 
@@ -1015,7 +1059,11 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                         className="cash-rec-submit-btn"
                       >
                         <LockIcon size={16} />
-                        {submitting ? 'Submitting Closing...' : 'Submit Day Closing'}
+                        {submitting
+                          ? 'Submitting Closing...'
+                          : selectedCashierId || isCashierUser
+                          ? 'Submit Cashier Register Closing'
+                          : 'Submit Day Closing'}
                       </button>
                     </form>
                   ) : (

@@ -60,6 +60,26 @@ export function registerDayClosing(r: Router) {
       [tenantId, branchId, branchId, bdate],
     );
 
+    // List cashiers who billed or opened shifts on this day
+    const availableCashiers = await ctx.db.query<any>(
+      `SELECT DISTINCT u.id, u.name, u.role
+       FROM users u
+       WHERE u.tenant_id = ?
+         AND (
+           u.role = 'CASHIER'
+           OR EXISTS (
+             SELECT 1 FROM invoices i
+             WHERE i.tenant_id = u.tenant_id AND i.branch_id = ? AND i.bdate = ? AND i.created_by = u.id
+           )
+           OR EXISTS (
+             SELECT 1 FROM shifts s
+             WHERE s.tenant_id = u.tenant_id AND (s.location = ? OR s.branch_id = ?) AND DATE(s.opened_at) = ?::date AND s.user_id = u.id
+           )
+         )
+       ORDER BY u.name ASC`,
+      [tenantId, branchId, bdate, branchId, branchId, bdate],
+    );
+
     // Sales Summary (kind = 'sale')
     const salesRow = await ctx.db.one<any>(
       `SELECT
@@ -184,8 +204,7 @@ export function registerDayClosing(r: Router) {
     const remainingCustomerCreditMinor = Math.max(0, oldProductsReturnedMinor - newProductsSoldMinor);
 
     // Payment Collections Summary by Channel
-    const paymentRows = await ctx.db.query<any>(
-      `SELECT
+    let paymentSql = `SELECT
         COALESCE(p.method, 'cash') AS method,
         COUNT(*)::int AS count,
         COALESCE(SUM(p.amount_minor), 0)::bigint AS total_minor
@@ -194,11 +213,19 @@ export function registerDayClosing(r: Router) {
        WHERE p.tenant_id = ?
          AND (p.status IS NULL OR p.status = 'posted')
          AND (p.bdate = ? OR (p.created_at)::date = ?::date)
-         AND (p.invoice_id IS NULL OR i.branch_id IS NULL OR i.branch_id = ?)
-         ${shiftId ? ' AND i.shift_id = ?' : ''}
-       GROUP BY COALESCE(p.method, 'cash')`,
-      shiftId ? [tenantId, bdate, bdate, branchId, shiftId] : [tenantId, bdate, bdate, branchId],
-    );
+         AND (p.invoice_id IS NULL OR i.branch_id IS NULL OR i.branch_id = ?)`;
+    const paymentParams: any[] = [tenantId, bdate, bdate, branchId];
+    if (shiftId) {
+      paymentSql += ' AND i.shift_id = ?';
+      paymentParams.push(shiftId);
+    }
+    if (cashierId) {
+      paymentSql += ' AND (p.created_by = ? OR i.created_by = ?)';
+      paymentParams.push(cashierId, cashierId);
+    }
+    paymentSql += ` GROUP BY COALESCE(p.method, 'cash')`;
+
+    const paymentRows = await ctx.db.query<any>(paymentSql, paymentParams);
 
     let cashCollectionsMinor = 0;
     let upiCollectionsMinor = 0;
@@ -219,8 +246,12 @@ export function registerDayClosing(r: Router) {
     }
 
     // Opening Cash from shifts for this date and branch
-    const shiftFilterSql = shiftId ? ' AND id = ?' : '';
-    const shiftFilterParams = shiftId ? [shiftId] : [];
+    let shiftFilterSql = shiftId ? ' AND id = ?' : '';
+    const shiftFilterParams: any[] = shiftId ? [shiftId] : [];
+    if (cashierId) {
+      shiftFilterSql += ' AND user_id = ?';
+      shiftFilterParams.push(cashierId);
+    }
     const shiftsRow = await ctx.db.one<any>(
       `SELECT COALESCE(SUM(opening_cash_minor), 0)::bigint AS opening_cash_minor
        FROM shifts
@@ -244,16 +275,22 @@ export function registerDayClosing(r: Router) {
     const operatingExpensesMinor = Number(expensesRow?.totalExpensesMinor ?? expensesRow?.total_expenses_minor ?? 0);
 
     // Cash movements (In/Out)
-    const cashMovesRow = await ctx.db.one<any>(
-      `SELECT
+    let cashMoveSql = `SELECT
         COALESCE(SUM(CASE WHEN cm.movement_type = 'cash_in' THEN cm.amount_minor ELSE 0 END), 0)::bigint AS cash_in_minor,
         COALESCE(SUM(CASE WHEN cm.movement_type = 'cash_out' THEN cm.amount_minor ELSE 0 END), 0)::bigint AS cash_out_minor
        FROM cash_movements cm
        JOIN shifts s ON s.id = cm.shift_id
-       WHERE cm.tenant_id = ? AND (s.location = ? OR s.branch_id = ?) AND (DATE(cm.created_at) = ?::date)
-         ${shiftId ? ' AND s.id = ?' : ''}`,
-      shiftId ? [tenantId, branchId, branchId, bdate, shiftId] : [tenantId, branchId, branchId, bdate],
-    );
+       WHERE cm.tenant_id = ? AND (s.location = ? OR s.branch_id = ?) AND (DATE(cm.created_at) = ?::date)`;
+    const cashMoveParams: any[] = [tenantId, branchId, branchId, bdate];
+    if (shiftId) {
+      cashMoveSql += ' AND s.id = ?';
+      cashMoveParams.push(shiftId);
+    }
+    if (cashierId) {
+      cashMoveSql += ' AND s.user_id = ?';
+      cashMoveParams.push(cashierId);
+    }
+    const cashMovesRow = await ctx.db.one<any>(cashMoveSql, cashMoveParams);
     const cashInMinor = Number(cashMovesRow?.cashInMinor ?? cashMovesRow?.cash_in_minor ?? 0);
     const cashOutMinor = Number(cashMovesRow?.cashOutMinor ?? cashMovesRow?.cash_out_minor ?? 0);
 
@@ -331,7 +368,9 @@ export function registerDayClosing(r: Router) {
       bdate,
       branchId,
       shiftId: shiftId || null,
+      cashierId: cashierId || null,
       availableShifts,
+      availableCashiers,
       isClosed: Boolean(closedRecord && (closedRecord.status === 'closed' || closedRecord.status === 'approved')),
       isSubmitted: Boolean(closedRecord && closedRecord.status === 'submitted'),
       isReopened: Boolean(closedRecord && closedRecord.status === 'reopened'),
