@@ -1,0 +1,750 @@
+/* ==========================================================================
+   DAY CLOSING & REGISTER RECONCILIATION - MODERN BENTO LAYOUT
+   ========================================================================== */
+
+.day-closing-wrapper {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  box-sizing: border-box;
+  font-family: inherit;
+  color: #1e293b;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* --------------------------------------------------------------------------
+   Top Bento Header Card
+   -------------------------------------------------------------------------- */
+.day-closing-header-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.day-closing-header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.day-closing-header-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #eef2ff;
+  color: #4f46e5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.day-closing-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+}
+
+.day-closing-subtitle {
+  margin: 0.25rem 0 0 0;
+  font-size: 0.825rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.day-closing-header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.day-closing-date-picker {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 0.5rem 0.85rem;
+  font-size: 0.85rem;
+  color: #334155;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.day-closing-date-picker:focus-within {
+  border-color: #6366f1;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+.day-closing-date-input {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #0f172a;
+  cursor: pointer;
+}
+
+.day-closing-refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1rem;
+  border-radius: 10px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  font-size: 0.825rem;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.day-closing-refresh-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+/* --------------------------------------------------------------------------
+   Sealed Status Banner
+   -------------------------------------------------------------------------- */
+.day-closing-sealed-banner {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border: 1px solid #fde68a;
+  border-radius: 14px;
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.08);
+}
+
+.day-closing-sealed-left {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.day-closing-sealed-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: #fef08a;
+  color: #92400e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.day-closing-sealed-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #78350f;
+}
+
+.day-closing-sealed-desc {
+  font-size: 0.8rem;
+  color: #92400e;
+  margin-top: 0.15rem;
+}
+
+.day-closing-print-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.15rem;
+  background: #d97706;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.825rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(217, 119, 6, 0.25);
+  transition: all 0.2s ease;
+}
+
+.day-closing-print-btn:hover {
+  background: #b45309;
+  transform: translateY(-1px);
+}
+
+/* --------------------------------------------------------------------------
+   Alert Messages (Error & Success)
+   -------------------------------------------------------------------------- */
+.day-closing-alert {
+  padding: 0.85rem 1.25rem;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.day-closing-alert.error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+}
+
+.day-closing-alert.success {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #047857;
+}
+
+/* --------------------------------------------------------------------------
+   Core Bento Grid System
+   -------------------------------------------------------------------------- */
+.day-closing-bento-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 1.25rem;
+  width: 100%;
+}
+
+.bento-col-8 {
+  grid-column: span 8;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.bento-col-4 {
+  grid-column: span 4;
+}
+
+.bento-col-6 {
+  grid-column: span 6;
+}
+
+.bento-col-12 {
+  grid-column: span 12;
+}
+
+/* Responsive Breakpoints */
+@media (max-width: 1100px) {
+  .bento-col-8,
+  .bento-col-4,
+  .bento-col-6 {
+    grid-column: span 12;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Standard Bento Card
+   -------------------------------------------------------------------------- */
+.day-closing-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.day-closing-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 0.85rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.day-closing-card-title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.day-closing-card-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.day-closing-card-badge.rose {
+  background: #fff1f2;
+  color: #e11d48;
+  border: 1px solid #ffe4e6;
+}
+
+.day-closing-card-badge.indigo {
+  background: #eef2ff;
+  color: #4f46e5;
+  border: 1px solid #e0e7ff;
+}
+
+.day-closing-card-badge.emerald {
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #d1fae5;
+}
+
+/* --------------------------------------------------------------------------
+   Section A: Daily Sales & Revenue Performance Grid
+   -------------------------------------------------------------------------- */
+.sales-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.85rem;
+}
+
+@media (max-width: 768px) {
+  .sales-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.sales-kpi-tile {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: all 0.2s ease;
+}
+
+.sales-kpi-tile:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+}
+
+.sales-kpi-tile.gross {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.sales-kpi-tile.returns {
+  background: #fff8f8;
+  border-color: #fecdd3;
+}
+
+.sales-kpi-tile.net {
+  background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+  border-color: #86efac;
+}
+
+.sales-kpi-tile.profit {
+  background: linear-gradient(135deg, #ffffff 0%, #faf5ff 100%);
+  border-color: #d8b4fe;
+}
+
+.sales-kpi-label {
+  font-size: 0.775rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.sales-kpi-val {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0.35rem 0 0.15rem 0;
+  letter-spacing: -0.02em;
+}
+
+.sales-kpi-val.rose {
+  color: #be123c;
+}
+
+.sales-kpi-val.emerald {
+  color: #15803d;
+}
+
+.sales-kpi-val.purple {
+  color: #7e22ce;
+}
+
+.sales-kpi-sub {
+  font-size: 0.725rem;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+/* Bottom Profit & Margin Info Strip */
+.sales-profit-strip {
+  margin-top: 1rem;
+  background: #f1f5f9;
+  border-radius: 10px;
+  padding: 0.65rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: #475569;
+  font-weight: 600;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* --------------------------------------------------------------------------
+   Section D: Tender & Payment Collections
+   -------------------------------------------------------------------------- */
+.tender-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.85rem;
+}
+
+@media (max-width: 768px) {
+  .tender-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.tender-kpi-card {
+  border-radius: 12px;
+  padding: 0.95rem 1rem;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #e2e8f0;
+}
+
+.tender-kpi-card.cash {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.tender-kpi-card.upi {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.tender-kpi-card.card {
+  background: #eef2ff;
+  border-color: #c7d2fe;
+}
+
+.tender-kpi-card.credit {
+  background: #faf5ff;
+  border-color: #e9d5ff;
+}
+
+.tender-header {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.775rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.tender-kpi-card.cash .tender-header { color: #15803d; }
+.tender-kpi-card.upi .tender-header { color: #1d4ed8; }
+.tender-kpi-card.card .tender-header { color: #4338ca; }
+.tender-kpi-card.credit .tender-header { color: #7e22ce; }
+
+.tender-amount {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+/* --------------------------------------------------------------------------
+   Section E: Cash Drawer Reconciliation (Right Column)
+   -------------------------------------------------------------------------- */
+.cash-rec-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.cash-rec-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.825rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px dashed #f1f5f9;
+}
+
+.cash-rec-row:last-of-type {
+  border-bottom: none;
+}
+
+.cash-rec-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.cash-rec-val {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.cash-rec-val.plus { color: #15803d; }
+.cash-rec-val.minus { color: #b91c1c; }
+
+.cash-rec-expected-box {
+  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+  border: 1px solid #c7d2fe;
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0.5rem 0;
+}
+
+.cash-rec-expected-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #3730a3;
+}
+
+.cash-rec-expected-val {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #312e81;
+}
+
+.cash-rec-input-group {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.cash-rec-input-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #334155;
+}
+
+.cash-rec-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.cash-rec-input-prefix {
+  position: absolute;
+  left: 0.85rem;
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.cash-rec-input {
+  width: 100%;
+  padding: 0.65rem 0.85rem 0.65rem 2rem;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #0f172a;
+  outline: none;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.cash-rec-input:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.cash-rec-diff-pill {
+  padding: 0.65rem 1rem;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.825rem;
+  font-weight: 700;
+}
+
+.cash-rec-diff-pill.balanced {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #047857;
+}
+
+.cash-rec-diff-pill.surplus {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1d4ed8;
+}
+
+.cash-rec-diff-pill.deficit {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+}
+
+.cash-rec-remarks-input {
+  width: 100%;
+  padding: 0.6rem 0.85rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  color: #1e293b;
+  resize: vertical;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.cash-rec-remarks-input:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+.cash-rec-submit-btn {
+  width: 100%;
+  padding: 0.85rem;
+  background: #4f46e5;
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3);
+  transition: all 0.2s ease;
+  margin-top: 0.5rem;
+}
+
+.cash-rec-submit-btn:hover {
+  background: #4338ca;
+  transform: translateY(-1px);
+}
+
+.cash-rec-submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* --------------------------------------------------------------------------
+   Sections B & C: Returns & Exchanges Row
+   -------------------------------------------------------------------------- */
+.detail-list-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  font-size: 0.825rem;
+  border-bottom: 1px solid #f8fafc;
+}
+
+.detail-list-row:last-of-type {
+  border-bottom: none;
+}
+
+.detail-list-label {
+  color: #64748b;
+  font-weight: 600;
+}
+
+.detail-list-val {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.detail-list-val.rose { color: #e11d48; }
+.detail-list-val.indigo { color: #4338ca; }
+.detail-list-val.purple { color: #7e22ce; }
+
+.detail-notice-box {
+  margin-top: 0.75rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 0.75rem;
+  font-size: 0.775rem;
+  color: #475569;
+  line-height: 1.45;
+}
+
+/* --------------------------------------------------------------------------
+   Past History Table
+   -------------------------------------------------------------------------- */
+.history-table-container {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid #f1f5f9;
+}
+
+.day-closing-history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  text-align: left;
+}
+
+.day-closing-history-table th {
+  background: #f8fafc;
+  color: #64748b;
+  font-weight: 700;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+.day-closing-history-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+  white-space: nowrap;
+}
+
+.day-closing-history-table tr:hover td {
+  background: #f8fafc;
+}
+
+.history-action-btn {
+  padding: 0.35rem 0.75rem;
+  border-radius: 8px;
+  background: #eef2ff;
+  color: #4f46e5;
+  font-weight: 700;
+  font-size: 0.75rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.history-action-btn:hover {
+  background: #e0e7ff;
+}
+
