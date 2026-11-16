@@ -262,6 +262,9 @@ test('3. Generates Wholesale Invoice with WH prefix, shared inventory deduction,
   assert.ok(printRes.text.includes('Reverse Charge'), 'Must contain Reverse Charge');
   assert.ok(printRes.text.includes('HSN CODE'), 'Must have HSN summary table');
   assert.ok(printRes.text.includes('Authorised Signatory'), 'Must have Authorised Signatory');
+  assert.ok(printRes.text.includes('Suhani Fashions Surat'), 'Must include customer firm name');
+  assert.ok(printRes.text.includes('27AAPFU0939F1ZV'), 'Must include customer GSTIN');
+  assert.equal(printRes.text.includes('Cash Customer'), false, 'Must NOT display Cash Customer');
 });
 
 test('4. Separate Business Identity for Retail (POS) and Wholesale (B2B)', async () => {
@@ -410,4 +413,144 @@ test('4. Separate Business Identity for Retail (POS) and Wholesale (B2B)', async
   const updatedShop = updateNameRes.body.shop || updateNameRes.body;
   assert.equal(updatedShop.wholesaleBusinessName, 'ABC Wholesale Traders');
   assert.equal(updatedShop.invoiceProfiles.wholesale.displayName, 'ABC Wholesale Traders');
+});
+
+test('5. Wholesale Billing displays customer actual details across invoice generation, preview and print', async () => {
+  // 1. Create product item
+  const itRes = await api('POST', '/api/items', {}, {
+    name: 'Basmati Rice Premium 25kg',
+    sku: 'BASMATI-PREM-25',
+    priceMinor: 250000,
+    wholesalePriceMinor: 210000,
+    minWholesaleQtyMilli: 25000,
+    taxRateBp: 500,
+    unit: 'Bag',
+  }, ownerToken);
+  assert.equal(itRes.status, 200);
+  const it = itRes.body.item;
+
+  await db.exec(
+    `INSERT INTO stock_moves (id, tenant_id, branch_id, item_id, kind, qty_milli, created_at)
+     VALUES (?, ?, ?, ?, 'opening', 500000, now())`,
+    ['sm_in_b_' + Date.now(), TEST_TENANT, BRANCH_ID, it.id]
+  );
+
+  // 2. Create wholesale customer PV (Attn: Ram, Phone: 919638521478, GSTIN: 33ABCDE1234F1Z5, Tamil Nadu)
+  const pvRes = await api('POST', '/api/parties', {}, {
+    name: 'PV',
+    type: 'customer',
+    customerType: 'wholesale',
+    contactPerson: 'Ram',
+    phone: '919638521478',
+    gstin: '33ABCDE1234F1Z5',
+    creditLimitMinor: 10000000, // ₹1,00,000
+    // Note: billing address not configured to test fallback
+  }, ownerToken);
+  assert.equal(pvRes.status, 200);
+  const pv = pvRes.body.party;
+  assert.equal(pv.name, 'PV');
+  assert.equal(pv.gstin, '33ABCDE1234F1Z5');
+
+  // 3. Generate Wholesale Invoice for PV
+  const invRes = await api('POST', '/api/invoices', {}, {
+    invoiceType: 'wholesale',
+    branchId: BRANCH_ID,
+    partyId: pv.id,
+    customerId: pv.id,
+    customerName: pv.name,
+    customerPhone: pv.phone,
+    customerGstin: pv.gstin,
+    customer: {
+      id: pv.id,
+      name: pv.name,
+      phone: pv.phone,
+      gstin: pv.gstin,
+      contactPerson: 'Ram',
+      stateCode: '33',
+      stateName: 'Tamil Nadu',
+    },
+    lines: [
+      {
+        itemId: it.id,
+        name: it.name,
+        qtyMilli: 25000,
+        priceMinor: 210000,
+        taxRateBp: 500,
+        discountMinor: 0,
+        unit: 'Bag',
+      },
+    ],
+    payments: [{ mode: 'bank', amountMinor: 220500 }],
+    custom: {
+      paymentTerms: 'NEFT / RTGS',
+      customerGstin: pv.gstin,
+      customerState: 'Tamil Nadu',
+      customerStateCode: '33',
+      contactPerson: 'Ram',
+    },
+  }, ownerToken);
+
+  assert.equal(invRes.status, 200);
+  const inv = invRes.body.invoice || invRes.body;
+  assert.equal(inv.customerName, 'PV');
+  assert.equal(inv.customerPhone, '919638521478');
+  assert.equal(inv.customerGstin, '33ABCDE1234F1Z5');
+  assert.equal(inv.partyId, pv.id);
+
+  // 4. Verify Invoice Details via GET /api/invoices/:id
+  const getInvRes = await api('GET', `/api/invoices/${inv.id}`, {}, undefined, ownerToken);
+  assert.equal(getInvRes.status, 200);
+  assert.equal(getInvRes.body.invoice.customerName, 'PV');
+  assert.equal(getInvRes.body.invoice.customerPhone, '919638521478');
+
+  // 5. Verify Invoice Print output
+  const printRes = await api('GET', `/api/invoices/${inv.id}/print`, {}, undefined, ownerToken);
+  assert.equal(printRes.status, 200);
+
+  // Assertions ensuring NO "Cash Customer" or "Unregistered" replacement
+  assert.ok(printRes.text.includes('PV'), 'Must display buyer name PV');
+  assert.equal(printRes.text.includes('Cash Customer'), false, 'Must NOT display Cash Customer');
+  assert.ok(printRes.text.includes('919638521478'), 'Must display customer phone 919638521478');
+  assert.ok(printRes.text.includes('33ABCDE1234F1Z5'), 'Must display customer GSTIN 33ABCDE1234F1Z5');
+  assert.ok(printRes.text.includes('Ram'), 'Must display contact person Ram');
+  assert.ok(printRes.text.includes('Tamil Nadu'), 'Must display state Tamil Nadu');
+  assert.ok(printRes.text.includes('Address not configured'), 'Must display address not configured fallback');
+
+  // 6. Test Unregistered wholesale customer
+  const unregRes = await api('POST', '/api/parties', {}, {
+    name: 'Balaji Retail Store',
+    type: 'customer',
+    customerType: 'wholesale',
+    phone: '9840123999',
+    address: '45 M.G. Road Salem',
+  }, ownerToken);
+  assert.equal(unregRes.status, 200);
+  const unreg = unregRes.body.party;
+
+  const unregInvRes = await api('POST', '/api/invoices', {}, {
+    invoiceType: 'wholesale',
+    branchId: BRANCH_ID,
+    partyId: unreg.id,
+    customerName: unreg.name,
+    customerPhone: unreg.phone,
+    lines: [
+      {
+        itemId: it.id,
+        name: it.name,
+        qtyMilli: 25000,
+        priceMinor: 210000,
+        taxRateBp: 500,
+        unit: 'Bag',
+      },
+    ],
+    payments: [{ mode: 'cash', amountMinor: 220500 }],
+  }, ownerToken);
+  assert.equal(unregInvRes.status, 200);
+
+  const unregPrintRes = await api('GET', `/api/invoices/${unregInvRes.body.id}/print`, {}, undefined, ownerToken);
+  assert.equal(unregPrintRes.status, 200);
+  assert.ok(unregPrintRes.text.includes('Balaji Retail Store'), 'Must display Balaji Retail Store');
+  assert.ok(unregPrintRes.text.includes('9840123999'), 'Must display phone 9840123999');
+  assert.ok(unregPrintRes.text.includes('Unregistered'), 'Unregistered customer must show Unregistered for GST');
+  assert.equal(unregPrintRes.text.includes('Cash Customer'), false, 'Must NOT display Cash Customer for Balaji');
 });

@@ -1,5 +1,6 @@
 import { fmtMoney, fmtQty, bpToPct, moneyInWords } from './money.ts';
 import type { Lang, PrintTemplate } from './types.ts';
+import { stateName } from './states.ts';
 
 export interface PrintableLine {
   name: string;
@@ -49,7 +50,16 @@ export interface PrintableBill {
   status?: string;
   dateText: string; // already formatted, e.g. 16 Oct 2026, 11:45
   shop: { name: string; address?: string | null; phone?: string | null; gstin?: string | null; stateName?: string | null; upiId?: string | null; logoUrl?: string | null };
-  customer?: { name?: string | null; phone?: string | null; gstin?: string | null } | null;
+  customer?: {
+    name?: string | null;
+    phone?: string | null;
+    gstin?: string | null;
+    address?: string | null;
+    shippingAddress?: string | null;
+    contactPerson?: string | null;
+    stateCode?: string | null;
+    stateName?: string | null;
+  } | null;
   lines: PrintableLine[];
   totals: {
     subtotalMinor: number; discountMinor: number; taxableMinor: number; cgstMinor: number; sgstMinor: number; igstMinor: number;
@@ -61,6 +71,7 @@ export interface PrintableBill {
   note?: string | null;
   linkedNumber?: string | null;
   intra: boolean;
+  placeState?: string | null;
   wholesale?: PrintableWholesaleMeta | null;
 }
 
@@ -504,12 +515,13 @@ export function wholesaleA4Copy(bill: PrintableBill, tpl: PrintTemplate, L: Reco
   const gstin = wh.gstin || bill.shop.gstin || '';
 
   const buyerName = bill.customer?.name || 'Cash Customer';
-  const buyerAddress = wh.billingAddress || (bill.customer as any)?.address || '';
-  const shippingAddress = wh.shippingAddress || buyerAddress;
+  const buyerContactPerson = wh.contactPerson || bill.customer?.contactPerson || '';
+  const buyerAddress = wh.billingAddress || bill.customer?.address || '';
+  const shippingAddress = wh.shippingAddress || bill.customer?.shippingAddress || buyerAddress;
   const buyerPhone = bill.customer?.phone || '';
   const buyerGstin = bill.customer?.gstin || '';
-  const buyerStateName = wh.customerState || '';
-  const buyerStateCode = wh.customerStateCode || '';
+  const buyerStateCode = wh.customerStateCode || bill.customer?.stateCode || (buyerGstin && buyerGstin.length >= 2 ? buyerGstin.slice(0, 2) : '') || bill.placeState || '';
+  const buyerStateName = wh.customerState || bill.customer?.stateName || (buyerStateCode ? stateName(buyerStateCode) : '');
 
   let totalQtyMilli = 0;
   let primaryUnit = 'Pcs';
@@ -598,7 +610,8 @@ export function wholesaleA4Copy(bill: PrintableBill, tpl: PrintTemplate, L: Reco
   <div class="wh-grid-2col">
     <div class="wh-col-buyer">
       <div style="font-size:11px;margin-bottom:3px;"><b>M/S, &nbsp; ${esc(buyerName)}</b></div>
-      ${buyerAddress ? `<div style="font-size:10px;margin-bottom:3px;color:#222;">${esc(buyerAddress)}</div>` : ''}
+      ${buyerContactPerson ? `<div style="font-size:9.5px;margin-bottom:2px;color:#333;"><b>Attn:</b> ${esc(buyerContactPerson)}</div>` : ''}
+      ${buyerAddress ? `<div style="font-size:10px;margin-bottom:3px;color:#222;">${esc(buyerAddress)}</div>` : `<div style="font-size:9.5px;margin-bottom:3px;color:#777;font-style:italic;">Address not configured</div>`}
       ${shippingAddress && shippingAddress !== buyerAddress ? `<div style="font-size:9.5px;margin-bottom:3px;color:#444;"><b>Ship To:</b> ${esc(shippingAddress)}</div>` : ''}
       <div style="font-size:10px;margin-bottom:4px;"><b>Phone :</b> ${esc(buyerPhone || '—')}</div>
       <div style="display:flex;justify-content:space-between;align-items:baseline;font-size:10px;margin-top:4px;">

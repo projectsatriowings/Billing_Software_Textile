@@ -74,10 +74,23 @@ export function WholesaleBillingView({
 
   // Customer state detection for GST
   const customerStateCode = useMemo(() => {
-    if (!selectedCustomer?.gstin) return null;
-    const clean = selectedCustomer.gstin.trim().toUpperCase();
-    return clean.length >= 2 ? clean.slice(0, 2) : null;
+    if (selectedCustomer?.gstin) {
+      const clean = selectedCustomer.gstin.trim().toUpperCase();
+      if (clean.length >= 2) return clean.slice(0, 2);
+    }
+    if (selectedCustomer?.stateCode) {
+      return String(selectedCustomer.stateCode).padStart(2, '0');
+    }
+    if ((selectedCustomer as any)?.state_code) {
+      return String((selectedCustomer as any).state_code).padStart(2, '0');
+    }
+    return null;
   }, [selectedCustomer]);
+
+  const customerStateName = useMemo(() => {
+    if (!customerStateCode) return '';
+    return STATES.find((s) => s.code === customerStateCode)?.name || '';
+  }, [customerStateCode]);
 
   const shopStateCode = useMemo(() => {
     if (wholesaleProfile.gstin && wholesaleProfile.gstin.length >= 2) {
@@ -394,40 +407,67 @@ export function WholesaleBillingView({
         });
       }
 
+      const custName = selectedCustomer.name.trim();
+      const custPhone = selectedCustomer.phone?.trim() || undefined;
+      const custGstin = selectedCustomer.gstin?.trim().toUpperCase() || undefined;
+      const custContactPerson = (selectedCustomer as any).contactPerson?.trim() || undefined;
+      const custAddress = selectedCustomer.address?.trim() || undefined;
+      const shipAddress = shippingAddress.trim() || custAddress || undefined;
+
       const payload = {
         invoiceType: 'wholesale',
         branchId: selectedBranch || undefined,
+        partyId: selectedCustomer.id,
         customerId: selectedCustomer.id,
+        customerName: custName,
+        customerPhone: custPhone,
+        customerGstin: custGstin,
+        billingAddress: custAddress,
+        shippingAddress: shipAddress,
+        contactPerson: custContactPerson,
+        placeState: customerStateCode || shopStateCode || '33',
+        intra: !isInterstate,
         customer: {
-          name: selectedCustomer.name,
-          phone: selectedCustomer.phone,
-          gstin: selectedCustomer.gstin,
-          address: selectedCustomer.address,
+          id: selectedCustomer.id,
+          name: custName,
+          phone: custPhone,
+          gstin: custGstin,
+          address: custAddress,
+          shippingAddress: shipAddress,
+          contactPerson: custContactPerson,
+          stateCode: customerStateCode || undefined,
+          stateName: customerStateName || undefined,
         },
         lines,
         payments,
+        billDiscountMinor: Math.round(billDiscountRupees * 100),
         custom: {
           paymentTerms: paymentMode === 'credit' ? '30 Days Credit' : (paymentMode === 'bank' ? 'NEFT / RTGS' : 'Due on Receipt'),
-          billingAddress: selectedCustomer.address || undefined,
-          shippingAddress: shippingAddress.trim() || selectedCustomer.address || undefined,
-          customerState: selectedCustomer.gstin ? (STATES.find((s) => s.code === selectedCustomer.gstin?.slice(0, 2))?.name || '') : undefined,
+          billingAddress: custAddress,
+          shippingAddress: shipAddress,
+          customerGstin: custGstin,
+          customerState: customerStateName || undefined,
           customerStateCode: customerStateCode || undefined,
+          contactPerson: custContactPerson,
         },
       };
 
-      const res = await api<{ invoice: any; invoiceId: string }>('/api/invoices', {
+      const res = await api<any>('/api/invoices', {
         method: 'POST',
         body: JSON.stringify(payload),
       });
 
-      const inv = res.invoice || { id: res.invoiceId, number: 'WH-BILL', totalMinor: calculated.totalPaise };
+      const invId = res.invoice?.id || res.id || res.invoiceId;
+      const invNumber = res.invoice?.number || res.number || 'WH-BILL';
+      const invTotal = res.invoice?.totalMinor ?? res.totalMinor ?? calculated.totalPaise;
+
       setGeneratedInvoice({
-        id: inv.id,
-        number: inv.number,
-        totalMinor: inv.totalMinor,
+        id: invId,
+        number: invNumber,
+        totalMinor: invTotal,
       });
       setShowInvoiceModal(true);
-      showToast(`Wholesale Invoice ${inv.number} generated successfully!`, 'success');
+      showToast(`Wholesale Invoice ${invNumber} generated successfully!`, 'success');
 
       // Clear cart
       setCart([]);
@@ -444,6 +484,10 @@ export function WholesaleBillingView({
 
   return (
     <div className="wholesale-billing-container" style={{ padding: '0 0.5rem 3rem' }}>
+      <h1 className="wholesale-page-title">
+        Wholesale Billing &amp; B2B Tax Invoices
+      </h1>
+
       {/* Main Grid: 2 Columns (Left: Selection & Cart, Right: Summary & Checkout) */}
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(360px, 1fr)', gap: '1.5rem', alignItems: 'start' }}>
         {/* Left Column: Customer + Product Search + Order Items Table + Logistics */}
