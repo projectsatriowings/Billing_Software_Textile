@@ -1024,6 +1024,7 @@ export function App() {
   const catalogSearchInputRef = useRef<HTMLInputElement>(null);
   const customerMobileInputRef = useRef<HTMLInputElement>(null);
   const customerNameInputRef = useRef<HTMLInputElement>(null);
+  const customerNameManuallyEditedRef = useRef(false);
   const checkoutBtnRef = useRef<HTMLButtonElement>(null);
   const [catalogSelectedIndex, setCatalogSelectedIndex] = useState<number>(-1);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
@@ -3830,8 +3831,9 @@ export function App() {
       });
       setParties((prev) => [res.party, ...prev]);
       setSelectedPartyId(res.party.id);
-      setCustomerSearch('');
-      setQuickCustomerName('');
+      setCustomerSearch(cleanDigits);
+      setQuickCustomerName(res.party.name);
+      customerNameManuallyEditedRef.current = false;
       setShowCustomerDropdown(false);
       showToast(`🎉 Customer ${res.party.name} enrolled! Points will start on this bill.`);
     } catch (err: any) {
@@ -8853,20 +8855,19 @@ export function App() {
 
                         {/* Direct Inline Customer Entry Bento Box */}
                         {(() => {
-                          const currentPhone = selectedParty?.phone || customerSearch;
-                          const cleanDigits = currentPhone.replace(/\D/g, '');
-                          const isPhoneValid = cleanDigits.length >= 10;
-                          const displayedCustomerName = quickCustomerName || (selectedParty ? selectedParty.name : '');
+                          const cleanDigits = customerSearch.replace(/\D/g, '');
+                          const isPhoneValid = cleanDigits.length === 10;
+                          const displayedCustomerName = selectedParty ? selectedParty.name : quickCustomerName;
 
-                          // Instant phone suggestions from parties and past invoices
+                          // Suggestions dropdown from parties and past invoices (ONLY when typing 3 to 9 digits and not already selected)
                           const phoneSuggestions: Array<{ id?: string; name: string; phone: string; points?: number }> = [];
-                          if (cleanDigits.length >= 3 && !selectedParty) {
+                          if (cleanDigits.length >= 3 && cleanDigits.length < 10 && !selectedPartyId) {
                             const seen = new Set<string>();
                             for (const p of parties) {
                               if (p.type !== 'customer' || !p.phone) continue;
                               const pD = p.phone.replace(/\D/g, '');
                               const p10 = pD.slice(-10);
-                              if (pD.includes(cleanDigits) || cleanDigits.includes(p10)) {
+                              if (pD.includes(cleanDigits) || p10.includes(cleanDigits) || p.name.toLowerCase().includes(customerSearch.toLowerCase())) {
                                 if (!seen.has(p10)) {
                                   seen.add(p10);
                                   phoneSuggestions.push({ id: p.id, name: p.name, phone: p10, points: p.loyaltyPoints ?? 0 });
@@ -8913,8 +8914,8 @@ export function App() {
                                       fontWeight: 750,
                                       padding: '2px 7px',
                                       borderRadius: '6px',
-                                      background: isPhoneValid ? '#dcfce7' : '#fee2e2',
-                                      color: isPhoneValid ? '#15803d' : '#b91c1c',
+                                      background: isPhoneValid ? '#dcfce7' : cleanDigits.length > 0 ? '#fef3c7' : '#fee2e2',
+                                      color: isPhoneValid ? '#15803d' : cleanDigits.length > 0 ? '#b45309' : '#b91c1c',
                                       display: 'inline-flex',
                                       alignItems: 'center',
                                       gap: '3px',
@@ -8927,6 +8928,8 @@ export function App() {
                                         </svg>
                                         <span>Mobile Verified</span>
                                       </>
+                                    ) : cleanDigits.length > 0 ? (
+                                      <span>Enter 10 Digits ({cleanDigits.length}/10) *</span>
                                     ) : (
                                       <span>10-Digit Mobile Required *</span>
                                     )}
@@ -8941,7 +8944,11 @@ export function App() {
                                         setSelectedPartyId('');
                                         setCustomerSearch('');
                                         setQuickCustomerName('');
+                                        customerNameManuallyEditedRef.current = false;
                                         setRedeemPoints(false);
+                                        if (customerMobileInputRef.current) {
+                                          customerMobileInputRef.current.focus();
+                                        }
                                       }}
                                       style={{
                                         background: '#ffffff',
@@ -8993,99 +9000,116 @@ export function App() {
                               </div>
 
                               {/* Direct Inline Inputs: Mobile Number and Customer Name */}
-                              <div style={{ display: 'grid', gridTemplateColumns: '1.15fr 1fr', gap: '0.5rem' }}>
-                                {/* 1. Customer Mobile Input with Suggestions */}
+                              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '0.5rem' }}>
+                                {/* 1. Customer Mobile Input with Prefix and Suggestions */}
                                 <div style={{ position: 'relative' }}>
-                                  <input
-                                    ref={customerMobileInputRef}
-                                    type="tel"
-                                    placeholder="Customer Mobile (10 digits) *"
-                                    maxLength={10}
-                                    value={selectedParty ? (selectedParty.phone || '') : customerSearch}
-                                    onChange={(e) => {
-                                      const digits = e.target.value.replace(/\D/g, '').slice(0, 10);
-                                      setCustomerSearch(digits);
+                                  <div style={{ display: 'flex', alignItems: 'stretch' }}>
+                                    <div
+                                      style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        padding: '0 0.55rem',
+                                        background: '#f8fafc',
+                                        border: isPhoneValid ? '1.5px solid #16a34a' : '1.5px solid #cbd5e1',
+                                        borderRight: 'none',
+                                        borderRadius: '8px 0 0 8px',
+                                        fontSize: '0.75rem',
+                                        fontWeight: 800,
+                                        color: '#475569',
+                                        userSelect: 'none',
+                                      }}
+                                    >
+                                      +91
+                                    </div>
+                                    <input
+                                      ref={customerMobileInputRef}
+                                      type="tel"
+                                      placeholder="10-digit mobile number *"
+                                      maxLength={10}
+                                      value={customerSearch}
+                                      onChange={(e) => {
+                                        let raw = e.target.value.replace(/\D/g, '');
+                                        // If pasted or typed with leading 91 or 0 and total > 10
+                                        if (raw.length === 12 && raw.startsWith('91')) {
+                                          raw = raw.slice(2);
+                                        } else if (raw.length === 11 && raw.startsWith('0')) {
+                                          raw = raw.slice(1);
+                                        } else if (raw.length > 10 && raw.startsWith('91')) {
+                                          raw = raw.slice(2);
+                                        }
+                                        const clean10 = raw.slice(0, 10);
+                                        setCustomerSearch(clean10);
 
-                                      // Detach previous party if phone digits changed
-                                      if (selectedParty && selectedParty.phone && !selectedParty.phone.replace(/\D/g, '').endsWith(digits)) {
-                                        setSelectedPartyId('');
-                                      }
+                                        // Detach any previous party if cashier is typing/editing
+                                        if (selectedPartyId) {
+                                          setSelectedPartyId('');
+                                        }
 
-                                      // Instant local lookup: check parties and invoices
-                                      if (digits.length >= 3) {
-                                        const partyMatch = parties.find((p) => {
-                                          if (p.type !== 'customer' || !p.phone) return false;
-                                          const pD = p.phone.replace(/\D/g, '');
-                                          if (digits.length === 10) {
-                                            return pD === digits || pD.endsWith(digits) || digits.endsWith(pD.slice(-10));
+                                        // DO NOT auto-fill customer name while still typing (< 10 digits)!
+                                        if (clean10.length === 10) {
+                                          // 1. Check local parties for EXACT 10-digit match
+                                          const exactParty = parties.find(
+                                            (p) => p.type === 'customer' && p.phone && p.phone.replace(/\D/g, '').slice(-10) === clean10
+                                          );
+                                          if (exactParty) {
+                                            setSelectedPartyId(exactParty.id);
+                                            setQuickCustomerName(exactParty.name);
+                                            customerNameManuallyEditedRef.current = false;
+                                            showToast(`Customer recognized: ${exactParty.name}`);
+                                            return;
                                           }
-                                          return pD.startsWith(digits) || pD.includes(digits);
-                                        });
 
-                                        if (partyMatch) {
-                                          setSelectedPartyId(partyMatch.id);
-                                          setQuickCustomerName(partyMatch.name);
-                                        } else {
-                                          const invMatch = invoices.find((inv) => {
-                                            const iPh = ((inv.customerPhone || (inv as any).customer_phone || '')).replace(/\D/g, '');
+                                          // 2. Check local invoices for EXACT 10-digit match
+                                          const exactInv = invoices.find((inv) => {
+                                            const iPh = (inv.customerPhone || (inv as any).customer_phone || '').replace(/\D/g, '').slice(-10);
                                             const iNm = (inv.customerName || (inv as any).customer_name || '').trim();
-                                            if (!iPh || !iNm || iNm.toLowerCase().includes('walk-in')) return false;
-                                            if (digits.length === 10) {
-                                              return iPh === digits || iPh.endsWith(digits) || digits.endsWith(iPh.slice(-10));
-                                            }
-                                            return iPh.startsWith(digits) || iPh.includes(digits);
+                                            return iPh === clean10 && iNm && !iNm.toLowerCase().includes('walk-in');
                                           });
-                                          if (invMatch) {
-                                            const name = (invMatch.customerName || (invMatch as any).customer_name || '').trim();
-                                            if (name) setQuickCustomerName(name);
+                                          if (exactInv) {
+                                            const invName = (exactInv.customerName || (exactInv as any).customer_name || '').trim();
+                                            setQuickCustomerName(invName);
+                                            customerNameManuallyEditedRef.current = false;
+                                            showToast(`Customer recognized: ${invName}`);
+                                            return;
+                                          }
+
+                                          // 3. Exact 10-digit backend lookup (cross-branch / DB)
+                                          fetch(`/api/parties/by-phone/${clean10}`)
+                                            .then((r) => r.json())
+                                            .then((data) => {
+                                              if (data?.party && data.party.name) {
+                                                if (data.party.id) {
+                                                  setSelectedPartyId(data.party.id);
+                                                  setParties((prev) => (prev.some((p) => p.id === data.party.id) ? prev : [data.party, ...prev]));
+                                                }
+                                                setQuickCustomerName(data.party.name);
+                                                customerNameManuallyEditedRef.current = false;
+                                                showToast(`Customer recognized: ${data.party.name}`);
+                                              }
+                                            })
+                                            .catch(() => {});
+                                        } else {
+                                          // Still typing: clear auto-populated name if not manually edited
+                                          if (!customerNameManuallyEditedRef.current) {
+                                            setQuickCustomerName('');
                                           }
                                         }
-                                      }
-
-                                      // Server lookup for 7+ digits (cross-branch & DB)
-                                      if (digits.length >= 7) {
-                                        fetch(`/api/parties/by-phone/${encodeURIComponent(digits)}`)
-                                          .then((r) => r.json())
-                                          .then((data) => {
-                                            if (data?.party && data.party.name) {
-                                              if (data.party.id) {
-                                                setSelectedPartyId(data.party.id);
-                                                setParties((prev) => (prev.some((p) => p.id === data.party.id) ? prev : [data.party, ...prev]));
-                                              }
-                                              setQuickCustomerName(data.party.name);
-                                              showToast(`Customer recognized: ${data.party.name}`);
-                                            }
-                                          })
-                                          .catch(() => {});
-                                      }
-                                    }}
-                                    style={{
-                                      width: '100%',
-                                      boxSizing: 'border-box',
-                                      padding: '0.45rem 0.65rem 0.45rem 1.85rem',
-                                      fontSize: '0.84rem',
-                                      borderRadius: '8px',
-                                      border: isPhoneValid ? '1.5px solid #16a34a' : '1.5px solid #f97316',
-                                      background: '#ffffff',
-                                      fontWeight: 700,
-                                      letterSpacing: '0.5px',
-                                      color: '#0f172a',
-                                      outline: 'none',
-                                    }}
-                                  />
-                                  <svg
-                                    width="13"
-                                    height="13"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke={isPhoneValid ? '#16a34a' : '#f97316'}
-                                    strokeWidth="2.3"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    style={{ position: 'absolute', left: '0.55rem', top: '50%', transform: 'translateY(-50%)' }}
-                                  >
-                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-                                  </svg>
+                                      }}
+                                      style={{
+                                        width: '100%',
+                                        boxSizing: 'border-box',
+                                        padding: '0.45rem 0.65rem',
+                                        fontSize: '0.84rem',
+                                        borderRadius: '0 8px 8px 0',
+                                        border: isPhoneValid ? '1.5px solid #16a34a' : '1.5px solid #cbd5e1',
+                                        background: '#ffffff',
+                                        fontWeight: 700,
+                                        letterSpacing: '0.5px',
+                                        color: '#0f172a',
+                                        outline: 'none',
+                                      }}
+                                    />
+                                  </div>
 
                                   {/* Suggestions Dropdown for Matching Customers */}
                                   {phoneSuggestions.length > 0 && (
@@ -9106,21 +9130,22 @@ export function App() {
                                       }}
                                     >
                                       <div style={{ padding: '4px 8px', background: '#f8fafc', fontSize: '0.68rem', fontWeight: 750, color: '#64748b', borderBottom: '1px solid #f1f5f9' }}>
-                                        Matching Customers:
+                                        Matching Customers (Click to select):
                                       </div>
-                                      {phoneSuggestions.map((item, idx) => (
+                                      {phoneSuggestions.slice(0, 5).map((item, idx) => (
                                         <div
                                           key={idx}
                                           onClick={() => {
                                             setCustomerSearch(item.phone);
                                             setQuickCustomerName(item.name);
+                                            customerNameManuallyEditedRef.current = false;
                                             if (item.id) setSelectedPartyId(item.id);
                                             showToast(`Selected customer: ${item.name}`);
                                           }}
                                           style={{
                                             padding: '6px 10px',
                                             cursor: 'pointer',
-                                            borderBottom: idx < phoneSuggestions.length - 1 ? '1px solid #f8fafc' : 'none',
+                                            borderBottom: idx < Math.min(phoneSuggestions.length, 5) - 1 ? '1px solid #f8fafc' : 'none',
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'space-between',
@@ -9154,6 +9179,7 @@ export function App() {
                                     onChange={(e) => {
                                       const val = e.target.value;
                                       setQuickCustomerName(val);
+                                      customerNameManuallyEditedRef.current = true;
                                       if (!val.trim() && selectedPartyId) {
                                         setSelectedPartyId('');
                                       }
@@ -10557,6 +10583,8 @@ export function App() {
                               if (existing) {
                                 setSelectedPartyId(existing.id);
                                 setCustomerSearch(phone10);
+                                setQuickCustomerName(existing.name);
+                                customerNameManuallyEditedRef.current = false;
                                 showToast(`Linked customer: ${existing.name} (+91 ${phone10})`);
                               } else {
                                 api<{ party: Party }>('/api/parties', {
@@ -10571,6 +10599,8 @@ export function App() {
                                     setParties((prev) => [res.party, ...prev]);
                                     setSelectedPartyId(res.party.id);
                                     setCustomerSearch(phone10);
+                                    setQuickCustomerName(res.party.name);
+                                    customerNameManuallyEditedRef.current = false;
                                     showToast(`Registered & linked customer: +91 ${phone10}`);
                                   }
                                 }).catch(() => {
@@ -10593,6 +10623,8 @@ export function App() {
                             onClick={() => {
                               setSelectedPartyId(p.id);
                               if (p.phone) setCustomerSearch(p.phone.replace(/\D/g, '').slice(-10));
+                              setQuickCustomerName(p.name);
+                              customerNameManuallyEditedRef.current = false;
                               setShowCustomerPickerModal(false);
                               showToast(`Linked customer: ${p.name}`);
                             }}

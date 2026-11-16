@@ -233,6 +233,9 @@ export function registerParties(r: Router) {
     const scope = await resolveBranchScope(ctx);
     const raw = ctx.params.phone || '';
     const digits = raw.replace(/\D/g, '');
+    if (digits.length < 10) {
+      return { party: null };
+    }
     const last10 = digits.slice(-10);
 
     const branchFilter = (!scope.isSuperAdminAll && scope.branchId) ? ' AND p.branch_id = ?' : '';
