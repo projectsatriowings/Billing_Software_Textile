@@ -3,6 +3,7 @@ import {
   fetchDayClosingPreview,
   submitDayClosing,
   approveDayClosing,
+  rejectDayClosing,
   reopenDayClosing,
   fetchDayClosingComparison,
   fetchDayClosingAnalytics,
@@ -104,7 +105,14 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
   const [isReopenModalOpen, setIsReopenModalOpen] = useState(false);
   const [reopenTargetId, setReopenTargetId] = useState<string>('');
   const [reopenReason, setReopenReason] = useState<string>('');
+  const [reopenPin, setReopenPin] = useState<string>('');
   const [reopening, setReopening] = useState(false);
+
+  // Reject / Recount Modal state
+  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+  const [rejectTargetId, setRejectTargetId] = useState<string>('');
+  const [rejectReason, setRejectReason] = useState<string>('');
+  const [rejecting, setRejecting] = useState(false);
 
   // Messages
   const [error, setError] = useState<string | null>(null);
@@ -115,6 +123,13 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
   const isCashierUser = userRole === 'CASHIER';
   const isManagerOrOwner = ['OWNER', 'SUPER_ADMIN', 'STORE_MANAGER', 'MANAGER'].includes(userRole);
   const isOwner = ['OWNER', 'SUPER_ADMIN'].includes(userRole);
+  const isManager = userRole === 'MANAGER' || userRole === 'STORE_MANAGER';
+
+  useEffect(() => {
+    if (isCashierUser && activeTab !== 'closing') {
+      setActiveTab('closing');
+    }
+  }, [isCashierUser, activeTab]);
 
   const [selectedCashierId, setSelectedCashierId] = useState<string>(() => {
     return isCashierUser ? user.id : '';
@@ -323,6 +338,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
   const handleOpenReopenModal = (closingId: string) => {
     setReopenTargetId(closingId);
     setReopenReason('');
+    setReopenPin('');
     setIsReopenModalOpen(true);
   };
 
@@ -333,11 +349,15 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
       alert('Please provide a meaningful reason (at least 5 characters) for reopening.');
       return;
     }
+    if (isManager && !reopenPin.trim()) {
+      alert('Security PIN or password is required for Manager reopening authorization.');
+      return;
+    }
 
     try {
       setReopening(true);
       setError(null);
-      await reopenDayClosing(reopenTargetId, reopenReason.trim());
+      await reopenDayClosing(reopenTargetId, reopenReason.trim(), reopenPin.trim() || undefined);
       setSuccessMsg('Business day has been reopened. Invoices unlocked for correction.');
       setIsReopenModalOpen(false);
       await loadPreview();
@@ -346,6 +366,35 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
       setError(err.message || 'Failed to reopen day closing');
     } finally {
       setReopening(false);
+    }
+  };
+
+  const handleOpenRejectModal = (closingId: string) => {
+    setRejectTargetId(closingId);
+    setRejectReason('');
+    setIsRejectModalOpen(true);
+  };
+
+  const handleConfirmReject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!rejectTargetId) return;
+    if (rejectReason.trim().length < 5) {
+      alert('Please provide a specific reason for rejection / recount (at least 5 characters).');
+      return;
+    }
+
+    try {
+      setRejecting(true);
+      setError(null);
+      await rejectDayClosing(rejectTargetId, rejectReason.trim());
+      setSuccessMsg('Day closing returned to Cashier for recount and correction.');
+      setIsRejectModalOpen(false);
+      await loadPreview();
+      await loadHistory();
+    } catch (err: any) {
+      setError(err.message || 'Failed to reject day closing');
+    } finally {
+      setRejecting(false);
     }
   };
 
@@ -504,29 +553,33 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
           Register Closing & Reconciliation
         </button>
 
-        <button
-          onClick={() => setActiveTab('comparison')}
-          className={`day-closing-tab-btn ${activeTab === 'comparison' ? 'active' : ''}`}
-        >
-          <ScaleIcon size={15} />
-          Today vs Previous Day Comparison
-        </button>
+        {!isCashierUser && (
+          <>
+            <button
+              onClick={() => setActiveTab('comparison')}
+              className={`day-closing-tab-btn ${activeTab === 'comparison' ? 'active' : ''}`}
+            >
+              <ScaleIcon size={15} />
+              Today vs Previous Day Comparison
+            </button>
 
-        <button
-          onClick={() => setActiveTab('analytics')}
-          className={`day-closing-tab-btn ${activeTab === 'analytics' ? 'active' : ''}`}
-        >
-          <BarChart3Icon size={15} />
-          Custom Date Range Analytics
-        </button>
+            <button
+              onClick={() => setActiveTab('analytics')}
+              className={`day-closing-tab-btn ${activeTab === 'analytics' ? 'active' : ''}`}
+            >
+              <BarChart3Icon size={15} />
+              Custom Date Range Analytics
+            </button>
 
-        <button
-          onClick={() => setActiveTab('history')}
-          className={`day-closing-tab-btn ${activeTab === 'history' ? 'active' : ''}`}
-        >
-          <ClockIcon size={15} />
-          Closing History & Audit Logs
-        </button>
+            <button
+              onClick={() => setActiveTab('history')}
+              className={`day-closing-tab-btn ${activeTab === 'history' ? 'active' : ''}`}
+            >
+              <ClockIcon size={15} />
+              Closing History & Audit Logs
+            </button>
+          </>
+        )}
       </div>
 
       {/* --------------------------------------------------------------------
@@ -534,7 +587,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
           -------------------------------------------------------------------- */}
       <div className="day-closing-filter-bar">
         <div className="day-closing-filter-group">
-          {branches && branches.length > 0 && (
+          {branches && branches.length > 0 && !isCashierUser && (
             <div className="day-closing-filter-item">
               <Building2Icon size={15} style={{ color: '#4f46e5' }} />
               <select
@@ -551,15 +604,30 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
             </div>
           )}
 
+          {isCashierUser && (
+            <div className="day-closing-filter-item" title="Assigned Branch">
+              <Building2Icon size={15} style={{ color: '#4f46e5' }} />
+              <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#0f172a' }}>
+                {branches?.find((b: any) => b.id === activeBranchId)?.name || activeBranchId}
+              </span>
+            </div>
+          )}
+
           {activeTab === 'closing' || activeTab === 'comparison' ? (
             <div className="day-closing-filter-item">
               <ClockIcon size={15} style={{ color: '#059669' }} />
-              <input
-                type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="day-closing-input"
-              />
+              {isCashierUser ? (
+                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#0f172a' }}>
+                  {selectedDate}
+                </span>
+              ) : (
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="day-closing-input"
+                />
+              )}
             </div>
           ) : null}
 
@@ -709,7 +777,31 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
             </div>
 
             <div className="status-banner-actions">
-              {(closingStatus === 'submitted' || closingStatus === 'reopened') && isManagerOrOwner && closedRecord?.id && (
+              {closingStatus === 'submitted' && isManagerOrOwner && closedRecord?.id && (
+                <>
+                  <button
+                    onClick={() => handleApproveClosing(closedRecord.id)}
+                    disabled={actionLoading}
+                    className="btn-approve"
+                    style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+                  >
+                    <CheckCircle2Icon size={15} />
+                    Approve & Lock Day Closing
+                  </button>
+
+                  <button
+                    onClick={() => handleOpenRejectModal(closedRecord.id)}
+                    disabled={actionLoading}
+                    className="btn-reject"
+                    style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+                  >
+                    <RotateCcwIcon size={15} />
+                    Reject / Recount
+                  </button>
+                </>
+              )}
+
+              {closingStatus === 'reopened' && isManagerOrOwner && closedRecord?.id && (
                 <button
                   onClick={() => handleApproveClosing(closedRecord.id)}
                   disabled={actionLoading}
@@ -717,11 +809,11 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                   style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
                 >
                   <CheckCircle2Icon size={15} />
-                  {closingStatus === 'reopened' ? 'Approve & Re-Seal Day Closing' : 'Approve & Lock Day Closing'}
+                  Approve & Re-Seal Day Closing
                 </button>
               )}
 
-              {(closingStatus === 'approved' || closingStatus === 'closed') && isOwner && closedRecord?.id && (
+              {(closingStatus === 'approved' || closingStatus === 'closed') && (isOwner || isManager) && closedRecord?.id && (
                 <button
                   onClick={() => handleOpenReopenModal(closedRecord.id)}
                   className="btn-reopen"
@@ -775,37 +867,71 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
               <span className="fin-kpi-sub">Gross - Discounts - Returns</span>
             </div>
 
-            {/* 4. Gross Profit */}
-            <div className="fin-kpi-card purple">
-              <div className="fin-kpi-top">
-                <span className="fin-kpi-label">Gross Profit</span>
-                <div className="fin-kpi-icon"><TrendingUpIcon size={14} /></div>
-              </div>
-              <div className="fin-kpi-val" style={{ color: '#7e22ce' }}>{fmt(profit.grossProfitMinor)}</div>
-              <span className="fin-kpi-sub">{marginPct.toFixed(1)}% Gross Margin</span>
-            </div>
+            {/* For Cashiers: Show operational cards (Bills, Discounts, GST). For Management: Show Profitability & Margin cards */}
+            {isCashierUser ? (
+              <>
+                <div className="fin-kpi-card purple">
+                  <div className="fin-kpi-top">
+                    <span className="fin-kpi-label">Total Invoices</span>
+                    <div className="fin-kpi-icon"><ReceiptIcon size={14} /></div>
+                  </div>
+                  <div className="fin-kpi-val" style={{ color: '#7e22ce' }}>{sales.invoicesCount || 0} bills</div>
+                  <span className="fin-kpi-sub">Completed sales transactions</span>
+                </div>
 
-            {/* 5. Operating Expenses */}
-            <div className="fin-kpi-card amber">
-              <div className="fin-kpi-top">
-                <span className="fin-kpi-label">Operating Expenses</span>
-                <div className="fin-kpi-icon"><ArrowUpRightIcon size={14} /></div>
-              </div>
-              <div className="fin-kpi-val">{fmt(profit.operatingExpensesMinor)}</div>
-              <span className="fin-kpi-sub">Branch petty & overheads</span>
-            </div>
+                <div className="fin-kpi-card amber">
+                  <div className="fin-kpi-top">
+                    <span className="fin-kpi-label">Discounts Given</span>
+                    <div className="fin-kpi-icon"><TagIcon size={14} /></div>
+                  </div>
+                  <div className="fin-kpi-val">{fmt(sales.totalDiscountsMinor)}</div>
+                  <span className="fin-kpi-sub">Bill & item discounts applied</span>
+                </div>
 
-            {/* 6. Operating Profit */}
-            <div className="fin-kpi-card green">
-              <div className="fin-kpi-top">
-                <span className="fin-kpi-label">Operating Profit</span>
-                <div className="fin-kpi-icon"><RupeeIcon size={14} /></div>
-              </div>
-              <div className="fin-kpi-val" style={{ color: profit.netProfitMinor >= 0 ? '#15803d' : '#b91c1c' }}>
-                {fmt(profit.netProfitMinor)}
-              </div>
-              <span className="fin-kpi-sub">{operatingMarginPct.toFixed(1)}% Net Margin</span>
-            </div>
+                <div className="fin-kpi-card green">
+                  <div className="fin-kpi-top">
+                    <span className="fin-kpi-label">GST Collected</span>
+                    <div className="fin-kpi-icon"><RupeeIcon size={14} /></div>
+                  </div>
+                  <div className="fin-kpi-val" style={{ color: '#15803d' }}>{fmt(sales.gstCollectedMinor)}</div>
+                  <span className="fin-kpi-sub">CGST + SGST + IGST</span>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* 4. Gross Profit */}
+                <div className="fin-kpi-card purple">
+                  <div className="fin-kpi-top">
+                    <span className="fin-kpi-label">Gross Profit</span>
+                    <div className="fin-kpi-icon"><TrendingUpIcon size={14} /></div>
+                  </div>
+                  <div className="fin-kpi-val" style={{ color: '#7e22ce' }}>{fmt(profit.grossProfitMinor)}</div>
+                  <span className="fin-kpi-sub">{marginPct.toFixed(1)}% Gross Margin</span>
+                </div>
+
+                {/* 5. Operating Expenses */}
+                <div className="fin-kpi-card amber">
+                  <div className="fin-kpi-top">
+                    <span className="fin-kpi-label">Operating Expenses</span>
+                    <div className="fin-kpi-icon"><ArrowUpRightIcon size={14} /></div>
+                  </div>
+                  <div className="fin-kpi-val">{fmt(profit.operatingExpensesMinor)}</div>
+                  <span className="fin-kpi-sub">Branch petty & overheads</span>
+                </div>
+
+                {/* 6. Operating Profit */}
+                <div className="fin-kpi-card green">
+                  <div className="fin-kpi-top">
+                    <span className="fin-kpi-label">Operating Profit</span>
+                    <div className="fin-kpi-icon"><RupeeIcon size={14} /></div>
+                  </div>
+                  <div className="fin-kpi-val" style={{ color: profit.netProfitMinor >= 0 ? '#15803d' : '#b91c1c' }}>
+                    {fmt(profit.netProfitMinor)}
+                  </div>
+                  <span className="fin-kpi-sub">{operatingMarginPct.toFixed(1)}% Net Margin</span>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Quick KPI Strip */}
@@ -1005,7 +1131,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                     <form onSubmit={handleSubmitClosing} style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
                       <div className="cash-rec-input-group">
                         <label className="cash-rec-input-label">
-                          Actual Physical Cash Counted (₹) *
+                          Enter the actual cash counted (₹) *
                         </label>
                         <div className="cash-rec-input-wrapper">
                           <span className="cash-rec-input-prefix">₹</span>
@@ -1031,10 +1157,10 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                       }`}>
                         <span>
                           {cashDifferenceMinor === 0
-                            ? 'Drawer Balanced (Exact Match)'
+                            ? 'Cash Matched'
                             : cashDifferenceMinor > 0
-                            ? 'Cash Excess / Surplus'
-                            : 'Cash Shortage / Deficit'}
+                            ? 'Cash Excess'
+                            : 'Cash Shortage'}
                         </span>
                         <span>
                           {cashDifferenceMinor >= 0 ? '+' : ''}{fmt(cashDifferenceMinor)}
@@ -1049,7 +1175,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                           rows={2}
                           value={closingRemarks}
                           onChange={(e) => setClosingRemarks(e.target.value)}
-                          placeholder="e.g. Counted by head cashier, minor coin variation"
+                          placeholder="e.g. Counted by cashier, minor coin variation"
                           className="cash-rec-remarks-input"
                           required={Math.abs(cashDifferenceMinor) > 0}
                         />
@@ -1065,8 +1191,6 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                           ? 'Submitting Closing...'
                           : closingStatus === 'reopened'
                           ? 'Submit & Re-Seal Day Closing'
-                          : selectedCashierId || isCashierUser
-                          ? 'Submit Cashier Register Closing'
                           : 'Submit Day Closing'}
                       </button>
                     </form>
@@ -1079,9 +1203,12 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.825rem' }}>
                         <span style={{ color: '#64748b' }}>Cash Discrepancy:</span>
-                        <strong style={{ color: (closedRecord?.variance_minor || 0) < 0 ? '#b91c1c' : '#15803d' }}>
-                          {(closedRecord?.variance_minor || 0) >= 0 ? '+' : ''}
-                          {fmt(closedRecord?.variance_minor || 0)}
+                        <strong style={{ color: (closedRecord?.variance_minor || 0) < 0 ? '#b91c1c' : (closedRecord?.variance_minor || 0) > 0 ? '#1d4ed8' : '#15803d' }}>
+                          {(closedRecord?.variance_minor || 0) === 0
+                            ? 'Cash Matched'
+                            : (closedRecord?.variance_minor || 0) < 0
+                            ? `Cash Shortage (${fmt(closedRecord?.variance_minor || 0)})`
+                            : `Cash Excess (+${fmt(closedRecord?.variance_minor || 0)})`}
                         </strong>
                       </div>
                       {closedRecord?.remarks && (
@@ -1090,16 +1217,44 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                         </div>
                       )}
 
+                      {closingStatus === 'submitted' && (
+                        <div style={{
+                          marginTop: '0.5rem',
+                          padding: '0.65rem 0.85rem',
+                          background: '#fffbeb',
+                          border: '1px solid #fde68a',
+                          borderRadius: '8px',
+                          fontSize: '0.775rem',
+                          color: '#92400e',
+                          fontWeight: 600
+                        }}>
+                          {isCashierUser
+                            ? 'Your Day Closing is submitted. Modification is locked awaiting Management review.'
+                            : 'Submitted by cashier. Review and approve or reject below.'}
+                        </div>
+                      )}
+
                       {closingStatus === 'submitted' && isManagerOrOwner && (
-                        <button
-                          onClick={() => handleApproveClosing(closedRecord.id)}
-                          disabled={actionLoading}
-                          className="btn-approve"
-                          style={{ marginTop: '0.5rem', width: '100%', justifyContent: 'center' }}
-                        >
-                          <CheckCircle2Icon size={15} />
-                          Approve & Seal Day Closing
-                        </button>
+                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                          <button
+                            onClick={() => handleApproveClosing(closedRecord.id)}
+                            disabled={actionLoading}
+                            className="btn-approve"
+                            style={{ flex: 1, justifyContent: 'center' }}
+                          >
+                            <CheckCircle2Icon size={15} />
+                            Approve
+                          </button>
+                          <button
+                            onClick={() => handleOpenRejectModal(closedRecord.id)}
+                            disabled={actionLoading}
+                            className="btn-reject"
+                            style={{ flex: 1, justifyContent: 'center' }}
+                          >
+                            <RotateCcwIcon size={15} />
+                            Reject
+                          </button>
+                        </div>
                       )}
                     </div>
                   )}
@@ -1600,6 +1755,26 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                 />
               </div>
 
+              {isManager && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#334155' }}>
+                    Manager Authorization PIN / Password *
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    value={reopenPin}
+                    onChange={(e) => setReopenPin(e.target.value)}
+                    placeholder="Enter security PIN or account password"
+                    className="day-closing-input"
+                    style={{ width: '100%' }}
+                  />
+                  <span style={{ fontSize: '0.725rem', color: '#64748b' }}>
+                    Authorized permission with secure PIN verification is required for managers.
+                  </span>
+                </div>
+              )}
+
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
                 <button
                   type="button"
@@ -1611,10 +1786,70 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
 
                 <button
                   type="submit"
-                  disabled={reopening || reopenReason.trim().length < 5}
+                  disabled={reopening || reopenReason.trim().length < 5 || (isManager && !reopenPin.trim())}
                   className="btn-reopen"
                 >
                   {reopening ? 'Reopening...' : 'Confirm & Reopen Day'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* --------------------------------------------------------------------
+          REJECT / RECOUNT MODAL DIALOG
+          -------------------------------------------------------------------- */}
+      {isRejectModalOpen && (
+        <div className="day-closing-modal-backdrop" onClick={() => setIsRejectModalOpen(false)}>
+          <div className="day-closing-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="day-closing-modal-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <RotateCcwIcon size={20} style={{ color: '#dc2626' }} />
+                <span className="day-closing-modal-title">Reject Day Closing & Request Recount</span>
+              </div>
+              <button
+                onClick={() => setIsRejectModalOpen(false)}
+                style={{ background: 'none', border: 'none', fontSize: '1.25rem', cursor: 'pointer', color: '#94a3b8' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleConfirmReject} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <p style={{ margin: 0, fontSize: '0.825rem', color: '#475569', lineHeight: 1.5 }}>
+                Rejecting this closing submission returns the register to the Cashier for physical recount and adjustment. Please state the reason clearly.
+              </p>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#334155' }}>
+                  Rejection & Recount Reason *
+                </label>
+                <textarea
+                  rows={3}
+                  required
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  placeholder="e.g. Unexplained cash shortage of ₹200. Please recheck coin tray and physical drawer."
+                  className="cash-rec-remarks-input"
+                />
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setIsRejectModalOpen(false)}
+                  className="day-closing-refresh-btn"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={rejecting || rejectReason.trim().length < 5}
+                  className="btn-reject"
+                >
+                  {rejecting ? 'Rejecting...' : 'Reject & Return to Cashier'}
                 </button>
               </div>
             </form>

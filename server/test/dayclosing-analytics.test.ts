@@ -340,3 +340,58 @@ test('Day Closing & Analytics: 10. CSV export endpoints produce Excel-compatible
     assert.equal(singleCsv.status, 200);
   }
 });
+
+test('Day Closing & Analytics: 11. Manager/Owner rejects day closing with reason and returns to Cashier', async () => {
+  const today = new Date().toISOString().slice(0, 10);
+
+  // Submit as cashier first
+  const subRes = await api('POST', '/api/day-closing/submit', {
+    branchId,
+    bdate: today,
+    actualCashMinor: 24000,
+    remarks: 'Cash drawer count',
+  }, cashierToken);
+  assert.equal(subRes.status, 200);
+
+  const prevRes = await api('GET', `/api/day-closing/preview?branchId=${branchId}&bdate=${today}`, undefined, ownerToken);
+  const closingId = prevRes.body.closedRecord?.id;
+  assert.ok(closingId);
+
+  // Cashier cannot reject
+  const cashRej = await api('POST', `/api/day-closing/${closingId}/reject`, { reason: 'Incorrect coin count' }, cashierToken);
+  assert.equal(cashRej.status, 403);
+
+  // Manager/Owner rejects with reason
+  const rejRes = await api('POST', `/api/day-closing/${closingId}/reject`, { reason: 'Variance detected. Please recount physical drawer.' }, ownerToken);
+  assert.equal(rejRes.status, 200);
+  assert.ok(rejRes.body.success);
+
+  // Status is now open so cashier can recount and submit
+  const afterPrev = await api('GET', `/api/day-closing/preview?branchId=${branchId}&bdate=${today}`, undefined, cashierToken);
+  assert.equal(afterPrev.body.status, 'open');
+  assert.ok(afterPrev.body.closedRecord?.remarks?.includes('Variance detected'));
+});
+
+test('Day Closing & Analytics: 12. Cashier cannot submit duplicate closing while already submitted', async () => {
+  const today = new Date().toISOString().slice(0, 10);
+
+  // Cashier submits
+  const subRes = await api('POST', '/api/day-closing/submit', {
+    branchId,
+    bdate: today,
+    actualCashMinor: 24000,
+    remarks: 'Cash drawer recount submitted',
+  }, cashierToken);
+  assert.equal(subRes.status, 200);
+  assert.equal(subRes.body.dayClosing?.status, 'submitted');
+
+  // Cashier attempts to submit again before management approval
+  const dupSub = await api('POST', '/api/day-closing/submit', {
+    branchId,
+    bdate: today,
+    actualCashMinor: 25000,
+    remarks: 'Altered cash count',
+  }, cashierToken);
+  assert.equal(dupSub.status, 400);
+  assert.equal(dupSub.body?.error?.code, 'ALREADY_SUBMITTED');
+});

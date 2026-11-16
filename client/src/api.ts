@@ -2589,10 +2589,16 @@ export const approveDayClosing = (closingId: string) =>
     method: 'POST',
   });
 
-export const reopenDayClosing = (closingId: string, reason: string) =>
-  api<{ success: boolean; dayClosing: any }>(`/api/day-closing/${closingId}/reopen`, {
+export const rejectDayClosing = (closingId: string, reason: string) =>
+  api<{ success: boolean; message: string; dayClosing?: any }>(`/api/day-closing/${closingId}/reject`, {
     method: 'POST',
     body: JSON.stringify({ reason }),
+  });
+
+export const reopenDayClosing = (closingId: string, reason: string, pin?: string) =>
+  api<{ success: boolean; dayClosing: any }>(`/api/day-closing/${closingId}/reopen`, {
+    method: 'POST',
+    body: JSON.stringify({ reason, pin }),
   });
 
 export const fetchDayClosingComparison = (params: { branchId?: string; date?: string } = {}) => {

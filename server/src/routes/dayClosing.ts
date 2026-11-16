@@ -1,6 +1,6 @@
 import { requirePerm, requireUser } from '../auth.ts';
 import { bad, notFound, forbidden, HtmlResponse, FileResponse, V, type Router } from '../http.ts';
-import { newId } from '../security.ts';
+import { newId, verifyPassword } from '../security.ts';
 import { j } from '../db/index.ts';
 import { audit } from '../audit.ts';
 import { fmtMoney } from '../../../shared/money.ts';
@@ -26,7 +26,11 @@ export function registerDayClosing(r: Router) {
     const bdate = String(ctx.query.bdate || todayStr).trim();
     const branchId = (!scope.isSuperAdminAll && scope.branchId) ? scope.branchId : String(ctx.query.branchId || 'MAIN').trim();
     const shiftId = ctx.query.shiftId ? String(ctx.query.shiftId).trim() : null;
-    const cashierId = ctx.query.cashierId ? String(ctx.query.cashierId).trim() : null;
+    const userRole = String(ctx.user!.role || '').toUpperCase();
+    const isCashier = userRole === 'CASHIER';
+    const cashierId = isCashier
+      ? ctx.user!.id
+      : (ctx.query.cashierId ? String(ctx.query.cashierId).trim() : null);
 
     // Optional shift and cashier SQL filter fragments
     const shiftClause = shiftId ? ' AND i.shift_id = ?' : '';
@@ -482,8 +486,10 @@ export function registerDayClosing(r: Router) {
     const shiftId = b.shiftId ? String(b.shiftId).trim() : null;
     const actualCashMinor = V.int(b.actualCashMinor, 'Actual closing cash', { min: 0 });
     const remarks = V.optStr(b.remarks, 'Closing remarks', 500);
-    const isOwnerOrManager = ['OWNER', 'SUPER_ADMIN', 'STORE_MANAGER', 'MANAGER'].includes(String(ctx.user!.role || '').toUpperCase());
-    const targetStatus = b.status || (isOwnerOrManager ? 'approved' : 'submitted');
+    const userRole = String(ctx.user!.role || '').toUpperCase();
+    const isOwnerOrManager = ['OWNER', 'SUPER_ADMIN', 'STORE_MANAGER', 'MANAGER'].includes(userRole);
+    const isCashier = userRole === 'CASHIER';
+    const targetStatus = isCashier ? 'submitted' : (b.status || (isOwnerOrManager ? 'approved' : 'submitted'));
     const isAutoApprove = targetStatus === 'approved' || targetStatus === 'closed';
 
     let savedRecord: any = null;
@@ -496,6 +502,9 @@ export function registerDayClosing(r: Router) {
       );
       if (existing && (existing.status === 'closed' || existing.status === 'approved')) {
         throw bad(`Day ${bdate} is already approved and closed for this branch. Reopening is required to modify.`, 'ALREADY_CLOSED');
+      }
+      if (existing && existing.status === 'submitted' && !isOwnerOrManager) {
+        throw bad('Day Closing has already been submitted and is awaiting Management approval.', 'ALREADY_SUBMITTED');
       }
 
       // Re-aggregate authoritative figures inside transaction
@@ -816,17 +825,101 @@ export function registerDayClosing(r: Router) {
   });
 
   // --------------------------------------------------------------------------
-  // 4. Reopen Day Closing (Owner authorization with mandatory reason)
+  // 3b. Reject Day Closing (Manager / Owner rejection - returns to Cashier for recount)
+  // --------------------------------------------------------------------------
+  r.post('/api/day-closing/:id/reject', requireUser, async (ctx) => {
+    const tenantId = ctx.user!.tenantId;
+    const id = ctx.params.id;
+    const roleUpper = String(ctx.user!.role || '').toUpperCase();
+    if (roleUpper !== 'OWNER' && roleUpper !== 'SUPER_ADMIN' && roleUpper !== 'MANAGER' && roleUpper !== 'STORE_MANAGER') {
+      throw forbidden('Only managers and owners can reject day closings');
+    }
+
+    const reason = V.str(ctx.body?.reason, 'Rejection reason', { min: 5, max: 500, required: true });
+
+    const dc = await ctx.db.one<any>(
+      `SELECT * FROM day_closings WHERE tenant_id = ? AND id = ?`,
+      [tenantId, id],
+    );
+    if (!dc) throw notFound('Day closing record');
+
+    if (dc.status === 'approved' || dc.status === 'closed') {
+      throw bad('Cannot reject an already approved day closing. Reopening is required first.', 'ALREADY_APPROVED');
+    }
+
+    const dcBranchId = dc.branch_id ?? dc.branchId;
+    const dcBdate = dc.bdate;
+
+    await ctx.db.tx(async (q) => {
+      await q.exec(
+        `UPDATE day_closings
+         SET status = 'open',
+             remarks = ?,
+             reopened_by = NULL,
+             reopened_at = NULL,
+             reopen_reason = NULL
+         WHERE id = ? AND tenant_id = ?`,
+        [`[Returned for Recount by ${ctx.user!.name}]: ${reason}`, id, tenantId],
+      );
+
+      // Invoices remain open for cashier adjustments
+      await q.exec(
+        `UPDATE invoices SET is_day_closed = FALSE WHERE tenant_id = ? AND branch_id = ? AND bdate = ?`,
+        [tenantId, dcBranchId, dcBdate],
+      );
+
+      await audit(q, ctx, {
+        action: 'day_closing.reject',
+        entity: 'day_closing',
+        entityId: id,
+        detail: { bdate: dcBdate, branchId: dcBranchId, rejectedBy: ctx.user!.id, reason },
+      });
+    });
+
+    return {
+      success: true,
+      dayClosing: { ...dc, status: 'open', remarks: `[Returned for Recount by ${ctx.user!.name}]: ${reason}` },
+      message: `Day closing returned to Cashier for recount: ${reason}`,
+    };
+  });
+
+  // --------------------------------------------------------------------------
+  // 4. Reopen Day Closing (Owner authorization / Manager PIN verification)
   // --------------------------------------------------------------------------
   r.post('/api/day-closing/:id/reopen', requireUser, async (ctx) => {
     const tenantId = ctx.user!.tenantId;
     const id = ctx.params.id;
     const roleUpper = String(ctx.user!.role || '').toUpperCase();
-    if (roleUpper !== 'OWNER' && roleUpper !== 'SUPER_ADMIN') {
-      throw forbidden('Only business owners can reopen a closed business day');
+    const isOwner = roleUpper === 'OWNER' || roleUpper === 'SUPER_ADMIN';
+    const isManager = roleUpper === 'MANAGER' || roleUpper === 'STORE_MANAGER';
+    if (!isOwner && !isManager) {
+      throw forbidden('Only business owners or authorized managers can reopen a closed business day');
     }
 
     const reason = V.str(ctx.body?.reason, 'Reopening reason', { min: 5, max: 500, required: true });
+    const pin = ctx.body?.pin ? String(ctx.body.pin).trim() : '';
+
+    if (isManager) {
+      if (!pin) {
+        throw bad('Secure PIN or Manager password is required to reopen a closed day', 'PIN_REQUIRED');
+      }
+      const currentUserRecord = await ctx.db.one<any>('SELECT password_hash FROM users WHERE id = ? AND tenant_id = ?', [ctx.user!.id, tenantId]);
+      let isVerified = false;
+      if (currentUserRecord?.password_hash && verifyPassword(pin, currentUserRecord.password_hash)) {
+        isVerified = true;
+      } else {
+        const owners = await ctx.db.query<any>("SELECT password_hash FROM users WHERE tenant_id = ? AND role IN ('owner', 'super_admin') AND active = true", [tenantId]);
+        for (const o of owners) {
+          if (o.password_hash && verifyPassword(pin, o.password_hash)) {
+            isVerified = true;
+            break;
+          }
+        }
+      }
+      if (!isVerified) {
+        throw bad('Invalid security PIN or password authorization', 'INVALID_PIN');
+      }
+    }
 
     const dc = await ctx.db.one<any>(
       `SELECT * FROM day_closings WHERE tenant_id = ? AND id = ?`,
