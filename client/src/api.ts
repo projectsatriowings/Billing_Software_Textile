@@ -2566,6 +2566,8 @@ export const submitDayClosing = (data: {
   date?: string;
   branchId?: string;
   shiftId?: string;
+  cashierId?: string;
+  status?: string;
   actualCashMinor?: number;
   actualClosingCashMinor?: number;
   remarks?: string;
@@ -2578,6 +2580,8 @@ export const submitDayClosing = (data: {
       bdate: data.bdate || data.date,
       branchId: data.branchId,
       shiftId: data.shiftId,
+      cashierId: data.cashierId,
+      status: data.status,
       actualCashMinor: data.actualCashMinor ?? data.actualClosingCashMinor,
       remarks: data.remarks || data.closingRemarks,
       tenderReconciliation: data.tenderReconciliation,

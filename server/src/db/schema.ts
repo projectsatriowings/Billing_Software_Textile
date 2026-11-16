@@ -1889,4 +1889,11 @@ export const MIGRATIONS: Migration[] = [
       `CREATE INDEX IF NOT EXISTS idx_day_closing_adj_tenant ON day_closing_adjustments (tenant_id, day_closing_id)`,
     ],
   },
+  {
+    version: 68,
+    statements: [
+      `ALTER TABLE day_closings ADD COLUMN IF NOT EXISTS cashier_id TEXT REFERENCES users(id)`,
+      `CREATE INDEX IF NOT EXISTS idx_day_closings_cashier ON day_closings (tenant_id, branch_id, bdate, cashier_id)`,
+    ],
+  },
 ];

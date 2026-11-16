@@ -120,10 +120,17 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
 
   const activeBranchId = selectedBranchId || selectedBranch || 'MAIN';
   const userRole = String(user.role || '').toUpperCase();
-  const isCashierUser = userRole === 'CASHIER';
+  const isCashierUser = userRole === 'CASHIER' || userRole === 'COUNTER';
   const isManagerOrOwner = ['OWNER', 'SUPER_ADMIN', 'STORE_MANAGER', 'MANAGER'].includes(userRole);
   const isOwner = ['OWNER', 'SUPER_ADMIN'].includes(userRole);
   const isManager = userRole === 'MANAGER' || userRole === 'STORE_MANAGER';
+
+  // Synchronize branch selection when parent props change
+  useEffect(() => {
+    if (selectedBranch && selectedBranch !== selectedBranchId) {
+      setSelectedBranchId(selectedBranch);
+    }
+  }, [selectedBranch]);
 
   useEffect(() => {
     if (isCashierUser && activeTab !== 'closing') {
@@ -157,12 +164,13 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
       setPreview(res);
       const expected = res.cashReconciliation?.expectedClosingCashMinor ?? 0;
       if (res.status === 'open' || res.status === 'reopened') {
-        if (!actualCashStr) {
-          setActualCashStr(((expected || 0) / 100).toFixed(2));
-        }
+        setActualCashStr(((expected || 0) / 100).toFixed(2));
+        setClosingRemarks(res.closedRecord?.remarks || '');
       } else if (res.closedRecord?.actual_cash_minor != null) {
         setActualCashStr((res.closedRecord.actual_cash_minor / 100).toFixed(2));
         setClosingRemarks(res.closedRecord.remarks || '');
+      } else {
+        setActualCashStr(((expected || 0) / 100).toFixed(2));
       }
     } catch (err: any) {
       setError(err.message || 'Failed to fetch day closing preview');
@@ -307,6 +315,8 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
         branchId: activeBranchId,
         date: preview.bdate || selectedDate,
         shiftId: selectedShiftId || undefined,
+        cashierId: selectedCashierId || undefined,
+        status: isCashierUser ? 'submitted' : undefined,
         actualCashMinor,
         remarks: closingRemarks.trim(),
       });
@@ -399,7 +409,9 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
   };
 
   const handlePrint = (closingId: string) => {
-    window.open(withAuthToken(`/api/day-closing/${closingId}/print`), '_blank', 'width=950,height=800');
+    const tid = shop?.id || preview?.closedRecord?.tenant_id || preview?.closedRecord?.tenantId || '';
+    const query = tid ? `?tenantId=${encodeURIComponent(tid)}` : '';
+    window.open(withAuthToken(`/api/day-closing/${closingId}/print${query}`), '_blank', 'width=950,height=800');
   };
 
   const handleExportCsv = (closingId?: string) => {
@@ -646,7 +658,11 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                   <UserIcon size={14} style={{ color: '#0284c7' }} />
                   <select
                     value={selectedCashierId}
-                    onChange={(e) => setSelectedCashierId(e.target.value)}
+                    onChange={(e) => {
+                      setSelectedCashierId(e.target.value);
+                      setActualCashStr('');
+                      setClosingRemarks('');
+                    }}
                     className="day-closing-select"
                     title="Filter by individual Cashier / Counter register"
                   >
