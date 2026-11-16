@@ -138,10 +138,10 @@ export function parseShopFields(body: any, cur: ShopFields = SHOP_DEFAULTS): Sho
   }
 
   // Keep wholesaleBusinessName and invoiceProfiles.wholesale.displayName synchronized
-  if (out.wholesaleBusinessName && !body.invoiceProfiles?.wholesale?.displayName) {
-    out.invoiceProfiles.wholesale.displayName = out.wholesaleBusinessName;
-  } else if (out.invoiceProfiles.wholesale.displayName && !out.wholesaleBusinessName) {
-    out.wholesaleBusinessName = out.invoiceProfiles.wholesale.displayName;
+  if (has(body, 'wholesaleBusinessName') || has(body, 'wholesale_business_name')) {
+    out.invoiceProfiles.wholesale.displayName = out.wholesaleBusinessName || '';
+  } else if (has(body, 'invoiceProfiles')) {
+    out.wholesaleBusinessName = out.invoiceProfiles.wholesale.displayName || null;
   }
 
   if (has(body, 'logoUrl')) {

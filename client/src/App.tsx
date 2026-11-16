@@ -49,6 +49,8 @@ import {
   getActiveBranchScope,
   setActiveBranchScope,
   selectActiveShiftCounter,
+  downloadInvoicePdf,
+  triggerBlobDownload,
 } from './api';
 import { BranchProvider } from './contexts/BranchContext';
 import { moneyInWords } from '../../shared/money.ts';
@@ -143,6 +145,7 @@ import { BranchSelector } from './components/common/BranchSelector';
 import { StoreManagerDashboard } from './components/dashboards/StoreManagerDashboard';
 import { fileToOptimizedDataUrl, resolveDriveImageUrl, isGoogleDriveUrl, handleProductImageError } from './imageUtils';
 import { BulkImportModal } from './components/BulkImportModal';
+import { SupplierInvoiceConverterModal } from './components/supplierInvoice/SupplierInvoiceConverterModal';
 import { WholesaleBillingView } from './components/wholesale/WholesaleBillingView';
 import { WHOLESALE_BILLING_ICON } from './components/wholesale/wholesaleIconData';
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
@@ -250,9 +253,11 @@ export const PAGE_TITLES: Record<string, string> = {
   '/payables': 'Accounts & Finance',
   '/receivables': 'Accounts & Finance',
   '/reports': 'Accounts & Finance',
+  '/wholesale': 'Wholesale Billing & B2B Tax Invoices',
 };
 
 export const TAB_PAGE_TITLES: Record<string, string> = {
+  'wholesale': 'Wholesale Billing & B2B Tax Invoices',
   'shifts': 'Cashier Shifts & Day-End Closing',
   'inventory': 'Inventory Hub',
   'items': 'Product Catalogue',
@@ -1235,6 +1240,7 @@ export function App() {
 
   // Settings tab form state
   const [settingsName, setSettingsName] = useState('');
+  const [settingsWholesaleBusinessName, setSettingsWholesaleBusinessName] = useState('');
   const [settingsType, setSettingsType] = useState('retail');
   const [settingsGstin, setSettingsGstin] = useState('');
   const [settingsPhone, setSettingsPhone] = useState('');
@@ -1407,6 +1413,7 @@ export function App() {
   // Master Data: Item Form Modal (Add & Edit)
   const [showItemModal, setShowItemModal] = useState(false);
   const [showBulkImportModal, setShowBulkImportModal] = useState(false);
+  const [showSupplierInvoiceConverter, setShowSupplierInvoiceConverter] = useState(false);
   const [editingItem, setEditingItem] = useState<Item | null>(null);
   const [deletingItem, setDeletingItem] = useState<Item | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -1827,6 +1834,7 @@ export function App() {
 
   const initSettingsForm = (s: Shop) => {
     setSettingsName(s.name || '');
+    setSettingsWholesaleBusinessName(s.wholesaleBusinessName || (s as any).wholesale_business_name || (s.invoiceProfiles?.wholesale?.displayName) || '');
     setSettingsType(s.businessType || 'retail');
     setSettingsGstin(s.gstin || '');
     setSettingsPhone(s.phone || '');
@@ -2805,6 +2813,7 @@ export function App() {
         method: 'PUT',
         body: JSON.stringify({
           name: settingsName,
+          wholesaleBusinessName: settingsWholesaleBusinessName.trim() || null,
           businessType: settingsType,
           gstin: settingsGstin || null,
           phone: settingsPhone || null,
@@ -2840,6 +2849,7 @@ export function App() {
         method: 'PUT',
         body: JSON.stringify({
           name: settingsName,
+          wholesaleBusinessName: settingsWholesaleBusinessName.trim() || null,
           businessType: settingsType,
           gstin: settingsGstin || null,
           phone: settingsPhone || null,
@@ -2876,6 +2886,7 @@ export function App() {
         method: 'PUT',
         body: JSON.stringify({
           name: settingsName,
+          wholesaleBusinessName: settingsWholesaleBusinessName.trim() || null,
           businessType: settingsType,
           gstin: settingsGstin || null,
           phone: settingsPhone || null,
@@ -3827,8 +3838,8 @@ export function App() {
       showToast('No past bills available to reprint');
       return;
     }
-    const lastInvoice = invoices[0];
-    setPrintModalInvoiceId(lastInvoice.id);
+    const lastRetail = invoices.find(inv => (inv.invoiceType || (inv as any).invoice_type) !== 'wholesale') || invoices[0];
+    setPrintModalInvoiceId(lastRetail.id);
   };
 
   const handleAddCustomItem = (e: React.FormEvent) => {
@@ -4477,6 +4488,7 @@ export function App() {
         method: 'POST',
         body: JSON.stringify({
           lines,
+          invoiceType: 'retail',
           location: user?.assignedLocation || currentBranchCode || undefined,
           counter: selectedCounter,
           counterId: checkoutCounterId || selectedCounterId || undefined,
@@ -7715,37 +7727,18 @@ export function App() {
                   <span className="stock-transfer-title-short">Stock Transfer</span>
                 </h1>
               </div>
+            ) : displayTab === 'wholesale' || activeTab === 'wholesale' ? (
+              <div className="top-wholesale-header-left">
+                <h1 className="top-wholesale-title" title="Wholesale Billing & B2B Tax Invoices">
+                  Wholesale Billing &amp; B2B Tax Invoices
+                </h1>
+              </div>
             ) : currentHeaderTitle ? (
               <h1 className="top-header-title" title={currentHeaderTitle}>
                 {currentHeaderTitle}
               </h1>
             ) : displayTab === 'dashboard' && user ? (
               <div className="top-dash-greeting-group-left" style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                {shop?.logoUrl && (
-                  <div
-                    style={{
-                      width: '46px',
-                      height: '46px',
-                      borderRadius: '12px',
-                      background: '#ffffff',
-                      border: '1px solid #e2e8f0',
-                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      padding: '3px',
-                      overflow: 'hidden',
-                      flexShrink: 0,
-                    }}
-                    title={shop.name}
-                  >
-                    <img
-                      src={shop.logoUrl}
-                      alt={shop.name}
-                      style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
-                    />
-                  </div>
-                )}
                 <div>
                   <h1 className="header-greeting-title">
                     {dashboardGreeting}, {userFirstName}
@@ -8129,12 +8122,11 @@ export function App() {
 
           {/* View Transition Stage (SPA Bento Transition) */}
           <div key={displayTab} className={`app-view-stage ${hideBusinessBar ? 'stage-business-bar-hidden' : ''}`}>
-            {/* Other Tab Headers */}
-            {!hideBusinessBar && displayTab !== 'pos' && displayTab !== 'shifts' && displayTab !== 'sales-analysis' && displayTab !== 'dashboard' && displayTab !== 'stock-transfer' && displayTab !== 'user-management' && activeTab !== 'user-management' && (
+            {/* Tab Headers */}
+            {!hideBusinessBar && displayTab !== 'pos' && displayTab !== 'shifts' && displayTab !== 'sales-analysis' && displayTab !== 'dashboard' && displayTab !== 'stock-transfer' && displayTab !== 'wholesale' && activeTab !== 'wholesale' && displayTab !== 'user-management' && activeTab !== 'user-management' && (
               <header className="content-top-header">
                 <div className="content-header-left">
                   <h1 className="content-page-title">
-                    {displayTab === 'wholesale' && 'Wholesale Billing & B2B Tax Invoices'}
                     {displayTab === 'items' && 'Product & Stock Catalog'}
                     {displayTab === 'purchases' && 'Purchases & Stock Inward'}
                     {displayTab === 'invoices' && 'Sales Invoices & Bills'}
@@ -8156,7 +8148,6 @@ export function App() {
                     {displayTab === 'gst-filing-history' && 'GST Returns & Audit Filing History'}
                   </h1>
                   <span className="content-page-subtitle">
-                    {displayTab === 'wholesale' && 'Generate traditional Indian A4 tax invoices, manage bulk orders, and track B2B customer credit'}
                     {displayTab === 'items' && 'Manage your catalog, stock balances, tax rates, and barcodes'}
                     {displayTab === 'purchases' && 'Record supplier invoices, inward goods stock into ledger, and track purchase GST'}
                     {displayTab === 'invoices' && 'View issued invoices, audit trails, and print thermal receipts'}
@@ -8211,7 +8202,8 @@ export function App() {
                   </div>
                 </div>
               </header>
-            )}
+            )
+            }
 
             {/* TAB 0: DASHBOARD (TODAY'S LIVE OVERVIEW) */}
             {displayTab === 'dashboard' && user && user.role !== 'cashier' && (
@@ -11460,6 +11452,28 @@ export function App() {
                         <span>Import Products</span>
                       </button>
                       <button
+                        id="convert-supplier-invoice-btn"
+                        className="btn btn-secondary"
+                        onClick={() => setShowSupplierInvoiceConverter(true)}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.45rem',
+                          fontWeight: 600,
+                          padding: '0.45rem 0.85rem',
+                        }}
+                        title="Convert Supplier Invoice (PDF, JPG, PNG) to Excel import template without AI"
+                      >
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                          <polyline points="14 2 14 8 20 8" />
+                          <line x1="8" y1="13" x2="16" y2="13" />
+                          <line x1="8" y1="17" x2="16" y2="17" />
+                          <polyline points="10 9 9 9 8 9" />
+                        </svg>
+                        <span>Convert Supplier Invoice to Excel</span>
+                      </button>
+                      <button
                         id="scan-manufacturer-barcodes-catalog-btn"
                         className="btn btn-secondary"
                         onClick={() => {
@@ -12702,6 +12716,7 @@ export function App() {
                 }}
                 showToast={showToast}
                 onReloadItems={loadItems}
+                onOpenSupplierInvoiceConverter={() => setShowSupplierInvoiceConverter(true)}
               />
             )}
 
@@ -14159,88 +14174,103 @@ export function App() {
                       </div>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                      <div className="form-group">
-                        <label className="form-label">Store / Enterprise Name</label>
-                        <input
-                          type="text"
-                          className="form-input"
-                          required
-                          value={settingsName}
-                          onChange={(e) => setSettingsName(e.target.value)}
-                        />
+                    <div className="business-profile-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        <div className="form-group">
+                          <label className="form-label">Store / Enterprise Name</label>
+                          <input
+                            type="text"
+                            className="form-input"
+                            required
+                            value={settingsName}
+                            onChange={(e) => setSettingsName(e.target.value)}
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Wholesale Business Name</label>
+                          <input
+                            type="text"
+                            className="form-input"
+                            placeholder="Enter wholesale business name"
+                            value={settingsWholesaleBusinessName}
+                            onChange={(e) => setSettingsWholesaleBusinessName(e.target.value)}
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">GSTIN (15-digit GST Number)</label>
+                          <input
+                            type="text"
+                            className="form-input"
+                            value={settingsGstin}
+                            onChange={(e) => setSettingsGstin(e.target.value)}
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Store Address</label>
+                          <input
+                            type="text"
+                            className="form-input"
+                            value={settingsAddress}
+                            onChange={(e) => setSettingsAddress(e.target.value)}
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">UPI ID for Payment QR (VPA)</label>
+                          <input
+                            type="text"
+                            className="form-input"
+                            value={settingsUpiId}
+                            onChange={(e) => setSettingsUpiId(e.target.value)}
+                          />
+                        </div>
                       </div>
-                      <div className="form-group">
-                        <label className="form-label">Business Type (Switches POS Features)</label>
-                        <select
-                          className="form-input"
-                          value={settingsType}
-                          onChange={(e) => setSettingsType(e.target.value)}
-                        >
-                          <option value="retail">Retail / Kirana / Supermarket</option>
-                          <option value="pharmacy">Pharmacy & Healthcare</option>
-                          <option value="restaurant">Restaurant / Cafe / Bakery</option>
-                          <option value="wholesale">Wholesale & Distribution</option>
-                          <option value="service">Professional & Technical Services</option>
-                          <option value="general">General Business</option>
-                        </select>
-                      </div>
-                      <div className="form-group">
-                        <label className="form-label">GSTIN (15-digit GST Number)</label>
-                        <input
-                          type="text"
-                          className="form-input"
-                          value={settingsGstin}
-                          onChange={(e) => setSettingsGstin(e.target.value)}
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label className="form-label">Phone / WhatsApp Number</label>
-                        <input
-                          type="text"
-                          className="form-input"
-                          value={settingsPhone}
-                          onChange={(e) => setSettingsPhone(e.target.value)}
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label className="form-label">Store Address</label>
-                        <input
-                          type="text"
-                          className="form-input"
-                          value={settingsAddress}
-                          onChange={(e) => setSettingsAddress(e.target.value)}
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label className="form-label">
-                          Owner Email ID <span style={{ color: '#5B3BE8', fontSize: '0.8rem', fontWeight: 500 }}>(Receives critical deletion &amp; security alerts)</span>
-                        </label>
-                        <input
-                          type="email"
-                          className="form-input"
-                          placeholder="owner@supermarket.com"
-                          value={settingsOwnerEmail}
-                          onChange={(e) => setSettingsOwnerEmail(e.target.value)}
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label className="form-label">UPI ID for Payment QR (VPA)</label>
-                        <input
-                          type="text"
-                          className="form-input"
-                          value={settingsUpiId}
-                          onChange={(e) => setSettingsUpiId(e.target.value)}
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label className="form-label">Invoice Number Prefix</label>
-                        <input
-                          type="text"
-                          className="form-input"
-                          value={settingsPrefix}
-                          onChange={(e) => setSettingsPrefix(e.target.value)}
-                        />
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        <div className="form-group">
+                          <label className="form-label">Business Type (Switches POS Features)</label>
+                          <select
+                            className="form-input"
+                            value={settingsType}
+                            onChange={(e) => setSettingsType(e.target.value)}
+                          >
+                            <option value="retail">Retail / Kirana / Supermarket</option>
+                            <option value="pharmacy">Pharmacy & Healthcare</option>
+                            <option value="restaurant">Restaurant / Cafe / Bakery</option>
+                            <option value="wholesale">Wholesale & Distribution</option>
+                            <option value="service">Professional & Technical Services</option>
+                            <option value="general">General Business</option>
+                          </select>
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Phone / WhatsApp Number</label>
+                          <input
+                            type="text"
+                            className="form-input"
+                            value={settingsPhone}
+                            onChange={(e) => setSettingsPhone(e.target.value)}
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">
+                            Owner Email ID <span style={{ color: '#5B3BE8', fontSize: '0.8rem', fontWeight: 500 }}>(Receives critical deletion &amp; security alerts)</span>
+                          </label>
+                          <input
+                            type="email"
+                            className="form-input"
+                            placeholder="owner@supermarket.com"
+                            value={settingsOwnerEmail}
+                            onChange={(e) => setSettingsOwnerEmail(e.target.value)}
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Invoice Number Prefix</label>
+                          <input
+                            type="text"
+                            className="form-input"
+                            value={settingsPrefix}
+                            onChange={(e) => setSettingsPrefix(e.target.value)}
+                          />
+                        </div>
                       </div>
                     </div>
                     <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'flex-end' }}>
@@ -15851,54 +15881,98 @@ export function App() {
         </main>
 
         {/* PRINT RECEIPT MODAL */}
-        {printModalInvoiceId && (
-          <div className="modal-overlay">
-            <div className="modal-content" style={{ maxWidth: '440px', background: '#ffffff', color: '#111827' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem', borderBottom: '1px solid #e5e7eb', alignItems: 'center' }}>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#111827' }}>Invoice Receipt Preview</h3>
-                <button
-                  style={{ background: 'none', border: 'none', fontSize: '1.25rem', cursor: 'pointer', color: '#6b7280' }}
-                  onClick={() => setPrintModalInvoiceId(null)}
-                >
-                  ✕
-                </button>
-              </div>
-              <div style={{ padding: '0.5rem', maxHeight: '520px', overflowY: 'auto' }}>
-                <iframe
-                  src={`/api/invoices/${printModalInvoiceId}/print?paper=thermal80`}
-                  style={{ width: '100%', height: '480px', border: 'none' }}
-                  title="Thermal Receipt"
-                />
-              </div>
-              <div style={{ padding: '0.75rem 1rem', display: 'flex', gap: '0.5rem', borderTop: '1px solid #e5e7eb' }}>
-                <a
-                  href={`/api/invoices/${printModalInvoiceId}/print?paper=thermal80&autoprint=true`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="btn btn-primary"
-                  style={{ flex: 1, textDecoration: 'none', textAlign: 'center' }}
-                >
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><PrinterIcon size={12} /> Thermal</span> Slip
-                </a>
-                <a
-                  href={`/api/invoices/${printModalInvoiceId}/print?paper=a4`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="btn btn-secondary"
-                  style={{ flex: 1, textDecoration: 'none', textAlign: 'center' }}
-                >
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><FileTextIcon size={12} /> A4</span> GST Copy
-                </a>
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => setPrintModalInvoiceId(null)}
-                >
-                  Close
-                </button>
+        {printModalInvoiceId && (() => {
+          const targetInv = invoices.find(i => i.id === printModalInvoiceId);
+          const isTargetWholesale = (targetInv?.invoiceType || (targetInv as any)?.invoice_type) === 'wholesale';
+          return (
+            <div className="modal-overlay">
+              <div
+                className="modal-content"
+                style={{
+                  maxWidth: isTargetWholesale ? '920px' : '440px',
+                  width: '95%',
+                  background: '#ffffff',
+                  color: '#111827',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem', borderBottom: '1px solid #e5e7eb', alignItems: 'center' }}>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#111827' }}>
+                    {isTargetWholesale
+                      ? `Wholesale Tax Invoice: ${targetInv?.number || ''}`
+                      : 'Retail Thermal Receipt Preview'}
+                  </h3>
+                  <button
+                    style={{ background: 'none', border: 'none', fontSize: '1.25rem', cursor: 'pointer', color: '#6b7280' }}
+                    onClick={() => setPrintModalInvoiceId(null)}
+                  >
+                    ✕
+                  </button>
+                </div>
+                <div style={{ padding: '0.5rem', maxHeight: isTargetWholesale ? '75vh' : '520px', overflowY: 'auto' }}>
+                  <iframe
+                    src={
+                      isTargetWholesale
+                        ? `/api/invoices/${printModalInvoiceId}/print?paper=wholesale_a4`
+                        : `/api/invoices/${printModalInvoiceId}/print?paper=thermal80`
+                    }
+                    style={{ width: '100%', height: isTargetWholesale ? '680px' : '480px', border: 'none' }}
+                    title={isTargetWholesale ? 'Wholesale A4 Tax Invoice' : 'Thermal Receipt'}
+                  />
+                </div>
+                <div style={{ padding: '0.75rem 1rem', display: 'flex', gap: '0.5rem', borderTop: '1px solid #e5e7eb' }}>
+                  {isTargetWholesale ? (
+                    <>
+                      <a
+                        href={`/api/invoices/${printModalInvoiceId}/print?paper=wholesale_a4&autoprint=true`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="btn btn-primary"
+                        style={{ flex: 1, textDecoration: 'none', textAlign: 'center' }}
+                      >
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><PrinterIcon size={12} /> Print A4 Invoice</span>
+                      </a>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            const blob = await downloadInvoicePdf(printModalInvoiceId, 'wholesale_a4');
+                            triggerBlobDownload(blob, `Wholesale_Invoice_${printModalInvoiceId}.pdf`);
+                            showToast('Wholesale invoice PDF downloaded successfully', 'success');
+                          } catch (err: any) {
+                            showToast(err.message || 'Failed to download wholesale invoice PDF', 'error');
+                          }
+                        }}
+                        className="btn btn-secondary"
+                        style={{ flex: 1, textDecoration: 'none', textAlign: 'center', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
+                      >
+                        <FileTextIcon size={12} />
+                        <span>Download Invoice</span>
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <a
+                        href={`/api/invoices/${printModalInvoiceId}/print?paper=thermal80&autoprint=true`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="btn btn-primary"
+                        style={{ flex: 1, textDecoration: 'none', textAlign: 'center' }}
+                      >
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><PrinterIcon size={12} /> Print Thermal Receipt</span>
+                      </a>
+                    </>
+                  )}
+                  <button
+                    className="btn btn-secondary"
+                    onClick={() => setPrintModalInvoiceId(null)}
+                  >
+                    Close
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* CASHIER KEYBOARD SHORTCUTS CHEATSHEET MODAL */}
         {showShortcutsModal && (
@@ -16292,11 +16366,28 @@ export function App() {
             shopName={shop?.name}
             suppliers={parties.filter((p) => p.type === 'supplier')}
             onClose={() => setShowBulkImportModal(false)}
+            onOpenSupplierInvoiceConverter={() => {
+              setShowBulkImportModal(false);
+              setShowSupplierInvoiceConverter(true);
+            }}
             onImportDone={() => {
               loadItems();
               loadCategories();
               loadParties();
               showToast('Bulk import completed! Products updated.');
+            }}
+          />
+        )}
+
+        {/* CONVERT SUPPLIER INVOICE TO EXCEL MODAL (NON-AI) */}
+        {showSupplierInvoiceConverter && (
+          <SupplierInvoiceConverterModal
+            suppliers={parties.filter((p) => p.type === 'supplier')}
+            existingItems={items}
+            onClose={() => setShowSupplierInvoiceConverter(false)}
+            onOpenBulkImport={() => {
+              setShowSupplierInvoiceConverter(false);
+              setShowBulkImportModal(true);
             }}
           />
         )}
@@ -20263,23 +20354,19 @@ export function App() {
                         <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
                         <rect x="6" y="14" width="12" height="8"></rect>
                       </svg>
-                      <span>Print Thermal Slip</span>
+                      <span>Print Thermal Receipt</span>
                     </a>
-                    <a
-                      href={`/api/invoices/${checkoutSuccess.invoiceId}/print?paper=a4`}
-                      target="_blank"
-                      rel="noreferrer"
+                    <button
+                      type="button"
                       className="btn btn-secondary checkout-action-btn"
+                      onClick={() => setPrintModalInvoiceId(checkoutSuccess.invoiceId)}
                     >
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                        <polyline points="14 2 14 8 20 8"></polyline>
-                        <line x1="16" y1="13" x2="8" y2="13"></line>
-                        <line x1="16" y1="17" x2="8" y2="17"></line>
-                        <polyline points="10 9 9 9 8 9"></polyline>
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
                       </svg>
-                      <span>View A4 GST PDF</span>
-                    </a>
+                      <span>Preview Receipt</span>
+                    </button>
                   </div>
 
                   {/* Start New Bill */}

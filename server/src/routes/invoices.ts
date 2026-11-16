@@ -1,9 +1,10 @@
 import { requirePerm, requireUser } from '../auth.ts';
-import { bad, notFound, HtmlResponse, V, type Router } from '../http.ts';
+import { bad, notFound, HtmlResponse, FileResponse, V, type Router } from '../http.ts';
 import { newId } from '../security.ts';
 import { j } from '../db/index.ts';
 import { calcBill } from '../../../shared/tax.ts';
 import { renderBillDoc, type PrintableBill } from '../../../shared/bill.ts';
+import { stateName } from '../../../shared/states.ts';
 import { DEFAULT_CONFIG } from '../../../shared/types.ts';
 import { qrSvg, upiUri } from '../../../shared/qr.ts';
 import { normalizePhone } from '../../../shared/whatsapp.ts';
@@ -11,6 +12,7 @@ import { audit } from '../audit.ts';
 import { resolveBranchScope } from '../branchScope.ts';
 import { invalidateTodayDashboardCache } from './dashboard.ts';
 import { sendInvoiceBillSms } from '../services/smsService.ts';
+import { generateInvoicePdf } from '../services/invoicePdfGenerator.ts';
 
 export function registerInvoices(r: Router) {
   // List invoices
@@ -87,6 +89,7 @@ export function registerInvoices(r: Router) {
         location: r.location || 'MAIN',
         counter: r.counter || 'COUNTER-1',
         shareToken: r.shareToken ?? r.share_token,
+        invoiceType: r.invoiceType ?? r.invoice_type ?? 'retail',
       })),
     };
   });
@@ -227,6 +230,7 @@ export function registerInvoices(r: Router) {
         whatsappLastLanguage: inv.whatsappLastLanguage ?? inv.whatsapp_last_language,
         whatsappLastSentBy: inv.whatsappLastSentBy ?? inv.whatsapp_last_sent_by,
         shareToken: inv.shareToken ?? inv.share_token,
+        invoiceType: inv.invoiceType ?? inv.invoice_type ?? 'retail',
         tender: (typeof inv.custom === 'string' ? JSON.parse(inv.custom || '{}') : (inv.custom || {}))?.tender || null,
       },
       lines: lines.map((l: any) => ({
@@ -282,24 +286,66 @@ export function registerInvoices(r: Router) {
     }
     const linesInput = V.arr(b.lines, 'Bill items', { min: 1 });
     const paymentsInput = V.arr(b.payments ?? [], 'Payments');
-    const customerName = V.optStr(b.customerName, 'Customer name', 100);
-    const customerPhone = V.optStr(b.customerPhone, 'Customer phone', 20);
-    let partyId = V.optStr(b.partyId, 'Customer party', 50);
+    let partyId = V.optStr(b.partyId ?? b.party_id ?? b.customerId ?? b.customer_id, 'Customer party', 50);
+    let customerName = V.optStr(b.customerName ?? b.customer_name ?? b.customer?.name, 'Customer name', 100);
+    let customerPhone = V.optStr(b.customerPhone ?? b.customer_phone ?? b.customer?.phone, 'Customer phone', 20);
+    let customerGstin = V.optStr(b.customerGstin ?? b.customer_gstin ?? b.customer?.gstin ?? b.custom?.customerGstin, 'Customer GSTIN', 20);
+    let customerAddress = V.optStr(b.billingAddress ?? b.customer?.address ?? b.custom?.billingAddress, 'Billing address', 500);
+    let customerShippingAddress = V.optStr(b.shippingAddress ?? b.customer?.shippingAddress ?? b.custom?.shippingAddress, 'Shipping address', 500);
+    let customerContactPerson = V.optStr(b.contactPerson ?? b.customer?.contactPerson ?? b.custom?.contactPerson, 'Contact person', 100);
+    let customerStateCode = V.optStr(b.customerStateCode ?? b.customer?.stateCode ?? b.custom?.customerStateCode, 'Customer state code', 10);
+    let customerState = V.optStr(b.customerState ?? b.customer?.stateName ?? b.custom?.customerState, 'Customer state', 100);
     const redeemedPoints = Math.max(0, V.int(b.redeemedPoints ?? 0, 'Redeemed points', { min: 0 }));
     const billDiscountMinor = V.int(b.billDiscountMinor ?? 0, 'Bill discount', { min: 0 });
     const appliedPromotionsInput = Array.isArray(b.appliedPromotions) ? b.appliedPromotions : [];
     const promotionDiscountMinor = V.int(b.promotionDiscountMinor ?? 0, 'Promotion discount', { min: 0 });
 
+    let partyRow: any = null;
+    if (partyId) {
+      partyRow = await ctx.db.one<any>(
+        'SELECT id, name, phone, email, gstin, state_code, address, custom FROM parties WHERE id = ? AND tenant_id = ?',
+        [partyId, tenantId]
+      );
+      if (partyRow) {
+        const partyCustom = (partyRow.custom && typeof partyRow.custom === 'object') ? partyRow.custom : {};
+        if (!customerName) customerName = partyRow.name;
+        if (!customerPhone) customerPhone = partyRow.phone;
+        if (!customerGstin) customerGstin = partyRow.gstin;
+        if (!customerAddress) customerAddress = partyRow.address;
+        if (!customerStateCode) customerStateCode = partyRow.state_code || (partyRow.gstin ? partyRow.gstin.slice(0, 2) : null);
+        if (!customerContactPerson) customerContactPerson = partyCustom.contactPerson || null;
+        if (!customerShippingAddress) customerShippingAddress = partyCustom.shippingAddress || customerAddress;
+      }
+    }
+
     const cleanPhoneDigits = customerPhone ? customerPhone.replace(/\D/g, '').slice(-10) : '';
     if (!partyId && cleanPhoneDigits) {
-      const match = await ctx.db.one<{ id: string }>(
-        `SELECT id FROM parties 
+      const match = await ctx.db.one<any>(
+        `SELECT id, name, phone, email, gstin, state_code, address, custom FROM parties 
          WHERE tenant_id = ? AND branch_id = ? AND type = 'customer' 
            AND (phone = ? OR REPLACE(phone, ' ', '') LIKE ? OR phone LIKE ?) 
          LIMIT 1`,
         [tenantId, invoiceBranchId, customerPhone, `%${cleanPhoneDigits}`, `%${cleanPhoneDigits}`]
       );
-      if (match) partyId = match.id;
+      if (match) {
+        partyId = match.id;
+        partyRow = match;
+        const matchCustom = (match.custom && typeof match.custom === 'object') ? match.custom : {};
+        if (!customerName) customerName = match.name;
+        if (!customerPhone) customerPhone = match.phone;
+        if (!customerGstin) customerGstin = match.gstin;
+        if (!customerAddress) customerAddress = match.address;
+        if (!customerStateCode) customerStateCode = match.state_code || (match.gstin ? match.gstin.slice(0, 2) : null);
+        if (!customerContactPerson) customerContactPerson = matchCustom.contactPerson || null;
+        if (!customerShippingAddress) customerShippingAddress = matchCustom.shippingAddress || customerAddress;
+      }
+    }
+
+    if (!customerStateCode && customerGstin && customerGstin.trim().length >= 2) {
+      customerStateCode = customerGstin.trim().slice(0, 2);
+    }
+    if (!customerState && customerStateCode) {
+      customerState = stateName(customerStateCode);
     }
 
     const tenderInput = b.tender;
@@ -316,6 +362,12 @@ export function registerInvoices(r: Router) {
 
     const shop = await ctx.db.one('SELECT * FROM tenants WHERE id = ?', [tenantId]);
     if (!shop) throw notFound('Shop');
+
+    const shopState = String(shop.stateCode ?? shop.state_code ?? '33');
+    const placeState = customerStateCode || b.placeState || shopState;
+    const isIntra = b.intra !== undefined
+      ? Boolean(b.intra)
+      : (customerStateCode ? customerStateCode === shopState : true);
 
     const formattedLines = linesInput.map((l: any, i: number) => {
       const name = V.str(l.name, `Item ${i + 1} name`, { required: true, max: 120 });
@@ -340,13 +392,12 @@ export function registerInvoices(r: Router) {
         inclusive: l.inclusive,
       })),
       {
-        intraState: b.intra !== undefined ? Boolean(b.intra) : true,
+        intraState: isIntra,
         billDiscountMinor,
         roundTotal: 'rupee',
       },
     );
 
-    const isIntra = b.intra !== undefined ? Boolean(b.intra) : true;
     const invoiceId = newId('inv');
     const shareToken = newId('tok');
     const todayStr = new Date().toISOString().slice(0, 10);
@@ -581,12 +632,12 @@ export function registerInvoices(r: Router) {
         ...(isWholesale ? {
           invoiceType: 'wholesale',
           paymentTerms: b.custom?.paymentTerms || b.paymentTerms || null,
-          customerGstin: b.custom?.customerGstin || b.customerGstin || null,
-          customerState: b.custom?.customerState || b.customerState || null,
-          customerStateCode: b.custom?.customerStateCode || b.customerStateCode || null,
-          billingAddress: b.custom?.billingAddress || b.billingAddress || null,
-          shippingAddress: b.custom?.shippingAddress || b.shippingAddress || b.billingAddress || null,
-          contactPerson: b.custom?.contactPerson || b.contactPerson || null,
+          customerGstin: customerGstin || null,
+          customerState: customerState || null,
+          customerStateCode: customerStateCode || null,
+          billingAddress: customerAddress || null,
+          shippingAddress: customerShippingAddress || customerAddress || null,
+          contactPerson: customerContactPerson || null,
         } : {}),
       };
 
@@ -595,7 +646,7 @@ export function registerInvoices(r: Router) {
       await q.exec(
         `INSERT INTO invoices (
           id, tenant_id, branch_id, client_id, number, kind, status, bdate, party_id,
-          customer_name, customer_phone, party_name, party_phone, place_state, intra,
+          customer_name, customer_phone, customer_gstin, party_name, party_phone, place_state, intra,
           subtotal_minor, discount_minor, taxable_minor, cgst_minor, sgst_minor, igst_minor,
           round_off_minor, rounding_minor, total_minor,
           paid_minor, balance_minor, payment_status, rule_version, calc, share_token, created_by, location, counter, counter_id, counter_name_snapshot, shift_id, custom,
@@ -603,7 +654,7 @@ export function registerInvoices(r: Router) {
           invoice_type, profile_snapshot
         ) VALUES (
           ?, ?, ?, ?, ?, 'sale', 'posted', ?, ?,
-          ?, ?, ?, ?, ?, ?,
+          ?, ?, ?, ?, ?, ?, ?,
           ?, ?, ?, ?, ?, ?,
           ?, ?, ?,
           ?, ?, ?, '1.0', ?::jsonb, ?, ?, ?, ?, ?, ?, ?, ?::jsonb,
@@ -620,9 +671,10 @@ export function registerInvoices(r: Router) {
           partyId || null,
           customerName || null,
           customerPhone || null,
+          customerGstin || null,
           customerName || null,
           customerPhone || null,
-          b.placeState || '33',
+          placeState,
           isIntra,
           calculated.subtotalMinor,
           billDiscountMinor,
@@ -879,6 +931,22 @@ export function registerInvoices(r: Router) {
       totalMinor: calculated.totalMinor,
       paidMinor: totalPaidMinor,
       balanceMinor: Math.max(0, calculated.totalMinor - totalPaidMinor),
+      customerName: customerName || null,
+      customerPhone: customerPhone || null,
+      customerGstin: customerGstin || null,
+      partyId,
+      invoice: {
+        id: invoiceId,
+        invoiceId,
+        number: assignedNumber,
+        totalMinor: calculated.totalMinor,
+        invoiceType: isWholesale ? 'wholesale' : 'retail',
+        shareToken,
+        customerName: customerName || null,
+        customerPhone: customerPhone || null,
+        customerGstin: customerGstin || null,
+        partyId,
+      },
       location,
       counter: resolvedCounterCode,
       counterId: resolvedCounterId,
@@ -887,7 +955,6 @@ export function registerInvoices(r: Router) {
       earnedLoyaltyPoints,
       redeemedLoyaltyPoints: redeemedPoints,
       customerLoyaltyPoints,
-      partyId,
       isNewCustomer,
       sms: smsDispatchResult ? {
         sent: smsDispatchResult.status === 'sent',
@@ -899,15 +966,15 @@ export function registerInvoices(r: Router) {
     };
   });
 
-  // Print Bill (HTML Thermal / A4 receipt)
-  r.get('/api/invoices/:id/print', async (ctx) => {
-    const inv = await ctx.db.one('SELECT * FROM invoices WHERE id = ?', [ctx.params.id]);
+  // Helper: Load full invoice details and construct PrintableBill structure
+  async function loadPrintableInvoice(db: any, invoiceId: string, queryPaper?: string) {
+    const inv = await db.one('SELECT * FROM invoices WHERE id = ?', [invoiceId]);
     if (!inv) throw notFound('Invoice');
 
-    const shop = await ctx.db.one('SELECT * FROM tenants WHERE id = ?', [inv.tenantId ?? inv.tenant_id]);
+    const shop = await db.one('SELECT * FROM tenants WHERE id = ?', [inv.tenantId ?? inv.tenant_id]);
     if (!shop) throw notFound('Shop');
 
-    const lines = await ctx.db.query(
+    const lines = await db.query(
       `SELECT il.*, it.custom AS item_custom
        FROM invoice_lines il
        LEFT JOIN items it ON it.id = il.item_id
@@ -915,11 +982,10 @@ export function registerInvoices(r: Router) {
        ORDER BY il.pos ASC`,
       [inv.id],
     );
-    const payments = await ctx.db.query('SELECT * FROM payments WHERE invoice_id = ? ORDER BY created_at ASC', [inv.id]);
+    const payments = await db.query('SELECT * FROM payments WHERE invoice_id = ? ORDER BY created_at ASC', [inv.id]);
 
-    const isWholesale = (inv.invoice_type === 'wholesale' || inv.invoiceType === 'wholesale' || ctx.query.paper === 'wholesale_a4' || ctx.query.template === 'wholesale_a4');
-    const paper = isWholesale ? 'wholesale_a4' : ((ctx.query.paper === 'a4' || ctx.query.paper === 'thermal58') ? ctx.query.paper : 'thermal80');
-    const autoPrint = ctx.query.autoprint === 'true';
+    const rawType = inv.invoiceType ?? inv.invoice_type;
+    const isWholesale = rawType === 'wholesale';
 
     const custName = inv.customerName ?? inv.customer_name;
     const custPhone = inv.customerPhone ?? inv.customer_phone;
@@ -936,13 +1002,16 @@ export function registerInvoices(r: Router) {
     const wholesaleProfile = (isWholesale && profileSnapshot) ? profileSnapshot : (shopProfiles?.wholesale || {});
     const retailProfile = (!isWholesale && profileSnapshot) ? profileSnapshot : (shopProfiles?.retail || {});
     const activeProfile = isWholesale ? wholesaleProfile : retailProfile;
+    const paper = isWholesale
+      ? 'wholesale_a4'
+      : ((queryPaper === 'thermal58' || retailProfile?.paper === 'thermal58') ? 'thermal58' : 'thermal80');
 
     const customFields: { label: string; value: string }[] = [];
     const pId = inv.partyId ?? inv.party_id;
     let partyRow: any = null;
     if (pId) {
-      partyRow = await ctx.db.one(
-        'SELECT loyalty_points, gstin, address, state_code, custom FROM parties WHERE id = ?',
+      partyRow = await db.one(
+        'SELECT name, phone, email, loyalty_points, gstin, address, state_code, custom FROM parties WHERE id = ?',
         [pId]
       );
       const pts = Number(partyRow?.loyaltyPoints ?? partyRow?.loyalty_points ?? 0);
@@ -955,6 +1024,16 @@ export function registerInvoices(r: Router) {
       customFields.push({ label: 'Counter', value: String(invCounter) });
     }
 
+    const partyCustom = (partyRow?.custom && typeof partyRow.custom === 'object') ? partyRow.custom : {};
+    const finalCustName = (custName || partyRow?.name || customObj?.customerName || '').trim();
+    const finalCustPhone = (custPhone || partyRow?.phone || customObj?.customerPhone || '').trim();
+    const finalCustGstin = (inv.customerGstin || inv.customer_gstin || partyRow?.gstin || customObj?.customerGstin || '').trim().toUpperCase();
+    const finalCustAddress = (customObj?.billingAddress || partyRow?.address || '').trim();
+    const finalCustShipping = (customObj?.shippingAddress || customObj?.billingAddress || partyRow?.address || '').trim();
+    const finalContactPerson = (customObj?.contactPerson || partyCustom?.contactPerson || '').trim();
+    const finalStateCode = (customObj?.customerStateCode || partyRow?.state_code || partyRow?.stateCode || (finalCustGstin ? finalCustGstin.slice(0, 2) : '') || inv.place_state || inv.placeState || '').trim();
+    const finalStateName = (customObj?.customerState || (finalStateCode ? stateName(finalStateCode) : '') || '').trim();
+
     const wholesaleDisplayName = (
       wholesaleProfile?.displayName ||
       shop.wholesaleBusinessName ||
@@ -965,7 +1044,7 @@ export function registerInvoices(r: Router) {
 
     const wholesaleMeta = isWholesale ? {
       invoiceType: 'wholesale' as const,
-      displayName: wholesaleDisplayName || (wholesaleLegalName ? wholesaleLegalName : null),
+      displayName: wholesaleDisplayName || wholesaleLegalName || shop.wholesaleBusinessName || shop.wholesale_business_name || shop.name,
       legalName: wholesaleLegalName || null,
       logoUrl: wholesaleProfile?.logoUrl || null,
       phone: wholesaleProfile?.phone || shop.phone || null,
@@ -973,11 +1052,11 @@ export function registerInvoices(r: Router) {
       gstin: wholesaleProfile?.gstin || shop.gstin || null,
       address: wholesaleProfile?.address || shop.address || null,
       paymentTerms: customObj?.paymentTerms || 'Due on Receipt',
-      billingAddress: customObj?.billingAddress || partyRow?.address || null,
-      shippingAddress: customObj?.shippingAddress || customObj?.billingAddress || partyRow?.address || null,
-      contactPerson: customObj?.contactPerson || (partyRow?.custom && typeof partyRow.custom === 'object' ? partyRow.custom.contactPerson : null),
-      customerState: customObj?.customerState || null,
-      customerStateCode: customObj?.customerStateCode || partyRow?.state_code || partyRow?.stateCode || null,
+      billingAddress: finalCustAddress || null,
+      shippingAddress: finalCustShipping || null,
+      contactPerson: finalContactPerson || null,
+      customerState: finalStateName || null,
+      customerStateCode: finalStateCode || null,
       terms: wholesaleProfile?.terms || null,
       jurisdiction: wholesaleProfile?.jurisdiction || null,
     } : null;
@@ -985,10 +1064,11 @@ export function registerInvoices(r: Router) {
     const printable: PrintableBill = {
       number: inv.number,
       kind: 'sale',
+      invoiceType: isWholesale ? 'wholesale' : 'retail',
       dateText: new Date(createdAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' }),
       shop: {
         name: isWholesale
-          ? (wholesaleDisplayName || wholesaleLegalName || 'Wholesale B2B Tax Invoice')
+          ? (wholesaleDisplayName || wholesaleLegalName || shop.wholesaleBusinessName || shop.wholesale_business_name || shop.name)
           : (retailProfile?.displayName || shop.name),
         address: isWholesale ? (wholesaleProfile?.address || shop.address) : (retailProfile?.address || shop.address),
         phone: isWholesale ? (wholesaleProfile?.phone || shop.phone) : (retailProfile?.phone || shop.phone),
@@ -996,12 +1076,16 @@ export function registerInvoices(r: Router) {
         upiId: shop.upiId ?? shop.upi_id,
         logoUrl: activeProfile?.logoUrl || shop.logoUrl || shop.logo_url || null,
       },
-      customer: custName ? {
-        name: custName,
-        phone: custPhone,
-        gstin: partyRow?.gstin || customObj?.customerGstin || null,
-        address: partyRow?.address || customObj?.billingAddress || null,
-      } as any : null,
+      customer: finalCustName ? {
+        name: finalCustName,
+        phone: finalCustPhone || null,
+        gstin: finalCustGstin || null,
+        address: finalCustAddress || null,
+        shippingAddress: finalCustShipping || null,
+        contactPerson: finalContactPerson || null,
+        stateCode: finalStateCode || null,
+        stateName: finalStateName || null,
+      } : null,
       lines: lines.map((l: any) => {
         let mrpMinor = 0;
         try {
@@ -1060,6 +1144,22 @@ export function registerInvoices(r: Router) {
       wholesale: wholesaleMeta,
     };
 
+    return { printable, isWholesale, paper, shop, inv };
+  }
+
+  // Print Bill (HTML Thermal / A4 receipt) or Download PDF if requested via format=pdf / download=true
+  r.get('/api/invoices/:id/print', async (ctx) => {
+    const { printable, isWholesale, paper, shop, inv } = await loadPrintableInvoice(ctx.db, ctx.params.id, ctx.query.paper);
+
+    // Support direct PDF download mode via query parameter
+    if (ctx.query.format === 'pdf' || ctx.query.download === 'true') {
+      const pdfBuffer = await generateInvoicePdf(printable);
+      const safeNumber = (printable.number || 'INV').replace(/[^a-zA-Z0-9_-]/g, '_');
+      const filename = isWholesale ? `Wholesale_Invoice_${safeNumber}.pdf` : `Invoice_${safeNumber}.pdf`;
+      return new FileResponse(pdfBuffer, 'application/pdf', filename);
+    }
+
+    const autoPrint = ctx.query.autoprint === 'true';
     let qrSvgMarkup = '';
     const upiId = shop.upiId ?? shop.upi_id;
     if (upiId) {
@@ -1067,8 +1167,17 @@ export function registerInvoices(r: Router) {
       qrSvgMarkup = qrSvg(upi, { size: 120 });
     }
 
-    const html = renderBillDoc(printable, { ...DEFAULT_CONFIG.template, paper }, { qrSvg: qrSvgMarkup, qrCaption: 'Scan UPI to pay', autoPrint });
+    const html = renderBillDoc(printable, { ...DEFAULT_CONFIG.template, paper: paper as any }, { qrSvg: qrSvgMarkup, qrCaption: 'Scan UPI to pay', autoPrint });
     return new HtmlResponse(html);
+  });
+
+  // Dedicated Invoice PDF Download Endpoint (Authenticated via requireUser)
+  r.get('/api/invoices/:id/download-pdf', requireUser, async (ctx) => {
+    const { printable, isWholesale } = await loadPrintableInvoice(ctx.db, ctx.params.id, ctx.query.paper);
+    const pdfBuffer = await generateInvoicePdf(printable);
+    const safeNumber = (printable.number || 'INV').replace(/[^a-zA-Z0-9_-]/g, '_');
+    const filename = isWholesale ? `Wholesale_Invoice_${safeNumber}.pdf` : `Invoice_${safeNumber}.pdf`;
+    return new FileResponse(pdfBuffer, 'application/pdf', filename);
   });
 
   // Track WhatsApp bill share
@@ -1158,19 +1267,81 @@ export function registerInvoices(r: Router) {
     const customObj = typeof inv.custom === 'string' ? JSON.parse(inv.custom || '{}') : (inv.custom || {});
     const tender = customObj?.tender || null;
 
+    const pId = inv.partyId ?? inv.party_id;
+    let partyRow: any = null;
+    if (pId) {
+      partyRow = await ctx.db.one(
+        'SELECT name, phone, email, loyalty_points, gstin, address, state_code, custom FROM parties WHERE id = ?',
+        [pId]
+      );
+    }
+    const partyCustom = (partyRow?.custom && typeof partyRow.custom === 'object') ? partyRow.custom : {};
+    const finalCustName = (custName || partyRow?.name || customObj?.customerName || '').trim();
+    const finalCustPhone = (custPhone || partyRow?.phone || customObj?.customerPhone || '').trim();
+    const finalCustGstin = (inv.customerGstin || inv.customer_gstin || partyRow?.gstin || customObj?.customerGstin || '').trim().toUpperCase();
+    const finalCustAddress = (customObj?.billingAddress || partyRow?.address || '').trim();
+    const finalCustShipping = (customObj?.shippingAddress || customObj?.billingAddress || partyRow?.address || '').trim();
+    const finalContactPerson = (customObj?.contactPerson || partyCustom?.contactPerson || '').trim();
+    const finalStateCode = (customObj?.customerStateCode || partyRow?.state_code || partyRow?.stateCode || (finalCustGstin ? finalCustGstin.slice(0, 2) : '') || inv.place_state || inv.placeState || '').trim();
+    const finalStateName = (customObj?.customerState || (finalStateCode ? stateName(finalStateCode) : '') || '').trim();
+
+    const isWholesale = (inv.invoice_type === 'wholesale' || inv.invoiceType === 'wholesale');
+    const rawShopProfiles = shop.invoiceProfiles ?? shop.invoice_profiles;
+    const shopProfiles = typeof rawShopProfiles === 'string' ? JSON.parse(rawShopProfiles) : (rawShopProfiles || null);
+    const wholesaleProfile = shopProfiles?.wholesale;
+    const retailProfile = shopProfiles?.retail;
+    const wholesaleDisplayName = (
+      wholesaleProfile?.displayName ||
+      shop.wholesaleBusinessName ||
+      shop.wholesale_business_name ||
+      ''
+    ).trim();
+    const wholesaleLegalName = (wholesaleProfile?.legalName || '').trim();
+
+    const wholesaleMeta = isWholesale ? {
+      invoiceType: 'wholesale' as const,
+      displayName: wholesaleDisplayName || wholesaleLegalName || shop.wholesaleBusinessName || shop.wholesale_business_name || shop.name,
+      legalName: wholesaleLegalName || null,
+      logoUrl: wholesaleProfile?.logoUrl || null,
+      phone: wholesaleProfile?.phone || shop.phone || null,
+      email: wholesaleProfile?.email || null,
+      gstin: wholesaleProfile?.gstin || shop.gstin || null,
+      address: wholesaleProfile?.address || shop.address || null,
+      paymentTerms: customObj?.paymentTerms || 'Due on Receipt',
+      billingAddress: finalCustAddress || null,
+      shippingAddress: finalCustShipping || null,
+      contactPerson: finalContactPerson || null,
+      customerState: finalStateName || null,
+      customerStateCode: finalStateCode || null,
+      terms: wholesaleProfile?.terms || null,
+      jurisdiction: wholesaleProfile?.jurisdiction || null,
+    } : null;
+
     const printable: PrintableBill = {
       number: inv.number,
       kind: 'sale',
+      invoiceType: isWholesale ? 'wholesale' : 'retail',
       dateText: new Date(createdAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' }),
       shop: {
-        name: shop.name,
-        address: shop.address,
-        phone: shop.phone,
-        gstin: shop.gstin,
+        name: isWholesale
+          ? (wholesaleDisplayName || wholesaleLegalName || shop.wholesaleBusinessName || shop.wholesale_business_name || shop.name)
+          : shop.name,
+        address: isWholesale ? (wholesaleProfile?.address || shop.address) : shop.address,
+        phone: isWholesale ? (wholesaleProfile?.phone || shop.phone) : shop.phone,
+        gstin: isWholesale ? (wholesaleProfile?.gstin || shop.gstin) : shop.gstin,
         upiId: shop.upiId ?? shop.upi_id,
         logoUrl: shop.logoUrl ?? shop.logo_url ?? null,
       },
-      customer: custName ? { name: custName, phone: custPhone } : null,
+      customer: finalCustName ? {
+        name: finalCustName,
+        phone: finalCustPhone || null,
+        gstin: finalCustGstin || null,
+        address: finalCustAddress || null,
+        shippingAddress: finalCustShipping || null,
+        contactPerson: finalContactPerson || null,
+        stateCode: finalStateCode || null,
+        stateName: finalStateName || null,
+      } : null,
       lines: lines.map((l: any) => {
         let mrpMinor = 0;
         try {
@@ -1225,7 +1396,8 @@ export function registerInvoices(r: Router) {
       payments: payments.map((p: any) => ({ method: p.method, amountMinor: Number(p.amountMinor ?? p.amount_minor) })),
       tender,
       customFields: [],
-      intra: true,
+      intra: Boolean(inv.intra !== false),
+      wholesale: wholesaleMeta,
     };
 
     let qrSvgMarkup = '';
@@ -1235,7 +1407,8 @@ export function registerInvoices(r: Router) {
       qrSvgMarkup = qrSvg(upi, { size: 120 });
     }
 
-    const html = renderBillDoc(printable, { ...DEFAULT_CONFIG.template, paper: 'a4' }, { qrSvg: qrSvgMarkup, qrCaption: 'Scan UPI to pay balance', autoPrint: false });
+    const paper = isWholesale ? 'wholesale_a4' : ((retailProfile?.paper === 'thermal58') ? 'thermal58' : 'thermal80');
+    const html = renderBillDoc(printable, { ...DEFAULT_CONFIG.template, paper }, { qrSvg: qrSvgMarkup, qrCaption: 'Scan UPI to pay balance', autoPrint: false });
     return new HtmlResponse(html);
   });
 }

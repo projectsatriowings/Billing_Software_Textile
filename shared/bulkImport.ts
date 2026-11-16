@@ -1,7 +1,88 @@
 /**
- * Bulk Import Helpers: SKU generation, Category suggestion, Product matching, Barcode generation.
+ * Bulk Import Helpers: SKU generation, Category suggestion, Product matching, Barcode generation,
+ * and reliable numeric parsing for prices, costs, and stock quantities.
  * Shared between client and server.
  */
+
+// ── 0. Reliable Numeric Parsing for Import & Excel ───────────────────────────
+
+/**
+ * Reliable numeric parser for bulk import monetary, quantity, and pricing fields.
+ * Handles:
+ * - Direct numbers: 90000 -> 90000
+ * - International comma grouping: "90,000.00" -> 90000, "1,200.00" -> 1200
+ * - Indian lakh/crore grouping: "1,00,000.00" -> 100000, "4,50,000.50" -> 450000.5
+ * - Currency symbols: "₹90,000.00", "Rs. 1,00,000", "$50,000.00"
+ * - Accounting negatives: "(1,200.00)" -> -1200, "-90,000" -> -90000
+ * - Zero amounts: "0", "0.00", 0 -> 0
+ * - Empty / invalid: "", null, undefined, "N/A", "abc" -> null (never unintended 0)
+ */
+export function parseImportNumeric(val: unknown): number | null {
+  if (val === null || val === undefined) return null;
+  if (typeof val === 'boolean') return null;
+  if (typeof val === 'number') {
+    return Number.isFinite(val) ? val : null;
+  }
+
+  let s = String(val).trim();
+  if (!s) return null;
+
+  // Handle accounting parentheses negative: (1,200.00) -> -1200
+  let isNegative = false;
+  if (/^\(.*\)$/.test(s)) {
+    isNegative = true;
+    s = s.slice(1, -1).trim();
+  } else if (s.startsWith('-')) {
+    isNegative = true;
+    s = s.slice(1).trim();
+  } else if (s.startsWith('+')) {
+    s = s.slice(1).trim();
+  }
+
+  // Strip currency symbols and prefixes (₹, Rs, Rs., INR, $, €, £)
+  s = s.replace(/^[₹$€£]\s*/, '').replace(/^(?:rs|inr)\.?\s*/i, '').trim();
+
+  // Strip thousands / grouping separators: commas, underscores, spaces, non-breaking spaces
+  s = s.replace(/[,_\s\u00A0]/g, '');
+
+  if (!s) return null;
+
+  // Must be a valid decimal number: digits with optional single decimal point
+  if (!/^\d+(\.\d+)?$/.test(s)) {
+    return null;
+  }
+
+  const n = parseFloat(s);
+  if (!Number.isFinite(n)) return null;
+
+  return isNegative ? -n : n;
+}
+
+/**
+ * Validates and converts monetary rupees to integer paise (minor units).
+ * e.g. "90,000.00" -> 9000000 paise
+ * e.g. "4,50,000.50" -> 45000050 paise
+ * e.g. "35.71" -> 3571 paise
+ * Returns null if invalid or negative (when allowNegative is false).
+ */
+export function parseImportMoneyMinor(val: unknown, allowNegative = false): number | null {
+  const n = parseImportNumeric(val);
+  if (n === null) return null;
+  if (!allowNegative && n < 0) return null;
+  return Math.round(n * 100);
+}
+
+/**
+ * Validates and converts stock quantity to integer milli-units (e.g. 5 pcs -> 5000 milli).
+ * Handles decimals: "1.5" kg -> 1500 milli.
+ * Returns null if invalid or negative (when allowNegative is false).
+ */
+export function parseImportQtyMilli(val: unknown, allowNegative = false): number | null {
+  const n = parseImportNumeric(val);
+  if (n === null) return null;
+  if (!allowNegative && n < 0) return null;
+  return Math.round(n * 1000);
+}
 
 // ── 1. Compact Short SKU Generation ──────────────────────────────────────────
 
