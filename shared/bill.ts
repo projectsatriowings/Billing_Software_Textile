@@ -331,14 +331,14 @@ function thermalCopy(bill: PrintableBill, tpl: PrintTemplate, L: Record<string, 
 
   <div class="th-divider"></div>
 
-  <!-- ITEMS TABLE: NAME, QTY, MRP, STORE PRICE, TOTAL PRICE -->
+  <!-- ITEMS TABLE: NAME, QTY, MRP, RATE, TOTAL PRICE -->
   <table class="th-bill-table">
     <thead>
       <tr>
         <th class="col-name">NAME</th>
         <th class="col-qty">QTY</th>
         <th class="col-mrp">MRP</th>
-        <th class="col-store">STORE PRICE</th>
+        <th class="col-store">RATE</th>
         <th class="col-total">TOTAL PRICE</th>
       </tr>
     </thead>

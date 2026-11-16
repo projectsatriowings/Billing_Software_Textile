@@ -555,7 +555,18 @@ export const getBusinessLabel = (type?: string) => {
   }
 };
 
-export const CASHIER_ALLOWED_TABS = new Set<string>(['pos', 'wholesale', 'shifts', 'invoices', 'day-closing']);
+export const CASHIER_ALLOWED_TABS = new Set<string>(['pos', 'shifts', 'invoices', 'day-closing']);
+
+export interface PosCartItem {
+  item: Item;
+  qty: number;
+  isReturn?: boolean;
+  origInvoiceId?: string;
+  origInvoiceNumber?: string;
+  origLineId?: string;
+  restock?: boolean;
+  returnReason?: string;
+}
 
 export function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -873,8 +884,12 @@ export function App() {
   const [categoriesList, setCategoriesList] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
-  const [cart, setCart] = useState<{ item: Item; qty: number }[]>([]);
+  const [cart, setCart] = useState<PosCartItem[]>([]);
   const [showReturnExchangeModal, setShowReturnExchangeModal] = useState<boolean>(false);
+  const showReturnExchangeModalRef = useRef(showReturnExchangeModal);
+  useEffect(() => {
+    showReturnExchangeModalRef.current = showReturnExchangeModal;
+  }, [showReturnExchangeModal]);
   const [activeExchangeLines, setActiveExchangeLines] = useState<ReturnSelectedLine[]>([]);
   const [activeExchangeOrigBill, setActiveExchangeOrigBill] = useState<string>('');
   const [parties, setParties] = useState<Party[]>([]);
@@ -1014,6 +1029,8 @@ export function App() {
   const catalogSearchInputRef = useRef<HTMLInputElement>(null);
   const customerMobileInputRef = useRef<HTMLInputElement>(null);
   const customerNameInputRef = useRef<HTMLInputElement>(null);
+  const customerNameManuallyEditedRef = useRef(false);
+  const manuallyDecreasedItemsRef = useRef<Set<string>>(new Set());
   const checkoutBtnRef = useRef<HTMLButtonElement>(null);
   const [catalogSelectedIndex, setCatalogSelectedIndex] = useState<number>(-1);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
@@ -1042,6 +1059,7 @@ export function App() {
   });
   const [showMobileScannerModal, setShowMobileScannerModal] = useState(false);
   const [isPhoneScannerConnected, setIsPhoneScannerConnected] = useState(false);
+  const [externalBarcodeScan, setExternalBarcodeScan] = useState<{ barcode: string; timestamp: number } | null>(null);
   // Inline POS Camera Scanner States
   const [isPosCameraActive, setIsPosCameraActive] = useState(false);
   const [isPosCameraStarting, setIsPosCameraStarting] = useState(false);
@@ -1058,6 +1076,19 @@ export function App() {
   const [customTunnelUrl, setCustomTunnelUrl] = useState('');
   const [showCfdModal, setShowCfdModal] = useState(false);
   const [isCfdConnected, setIsCfdConnected] = useState(false);
+
+  const scannerPairingUrl = useMemo(() => {
+    const localIp = scannerNetworkInfo?.localIp || window.location.hostname;
+    const port = scannerProtocol === 'https'
+      ? (scannerNetworkInfo?.httpsPort || 3444)
+      : (scannerNetworkInfo?.httpPort || 3001);
+    const effectiveProto = scannerProtocol === 'https' ? 'https' : 'http';
+    return customTunnelUrl.trim()
+      ? `${customTunnelUrl.trim().replace(/\/+$/, '')}/scanner?session=${encodeURIComponent(scannerSessionId)}`
+      : scannerNetworkInfo?.tunnelUrl
+        ? `${scannerNetworkInfo.tunnelUrl.replace(/\/+$/, '')}/scanner?session=${encodeURIComponent(scannerSessionId)}`
+        : `${effectiveProto}://${localIp}:${port}/scanner?session=${encodeURIComponent(scannerSessionId)}`;
+  }, [scannerNetworkInfo, scannerProtocol, customTunnelUrl, scannerSessionId]);
 
   // Modern Image 2 POS State
   const [customerSearch, setCustomerSearch] = useState('');
@@ -1366,6 +1397,18 @@ export function App() {
   const [cnWhatsAppSendState, setCnWhatsAppSendState] = useState<'idle' | 'sending' | 'sent'>('idle');
   const [cnWhatsAppPhone, setCnWhatsAppPhone] = useState<string>('');
   const [cnWhatsAppPhoneError, setCnWhatsAppPhoneError] = useState<string>('');
+
+  // POS Return & Exchange State (Way 2: Barcode & Phone Number lookup only)
+  const [showPosExchangeModal, setShowPosExchangeModal] = useState(false);
+  const [posExchangeQuery, setPosExchangeQuery] = useState('');
+  const [posExchangeLoading, setPosExchangeLoading] = useState(false);
+  const [posExchangeInvoices, setPosExchangeInvoices] = useState<any[]>([]);
+  const [posExchangeSelectedInvoice, setPosExchangeSelectedInvoice] = useState<any | null>(null);
+  const [posExchangeReturnInfo, setPosExchangeReturnInfo] = useState<any | null>(null);
+  const [posExchangeLinesInput, setPosExchangeLinesInput] = useState<{
+    [lineId: string]: { returnQty: number; restock: boolean; reason: string };
+  }>({});
+  const [posExchangeError, setPosExchangeError] = useState<string | null>(null);
 
   // Master Data: Item Form Modal (Add & Edit)
   const [showItemModal, setShowItemModal] = useState(false);
@@ -1909,6 +1952,34 @@ export function App() {
       setPromoEvalResult(null);
       return;
     }
+
+    // 1. Auto-consolidate any duplicate non-return lines of the exact same product
+    const duplicateIdx = cart.findIndex((c, i) => !c.isReturn && cart.findIndex((o) => !o.isReturn && o.item.id === c.item.id) !== i);
+    if (duplicateIdx !== -1) {
+      setCart((prev) => {
+        const merged: typeof prev = [];
+        const indexMap = new Map<string, number>();
+        for (const c of prev) {
+          if (c.isReturn) {
+            merged.push(c);
+            continue;
+          }
+          const existingIdx = indexMap.get(c.item.id);
+          if (existingIdx !== undefined) {
+            merged[existingIdx] = {
+              ...merged[existingIdx],
+              qty: merged[existingIdx].qty + c.qty,
+            };
+          } else {
+            indexMap.set(c.item.id, merged.length);
+            merged.push({ ...c, isFreeItem: false, appliedPromotionId: undefined } as any);
+          }
+        }
+        return merged;
+      });
+      return;
+    }
+
     const cartEvalInput: CartItemForEval[] = cart.map((c) => ({
       itemId: c.item.id,
       name: c.item.name,
@@ -1924,38 +1995,68 @@ export function App() {
       isFreeItem: Boolean((c as any).isFreeItem),
       appliedPromotionId: (c as any).appliedPromotionId,
     }));
+    const currentBranchCode = activeBranch?.code || user?.assignedLocation || branches[0]?.code || 'MAIN';
+    const currentCounterCode = user?.assignedCounter || 'COUNTER-1';
     const evalRes = evaluatePromotions(cartEvalInput, activePromotionsList, {
-      branchCode: branches[0]?.code || 'MAIN',
-      counterCode: 'COUNTER-1',
+      branchCode: currentBranchCode,
+      counterCode: currentCounterCode,
       partyId: selectedPartyId || undefined,
     });
     setPromoEvalResult(evalRes);
 
-    // Auto-add eligible free items for BOGO
+    // Auto-add eligible free items for BOGO into the SAME product line
     if (evalRes.autoFreeItems && evalRes.autoFreeItems.length > 0) {
       for (const freeItem of evalRes.autoFreeItems) {
         if (!freeItem.productId) continue;
-        const alreadyInCart = cart.some(
-          (c) => (c as any).isFreeItem && c.item.id === freeItem.productId && (c as any).appliedPromotionId === freeItem.promotionId
-        );
-        if (!alreadyInCart) {
-          const matchedItem = items.find((i) => i.id === freeItem.productId);
-          if (matchedItem) {
-            setCart((prev) => [
-              ...prev,
-              {
-                item: matchedItem,
-                qty: freeItem.qty,
-                isFreeItem: true,
-                appliedPromotionId: freeItem.promotionId,
-              } as any,
-            ]);
-            showToast(`🎉 BOGO Offer Applied: Added ${freeItem.qty} Free ${matchedItem.name}!`);
+
+        // If cashier recently manually decreased this item, don't auto-re-add
+        if (manuallyDecreasedItemsRef.current.has(freeItem.productId)) {
+          continue;
+        }
+
+        // Check if this item is already in cart (same-product BOGO)
+        const existingSameItem = cart.find((c) => !c.isReturn && c.item.id === freeItem.productId);
+        if (existingSameItem) {
+          // Merge directly into the SAME product line (do NOT add a separate line!)
+          setCart((prev) =>
+            prev.map((c) =>
+              !c.isReturn && c.item.id === freeItem.productId
+                ? { ...c, qty: c.qty + freeItem.qty }
+                : c
+            )
+          );
+          showToast(`🎉 BOGO Offer Applied: 1 Free ${existingSameItem.item.name} added to line!`);
+        } else {
+          // Different product free item
+          const alreadyInCart = cart.some(
+            (c) => (c as any).isFreeItem && c.item.id === freeItem.productId && (c as any).appliedPromotionId === freeItem.promotionId
+          );
+          if (!alreadyInCart) {
+            const matchedItem = items.find((i) => i.id === freeItem.productId);
+            if (matchedItem) {
+              setCart((prev) => [
+                ...prev,
+                {
+                  item: matchedItem,
+                  qty: freeItem.qty,
+                  isFreeItem: true,
+                  appliedPromotionId: freeItem.promotionId,
+                } as any,
+              ]);
+              showToast(`🎉 BOGO Offer Applied: Added ${freeItem.qty} Free ${matchedItem.name}!`);
+            }
           }
         }
       }
     }
   }, [cart, activePromotionsList, selectedPartyId, branches, items]);
+
+  // Keep active promotions refreshed whenever the user enters or works in the POS tab
+  useEffect(() => {
+    if (activeTab === 'pos') {
+      loadActivePromotions();
+    }
+  }, [activeTab]);
 
   const checkActiveShift = async () => {
     try {
@@ -2892,6 +2993,7 @@ export function App() {
 
   // Cart operations with stock validation
   const addToCart = (item: Item, qtyToAdd: number = 1): boolean => {
+    manuallyDecreasedItemsRef.current.delete(item.id);
     const avail = getAvailableStockUnits(item.id, item);
     if (avail <= 0) {
       playAlertTone();
@@ -2918,8 +3020,17 @@ export function App() {
   };
 
   const updateCartQty = (itemId: string, delta: number) => {
+    if (delta < 0) {
+      manuallyDecreasedItemsRef.current.add(itemId);
+    } else {
+      manuallyDecreasedItemsRef.current.delete(itemId);
+    }
     if (delta > 0) {
       const existing = cart.find((c) => c.item.id === itemId);
+      if (existing?.isReturn) {
+        showToast('Return item quantity cannot be increased beyond original returned amount.', 'warning');
+        return;
+      }
       const currentQty = existing ? existing.qty : 0;
       const avail = getAvailableStockUnits(itemId, existing?.item);
       if (currentQty + delta > avail) {
@@ -2985,6 +3096,22 @@ export function App() {
   // Barcode scanned from phone or physical USB barcode gun
   const handleBarcodeScanned = async (barcode: string) => {
     const rawClean = (barcode || '').trim();
+    if (!rawClean) return;
+
+    // 0. If POS Return & Exchange Modal is currently open, forward scan directly to it
+    if (showReturnExchangeModalRef.current) {
+      setExternalBarcodeScan({ barcode: rawClean, timestamp: Date.now() });
+      return;
+    }
+
+    // 0b. If barcode matches an invoice or credit note pattern (e.g. WH-1005, INV-1001, CN-1001), auto-launch Return & Exchange
+    if (/^(WH-|INV-|CN-)/i.test(rawClean)) {
+      setShowReturnExchangeModal(true);
+      setExternalBarcodeScan({ barcode: rawClean, timestamp: Date.now() });
+      showToast(`Opening Return & Exchange for ${rawClean}...`);
+      return;
+    }
+
     const clean = rawClean.replace(/[\s\-]/g, '');
     if (!clean) return;
 
@@ -3257,9 +3384,9 @@ export function App() {
     };
   }, []);
 
-  // Fetch local LAN network info when opening mobile scanner modal
+  // Fetch local LAN network info when opening mobile scanner modal or return & exchange modal
   useEffect(() => {
-    if (!showMobileScannerModal) return;
+    if (!showMobileScannerModal && !showReturnExchangeModal) return;
 
     const fetchInfo = () => {
       fetch('/api/scanner/network-info')
@@ -3276,7 +3403,7 @@ export function App() {
     fetchInfo();
     const timer = setInterval(fetchInfo, 3000);
     return () => clearInterval(timer);
-  }, [showMobileScannerModal, customTunnelUrl]);
+  }, [showMobileScannerModal, showReturnExchangeModal, customTunnelUrl]);
 
   // Real-time listener: receives barcodes scanned from mobile phone instantly
   useEffect(() => {
@@ -3304,7 +3431,11 @@ export function App() {
               lastScanId = ev.id;
               if (processedScanIdsRef.current.has(ev.id)) continue;
               processedScanIdsRef.current.add(ev.id);
-              await handleBarcodeScanned(ev.barcode);
+              if (showReturnExchangeModalRef.current) {
+                setExternalBarcodeScan({ barcode: ev.barcode, timestamp: Date.now() });
+              } else {
+                await handleBarcodeScanned(ev.barcode);
+              }
             }
           }
         } catch {
@@ -3335,16 +3466,51 @@ export function App() {
     return selectedParty.loyaltyPoints ?? 0;
   }, [selectedParty]);
 
-  // Cart Totals
-  const cartSubtotalMinor = cart.reduce((acc, c) => acc + c.item.priceMinor * c.qty, 0);
-  const cartTaxMinor = cart.reduce((acc, c) => {
-    const gross = c.item.priceMinor * c.qty;
-    const taxable = Math.round((gross * 10000) / (10000 + c.item.taxRateBp));
-    return acc + (gross - taxable);
-  }, 0);
-  const cartTaxableMinor = cartSubtotalMinor - cartTaxMinor;
-  const cartCgstMinor = Math.floor(cartTaxMinor / 2);
-  const cartSgstMinor = cartTaxMinor - cartCgstMinor;
+  // Cart items separated into normal purchase items and return items
+  const normalCartItems = useMemo(() => cart.filter((c) => !c.isReturn), [cart]);
+  const returnCartItems = useMemo(() => cart.filter((c) => c.isReturn), [cart]);
+  const isExchangeActive = activeExchangeLines.length > 0 || returnCartItems.length > 0;
+
+  // Total Exchange Return Credit available from returned goods
+  const totalExchangeCreditMinor = useMemo(() => {
+    const fromCart = returnCartItems.reduce((acc, c) => acc + Math.abs(c.item.priceMinor) * c.qty, 0);
+    const fromLines = activeExchangeLines.reduce((acc, l) => acc + (l.estimatedCreditMinor || 0), 0);
+    return Math.max(fromCart, fromLines);
+  }, [returnCartItems, activeExchangeLines]);
+
+  // New Items Subtotal & Taxes (for exchange or normal sale)
+  const newItemsSubtotalMinor = useMemo(() => {
+    return normalCartItems.reduce((acc, c) => acc + c.item.priceMinor * c.qty, 0);
+  }, [normalCartItems]);
+
+  const newItemsTaxMinor = useMemo(() => {
+    return normalCartItems.reduce((acc, c) => {
+      const gross = c.item.priceMinor * c.qty;
+      const taxable = Math.round((gross * 10000) / (10000 + (c.item.taxRateBp || 0)));
+      return acc + (gross - taxable);
+    }, 0);
+  }, [normalCartItems]);
+
+  const newItemsTaxableMinor = newItemsSubtotalMinor - newItemsTaxMinor;
+  const newItemsCgstMinor = Math.floor(newItemsTaxMinor / 2);
+  const newItemsSgstMinor = newItemsTaxMinor - newItemsCgstMinor;
+
+  // Cart Subtotal & Taxes for General POS or Exchange
+  const cartSubtotalMinor = isExchangeActive
+    ? newItemsSubtotalMinor
+    : cart.reduce((acc, c) => acc + c.item.priceMinor * c.qty, 0);
+
+  const cartTaxMinor = isExchangeActive
+    ? newItemsTaxMinor
+    : cart.reduce((acc, c) => {
+        const gross = c.item.priceMinor * c.qty;
+        const taxable = Math.round((gross * 10000) / (10000 + c.item.taxRateBp));
+        return acc + (gross - taxable);
+      }, 0);
+
+  const cartTaxableMinor = isExchangeActive ? newItemsTaxableMinor : cartSubtotalMinor - cartTaxMinor;
+  const cartCgstMinor = isExchangeActive ? newItemsCgstMinor : Math.floor(cartTaxMinor / 2);
+  const cartSgstMinor = isExchangeActive ? newItemsSgstMinor : cartTaxMinor - cartCgstMinor;
   const cartTotalMinor = cartSubtotalMinor;
   const percentDiscountMinor = Math.round((cartTotalMinor * appliedDiscountPercent) / 100);
   const maxPointsDiscountMinor = Math.max(0, cartTotalMinor - percentDiscountMinor);
@@ -3362,15 +3528,38 @@ export function App() {
   const pointsActuallyRedeemed = redeemPoints ? maxRedeemablePoints : 0;
   const promoDiscountMinor = promoEvalResult?.totalDiscountMinor || 0;
   const discountMinor = percentDiscountMinor + pointsDiscountMinor + promoDiscountMinor;
-  const finalPayableMinor = Math.max(0, cartTotalMinor - discountMinor);
-  const totalExchangeCreditMinor = useMemo(() => {
-    return activeExchangeLines.reduce((acc, l) => acc + (l.estimatedCreditMinor || 0), 0);
-  }, [activeExchangeLines]);
-  const exchangeCustomerPayableMinor = Math.max(0, finalPayableMinor - totalExchangeCreditMinor);
-  const exchangeCustomerRefundMinor = Math.max(0, totalExchangeCreditMinor - finalPayableMinor);
-  const pointsToEarnOnBill = (shopLoyaltyActive && shopPointsPer100 > 0)
-    ? Math.floor((finalPayableMinor * shopPointsPer100) / 10000)
+
+  // Amount payable on new items after discounts
+  const newItemsPayableMinor = Math.max(0, cartTotalMinor - discountMinor);
+
+  // Net Exchange Balance Math:
+  // If customer buys more than return credit -> customer pays the positive difference
+  // If return credit is more than new purchase -> shop owes customer a refund
+  const exchangeCustomerPayableMinor = isExchangeActive
+    ? Math.max(0, newItemsPayableMinor - totalExchangeCreditMinor)
     : 0;
+
+  const exchangeCustomerRefundMinor = isExchangeActive
+    ? Math.max(0, totalExchangeCreditMinor - newItemsPayableMinor)
+    : 0;
+
+  // Final amount to tender / collect at POS terminal
+  const finalPayableMinor = isExchangeActive
+    ? exchangeCustomerPayableMinor
+    : Math.max(0, cartTotalMinor - discountMinor);
+
+  // Net Loyalty Points on Exchange / Bill:
+  const netLoyaltyPointsToEarn = useMemo(() => {
+    if (!shopLoyaltyActive || shopPointsPer100 <= 0) return 0;
+    if (isExchangeActive) {
+      const earnedOnNew = Math.floor((newItemsPayableMinor * shopPointsPer100) / 10000);
+      const reversedOnReturn = Math.floor((totalExchangeCreditMinor * shopPointsPer100) / 10000);
+      return earnedOnNew - reversedOnReturn;
+    }
+    return Math.floor((finalPayableMinor * shopPointsPer100) / 10000);
+  }, [shopLoyaltyActive, shopPointsPer100, isExchangeActive, newItemsPayableMinor, totalExchangeCreditMinor, finalPayableMinor]);
+
+  const pointsToEarnOnBill = Math.max(0, netLoyaltyPointsToEarn);
 
   // Cash Tender & Change Return calculation
   const cashReceivedValMinor = cashReceived.trim() !== ''
@@ -3480,9 +3669,10 @@ export function App() {
   };
 
   // Cart MRP, Savings, and Category Breakdown
-  const cartTotalMrpMinor = cart.reduce((acc, c) => acc + getItemMrp(c.item) * c.qty, 0);
-  const totalMrpSavingsMinor = Math.max(0, cartTotalMrpMinor - cartSubtotalMinor) + discountMinor;
+  const cartTotalMrpMinor = cart.reduce((acc, c) => acc + (c.isReturn ? 0 : getItemMrp(c.item) * c.qty), 0);
+  const totalMrpSavingsMinor = Math.max(0, cartTotalMrpMinor - Math.max(0, cartSubtotalMinor)) + discountMinor;
   const cartCategoryBreakdown = cart.reduce((acc: { [cat: string]: { name: string; count: number; totalMinor: number } }, c) => {
+    if (c.isReturn) return acc;
     const cat = c.item.category?.trim() || 'General';
     if (!acc[cat]) {
       acc[cat] = { name: cat, count: 0, totalMinor: 0 };
@@ -3704,7 +3894,12 @@ export function App() {
   };
 
   const focusCustomerMobile = () => {
-    setShowCustomerPickerModal(true);
+    if (customerMobileInputRef.current) {
+      customerMobileInputRef.current.focus();
+      customerMobileInputRef.current.select();
+    } else {
+      setShowCustomerPickerModal(true);
+    }
   };
 
   const focusCustomerName = () => {
@@ -3770,8 +3965,9 @@ export function App() {
       });
       setParties((prev) => [res.party, ...prev]);
       setSelectedPartyId(res.party.id);
-      setCustomerSearch('');
-      setQuickCustomerName('');
+      setCustomerSearch(cleanDigits);
+      setQuickCustomerName(res.party.name);
+      customerNameManuallyEditedRef.current = false;
       setShowCustomerDropdown(false);
       showToast(`🎉 Customer ${res.party.name} enrolled! Points will start on this bill.`);
     } catch (err: any) {
@@ -3957,6 +4153,109 @@ export function App() {
     }
   };
 
+  const handleSearchExchangeBills = async () => {
+    const q = posExchangeQuery.trim();
+    if (!q) return;
+    setPosExchangeLoading(true);
+    setPosExchangeError(null);
+    try {
+      const res = await api<{ invoices: any[] }>(`/api/invoices?q=${encodeURIComponent(q)}&limit=20`);
+      const list = (res.invoices || []).filter((inv: any) => inv.kind !== 'credit_note' && inv.status !== 'cancelled');
+      if (list.length === 0) {
+        setPosExchangeError('No bills found matching this Barcode / Bill # or Customer Mobile Number.');
+        setPosExchangeInvoices([]);
+      } else {
+        setPosExchangeInvoices(list);
+        if (list.length === 1 && !list[0].fullyReturned) {
+          handleSelectExchangeInvoice(list[0]);
+        }
+      }
+    } catch (err: any) {
+      setPosExchangeError(err.message || 'Failed to search bills');
+    } finally {
+      setPosExchangeLoading(false);
+    }
+  };
+
+  const handleSelectExchangeInvoice = async (inv: any) => {
+    setPosExchangeSelectedInvoice(inv);
+    setPosExchangeLoading(true);
+    setPosExchangeError(null);
+    try {
+      const res = await api<any>(`/api/invoices/${inv.id}/return-info`);
+      setPosExchangeReturnInfo(res);
+      const initInputs: { [lineId: string]: { returnQty: number; restock: boolean; reason: string } } = {};
+      for (const l of res.lines || []) {
+        initInputs[l.id] = {
+          returnQty: l.returnableQtyMilli > 0 ? 1 : 0,
+          restock: true,
+          reason: 'Size / Fit Mismatch',
+        };
+      }
+      setPosExchangeLinesInput(initInputs);
+    } catch (err: any) {
+      setPosExchangeError(err.message || 'Failed to load bill return information');
+    } finally {
+      setPosExchangeLoading(false);
+    }
+  };
+
+  const handleConfirmAddExchangeToCart = () => {
+    if (!posExchangeReturnInfo || !posExchangeSelectedInvoice) return;
+    const linesToAdd = posExchangeReturnInfo.lines.filter((l: any) => {
+      const q = posExchangeLinesInput[l.id]?.returnQty || 0;
+      return q > 0;
+    });
+
+    if (linesToAdd.length === 0) {
+      showToast('Please select at least 1 item with return quantity > 0', 'warning');
+      return;
+    }
+
+    const newCartItems: PosCartItem[] = linesToAdd.map((l: any) => {
+      const inp = posExchangeLinesInput[l.id];
+      const returnQty = inp.returnQty;
+      return {
+        item: {
+          id: `return-${l.id}-${Date.now()}`,
+          name: l.name,
+          priceMinor: -Math.abs(l.priceMinor),
+          costMinor: 0,
+          taxRateBp: l.taxRateBp,
+          taxInclusive: l.inclusive,
+          unit: l.unit || 'pcs',
+          hsn: l.hsn,
+          category: 'Return / Exchange',
+          active: true,
+          currentStockMilli: 0,
+          favorite: false,
+        },
+        qty: returnQty,
+        isReturn: true,
+        origInvoiceId: posExchangeSelectedInvoice.id,
+        origInvoiceNumber: posExchangeSelectedInvoice.number,
+        origLineId: l.id,
+        restock: inp.restock !== false,
+        returnReason: inp.reason || 'Customer Exchange',
+      };
+    });
+
+    setCart((prev) => [...prev, ...newCartItems]);
+
+    // If bill has a customer phone and no customer currently set, auto-link customer
+    if (posExchangeSelectedInvoice.customerPhone) {
+      const cleanPh = posExchangeSelectedInvoice.customerPhone.replace(/\D/g, '').slice(-10);
+      const existing = parties.find((p) => p.type === 'customer' && p.phone && p.phone.replace(/\D/g, '').endsWith(cleanPh));
+      if (existing) {
+        setSelectedPartyId(existing.id);
+      }
+      setCustomerSearch(cleanPh);
+    }
+
+    setShowPosExchangeModal(false);
+    showToast('✓ Added return item(s) to cart. You can now scan replacement products.');
+  };
+
   const handleCheckout = async (isKot = false) => {
     if (cart.length === 0) return;
 
@@ -3981,9 +4280,72 @@ export function App() {
 
     const selectedCustomer = parties.find((p) => p.id === selectedPartyId);
 
+    // Strictly enforce customer phone number for every POS billing transaction
+    const cleanSearchDigits = customerSearch.trim().replace(/\D/g, '');
+    const checkoutPhone = selectedCustomer?.phone 
+      ? selectedCustomer.phone.replace(/\D/g, '').slice(-10) 
+      : (cleanSearchDigits.length >= 10 ? cleanSearchDigits.slice(-10) : undefined);
+
+    if (!checkoutPhone || checkoutPhone.length !== 10) {
+      showToast('Customer mobile number is strictly required for billing (10 digits).', 'error');
+      if (customerMobileInputRef.current) {
+        customerMobileInputRef.current.focus();
+        customerMobileInputRef.current.select();
+      } else {
+        setShowCustomerPickerModal(true);
+      }
+      return;
+    }
+
     setIsCheckingOut(true);
     try {
-      const lines = cart.map((c, idx) => ({
+      const normalCartItems = cart.filter((c) => !c.isReturn);
+      const returnCartItems = cart.filter((c) => c.isReturn);
+
+      // If cart has return items, issue the linked Credit Note(s) first
+      let lastCreditNoteNum = '';
+      if (returnCartItems.length > 0) {
+        const returnsByOrigInvoice: { [origId: string]: typeof returnCartItems } = {};
+        for (const ret of returnCartItems) {
+          const origId = ret.origInvoiceId;
+          if (origId) {
+            returnsByOrigInvoice[origId] = returnsByOrigInvoice[origId] || [];
+            returnsByOrigInvoice[origId].push(ret);
+          }
+        }
+
+        for (const [origInvId, retItems] of Object.entries(returnsByOrigInvoice)) {
+          const linesPayload = retItems.map((r) => ({
+            origLineId: r.origLineId,
+            returnQtyMilli: Math.round(r.qty * 1000),
+            restock: r.restock !== false,
+            reason: r.returnReason || 'Exchange on new bill',
+          }));
+
+          const cnRes = await api<{ creditNoteNumber: string }>(`/api/invoices/${origInvId}/returns`, {
+            method: 'POST',
+            body: JSON.stringify({
+              lines: linesPayload,
+              settlementType: 'advance',
+              note: `Customer exchange against new purchase on counter ${selectedCounter}`,
+            }),
+          });
+          if (cnRes?.creditNoteNumber) {
+            lastCreditNoteNum = cnRes.creditNoteNumber;
+          }
+        }
+      }
+
+      // If there are no normal items (a pure return), complete right here
+      if (normalCartItems.length === 0) {
+        setCart([]);
+        setCashReceived('');
+        showToast(`✓ Return processed successfully! Credit Note ${lastCreditNoteNum} issued.`);
+        setIsCheckingOut(false);
+        return;
+      }
+
+      const lines = normalCartItems.map((c, idx) => ({
         itemId: c.item.id?.startsWith('custom-') ? undefined : c.item.id,
         name: c.item.name,
         qtyMilli: Math.round(c.qty * 1000),
@@ -4083,7 +4445,14 @@ export function App() {
           customerPhone: checkoutPhone,
         });
 
-        showToast(`✓ Exchange completed! New Bill: ${exchangeRes.newInvoiceNumber}, Credit Note: ${exchangeRes.creditNoteNumber}`);
+        const ptsMsg = exchangeRes.netLoyaltyPointsAdjusted
+          ? (exchangeRes.netLoyaltyPointsAdjusted > 0
+              ? ` (+${exchangeRes.netLoyaltyPointsAdjusted} loyalty pts)`
+              : ` (${exchangeRes.netLoyaltyPointsAdjusted} loyalty pts)`)
+          : '';
+        showToast(`✓ Exchange completed! New Bill: ${exchangeRes.newInvoiceNumber}, Credit Note: ${exchangeRes.creditNoteNumber}${ptsMsg}`);
+        loadParties();
+        loadInvoices();
         try {
           window.open(`/api/exchanges/${exchangeRes.exchangeId}/print`, '_blank', 'width=900,height=800');
         } catch { }
@@ -6518,22 +6887,24 @@ export function App() {
                 <span className="nav-text">POS Counter</span>
               </button>
 
-              {/* 2b. Wholesale Billing (Traditional A4 Tax Invoices) */}
-              <button
-                type="button"
-                className={`sidebar-nav-item ${activeTab === 'wholesale' ? 'active' : ''}`}
-                onClick={() => setActiveTab('wholesale')}
-                title="Wholesale Billing (B2B Tax Invoices)"
-              >
-                <span className="nav-icon">
-                  <img
-                    src={WHOLESALE_BILLING_ICON}
-                    alt="Wholesale Billing"
-                    className="wholesale-nav-icon"
-                  />
-                </span>
-                <span className="nav-text">Wholesale Billing</span>
-              </button>
+              {/* 2b. Wholesale Billing (Traditional A4 Tax Invoices) - STRICTLY ADMIN ONLY */}
+              {user?.role !== 'cashier' && (
+                <button
+                  type="button"
+                  className={`sidebar-nav-item ${activeTab === 'wholesale' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('wholesale')}
+                  title="Wholesale Billing (B2B Tax Invoices)"
+                >
+                  <span className="nav-icon">
+                    <img
+                      src={WHOLESALE_BILLING_ICON}
+                      alt="Wholesale Billing"
+                      className="wholesale-nav-icon"
+                    />
+                  </span>
+                  <span className="nav-text">Wholesale Billing</span>
+                </button>
+              )}
 
               {/* 3. Cashier Shifts: ONLY for Cashier */}
               {user?.role === 'cashier' && (
@@ -8073,17 +8444,42 @@ export function App() {
                         <div className="terminal-actions">
                           <button
                             type="button"
-                            className="bento-hold-cart-btn"
-                            style={{ background: '#4f46e5', color: '#ffffff', borderColor: '#4338ca', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                            className="bento-exchange-btn"
+                            style={{
+                              background: '#4f46e5',
+                              color: '#ffffff',
+                              border: '1px solid #4338ca',
+                              padding: '0.36rem 0.75rem',
+                              borderRadius: '8px',
+                              fontSize: '0.8rem',
+                              fontWeight: 750,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              cursor: 'pointer',
+                              boxShadow: '0 2px 4px rgba(79, 70, 229, 0.2)',
+                            }}
                             onClick={() => setShowReturnExchangeModal(true)}
-                            title="Sales Return or Exchange (F3)"
+                            title="Scan bill barcode or search by phone to return/exchange items (F3)"
                           >
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                              <polyline points="1 4 1 10 7 10"></polyline>
-                              <polyline points="23 20 23 14 17 14"></polyline>
-                              <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
+                              <polyline points="23 4 23 10 17 10"></polyline>
+                              <polyline points="1 20 1 14 7 14"></polyline>
+                              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
                             </svg>
                             <span>Return / Exchange</span>
+                          </button>
+                          <button
+                            type="button"
+                            className="bento-hold-cart-btn"
+                            onClick={handleHoldOrder}
+                            title="Hold or restore order"
+                          >
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                              <rect x="6" y="4" width="4" height="16" rx="1"></rect>
+                              <rect x="14" y="4" width="4" height="16" rx="1"></rect>
+                            </svg>
+                            <span>{heldOrders.length > 0 ? `Held (${heldOrders.length})` : 'Hold'}</span>
                           </button>
                           <button
                             type="button"
@@ -8107,18 +8503,6 @@ export function App() {
                               <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                             </svg>
                             <span>Clear</span>
-                          </button>
-                          <button
-                            type="button"
-                            className="bento-hold-cart-btn"
-                            onClick={handleHoldOrder}
-                            title="Hold or restore order"
-                          >
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                              <rect x="6" y="4" width="4" height="16" rx="1"></rect>
-                              <rect x="14" y="4" width="4" height="16" rx="1"></rect>
-                            </svg>
-                            <span>{heldOrders.length > 0 ? `Held (${heldOrders.length})` : 'Hold'}</span>
                           </button>
                         </div>
                       </div>
@@ -8145,7 +8529,7 @@ export function App() {
                                 Linked Original Invoice: {activeExchangeOrigBill}
                               </div>
                               <div style={{ color: '#4338ca', fontSize: '0.75rem' }}>
-                                {activeExchangeLines.length} garment(s) returning · Available Return Credit: <strong>₹{(totalExchangeCreditMinor / 100).toFixed(2)}</strong>
+                                {activeExchangeLines.length} item(s) returning · Available Return Credit: <strong>₹{(totalExchangeCreditMinor / 100).toFixed(2)}</strong>
                               </div>
                             </div>
                           </div>
@@ -8155,6 +8539,7 @@ export function App() {
                               if (window.confirm('Cancel active exchange return credit?')) {
                                 setActiveExchangeLines([]);
                                 setActiveExchangeOrigBill('');
+                                setCart((prev) => prev.filter((c) => !c.isReturn));
                               }
                             }}
                             style={{
@@ -8256,44 +8641,135 @@ export function App() {
                               <span className="th-item" title="Product & Category">Product</span>
                               <span className="th-qty" title="Quantity">Qty</span>
                               <span className="th-mrp" title="Maximum Retail Price">MRP</span>
-                              <span className="th-price" title="Store Selling Price">Store Price</span>
+                              <span className="th-price" title="Selling Rate per unit">Rate</span>
                               <span className="th-total" title="Total Product Price">Total Price</span>
                               <span className="th-action"></span>
                             </div>
 
                             {/* Cart Rows: NO SEPARATE GST ON PRODUCT; SHOWS QTY, MRP, STORE PRICE, TOTAL PRICE, CATEGORY */}
                             <div className="bento-cart-rows-scroll">
-                              {cart.map(({ item, qty }, cartIdx) => {
+                              {cart.map((cartItem, cartIdx) => {
+                                const { item, qty, isReturn, origInvoiceNumber } = cartItem;
                                 const mrp = getItemMrp(item);
                                 const storePrice = item.priceMinor;
                                 const lineTotal = storePrice * qty;
-                                const lineSavings = Math.max(0, (mrp - storePrice) * qty);
-                                const availStock = getAvailableStockUnits(item.id, item);
-                                const isMaxStock = availStock !== Infinity && qty >= availStock;
+                                const lineSavings = isReturn ? 0 : Math.max(0, (mrp - storePrice) * qty);
+                                const availStock = isReturn ? qty : getAvailableStockUnits(item.id, item);
+                                const isMaxStock = isReturn || (availStock !== Infinity && qty >= availStock);
+
+                                const linePromo = promoEvalResult?.linePromotions?.[cartIdx];
+                                const promoDiscount = promoEvalResult?.lineDiscounts[cartIdx] || 0;
+
+                                // Also check active promo for this item if not yet unlocked
+                                const activePromoForItem = !isReturn
+                                  ? activePromotionsList.find((p) => {
+                                      if (p.rules?.qualifyingProductId === item.id) return true;
+                                      if (p.rules?.productIds && p.rules.productIds.includes(item.id)) return true;
+                                      if (p.rules?.categoryNames && item.category && p.rules.categoryNames.map((c) => c.toLowerCase()).includes(item.category.toLowerCase())) return true;
+                                      return false;
+                                    })
+                                  : undefined;
+
+                                const promoBadgeText = (() => {
+                                  if (linePromo) {
+                                    if (linePromo.promotionType === 'bogo') {
+                                      const matchP = activePromotionsList.find((p) => p.id === linePromo.promotionId);
+                                      const q = matchP?.rules?.qualifyingQty || 2;
+                                      const f = matchP?.rules?.freeQty || 1;
+                                      return `Promo: Buy ${q} Get ${f} Free`;
+                                    }
+                                    const cleanName = linePromo.promotionName.split(/\s*[-–—]\s*/)[0].replace(/\s+(on|for|with)\s+.*$/i, '').trim();
+                                    return cleanName ? (cleanName.toLowerCase().startsWith('promo') ? cleanName : `Promo: ${cleanName}`) : 'Promo';
+                                  }
+                                  if (activePromoForItem) {
+                                    if (activePromoForItem.type === 'bogo') {
+                                      const q = activePromoForItem.rules?.qualifyingQty || 2;
+                                      const f = activePromoForItem.rules?.freeQty || 1;
+                                      return `Promo: Buy ${q} Get ${f} Free`;
+                                    }
+                                    const cleanName = activePromoForItem.name.split(/\s*[-–—]\s*/)[0].replace(/\s+(on|for|with)\s+.*$/i, '').trim();
+                                    return cleanName ? (cleanName.toLowerCase().startsWith('promo') ? cleanName : `Promo: ${cleanName}`) : 'Promo';
+                                  }
+                                  return null;
+                                })();
 
                                 return (
-                                  <div key={item.id} className="bento-cart-row">
+                                  <div
+                                    key={item.id}
+                                    className={`bento-cart-row ${isReturn ? 'return-row' : ''}`}
+                                    style={isReturn ? { background: '#fff5f5', borderLeft: '3.5px solid #ef4444' } : undefined}
+                                  >
                                     {/* Col 1: Product Name & Category Badge */}
                                     <div className="bento-row-item-col">
-                                      <div className="bento-cart-item-name" title={item.name}>
+                                      <div className="bento-cart-item-name" title={item.name} style={isReturn ? { color: '#991b1b', fontWeight: 700 } : undefined}>
                                         {item.name}
                                       </div>
-                                      <div className="bento-cart-item-meta">
-                                        <span className="bento-cart-cat-badge">
-                                          {item.category || 'General'}
-                                        </span>
-                                        {lineSavings > 0 && (
-                                          <span className="bento-cart-savings-tag">
-                                            Save {formatRupees(lineSavings)}
-                                          </span>
-                                        )}
-                                        {promoEvalResult?.lineDiscounts[cartIdx] && promoEvalResult.lineDiscounts[cartIdx] > 0 && (
-                                          <span
-                                            className="bento-cart-savings-tag"
-                                            style={{ background: '#dcfce7', color: '#15803d', border: '1px solid #86efac' }}
-                                          >
-                                            🏷️ Offer: -{formatRupees(promoEvalResult.lineDiscounts[cartIdx])}
-                                          </span>
+                                      <div className="bento-cart-item-meta" style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap', marginTop: '3px' }}>
+                                        {isReturn ? (
+                                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                                            <span
+                                              style={{
+                                                background: '#fee2e2',
+                                                color: '#b91c1c',
+                                                border: '1px solid #fca5a5',
+                                                padding: '1px 6px',
+                                                borderRadius: '4px',
+                                                fontSize: '0.68rem',
+                                                fontWeight: 800,
+                                                letterSpacing: '0.3px',
+                                              }}
+                                            >
+                                              RETURN / EXCHANGE
+                                            </span>
+                                            <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600 }}>
+                                              Ref: Bill #{origInvoiceNumber || ''}
+                                            </span>
+                                          </div>
+                                        ) : (
+                                          <>
+                                            <span className="bento-cart-cat-badge">
+                                              {item.category || 'General'}
+                                            </span>
+                                            {/* Promotion Badge directly below the product title (clean, without full product name) */}
+                                            {promoBadgeText && (
+                                              <span
+                                                className="bento-cart-promo-badge"
+                                                style={{
+                                                  background: linePromo ? '#eff6ff' : '#fffbeb',
+                                                  color: linePromo ? '#1d4ed8' : '#b45309',
+                                                  border: linePromo ? '1.5px solid #93c5fd' : '1.5px solid #fde68a',
+                                                  padding: '1px 6px',
+                                                  borderRadius: '4px',
+                                                  fontSize: '0.68rem',
+                                                  fontWeight: 800,
+                                                  letterSpacing: '0.2px',
+                                                  display: 'inline-flex',
+                                                  alignItems: 'center',
+                                                  gap: '3px',
+                                                }}
+                                                title={linePromo?.promotionName || activePromoForItem?.name}
+                                              >
+                                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                                                  <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                                                  <line x1="7" y1="7" x2="7.01" y2="7"></line>
+                                                </svg>
+                                                <span>{promoBadgeText}</span>
+                                              </span>
+                                            )}
+                                            {lineSavings > 0 && (
+                                              <span className="bento-cart-savings-tag">
+                                                Save {formatRupees(lineSavings)}
+                                              </span>
+                                            )}
+                                            {promoDiscount > 0 && (
+                                              <span
+                                                className="bento-cart-savings-tag"
+                                                style={{ background: '#dcfce7', color: '#15803d', border: '1px solid #86efac', fontWeight: 750 }}
+                                              >
+                                                Offer: -{formatRupees(promoDiscount)}
+                                              </span>
+                                            )}
+                                          </>
                                         )}
                                       </div>
                                     </div>
@@ -8315,7 +8791,7 @@ export function App() {
                                           className={`bento-qty-btn ${isMaxStock ? 'disabled' : ''}`}
                                           disabled={isMaxStock}
                                           onClick={() => updateCartQty(item.id, 1)}
-                                          title={isMaxStock ? `Insufficient stock. Only ${availStock} units available.` : "Increase quantity"}
+                                          title={isReturn ? 'Return quantity cannot exceed original bill quantity' : (isMaxStock ? `Insufficient stock. Only ${availStock} units available.` : 'Increase quantity')}
                                         >
                                           +
                                         </button>
@@ -8324,21 +8800,25 @@ export function App() {
 
                                     {/* Col 3: MRP */}
                                     <div className="bento-row-mrp-col">
-                                      <span className="bento-mrp-val mono">
-                                        {formatRupees(mrp)}
+                                      <span className="bento-mrp-val mono" style={isReturn ? { color: '#94a3b8' } : undefined}>
+                                        {isReturn ? '-' : formatRupees(mrp)}
                                       </span>
                                     </div>
 
                                     {/* Col 4: Store Price */}
                                     <div className="bento-row-store-col">
-                                      <span className="bento-store-val mono">
-                                        {formatRupees(storePrice)}
+                                      <span className="bento-store-val mono" style={isReturn ? { color: '#dc2626', fontWeight: 700 } : undefined}>
+                                        {isReturn ? `-${formatRupees(Math.abs(storePrice))}` : formatRupees(storePrice)}
                                       </span>
                                     </div>
 
                                     {/* Col 5: Total Product Price */}
                                     <div className="bento-row-total-col">
-                                      {promoEvalResult?.lineDiscounts[cartIdx] && promoEvalResult.lineDiscounts[cartIdx] > 0 ? (
+                                      {isReturn ? (
+                                        <span className="bento-total-val mono" style={{ color: '#dc2626', fontWeight: 800 }}>
+                                          -{formatRupees(Math.abs(lineTotal))}
+                                        </span>
+                                      ) : promoEvalResult?.lineDiscounts[cartIdx] && promoEvalResult.lineDiscounts[cartIdx] > 0 ? (
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
                                           <span style={{ fontSize: '0.72rem', textDecoration: 'line-through', color: '#94a3b8' }} className="mono">
                                             {formatRupees(lineTotal)}
@@ -8360,7 +8840,7 @@ export function App() {
                                         type="button"
                                         className="bento-row-remove-btn"
                                         onClick={() => updateCartQty(item.id, -qty)}
-                                        title="Remove item"
+                                        title={isReturn ? 'Remove return item' : 'Remove item'}
                                       >
                                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round">
                                           <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -8409,7 +8889,9 @@ export function App() {
                           <div className="bento-summary-row">
                             <span className="summary-label">Items / Total Units</span>
                             <span className="summary-val mono">
-                              {cart.length} items ({cart.reduce((a, b) => a + b.qty, 0)} units)
+                              {isExchangeActive
+                                ? `${normalCartItems.length} new (${normalCartItems.reduce((a, b) => a + b.qty, 0)} units) + ${returnCartItems.length} return`
+                                : `${cart.length} items (${cart.reduce((a, b) => a + b.qty, 0)} units)`}
                             </span>
                           </div>
 
@@ -8421,9 +8903,20 @@ export function App() {
                           )}
 
                           <div className="bento-summary-row">
-                            <span className="summary-label">Taxable Subtotal</span>
+                            <span className="summary-label">{isExchangeActive ? 'New Items Taxable Subtotal' : 'Taxable Subtotal'}</span>
                             <span className="summary-val mono">{formatRupees(cartTaxableMinor)}</span>
                           </div>
+
+                          {isExchangeActive && totalExchangeCreditMinor > 0 && (
+                            <div className="bento-summary-row" style={{ background: '#f0fdf4', padding: '0.35rem 0.65rem', borderRadius: '6px', border: '1px solid #bbf7d0', margin: '3px 0' }}>
+                              <span className="summary-label" style={{ color: '#166534', fontWeight: 700 }}>
+                                Return Credit (Ref: #{activeExchangeOrigBill || returnCartItems[0]?.origInvoiceNumber || 'BILL'})
+                              </span>
+                              <span className="summary-val mono" style={{ color: '#166534', fontWeight: 800 }}>
+                                -{formatRupees(totalExchangeCreditMinor)}
+                              </span>
+                            </div>
+                          )}
 
                           {appliedDiscountPercent > 0 && (
                             <div className="bento-summary-row discount-row">
@@ -8498,40 +8991,44 @@ export function App() {
                             </div>
                           )}
 
-                          {/* LOYALTY POINTS EARNED ON BILL */}
+                          {/* LOYALTY POINTS EARNED / ADJUSTED ON BILL */}
                           {shopLoyaltyActive && cart.length > 0 && (
                             <div
                               className="bento-summary-row loyalty-earn-row"
                               style={{
-                                background: 'linear-gradient(135deg, #faf5ff 0%, #fdf4ff 100%)',
+                                background: netLoyaltyPointsToEarn >= 0 ? 'linear-gradient(135deg, #faf5ff 0%, #fdf4ff 100%)' : '#fef2f2',
                                 padding: '0.35rem 0.65rem',
                                 borderRadius: '6px',
-                                border: '1px solid #f0abfc',
+                                border: netLoyaltyPointsToEarn >= 0 ? '1px solid #f0abfc' : '1px solid #fecaca',
                                 margin: '3px 0',
                               }}
                             >
                               <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#86198f" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={netLoyaltyPointsToEarn >= 0 ? '#86198f' : '#b91c1c'} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                                   <polyline points="20 12 20 22 4 22 4 12"></polyline>
                                   <rect x="2" y="7" width="20" height="5"></rect>
                                   <line x1="12" y1="22" x2="12" y2="7"></line>
                                   <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path>
                                   <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path>
                                 </svg>
-                                <span className="summary-label" style={{ color: '#86198f', fontWeight: 700 }}>
-                                  Loyalty Points on Bill
+                                <span className="summary-label" style={{ color: netLoyaltyPointsToEarn >= 0 ? '#86198f' : '#b91c1c', fontWeight: 700 }}>
+                                  {isExchangeActive
+                                    ? (netLoyaltyPointsToEarn >= 0 ? 'Loyalty Points on Bill (Net)' : 'Loyalty Points Adjustment')
+                                    : 'Loyalty Points on Bill'}
                                 </span>
-                                <span style={{ fontSize: '0.68rem', color: '#a21caf', fontWeight: 600 }}>
+                                <span style={{ fontSize: '0.68rem', color: netLoyaltyPointsToEarn >= 0 ? '#a21caf' : '#991b1b', fontWeight: 600 }}>
                                   ({shopPointsPer100} pts/₹100)
                                 </span>
                               </div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <span className="summary-val mono" style={{ color: '#86198f', fontWeight: 800 }}>
-                                  +{pointsToEarnOnBill} pts
+                                <span className="summary-val mono" style={{ color: netLoyaltyPointsToEarn >= 0 ? '#86198f' : '#b91c1c', fontWeight: 800 }}>
+                                  {netLoyaltyPointsToEarn >= 0 ? `+${netLoyaltyPointsToEarn} pts` : `${netLoyaltyPointsToEarn} pts`}
                                 </span>
-                                <span style={{ fontSize: '0.7rem', color: '#15803d', fontWeight: 700 }}>
-                                  (≈ {formatRupees(pointsToEarnOnBill * shopPointValMinor)})
-                                </span>
+                                {netLoyaltyPointsToEarn !== 0 && (
+                                  <span style={{ fontSize: '0.7rem', color: netLoyaltyPointsToEarn > 0 ? '#15803d' : '#b91c1c', fontWeight: 700 }}>
+                                    (≈ {formatRupees(Math.abs(netLoyaltyPointsToEarn) * shopPointValMinor)})
+                                  </span>
+                                )}
                               </div>
                             </div>
                           )}
@@ -8539,7 +9036,7 @@ export function App() {
                           {/* CONSOLIDATED OVERALL GST WITH TAX BREAKDOWN */}
                           <div className="bento-summary-row tax-row">
                             <div className="tax-label-group">
-                              <span className="summary-label">Consolidated GST Tax</span>
+                              <span className="summary-label">{isExchangeActive ? 'New Items GST Tax' : 'Consolidated GST Tax'}</span>
                               <span className="tax-sub-breakdown">
                                 (CGST: {formatRupees(cartCgstMinor)} + SGST: {formatRupees(cartSgstMinor)})
                               </span>
@@ -8560,93 +9057,377 @@ export function App() {
                           )}
                         </div>
 
-                        {/* Compact Customer Status in Billing Terminal */}
-                        <div className="bento-billing-customer-chip">
-                          <div className="cust-chip-info">
-                            <span className="cust-chip-icon">
-                              {selectedParty ? (
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
-                                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                                  <circle cx="12" cy="7" r="4"></circle>
-                                </svg>
-                              ) : (
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
-                                  <circle cx="9" cy="21" r="1"></circle>
-                                  <circle cx="20" cy="21" r="1"></circle>
-                                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-                                </svg>
-                              )}
-                            </span>
-                            <span className="cust-chip-label">Customer:</span>
-                            {selectedParty ? (
-                              <>
-                                <span className="chip-walkin-text" style={{ fontWeight: 700, color: '#1e293b' }}>{selectedParty.name}</span>
-                                {selectedParty.phone && <span className="chip-phone">({selectedParty.phone})</span>}
-                              </>
-                            ) : (
-                              <span className="chip-walkin-text">Walk-in Customer (Default)</span>
-                            )}
-                          </div>
-                          <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
-                            {selectedParty && (
-                              <button
-                                type="button"
-                                className="cust-chip-clear-btn"
-                                style={{
-                                  background: '#fee2e2',
-                                  color: '#b91c1c',
-                                  border: '1px solid #fca5a5',
-                                  padding: '0.24rem 0.55rem',
-                                  borderRadius: '6px',
-                                  fontSize: '0.72rem',
-                                  fontWeight: 700,
-                                  cursor: 'pointer',
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: '4px',
-                                }}
-                                onClick={() => {
-                                  setSelectedPartyId('');
-                                  setCustomerSearch('');
-                                  setRedeemPoints(false);
-                                }}
-                                title="Reset to Walk-in Customer"
-                              >
-                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                                </svg>
-                                <span>Walk-in</span>
-                              </button>
-                            )}
-                            <button
-                              type="button"
-                              className="cust-chip-focus-btn"
-                              onClick={() => setShowCustomerPickerModal(true)}
-                              title="Select customer or enter phone number (F3)"
-                              style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}
+                        {/* Direct Inline Customer Entry Bento Box */}
+                        {(() => {
+                          const cleanDigits = customerSearch.replace(/\D/g, '');
+                          const isPhoneValid = cleanDigits.length === 10;
+                          const displayedCustomerName = selectedParty ? selectedParty.name : quickCustomerName;
+
+                          // Suggestions dropdown from parties and past invoices (ONLY when typing 3 to 9 digits and not already selected)
+                          const phoneSuggestions: Array<{ id?: string; name: string; phone: string; points?: number }> = [];
+                          if (cleanDigits.length >= 3 && cleanDigits.length < 10 && !selectedPartyId) {
+                            const seen = new Set<string>();
+                            for (const p of parties) {
+                              if (p.type !== 'customer' || !p.phone) continue;
+                              const pD = p.phone.replace(/\D/g, '');
+                              const p10 = pD.slice(-10);
+                              if (pD.includes(cleanDigits) || p10.includes(cleanDigits) || p.name.toLowerCase().includes(customerSearch.toLowerCase())) {
+                                if (!seen.has(p10)) {
+                                  seen.add(p10);
+                                  phoneSuggestions.push({ id: p.id, name: p.name, phone: p10, points: p.loyaltyPoints ?? 0 });
+                                }
+                              }
+                            }
+                            for (const inv of invoices) {
+                              const iPh = (inv.customerPhone || (inv as any).customer_phone || '').replace(/\D/g, '');
+                              const iNm = (inv.customerName || (inv as any).customer_name || '').trim();
+                              if (!iPh || !iNm || iNm.toLowerCase().includes('walk-in')) continue;
+                              const i10 = iPh.slice(-10);
+                              if (i10.includes(cleanDigits) && !seen.has(i10)) {
+                                seen.add(i10);
+                                phoneSuggestions.push({ name: iNm, phone: i10 });
+                              }
+                            }
+                          }
+
+                          return (
+                            <div
+                              className="bento-billing-customer-box"
+                              style={{
+                                margin: '0.65rem 0 0.85rem 0',
+                                padding: '0.75rem 0.9rem',
+                                borderRadius: '12px',
+                                background: isPhoneValid ? '#f0fdf4' : '#fff7ed',
+                                border: isPhoneValid ? '1.5px solid #86efac' : '1.5px solid #fed7aa',
+                                transition: 'all 0.2s ease',
+                              }}
                             >
-                              {selectedParty ? (
-                                <>
-                                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                                    <circle cx="8.5" cy="7" r="4"></circle>
-                                    <polyline points="17 11 19 13 23 9"></polyline>
+                              {/* Header Bar: Title, Validation Badge, and Action Buttons */}
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem', flexWrap: 'wrap', gap: '4px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={isPhoneValid ? '#16a34a' : '#ea580c'} strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
                                   </svg>
-                                  <span>Change Customer</span>
-                                </>
-                              ) : (
-                                <>
-                                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                  <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#0f172a' }}>
+                                    Customer Details
+                                  </span>
+                                  <span
+                                    style={{
+                                      fontSize: '0.68rem',
+                                      fontWeight: 750,
+                                      padding: '2px 7px',
+                                      borderRadius: '6px',
+                                      background: isPhoneValid ? '#dcfce7' : cleanDigits.length > 0 ? '#fef3c7' : '#fee2e2',
+                                      color: isPhoneValid ? '#15803d' : cleanDigits.length > 0 ? '#b45309' : '#b91c1c',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '3px',
+                                    }}
+                                  >
+                                    {isPhoneValid ? (
+                                      <>
+                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                          <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                        <span>Mobile Verified</span>
+                                      </>
+                                    ) : cleanDigits.length > 0 ? (
+                                      <span>Enter 10 Digits ({cleanDigits.length}/10) *</span>
+                                    ) : (
+                                      <span>10-Digit Mobile Required *</span>
+                                    )}
+                                  </span>
+                                </div>
+
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                  {(selectedParty || customerSearch || quickCustomerName) && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setSelectedPartyId('');
+                                        setCustomerSearch('');
+                                        setQuickCustomerName('');
+                                        customerNameManuallyEditedRef.current = false;
+                                        setRedeemPoints(false);
+                                        if (customerMobileInputRef.current) {
+                                          customerMobileInputRef.current.focus();
+                                        }
+                                      }}
+                                      style={{
+                                        background: '#ffffff',
+                                        border: '1px solid #cbd5e1',
+                                        borderRadius: '6px',
+                                        fontSize: '0.72rem',
+                                        fontWeight: 700,
+                                        padding: '2px 7px',
+                                        cursor: 'pointer',
+                                        color: '#64748b',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '3px',
+                                      }}
+                                      title="Clear customer details"
+                                    >
+                                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                                      </svg>
+                                      <span>Clear</span>
+                                    </button>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => setShowCustomerPickerModal(true)}
+                                    style={{
+                                      background: '#ffffff',
+                                      border: '1px solid #cbd5e1',
+                                      borderRadius: '6px',
+                                      fontSize: '0.72rem',
+                                      fontWeight: 700,
+                                      padding: '2px 8px',
+                                      cursor: 'pointer',
+                                      color: '#4338ca',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '4px',
+                                    }}
+                                    title="Search existing customers directory (F3)"
+                                  >
+                                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                                      <circle cx="11" cy="11" r="8"></circle>
+                                      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                    </svg>
+                                    <span>Browse</span>
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Direct Inline Inputs: Mobile Number and Customer Name */}
+                              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '0.5rem' }}>
+                                {/* 1. Customer Mobile Input with Prefix and Suggestions */}
+                                <div style={{ position: 'relative' }}>
+                                  <div style={{ display: 'flex', alignItems: 'stretch' }}>
+                                    <div
+                                      style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        padding: '0 0.55rem',
+                                        background: '#f8fafc',
+                                        border: isPhoneValid ? '1.5px solid #16a34a' : '1.5px solid #cbd5e1',
+                                        borderRight: 'none',
+                                        borderRadius: '8px 0 0 8px',
+                                        fontSize: '0.75rem',
+                                        fontWeight: 800,
+                                        color: '#475569',
+                                        userSelect: 'none',
+                                      }}
+                                    >
+                                      +91
+                                    </div>
+                                    <input
+                                      ref={customerMobileInputRef}
+                                      type="tel"
+                                      placeholder="10-digit mobile number *"
+                                      maxLength={10}
+                                      value={customerSearch}
+                                      onChange={(e) => {
+                                        let raw = e.target.value.replace(/\D/g, '');
+                                        // If pasted or typed with leading 91 or 0 and total > 10
+                                        if (raw.length === 12 && raw.startsWith('91')) {
+                                          raw = raw.slice(2);
+                                        } else if (raw.length === 11 && raw.startsWith('0')) {
+                                          raw = raw.slice(1);
+                                        } else if (raw.length > 10 && raw.startsWith('91')) {
+                                          raw = raw.slice(2);
+                                        }
+                                        const clean10 = raw.slice(0, 10);
+                                        setCustomerSearch(clean10);
+
+                                        // Detach any previous party if cashier is typing/editing
+                                        if (selectedPartyId) {
+                                          setSelectedPartyId('');
+                                        }
+
+                                        // DO NOT auto-fill customer name while still typing (< 10 digits)!
+                                        if (clean10.length === 10) {
+                                          // 1. Check local parties for EXACT 10-digit match
+                                          const exactParty = parties.find(
+                                            (p) => p.type === 'customer' && p.phone && p.phone.replace(/\D/g, '').slice(-10) === clean10
+                                          );
+                                          if (exactParty) {
+                                            setSelectedPartyId(exactParty.id);
+                                            setQuickCustomerName(exactParty.name);
+                                            customerNameManuallyEditedRef.current = false;
+                                            showToast(`Customer recognized: ${exactParty.name}`);
+                                            return;
+                                          }
+
+                                          // 2. Check local invoices for EXACT 10-digit match
+                                          const exactInv = invoices.find((inv) => {
+                                            const iPh = (inv.customerPhone || (inv as any).customer_phone || '').replace(/\D/g, '').slice(-10);
+                                            const iNm = (inv.customerName || (inv as any).customer_name || '').trim();
+                                            return iPh === clean10 && iNm && !iNm.toLowerCase().includes('walk-in');
+                                          });
+                                          if (exactInv) {
+                                            const invName = (exactInv.customerName || (exactInv as any).customer_name || '').trim();
+                                            setQuickCustomerName(invName);
+                                            customerNameManuallyEditedRef.current = false;
+                                            showToast(`Customer recognized: ${invName}`);
+                                            return;
+                                          }
+
+                                          // 3. Exact 10-digit backend lookup (cross-branch / DB)
+                                          fetch(`/api/parties/by-phone/${clean10}`)
+                                            .then((r) => r.json())
+                                            .then((data) => {
+                                              if (data?.party && data.party.name) {
+                                                if (data.party.id) {
+                                                  setSelectedPartyId(data.party.id);
+                                                  setParties((prev) => (prev.some((p) => p.id === data.party.id) ? prev : [data.party, ...prev]));
+                                                }
+                                                setQuickCustomerName(data.party.name);
+                                                customerNameManuallyEditedRef.current = false;
+                                                showToast(`Customer recognized: ${data.party.name}`);
+                                              }
+                                            })
+                                            .catch(() => {});
+                                        } else {
+                                          // Still typing: clear auto-populated name if not manually edited
+                                          if (!customerNameManuallyEditedRef.current) {
+                                            setQuickCustomerName('');
+                                          }
+                                        }
+                                      }}
+                                      style={{
+                                        width: '100%',
+                                        boxSizing: 'border-box',
+                                        padding: '0.45rem 0.65rem',
+                                        fontSize: '0.84rem',
+                                        borderRadius: '0 8px 8px 0',
+                                        border: isPhoneValid ? '1.5px solid #16a34a' : '1.5px solid #cbd5e1',
+                                        background: '#ffffff',
+                                        fontWeight: 700,
+                                        letterSpacing: '0.5px',
+                                        color: '#0f172a',
+                                        outline: 'none',
+                                      }}
+                                    />
+                                  </div>
+
+                                  {/* Suggestions Dropdown for Matching Customers */}
+                                  {phoneSuggestions.length > 0 && (
+                                    <div
+                                      style={{
+                                        position: 'absolute',
+                                        left: 0,
+                                        right: 0,
+                                        top: '100%',
+                                        zIndex: 60,
+                                        background: '#ffffff',
+                                        border: '1.5px solid #cbd5e1',
+                                        borderRadius: '8px',
+                                        boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                                        marginTop: '4px',
+                                        maxHeight: '180px',
+                                        overflowY: 'auto',
+                                      }}
+                                    >
+                                      <div style={{ padding: '4px 8px', background: '#f8fafc', fontSize: '0.68rem', fontWeight: 750, color: '#64748b', borderBottom: '1px solid #f1f5f9' }}>
+                                        Matching Customers (Click to select):
+                                      </div>
+                                      {phoneSuggestions.slice(0, 5).map((item, idx) => (
+                                        <div
+                                          key={idx}
+                                          onClick={() => {
+                                            setCustomerSearch(item.phone);
+                                            setQuickCustomerName(item.name);
+                                            customerNameManuallyEditedRef.current = false;
+                                            if (item.id) setSelectedPartyId(item.id);
+                                            showToast(`Selected customer: ${item.name}`);
+                                          }}
+                                          style={{
+                                            padding: '6px 10px',
+                                            cursor: 'pointer',
+                                            borderBottom: idx < Math.min(phoneSuggestions.length, 5) - 1 ? '1px solid #f8fafc' : 'none',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            fontSize: '0.78rem',
+                                          }}
+                                          onMouseEnter={(e) => (e.currentTarget.style.background = '#eef2ff')}
+                                          onMouseLeave={(e) => (e.currentTarget.style.background = '#ffffff')}
+                                        >
+                                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            <span style={{ fontWeight: 750, color: '#1e293b' }}>{item.name}</span>
+                                            <span style={{ color: '#64748b', fontSize: '0.74rem' }}>({item.phone})</span>
+                                          </div>
+                                          {item.points !== undefined && item.points > 0 && (
+                                            <span style={{ fontSize: '0.68rem', color: '#15803d', fontWeight: 750, background: '#dcfce7', padding: '1px 5px', borderRadius: '4px' }}>
+                                              {item.points} pts
+                                            </span>
+                                          )}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* 2. Customer Name Input */}
+                                <div style={{ position: 'relative' }}>
+                                  <input
+                                    ref={customerNameInputRef}
+                                    type="text"
+                                    placeholder="Customer Name (Optional)"
+                                    value={displayedCustomerName}
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      setQuickCustomerName(val);
+                                      customerNameManuallyEditedRef.current = true;
+                                      if (!val.trim() && selectedPartyId) {
+                                        setSelectedPartyId('');
+                                      }
+                                    }}
+                                    style={{
+                                      width: '100%',
+                                      boxSizing: 'border-box',
+                                      padding: '0.45rem 0.65rem 0.45rem 1.75rem',
+                                      fontSize: '0.84rem',
+                                      borderRadius: '8px',
+                                      border: '1.5px solid #cbd5e1',
+                                      background: '#ffffff',
+                                      fontWeight: 650,
+                                      color: '#0f172a',
+                                      outline: 'none',
+                                    }}
+                                  />
+                                  <svg
+                                    width="13"
+                                    height="13"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="#94a3b8"
+                                    strokeWidth="2.3"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    style={{ position: 'absolute', left: '0.55rem', top: '50%', transform: 'translateY(-50%)' }}
+                                  >
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
                                   </svg>
-                                  <span>Select Customer</span>
-                                </>
+                                </div>
+                              </div>
+
+                              {/* Recognized Customer Loyalty Details Footer */}
+                              {selectedParty && (
+                                <div style={{ marginTop: '0.4rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.74rem', color: '#15803d', fontWeight: 650 }}>
+                                  <span>Linked Member: <strong>{selectedParty.name}</strong></span>
+                                  <span>Available Loyalty Points: <strong>{selectedParty.loyaltyPoints ?? 0} pts</strong></span>
+                                </div>
                               )}
-                            </button>
-                          </div>
-                        </div>
+                            </div>
+                          );
+                        })()}
 
                         {/* Pharmacy Doctor Field */}
                         {shop?.businessType === 'pharmacy' && (
@@ -9470,16 +10251,27 @@ export function App() {
                         {/* Bottom Grand Total & Proceed Button */}
                         <div className="bento-checkout-row">
                           <div className="bento-grand-total">
-                            {activeExchangeLines.length > 0 ? (
+                            {isExchangeActive ? (
                               <div>
-                                <div style={{ fontSize: '0.72rem', color: '#4f46e5', fontWeight: 600 }}>
-                                  New Items: {formatRupees(finalPayableMinor)} | Return Credit: -{formatRupees(totalExchangeCreditMinor)}
+                                <div style={{ fontSize: '0.75rem', color: '#4f46e5', fontWeight: 600, display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '2px' }}>
+                                  <span>New Items: {formatRupees(newItemsPayableMinor)}</span>
+                                  <span style={{ color: '#94a3b8' }}>•</span>
+                                  <span style={{ color: '#059669' }}>Return Credit: -{formatRupees(totalExchangeCreditMinor)}</span>
                                 </div>
                                 <span className="grand-total-label">
-                                  {finalPayableMinor >= totalExchangeCreditMinor ? 'Net Customer Payable' : 'Customer Refund Due'}
+                                  {exchangeCustomerPayableMinor > 0
+                                    ? 'Net Customer Payable'
+                                    : exchangeCustomerRefundMinor > 0
+                                      ? 'Customer Refund Due'
+                                      : 'Even Exchange (₹0 Due)'}
                                 </span>
-                                <span className="grand-total-val mono" style={{ color: finalPayableMinor >= totalExchangeCreditMinor ? '#059669' : '#dc2626' }}>
-                                  {formatRupees(Math.abs(finalPayableMinor - totalExchangeCreditMinor))}
+                                <span
+                                  className="grand-total-val mono"
+                                  style={{
+                                    color: exchangeCustomerPayableMinor > 0 ? '#4338ca' : exchangeCustomerRefundMinor > 0 ? '#dc2626' : '#0284c7',
+                                  }}
+                                >
+                                  {formatRupees(exchangeCustomerPayableMinor > 0 ? exchangeCustomerPayableMinor : exchangeCustomerRefundMinor)}
                                 </span>
                               </div>
                             ) : (
@@ -9517,8 +10309,12 @@ export function App() {
                               ) : (
                                 <>
                                   <span>
-                                    {activeExchangeLines.length > 0
-                                      ? (finalPayableMinor >= totalExchangeCreditMinor ? 'Complete Exchange & Bill' : 'Complete Exchange & Refund Balance')
+                                    {isExchangeActive
+                                      ? (exchangeCustomerPayableMinor > 0
+                                          ? `Complete Exchange & Collect ${formatRupees(exchangeCustomerPayableMinor)}`
+                                          : exchangeCustomerRefundMinor > 0
+                                            ? `Complete Exchange & Refund ${formatRupees(exchangeCustomerRefundMinor)}`
+                                            : 'Complete Even Exchange')
                                       : (selectedPayMode === 'cash' ? 'Complete Sale & Generate Bill' :
                                         selectedPayMode === 'upi' ? 'Confirm UPI & Generate Bill' :
                                           selectedPayMode === 'card' ? 'Card Paid & Generate Bill' :
@@ -9904,13 +10700,12 @@ export function App() {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
                           <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#ede9fe', color: '#6366f1', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                              <circle cx="12" cy="7" r="4"></circle>
+                              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
                             </svg>
                           </div>
                           <div>
-                            <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#0f172a' }}>Select Customer</h3>
-                            <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Search customer by name or phone (Press Esc to close)</span>
+                            <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#0f172a' }}>Customer Mobile Number (Mandatory)</h3>
+                            <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Enter 10-digit mobile number to generate invoice (Press Esc to close)</span>
                           </div>
                         </div>
                         <button
@@ -9928,15 +10723,48 @@ export function App() {
 
                       <div style={{ position: 'relative', marginBottom: '0.85rem' }}>
                         <input
-                          type="text"
+                          type="tel"
                           autoFocus
                           className="form-input"
-                          style={{ paddingLeft: '2.4rem', fontSize: '0.9rem', width: '100%', boxSizing: 'border-box' }}
-                          placeholder="Search customer name or mobile..."
+                          style={{ paddingLeft: '2.4rem', fontSize: '0.95rem', width: '100%', boxSizing: 'border-box', fontWeight: 600, letterSpacing: '0.5px' }}
+                          placeholder="Enter 10-digit mobile number (e.g. 9876543210)..."
                           value={customerSearch}
                           onChange={(e) => setCustomerSearch(e.target.value)}
                           onKeyDown={(e) => {
                             if (e.key === 'Escape') setShowCustomerPickerModal(false);
+                            if (e.key === 'Enter') {
+                              const d = customerSearch.replace(/\D/g, '');
+                              if (d.length >= 10) {
+                                e.preventDefault();
+                                const phone10 = d.slice(-10);
+                                const existing = parties.find((p) => p.type === 'customer' && p.phone && p.phone.replace(/\D/g, '').endsWith(phone10));
+                                if (existing) {
+                                  setSelectedPartyId(existing.id);
+                                  setCustomerSearch(phone10);
+                                  showToast(`Linked customer: ${existing.name} (+91 ${phone10})`);
+                                } else {
+                                  api<{ party: Party }>('/api/parties', {
+                                    method: 'POST',
+                                    body: JSON.stringify({
+                                      name: `Customer ${phone10.slice(-4)}`,
+                                      phone: phone10,
+                                      type: 'customer',
+                                    }),
+                                  }).then((res) => {
+                                    if (res?.party) {
+                                      setParties((prev) => [res.party, ...prev]);
+                                      setSelectedPartyId(res.party.id);
+                                      setCustomerSearch(phone10);
+                                      showToast(`Registered & linked customer: +91 ${phone10}`);
+                                    }
+                                  }).catch(() => {
+                                    setCustomerSearch(phone10);
+                                    showToast(`Linked customer mobile: +91 ${phone10}`);
+                                  });
+                                }
+                                setShowCustomerPickerModal(false);
+                              }
+                            }
                           }}
                         />
                         <svg
@@ -9948,17 +10776,74 @@ export function App() {
                           strokeWidth="2.2"
                           style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)' }}
                         >
-                          <circle cx="11" cy="11" r="8"></circle>
-                          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                          <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                          <line x1="12" y1="18" x2="12.01" y2="18"></line>
                         </svg>
                       </div>
 
-                      <div style={{ maxHeight: '240px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.4rem', marginBottom: '1rem' }}>
+                      {/* Quick 1-click confirmation when 10 digits are typed */}
+                      {customerSearch.replace(/\D/g, '').length >= 10 && (
+                        <div style={{ background: '#f0fdf4', border: '1.5px dashed #16a34a', borderRadius: '10px', padding: '0.75rem', marginBottom: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                          <div>
+                            <div style={{ fontWeight: 800, fontSize: '0.92rem', color: '#166534' }}>
+                              📱 +91 {customerSearch.replace(/\D/g, '').slice(-10)}
+                            </div>
+                            <div style={{ fontSize: '0.74rem', color: '#15803d' }}>
+                              Press Enter or click to use this customer mobile number
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            className="btn btn-primary"
+                            style={{ background: '#16a34a', borderColor: '#15803d', fontSize: '0.8rem', padding: '0.45rem 0.85rem', fontWeight: 700, whiteSpace: 'nowrap' }}
+                            onClick={() => {
+                              const phone10 = customerSearch.replace(/\D/g, '').slice(-10);
+                              const existing = parties.find((p) => p.type === 'customer' && p.phone && p.phone.replace(/\D/g, '').endsWith(phone10));
+                              if (existing) {
+                                setSelectedPartyId(existing.id);
+                                setCustomerSearch(phone10);
+                                setQuickCustomerName(existing.name);
+                                customerNameManuallyEditedRef.current = false;
+                                showToast(`Linked customer: ${existing.name} (+91 ${phone10})`);
+                              } else {
+                                api<{ party: Party }>('/api/parties', {
+                                  method: 'POST',
+                                  body: JSON.stringify({
+                                    name: `Customer ${phone10.slice(-4)}`,
+                                    phone: phone10,
+                                    type: 'customer',
+                                  }),
+                                }).then((res) => {
+                                  if (res?.party) {
+                                    setParties((prev) => [res.party, ...prev]);
+                                    setSelectedPartyId(res.party.id);
+                                    setCustomerSearch(phone10);
+                                    setQuickCustomerName(res.party.name);
+                                    customerNameManuallyEditedRef.current = false;
+                                    showToast(`Registered & linked customer: +91 ${phone10}`);
+                                  }
+                                }).catch(() => {
+                                  setCustomerSearch(phone10);
+                                  showToast(`Linked customer mobile: +91 ${phone10}`);
+                                });
+                              }
+                              setShowCustomerPickerModal(false);
+                            }}
+                          >
+                            ✓ Use Number
+                          </button>
+                        </div>
+                      )}
+
+                      <div style={{ maxHeight: '220px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.4rem', marginBottom: '1rem' }}>
                         {filteredParties.slice(0, 15).map((p) => (
                           <div
                             key={p.id}
                             onClick={() => {
                               setSelectedPartyId(p.id);
+                              if (p.phone) setCustomerSearch(p.phone.replace(/\D/g, '').slice(-10));
+                              setQuickCustomerName(p.name);
+                              customerNameManuallyEditedRef.current = false;
                               setShowCustomerPickerModal(false);
                               showToast(`Linked customer: ${p.name}`);
                             }}
@@ -10005,25 +10890,15 @@ export function App() {
 
                         {filteredParties.length === 0 && (
                           <div style={{ textAlign: 'center', padding: '1.25rem 0', color: '#64748b', fontSize: '0.84rem' }}>
-                            No customer found matching "{customerSearch}"
+                            {customerSearch.trim() ? `No customer found matching "${customerSearch}"` : 'Type 10-digit mobile number above'}
                           </div>
                         )}
                       </div>
 
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #e2e8f0', paddingTop: '0.85rem' }}>
-                        <button
-                          type="button"
-                          className="btn btn-secondary"
-                          onClick={() => {
-                            setSelectedPartyId('');
-                            setCustomerSearch('');
-                            setShowCustomerPickerModal(false);
-                            showToast('Reset to Walk-in Customer');
-                          }}
-                          style={{ fontSize: '0.8rem' }}
-                        >
-                          Reset to Walk-in
-                        </button>
+                        <div style={{ fontSize: '0.76rem', color: '#dc2626', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <span>* 10-digit customer mobile number is mandatory for all bills</span>
+                        </div>
                         <button
                           type="button"
                           className="btn btn-primary"
@@ -10410,8 +11285,8 @@ export function App() {
               </div>
             )}
 
-            {/* TAB: WHOLESALE BILLING & B2B TAX INVOICES */}
-            {displayTab === 'wholesale' && user && (
+            {/* TAB: WHOLESALE BILLING & B2B TAX INVOICES - STRICTLY ADMIN ONLY */}
+            {displayTab === 'wholesale' && user && user.role !== 'cashier' && (
               <div className="tab-content-wrapper" key={`wholesale-${selectedBranchScope}`}>
                 <WholesaleBillingView
                   user={user}
@@ -22222,15 +23097,44 @@ export function App() {
         <PosReturnExchangeModal
           isOpen={showReturnExchangeModal}
           onClose={() => setShowReturnExchangeModal(false)}
+          isPhoneScannerConnected={isPhoneScannerConnected}
+          scannerPairingUrl={scannerPairingUrl}
+          externalBarcodeScan={externalBarcodeScan}
+          onOpenMobileScannerModal={() => setShowMobileScannerModal(true)}
           onSelectForExchange={(lines, origInv) => {
             setActiveExchangeLines(lines);
             setActiveExchangeOrigBill(origInv);
+            const returnCartItems: PosCartItem[] = lines.map((l) => ({
+              item: {
+                id: `return-${l.origLineId}-${Date.now()}`,
+                name: l.name,
+                priceMinor: -Math.abs(l.priceMinor),
+                costMinor: 0,
+                taxRateBp: l.taxRateBp,
+                taxInclusive: l.inclusive,
+                unit: l.unit || 'pcs',
+                category: 'Return / Exchange',
+                active: true,
+                currentStockMilli: 0,
+                favorite: false,
+              },
+              qty: l.returnQtyMilli / 1000,
+              isReturn: true,
+              origInvoiceId: l.origInvoiceId,
+              origInvoiceNumber: l.origInvoiceNumber,
+              origLineId: l.origLineId,
+              restock: l.condition === 'resellable',
+              returnReason: l.reason,
+            }));
+            setCart((prev) => [...prev, ...returnCartItems]);
             setShowReturnExchangeModal(false);
-            showToast(`✓ Added ${lines.length} return item(s) from ${origInv} to exchange! Select new garments to complete.`);
+            showToast(`Added ${lines.length} return item(s) from ${origInv} to exchange! Select new items to complete.`);
           }}
           onReturnCompleted={(_cnId, cnNumber) => {
-            showToast(`✓ Return processed successfully! Credit Note: ${cnNumber}`);
+            showToast(`Return processed successfully! Credit Note: ${cnNumber}`);
             setShowReturnExchangeModal(false);
+            loadParties();
+            loadInvoices();
           }}
         />
       </div>
