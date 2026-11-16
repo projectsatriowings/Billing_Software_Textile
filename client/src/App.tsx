@@ -175,6 +175,7 @@ import { evaluatePromotions, type Promotion, type PromotionEvalResult, type Cart
 import { fetchPromotions } from './api';
 import { LoyaltySchemeModal } from './components/loyalty/LoyaltySchemeModal.tsx';
 import { PosReturnExchangeModal, type ReturnSelectedLine } from './components/pos/PosReturnExchangeModal.tsx';
+import { ConfirmModal } from './components/common/ConfirmModal.tsx';
 import { DayClosingView } from './components/shifts/DayClosingView.tsx';
 import { ReturnReportsView } from './components/reports/ReturnReportsView.tsx';
 import { submitExchange } from './api';
@@ -1403,6 +1404,44 @@ export function App() {
     [lineId: string]: { returnQty: number; restock: boolean; reason: string };
   }>({});
   const [posExchangeError, setPosExchangeError] = useState<string | null>(null);
+
+  // Bento Custom Confirmation Modal
+  const [bentoConfirm, setBentoConfirm] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: React.ReactNode;
+    confirmText?: string;
+    cancelText?: string;
+    variant?: 'danger' | 'warning' | 'info';
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
+
+  const askConfirmation = (opts: {
+    title: string;
+    message: React.ReactNode;
+    confirmText?: string;
+    cancelText?: string;
+    variant?: 'danger' | 'warning' | 'info';
+    onConfirm: () => void;
+  }) => {
+    setBentoConfirm({
+      isOpen: true,
+      title: opts.title,
+      message: opts.message,
+      confirmText: opts.confirmText || 'Confirm',
+      cancelText: opts.cancelText || 'Cancel',
+      variant: opts.variant || 'warning',
+      onConfirm: () => {
+        setBentoConfirm((prev) => ({ ...prev, isOpen: false }));
+        opts.onConfirm();
+      },
+    });
+  };
 
   // Master Data: Item Form Modal (Add & Edit)
   const [showItemModal, setShowItemModal] = useState(false);
@@ -2654,6 +2693,7 @@ export function App() {
 
 
   const loadReports = async (overrideBranch?: string) => {
+    if (!can(user?.role as any, 'reports')) return;
     try {
       const bScope = overrideBranch !== undefined ? overrideBranch : selectedBranchScope;
       const query = bScope && bScope.toLowerCase() !== 'all' ? `?branch=${encodeURIComponent(bScope)}` : '';
@@ -2797,39 +2837,47 @@ export function App() {
   };
 
   const handleRemoveLogo = async () => {
-    if (!confirm('Are you sure you want to remove your store brand logo?')) return;
-    setSettingsLogoUrl('');
-    try {
-      setIsSavingSettings(true);
-      const updated = await api<Shop>('/api/shop', {
-        method: 'PUT',
-        body: JSON.stringify({
-          name: settingsName,
-          businessType: settingsType,
-          gstin: settingsGstin || null,
-          phone: settingsPhone || null,
-          address: settingsAddress || null,
-          upiId: settingsUpiId || null,
-          invoicePrefix: settingsPrefix || 'INV',
-          ownerEmail: settingsOwnerEmail || null,
-          logoUrl: null,
-          whatsappEnabled: settingsWhatsAppEnabled,
-          whatsappDefaultLang: settingsWhatsAppDefaultLang,
-          whatsappIncludeLink: settingsWhatsAppIncludeLink,
-          loyaltyEnabled: settingsLoyaltyEnabled,
-          loyaltyPointsPer100: Math.max(0, Number(settingsLoyaltyPointsPer100) || 0),
-          loyaltyPointValueMinor: Math.round((Number(settingsLoyaltyPointValueRupees) || 0.10) * 100),
-          loyaltyMinPointsRedeem: Math.max(0, Number(settingsLoyaltyMinRedeem) || 0),
-        }),
-      });
-      setShop(updated);
-      initSettingsForm(updated);
-      showToast('Store logo permanently removed!');
-    } catch (err: any) {
-      alert(err.message || 'Failed to remove logo on server');
-    } finally {
-      setIsSavingSettings(false);
-    }
+    askConfirmation({
+      title: 'Remove Store Logo?',
+      message: 'Are you sure you want to remove your store brand logo? It will no longer appear on receipts or customer-facing screens.',
+      confirmText: 'Remove Logo',
+      cancelText: 'Keep Logo',
+      variant: 'danger',
+      onConfirm: async () => {
+        setSettingsLogoUrl('');
+        try {
+          setIsSavingSettings(true);
+          const updated = await api<Shop>('/api/shop', {
+            method: 'PUT',
+            body: JSON.stringify({
+              name: settingsName,
+              businessType: settingsType,
+              gstin: settingsGstin || null,
+              phone: settingsPhone || null,
+              address: settingsAddress || null,
+              upiId: settingsUpiId || null,
+              invoicePrefix: settingsPrefix || 'INV',
+              ownerEmail: settingsOwnerEmail || null,
+              logoUrl: null,
+              whatsappEnabled: settingsWhatsAppEnabled,
+              whatsappDefaultLang: settingsWhatsAppDefaultLang,
+              whatsappIncludeLink: settingsWhatsAppIncludeLink,
+              loyaltyEnabled: settingsLoyaltyEnabled,
+              loyaltyPointsPer100: Math.max(0, Number(settingsLoyaltyPointsPer100) || 0),
+              loyaltyPointValueMinor: Math.round((Number(settingsLoyaltyPointValueRupees) || 0.10) * 100),
+              loyaltyMinPointsRedeem: Math.max(0, Number(settingsLoyaltyMinRedeem) || 0),
+            }),
+          });
+          setShop(updated);
+          initSettingsForm(updated);
+          showToast('Store logo permanently removed!');
+        } catch (err: any) {
+          showToast(err.message || 'Failed to remove logo on server', 'error');
+        } finally {
+          setIsSavingSettings(false);
+        }
+      },
+    });
   };
 
   const handleSaveLogoDirectly = async (logoToSave?: string) => {
@@ -4286,12 +4334,92 @@ export function App() {
       return;
     }
 
+    // Build customer name with contextual business tags
+    let custName = selectedCustomer ? selectedCustomer.name : undefined;
+    if (shop?.businessType === 'restaurant') {
+      custName = `${restaurantTable} (${restaurantOrderType}) ${custName ? '- ' + custName : ''}`;
+    } else if (shop?.businessType === 'pharmacy' && doctorName) {
+      custName = `${custName || 'Walk-in Patient'} [Prescribed by: ${doctorName}]`;
+    } else if (shop?.businessType === 'wholesale' && poNumber) {
+      custName = `${custName || 'B2B Buyer'} [PO: ${poNumber}]`;
+    } else if (shop?.businessType === 'service' && jobRef) {
+      custName = `${custName || 'Client'} [Ref: ${jobRef}]`;
+    }
+    const checkoutCustName = custName || (selectedCustomer ? selectedCustomer.name : (quickCustomerName.trim() || (checkoutPhone ? `Customer ${checkoutPhone.slice(-4)}` : undefined)));
+
     setIsCheckingOut(true);
     try {
       const normalCartItems = cart.filter((c) => !c.isReturn);
       const returnCartItems = cart.filter((c) => c.isReturn);
 
-      // If cart has return items, issue the linked Credit Note(s) first
+      // 1. Handle Exchange Transaction Workflow (returns + new purchases settled atomically)
+      if (activeExchangeLines.length > 0) {
+        const exchangeMethod = selectedPayMode === 'split' ? splitMethod1 : selectedPayMode;
+        const exchangeRef = (exchangeMethod === 'upi' || exchangeMethod === 'bank')
+          ? (activeQrAttempt?.providerPaymentId || (upiManualRef.trim() ? upiManualRef.trim() : undefined))
+          : (exchangeMethod === 'card' ? (paymentCardRef || 'CARD_PAYMENT') : undefined);
+
+        const exchangeLines = normalCartItems.map((c, idx) => ({
+          itemId: c.item.id?.startsWith('custom-') ? undefined : c.item.id,
+          name: c.item.name,
+          qtyMilli: Math.round(c.qty * 1000),
+          priceMinor: Math.round(c.item.priceMinor),
+          discountMinor: promoEvalResult?.lineDiscounts[idx] || 0,
+          taxRateBp: Math.round(c.item.taxRateBp || 0),
+          inclusive: c.item.taxInclusive,
+          unit: c.item.unit,
+          hsn: c.item.hsn,
+        }));
+
+        const exchangeRes = await submitExchange({
+          origInvoiceId: activeExchangeLines[0].origInvoiceId,
+          branchId: activeBranch?.id || user?.branchId || undefined,
+          counter: selectedCounter,
+          counterId: checkoutCounterId || selectedCounterId || undefined,
+          returnLines: activeExchangeLines.map((l) => ({
+            origLineId: l.origLineId,
+            returnQtyMilli: l.returnQtyMilli,
+            condition: l.condition,
+            reason: l.reason,
+            remarks: l.remarks,
+          })),
+          newLines: exchangeLines,
+          paymentMethod: exchangeMethod,
+          paymentRef: exchangeRef,
+          excessRefundMethod: 'cash',
+          customerName: checkoutCustName,
+          customerPhone: checkoutPhone,
+        });
+
+        const ptsMsg = exchangeRes.netLoyaltyPointsAdjusted
+          ? (exchangeRes.netLoyaltyPointsAdjusted > 0
+              ? ` (+${exchangeRes.netLoyaltyPointsAdjusted} loyalty pts)`
+              : ` (${exchangeRes.netLoyaltyPointsAdjusted} loyalty pts)`)
+          : '';
+        showToast(`✓ Exchange completed! New Bill: ${exchangeRes.newInvoiceNumber}, Credit Note: ${exchangeRes.creditNoteNumber}${ptsMsg}`);
+        loadParties();
+        loadInvoices();
+        loadItems();
+        try {
+          window.open(`/api/exchanges/${exchangeRes.exchangeId}/print`, '_blank', 'width=900,height=800');
+        } catch { }
+
+        setActiveExchangeLines([]);
+        setActiveExchangeOrigBill('');
+        setCart([]);
+        setCashReceived('');
+        setActiveQrAttempt(null);
+        setUpiManualRef('');
+        setSplitAmount1('');
+        setSplitAmount2('');
+        setSplitCashTendered('');
+        setCustomerSearch('');
+        setQuickCustomerName('');
+        setIsCheckingOut(false);
+        return;
+      }
+
+      // 2. Standalone Returns (if pure return without exchange)
       let lastCreditNoteNum = '';
       if (returnCartItems.length > 0) {
         const returnsByOrigInvoice: { [origId: string]: typeof returnCartItems } = {};
@@ -4346,18 +4474,6 @@ export function App() {
         hsn: c.item.hsn,
       }));
 
-      // Build customer name with contextual business tags
-      let custName = selectedCustomer ? selectedCustomer.name : undefined;
-      if (shop?.businessType === 'restaurant') {
-        custName = `${restaurantTable} (${restaurantOrderType}) ${custName ? '- ' + custName : ''}`;
-      } else if (shop?.businessType === 'pharmacy' && doctorName) {
-        custName = `${custName || 'Walk-in Patient'} [Prescribed by: ${doctorName}]`;
-      } else if (shop?.businessType === 'wholesale' && poNumber) {
-        custName = `${custName || 'B2B Buyer'} [PO: ${poNumber}]`;
-      } else if (shop?.businessType === 'service' && jobRef) {
-        custName = `${custName || 'Client'} [Ref: ${jobRef}]`;
-      }
-
       let paymentsPayload: { method: string; amountMinor: number; reference?: string }[] = [];
       let tenderPayload: { cashReceivedMinor: number; changeReturnedMinor: number } | null = null;
 
@@ -4400,57 +4516,6 @@ export function App() {
             changeReturnedMinor: Math.round(changeDueMinor),
           };
         }
-      }
-
-      // Capture customer phone & name reliably before resetting search inputs
-      const cleanSearchDigits = customerSearch.trim().replace(/\D/g, '');
-      const checkoutPhone = selectedCustomer?.phone || (cleanSearchDigits.length >= 7 ? customerSearch.trim() : undefined);
-      const checkoutCustName = custName || (selectedCustomer ? selectedCustomer.name : (quickCustomerName.trim() || (checkoutPhone ? `Customer ${checkoutPhone.replace(/\D/g, '').slice(-4)}` : undefined)));
-
-      // Handle Exchange Transaction Workflow
-      if (activeExchangeLines.length > 0) {
-        const exchangeMethod = selectedPayMode === 'split' ? splitMethod1 : selectedPayMode;
-        const exchangeRef = (exchangeMethod === 'upi' || exchangeMethod === 'bank')
-          ? (activeQrAttempt?.providerPaymentId || (upiManualRef.trim() ? upiManualRef.trim() : undefined))
-          : (exchangeMethod === 'card' ? (paymentCardRef || 'CARD_PAYMENT') : undefined);
-
-        const exchangeRes = await submitExchange({
-          origInvoiceId: activeExchangeLines[0].origInvoiceId,
-          branchId: activeBranch?.id || user?.branchId || undefined,
-          counter: selectedCounter,
-          counterId: checkoutCounterId || selectedCounterId || undefined,
-          returnLines: activeExchangeLines.map((l) => ({
-            origLineId: l.origLineId,
-            returnQtyMilli: l.returnQtyMilli,
-            condition: l.condition,
-            reason: l.reason,
-            remarks: l.remarks,
-          })),
-          newLines: lines,
-          paymentMethod: exchangeMethod,
-          paymentRef: exchangeRef,
-          excessRefundMethod: 'cash',
-          customerName: checkoutCustName,
-          customerPhone: checkoutPhone,
-        });
-
-        const ptsMsg = exchangeRes.netLoyaltyPointsAdjusted
-          ? (exchangeRes.netLoyaltyPointsAdjusted > 0
-              ? ` (+${exchangeRes.netLoyaltyPointsAdjusted} loyalty pts)`
-              : ` (${exchangeRes.netLoyaltyPointsAdjusted} loyalty pts)`)
-          : '';
-        showToast(`✓ Exchange completed! New Bill: ${exchangeRes.newInvoiceNumber}, Credit Note: ${exchangeRes.creditNoteNumber}${ptsMsg}`);
-        loadParties();
-        loadInvoices();
-        try {
-          window.open(`/api/exchanges/${exchangeRes.exchangeId}/print`, '_blank', 'width=900,height=800');
-        } catch { }
-
-        setActiveExchangeLines([]);
-        setActiveExchangeOrigBill('');
-        setCart([]);
-        setIsCheckingOut(false);
-        return;
       }
 
       const res = await api<{
@@ -4565,6 +4630,20 @@ export function App() {
       playAlertTone();
       showToast(err.message || 'Checkout failed', 'error');
       loadItems();
+      if (err.message && err.message.toLowerCase().includes('return quantity exceeds')) {
+        askConfirmation({
+          title: 'Return Item Stale or Already Returned',
+          message: `${err.message}. Would you like to clear the return item from your billing counter?`,
+          confirmText: 'Clear Return Item',
+          cancelText: 'Keep in Cart',
+          variant: 'warning',
+          onConfirm: () => {
+            setActiveExchangeLines([]);
+            setActiveExchangeOrigBill('');
+            setCart((prev) => prev.filter((c) => !c.isReturn));
+          },
+        });
+      }
     } finally {
       setIsCheckingOut(false);
     }
@@ -5299,8 +5378,15 @@ export function App() {
 
     // Turning off: ask for confirmation first
     if (prevActive && !skipConfirm) {
-      const confirmed = window.confirm(`Deactivate "${item.name}"? It will be hidden from POS billing.`);
-      if (!confirmed) return;
+      askConfirmation({
+        title: 'Deactivate Product?',
+        message: `Are you sure you want to deactivate "${item.name}"? It will be hidden from POS billing counters.`,
+        confirmText: 'Deactivate',
+        cancelText: 'Keep Active',
+        variant: 'warning',
+        onConfirm: () => handleToggleItemActive(item, true),
+      });
+      return;
     }
 
     setTogglingItemId(item.id);
@@ -6206,19 +6292,25 @@ export function App() {
   };
 
   const handleDeleteCategory = async (cat: Category) => {
-    const confirmMsg = `Are you sure you want to permanently delete category "${cat.name}"? Products assigned to this category will have their category cleared.`;
-    if (!window.confirm(confirmMsg)) return;
-
-    try {
-      await api(`/api/categories/${cat.id}`, {
-        method: 'DELETE',
-      });
-      showToast(`Category "${cat.name}" permanently deleted!`);
-      loadCategories();
-      loadItems();
-    } catch (err: any) {
-      alert(err.message || 'Failed to delete category');
-    }
+    askConfirmation({
+      title: 'Delete Category?',
+      message: `Are you sure you want to permanently delete category "${cat.name}"? Products assigned to this category will have their category cleared.`,
+      confirmText: 'Delete Category',
+      cancelText: 'Cancel',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          await api(`/api/categories/${cat.id}`, {
+            method: 'DELETE',
+          });
+          showToast(`Category "${cat.name}" permanently deleted!`);
+          loadCategories();
+          loadItems();
+        } catch (err: any) {
+          showToast(err.message || 'Failed to delete category', 'error');
+        }
+      },
+    });
   };
 
   const handleDownloadCategoryTemplate = async () => {
@@ -8494,15 +8586,26 @@ export function App() {
                             className="bento-clear-cart-btn"
                             disabled={cart.length === 0}
                             onClick={() => {
-                              setCart([]);
-                              setActiveExchangeLines([]);
-                              setActiveExchangeOrigBill('');
-                              setCashReceived('');
-                              setActiveQrAttempt(null);
-                              setUpiManualRef('');
-                              setSplitAmount1('');
-                              setSplitAmount2('');
-                              setSplitCashTendered('');
+                              if (cart.length === 0) return;
+                              askConfirmation({
+                                title: 'Clear Billing Terminal?',
+                                message: `Are you sure you want to clear ${cart.length} item(s) from the billing counter?`,
+                                confirmText: 'Yes, Clear Cart',
+                                cancelText: 'Keep Items',
+                                variant: 'danger',
+                                onConfirm: () => {
+                                  setCart([]);
+                                  setActiveExchangeLines([]);
+                                  setActiveExchangeOrigBill('');
+                                  setCashReceived('');
+                                  setActiveQrAttempt(null);
+                                  setUpiManualRef('');
+                                  setSplitAmount1('');
+                                  setSplitAmount2('');
+                                  setSplitCashTendered('');
+                                  showToast('Billing cart cleared');
+                                },
+                              });
                             }}
                             title="Clear all cart items"
                           >
@@ -8544,11 +8647,19 @@ export function App() {
                           <button
                             type="button"
                             onClick={() => {
-                              if (window.confirm('Cancel active exchange return credit?')) {
-                                setActiveExchangeLines([]);
-                                setActiveExchangeOrigBill('');
-                                setCart((prev) => prev.filter((c) => !c.isReturn));
-                              }
+                              askConfirmation({
+                                title: 'Cancel Active Exchange?',
+                                message: 'The return credit and return items from the original bill will be removed from this billing session.',
+                                confirmText: 'Yes, Cancel Exchange',
+                                cancelText: 'Keep Exchange',
+                                variant: 'danger',
+                                onConfirm: () => {
+                                  setActiveExchangeLines([]);
+                                  setActiveExchangeOrigBill('');
+                                  setCart((prev) => prev.filter((c) => !c.isReturn));
+                                  showToast('Exchange cancelled');
+                                },
+                              });
                             }}
                             style={{
                               background: '#fee2e2',
@@ -16164,14 +16275,24 @@ export function App() {
                               className="btn btn-primary"
                               style={{ padding: '0.35rem 0.75rem', fontSize: '0.78rem' }}
                               onClick={() => {
+                                const restoreOrder = () => {
+                                  setCart(order.cart);
+                                  setHeldOrders(prev => prev.filter(o => o.id !== order.id));
+                                  setShowHeldOrdersModal(false);
+                                  showToast(`Restored Order #${idx + 1} to active cart`);
+                                };
                                 if (cart.length > 0) {
-                                  const replace = window.confirm('Your active cart has items. Replace active cart with this held order?');
-                                  if (!replace) return;
+                                  askConfirmation({
+                                    title: 'Replace Active Cart?',
+                                    message: 'Your active cart has items. Replace current items with this held order?',
+                                    confirmText: 'Replace Cart',
+                                    cancelText: 'Keep Current Cart',
+                                    variant: 'warning',
+                                    onConfirm: restoreOrder,
+                                  });
+                                } else {
+                                  restoreOrder();
                                 }
-                                setCart(order.cart);
-                                setHeldOrders(prev => prev.filter(o => o.id !== order.id));
-                                setShowHeldOrdersModal(false);
-                                showToast(`Restored Order #${idx + 1} to active cart`);
                               }}
                             >
                               Restore
@@ -16181,10 +16302,17 @@ export function App() {
                               className="btn btn-secondary"
                               style={{ padding: '0.35rem 0.5rem', fontSize: '0.78rem', color: '#dc2626' }}
                               onClick={() => {
-                                if (window.confirm('Discard this held order?')) {
-                                  setHeldOrders(prev => prev.filter(o => o.id !== order.id));
-                                  showToast('Held order discarded');
-                                }
+                                askConfirmation({
+                                  title: 'Discard Parked Order?',
+                                  message: 'Are you sure you want to discard this held order?',
+                                  confirmText: 'Discard Order',
+                                  cancelText: 'Keep Order',
+                                  variant: 'danger',
+                                  onConfirm: () => {
+                                    setHeldOrders(prev => prev.filter(o => o.id !== order.id));
+                                    showToast('Held order discarded');
+                                  },
+                                });
                               }}
                             >
                               ✕
@@ -18337,7 +18465,15 @@ export function App() {
               (purLines[0] && (purLines[0].costRupees > 0 || purLines[0].discountRupees > 0 || purLines[0].batchNo))
             );
             if (isDirty) {
-              if (!confirm('Discard this purchase entry?')) return;
+              askConfirmation({
+                title: 'Discard Purchase Entry?',
+                message: 'You have unsaved changes in this purchase entry. Discard them?',
+                confirmText: 'Discard Entry',
+                cancelText: 'Continue Editing',
+                variant: 'danger',
+                onConfirm: () => setShowPurchaseModal(false),
+              });
+              return;
             }
             setShowPurchaseModal(false);
           };
@@ -23049,6 +23185,18 @@ export function App() {
             loadParties();
             loadInvoices();
           }}
+        />
+
+        {/* Bento Custom Confirmation Modal */}
+        <ConfirmModal
+          isOpen={bentoConfirm.isOpen}
+          title={bentoConfirm.title}
+          message={bentoConfirm.message}
+          confirmText={bentoConfirm.confirmText}
+          cancelText={bentoConfirm.cancelText}
+          variant={bentoConfirm.variant}
+          onConfirm={bentoConfirm.onConfirm}
+          onCancel={() => setBentoConfirm((prev) => ({ ...prev, isOpen: false }))}
         />
       </div>
     </BranchProvider>
