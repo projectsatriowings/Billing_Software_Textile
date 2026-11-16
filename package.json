@@ -19,6 +19,7 @@
     "tunnel": "npx -y cloudflared tunnel --url http://localhost:3001"
   },
   "dependencies": {
+    "exceljs": "^4.4.0",
     "html5-qrcode": "^2.3.8",
     "nodemailer": "^10.3.1",
     "pdf-lib": "^1.17.1",
@@ -27,6 +28,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "selfsigned": "^5.5.0",
+    "tesseract.js": "^7.0.0",
     "tsx": "^4.19.0",
     "xlsx": "^0.18.5"
   },

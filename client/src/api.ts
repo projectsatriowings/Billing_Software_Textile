@@ -2604,4 +2604,139 @@ export const fetchReturnReports = (params: {
   return api<any>(`/api/reports/returns-module?${q.toString()}`);
 };
 
+// ── Supplier Invoice to Excel Converter ───────────────────────────────────────
+export interface ExtractedSupplierInvoiceItem {
+  id: string;
+  name: string;
+  uom: string;
+  sellingPrice: string;
+  costPrice: string;
+  hsn: string;
+  gstRate: string;
+  priceInclusive: 'Yes' | 'No';
+  openingStock: string;
+  rawRate?: string;
+  rawQty?: string;
+  rawDiscount?: string;
+  rawTaxable?: string;
+  rawTotal?: string;
+  confidence?: 'high' | 'medium' | 'low';
+  flags?: string[];
+}
+
+export interface SupplierInvoiceMetadata {
+  supplierName: string;
+  supplierGstin: string;
+  invoiceNumber: string;
+  invoiceDate: string;
+  totalAmount: number | null;
+  rawText: string;
+}
+
+export interface SupplierInvoiceExtractionResult {
+  ok: boolean;
+  metadata: SupplierInvoiceMetadata;
+  headers: string[];
+  detectedColumns: string[];
+  columnMap: Record<string, string | undefined>;
+  savedMapping: {
+    id: string;
+    supplierId?: string;
+    supplierName: string;
+    supplierGstin?: string;
+    mapping: Record<string, string | undefined>;
+  } | null;
+  pageCount: number;
+  isOcr: boolean;
+  products: ExtractedSupplierInvoiceItem[];
+  calculatedTotalCost: number;
+  dataLinesPreview: string[];
+}
+
+export interface SupplierInvoiceMapping {
+  id: string;
+  supplierId?: string | null;
+  supplierName: string;
+  supplierGstin?: string | null;
+  mapping: Record<string, string | undefined>;
+  headerSample?: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const extractSupplierInvoice = (payload: {
+  fileName: string;
+  fileData: string;
+  mimeType?: string;
+  supplierId?: string;
+}) =>
+  api<SupplierInvoiceExtractionResult>('/api/supplier-invoices/extract', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+
+export const reparseSupplierInvoice = (payload: {
+  dataLines: string[];
+  headers: string[];
+  columnMap: Record<string, string | undefined>;
+}) =>
+  api<{
+    ok: boolean;
+    products: ExtractedSupplierInvoiceItem[];
+    calculatedTotalCost: number;
+    columnMap: Record<string, string | undefined>;
+  }>('/api/supplier-invoices/reparse', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+
+export const fetchSupplierInvoiceMappings = () =>
+  api<{ ok: boolean; mappings: SupplierInvoiceMapping[] }>('/api/supplier-invoices/mappings');
+
+export const saveSupplierInvoiceMapping = (data: {
+  id?: string;
+  supplierId?: string | null;
+  supplierName: string;
+  supplierGstin?: string | null;
+  mapping: Record<string, string | undefined>;
+  headerSample?: string[];
+}) =>
+  api<{ ok: boolean; id: string; created?: boolean; updated?: boolean }>('/api/supplier-invoices/mappings', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+export const deleteSupplierInvoiceMapping = (id: string) =>
+  api<{ ok: boolean; deleted: boolean }>(`/api/supplier-invoices/mappings/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+  });
+
+export const exportSupplierInvoiceExcel = async (payload: {
+  products: ExtractedSupplierInvoiceItem[];
+  invoiceNumber?: string;
+}): Promise<Blob> => {
+  const token = localStorage.getItem('token') || '';
+  const branchId = getActiveBranchScope();
+  const res = await fetch('/api/supplier-invoices/export-excel', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      authorization: token ? `Bearer ${token}` : '',
+      ...(branchId ? { 'x-branch-id': branchId } : {}),
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const errorText = await res.text();
+    let msg = 'Failed to generate Excel file';
+    try {
+      const errJson = JSON.parse(errorText);
+      msg = errJson.error?.message || msg;
+    } catch {}
+    throw new Error(msg);
+  }
+  return res.blob();
+};
+
+
 

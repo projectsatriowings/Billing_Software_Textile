@@ -143,6 +143,7 @@ import { BranchSelector } from './components/common/BranchSelector';
 import { StoreManagerDashboard } from './components/dashboards/StoreManagerDashboard';
 import { fileToOptimizedDataUrl, resolveDriveImageUrl, isGoogleDriveUrl, handleProductImageError } from './imageUtils';
 import { BulkImportModal } from './components/BulkImportModal';
+import { SupplierInvoiceConverterModal } from './components/supplierInvoice/SupplierInvoiceConverterModal';
 import { WholesaleBillingView } from './components/wholesale/WholesaleBillingView';
 import { WHOLESALE_BILLING_ICON } from './components/wholesale/wholesaleIconData';
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
@@ -204,7 +205,6 @@ export const HIDE_BUSINESS_BAR_ROUTES = [
 ];
 
 export const HIDE_BUSINESS_BAR_TABS = new Set([
-  'wholesale',
   'shifts',
   'items',
   'categories',
@@ -1366,6 +1366,7 @@ export function App() {
   // Master Data: Item Form Modal (Add & Edit)
   const [showItemModal, setShowItemModal] = useState(false);
   const [showBulkImportModal, setShowBulkImportModal] = useState(false);
+  const [showSupplierInvoiceConverter, setShowSupplierInvoiceConverter] = useState(false);
   const [editingItem, setEditingItem] = useState<Item | null>(null);
   const [deletingItem, setDeletingItem] = useState<Item | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -7765,11 +7766,20 @@ export function App() {
           {/* View Transition Stage (SPA Bento Transition) */}
           <div key={displayTab} className={`app-view-stage ${hideBusinessBar ? 'stage-business-bar-hidden' : ''}`}>
             {/* Tab Headers */}
-            {!hideBusinessBar && displayTab !== 'pos' && displayTab !== 'shifts' && displayTab !== 'sales-analysis' && displayTab !== 'dashboard' && displayTab !== 'stock-transfer' && displayTab !== 'user-management' && activeTab !== 'user-management' && (
-              <header className="content-top-header">
+            {displayTab === 'wholesale' ? (
+              <header className="content-top-header wholesale-top-header">
                 <div className="content-header-left">
-                  <h1 className="content-page-title">
-                    {displayTab === 'items' && 'Product & Stock Catalog'}
+                  <h1 className="content-page-title wholesale-page-title">
+                    Wholesale Billing &amp; B2B Tax Invoices
+                  </h1>
+                </div>
+              </header>
+            ) : (
+              !hideBusinessBar && displayTab !== 'pos' && displayTab !== 'shifts' && displayTab !== 'sales-analysis' && displayTab !== 'dashboard' && displayTab !== 'stock-transfer' && displayTab !== 'user-management' && activeTab !== 'user-management' && (
+                <header className="content-top-header">
+                  <div className="content-header-left">
+                    <h1 className="content-page-title">
+                      {displayTab === 'items' && 'Product & Stock Catalog'}
                       {displayTab === 'purchases' && 'Purchases & Stock Inward'}
                       {displayTab === 'invoices' && 'Sales Invoices & Bills'}
                       {displayTab === 'customers' && 'Customer Directory & Loyalty Points'}
@@ -7845,7 +7855,7 @@ export function App() {
                   </div>
                 </header>
               )
-            }
+            )}
 
             {/* TAB 0: DASHBOARD (TODAY'S LIVE OVERVIEW) */}
             {displayTab === 'dashboard' && user && user.role !== 'cashier' && (
@@ -10590,6 +10600,28 @@ export function App() {
                         <span>Import Products</span>
                       </button>
                       <button
+                        id="convert-supplier-invoice-btn"
+                        className="btn btn-secondary"
+                        onClick={() => setShowSupplierInvoiceConverter(true)}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.45rem',
+                          fontWeight: 600,
+                          padding: '0.45rem 0.85rem',
+                        }}
+                        title="Convert Supplier Invoice (PDF, JPG, PNG) to Excel import template without AI"
+                      >
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                          <polyline points="14 2 14 8 20 8" />
+                          <line x1="8" y1="13" x2="16" y2="13" />
+                          <line x1="8" y1="17" x2="16" y2="17" />
+                          <polyline points="10 9 9 9 8 9" />
+                        </svg>
+                        <span>Convert Supplier Invoice to Excel</span>
+                      </button>
+                      <button
                         id="scan-manufacturer-barcodes-catalog-btn"
                         className="btn btn-secondary"
                         onClick={() => {
@@ -11832,6 +11864,7 @@ export function App() {
                 }}
                 showToast={showToast}
                 onReloadItems={loadItems}
+                onOpenSupplierInvoiceConverter={() => setShowSupplierInvoiceConverter(true)}
               />
             )}
 
@@ -15437,11 +15470,28 @@ export function App() {
             shopName={shop?.name}
             suppliers={parties.filter((p) => p.type === 'supplier')}
             onClose={() => setShowBulkImportModal(false)}
+            onOpenSupplierInvoiceConverter={() => {
+              setShowBulkImportModal(false);
+              setShowSupplierInvoiceConverter(true);
+            }}
             onImportDone={() => {
               loadItems();
               loadCategories();
               loadParties();
               showToast('Bulk import completed! Products updated.');
+            }}
+          />
+        )}
+
+        {/* CONVERT SUPPLIER INVOICE TO EXCEL MODAL (NON-AI) */}
+        {showSupplierInvoiceConverter && (
+          <SupplierInvoiceConverterModal
+            suppliers={parties.filter((p) => p.type === 'supplier')}
+            existingItems={items}
+            onClose={() => setShowSupplierInvoiceConverter(false)}
+            onOpenBulkImport={() => {
+              setShowSupplierInvoiceConverter(false);
+              setShowBulkImportModal(true);
             }}
           />
         )}

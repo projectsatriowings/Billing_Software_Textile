@@ -414,6 +414,7 @@ interface Props {
   suppliers?: Party[];
   onClose: () => void;
   onImportDone: () => void;
+  onOpenSupplierInvoiceConverter?: () => void;
 }
 
 // ── Helper functions ──────────────────────────────────────────────────────────
@@ -471,7 +472,7 @@ export function downloadExcelTemplate(): void {
 
 // ── Main Component ────────────────────────────────────────────────────────────
 
-export function BulkImportModal({ categories, existingItems = [], shopName, branchId, suppliers, onClose, onImportDone }: Props) {
+export function BulkImportModal({ categories, existingItems = [], shopName, branchId, suppliers, onClose, onImportDone, onOpenSupplierInvoiceConverter }: Props) {
   const [step, setStep] = useState<WizardStep>('choose');
   const [importSource, setImportSource] = useState<string>('Uploaded File');
   const [activeTab, setActiveTab] = useState<'upload' | 'paste' | 'manual'>('upload');
@@ -2302,6 +2303,19 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
                   <span>Enter Data Manually</span>
                   {activeTab === 'manual' && <span className="bulk-method-dot"></span>}
                 </button>
+                {onOpenSupplierInvoiceConverter && (
+                  <button
+                    type="button"
+                    id="bulk-tab-convert-invoice"
+                    onClick={onOpenSupplierInvoiceConverter}
+                    className="bulk-method-pill"
+                    title="Upload PDF, JPG, or PNG supplier invoices to extract products"
+                    style={{ background: '#f5f3ff', border: '1px solid #ddd6fe', color: '#4f46e5', fontWeight: 600 }}
+                  >
+                    <FileSpreadsheetIcon size={16} color="#4f46e5" />
+                    <span>Convert Supplier Invoice to Excel</span>
+                  </button>
+                )}
               </div>
 
               {/* TAB A: UPLOAD FILE BENTO GRID */}
@@ -2422,6 +2436,35 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
                             <DownloadIcon size={13} />
                           </div>
                         </div>
+
+                        {onOpenSupplierInvoiceConverter && (
+                          <div
+                            className="bulk-template-tile"
+                            id="bulk-open-invoice-converter-btn"
+                            onClick={onOpenSupplierInvoiceConverter}
+                            title="Upload a supplier invoice in PDF, JPG, or PNG to convert to Excel import template"
+                            style={{
+                              gridColumn: '1 / -1',
+                              background: 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)',
+                              border: '1.5px dashed #a5b4fc',
+                            }}
+                          >
+                            <div className="bulk-template-icon-squircle purple">
+                              <FileSpreadsheetIcon size={16} color="#4f46e5" />
+                            </div>
+                            <div className="bulk-template-info">
+                              <span className="bulk-template-name" style={{ color: '#3730a3', fontWeight: 700 }}>
+                                Convert Supplier Invoice to Excel
+                              </span>
+                              <span className="bulk-template-sub">
+                                Scan PDF, JPG, or PNG invoice without AI
+                              </span>
+                            </div>
+                            <div className="bulk-template-download-btn" style={{ color: '#4f46e5' }}>
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
 
