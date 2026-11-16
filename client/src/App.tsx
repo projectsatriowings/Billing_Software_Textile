@@ -3455,16 +3455,51 @@ export function App() {
     return selectedParty.loyaltyPoints ?? 0;
   }, [selectedParty]);
 
-  // Cart Totals
-  const cartSubtotalMinor = cart.reduce((acc, c) => acc + c.item.priceMinor * c.qty, 0);
-  const cartTaxMinor = cart.reduce((acc, c) => {
-    const gross = c.item.priceMinor * c.qty;
-    const taxable = Math.round((gross * 10000) / (10000 + c.item.taxRateBp));
-    return acc + (gross - taxable);
-  }, 0);
-  const cartTaxableMinor = cartSubtotalMinor - cartTaxMinor;
-  const cartCgstMinor = Math.floor(cartTaxMinor / 2);
-  const cartSgstMinor = cartTaxMinor - cartCgstMinor;
+  // Cart items separated into normal purchase items and return items
+  const normalCartItems = useMemo(() => cart.filter((c) => !c.isReturn), [cart]);
+  const returnCartItems = useMemo(() => cart.filter((c) => c.isReturn), [cart]);
+  const isExchangeActive = activeExchangeLines.length > 0 || returnCartItems.length > 0;
+
+  // Total Exchange Return Credit available from returned goods
+  const totalExchangeCreditMinor = useMemo(() => {
+    const fromCart = returnCartItems.reduce((acc, c) => acc + Math.abs(c.item.priceMinor) * c.qty, 0);
+    const fromLines = activeExchangeLines.reduce((acc, l) => acc + (l.estimatedCreditMinor || 0), 0);
+    return Math.max(fromCart, fromLines);
+  }, [returnCartItems, activeExchangeLines]);
+
+  // New Items Subtotal & Taxes (for exchange or normal sale)
+  const newItemsSubtotalMinor = useMemo(() => {
+    return normalCartItems.reduce((acc, c) => acc + c.item.priceMinor * c.qty, 0);
+  }, [normalCartItems]);
+
+  const newItemsTaxMinor = useMemo(() => {
+    return normalCartItems.reduce((acc, c) => {
+      const gross = c.item.priceMinor * c.qty;
+      const taxable = Math.round((gross * 10000) / (10000 + (c.item.taxRateBp || 0)));
+      return acc + (gross - taxable);
+    }, 0);
+  }, [normalCartItems]);
+
+  const newItemsTaxableMinor = newItemsSubtotalMinor - newItemsTaxMinor;
+  const newItemsCgstMinor = Math.floor(newItemsTaxMinor / 2);
+  const newItemsSgstMinor = newItemsTaxMinor - newItemsCgstMinor;
+
+  // Cart Subtotal & Taxes for General POS or Exchange
+  const cartSubtotalMinor = isExchangeActive
+    ? newItemsSubtotalMinor
+    : cart.reduce((acc, c) => acc + c.item.priceMinor * c.qty, 0);
+
+  const cartTaxMinor = isExchangeActive
+    ? newItemsTaxMinor
+    : cart.reduce((acc, c) => {
+        const gross = c.item.priceMinor * c.qty;
+        const taxable = Math.round((gross * 10000) / (10000 + c.item.taxRateBp));
+        return acc + (gross - taxable);
+      }, 0);
+
+  const cartTaxableMinor = isExchangeActive ? newItemsTaxableMinor : cartSubtotalMinor - cartTaxMinor;
+  const cartCgstMinor = isExchangeActive ? newItemsCgstMinor : Math.floor(cartTaxMinor / 2);
+  const cartSgstMinor = isExchangeActive ? newItemsSgstMinor : cartTaxMinor - cartCgstMinor;
   const cartTotalMinor = cartSubtotalMinor;
   const percentDiscountMinor = Math.round((cartTotalMinor * appliedDiscountPercent) / 100);
   const maxPointsDiscountMinor = Math.max(0, cartTotalMinor - percentDiscountMinor);
@@ -3482,15 +3517,38 @@ export function App() {
   const pointsActuallyRedeemed = redeemPoints ? maxRedeemablePoints : 0;
   const promoDiscountMinor = promoEvalResult?.totalDiscountMinor || 0;
   const discountMinor = percentDiscountMinor + pointsDiscountMinor + promoDiscountMinor;
-  const finalPayableMinor = Math.max(0, cartTotalMinor - discountMinor);
-  const totalExchangeCreditMinor = useMemo(() => {
-    return activeExchangeLines.reduce((acc, l) => acc + (l.estimatedCreditMinor || 0), 0);
-  }, [activeExchangeLines]);
-  const exchangeCustomerPayableMinor = Math.max(0, finalPayableMinor - totalExchangeCreditMinor);
-  const exchangeCustomerRefundMinor = Math.max(0, totalExchangeCreditMinor - finalPayableMinor);
-  const pointsToEarnOnBill = (shopLoyaltyActive && shopPointsPer100 > 0)
-    ? Math.floor((finalPayableMinor * shopPointsPer100) / 10000)
+
+  // Amount payable on new items after discounts
+  const newItemsPayableMinor = Math.max(0, cartTotalMinor - discountMinor);
+
+  // Net Exchange Balance Math:
+  // If customer buys more than return credit -> customer pays the positive difference
+  // If return credit is more than new purchase -> shop owes customer a refund
+  const exchangeCustomerPayableMinor = isExchangeActive
+    ? Math.max(0, newItemsPayableMinor - totalExchangeCreditMinor)
     : 0;
+
+  const exchangeCustomerRefundMinor = isExchangeActive
+    ? Math.max(0, totalExchangeCreditMinor - newItemsPayableMinor)
+    : 0;
+
+  // Final amount to tender / collect at POS terminal
+  const finalPayableMinor = isExchangeActive
+    ? exchangeCustomerPayableMinor
+    : Math.max(0, cartTotalMinor - discountMinor);
+
+  // Net Loyalty Points on Exchange / Bill:
+  const netLoyaltyPointsToEarn = useMemo(() => {
+    if (!shopLoyaltyActive || shopPointsPer100 <= 0) return 0;
+    if (isExchangeActive) {
+      const earnedOnNew = Math.floor((newItemsPayableMinor * shopPointsPer100) / 10000);
+      const reversedOnReturn = Math.floor((totalExchangeCreditMinor * shopPointsPer100) / 10000);
+      return earnedOnNew - reversedOnReturn;
+    }
+    return Math.floor((finalPayableMinor * shopPointsPer100) / 10000);
+  }, [shopLoyaltyActive, shopPointsPer100, isExchangeActive, newItemsPayableMinor, totalExchangeCreditMinor, finalPayableMinor]);
+
+  const pointsToEarnOnBill = Math.max(0, netLoyaltyPointsToEarn);
 
   // Cash Tender & Change Return calculation
   const cashReceivedValMinor = cashReceived.trim() !== ''
@@ -4376,7 +4434,14 @@ export function App() {
           customerPhone: checkoutPhone,
         });
 
-        showToast(`✓ Exchange completed! New Bill: ${exchangeRes.newInvoiceNumber}, Credit Note: ${exchangeRes.creditNoteNumber}`);
+        const ptsMsg = exchangeRes.netLoyaltyPointsAdjusted
+          ? (exchangeRes.netLoyaltyPointsAdjusted > 0
+              ? ` (+${exchangeRes.netLoyaltyPointsAdjusted} loyalty pts)`
+              : ` (${exchangeRes.netLoyaltyPointsAdjusted} loyalty pts)`)
+          : '';
+        showToast(`✓ Exchange completed! New Bill: ${exchangeRes.newInvoiceNumber}, Credit Note: ${exchangeRes.creditNoteNumber}${ptsMsg}`);
+        loadParties();
+        loadInvoices();
         try {
           window.open(`/api/exchanges/${exchangeRes.exchangeId}/print`, '_blank', 'width=900,height=800');
         } catch { }
@@ -8472,7 +8537,7 @@ export function App() {
                                 Linked Original Invoice: {activeExchangeOrigBill}
                               </div>
                               <div style={{ color: '#4338ca', fontSize: '0.75rem' }}>
-                                {activeExchangeLines.length} garment(s) returning · Available Return Credit: <strong>₹{(totalExchangeCreditMinor / 100).toFixed(2)}</strong>
+                                {activeExchangeLines.length} item(s) returning · Available Return Credit: <strong>₹{(totalExchangeCreditMinor / 100).toFixed(2)}</strong>
                               </div>
                             </div>
                           </div>
@@ -8482,6 +8547,7 @@ export function App() {
                               if (window.confirm('Cancel active exchange return credit?')) {
                                 setActiveExchangeLines([]);
                                 setActiveExchangeOrigBill('');
+                                setCart((prev) => prev.filter((c) => !c.isReturn));
                               }
                             }}
                             style={{
@@ -8831,7 +8897,9 @@ export function App() {
                           <div className="bento-summary-row">
                             <span className="summary-label">Items / Total Units</span>
                             <span className="summary-val mono">
-                              {cart.length} items ({cart.reduce((a, b) => a + b.qty, 0)} units)
+                              {isExchangeActive
+                                ? `${normalCartItems.length} new (${normalCartItems.reduce((a, b) => a + b.qty, 0)} units) + ${returnCartItems.length} return`
+                                : `${cart.length} items (${cart.reduce((a, b) => a + b.qty, 0)} units)`}
                             </span>
                           </div>
 
@@ -8843,9 +8911,20 @@ export function App() {
                           )}
 
                           <div className="bento-summary-row">
-                            <span className="summary-label">Taxable Subtotal</span>
+                            <span className="summary-label">{isExchangeActive ? 'New Items Taxable Subtotal' : 'Taxable Subtotal'}</span>
                             <span className="summary-val mono">{formatRupees(cartTaxableMinor)}</span>
                           </div>
+
+                          {isExchangeActive && totalExchangeCreditMinor > 0 && (
+                            <div className="bento-summary-row" style={{ background: '#f0fdf4', padding: '0.35rem 0.65rem', borderRadius: '6px', border: '1px solid #bbf7d0', margin: '3px 0' }}>
+                              <span className="summary-label" style={{ color: '#166534', fontWeight: 700 }}>
+                                Return Credit (Ref: #{activeExchangeOrigBill || returnCartItems[0]?.origInvoiceNumber || 'BILL'})
+                              </span>
+                              <span className="summary-val mono" style={{ color: '#166534', fontWeight: 800 }}>
+                                -{formatRupees(totalExchangeCreditMinor)}
+                              </span>
+                            </div>
+                          )}
 
                           {appliedDiscountPercent > 0 && (
                             <div className="bento-summary-row discount-row">
@@ -8920,40 +8999,44 @@ export function App() {
                             </div>
                           )}
 
-                          {/* LOYALTY POINTS EARNED ON BILL */}
+                          {/* LOYALTY POINTS EARNED / ADJUSTED ON BILL */}
                           {shopLoyaltyActive && cart.length > 0 && (
                             <div
                               className="bento-summary-row loyalty-earn-row"
                               style={{
-                                background: 'linear-gradient(135deg, #faf5ff 0%, #fdf4ff 100%)',
+                                background: netLoyaltyPointsToEarn >= 0 ? 'linear-gradient(135deg, #faf5ff 0%, #fdf4ff 100%)' : '#fef2f2',
                                 padding: '0.35rem 0.65rem',
                                 borderRadius: '6px',
-                                border: '1px solid #f0abfc',
+                                border: netLoyaltyPointsToEarn >= 0 ? '1px solid #f0abfc' : '1px solid #fecaca',
                                 margin: '3px 0',
                               }}
                             >
                               <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#86198f" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={netLoyaltyPointsToEarn >= 0 ? '#86198f' : '#b91c1c'} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                                   <polyline points="20 12 20 22 4 22 4 12"></polyline>
                                   <rect x="2" y="7" width="20" height="5"></rect>
                                   <line x1="12" y1="22" x2="12" y2="7"></line>
                                   <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path>
                                   <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path>
                                 </svg>
-                                <span className="summary-label" style={{ color: '#86198f', fontWeight: 700 }}>
-                                  Loyalty Points on Bill
+                                <span className="summary-label" style={{ color: netLoyaltyPointsToEarn >= 0 ? '#86198f' : '#b91c1c', fontWeight: 700 }}>
+                                  {isExchangeActive
+                                    ? (netLoyaltyPointsToEarn >= 0 ? 'Loyalty Points on Bill (Net)' : 'Loyalty Points Adjustment')
+                                    : 'Loyalty Points on Bill'}
                                 </span>
-                                <span style={{ fontSize: '0.68rem', color: '#a21caf', fontWeight: 600 }}>
+                                <span style={{ fontSize: '0.68rem', color: netLoyaltyPointsToEarn >= 0 ? '#a21caf' : '#991b1b', fontWeight: 600 }}>
                                   ({shopPointsPer100} pts/₹100)
                                 </span>
                               </div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <span className="summary-val mono" style={{ color: '#86198f', fontWeight: 800 }}>
-                                  +{pointsToEarnOnBill} pts
+                                <span className="summary-val mono" style={{ color: netLoyaltyPointsToEarn >= 0 ? '#86198f' : '#b91c1c', fontWeight: 800 }}>
+                                  {netLoyaltyPointsToEarn >= 0 ? `+${netLoyaltyPointsToEarn} pts` : `${netLoyaltyPointsToEarn} pts`}
                                 </span>
-                                <span style={{ fontSize: '0.7rem', color: '#15803d', fontWeight: 700 }}>
-                                  (≈ {formatRupees(pointsToEarnOnBill * shopPointValMinor)})
-                                </span>
+                                {netLoyaltyPointsToEarn !== 0 && (
+                                  <span style={{ fontSize: '0.7rem', color: netLoyaltyPointsToEarn > 0 ? '#15803d' : '#b91c1c', fontWeight: 700 }}>
+                                    (≈ {formatRupees(Math.abs(netLoyaltyPointsToEarn) * shopPointValMinor)})
+                                  </span>
+                                )}
                               </div>
                             </div>
                           )}
@@ -8961,7 +9044,7 @@ export function App() {
                           {/* CONSOLIDATED OVERALL GST WITH TAX BREAKDOWN */}
                           <div className="bento-summary-row tax-row">
                             <div className="tax-label-group">
-                              <span className="summary-label">Consolidated GST Tax</span>
+                              <span className="summary-label">{isExchangeActive ? 'New Items GST Tax' : 'Consolidated GST Tax'}</span>
                               <span className="tax-sub-breakdown">
                                 (CGST: {formatRupees(cartCgstMinor)} + SGST: {formatRupees(cartSgstMinor)})
                               </span>
@@ -10176,16 +10259,27 @@ export function App() {
                         {/* Bottom Grand Total & Proceed Button */}
                         <div className="bento-checkout-row">
                           <div className="bento-grand-total">
-                            {activeExchangeLines.length > 0 ? (
+                            {isExchangeActive ? (
                               <div>
-                                <div style={{ fontSize: '0.72rem', color: '#4f46e5', fontWeight: 600 }}>
-                                  New Items: {formatRupees(finalPayableMinor)} | Return Credit: -{formatRupees(totalExchangeCreditMinor)}
+                                <div style={{ fontSize: '0.75rem', color: '#4f46e5', fontWeight: 600, display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '2px' }}>
+                                  <span>New Items: {formatRupees(newItemsPayableMinor)}</span>
+                                  <span style={{ color: '#94a3b8' }}>•</span>
+                                  <span style={{ color: '#059669' }}>Return Credit: -{formatRupees(totalExchangeCreditMinor)}</span>
                                 </div>
                                 <span className="grand-total-label">
-                                  {finalPayableMinor >= totalExchangeCreditMinor ? 'Net Customer Payable' : 'Customer Refund Due'}
+                                  {exchangeCustomerPayableMinor > 0
+                                    ? 'Net Customer Payable'
+                                    : exchangeCustomerRefundMinor > 0
+                                      ? 'Customer Refund Due'
+                                      : 'Even Exchange (₹0 Due)'}
                                 </span>
-                                <span className="grand-total-val mono" style={{ color: finalPayableMinor >= totalExchangeCreditMinor ? '#059669' : '#dc2626' }}>
-                                  {formatRupees(Math.abs(finalPayableMinor - totalExchangeCreditMinor))}
+                                <span
+                                  className="grand-total-val mono"
+                                  style={{
+                                    color: exchangeCustomerPayableMinor > 0 ? '#4338ca' : exchangeCustomerRefundMinor > 0 ? '#dc2626' : '#0284c7',
+                                  }}
+                                >
+                                  {formatRupees(exchangeCustomerPayableMinor > 0 ? exchangeCustomerPayableMinor : exchangeCustomerRefundMinor)}
                                 </span>
                               </div>
                             ) : (
@@ -10223,8 +10317,12 @@ export function App() {
                               ) : (
                                 <>
                                   <span>
-                                    {activeExchangeLines.length > 0
-                                      ? (finalPayableMinor >= totalExchangeCreditMinor ? 'Complete Exchange & Bill' : 'Complete Exchange & Refund Balance')
+                                    {isExchangeActive
+                                      ? (exchangeCustomerPayableMinor > 0
+                                          ? `Complete Exchange & Collect ${formatRupees(exchangeCustomerPayableMinor)}`
+                                          : exchangeCustomerRefundMinor > 0
+                                            ? `Complete Exchange & Refund ${formatRupees(exchangeCustomerRefundMinor)}`
+                                            : 'Complete Even Exchange')
                                       : (selectedPayMode === 'cash' ? 'Complete Sale & Generate Bill' :
                                         selectedPayMode === 'upi' ? 'Confirm UPI & Generate Bill' :
                                           selectedPayMode === 'card' ? 'Card Paid & Generate Bill' :
@@ -22948,6 +23046,8 @@ export function App() {
           onReturnCompleted={(_cnId, cnNumber) => {
             showToast(`Return processed successfully! Credit Note: ${cnNumber}`);
             setShowReturnExchangeModal(false);
+            loadParties();
+            loadInvoices();
           }}
         />
       </div>

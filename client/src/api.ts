@@ -2540,6 +2540,8 @@ export const submitExchange = (data: {
     customerPayableMinor: number;
     customerRefundMinor: number;
     exchangeAdjustedMinor: number;
+    netLoyaltyPointsAdjusted?: number;
+    customerLoyaltyPoints?: number;
   }>('/api/exchanges', {
     method: 'POST',
     body: JSON.stringify(data),
