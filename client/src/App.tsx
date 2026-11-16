@@ -4412,7 +4412,8 @@ export function App() {
         loadInvoices();
         loadItems();
         try {
-          window.open(`/api/exchanges/${exchangeRes.exchangeId}/print`, '_blank', 'width=900,height=800');
+          const tenantParam = shop?.id ? `?tenantId=${encodeURIComponent(shop.id)}` : '';
+          window.open(`/api/exchanges/${exchangeRes.exchangeId}/print${tenantParam}`, '_blank', 'width=900,height=800');
         } catch { }
 
         setActiveExchangeLines([]);

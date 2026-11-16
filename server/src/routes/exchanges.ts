@@ -658,22 +658,28 @@ export function registerExchanges(r: Router) {
   // 2. Printable Exchange Invoice
   r.get('/api/exchanges/:exchangeId/print', async (ctx) => {
     const exchangeId = ctx.params.exchangeId;
-    const tenantId = (ctx.query.tenantId as string) || (ctx.user?.tenantId);
+
+    // Look up exchange invoices by unique exchange_id
+    const invSale = await ctx.db.one<any>(
+      `SELECT * FROM invoices WHERE exchange_id = ? AND kind = 'sale' AND status = 'posted' LIMIT 1`,
+      [exchangeId],
+    );
+    const invCn = await ctx.db.one<any>(
+      `SELECT * FROM invoices WHERE exchange_id = ? AND kind = 'credit_note' AND status = 'posted' LIMIT 1`,
+      [exchangeId],
+    );
+
+    if (!invSale && !invCn) throw notFound('Exchange record');
+
+    const tenantId =
+      (ctx.query.tenantId as string) ||
+      ctx.user?.tenantId ||
+      (invSale?.tenantId ?? invSale?.tenant_id) ||
+      (invCn?.tenantId ?? invCn?.tenant_id);
     if (!tenantId) throw bad('Missing tenantId');
 
     const shop = await ctx.db.one<any>('SELECT * FROM tenants WHERE id = ?', [tenantId]);
     if (!shop) throw notFound('Shop');
-
-    const invSale = await ctx.db.one<any>(
-      `SELECT * FROM invoices WHERE tenant_id = ? AND exchange_id = ? AND kind = 'sale' AND status = 'posted'`,
-      [tenantId, exchangeId],
-    );
-    const invCn = await ctx.db.one<any>(
-      `SELECT * FROM invoices WHERE tenant_id = ? AND exchange_id = ? AND kind = 'credit_note' AND status = 'posted'`,
-      [tenantId, exchangeId],
-    );
-
-    if (!invSale && !invCn) throw notFound('Exchange record');
 
     const saleLines = invSale ? await ctx.db.query<any>('SELECT * FROM invoice_lines WHERE invoice_id = ? ORDER BY pos ASC', [invSale.id]) : [];
     const cnLines = invCn ? await ctx.db.query<any>('SELECT * FROM invoice_lines WHERE invoice_id = ? ORDER BY pos ASC', [invCn.id]) : [];
