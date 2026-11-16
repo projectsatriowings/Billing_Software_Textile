@@ -448,13 +448,13 @@ export function StoreSettingsView({
 
               <div className="form-group">
                 <label className="form-label" style={{ fontWeight: 600, fontSize: '0.85rem' }}>
-                  Wholesale Business Display Name
+                  Wholesale Business Name
                 </label>
                 <input
                   type="text"
                   className="form-input"
                   disabled={!isEditable}
-                  placeholder="e.g. ABC Wholesale Traders, Sri Lakshmi Distributors, Kumar Agencies"
+                  placeholder="Enter wholesale business name"
                   value={wholesaleBusinessName}
                   onChange={(e) => {
                     const val = e.target.value;

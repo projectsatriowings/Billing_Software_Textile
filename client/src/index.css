@@ -1192,6 +1192,12 @@ body {
   }
 }
 
+@media (max-width: 640px) {
+  .business-profile-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
 .header-store-chip {
   display: inline-flex;
   align-items: center;

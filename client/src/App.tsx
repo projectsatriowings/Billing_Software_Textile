@@ -1204,6 +1204,7 @@ export function App() {
 
   // Settings tab form state
   const [settingsName, setSettingsName] = useState('');
+  const [settingsWholesaleBusinessName, setSettingsWholesaleBusinessName] = useState('');
   const [settingsType, setSettingsType] = useState('retail');
   const [settingsGstin, setSettingsGstin] = useState('');
   const [settingsPhone, setSettingsPhone] = useState('');
@@ -1784,6 +1785,7 @@ export function App() {
 
   const initSettingsForm = (s: Shop) => {
     setSettingsName(s.name || '');
+    setSettingsWholesaleBusinessName(s.wholesaleBusinessName || (s as any).wholesale_business_name || (s.invoiceProfiles?.wholesale?.displayName) || '');
     setSettingsType(s.businessType || 'retail');
     setSettingsGstin(s.gstin || '');
     setSettingsPhone(s.phone || '');
@@ -2704,6 +2706,7 @@ export function App() {
         method: 'PUT',
         body: JSON.stringify({
           name: settingsName,
+          wholesaleBusinessName: settingsWholesaleBusinessName.trim() || null,
           businessType: settingsType,
           gstin: settingsGstin || null,
           phone: settingsPhone || null,
@@ -2739,6 +2742,7 @@ export function App() {
         method: 'PUT',
         body: JSON.stringify({
           name: settingsName,
+          wholesaleBusinessName: settingsWholesaleBusinessName.trim() || null,
           businessType: settingsType,
           gstin: settingsGstin || null,
           phone: settingsPhone || null,
@@ -2775,6 +2779,7 @@ export function App() {
         method: 'PUT',
         body: JSON.stringify({
           name: settingsName,
+          wholesaleBusinessName: settingsWholesaleBusinessName.trim() || null,
           businessType: settingsType,
           gstin: settingsGstin || null,
           phone: settingsPhone || null,
@@ -13292,88 +13297,103 @@ export function App() {
                       </div>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                      <div className="form-group">
-                        <label className="form-label">Store / Enterprise Name</label>
-                        <input
-                          type="text"
-                          className="form-input"
-                          required
-                          value={settingsName}
-                          onChange={(e) => setSettingsName(e.target.value)}
-                        />
+                    <div className="business-profile-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        <div className="form-group">
+                          <label className="form-label">Store / Enterprise Name</label>
+                          <input
+                            type="text"
+                            className="form-input"
+                            required
+                            value={settingsName}
+                            onChange={(e) => setSettingsName(e.target.value)}
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Wholesale Business Name</label>
+                          <input
+                            type="text"
+                            className="form-input"
+                            placeholder="Enter wholesale business name"
+                            value={settingsWholesaleBusinessName}
+                            onChange={(e) => setSettingsWholesaleBusinessName(e.target.value)}
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">GSTIN (15-digit GST Number)</label>
+                          <input
+                            type="text"
+                            className="form-input"
+                            value={settingsGstin}
+                            onChange={(e) => setSettingsGstin(e.target.value)}
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Store Address</label>
+                          <input
+                            type="text"
+                            className="form-input"
+                            value={settingsAddress}
+                            onChange={(e) => setSettingsAddress(e.target.value)}
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">UPI ID for Payment QR (VPA)</label>
+                          <input
+                            type="text"
+                            className="form-input"
+                            value={settingsUpiId}
+                            onChange={(e) => setSettingsUpiId(e.target.value)}
+                          />
+                        </div>
                       </div>
-                      <div className="form-group">
-                        <label className="form-label">Business Type (Switches POS Features)</label>
-                        <select
-                          className="form-input"
-                          value={settingsType}
-                          onChange={(e) => setSettingsType(e.target.value)}
-                        >
-                          <option value="retail">Retail / Kirana / Supermarket</option>
-                          <option value="pharmacy">Pharmacy & Healthcare</option>
-                          <option value="restaurant">Restaurant / Cafe / Bakery</option>
-                          <option value="wholesale">Wholesale & Distribution</option>
-                          <option value="service">Professional & Technical Services</option>
-                          <option value="general">General Business</option>
-                        </select>
-                      </div>
-                      <div className="form-group">
-                        <label className="form-label">GSTIN (15-digit GST Number)</label>
-                        <input
-                          type="text"
-                          className="form-input"
-                          value={settingsGstin}
-                          onChange={(e) => setSettingsGstin(e.target.value)}
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label className="form-label">Phone / WhatsApp Number</label>
-                        <input
-                          type="text"
-                          className="form-input"
-                          value={settingsPhone}
-                          onChange={(e) => setSettingsPhone(e.target.value)}
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label className="form-label">Store Address</label>
-                        <input
-                          type="text"
-                          className="form-input"
-                          value={settingsAddress}
-                          onChange={(e) => setSettingsAddress(e.target.value)}
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label className="form-label">
-                          Owner Email ID <span style={{ color: '#5B3BE8', fontSize: '0.8rem', fontWeight: 500 }}>(Receives critical deletion &amp; security alerts)</span>
-                        </label>
-                        <input
-                          type="email"
-                          className="form-input"
-                          placeholder="owner@supermarket.com"
-                          value={settingsOwnerEmail}
-                          onChange={(e) => setSettingsOwnerEmail(e.target.value)}
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label className="form-label">UPI ID for Payment QR (VPA)</label>
-                        <input
-                          type="text"
-                          className="form-input"
-                          value={settingsUpiId}
-                          onChange={(e) => setSettingsUpiId(e.target.value)}
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label className="form-label">Invoice Number Prefix</label>
-                        <input
-                          type="text"
-                          className="form-input"
-                          value={settingsPrefix}
-                          onChange={(e) => setSettingsPrefix(e.target.value)}
-                        />
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        <div className="form-group">
+                          <label className="form-label">Business Type (Switches POS Features)</label>
+                          <select
+                            className="form-input"
+                            value={settingsType}
+                            onChange={(e) => setSettingsType(e.target.value)}
+                          >
+                            <option value="retail">Retail / Kirana / Supermarket</option>
+                            <option value="pharmacy">Pharmacy & Healthcare</option>
+                            <option value="restaurant">Restaurant / Cafe / Bakery</option>
+                            <option value="wholesale">Wholesale & Distribution</option>
+                            <option value="service">Professional & Technical Services</option>
+                            <option value="general">General Business</option>
+                          </select>
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Phone / WhatsApp Number</label>
+                          <input
+                            type="text"
+                            className="form-input"
+                            value={settingsPhone}
+                            onChange={(e) => setSettingsPhone(e.target.value)}
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">
+                            Owner Email ID <span style={{ color: '#5B3BE8', fontSize: '0.8rem', fontWeight: 500 }}>(Receives critical deletion &amp; security alerts)</span>
+                          </label>
+                          <input
+                            type="email"
+                            className="form-input"
+                            placeholder="owner@supermarket.com"
+                            value={settingsOwnerEmail}
+                            onChange={(e) => setSettingsOwnerEmail(e.target.value)}
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Invoice Number Prefix</label>
+                          <input
+                            type="text"
+                            className="form-input"
+                            value={settingsPrefix}
+                            onChange={(e) => setSettingsPrefix(e.target.value)}
+                          />
+                        </div>
                       </div>
                     </div>
                     <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'flex-end' }}>

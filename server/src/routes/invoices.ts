@@ -965,7 +965,7 @@ export function registerInvoices(r: Router) {
 
     const wholesaleMeta = isWholesale ? {
       invoiceType: 'wholesale' as const,
-      displayName: wholesaleDisplayName || (wholesaleLegalName ? wholesaleLegalName : null),
+      displayName: wholesaleDisplayName || wholesaleLegalName || shop.wholesaleBusinessName || shop.wholesale_business_name || shop.name,
       legalName: wholesaleLegalName || null,
       logoUrl: wholesaleProfile?.logoUrl || null,
       phone: wholesaleProfile?.phone || shop.phone || null,
@@ -988,7 +988,7 @@ export function registerInvoices(r: Router) {
       dateText: new Date(createdAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' }),
       shop: {
         name: isWholesale
-          ? (wholesaleDisplayName || wholesaleLegalName || 'Wholesale B2B Tax Invoice')
+          ? (wholesaleDisplayName || wholesaleLegalName || shop.wholesaleBusinessName || shop.wholesale_business_name || shop.name)
           : (retailProfile?.displayName || shop.name),
         address: isWholesale ? (wholesaleProfile?.address || shop.address) : (retailProfile?.address || shop.address),
         phone: isWholesale ? (wholesaleProfile?.phone || shop.phone) : (retailProfile?.phone || shop.phone),
@@ -1158,15 +1158,48 @@ export function registerInvoices(r: Router) {
     const customObj = typeof inv.custom === 'string' ? JSON.parse(inv.custom || '{}') : (inv.custom || {});
     const tender = customObj?.tender || null;
 
+    const isWholesale = (inv.invoice_type === 'wholesale' || inv.invoiceType === 'wholesale');
+    const rawShopProfiles = shop.invoiceProfiles ?? shop.invoice_profiles;
+    const shopProfiles = typeof rawShopProfiles === 'string' ? JSON.parse(rawShopProfiles) : (rawShopProfiles || null);
+    const wholesaleProfile = shopProfiles?.wholesale;
+    const wholesaleDisplayName = (
+      wholesaleProfile?.displayName ||
+      shop.wholesaleBusinessName ||
+      shop.wholesale_business_name ||
+      ''
+    ).trim();
+    const wholesaleLegalName = (wholesaleProfile?.legalName || '').trim();
+
+    const wholesaleMeta = isWholesale ? {
+      invoiceType: 'wholesale' as const,
+      displayName: wholesaleDisplayName || wholesaleLegalName || shop.wholesaleBusinessName || shop.wholesale_business_name || shop.name,
+      legalName: wholesaleLegalName || null,
+      logoUrl: wholesaleProfile?.logoUrl || null,
+      phone: wholesaleProfile?.phone || shop.phone || null,
+      email: wholesaleProfile?.email || null,
+      gstin: wholesaleProfile?.gstin || shop.gstin || null,
+      address: wholesaleProfile?.address || shop.address || null,
+      paymentTerms: customObj?.paymentTerms || 'Due on Receipt',
+      billingAddress: customObj?.billingAddress || null,
+      shippingAddress: customObj?.shippingAddress || customObj?.billingAddress || null,
+      contactPerson: customObj?.contactPerson || null,
+      customerState: customObj?.customerState || null,
+      customerStateCode: customObj?.customerStateCode || null,
+      terms: wholesaleProfile?.terms || null,
+      jurisdiction: wholesaleProfile?.jurisdiction || null,
+    } : null;
+
     const printable: PrintableBill = {
       number: inv.number,
       kind: 'sale',
       dateText: new Date(createdAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' }),
       shop: {
-        name: shop.name,
-        address: shop.address,
-        phone: shop.phone,
-        gstin: shop.gstin,
+        name: isWholesale
+          ? (wholesaleDisplayName || wholesaleLegalName || shop.wholesaleBusinessName || shop.wholesale_business_name || shop.name)
+          : shop.name,
+        address: isWholesale ? (wholesaleProfile?.address || shop.address) : shop.address,
+        phone: isWholesale ? (wholesaleProfile?.phone || shop.phone) : shop.phone,
+        gstin: isWholesale ? (wholesaleProfile?.gstin || shop.gstin) : shop.gstin,
         upiId: shop.upiId ?? shop.upi_id,
         logoUrl: shop.logoUrl ?? shop.logo_url ?? null,
       },
@@ -1226,6 +1259,7 @@ export function registerInvoices(r: Router) {
       tender,
       customFields: [],
       intra: true,
+      wholesale: wholesaleMeta,
     };
 
     let qrSvgMarkup = '';
@@ -1235,7 +1269,7 @@ export function registerInvoices(r: Router) {
       qrSvgMarkup = qrSvg(upi, { size: 120 });
     }
 
-    const html = renderBillDoc(printable, { ...DEFAULT_CONFIG.template, paper: 'a4' }, { qrSvg: qrSvgMarkup, qrCaption: 'Scan UPI to pay balance', autoPrint: false });
+    const html = renderBillDoc(printable, { ...DEFAULT_CONFIG.template, paper: isWholesale ? 'wholesale_a4' : 'a4' }, { qrSvg: qrSvgMarkup, qrCaption: 'Scan UPI to pay balance', autoPrint: false });
     return new HtmlResponse(html);
   });
 }

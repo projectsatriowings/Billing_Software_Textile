@@ -495,7 +495,7 @@ export function wholesaleA4Copy(bill: PrintableBill, tpl: PrintTemplate, L: Reco
   const wh = bill.wholesale || {};
   const t = bill.totals;
   const isInterstate = !bill.intra;
-  const displayName = (wh.displayName || (wh.legalName && wh.legalName !== bill.shop.name ? wh.legalName : '') || 'WHOLESALE B2B TAX INVOICE').trim();
+  const displayName = (wh.displayName || (wh.legalName && wh.legalName !== bill.shop.name ? wh.legalName : '') || bill.shop.name || 'WHOLESALE B2B TAX INVOICE').trim();
   const legalName = (wh.legalName || '').trim();
   const logoUrl = wh.logoUrl || bill.shop.logoUrl || '';
   const headOfficeAddress = wh.address || bill.shop.address || '';
