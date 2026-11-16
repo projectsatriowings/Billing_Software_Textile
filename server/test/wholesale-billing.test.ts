@@ -30,7 +30,7 @@ async function api(method: string, path: string, headers: Record<string, string>
   const text = await res.text();
   let json: any = null;
   try { json = JSON.parse(text); } catch { }
-  return { status: res.status, body: json, text };
+  return { status: res.status, body: json, text, headers: Object.fromEntries(res.headers.entries()) };
 }
 
 before(async () => {
@@ -654,4 +654,83 @@ test('6. Invoice template selection strictly isolates Retail (Thermal) and Whole
   assert.equal(whPublic.status, 200);
   assert.ok(whPublic.text.includes('copy wholesale-a4'), 'Public bill for wholesale must be wholesale A4');
   assert.equal(whPublic.text.includes('th-bill-table'), false);
+});
+
+test('11. Invoice PDF Download functionality for Wholesale Billing', async () => {
+  // Create a wholesale customer
+  const custRes = await api(
+    'POST',
+    '/api/parties',
+    {},
+    {
+      name: 'PV Wholesale Mart',
+      type: 'customer',
+      customerType: 'wholesale',
+      branchId: BRANCH_ID,
+      phone: '9196385' + Math.floor(10000 + Math.random() * 90000),
+      gstin: '33ABCDE5678F1Z5',
+      address: 'Plot 45 SIPCOT Industrial Complex Hosur',
+      stateCode: '33',
+    },
+    ownerToken
+  );
+  assert.equal(custRes.status, 200);
+  const custId = custRes.body.party ? custRes.body.party.id : custRes.body.id;
+
+  // Create a wholesale invoice
+  const invCreateRes = await api(
+    'POST',
+    '/api/invoices',
+    {},
+    {
+      invoiceType: 'wholesale',
+      branchId: BRANCH_ID,
+      partyId: custId,
+      customerId: custId,
+      lines: [
+        {
+          name: 'Colgate Strong Teeth 200g',
+          hsn: '3306',
+          unit: 'pcs',
+          qtyMilli: 10000,
+          priceMinor: 11500,
+          discountMinor: 0,
+          taxRateBp: 1800,
+        },
+      ],
+      paymentMode: 'bank',
+      paidAmountRupees: '1150.00',
+    },
+    ownerToken
+  );
+  assert.equal(invCreateRes.status, 200);
+  const invoiceId = invCreateRes.body.invoice ? invCreateRes.body.invoice.id : invCreateRes.body.id;
+  const invoiceNumber = invCreateRes.body.invoice ? invCreateRes.body.invoice.number : invCreateRes.body.number;
+
+  // 1. Verify unauthenticated call to /api/invoices/:id/download-pdf returns 401
+  const unauthRes = await api('GET', `/api/invoices/${invoiceId}/download-pdf`);
+  assert.equal(unauthRes.status, 401);
+
+  // 2. Verify authenticated call to /api/invoices/:id/download-pdf returns PDF
+  const pdfRes = await api('GET', `/api/invoices/${invoiceId}/download-pdf`, {}, undefined, ownerToken);
+  assert.equal(pdfRes.status, 200);
+  assert.equal(pdfRes.headers['content-type'], 'application/pdf');
+  assert.ok(pdfRes.headers['content-disposition']?.includes('attachment; filename='));
+  assert.ok(pdfRes.headers['content-disposition']?.includes(`Wholesale_Invoice_${invoiceNumber}.pdf`));
+  assert.ok(pdfRes.text.startsWith('%PDF-'));
+  assert.ok(pdfRes.text.length > 500);
+
+  // 3. Verify /api/invoices/:id/print?format=pdf downloads PDF
+  const printPdfRes = await api('GET', `/api/invoices/${invoiceId}/print?format=pdf`, {}, undefined, ownerToken);
+  assert.equal(printPdfRes.status, 200);
+  assert.equal(printPdfRes.headers['content-type'], 'application/pdf');
+  assert.ok(printPdfRes.headers['content-disposition']?.includes(`Wholesale_Invoice_${invoiceNumber}.pdf`));
+  assert.ok(printPdfRes.text.startsWith('%PDF-'));
+
+  // 4. Verify /api/invoices/:id/print (without pdf param) remains print HTML view
+  const printHtmlRes = await api('GET', `/api/invoices/${invoiceId}/print?paper=wholesale_a4&autoprint=true`, {}, undefined, ownerToken);
+  assert.equal(printHtmlRes.status, 200);
+  assert.ok(printHtmlRes.headers['content-type']?.includes('text/html'));
+  assert.ok(printHtmlRes.text.includes('copy wholesale-a4'));
+  assert.ok(printHtmlRes.text.includes('window.print()'));
 });

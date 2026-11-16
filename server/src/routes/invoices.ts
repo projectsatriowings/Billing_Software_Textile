@@ -1,5 +1,5 @@
 import { requirePerm, requireUser } from '../auth.ts';
-import { bad, notFound, HtmlResponse, V, type Router } from '../http.ts';
+import { bad, notFound, HtmlResponse, FileResponse, V, type Router } from '../http.ts';
 import { newId } from '../security.ts';
 import { j } from '../db/index.ts';
 import { calcBill } from '../../../shared/tax.ts';
@@ -12,6 +12,7 @@ import { audit } from '../audit.ts';
 import { resolveBranchScope } from '../branchScope.ts';
 import { invalidateTodayDashboardCache } from './dashboard.ts';
 import { sendInvoiceBillSms } from '../services/smsService.ts';
+import { generateInvoicePdf } from '../services/invoicePdfGenerator.ts';
 
 export function registerInvoices(r: Router) {
   // List invoices
@@ -965,15 +966,15 @@ export function registerInvoices(r: Router) {
     };
   });
 
-  // Print Bill (HTML Thermal / A4 receipt)
-  r.get('/api/invoices/:id/print', async (ctx) => {
-    const inv = await ctx.db.one('SELECT * FROM invoices WHERE id = ?', [ctx.params.id]);
+  // Helper: Load full invoice details and construct PrintableBill structure
+  async function loadPrintableInvoice(db: any, invoiceId: string, queryPaper?: string) {
+    const inv = await db.one('SELECT * FROM invoices WHERE id = ?', [invoiceId]);
     if (!inv) throw notFound('Invoice');
 
-    const shop = await ctx.db.one('SELECT * FROM tenants WHERE id = ?', [inv.tenantId ?? inv.tenant_id]);
+    const shop = await db.one('SELECT * FROM tenants WHERE id = ?', [inv.tenantId ?? inv.tenant_id]);
     if (!shop) throw notFound('Shop');
 
-    const lines = await ctx.db.query(
+    const lines = await db.query(
       `SELECT il.*, it.custom AS item_custom
        FROM invoice_lines il
        LEFT JOIN items it ON it.id = il.item_id
@@ -981,11 +982,10 @@ export function registerInvoices(r: Router) {
        ORDER BY il.pos ASC`,
       [inv.id],
     );
-    const payments = await ctx.db.query('SELECT * FROM payments WHERE invoice_id = ? ORDER BY created_at ASC', [inv.id]);
+    const payments = await db.query('SELECT * FROM payments WHERE invoice_id = ? ORDER BY created_at ASC', [inv.id]);
 
     const rawType = inv.invoiceType ?? inv.invoice_type;
     const isWholesale = rawType === 'wholesale';
-    const autoPrint = ctx.query.autoprint === 'true';
 
     const custName = inv.customerName ?? inv.customer_name;
     const custPhone = inv.customerPhone ?? inv.customer_phone;
@@ -1004,13 +1004,13 @@ export function registerInvoices(r: Router) {
     const activeProfile = isWholesale ? wholesaleProfile : retailProfile;
     const paper = isWholesale
       ? 'wholesale_a4'
-      : ((ctx.query.paper === 'thermal58' || retailProfile?.paper === 'thermal58') ? 'thermal58' : 'thermal80');
+      : ((queryPaper === 'thermal58' || retailProfile?.paper === 'thermal58') ? 'thermal58' : 'thermal80');
 
     const customFields: { label: string; value: string }[] = [];
     const pId = inv.partyId ?? inv.party_id;
     let partyRow: any = null;
     if (pId) {
-      partyRow = await ctx.db.one(
+      partyRow = await db.one(
         'SELECT name, phone, email, loyalty_points, gstin, address, state_code, custom FROM parties WHERE id = ?',
         [pId]
       );
@@ -1144,6 +1144,22 @@ export function registerInvoices(r: Router) {
       wholesale: wholesaleMeta,
     };
 
+    return { printable, isWholesale, paper, shop, inv };
+  }
+
+  // Print Bill (HTML Thermal / A4 receipt) or Download PDF if requested via format=pdf / download=true
+  r.get('/api/invoices/:id/print', async (ctx) => {
+    const { printable, isWholesale, paper, shop, inv } = await loadPrintableInvoice(ctx.db, ctx.params.id, ctx.query.paper);
+
+    // Support direct PDF download mode via query parameter
+    if (ctx.query.format === 'pdf' || ctx.query.download === 'true') {
+      const pdfBuffer = await generateInvoicePdf(printable);
+      const safeNumber = (printable.number || 'INV').replace(/[^a-zA-Z0-9_-]/g, '_');
+      const filename = isWholesale ? `Wholesale_Invoice_${safeNumber}.pdf` : `Invoice_${safeNumber}.pdf`;
+      return new FileResponse(pdfBuffer, 'application/pdf', filename);
+    }
+
+    const autoPrint = ctx.query.autoprint === 'true';
     let qrSvgMarkup = '';
     const upiId = shop.upiId ?? shop.upi_id;
     if (upiId) {
@@ -1151,8 +1167,17 @@ export function registerInvoices(r: Router) {
       qrSvgMarkup = qrSvg(upi, { size: 120 });
     }
 
-    const html = renderBillDoc(printable, { ...DEFAULT_CONFIG.template, paper }, { qrSvg: qrSvgMarkup, qrCaption: 'Scan UPI to pay', autoPrint });
+    const html = renderBillDoc(printable, { ...DEFAULT_CONFIG.template, paper: paper as any }, { qrSvg: qrSvgMarkup, qrCaption: 'Scan UPI to pay', autoPrint });
     return new HtmlResponse(html);
+  });
+
+  // Dedicated Invoice PDF Download Endpoint (Authenticated via requireUser)
+  r.get('/api/invoices/:id/download-pdf', requireUser, async (ctx) => {
+    const { printable, isWholesale } = await loadPrintableInvoice(ctx.db, ctx.params.id, ctx.query.paper);
+    const pdfBuffer = await generateInvoicePdf(printable);
+    const safeNumber = (printable.number || 'INV').replace(/[^a-zA-Z0-9_-]/g, '_');
+    const filename = isWholesale ? `Wholesale_Invoice_${safeNumber}.pdf` : `Invoice_${safeNumber}.pdf`;
+    return new FileResponse(pdfBuffer, 'application/pdf', filename);
   });
 
   // Track WhatsApp bill share

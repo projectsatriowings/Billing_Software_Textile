@@ -49,6 +49,8 @@ import {
   getActiveBranchScope,
   setActiveBranchScope,
   selectActiveShiftCounter,
+  downloadInvoicePdf,
+  triggerBlobDownload,
 } from './api';
 import { BranchProvider } from './contexts/BranchContext';
 import { moneyInWords } from '../../shared/money.ts';
@@ -15079,15 +15081,23 @@ export function App() {
                       >
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><PrinterIcon size={12} /> Print A4 Invoice</span>
                       </a>
-                      <a
-                        href={`/api/invoices/${printModalInvoiceId}/print?paper=wholesale_a4`}
-                        target="_blank"
-                        rel="noreferrer"
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            const blob = await downloadInvoicePdf(printModalInvoiceId, 'wholesale_a4');
+                            triggerBlobDownload(blob, `Wholesale_Invoice_${printModalInvoiceId}.pdf`);
+                            showToast('Wholesale invoice PDF downloaded successfully', 'success');
+                          } catch (err: any) {
+                            showToast(err.message || 'Failed to download wholesale invoice PDF', 'error');
+                          }
+                        }}
                         className="btn btn-secondary"
-                        style={{ flex: 1, textDecoration: 'none', textAlign: 'center' }}
+                        style={{ flex: 1, textDecoration: 'none', textAlign: 'center', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
                       >
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><FileTextIcon size={12} /> Download / View</span>
-                      </a>
+                        <FileTextIcon size={12} />
+                        <span>Download Invoice</span>
+                      </button>
                     </>
                   ) : (
                     <>

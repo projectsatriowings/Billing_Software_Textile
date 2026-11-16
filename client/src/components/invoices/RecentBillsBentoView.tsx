@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import type { Invoice, Party, User, Shop } from '../../api.ts';
+import { downloadInvoicePdf, triggerBlobDownload } from '../../api.ts';
 import type { Branch } from '../../../../shared/types.ts';
 import {
   ReceiptIcon,
@@ -666,16 +667,22 @@ export const RecentBillsBentoView: React.FC<RecentBillsBentoViewProps> = ({
                               <PrinterIcon size={13} />
                               <span>A4 Print</span>
                             </a>
-                            <a
-                              href={`/api/invoices/${inv.id}/print?paper=wholesale_a4`}
-                              target="_blank"
-                              rel="noreferrer"
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                try {
+                                  const blob = await downloadInvoicePdf(inv.id, 'wholesale_a4');
+                                  triggerBlobDownload(blob, `Wholesale_Invoice_${inv.number}.pdf`);
+                                } catch (err: any) {
+                                  alert(err.message || 'Failed to download wholesale invoice PDF');
+                                }
+                              }}
                               className="bento-act-btn view"
-                              title="View / Download Wholesale A4 Tax Invoice"
+                              title="Download Wholesale A4 Tax Invoice PDF"
                             >
                               <FileTextIcon size={13} />
-                              <span>View A4</span>
-                            </a>
+                              <span>Download PDF</span>
+                            </button>
                             <button
                               type="button"
                               className="bento-act-btn view"

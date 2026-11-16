@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import type { User, Shop, Item, Party, Branch } from '../../api';
-import { api } from '../../api';
+import { api, downloadInvoicePdf, triggerBlobDownload } from '../../api';
 import { moneyInWords } from '../../../../shared/money.ts';
 import { STATES } from '../../../../shared/states.ts';
 import { DEFAULT_INVOICE_PROFILES } from '../../../../shared/types.ts';
@@ -139,6 +139,22 @@ export function WholesaleBillingView({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [generatedInvoice, setGeneratedInvoice] = useState<{ id: string; number: string; totalMinor: number } | null>(null);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+
+  const handleDownloadInvoice = async (invoiceId: string, invoiceNumber?: string) => {
+    if (isDownloadingPdf) return;
+    setIsDownloadingPdf(true);
+    try {
+      const blob = await downloadInvoicePdf(invoiceId, 'wholesale_a4');
+      triggerBlobDownload(blob, `Wholesale_Invoice_${invoiceNumber || 'INV'}.pdf`);
+      showToast('Wholesale invoice PDF downloaded successfully', 'success');
+    } catch (err: any) {
+      console.error('Failed to download invoice PDF:', err);
+      showToast(err.message || 'Failed to download wholesale invoice PDF. Please try again.', 'error');
+    } finally {
+      setIsDownloadingPdf(false);
+    }
+  };
 
   // Filter products
   const filteredProducts = useMemo(() => {
@@ -1380,9 +1396,8 @@ export function WholesaleBillingView({
 
                 <button
                   type="button"
-                  onClick={() => {
-                    window.open(`/api/invoices/${generatedInvoice.id}/print?paper=wholesale_a4`, '_blank');
-                  }}
+                  disabled={isDownloadingPdf}
+                  onClick={() => handleDownloadInvoice(generatedInvoice.id, generatedInvoice.number)}
                   className="btn btn-secondary"
                   style={{
                     display: 'inline-flex',
@@ -1390,9 +1405,12 @@ export function WholesaleBillingView({
                     gap: '0.4rem',
                     padding: '0.5rem 1rem',
                     fontSize: '0.88rem',
+                    opacity: isDownloadingPdf ? 0.7 : 1,
+                    cursor: isDownloadingPdf ? 'not-allowed' : 'pointer',
                   }}
+                  title="Download Wholesale A4 Tax Invoice PDF"
                 >
-                  <span>📄</span> Download / View
+                  <span>📥</span> {isDownloadingPdf ? 'Downloading PDF...' : 'Download Invoice'}
                 </button>
 
                 <button

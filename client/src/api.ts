@@ -2792,6 +2792,36 @@ export interface DownloadableExcelBlob extends Blob {
   filename?: string;
 }
 
+export interface DownloadableInvoiceBlob extends Blob {
+  filename?: string;
+}
+
+export const downloadInvoicePdf = async (
+  invoiceId: string,
+  paper: string = 'wholesale_a4'
+): Promise<DownloadableInvoiceBlob> => {
+  const { blob, filename } = await apiBlob(
+    `/api/invoices/${encodeURIComponent(invoiceId)}/download-pdf?paper=${encodeURIComponent(paper)}`
+  );
+  const resBlob = blob as DownloadableInvoiceBlob;
+  resBlob.filename = filename || `Wholesale_Invoice_${invoiceId}.pdf`;
+  return resBlob;
+};
+
+export function triggerBlobDownload(blob: Blob, fallbackFilename: string = 'Invoice.pdf') {
+  const filename = (blob as any).filename || fallbackFilename;
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, 100);
+}
+
 export const exportSupplierInvoiceExcel = async (payload: {
   products: ExtractedSupplierInvoiceItem[];
   invoiceNumber?: string;
