@@ -7,6 +7,7 @@ import {
   fetchDayClosingComparison,
   fetchDayClosingAnalytics,
   fetchDayClosingHistory,
+  withAuthToken,
   type User,
   type Shop,
 } from '../../api.ts';
@@ -349,14 +350,14 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
   };
 
   const handlePrint = (closingId: string) => {
-    window.open(`/api/day-closing/${closingId}/print`, '_blank', 'width=950,height=800');
+    window.open(withAuthToken(`/api/day-closing/${closingId}/print`), '_blank', 'width=950,height=800');
   };
 
   const handleExportCsv = (closingId?: string) => {
     if (closingId) {
-      window.open(`/api/day-closing/${closingId}/export.csv`, '_blank');
+      window.open(withAuthToken(`/api/day-closing/${closingId}/export.csv`), '_blank');
     } else {
-      window.open(`/api/day-closing/history/export.csv?branchId=${encodeURIComponent(activeBranchId)}`, '_blank');
+      window.open(withAuthToken(`/api/day-closing/history/export.csv?branchId=${encodeURIComponent(activeBranchId)}`), '_blank');
     }
   };
 

@@ -1334,11 +1334,7 @@ export function registerDayClosing(r: Router) {
   // --------------------------------------------------------------------------
   r.get('/api/day-closing/:id/print', async (ctx) => {
     const id = ctx.params.id;
-    const tenantId = (ctx.query.tenantId as string) || ctx.user?.tenantId;
-    if (!tenantId) throw bad('Missing tenantId');
-
-    const shop = await ctx.db.one<any>('SELECT * FROM tenants WHERE id = ?', [tenantId]);
-    if (!shop) throw notFound('Shop');
+    let tenantId = (ctx.query.tenantId as string) || ctx.user?.tenantId;
 
     const dc = await ctx.db.one<any>(
       `SELECT dc.*, u.name AS closed_by_name, vu.name AS verified_by_name,
@@ -1347,15 +1343,44 @@ export function registerDayClosing(r: Router) {
        LEFT JOIN users u ON u.id = dc.closed_by
        LEFT JOIN users vu ON vu.id = dc.verified_by
        LEFT JOIN users au ON au.id = dc.approved_by
-       LEFT JOIN branches b ON b.id = dc.branch_id OR b.code = dc.branch_id
-       WHERE dc.tenant_id = ? AND dc.id = ?`,
-      [tenantId, id],
+       LEFT JOIN branches b ON (b.id = dc.branch_id OR b.code = dc.branch_id) AND b.tenant_id = dc.tenant_id
+       WHERE dc.id = ? ${tenantId ? 'AND dc.tenant_id = ?' : ''}`,
+      tenantId ? [id, tenantId] : [id],
     );
     if (!dc) throw notFound('Day closing record');
 
-    const variance = Number(dc.variance_minor || 0);
-    const varianceColor = variance === 0 ? '#16a34a' : variance > 0 ? '#2563eb' : '#dc2626';
-    const varianceLabel = variance === 0 ? 'BALANCED' : variance > 0 ? `EXCESS (+${fmtMoney(variance)})` : `SHORTAGE (${fmtMoney(variance)})`;
+    tenantId = tenantId || dc.tenantId || dc.tenant_id;
+    const shop = await ctx.db.one<any>('SELECT * FROM tenants WHERE id = ?', [tenantId]);
+    if (!shop) throw notFound('Shop');
+
+    const grossSalesMinor = Number(dc.grossSalesMinor ?? dc.gross_sales_minor ?? 0);
+    const returnsTotalMinor = Number(dc.returnsTotalMinor ?? dc.returns_total_minor ?? 0);
+    const netSalesMinor = Number(dc.netSalesMinor ?? dc.net_sales_minor ?? 0);
+    const invoicesCount = Number(dc.invoicesCount ?? dc.invoices_count ?? 0);
+    const returnsCount = Number(dc.returnsCount ?? dc.returns_count ?? 0);
+    const exchangesCount = Number(dc.exchangesCount ?? dc.exchanges_count ?? 0);
+    const refundsCount = Number(dc.refundsCount ?? dc.refunds_count ?? 0);
+    const openingCashMinor = Number(dc.openingCashMinor ?? dc.opening_cash_minor ?? 0);
+    const cashSalesMinor = Number(dc.cashSalesMinor ?? dc.cash_sales_minor ?? 0);
+    const cashRefundsMinor = Number(dc.cashRefundsMinor ?? dc.cash_refunds_minor ?? 0);
+    const cashExpensesMinor = Number(dc.cashExpensesMinor ?? dc.cash_expenses_minor ?? 0);
+    const cashInMinor = Number(dc.cashInMinor ?? dc.cash_in_minor ?? 0);
+    const cashOutMinor = Number(dc.cashOutMinor ?? dc.cash_out_minor ?? 0);
+    const expectedCashMinor = Number(dc.expectedCashMinor ?? dc.expected_cash_minor ?? 0);
+    const actualCashMinor = Number(dc.actualCashMinor ?? dc.actual_cash_minor ?? 0);
+    const varianceMinor = Number(dc.varianceMinor ?? dc.variance_minor ?? 0);
+    const netCogsMinor = Number(dc.netCogsMinor ?? dc.net_cogs_minor ?? 0);
+    const grossProfitMinor = Number(dc.grossProfitMinor ?? dc.gross_profit_minor ?? 0);
+    const operatingExpensesMinor = Number(dc.operatingExpensesMinor ?? dc.operating_expenses_minor ?? 0);
+    const netProfitMinor = Number(dc.netProfitMinor ?? dc.net_profit_minor ?? 0);
+    const branchName = dc.branchName || dc.branch_name || dc.branchId || dc.branch_id || 'Main';
+    const closedByName = dc.closedByName || dc.closed_by_name || 'Cashier';
+    const approvedByName = dc.approvedByName || dc.approved_by_name || '';
+    const closedAt = dc.closedAt || dc.closed_at || new Date().toISOString();
+    const approvedAt = dc.approvedAt || dc.approved_at || null;
+
+    const varianceColor = varianceMinor === 0 ? '#16a34a' : varianceMinor > 0 ? '#2563eb' : '#dc2626';
+    const varianceLabel = varianceMinor === 0 ? 'BALANCED' : varianceMinor > 0 ? `EXCESS (+${fmtMoney(varianceMinor)})` : `SHORTAGE (${fmtMoney(varianceMinor)})`;
 
     const html = `<!DOCTYPE html>
 <html lang="en">
@@ -1401,16 +1426,16 @@ export function registerDayClosing(r: Router) {
     <table style="width: 100%; margin-bottom: 16px; font-size: 0.85rem;">
       <tr>
         <td><strong>Closing Date:</strong> ${dc.bdate}</td>
-        <td class="text-right"><strong>Branch:</strong> ${dc.branch_name || dc.branch_id}</td>
+        <td class="text-right"><strong>Branch:</strong> ${branchName}</td>
       </tr>
       <tr>
-        <td><strong>Submitted By:</strong> ${dc.closed_by_name || 'Cashier'}</td>
-        <td class="text-right"><strong>Submitted At:</strong> ${new Date(dc.closed_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}</td>
+        <td><strong>Submitted By:</strong> ${closedByName}</td>
+        <td class="text-right"><strong>Submitted At:</strong> ${new Date(closedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}</td>
       </tr>
-      ${dc.approved_by_name ? `
+      ${approvedByName ? `
       <tr>
-        <td><strong>Approved By:</strong> ${dc.approved_by_name}</td>
-        <td class="text-right"><strong>Approved At:</strong> ${dc.approved_at ? new Date(dc.approved_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }) : '-'}</td>
+        <td><strong>Approved By:</strong> ${approvedByName}</td>
+        <td class="text-right"><strong>Approved At:</strong> ${approvedAt ? new Date(approvedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }) : '-'}</td>
       </tr>
       ` : ''}
     </table>
@@ -1420,9 +1445,9 @@ export function registerDayClosing(r: Router) {
       <div class="box">
         <div class="box-title">A. Sales Performance</div>
         <table>
-          <tr><td>Gross Sales (${dc.invoices_count} bills):</td><td class="text-right font-bold">${fmtMoney(dc.gross_sales_minor)}</td></tr>
-          <tr><td style="color: #dc2626;">Sales Returns (${dc.returns_count} returns):</td><td class="text-right font-bold" style="color: #dc2626;">-${fmtMoney(dc.returns_total_minor)}</td></tr>
-          <tr style="border-top: 1px solid #cbd5e1;"><td><strong>Net Daily Sales:</strong></td><td class="text-right val-highlight" style="color: #0f172a;">${fmtMoney(dc.net_sales_minor)}</td></tr>
+          <tr><td>Gross Sales (${invoicesCount} bills):</td><td class="text-right font-bold">${fmtMoney(grossSalesMinor)}</td></tr>
+          <tr><td style="color: #dc2626;">Sales Returns (${returnsCount} returns):</td><td class="text-right font-bold" style="color: #dc2626;">-${fmtMoney(returnsTotalMinor)}</td></tr>
+          <tr style="border-top: 1px solid #cbd5e1;"><td><strong>Net Daily Sales:</strong></td><td class="text-right val-highlight" style="color: #0f172a;">${fmtMoney(netSalesMinor)}</td></tr>
         </table>
       </div>
 
@@ -1430,14 +1455,14 @@ export function registerDayClosing(r: Router) {
       <div class="box">
         <div class="box-title">B. Cash Drawer Reconciliation</div>
         <table>
-          <tr><td>Opening Drawer Cash:</td><td class="text-right">${fmtMoney(dc.opening_cash_minor)}</td></tr>
-          <tr><td>Cash Sales Received:</td><td class="text-right" style="color: #16a34a;">+${fmtMoney(dc.cash_sales_minor)}</td></tr>
-          <tr><td>Cash Refunds Paid:</td><td class="text-right" style="color: #dc2626;">-${fmtMoney(dc.cash_refunds_minor)}</td></tr>
-          <tr><td>Cash Expenses Paid:</td><td class="text-right" style="color: #dc2626;">-${fmtMoney(dc.cash_expenses_minor)}</td></tr>
-          <tr><td>Cash In / Deposits:</td><td class="text-right">+${fmtMoney(dc.cash_in_minor)}</td></tr>
-          <tr><td>Cash Out / Withdrawals:</td><td class="text-right">-${fmtMoney(dc.cash_out_minor)}</td></tr>
-          <tr style="border-top: 1px solid #cbd5e1;"><td><strong>Expected Cash:</strong></td><td class="text-right font-black">${fmtMoney(dc.expected_cash_minor)}</td></tr>
-          <tr><td><strong>Actual Counted Cash:</strong></td><td class="text-right font-black">${fmtMoney(dc.actual_cash_minor)}</td></tr>
+          <tr><td>Opening Drawer Cash:</td><td class="text-right">${fmtMoney(openingCashMinor)}</td></tr>
+          <tr><td>Cash Sales Received:</td><td class="text-right" style="color: #16a34a;">+${fmtMoney(cashSalesMinor)}</td></tr>
+          <tr><td>Cash Refunds Paid:</td><td class="text-right" style="color: #dc2626;">-${fmtMoney(cashRefundsMinor)}</td></tr>
+          <tr><td>Cash Expenses Paid:</td><td class="text-right" style="color: #dc2626;">-${fmtMoney(cashExpensesMinor)}</td></tr>
+          <tr><td>Cash In / Deposits:</td><td class="text-right">+${fmtMoney(cashInMinor)}</td></tr>
+          <tr><td>Cash Out / Withdrawals:</td><td class="text-right">-${fmtMoney(cashOutMinor)}</td></tr>
+          <tr style="border-top: 1px solid #cbd5e1;"><td><strong>Expected Cash:</strong></td><td class="text-right font-black">${fmtMoney(expectedCashMinor)}</td></tr>
+          <tr><td><strong>Actual Counted Cash:</strong></td><td class="text-right font-black">${fmtMoney(actualCashMinor)}</td></tr>
           <tr style="border-top: 1px dashed #cbd5e1;">
             <td><strong>Variance / Diff:</strong></td>
             <td class="text-right font-black" style="color: ${varianceColor};">${varianceLabel}</td>
@@ -1451,10 +1476,10 @@ export function registerDayClosing(r: Router) {
       <div class="box">
         <div class="box-title">C. Returns, Exchanges & Refunds</div>
         <table>
-          <tr><td>Total Returns Value:</td><td class="text-right">${fmtMoney(dc.returns_total_minor)}</td></tr>
-          <tr><td>Cash Refunds Disbursed:</td><td class="text-right">${fmtMoney(dc.cash_refunds_minor)}</td></tr>
-          <tr><td>Number of Exchanges:</td><td class="text-right">${dc.exchanges_count}</td></tr>
-          <tr><td>Number of Refunds:</td><td class="text-right">${dc.refunds_count}</td></tr>
+          <tr><td>Total Returns Value:</td><td class="text-right">${fmtMoney(returnsTotalMinor)}</td></tr>
+          <tr><td>Cash Refunds Disbursed:</td><td class="text-right">${fmtMoney(cashRefundsMinor)}</td></tr>
+          <tr><td>Number of Exchanges:</td><td class="text-right">${exchangesCount}</td></tr>
+          <tr><td>Number of Refunds:</td><td class="text-right">${refundsCount}</td></tr>
         </table>
       </div>
 
@@ -1462,11 +1487,11 @@ export function registerDayClosing(r: Router) {
       <div class="box">
         <div class="box-title">D. Gross & Net Profit Summary</div>
         <table>
-          <tr><td>Net Sales:</td><td class="text-right">${fmtMoney(dc.net_sales_minor)}</td></tr>
-          <tr><td>Net COGS (Product Cost):</td><td class="text-right">-${fmtMoney(dc.net_cogs_minor)}</td></tr>
-          <tr style="border-top: 1px solid #cbd5e1;"><td><strong>Gross Profit:</strong></td><td class="text-right font-bold" style="color: #16a34a;">${fmtMoney(dc.gross_profit_minor)}</td></tr>
-          <tr><td>Operating Expenses:</td><td class="text-right">-${fmtMoney(dc.operating_expenses_minor)}</td></tr>
-          <tr style="border-top: 1px solid #cbd5e1;"><td><strong>Net Profit:</strong></td><td class="text-right val-highlight" style="color: #2563eb;">${fmtMoney(dc.net_profit_minor)}</td></tr>
+          <tr><td>Net Sales:</td><td class="text-right">${fmtMoney(netSalesMinor)}</td></tr>
+          <tr><td>Net COGS (Product Cost):</td><td class="text-right">-${fmtMoney(netCogsMinor)}</td></tr>
+          <tr style="border-top: 1px solid #cbd5e1;"><td><strong>Gross Profit:</strong></td><td class="text-right font-bold" style="color: #16a34a;">${fmtMoney(grossProfitMinor)}</td></tr>
+          <tr><td>Operating Expenses:</td><td class="text-right">-${fmtMoney(operatingExpensesMinor)}</td></tr>
+          <tr style="border-top: 1px solid #cbd5e1;"><td><strong>Net Profit:</strong></td><td class="text-right val-highlight" style="color: #2563eb;">${fmtMoney(netProfitMinor)}</td></tr>
         </table>
       </div>
     </div>
@@ -1485,6 +1510,8 @@ export function registerDayClosing(r: Router) {
   <script>window.onload = function() { window.print(); };</script>
 </body>
 </html>`;
+
+    return new HtmlResponse(html);
 
     return new HtmlResponse(html);
   });
@@ -1547,18 +1574,18 @@ export function registerDayClosing(r: Router) {
   // --------------------------------------------------------------------------
   // 11. Export Single Day Closing to CSV (Excel-compatible)
   // --------------------------------------------------------------------------
-  r.get('/api/day-closing/:id/export.csv', requireUser, async (ctx) => {
+  r.get('/api/day-closing/:id/export.csv', async (ctx) => {
     const id = ctx.params.id;
-    const tenantId = ctx.user!.tenantId;
+    let tenantId = (ctx.query.tenantId as string) || ctx.user?.tenantId;
 
     const dc = await ctx.db.one<any>(
       `SELECT dc.*, u.name AS closed_by_name, au.name AS approved_by_name, b.name AS branch_name
        FROM day_closings dc
        LEFT JOIN users u ON u.id = dc.closed_by
        LEFT JOIN users au ON au.id = dc.approved_by
-       LEFT JOIN branches b ON b.id = dc.branch_id OR b.code = dc.branch_id
-       WHERE dc.tenant_id = ? AND dc.id = ?`,
-      [tenantId, id],
+       LEFT JOIN branches b ON (b.id = dc.branch_id OR b.code = dc.branch_id) AND b.tenant_id = dc.tenant_id
+       WHERE dc.id = ? ${tenantId ? 'AND dc.tenant_id = ?' : ''}`,
+      tenantId ? [id, tenantId] : [id],
     );
     if (!dc) throw notFound('Day closing record');
 
@@ -1566,29 +1593,29 @@ export function registerDayClosing(r: Router) {
     const rows = [
       ['Metric', 'Value'],
       ['Closing Date', dc.bdate],
-      ['Branch', dc.branch_name || dc.branch_id],
+      ['Branch', dc.branchName || dc.branch_name || dc.branchId || dc.branch_id],
       ['Status', dc.status],
-      ['Gross Sales (Rs)', (Number(dc.gross_sales_minor || 0) / 100).toFixed(2)],
-      ['Sales Returns (Rs)', (Number(dc.returns_total_minor || 0) / 100).toFixed(2)],
-      ['Net Sales (Rs)', (Number(dc.net_sales_minor || 0) / 100).toFixed(2)],
-      ['Total Invoices', dc.invoices_count],
-      ['Cost of Goods Sold (COGS Rs)', (Number(dc.net_cogs_minor || 0) / 100).toFixed(2)],
-      ['Gross Profit (Rs)', (Number(dc.gross_profit_minor || 0) / 100).toFixed(2)],
-      ['Operating Expenses (Rs)', (Number(dc.operating_expenses_minor || 0) / 100).toFixed(2)],
-      ['Net Operating Profit (Rs)', (Number(dc.net_profit_minor || 0) / 100).toFixed(2)],
-      ['Opening Cash Float (Rs)', (Number(dc.opening_cash_minor || 0) / 100).toFixed(2)],
-      ['Cash Sales Collected (Rs)', (Number(dc.cash_sales_minor || 0) / 100).toFixed(2)],
-      ['Cash Refunds Paid (Rs)', (Number(dc.cash_refunds_minor || 0) / 100).toFixed(2)],
-      ['Cash Expenses Paid (Rs)', (Number(dc.cash_expenses_minor || 0) / 100).toFixed(2)],
-      ['Expected Closing Cash (Rs)', (Number(dc.expected_cash_minor || 0) / 100).toFixed(2)],
-      ['Actual Physical Cash Counted (Rs)', (Number(dc.actual_cash_minor || 0) / 100).toFixed(2)],
-      ['Cash Variance / Diff (Rs)', (Number(dc.variance_minor || 0) / 100).toFixed(2)],
-      ['Submitted By', dc.closed_by_name || 'Cashier'],
-      ['Approved By', dc.approved_by_name || '—'],
+      ['Gross Sales (Rs)', (Number(dc.grossSalesMinor ?? dc.gross_sales_minor ?? 0) / 100).toFixed(2)],
+      ['Sales Returns (Rs)', (Number(dc.returnsTotalMinor ?? dc.returns_total_minor ?? 0) / 100).toFixed(2)],
+      ['Net Sales (Rs)', (Number(dc.netSalesMinor ?? dc.net_sales_minor ?? 0) / 100).toFixed(2)],
+      ['Total Invoices', dc.invoicesCount ?? dc.invoices_count ?? 0],
+      ['Cost of Goods Sold (COGS Rs)', (Number(dc.netCogsMinor ?? dc.net_cogs_minor ?? 0) / 100).toFixed(2)],
+      ['Gross Profit (Rs)', (Number(dc.grossProfitMinor ?? dc.gross_profit_minor ?? 0) / 100).toFixed(2)],
+      ['Operating Expenses (Rs)', (Number(dc.operatingExpensesMinor ?? dc.operating_expenses_minor ?? 0) / 100).toFixed(2)],
+      ['Net Operating Profit (Rs)', (Number(dc.netProfitMinor ?? dc.net_profit_minor ?? 0) / 100).toFixed(2)],
+      ['Opening Cash Float (Rs)', (Number(dc.openingCashMinor ?? dc.opening_cash_minor ?? 0) / 100).toFixed(2)],
+      ['Cash Sales Collected (Rs)', (Number(dc.cashSalesMinor ?? dc.cash_sales_minor ?? 0) / 100).toFixed(2)],
+      ['Cash Refunds Paid (Rs)', (Number(dc.cashRefundsMinor ?? dc.cash_refunds_minor ?? 0) / 100).toFixed(2)],
+      ['Cash Expenses Paid (Rs)', (Number(dc.cashExpensesMinor ?? dc.cash_expenses_minor ?? 0) / 100).toFixed(2)],
+      ['Expected Closing Cash (Rs)', (Number(dc.expectedCashMinor ?? dc.expected_cash_minor ?? 0) / 100).toFixed(2)],
+      ['Actual Physical Cash Counted (Rs)', (Number(dc.actualCashMinor ?? dc.actual_cash_minor ?? 0) / 100).toFixed(2)],
+      ['Cash Variance / Diff (Rs)', (Number(dc.varianceMinor ?? dc.variance_minor ?? 0) / 100).toFixed(2)],
+      ['Submitted By', dc.closedByName || dc.closed_by_name || 'Cashier'],
+      ['Approved By', dc.approvedByName || dc.approved_by_name || '—'],
       ['Remarks', dc.remarks || ''],
     ];
 
     const csvContent = rows.map((r) => r.map(escapeCsv).join(',')).join('\r\n');
-    return new FileResponse(csvContent, 'text/csv; charset=utf-8', `DayClosing_${dc.bdate}_${dc.branch_id}.csv`);
+    return new FileResponse(csvContent, 'text/csv; charset=utf-8', `DayClosing_${dc.bdate}_${dc.branchId || dc.branch_id || 'main'}.csv`);
   });
 }
