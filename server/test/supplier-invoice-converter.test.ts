@@ -521,3 +521,54 @@ test('10. End-to-end OCR extraction of FreshMart invoice image extracts 3 items,
   assert.equal(sugar.priceInclusive, 'No');
   assert.equal(sugar.sellingPrice, '');
 });
+
+test('11. End-to-end OCR extraction of Sharma Grocery Shop invoice extracts 2 items, correct metadata & totals', { timeout: 60000 }, async () => {
+  const fs = await import('fs');
+  const path = 'C:/Users/I S Manish Madhava/.gemini/antigravity/brain/9997d043-54ff-4b9b-8345-936187dfb219/.user_uploaded/media_1794818926070_855cef64.png';
+  if (!fs.existsSync(path)) {
+    console.log('Skipping test 11: Sharma invoice image not found');
+    return;
+  }
+
+  const fileBuf = fs.readFileSync(path);
+  const base64Data = fileBuf.toString('base64');
+
+  const res = await api(
+    'POST',
+    '/api/supplier-invoices/extract',
+    {},
+    {
+      fileData: base64Data,
+      fileName: 'sharma-grocery-invoice.png',
+      mimeType: 'image/png',
+    },
+    ownerToken
+  );
+
+  assert.equal(res.status, 200);
+  assert.equal(res.body.ok, true);
+
+  // Metadata verification
+  assert.ok(res.body.metadata.supplierName.toLowerCase().includes('sharma'));
+  assert.ok(res.body.metadata.supplierGstin.startsWith('29AAC'));
+  assert.ok(res.body.metadata.invoiceNumber.includes('SG/'));
+  assert.equal(res.body.metadata.invoiceDate, '18/07/2024');
+  assert.equal(res.body.metadata.totalAmount, 660);
+
+  // Products verification: 2 detected products
+  assert.equal(res.body.products.length, 2);
+
+  const curd = res.body.products.find((p: any) => p.name.toLowerCase().includes('curd'));
+  assert.ok(curd, 'Nandini Curd product should be found');
+  assert.equal(curd.hsn, '403');
+  assert.equal(curd.openingStock, '5');
+  assert.equal(curd.costPrice, '35.71');
+  assert.equal(curd.gstRate, '12%');
+
+  const juice = res.body.products.find((p: any) => p.name.toLowerCase().includes('juice'));
+  assert.ok(juice, 'Real Fruit Juice product should be found');
+  assert.equal(juice.hsn, '2009');
+  assert.equal(juice.openingStock, '5');
+  assert.equal(juice.costPrice, '94.29');
+  assert.equal(juice.gstRate, '5%');
+});

@@ -88,13 +88,13 @@ export function registerSupplierInvoices(r: Router): void {
     const { headers, columnMap, dataLines } = detectTableColumns(lines, initialMapping);
 
     // Parse product items
-    let rawProducts = parseLineItems(dataLines, columnMap, headers);
+    let rawProducts = parseLineItems(dataLines, columnMap, headers, sparseText);
 
     // If line parsing yielded 0 items but we have tableData from PDF, attempt tableData mapping
     if (rawProducts.length === 0 && tableData && tableData.length > 1) {
       const tableLines = tableData.map((row) => row.join('\t'));
       const colDet = detectTableColumns(tableLines, initialMapping);
-      rawProducts = parseLineItems(colDet.dataLines, colDet.columnMap, colDet.headers);
+      rawProducts = parseLineItems(colDet.dataLines, colDet.columnMap, colDet.headers, sparseText);
     }
 
     // Cross-reference existing items in catalog to fill Selling Price
