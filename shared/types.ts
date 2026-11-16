@@ -8,7 +8,7 @@ const ALL: Role[] = ['owner', 'manager', 'cashier', 'accountant'];
 export const PERMS = {
   sell: ['owner', 'manager', 'cashier', 'counter'],
   'bills.view': ALL,
-  returns: ['owner', 'manager'],
+  returns: ['owner', 'manager', 'cashier'],
   'items.view': ALL,
   'items.write': ['owner', 'manager'],
   'parties.view': ALL,
@@ -94,7 +94,81 @@ export interface FieldDef {
   showOnPrint?: boolean;
 }
 
-export type Paper = 'thermal58' | 'thermal80' | 'a4' | 'a5';
+export type Paper = 'thermal58' | 'thermal80' | 'a4' | 'a5' | 'wholesale_a4';
+
+export interface InvoiceProfileBankDetails {
+  bankName: string;
+  accountNo: string;
+  branchName: string;
+  ifscCode: string;
+}
+
+export interface InvoiceProfile {
+  enabled: boolean;
+  displayName: string;
+  legalName?: string | null;
+  logoUrl?: string | null;
+  gstin?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  address?: string | null;
+  stateCode?: string | null;
+  invoicePrefix: string;
+  paper: Paper;
+  bankDetails?: InvoiceProfileBankDetails;
+  terms?: string | null;
+  jurisdiction?: string | null;
+}
+
+export interface InvoiceProfiles {
+  retail: InvoiceProfile;
+  wholesale: InvoiceProfile;
+}
+
+export const DEFAULT_INVOICE_PROFILES: InvoiceProfiles = {
+  retail: {
+    enabled: true,
+    displayName: '',
+    legalName: '',
+    logoUrl: null,
+    gstin: '',
+    phone: '',
+    email: '',
+    address: '',
+    stateCode: '33',
+    invoicePrefix: 'INV',
+    paper: 'thermal80',
+    bankDetails: {
+      bankName: '',
+      accountNo: '',
+      branchName: '',
+      ifscCode: '',
+    },
+    terms: 'Goods once sold will not be taken back or exchanged. Thank you!',
+    jurisdiction: '',
+  },
+  wholesale: {
+    enabled: true,
+    displayName: '',
+    legalName: '',
+    logoUrl: null,
+    gstin: '',
+    phone: '',
+    email: '',
+    address: '',
+    stateCode: '33',
+    invoicePrefix: 'WH',
+    paper: 'wholesale_a4',
+    bankDetails: {
+      bankName: '',
+      accountNo: '',
+      branchName: '',
+      ifscCode: '',
+    },
+    terms: "(1) Payments to be made by payee's A/c. Cheque, Draft or NEFT/RTGS.\n(2) Goods once sold and/or delivered will in no circumstances be taken back or exchanged.\n(3) Any Complain for goods should be made within 7 days. after that no complain will be entertained.\n(4) Interest @ 24 % per annum will be charged after due date of the bill.\n(5) We are not responsible for any loss or damage during transit.\n(6) Subject to Jurisdiction.",
+    jurisdiction: '',
+  },
+};
 export type Lang = 'en' | 'ta' | 'hi';
 export interface PrintTemplate {
   paper: Paper;
@@ -1253,3 +1327,103 @@ export function formatStockDuration(days: number | null | undefined): string {
   const totalMinutes = Math.max(1, Math.round(totalHours * 60));
   return `${totalMinutes} ${totalMinutes === 1 ? 'Minute' : 'Minutes'}`;
 }
+
+export type ReturnItemCondition = 'resellable' | 'damaged' | 'defective';
+export type ReturnReason =
+  | 'Size too small'
+  | 'Size too large'
+  | 'Damaged product'
+  | 'Wrong product'
+  | 'Customer changed mind'
+  | 'Other';
+
+export interface DayClosing {
+  id: string;
+  tenantId: string;
+  branchId: string;
+  bdate: string;
+  status: 'closed' | 'reopened';
+  openingCashMinor: number;
+  cashSalesMinor: number;
+  cashRefundsMinor: number;
+  cashExpensesMinor: number;
+  cashInMinor: number;
+  cashOutMinor: number;
+  expectedCashMinor: number;
+  actualCashMinor: number;
+  varianceMinor: number;
+  grossSalesMinor: number;
+  returnsTotalMinor: number;
+  netSalesMinor: number;
+  invoicesCount: number;
+  returnsCount: number;
+  exchangesCount: number;
+  refundsCount: number;
+  cogsMinor: number;
+  returnedCogsMinor: number;
+  netCogsMinor: number;
+  grossProfitMinor: number;
+  operatingExpensesMinor: number;
+  netProfitMinor: number;
+  collectionsSummary: Record<string, number>;
+  returnsSummary: {
+    totalValueMinor: number;
+    cashRefundsMinor: number;
+    upiRefundsMinor: number;
+    exchangeAdjustedMinor: number;
+    storeCreditsIssuedMinor: number;
+  };
+  exchangesSummary: {
+    count: number;
+    oldReturnedMinor: number;
+    newSoldMinor: number;
+    diffCollectedMinor: number;
+    remainingCreditMinor: number;
+  };
+  remarks?: string | null;
+  closedBy: string;
+  closedByName?: string;
+  verifiedBy?: string | null;
+  closedAt: string;
+  createdAt: string;
+}
+
+export interface StoreCredit {
+  id: string;
+  tenantId: string;
+  partyId: string;
+  partyName?: string;
+  partyPhone?: string;
+  creditNoteId?: string;
+  creditNoteNumber?: string;
+  amountMinor: number;
+  balanceMinor: number;
+  status: 'active' | 'exhausted' | 'expired' | 'voided';
+  referenceNo?: string;
+  expiryDate?: string;
+  notes?: string;
+  createdBy?: string;
+  createdByName?: string;
+  createdAt: string;
+}
+
+export interface RefundTransaction {
+  id: string;
+  tenantId: string;
+  creditNoteId: string;
+  creditNoteNumber?: string;
+  origInvoiceId?: string;
+  origInvoiceNumber?: string;
+  partyId?: string;
+  partyName?: string;
+  amountMinor: number;
+  method: 'cash' | 'upi' | 'bank' | 'card' | 'original' | 'store_credit';
+  referenceNo?: string;
+  bdate: string;
+  shiftId?: string;
+  notes?: string;
+  processedBy: string;
+  processedByName?: string;
+  createdAt: string;
+}
+
