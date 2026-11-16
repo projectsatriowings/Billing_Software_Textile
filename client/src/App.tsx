@@ -1025,6 +1025,7 @@ export function App() {
   const customerMobileInputRef = useRef<HTMLInputElement>(null);
   const customerNameInputRef = useRef<HTMLInputElement>(null);
   const customerNameManuallyEditedRef = useRef(false);
+  const manuallyDecreasedItemsRef = useRef<Set<string>>(new Set());
   const checkoutBtnRef = useRef<HTMLButtonElement>(null);
   const [catalogSelectedIndex, setCatalogSelectedIndex] = useState<number>(-1);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
@@ -1943,6 +1944,34 @@ export function App() {
       setPromoEvalResult(null);
       return;
     }
+
+    // 1. Auto-consolidate any duplicate non-return lines of the exact same product
+    const duplicateIdx = cart.findIndex((c, i) => !c.isReturn && cart.findIndex((o) => !o.isReturn && o.item.id === c.item.id) !== i);
+    if (duplicateIdx !== -1) {
+      setCart((prev) => {
+        const merged: typeof prev = [];
+        const indexMap = new Map<string, number>();
+        for (const c of prev) {
+          if (c.isReturn) {
+            merged.push(c);
+            continue;
+          }
+          const existingIdx = indexMap.get(c.item.id);
+          if (existingIdx !== undefined) {
+            merged[existingIdx] = {
+              ...merged[existingIdx],
+              qty: merged[existingIdx].qty + c.qty,
+            };
+          } else {
+            indexMap.set(c.item.id, merged.length);
+            merged.push({ ...c, isFreeItem: false, appliedPromotionId: undefined } as any);
+          }
+        }
+        return merged;
+      });
+      return;
+    }
+
     const cartEvalInput: CartItemForEval[] = cart.map((c) => ({
       itemId: c.item.id,
       name: c.item.name,
@@ -1965,26 +1994,47 @@ export function App() {
     });
     setPromoEvalResult(evalRes);
 
-    // Auto-add eligible free items for BOGO
+    // Auto-add eligible free items for BOGO into the SAME product line
     if (evalRes.autoFreeItems && evalRes.autoFreeItems.length > 0) {
       for (const freeItem of evalRes.autoFreeItems) {
         if (!freeItem.productId) continue;
-        const alreadyInCart = cart.some(
-          (c) => (c as any).isFreeItem && c.item.id === freeItem.productId && (c as any).appliedPromotionId === freeItem.promotionId
-        );
-        if (!alreadyInCart) {
-          const matchedItem = items.find((i) => i.id === freeItem.productId);
-          if (matchedItem) {
-            setCart((prev) => [
-              ...prev,
-              {
-                item: matchedItem,
-                qty: freeItem.qty,
-                isFreeItem: true,
-                appliedPromotionId: freeItem.promotionId,
-              } as any,
-            ]);
-            showToast(`🎉 BOGO Offer Applied: Added ${freeItem.qty} Free ${matchedItem.name}!`);
+
+        // If cashier recently manually decreased this item, don't auto-re-add
+        if (manuallyDecreasedItemsRef.current.has(freeItem.productId)) {
+          continue;
+        }
+
+        // Check if this item is already in cart (same-product BOGO)
+        const existingSameItem = cart.find((c) => !c.isReturn && c.item.id === freeItem.productId);
+        if (existingSameItem) {
+          // Merge directly into the SAME product line (do NOT add a separate line!)
+          setCart((prev) =>
+            prev.map((c) =>
+              !c.isReturn && c.item.id === freeItem.productId
+                ? { ...c, qty: c.qty + freeItem.qty }
+                : c
+            )
+          );
+          showToast(`🎉 BOGO Offer Applied: 1 Free ${existingSameItem.item.name} added to line!`);
+        } else {
+          // Different product free item
+          const alreadyInCart = cart.some(
+            (c) => (c as any).isFreeItem && c.item.id === freeItem.productId && (c as any).appliedPromotionId === freeItem.promotionId
+          );
+          if (!alreadyInCart) {
+            const matchedItem = items.find((i) => i.id === freeItem.productId);
+            if (matchedItem) {
+              setCart((prev) => [
+                ...prev,
+                {
+                  item: matchedItem,
+                  qty: freeItem.qty,
+                  isFreeItem: true,
+                  appliedPromotionId: freeItem.promotionId,
+                } as any,
+              ]);
+              showToast(`🎉 BOGO Offer Applied: Added ${freeItem.qty} Free ${matchedItem.name}!`);
+            }
           }
         }
       }
@@ -2923,6 +2973,7 @@ export function App() {
 
   // Cart operations with stock validation
   const addToCart = (item: Item, qtyToAdd: number = 1): boolean => {
+    manuallyDecreasedItemsRef.current.delete(item.id);
     const avail = getAvailableStockUnits(item.id, item);
     if (avail <= 0) {
       playAlertTone();
@@ -2949,6 +3000,11 @@ export function App() {
   };
 
   const updateCartQty = (itemId: string, delta: number) => {
+    if (delta < 0) {
+      manuallyDecreasedItemsRef.current.add(itemId);
+    } else {
+      manuallyDecreasedItemsRef.current.delete(itemId);
+    }
     if (delta > 0) {
       const existing = cart.find((c) => c.item.id === itemId);
       if (existing?.isReturn) {
@@ -8532,6 +8588,42 @@ export function App() {
                                 const availStock = isReturn ? qty : getAvailableStockUnits(item.id, item);
                                 const isMaxStock = isReturn || (availStock !== Infinity && qty >= availStock);
 
+                                const linePromo = promoEvalResult?.linePromotions?.[cartIdx];
+                                const promoDiscount = promoEvalResult?.lineDiscounts[cartIdx] || 0;
+
+                                // Also check active promo for this item if not yet unlocked
+                                const activePromoForItem = !isReturn
+                                  ? activePromotionsList.find((p) => {
+                                      if (p.rules?.qualifyingProductId === item.id) return true;
+                                      if (p.rules?.productIds && p.rules.productIds.includes(item.id)) return true;
+                                      if (p.rules?.categoryNames && item.category && p.rules.categoryNames.map((c) => c.toLowerCase()).includes(item.category.toLowerCase())) return true;
+                                      return false;
+                                    })
+                                  : undefined;
+
+                                const promoBadgeText = (() => {
+                                  if (linePromo) {
+                                    if (linePromo.promotionType === 'bogo') {
+                                      const matchP = activePromotionsList.find((p) => p.id === linePromo.promotionId);
+                                      const q = matchP?.rules?.qualifyingQty || 2;
+                                      const f = matchP?.rules?.freeQty || 1;
+                                      return `Promo: Buy ${q} Get ${f} Free`;
+                                    }
+                                    const cleanName = linePromo.promotionName.split(/\s*[-–—]\s*/)[0].replace(/\s+(on|for|with)\s+.*$/i, '').trim();
+                                    return cleanName ? (cleanName.toLowerCase().startsWith('promo') ? cleanName : `Promo: ${cleanName}`) : 'Promo';
+                                  }
+                                  if (activePromoForItem) {
+                                    if (activePromoForItem.type === 'bogo') {
+                                      const q = activePromoForItem.rules?.qualifyingQty || 2;
+                                      const f = activePromoForItem.rules?.freeQty || 1;
+                                      return `Promo: Buy ${q} Get ${f} Free`;
+                                    }
+                                    const cleanName = activePromoForItem.name.split(/\s*[-–—]\s*/)[0].replace(/\s+(on|for|with)\s+.*$/i, '').trim();
+                                    return cleanName ? (cleanName.toLowerCase().startsWith('promo') ? cleanName : `Promo: ${cleanName}`) : 'Promo';
+                                  }
+                                  return null;
+                                })();
+
                                 return (
                                   <div
                                     key={item.id}
@@ -8543,7 +8635,7 @@ export function App() {
                                       <div className="bento-cart-item-name" title={item.name} style={isReturn ? { color: '#991b1b', fontWeight: 700 } : undefined}>
                                         {item.name}
                                       </div>
-                                      <div className="bento-cart-item-meta">
+                                      <div className="bento-cart-item-meta" style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap', marginTop: '3px' }}>
                                         {isReturn ? (
                                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                                             <span
@@ -8569,17 +8661,43 @@ export function App() {
                                             <span className="bento-cart-cat-badge">
                                               {item.category || 'General'}
                                             </span>
+                                            {/* Promotion Badge directly below the product title (clean, without full product name) */}
+                                            {promoBadgeText && (
+                                              <span
+                                                className="bento-cart-promo-badge"
+                                                style={{
+                                                  background: linePromo ? '#eff6ff' : '#fffbeb',
+                                                  color: linePromo ? '#1d4ed8' : '#b45309',
+                                                  border: linePromo ? '1.5px solid #93c5fd' : '1.5px solid #fde68a',
+                                                  padding: '1px 6px',
+                                                  borderRadius: '4px',
+                                                  fontSize: '0.68rem',
+                                                  fontWeight: 800,
+                                                  letterSpacing: '0.2px',
+                                                  display: 'inline-flex',
+                                                  alignItems: 'center',
+                                                  gap: '3px',
+                                                }}
+                                                title={linePromo?.promotionName || activePromoForItem?.name}
+                                              >
+                                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                                                  <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                                                  <line x1="7" y1="7" x2="7.01" y2="7"></line>
+                                                </svg>
+                                                <span>{promoBadgeText}</span>
+                                              </span>
+                                            )}
                                             {lineSavings > 0 && (
                                               <span className="bento-cart-savings-tag">
                                                 Save {formatRupees(lineSavings)}
                                               </span>
                                             )}
-                                            {promoEvalResult?.lineDiscounts[cartIdx] && promoEvalResult.lineDiscounts[cartIdx] > 0 && (
+                                            {promoDiscount > 0 && (
                                               <span
                                                 className="bento-cart-savings-tag"
-                                                style={{ background: '#dcfce7', color: '#15803d', border: '1px solid #86efac' }}
+                                                style={{ background: '#dcfce7', color: '#15803d', border: '1px solid #86efac', fontWeight: 750 }}
                                               >
-                                                Offer: -{formatRupees(promoEvalResult.lineDiscounts[cartIdx])}
+                                                Offer: -{formatRupees(promoDiscount)}
                                               </span>
                                             )}
                                           </>

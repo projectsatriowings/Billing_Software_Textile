@@ -165,9 +165,19 @@ export interface AutoFreeItem {
   promotionName: string;
 }
 
+export interface LinePromotionInfo {
+  promotionId: string;
+  promotionName: string;
+  promotionType: PromotionType;
+  discountMinor: number;
+  freeUnits?: number;
+  description?: string;
+}
+
 export interface PromotionEvalResult {
   appliedPromotions: AppliedPromotionDetail[];
   lineDiscounts: Record<number, number>; // lineIndex -> discountMinor in paise
+  linePromotions: Record<number, LinePromotionInfo>; // lineIndex -> LinePromotionInfo
   billDiscountMinor: number; // bill-level discount in paise
   totalDiscountMinor: number; // sum of line discounts + bill discount
   nudges: PromotionNudge[];
@@ -234,6 +244,7 @@ export function evaluatePromotions(
   } = {}
 ): PromotionEvalResult {
   const lineDiscounts: Record<number, number> = {};
+  const linePromotions: Record<number, LinePromotionInfo> = {};
   const appliedPromotions: AppliedPromotionDetail[] = [];
   const nudges: PromotionNudge[] = [];
   const autoFreeItems: AutoFreeItem[] = [];
@@ -243,6 +254,7 @@ export function evaluatePromotions(
     return {
       appliedPromotions: [],
       lineDiscounts: {},
+      linePromotions: {},
       billDiscountMinor: 0,
       totalDiscountMinor: 0,
       nudges: [],
@@ -330,6 +342,14 @@ export function evaluatePromotions(
                 const units = Math.min(item.qty, remaining);
                 const d = item.priceMinor * units;
                 lineDiscounts[idx] = (lineDiscounts[idx] || 0) + d;
+                linePromotions[idx] = {
+                  promotionId: promo.id,
+                  promotionName: promo.name,
+                  promotionType: promo.type,
+                  discountMinor: (linePromotions[idx]?.discountMinor || 0) + d,
+                  freeUnits: (linePromotions[idx]?.freeUnits || 0) + units,
+                  description: promo.name,
+                };
                 disc += d;
                 remaining -= units;
               }
@@ -361,6 +381,14 @@ export function evaluatePromotions(
                   const units = Math.min(item.qty, remainingFree);
                   const d = item.priceMinor * units;
                   lineDiscounts[idx] = (lineDiscounts[idx] || 0) + d;
+                  linePromotions[idx] = {
+                    promotionId: promo.id,
+                    promotionName: promo.name,
+                    promotionType: promo.type,
+                    discountMinor: (linePromotions[idx]?.discountMinor || 0) + d,
+                    freeUnits: (linePromotions[idx]?.freeUnits || 0) + units,
+                    description: promo.name,
+                  };
                   disc += d;
                   remainingFree -= units;
                 }
@@ -424,6 +452,14 @@ export function evaluatePromotions(
                 const units = Math.min(item.qty, remaining);
                 const d = item.priceMinor * units;
                 lineDiscounts[idx] = (lineDiscounts[idx] || 0) + d;
+                linePromotions[idx] = {
+                  promotionId: promo.id,
+                  promotionName: promo.name,
+                  promotionType: promo.type,
+                  discountMinor: (linePromotions[idx]?.discountMinor || 0) + d,
+                  freeUnits: (linePromotions[idx]?.freeUnits || 0) + units,
+                  description: promo.name,
+                };
                 disc += d;
                 remaining -= units;
               }
@@ -501,6 +537,13 @@ export function evaluatePromotions(
 
               if (disc > 0) {
                 lineDiscounts[idx] = (lineDiscounts[idx] || 0) + disc;
+                linePromotions[idx] = {
+                  promotionId: promo.id,
+                  promotionName: promo.name,
+                  promotionType: promo.type,
+                  discountMinor: (linePromotions[idx]?.discountMinor || 0) + disc,
+                  description: promo.name,
+                };
                 promoDiscountTotal += disc;
               }
             } else if (item.qty > 0 && minQty > item.qty) {
@@ -568,6 +611,13 @@ export function evaluatePromotions(
                 }
                 if (disc > 0) {
                   lineDiscounts[idx] = (lineDiscounts[idx] || 0) + disc;
+                  linePromotions[idx] = {
+                    promotionId: promo.id,
+                    promotionName: promo.name,
+                    promotionType: promo.type,
+                    discountMinor: (linePromotions[idx]?.discountMinor || 0) + disc,
+                    description: promo.name,
+                  };
                   promoDisc += disc;
                 }
               }
@@ -620,6 +670,13 @@ export function evaluatePromotions(
             }
             if (disc > lineGross) disc = lineGross;
             lineDiscounts[idx] = (lineDiscounts[idx] || 0) + disc;
+            linePromotions[idx] = {
+              promotionId: promo.id,
+              promotionName: promo.name,
+              promotionType: promo.type,
+              discountMinor: (linePromotions[idx]?.discountMinor || 0) + disc,
+              description: promo.name,
+            };
             slabDiscountTotal += disc;
           });
 
@@ -719,6 +776,13 @@ export function evaluatePromotions(
 
             if (disc > 0) {
               lineDiscounts[targetLineIdx] = (lineDiscounts[targetLineIdx] || 0) + disc;
+              linePromotions[targetLineIdx] = {
+                promotionId: promo.id,
+                promotionName: promo.name,
+                promotionType: promo.type,
+                discountMinor: (linePromotions[targetLineIdx]?.discountMinor || 0) + disc,
+                description: promo.name,
+              };
               appliedPromotions.push({
                 promotionId: promo.id,
                 promotionName: promo.name,
@@ -751,6 +815,7 @@ export function evaluatePromotions(
   return {
     appliedPromotions,
     lineDiscounts,
+    linePromotions,
     billDiscountMinor,
     totalDiscountMinor,
     nudges,
