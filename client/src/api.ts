@@ -105,6 +105,75 @@ export async function api<T = any>(path: string, options: RequestInit = {}): Pro
   return data as T;
 }
 
+export interface DownloadBlobResult {
+  blob: Blob;
+  filename?: string;
+  contentType: string;
+}
+
+export async function apiBlob(
+  path: string,
+  options: RequestInit = {}
+): Promise<DownloadBlobResult> {
+  const token = getToken();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(options.headers as Record<string, string>),
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  const selectedBranch = getActiveBranchScope();
+  if (selectedBranch && selectedBranch.toLowerCase() !== 'all') {
+    headers['x-branch-id'] = selectedBranch;
+  }
+
+  const res = await fetch(path, {
+    ...options,
+    headers,
+  });
+
+  if (res.status === 401) {
+    clearToken();
+    window.dispatchEvent(new Event('auth_required'));
+    const errJson = await res.json().catch(() => ({}));
+    const msg = errJson?.error?.message || errJson?.message || 'Please sign in again';
+    throw new Error(msg);
+  }
+
+  if (res.status === 403) {
+    const clone = res.clone();
+    const data = await clone.json().catch(() => ({}));
+    if (data?.code === 'PASSWORD_CHANGE_REQUIRED' || data?.error?.code === 'PASSWORD_CHANGE_REQUIRED') {
+      window.dispatchEvent(new CustomEvent('password_change_required'));
+    }
+  }
+
+  if (!res.ok) {
+    const errJson = await res.json().catch(() => ({}));
+    const msg = errJson?.error?.message || errJson?.message || `Download failed with HTTP ${res.status}`;
+    throw new Error(msg);
+  }
+
+  const contentType = res.headers.get('content-type') || '';
+  if (contentType.includes('application/json')) {
+    const json = await res.json().catch(() => ({}));
+    if (json?.error) {
+      throw new Error(json.error.message || 'Server error occurred during download');
+    }
+  }
+
+  const disposition = res.headers.get('content-disposition') || '';
+  let filename: string | undefined;
+  if (disposition && disposition.includes('filename=')) {
+    const match = disposition.match(/filename="?([^";]+)"?/);
+    if (match && match[1]) filename = match[1];
+  }
+
+  const blob = await res.blob();
+  return { blob, filename, contentType };
+}
+
 export async function changePassword(
   currentPassword: string,
   newPassword: string,
@@ -2719,31 +2788,26 @@ export const deleteSupplierInvoiceMapping = (id: string) =>
     method: 'DELETE',
   });
 
+export interface DownloadableExcelBlob extends Blob {
+  filename?: string;
+}
+
 export const exportSupplierInvoiceExcel = async (payload: {
   products: ExtractedSupplierInvoiceItem[];
   invoiceNumber?: string;
-}): Promise<Blob> => {
-  const token = localStorage.getItem('token') || '';
-  const branchId = getActiveBranchScope();
-  const res = await fetch('/api/supplier-invoices/export-excel', {
+}): Promise<DownloadableExcelBlob> => {
+  const invoiceNum = (payload.invoiceNumber || 'INV').replace(/[^\w-]/g, '_');
+  const dateStr = new Date().toISOString().slice(0, 10);
+  const fallbackFilename = `Supplier_Product_Import_${invoiceNum}_${dateStr}.xlsx`;
+
+  const { blob, filename } = await apiBlob('/api/supplier-invoices/export-excel', {
     method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      authorization: token ? `Bearer ${token}` : '',
-      ...(branchId ? { 'x-branch-id': branchId } : {}),
-    },
     body: JSON.stringify(payload),
   });
-  if (!res.ok) {
-    const errorText = await res.text();
-    let msg = 'Failed to generate Excel file';
-    try {
-      const errJson = JSON.parse(errorText);
-      msg = errJson.error?.message || msg;
-    } catch {}
-    throw new Error(msg);
-  }
-  return res.blob();
+
+  const resBlob = blob as DownloadableExcelBlob;
+  resBlob.filename = filename || fallbackFilename;
+  return resBlob;
 };
 
 

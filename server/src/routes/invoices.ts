@@ -927,7 +927,6 @@ export function registerInvoices(r: Router) {
       invoiceId,
       number: assignedNumber,
       invoiceType: isWholesale ? 'wholesale' : 'retail',
-      shareToken,
       totalMinor: calculated.totalMinor,
       paidMinor: totalPaidMinor,
       balanceMinor: Math.max(0, calculated.totalMinor - totalPaidMinor),

@@ -38,7 +38,7 @@ async function api(method: string, path: string, headers: Record<string, string>
   const text = await res.text();
   let json: any = null;
   try { json = JSON.parse(text); } catch { }
-  return { status: res.status, body: json, text };
+  return { status: res.status, body: json, json, text, headers: Object.fromEntries(res.headers.entries()) };
 }
 
 before(async () => {
@@ -336,7 +336,35 @@ test('7. POST /api/supplier-invoices/mappings saves supplier mapping and GET ret
   assert.equal(delRes.status, 200);
 });
 
-test('8. POST /api/supplier-invoices/export-excel downloads valid .xlsx file', async () => {
+test('8. POST /api/supplier-invoices/export-excel requires authentication and downloads valid .xlsx file', async () => {
+  // Test unauthorized request (no token)
+  const unauthRes = await api(
+    'POST',
+    '/api/supplier-invoices/export-excel',
+    {},
+    {
+      invoiceNumber: 'INV-TEST-1',
+      products: [],
+    }
+  );
+  assert.equal(unauthRes.status, 401);
+  assert.equal(unauthRes.json.error?.code, 'UNAUTHORIZED');
+
+  // Test unauthorized request (invalid token)
+  const invalidRes = await api(
+    'POST',
+    '/api/supplier-invoices/export-excel',
+    {},
+    {
+      invoiceNumber: 'INV-TEST-1',
+      products: [],
+    },
+    'invalid_token_xyz'
+  );
+  assert.equal(invalidRes.status, 401);
+  assert.equal(invalidRes.json.error?.code, 'UNAUTHORIZED');
+
+  // Test authorized request with valid owner token
   const exportRes = await api(
     'POST',
     '/api/supplier-invoices/export-excel',
@@ -362,6 +390,8 @@ test('8. POST /api/supplier-invoices/export-excel downloads valid .xlsx file', a
 
   assert.equal(exportRes.status, 200);
   assert.ok(exportRes.text.length > 500);
+  assert.ok(exportRes.headers['content-disposition']?.includes('INV-TEST-1'));
+  assert.ok(exportRes.headers['content-type']?.includes('spreadsheetml'));
 });
 
 test('9. Extract from binary PDF document using pdf-parse', async () => {

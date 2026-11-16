@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
+  api,
+  setToken,
   extractSupplierInvoice,
   reparseSupplierInvoice,
   fetchSupplierInvoiceMappings,
@@ -59,6 +61,13 @@ export function SupplierInvoiceConverterModal({
   const [downloadBlob, setDownloadBlob] = useState<Blob | null>(null);
   const [downloadFilename, setDownloadFilename] = useState<string>('supplier_product_import.xlsx');
   const [isGeneratingExcel, setIsGeneratingExcel] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+  const [isAuthError, setIsAuthError] = useState(false);
+  const [showInlineLogin, setShowInlineLogin] = useState(false);
+  const [inlineLoginIdentifier, setInlineLoginIdentifier] = useState('');
+  const [inlineLoginPassword, setInlineLoginPassword] = useState('');
+  const [inlineLoginLoading, setInlineLoginLoading] = useState(false);
+  const [inlineLoginError, setInlineLoginError] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -299,11 +308,15 @@ export function SupplierInvoiceConverterModal({
       return;
     }
     setIsGeneratingExcel(true);
+    setDownloadError(null);
+    setIsAuthError(false);
     try {
       const blob = await exportSupplierInvoiceExcel({
         products,
         invoiceNumber: metadata.invoiceNumber || 'INV',
       });
+      const resolvedFilename = blob.filename || downloadFilename;
+      setDownloadFilename(resolvedFilename);
       setDownloadBlob(blob);
       setIsGeneratingExcel(false);
       setStep('download');
@@ -312,14 +325,51 @@ export function SupplierInvoiceConverterModal({
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = downloadFilename;
+      a.download = resolvedFilename;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch (err: any) {
       setIsGeneratingExcel(false);
-      alert(err.message || 'Failed to generate Excel file');
+      const msg = err.message || 'Failed to generate Excel file';
+      const isAuth =
+        msg.toLowerCase().includes('sign in') ||
+        msg.toLowerCase().includes('unauthorized') ||
+        msg.toLowerCase().includes('session') ||
+        msg.toLowerCase().includes('authenticated');
+      setDownloadError(msg);
+      setIsAuthError(isAuth);
+    }
+  };
+
+  const handleInlineLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setInlineLoginLoading(true);
+    setInlineLoginError(null);
+    try {
+      const res = await api<{ token: string }>('/api/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({
+          identifier: inlineLoginIdentifier,
+          password: inlineLoginPassword,
+        }),
+      });
+      if (res.token) {
+        setToken(res.token);
+        setShowInlineLogin(false);
+        setDownloadError(null);
+        setIsAuthError(false);
+        setInlineLoginPassword('');
+        // Automatically retry download with the new active token
+        setTimeout(() => {
+          handleGenerateExcel();
+        }, 150);
+      }
+    } catch (loginErr: any) {
+      setInlineLoginError(loginErr.message || 'Sign in failed');
+    } finally {
+      setInlineLoginLoading(false);
     }
   };
 
@@ -789,6 +839,73 @@ export function SupplierInvoiceConverterModal({
                 </div>
               </div>
 
+              {/* Download Error Banner with Inline Re-authentication */}
+              {downloadError && (
+                <div style={{
+                  padding: '0.75rem 1.5rem',
+                  background: isAuthError ? '#fff7ed' : '#fef2f2',
+                  borderBottom: `1px solid ${isAuthError ? '#fed7aa' : '#fecaca'}`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '0.85rem',
+                  fontSize: '0.86rem',
+                  color: isAuthError ? '#9a3412' : '#b91c1c',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                    <span><strong>{isAuthError ? 'Authentication Required:' : 'Download Failed:'}</strong> {downloadError} (Your extracted products and edits are preserved)</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    {isAuthError && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setInlineLoginError(null);
+                          setShowInlineLogin(true);
+                        }}
+                        style={{
+                          padding: '0.35rem 0.85rem',
+                          background: '#ea580c',
+                          color: '#ffffff',
+                          border: 'none',
+                          borderRadius: '6px',
+                          fontSize: '0.8rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Sign In to Continue
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleGenerateExcel()}
+                      style={{
+                        padding: '0.35rem 0.85rem',
+                        background: '#ffffff',
+                        color: isAuthError ? '#ea580c' : '#b91c1c',
+                        border: `1px solid ${isAuthError ? '#fed7aa' : '#fecaca'}`,
+                        borderRadius: '6px',
+                        fontSize: '0.8rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Retry Download
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDownloadError(null)}
+                      style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: '1rem', padding: '0 0.25rem' }}
+                      title="Dismiss"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Financial Discrepancy Alert */}
               {metadata.discrepancyWarning && (
                 <div style={{ padding: '0.65rem 1.5rem', background: '#fffbeb', borderBottom: '1px solid #fde68a', display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.82rem', color: '#92400e' }}>
@@ -1242,6 +1359,103 @@ export function SupplierInvoiceConverterModal({
           )}
         </div>
       </div>
+
+      {/* INLINE RE-AUTHENTICATION MODAL */}
+      {showInlineLogin && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.72)',
+            zIndex: 10050,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+          }}
+        >
+          <div
+            style={{
+              background: '#ffffff',
+              borderRadius: '16px',
+              width: '100%',
+              maxWidth: '420px',
+              padding: '1.75rem',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.25)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h4 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: '#1e1b4b' }}>
+                Sign In to Continue
+              </h4>
+              <button
+                type="button"
+                onClick={() => setShowInlineLogin(false)}
+                style={{ background: 'none', border: 'none', fontSize: '1.25rem', color: '#64748b', cursor: 'pointer' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <p style={{ fontSize: '0.85rem', color: '#64748b', margin: '0 0 1.25rem' }}>
+              Your session timed out. Sign in below to resume your download without losing your invoice corrections.
+            </p>
+
+            {inlineLoginError && (
+              <div style={{ padding: '0.65rem 0.85rem', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', color: '#b91c1c', fontSize: '0.82rem', marginBottom: '1rem' }}>
+                {inlineLoginError}
+              </div>
+            )}
+
+            <form onSubmit={handleInlineLogin}>
+              <div style={{ marginBottom: '0.85rem' }}>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem' }}>
+                  Username or Email
+                </label>
+                <input
+                  type="text"
+                  value={inlineLoginIdentifier}
+                  onChange={(e) => setInlineLoginIdentifier(e.target.value)}
+                  required
+                  placeholder="Username or email"
+                  style={{ width: '100%', padding: '0.55rem 0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.9rem' }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '1.25rem' }}>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem' }}>
+                  Password
+                </label>
+                <input
+                  type="password"
+                  value={inlineLoginPassword}
+                  onChange={(e) => setInlineLoginPassword(e.target.value)}
+                  required
+                  placeholder="Enter password"
+                  style={{ width: '100%', padding: '0.55rem 0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.9rem' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowInlineLogin(false)}
+                  style={{ padding: '0.5rem 1rem', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 600, color: '#475569', cursor: 'pointer' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={inlineLoginLoading}
+                  style={{ padding: '0.5rem 1.25rem', background: 'linear-gradient(135deg, #4f46e5 0%, #4338ca 100%)', border: 'none', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 700, color: '#ffffff', cursor: inlineLoginLoading ? 'wait' : 'pointer' }}
+                >
+                  {inlineLoginLoading ? 'Signing In...' : 'Sign In & Download'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
