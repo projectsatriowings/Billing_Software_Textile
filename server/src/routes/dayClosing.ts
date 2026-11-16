@@ -1,5 +1,5 @@
 import { requirePerm, requireUser } from '../auth.ts';
-import { bad, notFound, forbidden, HtmlResponse, V, type Router } from '../http.ts';
+import { bad, notFound, forbidden, HtmlResponse, FileResponse, V, type Router } from '../http.ts';
 import { newId } from '../security.ts';
 import { j } from '../db/index.ts';
 import { audit } from '../audit.ts';
@@ -291,6 +291,42 @@ export function registerDayClosing(r: Router) {
     const grossProfitMinor = netSalesMinor - netCogsMinor;
     const netProfitMinor = grossProfitMinor - operatingExpensesMinor;
 
+    // Duplicate Invoices Detection: Check for potential duplicate billing events on this date
+    const duplicateInvoices = await ctx.db.query<any>(
+      `SELECT i1.id AS invoice_id_1, i1.number AS number_1,
+              i2.id AS invoice_id_2, i2.number AS number_2,
+              i1.total_minor, i1.customer_phone, i1.created_at
+       FROM invoices i1
+       JOIN invoices i2 ON i1.tenant_id = i2.tenant_id
+                       AND i1.branch_id = i2.branch_id
+                       AND i1.bdate = i2.bdate
+                       AND i1.id < i2.id
+                       AND i1.total_minor = i2.total_minor
+                       AND i1.customer_phone = i2.customer_phone
+                       AND i1.customer_phone IS NOT NULL
+                       AND i1.customer_phone != ''
+                       AND ABS(EXTRACT(EPOCH FROM (i1.created_at - i2.created_at))) < 180
+       WHERE i1.tenant_id = ? AND i1.branch_id = ? AND i1.bdate = ?
+         AND i1.status = 'posted' AND i2.status = 'posted'
+       LIMIT 5`,
+      [tenantId, branchId, bdate],
+    );
+
+    // Closing Reminder: Check if previous business day was unclosed
+    const yesterdayDate = new Date(new Date(bdate).getTime() - 86400000).toISOString().slice(0, 10);
+    const prevDayRecord = await ctx.db.one<any>(
+      `SELECT id, status FROM day_closings WHERE tenant_id = ? AND branch_id = ? AND bdate = ?`,
+      [tenantId, branchId, yesterdayDate],
+    );
+    const prevDayInvoices = await ctx.db.one<any>(
+      `SELECT COUNT(*)::int AS count FROM invoices WHERE tenant_id = ? AND branch_id = ? AND bdate = ? AND status = 'posted'`,
+      [tenantId, branchId, yesterdayDate],
+    );
+    const hasUnclosedPrevDay = Boolean(
+      (prevDayInvoices?.count || 0) > 0 &&
+      (!prevDayRecord || prevDayRecord.status === 'open' || prevDayRecord.status === 'submitted')
+    );
+
     return {
       bdate,
       branchId,
@@ -375,6 +411,19 @@ export function registerDayClosing(r: Router) {
         operatingExpensesMinor,
         netProfitMinor,
         marginPct: netSalesMinor > 0 ? (grossProfitMinor / netSalesMinor) * 100 : 0,
+      },
+
+      // G. Pre-Closing Alerts & Reminders
+      duplicateAlerts: duplicateInvoices.map((d: any) => ({
+        invoice1: d.number_1 || d.invoice_id_1,
+        invoice2: d.number_2 || d.invoice_id_2,
+        amountMinor: Number(d.total_minor || 0),
+        customerPhone: d.customer_phone,
+      })),
+      closingReminder: {
+        hasUnclosedPrevDay,
+        prevDayDate: yesterdayDate,
+        message: hasUnclosedPrevDay ? `Notice: Previous business day (${yesterdayDate}) register has not been sealed yet.` : null,
       },
     };
   });
@@ -1397,5 +1446,108 @@ export function registerDayClosing(r: Router) {
 </html>`;
 
     return new HtmlResponse(html);
+  });
+
+  // --------------------------------------------------------------------------
+  // 10. Export Day Closing History to CSV (Excel-compatible)
+  // --------------------------------------------------------------------------
+  r.get('/api/day-closing/history/export.csv', requireUser, async (ctx) => {
+    const tenantId = ctx.user!.tenantId;
+    const branchId = ctx.query.branchId as string;
+
+    let sql = `
+      SELECT dc.*, u.name AS closed_by_name, au.name AS approved_by_name, b.name AS branch_name
+      FROM day_closings dc
+      LEFT JOIN users u ON u.id = dc.closed_by
+      LEFT JOIN users au ON au.id = dc.approved_by
+      LEFT JOIN branches b ON b.id = dc.branch_id OR b.code = dc.branch_id
+      WHERE dc.tenant_id = ?
+    `;
+    const params: any[] = [tenantId];
+    if (branchId && branchId !== 'all') {
+      sql += ` AND dc.branch_id = ?`;
+      params.push(branchId);
+    }
+    sql += ` ORDER BY dc.bdate DESC LIMIT 365`;
+    const history = await ctx.db.query<any>(sql, params);
+
+    const escapeCsv = (str: any) => `"${String(str ?? '').replace(/"/g, '""')}"`;
+    const header = [
+      'Date', 'Branch', 'Status', 'Gross Sales (Rs)', 'Returns (Rs)', 'Net Sales (Rs)',
+      'Total Invoices', 'COGS (Rs)', 'Gross Profit (Rs)', 'Expenses (Rs)', 'Net Profit (Rs)',
+      'Opening Cash (Rs)', 'Expected Cash (Rs)', 'Actual Cash (Rs)', 'Variance (Rs)',
+      'Submitted By', 'Approved By', 'Remarks'
+    ];
+    const rows = history.map((h: any) => [
+      h.bdate,
+      h.branch_name || h.branch_id,
+      h.status,
+      (Number(h.gross_sales_minor || 0) / 100).toFixed(2),
+      (Number(h.returns_total_minor || h.sales_returns_minor || 0) / 100).toFixed(2),
+      (Number(h.net_sales_minor || 0) / 100).toFixed(2),
+      h.invoices_count || 0,
+      (Number(h.net_cogs_minor || 0) / 100).toFixed(2),
+      (Number(h.gross_profit_minor || 0) / 100).toFixed(2),
+      (Number(h.operating_expenses_minor || 0) / 100).toFixed(2),
+      (Number(h.net_profit_minor || 0) / 100).toFixed(2),
+      (Number(h.opening_cash_minor || 0) / 100).toFixed(2),
+      (Number(h.expected_cash_minor || 0) / 100).toFixed(2),
+      (Number(h.actual_cash_minor || 0) / 100).toFixed(2),
+      (Number(h.variance_minor ?? 0) / 100).toFixed(2),
+      h.closed_by_name || 'Cashier',
+      h.approved_by_name || '—',
+      h.remarks || ''
+    ]);
+
+    const csvContent = [header, ...rows].map((r) => r.map(escapeCsv).join(',')).join('\r\n');
+    return new FileResponse(csvContent, 'text/csv; charset=utf-8', `DayClosing_History_${new Date().toISOString().slice(0, 10)}.csv`);
+  });
+
+  // --------------------------------------------------------------------------
+  // 11. Export Single Day Closing to CSV (Excel-compatible)
+  // --------------------------------------------------------------------------
+  r.get('/api/day-closing/:id/export.csv', requireUser, async (ctx) => {
+    const id = ctx.params.id;
+    const tenantId = ctx.user!.tenantId;
+
+    const dc = await ctx.db.one<any>(
+      `SELECT dc.*, u.name AS closed_by_name, au.name AS approved_by_name, b.name AS branch_name
+       FROM day_closings dc
+       LEFT JOIN users u ON u.id = dc.closed_by
+       LEFT JOIN users au ON au.id = dc.approved_by
+       LEFT JOIN branches b ON b.id = dc.branch_id OR b.code = dc.branch_id
+       WHERE dc.tenant_id = ? AND dc.id = ?`,
+      [tenantId, id],
+    );
+    if (!dc) throw notFound('Day closing record');
+
+    const escapeCsv = (str: any) => `"${String(str ?? '').replace(/"/g, '""')}"`;
+    const rows = [
+      ['Metric', 'Value'],
+      ['Closing Date', dc.bdate],
+      ['Branch', dc.branch_name || dc.branch_id],
+      ['Status', dc.status],
+      ['Gross Sales (Rs)', (Number(dc.gross_sales_minor || 0) / 100).toFixed(2)],
+      ['Sales Returns (Rs)', (Number(dc.returns_total_minor || 0) / 100).toFixed(2)],
+      ['Net Sales (Rs)', (Number(dc.net_sales_minor || 0) / 100).toFixed(2)],
+      ['Total Invoices', dc.invoices_count],
+      ['Cost of Goods Sold (COGS Rs)', (Number(dc.net_cogs_minor || 0) / 100).toFixed(2)],
+      ['Gross Profit (Rs)', (Number(dc.gross_profit_minor || 0) / 100).toFixed(2)],
+      ['Operating Expenses (Rs)', (Number(dc.operating_expenses_minor || 0) / 100).toFixed(2)],
+      ['Net Operating Profit (Rs)', (Number(dc.net_profit_minor || 0) / 100).toFixed(2)],
+      ['Opening Cash Float (Rs)', (Number(dc.opening_cash_minor || 0) / 100).toFixed(2)],
+      ['Cash Sales Collected (Rs)', (Number(dc.cash_sales_minor || 0) / 100).toFixed(2)],
+      ['Cash Refunds Paid (Rs)', (Number(dc.cash_refunds_minor || 0) / 100).toFixed(2)],
+      ['Cash Expenses Paid (Rs)', (Number(dc.cash_expenses_minor || 0) / 100).toFixed(2)],
+      ['Expected Closing Cash (Rs)', (Number(dc.expected_cash_minor || 0) / 100).toFixed(2)],
+      ['Actual Physical Cash Counted (Rs)', (Number(dc.actual_cash_minor || 0) / 100).toFixed(2)],
+      ['Cash Variance / Diff (Rs)', (Number(dc.variance_minor || 0) / 100).toFixed(2)],
+      ['Submitted By', dc.closed_by_name || 'Cashier'],
+      ['Approved By', dc.approved_by_name || '—'],
+      ['Remarks', dc.remarks || ''],
+    ];
+
+    const csvContent = rows.map((r) => r.map(escapeCsv).join(',')).join('\r\n');
+    return new FileResponse(csvContent, 'text/csv; charset=utf-8', `DayClosing_${dc.bdate}_${dc.branch_id}.csv`);
   });
 }

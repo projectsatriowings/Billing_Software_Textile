@@ -319,3 +319,24 @@ test('Day Closing & Analytics: 8. Product profitability breakdown calculates COG
     throw err;
   }
 });
+
+test('Day Closing & Analytics: 9. Live preview provides closing reminder and duplicate billing detection', async () => {
+  const today = new Date().toISOString().slice(0, 10);
+  const prevRes = await api('GET', `/api/day-closing/preview?branchId=${branchId}&bdate=${today}`, undefined, cashierToken);
+  assert.equal(prevRes.status, 200);
+  assert.ok(prevRes.body.closingReminder);
+  assert.ok(Array.isArray(prevRes.body.duplicateAlerts));
+});
+
+test('Day Closing & Analytics: 10. CSV export endpoints produce Excel-compatible registers', async () => {
+  // History CSV
+  const histCsv = await api('GET', `/api/day-closing/history/export.csv?branchId=${branchId}`, undefined, ownerToken);
+  assert.equal(histCsv.status, 200);
+
+  // Single Day CSV
+  const dc = await db.one<any>(`SELECT id FROM day_closings WHERE tenant_id = ? AND branch_id = ? LIMIT 1`, [tenantId, branchId]);
+  if (dc?.id) {
+    const singleCsv = await api('GET', `/api/day-closing/${dc.id}/export.csv`, undefined, ownerToken);
+    assert.equal(singleCsv.status, 200);
+  }
+});

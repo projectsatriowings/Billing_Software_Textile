@@ -5,6 +5,7 @@ import {
   approveDayClosing,
   reopenDayClosing,
   fetchDayClosingComparison,
+  fetchDayClosingAnalytics,
   fetchDayClosingHistory,
   type User,
   type Shop,
@@ -21,7 +22,10 @@ import {
   RotateCcwIcon,
   CheckCircle2Icon,
   AlertTriangleIcon,
+  AlertOctagonIcon,
   FileTextIcon,
+  FileSpreadsheetIcon,
+  DownloadIcon,
   LockIcon,
   StoreIcon,
   ArrowDownLeftIcon,
@@ -34,6 +38,7 @@ import {
   FilterIcon,
   CheckCircleIcon,
   PrinterIcon,
+  InfoIcon,
 } from '../inventory/InventoryIcons.tsx';
 import './dayClosing.css';
 
@@ -44,7 +49,7 @@ interface DayClosingViewProps {
   branches?: any[];
 }
 
-type TabType = 'closing' | 'comparison' | 'history';
+type TabType = 'closing' | 'comparison' | 'analytics' | 'history';
 
 export const DayClosingView: React.FC<DayClosingViewProps> = ({
   user,
@@ -52,7 +57,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
   selectedBranch,
   branches,
 }) => {
-  // Navigation: 3 clean, focused tabs (no clumsy analytics or product clutter)
+  // Navigation: 4 clean, dedicated tabs
   const [activeTab, setActiveTab] = useState<TabType>('closing');
 
   // Branch & Filter states
@@ -76,9 +81,22 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
   const [comparisonData, setComparisonData] = useState<any | null>(null);
   const [loadingComparison, setLoadingComparison] = useState(false);
 
-  // Tab 3: History state
+  // Tab 3: Custom Date Range Analytics state
+  const [analyticsStartDate, setAnalyticsStartDate] = useState<string>(() => {
+    const d = new Date();
+    return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0, 10);
+  });
+  const [analyticsEndDate, setAnalyticsEndDate] = useState<string>(
+    new Date().toISOString().slice(0, 10)
+  );
+  const [analyticsPreset, setAnalyticsPreset] = useState<string>('this_month');
+  const [analyticsData, setAnalyticsData] = useState<any | null>(null);
+  const [loadingAnalytics, setLoadingAnalytics] = useState(false);
+
+  // Tab 4: History state
   const [history, setHistory] = useState<any[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [expandedHistoryId, setExpandedHistoryId] = useState<string | null>(null);
 
   // Reopen Modal state
   const [isReopenModalOpen, setIsReopenModalOpen] = useState(false);
@@ -146,6 +164,23 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
     }
   };
 
+  const loadAnalytics = async () => {
+    try {
+      setLoadingAnalytics(true);
+      setError(null);
+      const res = await fetchDayClosingAnalytics({
+        branchId: activeBranchId,
+        startDate: analyticsStartDate,
+        endDate: analyticsEndDate,
+      });
+      setAnalyticsData(res);
+    } catch (err: any) {
+      setError(err.message || 'Failed to fetch date range analytics');
+    } finally {
+      setLoadingAnalytics(false);
+    }
+  };
+
   const loadHistory = async () => {
     try {
       setLoadingHistory(true);
@@ -167,10 +202,44 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
       loadPreview();
     } else if (activeTab === 'comparison') {
       loadComparison();
+    } else if (activeTab === 'analytics') {
+      loadAnalytics();
     } else if (activeTab === 'history') {
       loadHistory();
     }
   }, [activeBranchId, selectedDate, selectedShiftId, activeTab]);
+
+  const handleApplyPreset = (preset: string) => {
+    setAnalyticsPreset(preset);
+    const d = new Date();
+    const todayStr = d.toISOString().slice(0, 10);
+
+    if (preset === 'today') {
+      setAnalyticsStartDate(todayStr);
+      setAnalyticsEndDate(todayStr);
+    } else if (preset === 'yesterday') {
+      const y = new Date(d.getTime() - 86400000).toISOString().slice(0, 10);
+      setAnalyticsStartDate(y);
+      setAnalyticsEndDate(y);
+    } else if (preset === 'last_7_days') {
+      const s = new Date(d.getTime() - 6 * 86400000).toISOString().slice(0, 10);
+      setAnalyticsStartDate(s);
+      setAnalyticsEndDate(todayStr);
+    } else if (preset === 'last_30_days') {
+      const s = new Date(d.getTime() - 29 * 86400000).toISOString().slice(0, 10);
+      setAnalyticsStartDate(s);
+      setAnalyticsEndDate(todayStr);
+    } else if (preset === 'this_month') {
+      const start = new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0, 10);
+      setAnalyticsStartDate(start);
+      setAnalyticsEndDate(todayStr);
+    } else if (preset === 'last_month') {
+      const start = new Date(d.getFullYear(), d.getMonth() - 1, 1).toISOString().slice(0, 10);
+      const end = new Date(d.getFullYear(), d.getMonth(), 0).toISOString().slice(0, 10);
+      setAnalyticsStartDate(start);
+      setAnalyticsEndDate(end);
+    }
+  };
 
   // --------------------------------------------------------------------------
   // Action Handlers
@@ -193,12 +262,18 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
     const expectedCashMinor = preview.cashReconciliation?.expectedClosingCashMinor || 0;
     const diffMinor = actualCashMinor - expectedCashMinor;
 
+    // Discrepancy explanation mandatory if there is cash variance
+    if (Math.abs(diffMinor) > 0 && closingRemarks.trim().length < 3) {
+      alert(`Cash difference of ${diffMinor >= 0 ? '+' : ''}${fmt(diffMinor)} detected.\n\nPlease provide a brief discrepancy reason in the remarks field before submitting.`);
+      return;
+    }
+
     const confirmMsg =
       `Submit Day Closing for ${preview.bdate || selectedDate}?\n\n` +
       `Expected Cash: ${fmt(expectedCashMinor)}\n` +
       `Counted Cash:  ${fmt(actualCashMinor)}\n` +
       `Difference:    ${diffMinor >= 0 ? '+' : ''}${fmt(diffMinor)}\n\n` +
-      `This will seal today's transactions and register reconciliation.`;
+      `This will seal today's register and record cash drawer floats.`;
 
     if (!window.confirm(confirmMsg)) return;
 
@@ -268,6 +343,14 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
 
   const handlePrint = (closingId: string) => {
     window.open(`/api/day-closing/${closingId}/print`, '_blank', 'width=950,height=800');
+  };
+
+  const handleExportCsv = (closingId?: string) => {
+    if (closingId) {
+      window.open(`/api/day-closing/${closingId}/export.csv`, '_blank');
+    } else {
+      window.open(`/api/day-closing/history/export.csv?branchId=${encodeURIComponent(activeBranchId)}`, '_blank');
+    }
   };
 
   // Computed values from preview
@@ -364,33 +447,45 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
 
         <div className="day-closing-header-right">
           {closedRecord?.id && (
-            <button
-              onClick={() => handlePrint(closedRecord.id)}
-              className="btn-print"
-              title="Print Official Closing Statement"
-            >
-              <PrinterIcon size={15} />
-              Print Closing Report
-            </button>
+            <>
+              <button
+                onClick={() => handlePrint(closedRecord.id)}
+                className="btn-print"
+                title="Print Official Closing Statement"
+              >
+                <PrinterIcon size={15} />
+                Print Statement
+              </button>
+
+              <button
+                onClick={() => handleExportCsv(closedRecord.id)}
+                className="btn-export"
+                title="Download closing details in Excel CSV format"
+              >
+                <FileSpreadsheetIcon size={15} />
+                Export CSV
+              </button>
+            </>
           )}
 
           <button
             onClick={() => {
               if (activeTab === 'closing') loadPreview();
               else if (activeTab === 'comparison') loadComparison();
+              else if (activeTab === 'analytics') loadAnalytics();
               else if (activeTab === 'history') loadHistory();
             }}
-            disabled={loadingPreview || loadingComparison || loadingHistory}
+            disabled={loadingPreview || loadingComparison || loadingAnalytics || loadingHistory}
             className="day-closing-refresh-btn"
           >
-            <RefreshCwIcon size={14} className={(loadingPreview || loadingComparison || loadingHistory) ? 'animate-spin' : ''} />
+            <RefreshCwIcon size={14} className={(loadingPreview || loadingComparison || loadingAnalytics || loadingHistory) ? 'animate-spin' : ''} />
             Refresh
           </button>
         </div>
       </div>
 
       {/* --------------------------------------------------------------------
-          2. Tab Navigation Bar (3 Clean, Uncluttered Tabs)
+          2. Tab Navigation Bar (4 Clean, Dedicated Tabs)
           -------------------------------------------------------------------- */}
       <div className="day-closing-tabs-bar">
         <button
@@ -407,6 +502,14 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
         >
           <ScaleIcon size={15} />
           Today vs Previous Day Comparison
+        </button>
+
+        <button
+          onClick={() => setActiveTab('analytics')}
+          className={`day-closing-tab-btn ${activeTab === 'analytics' ? 'active' : ''}`}
+        >
+          <BarChart3Icon size={15} />
+          Custom Date Range Analytics
         </button>
 
         <button
@@ -502,6 +605,37 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
           ==================================================================== */}
       {activeTab === 'closing' && (
         <>
+          {/* Closing Reminder Alert Banner */}
+          {preview?.closingReminder?.hasUnclosedPrevDay && (
+            <div className="day-closing-alert warning">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <AlertTriangleIcon size={18} style={{ color: '#d97706', flexShrink: 0 }} />
+                <span>
+                  <strong>Closing Reminder:</strong> Previous business day ({preview.closingReminder.prevDayDate}) register has not been approved and sealed yet. Please review and seal previous day to maintain continuous audit records.
+                </span>
+              </div>
+              <button
+                onClick={() => setSelectedDate(preview.closingReminder.prevDayDate)}
+                className="day-closing-refresh-btn"
+                style={{ fontSize: '0.75rem', padding: '0.3rem 0.65rem' }}
+              >
+                Inspect {preview.closingReminder.prevDayDate}
+              </button>
+            </div>
+          )}
+
+          {/* Duplicate Transaction Warning Banner */}
+          {preview?.duplicateAlerts && preview.duplicateAlerts.length > 0 && (
+            <div className="day-closing-alert warning">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <AlertOctagonIcon size={18} style={{ color: '#d97706', flexShrink: 0 }} />
+                <span>
+                  <strong>Duplicate Billing Alert:</strong> Detected {preview.duplicateAlerts.length} potential duplicate invoice pair(s) with identical customer phone and amount within 3 minutes ({preview.duplicateAlerts.map((d: any) => `${d.invoice1} & ${d.invoice2} for ${fmt(d.amountMinor)}`).join(', ')}). Please verify before sealing register.
+                </span>
+              </div>
+            </div>
+          )}
+
           {/* Lifecycle Status Ribbon */}
           <div className={`day-closing-status-banner ${closingStatus}`}>
             <div className="status-banner-left">
@@ -632,7 +766,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
             </div>
           </div>
 
-          {/* Quick KPI Strip (Subordinate stats in one compact row) */}
+          {/* Quick KPI Strip */}
           <div className="quick-kpi-strip">
             <div>Total Invoices: <strong>{sales.invoicesCount || 0} bills</strong></div>
             <div>Avg Bill Value: <strong>{fmt(sales.averageBillValueMinor)}</strong></div>
@@ -732,8 +866,11 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                   </div>
                 </div>
 
-                <div className="detail-notice-box">
-                  💡 <strong>Accounting Integrity:</strong> Exchanges seamlessly offset customer return credit against new merchandise sold without inflating gross cash collections. Resellable returns restore inventory cost, while damaged goods are quarantined separately.
+                <div className="detail-notice-box" style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                  <InfoIcon size={16} style={{ color: '#4f46e5', flexShrink: 0, marginTop: '2px' }} />
+                  <div>
+                    <strong>Accounting Integrity:</strong> Exchanges seamlessly offset customer return credit against new merchandise sold without inflating gross cash collections. Resellable returns restore inventory cost, while damaged goods are quarantined separately.
+                  </div>
                 </div>
               </div>
             </div>
@@ -798,6 +935,25 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                     <span className="cash-rec-expected-val">{fmt(cashRec.expectedClosingCashMinor)}</span>
                   </div>
 
+                  {/* Cash Variance Warning Alert */}
+                  {Math.abs(cashDifferenceMinor) > 5000 && (closingStatus === 'open' || closingStatus === 'reopened') && (
+                    <div style={{
+                      background: '#fffbeb',
+                      border: '1px solid #fde68a',
+                      borderRadius: '10px',
+                      padding: '0.65rem 0.85rem',
+                      fontSize: '0.775rem',
+                      color: '#92400e',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      fontWeight: 600
+                    }}>
+                      <AlertTriangleIcon size={16} style={{ color: '#d97706', flexShrink: 0 }} />
+                      <span>Notice: High cash variance detected ({cashDifferenceMinor >= 0 ? '+' : ''}{fmt(cashDifferenceMinor)}). Discrepancy reason is mandatory in remarks before submission.</span>
+                    </div>
+                  )}
+
                   {/* Submission Form (Active if open or reopened) */}
                   {closingStatus === 'open' || closingStatus === 'reopened' ? (
                     <form onSubmit={handleSubmitClosing} style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
@@ -841,7 +997,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
 
                       <div className="cash-rec-input-group">
                         <label className="cash-rec-input-label">
-                          Closing Remarks / Discrepancy Reason
+                          Closing Remarks / Discrepancy Reason {Math.abs(cashDifferenceMinor) > 0 ? '*' : ''}
                         </label>
                         <textarea
                           rows={2}
@@ -849,6 +1005,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                           onChange={(e) => setClosingRemarks(e.target.value)}
                           placeholder="e.g. Counted by head cashier, minor coin variation"
                           className="cash-rec-remarks-input"
+                          required={Math.abs(cashDifferenceMinor) > 0}
                         />
                       </div>
 
@@ -939,7 +1096,6 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                         const isGrowthPos = (m.growthPct || 0) > 0;
                         const isGrowthNeg = (m.growthPct || 0) < 0;
 
-                        // Readable labels
                         const labelMap: Record<string, string> = {
                           grossSales: 'Gross Sales (excl. GST)',
                           totalDiscounts: 'Total Discounts Given',
@@ -964,7 +1120,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                             </td>
                             <td>
                               <span className={`growth-badge ${isGrowthPos ? 'positive' : isGrowthNeg ? 'negative' : 'neutral'}`}>
-                                {isGrowthPos ? '↑ +' : isGrowthNeg ? '↓ ' : ''}
+                                {isGrowthPos ? '+ ' : isGrowthNeg ? '- ' : ''}
                                 {(m.growthPct || 0).toFixed(1)}%
                               </span>
                             </td>
@@ -981,7 +1137,188 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
       )}
 
       {/* ====================================================================
-          TAB 3: CLOSING HISTORY & AUDIT LOGS
+          TAB 3: CUSTOM DATE RANGE ANALYTICS
+          ==================================================================== */}
+      {activeTab === 'analytics' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          {/* Date Range Selector Card */}
+          <div className="day-closing-card">
+            <div className="day-closing-card-header">
+              <div className="day-closing-card-title-group">
+                <BarChart3Icon size={18} style={{ color: '#4f46e5' }} />
+                <span>Custom Date Range Business Analysis</span>
+              </div>
+
+              <div className="preset-pills-bar">
+                {[
+                  { id: 'today', label: 'Today' },
+                  { id: 'yesterday', label: 'Yesterday' },
+                  { id: 'last_7_days', label: 'Last 7 Days' },
+                  { id: 'this_month', label: 'This Month' },
+                  { id: 'last_month', label: 'Last Month' },
+                ].map((p) => (
+                  <button
+                    key={p.id}
+                    onClick={() => handleApplyPreset(p.id)}
+                    className={`preset-pill-btn ${analyticsPreset === p.id ? 'active' : ''}`}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+              <div className="day-closing-filter-item">
+                <span>Start Date:</span>
+                <input
+                  type="date"
+                  value={analyticsStartDate}
+                  onChange={(e) => {
+                    setAnalyticsStartDate(e.target.value);
+                    setAnalyticsPreset('custom');
+                  }}
+                  className="day-closing-input"
+                />
+              </div>
+
+              <div className="day-closing-filter-item">
+                <span>End Date:</span>
+                <input
+                  type="date"
+                  value={analyticsEndDate}
+                  onChange={(e) => {
+                    setAnalyticsEndDate(e.target.value);
+                    setAnalyticsPreset('custom');
+                  }}
+                  className="day-closing-input"
+                />
+              </div>
+
+              <button
+                onClick={loadAnalytics}
+                disabled={loadingAnalytics}
+                className="btn-approve"
+                style={{ background: '#4f46e5' }}
+              >
+                <RefreshCwIcon size={14} className={loadingAnalytics ? 'animate-spin' : ''} />
+                Calculate Range
+              </button>
+            </div>
+          </div>
+
+          {loadingAnalytics ? (
+            <div style={{ padding: '3rem', textAlign: 'center', background: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+              <RefreshCwIcon size={32} className="animate-spin" style={{ margin: '0 auto 12px auto', color: '#6366f1' }} />
+              <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#64748b' }}>Aggregating multi-day financial records...</p>
+            </div>
+          ) : analyticsData?.current ? (
+            <>
+              {/* Range Financial Summary Grid */}
+              <div className="financial-kpi-grid">
+                <div className="fin-kpi-card blue">
+                  <div className="fin-kpi-top">
+                    <span className="fin-kpi-label">Gross Sales</span>
+                    <div className="fin-kpi-icon"><TrendingUpIcon size={14} /></div>
+                  </div>
+                  <div className="fin-kpi-val">{fmt(analyticsData.current.grossSalesMinor)}</div>
+                  <span className="fin-kpi-sub">Total billed before tax</span>
+                </div>
+
+                <div className="fin-kpi-card rose">
+                  <div className="fin-kpi-top">
+                    <span className="fin-kpi-label">Returns</span>
+                    <div className="fin-kpi-icon"><RotateCcwIcon size={14} /></div>
+                  </div>
+                  <div className="fin-kpi-val" style={{ color: '#e11d48' }}>-{fmt(analyticsData.current.returnsMinor)}</div>
+                  <span className="fin-kpi-sub">Total returned goods</span>
+                </div>
+
+                <div className="fin-kpi-card green highlight">
+                  <div className="fin-kpi-top">
+                    <span className="fin-kpi-label">Net Sales</span>
+                    <div className="fin-kpi-icon"><RupeeIcon size={14} /></div>
+                  </div>
+                  <div className="fin-kpi-val">{fmt(analyticsData.current.netSalesMinor)}</div>
+                  <span className="fin-kpi-sub">Net revenue realized</span>
+                </div>
+
+                <div className="fin-kpi-card purple">
+                  <div className="fin-kpi-top">
+                    <span className="fin-kpi-label">Gross Profit</span>
+                    <div className="fin-kpi-icon"><TrendingUpIcon size={14} /></div>
+                  </div>
+                  <div className="fin-kpi-val" style={{ color: '#7e22ce' }}>{fmt(analyticsData.current.grossProfitMinor)}</div>
+                  <span className="fin-kpi-sub">{((analyticsData.current.grossMarginPct || 0)).toFixed(1)}% Gross Margin</span>
+                </div>
+
+                <div className="fin-kpi-card amber">
+                  <div className="fin-kpi-top">
+                    <span className="fin-kpi-label">Expenses</span>
+                    <div className="fin-kpi-icon"><ArrowUpRightIcon size={14} /></div>
+                  </div>
+                  <div className="fin-kpi-val">{fmt(analyticsData.current.expensesMinor)}</div>
+                  <span className="fin-kpi-sub">Operating costs</span>
+                </div>
+
+                <div className="fin-kpi-card green">
+                  <div className="fin-kpi-top">
+                    <span className="fin-kpi-label">Operating Profit</span>
+                    <div className="fin-kpi-icon"><RupeeIcon size={14} /></div>
+                  </div>
+                  <div className="fin-kpi-val" style={{ color: (analyticsData.current.netProfitMinor || 0) >= 0 ? '#15803d' : '#b91c1c' }}>
+                    {fmt(analyticsData.current.netProfitMinor)}
+                  </div>
+                  <span className="fin-kpi-sub">{((analyticsData.current.netMarginPct || 0)).toFixed(1)}% Net Margin</span>
+                </div>
+              </div>
+
+              {/* Range Daily Series Breakdown */}
+              {analyticsData.dailySeries && analyticsData.dailySeries.length > 0 && (
+                <div className="day-closing-card">
+                  <div className="day-closing-card-header">
+                    <div className="day-closing-card-title-group">
+                      <FileTextIcon size={18} style={{ color: '#4f46e5' }} />
+                      <span>Daily Breakdown in Range ({analyticsStartDate} to {analyticsEndDate})</span>
+                    </div>
+                    <span className="day-closing-card-badge">
+                      {analyticsData.dailySeries.length} Days Recorded
+                    </span>
+                  </div>
+
+                  <div className="data-table-container">
+                    <table className="analytics-table">
+                      <thead>
+                        <tr>
+                          <th>Date</th>
+                          <th>Invoices Count</th>
+                          <th>Gross Sales</th>
+                          <th>Net Sales</th>
+                          <th>Gross Profit</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {analyticsData.dailySeries.map((d: any) => (
+                          <tr key={d.date}>
+                            <td style={{ fontWeight: 800, color: '#0f172a' }}>{d.date}</td>
+                            <td>{d.invoicesCount || 0}</td>
+                            <td>{fmt(d.grossSalesMinor)}</td>
+                            <td style={{ fontWeight: 700, color: '#15803d' }}>{fmt(d.netSalesMinor)}</td>
+                            <td style={{ fontWeight: 800, color: '#4f46e5' }}>{fmt(d.grossProfitMinor)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </>
+          ) : null}
+        </div>
+      )}
+
+      {/* ====================================================================
+          TAB 4: CLOSING HISTORY & AUDIT LOGS
           ==================================================================== */}
       {activeTab === 'history' && (
         <div className="day-closing-card">
@@ -990,9 +1327,19 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
               <ClockIcon size={18} style={{ color: '#4f46e5' }} />
               <span>Previous Day Closings & Sealed Audit Trail</span>
             </div>
-            <span className="day-closing-card-badge">
-              {history.length} Records Logged
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <button
+                onClick={() => handleExportCsv()}
+                className="day-closing-refresh-btn"
+                title="Download all past day closings in CSV format"
+              >
+                <DownloadIcon size={14} />
+                Export All CSV
+              </button>
+              <span className="day-closing-card-badge">
+                {history.length} Records Logged
+              </span>
+            </div>
           </div>
 
           {loadingHistory ? (
@@ -1026,64 +1373,134 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                   {history.map((h) => {
                     const variance = h.variance_minor ?? 0;
                     const status = h.status || 'closed';
-                    return (
-                      <tr key={h.id}>
-                        <td style={{ fontWeight: 800, color: '#0f172a' }}>{h.bdate}</td>
-                        <td>
-                          <span style={{
-                            padding: '2px 8px',
-                            borderRadius: '9999px',
-                            fontSize: '0.725rem',
-                            fontWeight: 800,
-                            textTransform: 'uppercase',
-                            background: status === 'approved' || status === 'closed' ? '#eef2ff' : status === 'submitted' ? '#fffbeb' : '#fff1f2',
-                            color: status === 'approved' || status === 'closed' ? '#4338ca' : status === 'submitted' ? '#92400e' : '#be123c',
-                          }}>
-                            {status}
-                          </span>
-                        </td>
-                        <td>{fmt(h.gross_sales_minor)}</td>
-                        <td style={{ color: '#e11d48' }}>-{fmt(h.returns_total_minor || h.sales_returns_minor)}</td>
-                        <td style={{ fontWeight: 700, color: '#15803d' }}>{fmt(h.net_sales_minor)}</td>
-                        <td>{fmt(h.expected_cash_minor)}</td>
-                        <td style={{ fontWeight: 700, color: '#0f172a' }}>{fmt(h.actual_cash_minor)}</td>
-                        <td>
-                          <span style={{
-                            padding: '2px 8px',
-                            borderRadius: '9999px',
-                            fontSize: '0.725rem',
-                            fontWeight: 800,
-                            background: variance === 0 ? '#ecfdf5' : variance > 0 ? '#eff6ff' : '#fef2f2',
-                            color: variance === 0 ? '#047857' : variance > 0 ? '#1d4ed8' : '#b91c1c',
-                          }}>
-                            {variance >= 0 ? '+' : ''}{fmt(variance)}
-                          </span>
-                        </td>
-                        <td style={{ fontWeight: 700, color: '#4f46e5' }}>{fmt(h.gross_profit_minor)}</td>
-                        <td style={{ color: '#64748b' }}>{h.closed_by_name || 'Cashier'}</td>
-                        <td style={{ color: '#64748b' }}>{h.approved_by_name || '—'}</td>
-                        <td style={{ textAlign: 'right' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.4rem' }}>
-                            <button
-                              onClick={() => handlePrint(h.id)}
-                              className="day-closing-refresh-btn"
-                              style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem' }}
-                            >
-                              Print
-                            </button>
+                    const isExpanded = expandedHistoryId === h.id;
 
-                            {(status === 'approved' || status === 'closed') && isOwner && (
+                    return (
+                      <React.Fragment key={h.id}>
+                        <tr
+                          style={{ cursor: 'pointer' }}
+                          onClick={() => setExpandedHistoryId(isExpanded ? null : h.id)}
+                        >
+                          <td style={{ fontWeight: 800, color: '#0f172a' }}>{h.bdate}</td>
+                          <td>
+                            <span style={{
+                              padding: '2px 8px',
+                              borderRadius: '9999px',
+                              fontSize: '0.725rem',
+                              fontWeight: 800,
+                              textTransform: 'uppercase',
+                              background: status === 'approved' || status === 'closed' ? '#eef2ff' : status === 'submitted' ? '#fffbeb' : '#fff1f2',
+                              color: status === 'approved' || status === 'closed' ? '#4338ca' : status === 'submitted' ? '#92400e' : '#be123c',
+                            }}>
+                              {status}
+                            </span>
+                          </td>
+                          <td>{fmt(h.gross_sales_minor)}</td>
+                          <td style={{ color: '#e11d48' }}>-{fmt(h.returns_total_minor || h.sales_returns_minor)}</td>
+                          <td style={{ fontWeight: 700, color: '#15803d' }}>{fmt(h.net_sales_minor)}</td>
+                          <td>{fmt(h.expected_cash_minor)}</td>
+                          <td style={{ fontWeight: 700, color: '#0f172a' }}>{fmt(h.actual_cash_minor)}</td>
+                          <td>
+                            <span style={{
+                              padding: '2px 8px',
+                              borderRadius: '9999px',
+                              fontSize: '0.725rem',
+                              fontWeight: 800,
+                              background: variance === 0 ? '#ecfdf5' : variance > 0 ? '#eff6ff' : '#fef2f2',
+                              color: variance === 0 ? '#047857' : variance > 0 ? '#1d4ed8' : '#b91c1c',
+                            }}>
+                              {variance >= 0 ? '+' : ''}{fmt(variance)}
+                            </span>
+                          </td>
+                          <td style={{ fontWeight: 700, color: '#4f46e5' }}>{fmt(h.gross_profit_minor)}</td>
+                          <td style={{ color: '#64748b' }}>{h.closed_by_name || 'Cashier'}</td>
+                          <td style={{ color: '#64748b' }}>{h.approved_by_name || '—'}</td>
+                          <td style={{ textAlign: 'right' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.4rem' }}>
                               <button
-                                onClick={() => handleOpenReopenModal(h.id)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handlePrint(h.id);
+                                }}
                                 className="day-closing-refresh-btn"
-                                style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', color: '#ea580c' }}
+                                style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem' }}
+                                title="Print Statement"
                               >
-                                Reopen
+                                Print
                               </button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
+
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleExportCsv(h.id);
+                                }}
+                                className="day-closing-refresh-btn"
+                                style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem' }}
+                                title="Download CSV"
+                              >
+                                CSV
+                              </button>
+
+                              {(status === 'approved' || status === 'closed') && isOwner && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleOpenReopenModal(h.id);
+                                  }}
+                                  className="day-closing-refresh-btn"
+                                  style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', color: '#ea580c' }}
+                                >
+                                  Reopen
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+
+                        {/* Expandable Audit Log Details Row */}
+                        {isExpanded && (
+                          <tr>
+                            <td colSpan={12} style={{ background: '#f8fafc', padding: '1rem 1.25rem' }}>
+                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', fontSize: '0.8rem' }}>
+                                <div>
+                                  <div style={{ color: '#64748b', fontWeight: 600 }}>Submitted By</div>
+                                  <div style={{ fontWeight: 800, color: '#0f172a' }}>{h.closed_by_name || 'Cashier'}</div>
+                                  <div style={{ color: '#94a3b8', fontSize: '0.75rem' }}>
+                                    {h.closed_at ? new Date(h.closed_at).toLocaleString('en-IN') : '—'}
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <div style={{ color: '#64748b', fontWeight: 600 }}>Approved By</div>
+                                  <div style={{ fontWeight: 800, color: '#0f172a' }}>{h.approved_by_name || 'Pending Approval'}</div>
+                                  <div style={{ color: '#94a3b8', fontSize: '0.75rem' }}>
+                                    {h.approved_at ? new Date(h.approved_at).toLocaleString('en-IN') : '—'}
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <div style={{ color: '#64748b', fontWeight: 600 }}>Reopened By</div>
+                                  <div style={{ fontWeight: 800, color: h.reopened_by_name ? '#b91c1c' : '#0f172a' }}>
+                                    {h.reopened_by_name || 'Not Reopened'}
+                                  </div>
+                                  {h.reopen_reason && (
+                                    <div style={{ color: '#991b1b', fontSize: '0.75rem', fontStyle: 'italic' }}>
+                                      "{h.reopen_reason}"
+                                    </div>
+                                  )}
+                                </div>
+
+                                <div>
+                                  <div style={{ color: '#64748b', fontWeight: 600 }}>Closing Remarks / Note</div>
+                                  <div style={{ fontWeight: 600, color: '#334155' }}>
+                                    {h.remarks || 'No remarks recorded.'}
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
                     );
                   })}
                 </tbody>
