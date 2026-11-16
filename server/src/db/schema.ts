@@ -1857,4 +1857,23 @@ export const MIGRATIONS: Migration[] = [
       `ALTER TABLE tenants ADD COLUMN IF NOT EXISTS wholesale_business_name TEXT DEFAULT NULL`,
     ],
   },
+  {
+    version: 66,
+    statements: [
+      `CREATE TABLE IF NOT EXISTS supplier_invoice_mappings (
+        id TEXT PRIMARY KEY,
+        tenant_id TEXT NOT NULL REFERENCES tenants(id),
+        supplier_id TEXT REFERENCES parties(id) ON DELETE SET NULL,
+        supplier_name TEXT NOT NULL,
+        supplier_gstin TEXT,
+        mapping JSONB NOT NULL DEFAULT '{}'::jsonb,
+        header_sample TEXT[] DEFAULT ARRAY[]::TEXT[],
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_supplier_inv_map_tenant ON supplier_invoice_mappings (tenant_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_supplier_inv_map_sup ON supplier_invoice_mappings (tenant_id, supplier_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_supplier_inv_map_gstin ON supplier_invoice_mappings (tenant_id, lower(supplier_gstin))`,
+    ],
+  },
 ];

@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import type { Invoice, Party, User, Shop } from '../../api.ts';
+import { downloadInvoicePdf, triggerBlobDownload } from '../../api.ts';
 import type { Branch } from '../../../../shared/types.ts';
 import {
   ReceiptIcon,
@@ -622,47 +623,109 @@ export const RecentBillsBentoView: React.FC<RecentBillsBentoViewProps> = ({
                     <td>
                       <div className="bento-act-group">
                         {/* 1. View */}
-                        <button
-                          type="button"
-                          className="bento-act-btn view"
-                          onClick={() => openInvoiceDetail(inv.id)}
-                          title="View bill lines & items"
-                        >
-                          <EyeIcon size={13} />
-                          <span>View</span>
-                        </button>
-
-                        {/* 2. Thermal Print */}
-                        <a
-                          href={
-                            inv.kind === 'credit_note'
-                              ? `/api/credit-notes/${inv.id}/print?paper=thermal80&autoprint=true`
-                              : `/api/invoices/${inv.id}/print?paper=thermal80&autoprint=true`
-                          }
-                          target="_blank"
-                          rel="noreferrer"
-                          className="bento-act-btn thermal"
-                          title="Print 80mm thermal receipt"
-                        >
-                          <PrinterIcon size={13} />
-                          <span>Thermal</span>
-                        </a>
-
-                        {/* 3. A4 GST Print */}
-                        <a
-                          href={
-                            inv.kind === 'credit_note'
-                              ? `/api/credit-notes/${inv.id}/print?paper=a4`
-                              : `/api/invoices/${inv.id}/print?paper=a4`
-                          }
-                          target="_blank"
-                          rel="noreferrer"
-                          className="bento-act-btn a4"
-                          title="Print official A4 GST tax invoice"
-                        >
-                          <FileTextIcon size={13} />
-                          <span>A4 GST</span>
-                        </a>
+                        {inv.kind === 'credit_note' ? (
+                          <>
+                            <button
+                              type="button"
+                              className="bento-act-btn view"
+                              onClick={() => openInvoiceDetail(inv.id)}
+                              title="View credit note lines"
+                            >
+                              <EyeIcon size={13} />
+                              <span>View</span>
+                            </button>
+                            <a
+                              href={`/api/credit-notes/${inv.id}/print?paper=thermal80&autoprint=true`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="bento-act-btn thermal"
+                              title="Print 80mm thermal receipt"
+                            >
+                              <PrinterIcon size={13} />
+                              <span>Thermal</span>
+                            </a>
+                            <a
+                              href={`/api/credit-notes/${inv.id}/print?paper=a4`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="bento-act-btn a4"
+                              title="Print official A4 GST credit note"
+                            >
+                              <FileTextIcon size={13} />
+                              <span>A4 GST</span>
+                            </a>
+                          </>
+                        ) : (inv.invoiceType === 'wholesale' || (inv as any).invoice_type === 'wholesale') ? (
+                          <>
+                            <a
+                              href={`/api/invoices/${inv.id}/print?paper=wholesale_a4&autoprint=true`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="bento-act-btn a4"
+                              title="Print Wholesale A4 Tax Invoice"
+                            >
+                              <PrinterIcon size={13} />
+                              <span>A4 Print</span>
+                            </a>
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                try {
+                                  const blob = await downloadInvoicePdf(inv.id, 'wholesale_a4');
+                                  triggerBlobDownload(blob, `Wholesale_Invoice_${inv.number}.pdf`);
+                                } catch (err: any) {
+                                  alert(err.message || 'Failed to download wholesale invoice PDF');
+                                }
+                              }}
+                              className="bento-act-btn view"
+                              title="Download Wholesale A4 Tax Invoice PDF"
+                            >
+                              <FileTextIcon size={13} />
+                              <span>Download PDF</span>
+                            </button>
+                            <button
+                              type="button"
+                              className="bento-act-btn view"
+                              onClick={() => openInvoiceDetail(inv.id)}
+                              title="View invoice lines & items"
+                            >
+                              <EyeIcon size={13} />
+                              <span>Items</span>
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <a
+                              href={`/api/invoices/${inv.id}/print?paper=thermal80&autoprint=true`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="bento-act-btn thermal"
+                              title="Print original 80mm thermal receipt"
+                            >
+                              <PrinterIcon size={13} />
+                              <span>Thermal</span>
+                            </a>
+                            <a
+                              href={`/api/invoices/${inv.id}/print?paper=thermal80`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="bento-act-btn view"
+                              title="Preview thermal receipt"
+                            >
+                              <FileTextIcon size={13} />
+                              <span>Receipt</span>
+                            </a>
+                            <button
+                              type="button"
+                              className="bento-act-btn view"
+                              onClick={() => openInvoiceDetail(inv.id)}
+                              title="View bill lines & items"
+                            >
+                              <EyeIcon size={13} />
+                              <span>Items</span>
+                            </button>
+                          </>
+                        )}
 
                         {/* 4. Return / Credit Note */}
                         {inv.kind !== 'credit_note' && inv.status !== 'cancelled' && (

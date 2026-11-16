@@ -28,12 +28,14 @@ import {
   RefreshCwIcon,
   CheckCircleIcon,
   LockIcon,
+  TruckIcon,
 } from '../inventory/InventoryIcons.tsx';
 
 interface TodayDashboardViewProps {
   user: User;
   shop: Shop | null;
   onNavigateToPos: () => void;
+  onNavigateToWholesale?: () => void;
   onNavigateToShifts?: () => void;
   onNavigateToInventory: () => void;
   onNavigateToSalesAnalysis: () => void;
@@ -291,6 +293,7 @@ export const TodayDashboardView: React.FC<TodayDashboardViewProps> = ({
   user,
   shop,
   onNavigateToPos,
+  onNavigateToWholesale,
   onNavigateToShifts,
   onNavigateToInventory,
   onNavigateToSalesAnalysis,
@@ -452,7 +455,7 @@ export const TodayDashboardView: React.FC<TodayDashboardViewProps> = ({
       try {
         localStorage.setItem('sa_selected_branch', newBranchCode);
         localStorage.setItem('selected_branch', newBranchCode);
-      } catch {}
+      } catch { }
     }
     setSelectedBranchCode(newBranchCode);
     selectedBranchCodeRef.current = newBranchCode;
@@ -755,9 +758,9 @@ export const TodayDashboardView: React.FC<TodayDashboardViewProps> = ({
             expectedCashMinor: updatedSummary.expectedCashMinor,
             activeShift: prev.shiftDrawer.activeShift
               ? {
-                  ...prev.shiftDrawer.activeShift,
-                  summary: updatedSummary,
-                }
+                ...prev.shiftDrawer.activeShift,
+                summary: updatedSummary,
+              }
               : null,
           },
         };
@@ -810,7 +813,27 @@ export const TodayDashboardView: React.FC<TodayDashboardViewProps> = ({
 
   if (!data) return null;
 
-  const { cards, hourly, payments, topSellers, stockAttention, shiftDrawer, countersToday, nowKolkata } = data;
+  const { cards, hourly, payments, topSellers, stockAttention, shiftDrawer, countersToday, nowKolkata, wholesale: rawWholesale } = data;
+  const wholesale = rawWholesale || {
+    totalSalesMinor: 0,
+    grossSalesMinor: 0,
+    returnsMinor: 0,
+    invoicesCount: 0,
+    totalUnitsSold: 0,
+    distinctProductsCount: 0,
+    taxableMinor: 0,
+    cgstMinor: 0,
+    sgstMinor: 0,
+    igstMinor: 0,
+    totalGstMinor: 0,
+    outstandingCreditMinor: 0,
+    paidMinor: 0,
+    compTotalSalesMinor: 0,
+    compInvoicesCount: 0,
+    salesChangePct: null,
+    topItems: [],
+    paymentModes: [],
+  };
   const isBilledEmpty = cards.bills.billsCount === 0 && cards.todaySales.netSalesMinor === 0;
 
   return (
@@ -822,7 +845,7 @@ export const TodayDashboardView: React.FC<TodayDashboardViewProps> = ({
           <div className="empty-alert-content">
             <SparklesIcon size={20} className="empty-alert-icon" style={{ color: "#6366f1" }} />
             <div>
-              <strong>No bills yet today</strong> — start billing from POS Counter to see live sales, hourly rush curves, and collections!
+              <strong>No retail bills yet today</strong> — start billing from POS Counter to see live sales, hourly rush curves, and collections!
             </div>
           </div>
           <button type="button" className="btn-empty-start" onClick={onNavigateToPos}>
@@ -832,12 +855,25 @@ export const TodayDashboardView: React.FC<TodayDashboardViewProps> = ({
         </div>
       )}
 
-      {/* 2. SIX SUMMARY KPI CARDS */}
+      {/* 2. RETAIL BILLING SALES OVERVIEW */}
+      <div className="today-wholesale-section" style={{ marginTop: '0.25rem', marginBottom: '0.65rem' }}>
+        <div className="wholesale-section-header" style={{ marginBottom: '0.4rem' }}>
+          <div className="wholesale-title-group">
+            <h2 className="wholesale-section-title">
+              Today's Retail Sales Overview Retail POS
+            </h2>
+          </div>
+          <span className="wholesale-section-subtitle">
+            In-store POS counter bills, walk-in shoppers & consumer transactions
+          </span>
+        </div>
+      </div>
+
       <section className="today-kpi-grid">
-        {/* CARD 1: TODAY'S SALES (Highlighted Purple Card) */}
+        {/* CARD 1: TODAY'S RETAIL SALES (Highlighted Purple Card) */}
         <div className="today-kpi-card purple-highlight">
           <div className="kpi-card-header">
-            <span className="kpi-label">TODAY'S SALES</span>
+            <span className="kpi-label">TODAY'S RETAIL SALES</span>
             <span className="kpi-icon-badge purple"><TrendingUpIcon size={15} style={{ color: "#ffffff" }} /></span>
           </div>
           <div className="kpi-value-row">
@@ -860,10 +896,10 @@ export const TodayDashboardView: React.FC<TodayDashboardViewProps> = ({
           </div>
         </div>
 
-        {/* CARD 2: BILLS */}
+        {/* CARD 2: RETAIL BILLS */}
         <div className="today-kpi-card">
           <div className="kpi-card-header">
-            <span className="kpi-label">BILLS</span>
+            <span className="kpi-label">RETAIL BILLS</span>
             <span className="kpi-icon-badge blue"><ReceiptIcon size={16} style={{ color: "#2563eb" }} /></span>
           </div>
           <div className="kpi-value-row">
@@ -877,8 +913,8 @@ export const TodayDashboardView: React.FC<TodayDashboardViewProps> = ({
                 {cards.bills.diffCount !== null && cards.bills.diffCount > 0
                   ? `▲ ${cards.bills.diffCount} vs yesterday`
                   : cards.bills.diffCount !== null && cards.bills.diffCount < 0
-                  ? `▼ ${Math.abs(cards.bills.diffCount)} vs yesterday`
-                  : `No change vs yesterday`}
+                    ? `▼ ${Math.abs(cards.bills.diffCount)} vs yesterday`
+                    : `No change vs yesterday`}
               </span>
             ) : (
               <span className="kpi-change-text neutral">No bills yesterday</span>
@@ -886,10 +922,10 @@ export const TodayDashboardView: React.FC<TodayDashboardViewProps> = ({
           </div>
         </div>
 
-        {/* CARD 3: AVG BILL VALUE */}
+        {/* CARD 3: RETAIL AVG BILL */}
         <div className="today-kpi-card">
           <div className="kpi-card-header">
-            <span className="kpi-label">AVG BILL VALUE</span>
+            <span className="kpi-label">RETAIL AVG BILL</span>
             <span className="kpi-icon-badge green"><TagIcon size={16} style={{ color: "#059669" }} /></span>
           </div>
           <div className="kpi-value-row">
@@ -908,11 +944,11 @@ export const TodayDashboardView: React.FC<TodayDashboardViewProps> = ({
           </div>
         </div>
 
-        {/* CARD 4: GROSS PROFIT (Owner / Manager only) */}
+        {/* CARD 4: RETAIL GROSS PROFIT (Owner / Manager only) */}
         {cards.grossProfit.visible && (
           <div className="today-kpi-card">
             <div className="kpi-card-header">
-              <span className="kpi-label">GROSS PROFIT</span>
+              <span className="kpi-label">RETAIL GROSS PROFIT</span>
               <span className="kpi-icon-badge green"><ShieldCheckIcon size={16} style={{ color: "#059669" }} /></span>
             </div>
             <div className="kpi-value-row">
@@ -929,10 +965,10 @@ export const TodayDashboardView: React.FC<TodayDashboardViewProps> = ({
           </div>
         )}
 
-        {/* CARD 5: ITEMS SOLD */}
+        {/* CARD 5: RETAIL ITEMS SOLD */}
         <div className="today-kpi-card">
           <div className="kpi-card-header">
-            <span className="kpi-label">ITEMS SOLD</span>
+            <span className="kpi-label">RETAIL ITEMS SOLD</span>
             <span className="kpi-icon-badge brown"><PackageIcon size={16} style={{ color: "#d97706" }} /></span>
           </div>
           <div className="kpi-value-row">
@@ -945,10 +981,10 @@ export const TodayDashboardView: React.FC<TodayDashboardViewProps> = ({
           </div>
         </div>
 
-        {/* CARD 6: RETURNS */}
+        {/* CARD 6: RETAIL RETURNS */}
         <div className="today-kpi-card">
           <div className="kpi-card-header">
-            <span className="kpi-label">RETURNS</span>
+            <span className="kpi-label">RETAIL RETURNS</span>
             <span className="kpi-icon-badge red"><RotateCcwIcon size={16} style={{ color: "#ef4444" }} /></span>
           </div>
           <div className="kpi-value-row">
@@ -1214,7 +1250,7 @@ export const TodayDashboardView: React.FC<TodayDashboardViewProps> = ({
                   fontWeight="500"
                   letterSpacing="0.2px"
                 >
-                   {nowKolkata.timeStr}
+                  {nowKolkata.timeStr}
                 </text>
               </g>
 
@@ -1313,7 +1349,7 @@ export const TodayDashboardView: React.FC<TodayDashboardViewProps> = ({
               const tooltipYPercent = isNearTop
                 ? ((activeTooltipPoint.todayY + 16) / svgHeight) * 100
                 : ((activeTooltipPoint.todayY - 14) / svgHeight) * 100;
-              
+
               const xTranslate = tooltipXPercent < 15 ? '0%' : tooltipXPercent > 85 ? '-100%' : '-50%';
               const yTranslate = isNearTop ? '0%' : '-100%';
 
@@ -1337,16 +1373,16 @@ export const TodayDashboardView: React.FC<TodayDashboardViewProps> = ({
                     {!activeTooltipPoint.isPastOrCurrent
                       ? '—'
                       : chartMetric === 'bills'
-                      ? `${activeTooltipPoint.todayVal ?? 0} bills`
-                      : formatRupees(activeTooltipPoint.todayVal ?? 0)}
+                        ? `${activeTooltipPoint.todayVal ?? 0} bills`
+                        : formatRupees(activeTooltipPoint.todayVal ?? 0)}
                   </div>
                   <div className="card-sub-meta">
                     <span>
                       {!activeTooltipPoint.isPastOrCurrent
                         ? 'upcoming'
                         : chartMetric === 'bills'
-                        ? `${activeTooltipPoint.todayVal ?? 0} bills today`
-                        : `${activeTooltipPoint.todayBillsCount ?? 0} bills · ${formatRupees(activeTooltipPoint.todayVal ?? 0)}`}
+                          ? `${activeTooltipPoint.todayVal ?? 0} bills today`
+                          : `${activeTooltipPoint.todayBillsCount ?? 0} bills · ${formatRupees(activeTooltipPoint.todayVal ?? 0)}`}
                     </span>
                     <span className="dot">·</span>
                     <span>
@@ -1477,149 +1513,149 @@ export const TodayDashboardView: React.FC<TodayDashboardViewProps> = ({
           <>
             {/* CARD 1: TOP SELLERS TODAY */}
             <div className="today-section-card bento-card-3d bento-card-top-sellers">
-          <div className="section-card-header">
-            <div className="section-title-group">
-              <div className="section-title-icon-box sellers-icon-box">
-                <SparklesIcon size={16} />
-              </div>
-              <div>
-                <h3 className="section-title">Top Sellers Today</h3>
-                <span className="section-subtitle">Ranked by revenue & volume</span>
-              </div>
-            </div>
-            <button
-              type="button"
-              className="section-link-pill-btn"
-              onClick={onNavigateToSalesAnalysis}
-            >
-              <span>Sales Analysis</span>
-              <span className="pill-arrow">→</span>
-            </button>
-          </div>
-
-          <div className="sellers-list" key={`sellers-${chartAnimKey}`}>
-            {topSellers.length > 0 ? (
-              topSellers.map((item, idx) => (
-                <div key={item.itemId} className="seller-row bento-item-tile">
-                  <div className={`seller-rank-badge rank-${idx + 1}`}>
-                    #{idx + 1}
+              <div className="section-card-header">
+                <div className="section-title-group">
+                  <div className="section-title-icon-box sellers-icon-box">
+                    <SparklesIcon size={16} />
                   </div>
-                  <div className="seller-info">
-                    <div className="seller-name-row">
-                      <span className="seller-name" title={item.name}>{item.name}</span>
-                      <span className="seller-qty-chip">
-                        {item.quantity} {item.unit}
-                      </span>
-                    </div>
-                    <div className="seller-bar-track">
-                      <div
-                        className="seller-bar-fill animated-modern-bar"
-                        style={{
-                          width: `${item.barPct}%`,
-                          animationDelay: `${idx * 0.08}s`,
-                        }}
-                      >
-                        <span className="bar-shimmer-highlight"></span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="seller-amount-col mono">
-                    <span className="seller-amount-val">{formatRupees(item.salesMinor)}</span>
-                    <span className="seller-share-label">{item.barPct}%</span>
+                  <div>
+                    <h3 className="section-title">Top Sellers Today</h3>
+                    <span className="section-subtitle">Ranked by revenue & volume</span>
                   </div>
                 </div>
-              ))
-            ) : (
-              <div className="empty-sub-card">
-                <ShoppingCartIcon size={20} className="empty-sub-icon" />
-                <span>No product sales yet today</span>
+                <button
+                  type="button"
+                  className="section-link-pill-btn"
+                  onClick={onNavigateToSalesAnalysis}
+                >
+                  <span>Sales Analysis</span>
+                  <span className="pill-arrow">→</span>
+                </button>
               </div>
-            )}
-          </div>
-        </div>
 
-        {/* CARD 2: STOCK NEEDING ATTENTION */}
-        <div className="today-section-card bento-card-3d bento-card-stock-attention">
-          <div className="section-card-header">
-            <div className="section-title-group">
-              <div className="section-title-icon-box stock-icon-box">
-                <AlertTriangleIcon size={16} />
-              </div>
-              <div>
-                <h3 className="section-title">Stock Needing Attention</h3>
-                <span className="section-subtitle">Fast sellers running low today</span>
+              <div className="sellers-list" key={`sellers-${chartAnimKey}`}>
+                {topSellers.length > 0 ? (
+                  topSellers.map((item, idx) => (
+                    <div key={item.itemId} className="seller-row bento-item-tile">
+                      <div className={`seller-rank-badge rank-${idx + 1}`}>
+                        #{idx + 1}
+                      </div>
+                      <div className="seller-info">
+                        <div className="seller-name-row">
+                          <span className="seller-name" title={item.name}>{item.name}</span>
+                          <span className="seller-qty-chip">
+                            {item.quantity} {item.unit}
+                          </span>
+                        </div>
+                        <div className="seller-bar-track">
+                          <div
+                            className="seller-bar-fill animated-modern-bar"
+                            style={{
+                              width: `${item.barPct}%`,
+                              animationDelay: `${idx * 0.08}s`,
+                            }}
+                          >
+                            <span className="bar-shimmer-highlight"></span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="seller-amount-col mono">
+                        <span className="seller-amount-val">{formatRupees(item.salesMinor)}</span>
+                        <span className="seller-share-label">{item.barPct}%</span>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="empty-sub-card">
+                    <ShoppingCartIcon size={20} className="empty-sub-icon" />
+                    <span>No product sales yet today</span>
+                  </div>
+                )}
               </div>
             </div>
-            <button
-              type="button"
-              className="section-link-pill-btn"
-              onClick={onNavigateToInventory}
-            >
-              <span>Inventory Hub</span>
-              <span className="pill-arrow">→</span>
-            </button>
-          </div>
 
-          <div className="stock-alerts-list" key={`stock-${chartAnimKey}`}>
-            {stockAttention.length > 0 ? (
-              stockAttention.map((item, idx) => {
-                const stockQty = typeof item.stockQty === 'number' && !isNaN(item.stockQty) ? item.stockQty : 0;
-                const badgeText =
-                  item.badgeText && !item.badgeText.includes('NaN')
-                    ? item.badgeText
-                    : stockQty <= 0
-                    ? 'Out of stock'
-                    : item.reorderLevel && !isNaN(item.reorderLevel) && item.reorderLevel > 0
-                    ? `Below reorder (${item.reorderLevel})`
-                    : 'Reorder level not configured';
-
-                const badgeType =
-                  item.badgeType ||
-                  (stockQty <= 0
-                    ? 'danger'
-                    : item.reorderLevel && !isNaN(item.reorderLevel) && item.reorderLevel > 0
-                    ? 'warning'
-                    : 'neutral');
-
-                const initials = (item.name || 'P').slice(0, 2).toUpperCase();
-
-                return (
-                  <div
-                    key={item.itemId}
-                    className={`stock-alert-row bento-item-tile stock-status-${badgeType}`}
-                    style={{ animationDelay: `${idx * 0.07}s` }}
-                  >
-                    <div className="stock-item-avatar">
-                      {initials}
-                    </div>
-
-                    <div className="stock-info">
-                      <span className="stock-name" title={item.name}>{item.name}</span>
-                      <span className="stock-left-qty">
-                        <span className={`status-beacon-dot beacon-${badgeType}`}></span>
-                        {stockQty <= 0 ? '0' : stockQty} {item.unit || 'pcs'} left
-                        {item.soldTodayQty > 0 && ` · ${item.soldTodayQty} sold today`}
-                      </span>
-                    </div>
-
-                    <div className="stock-badge-col">
-                      <span className={`stock-badge modern-pill-badge ${badgeType}`}>
-                        <span className="badge-pulse-indicator"></span>
-                        {badgeText}
-                      </span>
-                    </div>
+            {/* CARD 2: STOCK NEEDING ATTENTION */}
+            <div className="today-section-card bento-card-3d bento-card-stock-attention">
+              <div className="section-card-header">
+                <div className="section-title-group">
+                  <div className="section-title-icon-box stock-icon-box">
+                    <AlertTriangleIcon size={16} />
                   </div>
-                );
-              })
-            ) : (
-              <div className="empty-sub-card">
-                <CheckCircleIcon size={20} style={{ color: "#10b981", marginRight: "8px" }} />
-                <span>All active inventory levels are healthy</span>
+                  <div>
+                    <h3 className="section-title">Stock Needing Attention</h3>
+                    <span className="section-subtitle">Fast sellers running low today</span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="section-link-pill-btn"
+                  onClick={onNavigateToInventory}
+                >
+                  <span>Inventory Hub</span>
+                  <span className="pill-arrow">→</span>
+                </button>
               </div>
-            )}
-          </div>
-        </div>
+
+              <div className="stock-alerts-list" key={`stock-${chartAnimKey}`}>
+                {stockAttention.length > 0 ? (
+                  stockAttention.map((item, idx) => {
+                    const stockQty = typeof item.stockQty === 'number' && !isNaN(item.stockQty) ? item.stockQty : 0;
+                    const badgeText =
+                      item.badgeText && !item.badgeText.includes('NaN')
+                        ? item.badgeText
+                        : stockQty <= 0
+                          ? 'Out of stock'
+                          : item.reorderLevel && !isNaN(item.reorderLevel) && item.reorderLevel > 0
+                            ? `Below reorder (${item.reorderLevel})`
+                            : 'Reorder level not configured';
+
+                    const badgeType =
+                      item.badgeType ||
+                      (stockQty <= 0
+                        ? 'danger'
+                        : item.reorderLevel && !isNaN(item.reorderLevel) && item.reorderLevel > 0
+                          ? 'warning'
+                          : 'neutral');
+
+                    const initials = (item.name || 'P').slice(0, 2).toUpperCase();
+
+                    return (
+                      <div
+                        key={item.itemId}
+                        className={`stock-alert-row bento-item-tile stock-status-${badgeType}`}
+                        style={{ animationDelay: `${idx * 0.07}s` }}
+                      >
+                        <div className="stock-item-avatar">
+                          {initials}
+                        </div>
+
+                        <div className="stock-info">
+                          <span className="stock-name" title={item.name}>{item.name}</span>
+                          <span className="stock-left-qty">
+                            <span className={`status-beacon-dot beacon-${badgeType}`}></span>
+                            {stockQty <= 0 ? '0' : stockQty} {item.unit || 'pcs'} left
+                            {item.soldTodayQty > 0 && ` · ${item.soldTodayQty} sold today`}
+                          </span>
+                        </div>
+
+                        <div className="stock-badge-col">
+                          <span className={`stock-badge modern-pill-badge ${badgeType}`}>
+                            <span className="badge-pulse-indicator"></span>
+                            {badgeText}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="empty-sub-card">
+                    <CheckCircleIcon size={20} style={{ color: "#10b981", marginRight: "8px" }} />
+                    <span>All active inventory levels are healthy</span>
+                  </div>
+                )}
+              </div>
+            </div>
           </>
         )}
 
@@ -1687,6 +1723,159 @@ export const TodayDashboardView: React.FC<TodayDashboardViewProps> = ({
                   <AnimatedCounter value={countersToday?.totalMinor || 0} isRupees={true} animKey={chartAnimKey} />
                 </span>
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 5. TODAY'S WHOLESALE SALES ANALYSIS (B2B WHOLESALE SECTION) */}
+      <section className="today-wholesale-section">
+        <div className="wholesale-section-header">
+          <div className="wholesale-title-group">
+            <div className="wholesale-title-icon-box">
+              <TruckIcon size={20} />
+            </div>
+            <div>
+              <h2 className="wholesale-section-title">
+                Today's Wholesale Sales Analysis
+                <span className="wholesale-badge-pill">B2B Wholesale</span>
+              </h2>
+              <p className="wholesale-section-subtitle">
+                B2B Tax Invoices, bulk order dispatches & trade receivables (strictly isolated from Retail POS)
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* 6 WHOLESALE KPI CARDS */}
+        <div className="today-kpi-grid">
+          {/* WS CARD 1: TOTAL WHOLESALE SALES */}
+          <div className="today-kpi-card">
+            <div className="kpi-card-header">
+              <span className="kpi-label">TOTAL WHOLESALE SALES</span>
+              <span className="kpi-icon-badge neutral">
+                <TrendingUpIcon size={16} />
+              </span>
+            </div>
+            <div className="kpi-value-row">
+              <span className="kpi-value mono">
+                <AnimatedCounter value={wholesale.totalSalesMinor} isRupees={true} animKey={chartAnimKey} />
+              </span>
+            </div>
+            <div className="kpi-footer-row">
+              {wholesale.salesChangePct !== null ? (
+                <span className={`kpi-change-pill ${wholesale.salesChangePct >= 0 ? 'pos' : 'neg'}`}>
+                  <span className="kpi-pill-arrow">{wholesale.salesChangePct >= 0 ? '▲' : '▼'}</span>
+                  <span className="kpi-pill-pct">{Math.abs(wholesale.salesChangePct).toFixed(1)}%</span>
+                  <span className="kpi-pill-ref">vs yesterday</span>
+                </span>
+              ) : (
+                <span className="kpi-change-pill neutral">No wholesale yesterday</span>
+              )}
+            </div>
+          </div>
+
+          {/* WS CARD 2: NUMBER OF WHOLESALE INVOICES */}
+          <div className="today-kpi-card">
+            <div className="kpi-card-header">
+              <span className="kpi-label">WHOLESALE INVOICES</span>
+              <span className="kpi-icon-badge neutral">
+                <ReceiptIcon size={16} />
+              </span>
+            </div>
+            <div className="kpi-value-row">
+              <span className="kpi-value mono">
+                <AnimatedCounter value={wholesale.invoicesCount} isRupees={false} animKey={chartAnimKey} />
+              </span>
+            </div>
+            <div className="kpi-footer-row">
+              <span className="kpi-meta-text">
+                {wholesale.invoicesCount === 1 ? '1 B2B invoice issued' : `${wholesale.invoicesCount} B2B invoices issued`}
+              </span>
+            </div>
+          </div>
+
+          {/* WS CARD 3: TOTAL WHOLESALE ITEMS / QUANTITY SOLD */}
+          <div className="today-kpi-card">
+            <div className="kpi-card-header">
+              <span className="kpi-label">ITEMS / QTY SOLD</span>
+              <span className="kpi-icon-badge neutral">
+                <PackageIcon size={16} />
+              </span>
+            </div>
+            <div className="kpi-value-row">
+              <span className="kpi-value mono">
+                <AnimatedCounter
+                  value={wholesale.totalUnitsSold}
+                  isRupees={false}
+                  decimals={wholesale.totalUnitsSold % 1 !== 0 ? 1 : 0}
+                  animKey={chartAnimKey}
+                />
+              </span>
+            </div>
+            <div className="kpi-footer-row">
+              <span className="kpi-meta-text">
+                units across {wholesale.distinctProductsCount} distinct {wholesale.distinctProductsCount === 1 ? 'product' : 'products'}
+              </span>
+            </div>
+          </div>
+
+          {/* WS CARD 4: WHOLESALE TAXABLE AMOUNT */}
+          <div className="today-kpi-card">
+            <div className="kpi-card-header">
+              <span className="kpi-label">TAXABLE AMOUNT</span>
+              <span className="kpi-icon-badge neutral">
+                <TagIcon size={16} />
+              </span>
+            </div>
+            <div className="kpi-value-row">
+              <span className="kpi-value mono">
+                <AnimatedCounter value={wholesale.taxableMinor} isRupees={true} animKey={chartAnimKey} />
+              </span>
+            </div>
+            <div className="kpi-footer-row">
+              <span className="kpi-meta-text">Pre-tax B2B order value</span>
+            </div>
+          </div>
+
+          {/* WS CARD 5: WHOLESALE GST COLLECTED */}
+          <div className="today-kpi-card">
+            <div className="kpi-card-header">
+              <span className="kpi-label">GST COLLECTED</span>
+              <span className="kpi-icon-badge neutral">
+                <ShieldCheckIcon size={16} />
+              </span>
+            </div>
+            <div className="kpi-value-row">
+              <span className="kpi-value mono">
+                <AnimatedCounter value={wholesale.totalGstMinor} isRupees={true} animKey={chartAnimKey} />
+              </span>
+            </div>
+            <div className="kpi-footer-row">
+              <span className="kpi-meta-text">
+                CGST {formatRupees(wholesale.cgstMinor)} · SGST {formatRupees(wholesale.sgstMinor)}
+                {wholesale.igstMinor > 0 && ` · IGST ${formatRupees(wholesale.igstMinor)}`}
+              </span>
+            </div>
+          </div>
+
+          {/* WS CARD 6: WHOLESALE OUTSTANDING / CREDIT AMOUNT */}
+          <div className="today-kpi-card">
+            <div className="kpi-card-header">
+              <span className="kpi-label">OUTSTANDING CREDIT</span>
+              <span className="kpi-icon-badge neutral">
+                <AlertTriangleIcon size={16} />
+              </span>
+            </div>
+            <div className="kpi-value-row">
+              <span className="kpi-value mono">
+                <AnimatedCounter value={wholesale.outstandingCreditMinor} isRupees={true} animKey={chartAnimKey} />
+              </span>
+            </div>
+            <div className="kpi-footer-row">
+              <span className="kpi-meta-text">
+                Paid: {formatRupees(wholesale.paidMinor)} · Trade receivables
+              </span>
             </div>
           </div>
         </div>

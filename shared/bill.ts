@@ -1,5 +1,6 @@
 import { fmtMoney, fmtQty, bpToPct, moneyInWords } from './money.ts';
 import type { Lang, PrintTemplate } from './types.ts';
+import { stateName } from './states.ts';
 
 export interface PrintableLine {
   name: string;
@@ -46,10 +47,20 @@ export interface PrintableWholesaleMeta {
 export interface PrintableBill {
   number: string;
   kind: 'sale' | 'credit_note';
+  invoiceType?: 'retail' | 'wholesale';
   status?: string;
   dateText: string; // already formatted, e.g. 16 Oct 2026, 11:45
   shop: { name: string; address?: string | null; phone?: string | null; gstin?: string | null; stateName?: string | null; upiId?: string | null; logoUrl?: string | null };
-  customer?: { name?: string | null; phone?: string | null; gstin?: string | null } | null;
+  customer?: {
+    name?: string | null;
+    phone?: string | null;
+    gstin?: string | null;
+    address?: string | null;
+    shippingAddress?: string | null;
+    contactPerson?: string | null;
+    stateCode?: string | null;
+    stateName?: string | null;
+  } | null;
   lines: PrintableLine[];
   totals: {
     subtotalMinor: number; discountMinor: number; taxableMinor: number; cgstMinor: number; sgstMinor: number; igstMinor: number;
@@ -61,6 +72,7 @@ export interface PrintableBill {
   note?: string | null;
   linkedNumber?: string | null;
   intra: boolean;
+  placeState?: string | null;
   wholesale?: PrintableWholesaleMeta | null;
 }
 
@@ -495,7 +507,7 @@ export function wholesaleA4Copy(bill: PrintableBill, tpl: PrintTemplate, L: Reco
   const wh = bill.wholesale || {};
   const t = bill.totals;
   const isInterstate = !bill.intra;
-  const displayName = (wh.displayName || (wh.legalName && wh.legalName !== bill.shop.name ? wh.legalName : '') || 'WHOLESALE B2B TAX INVOICE').trim();
+  const displayName = (wh.displayName || (wh.legalName && wh.legalName !== bill.shop.name ? wh.legalName : '') || bill.shop.name || 'WHOLESALE B2B TAX INVOICE').trim();
   const legalName = (wh.legalName || '').trim();
   const logoUrl = wh.logoUrl || bill.shop.logoUrl || '';
   const headOfficeAddress = wh.address || bill.shop.address || '';
@@ -504,12 +516,13 @@ export function wholesaleA4Copy(bill: PrintableBill, tpl: PrintTemplate, L: Reco
   const gstin = wh.gstin || bill.shop.gstin || '';
 
   const buyerName = bill.customer?.name || 'Cash Customer';
-  const buyerAddress = wh.billingAddress || (bill.customer as any)?.address || '';
-  const shippingAddress = wh.shippingAddress || buyerAddress;
+  const buyerContactPerson = wh.contactPerson || bill.customer?.contactPerson || '';
+  const buyerAddress = wh.billingAddress || bill.customer?.address || '';
+  const shippingAddress = wh.shippingAddress || bill.customer?.shippingAddress || buyerAddress;
   const buyerPhone = bill.customer?.phone || '';
   const buyerGstin = bill.customer?.gstin || '';
-  const buyerStateName = wh.customerState || '';
-  const buyerStateCode = wh.customerStateCode || '';
+  const buyerStateCode = wh.customerStateCode || bill.customer?.stateCode || (buyerGstin && buyerGstin.length >= 2 ? buyerGstin.slice(0, 2) : '') || bill.placeState || '';
+  const buyerStateName = wh.customerState || bill.customer?.stateName || (buyerStateCode ? stateName(buyerStateCode) : '');
 
   let totalQtyMilli = 0;
   let primaryUnit = 'Pcs';
@@ -598,7 +611,8 @@ export function wholesaleA4Copy(bill: PrintableBill, tpl: PrintTemplate, L: Reco
   <div class="wh-grid-2col">
     <div class="wh-col-buyer">
       <div style="font-size:11px;margin-bottom:3px;"><b>M/S, &nbsp; ${esc(buyerName)}</b></div>
-      ${buyerAddress ? `<div style="font-size:10px;margin-bottom:3px;color:#222;">${esc(buyerAddress)}</div>` : ''}
+      ${buyerContactPerson ? `<div style="font-size:9.5px;margin-bottom:2px;color:#333;"><b>Attn:</b> ${esc(buyerContactPerson)}</div>` : ''}
+      ${buyerAddress ? `<div style="font-size:10px;margin-bottom:3px;color:#222;">${esc(buyerAddress)}</div>` : `<div style="font-size:9.5px;margin-bottom:3px;color:#777;font-style:italic;">Address not configured</div>`}
       ${shippingAddress && shippingAddress !== buyerAddress ? `<div style="font-size:9.5px;margin-bottom:3px;color:#444;"><b>Ship To:</b> ${esc(shippingAddress)}</div>` : ''}
       <div style="font-size:10px;margin-bottom:4px;"><b>Phone :</b> ${esc(buyerPhone || '—')}</div>
       <div style="display:flex;justify-content:space-between;align-items:baseline;font-size:10px;margin-top:4px;">
@@ -927,16 +941,16 @@ table{border-collapse:collapse;width:100%}table.items th{background:#111;color:#
 /** Full HTML document for one bill (all requested copies). Used for printing, the public bill page and PDF-by-browser. */
 export function renderBillDoc(bill: PrintableBill, tpl: PrintTemplate, opts: RenderOpts = {}): string {
   const L = LABELS[tpl.language] ?? LABELS.en;
-  const isWholesale = bill.wholesale?.invoiceType === 'wholesale' || tpl.paper === 'wholesale_a4';
-  const thermal = !isWholesale && (tpl.paper === 'thermal58' || tpl.paper === 'thermal80');
+  const isWholesale = bill.invoiceType === 'wholesale'
+    || (!bill.invoiceType && (bill.wholesale?.invoiceType === 'wholesale' || tpl.paper === 'wholesale_a4'));
+  const effectivePaper = isWholesale ? 'wholesale_a4' : (tpl.paper === 'thermal58' ? 'thermal58' : 'thermal80');
+  const thermal = !isWholesale;
   const labels = ['', L.copy2, L.copy3];
   const copies = Array.from({ length: tpl.copies }, (_, i) => (i === 0 ? (tpl.copies > 1 ? L.original : '') : labels[i]));
   const sections = copies.map((c) => {
-    if (thermal) return thermalCopy(bill, tpl, L, c, opts);
-    if (isWholesale) return wholesaleA4Copy(bill, tpl, L, c, opts);
-    return a4Copy(bill, tpl, L, c, opts);
+    if (thermal) return thermalCopy(bill, { ...tpl, paper: effectivePaper }, L, c, opts);
+    return wholesaleA4Copy(bill, { ...tpl, paper: effectivePaper }, L, c, opts);
   }).join('\n');
-  const effectivePaper = isWholesale ? 'wholesale_a4' : tpl.paper;
   return `<!doctype html><html lang="${tpl.language}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(bill.number)}</title><style>${CSS(effectivePaper)}</style></head><body>${sections}${opts.autoPrint ? '<script>window.addEventListener("load",function(){setTimeout(function(){window.focus();window.print()},250)})</script>' : ''}</body></html>`;
 }
 
