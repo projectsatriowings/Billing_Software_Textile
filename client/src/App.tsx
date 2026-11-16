@@ -3031,7 +3031,7 @@ export function App() {
     if (/^(WH-|INV-|CN-)/i.test(rawClean)) {
       setShowReturnExchangeModal(true);
       setExternalBarcodeScan({ barcode: rawClean, timestamp: Date.now() });
-      showToast(`🔍 Opening Return & Exchange for ${rawClean}...`);
+      showToast(`Opening Return & Exchange for ${rawClean}...`);
       return;
     }
 
@@ -22520,10 +22520,10 @@ export function App() {
             }));
             setCart((prev) => [...prev, ...returnCartItems]);
             setShowReturnExchangeModal(false);
-            showToast(`✓ Added ${lines.length} return item(s) from ${origInv} to exchange! Select new items to complete.`);
+            showToast(`Added ${lines.length} return item(s) from ${origInv} to exchange! Select new items to complete.`);
           }}
           onReturnCompleted={(_cnId, cnNumber) => {
-            showToast(`✓ Return processed successfully! Credit Note: ${cnNumber}`);
+            showToast(`Return processed successfully! Credit Note: ${cnNumber}`);
             setShowReturnExchangeModal(false);
           }}
         />

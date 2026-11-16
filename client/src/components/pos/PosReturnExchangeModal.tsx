@@ -437,7 +437,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                     }}
                   >
                     <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#16a34a' }}></span>
-                    📱 Mobile Scanner Connected
+                    Mobile Scanner Connected
                   </span>
                 ) : (
                   <span
@@ -782,13 +782,18 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                         transition: 'all 0.15s ease',
                       }}
                     >
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                         <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
                         <line x1="12" y1="18" x2="12.01" y2="18"></line>
                       </svg>
                       <span>
-                        {isPhoneScannerConnected ? '📱 Mobile Phone Connected ✓' : '📱 Scan with Mobile Phone Camera'}
+                        {isPhoneScannerConnected ? 'Mobile Phone Connected' : 'Scan with Mobile Phone Camera'}
                       </span>
+                      {isPhoneScannerConnected && (
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                      )}
                     </button>
 
                     {/* Option 2: Desktop Camera Scanner */}
@@ -902,16 +907,23 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                                   borderRadius: '6px',
                                   fontSize: '0.74rem',
                                   fontWeight: 700,
-                                  padding: '0.25rem 0.65rem',
+                                  padding: '0.35rem 0.75rem',
                                   cursor: 'pointer',
                                   color: '#334155',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '6px',
                                 }}
                                 onClick={() => {
                                   navigator.clipboard?.writeText(scannerPairingUrl);
                                   alert('Copied scanner link to clipboard!');
                                 }}
                               >
-                                📋 Copy Link to Open in Phone Browser
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                </svg>
+                                <span>Copy Link to Open in Phone Browser</span>
                               </button>
                             </div>
                           )}
@@ -950,7 +962,12 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                       }}
                     >
                       <div style={{ fontWeight: 800, fontSize: '0.84rem', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                        <span>⚠️ Desktop Camera Inaccessible</span>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                          <line x1="12" y1="9" x2="12" y2="13"></line>
+                          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        </svg>
+                        <span>Desktop Camera Inaccessible</span>
                       </div>
                       <div style={{ fontSize: '0.78rem', color: '#7f1d1d', lineHeight: 1.4 }}>
                         Your computer does not have an active camera or permission is disabled. You can easily use your <strong>smartphone camera as a wireless scanner</strong> instead!
@@ -973,10 +990,14 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                             cursor: 'pointer',
                             display: 'inline-flex',
                             alignItems: 'center',
-                            gap: '4px',
+                            gap: '6px',
                           }}
                         >
-                          <span>📱 Scan via Mobile Phone Instead</span>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                            <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                          </svg>
+                          <span>Scan via Mobile Phone Instead</span>
                         </button>
                         <span style={{ fontSize: '0.74rem', color: '#64748b' }}>or type the barcode above</span>
                       </div>
@@ -1188,9 +1209,13 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                           <button
                             type="button"
                             className="btn btn-primary"
-                            style={{ padding: '0.35rem 0.8rem', fontSize: '0.78rem', fontWeight: 700 }}
+                            style={{ padding: '0.35rem 0.8rem', fontSize: '0.78rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                           >
-                            Select ➔
+                            <span>Select</span>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                              <line x1="5" y1="12" x2="19" y2="12"></line>
+                              <polyline points="12 5 19 12 12 19"></polyline>
+                            </svg>
                           </button>
                         </div>
                       </div>
@@ -1204,7 +1229,11 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
           {/* Loading invoice items spinner */}
           {loadingInvoice && (
             <div style={{ textAlign: 'center', padding: '2.5rem', color: '#64748b' }}>
-              <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>⏳</div>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'spin 1s linear infinite' }}>
+                  <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
+                </svg>
+              </div>
               <div style={{ fontWeight: 700, color: '#1e293b' }}>Loading bill items from database...</div>
               <div style={{ fontSize: '0.78rem' }}>Verifying previously returned units & remaining quantities</div>
             </div>
@@ -1406,9 +1435,9 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                                 background: '#ffffff',
                               }}
                             >
-                              <option value="resellable">🟢 Resellable (Restock to Shelf)</option>
-                              <option value="damaged">🟡 Damaged (Hold for Inspection)</option>
-                              <option value="defective">🔴 Defective (Defective Bin)</option>
+                              <option value="resellable">Resellable (Restock to Shelf)</option>
+                              <option value="damaged">Damaged (Hold for Inspection)</option>
+                              <option value="defective">Defective (Defective Bin)</option>
                             </select>
                           </td>
                           <td style={{ padding: '0.65rem 0.75rem' }}>
@@ -1635,9 +1664,18 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                         border: 'none',
                         cursor: selectedLinesList.length === 0 || submitting ? 'not-allowed' : 'pointer',
                         boxShadow: '0 4px 12px rgba(5, 150, 105, 0.25)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
                       }}
                     >
-                      {submitting ? 'Processing Return & Refund...' : `Confirm Return & Refund ${formatRupees(totalEstimatedCreditMinor)} ✓`}
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                      </svg>
+                      <span>
+                        {submitting ? 'Processing Return & Refund...' : `Confirm Return & Refund ${formatRupees(totalEstimatedCreditMinor)}`}
+                      </span>
                     </button>
                   </div>
                 )}
