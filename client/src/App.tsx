@@ -204,6 +204,7 @@ export const HIDE_BUSINESS_BAR_ROUTES = [
 ];
 
 export const HIDE_BUSINESS_BAR_TABS = new Set([
+  'wholesale',
   'shifts',
   'items',
   'categories',
@@ -7764,20 +7765,11 @@ export function App() {
           {/* View Transition Stage (SPA Bento Transition) */}
           <div key={displayTab} className={`app-view-stage ${hideBusinessBar ? 'stage-business-bar-hidden' : ''}`}>
             {/* Tab Headers */}
-            {displayTab === 'wholesale' ? (
-              <header className="content-top-header wholesale-top-header">
+            {!hideBusinessBar && displayTab !== 'pos' && displayTab !== 'shifts' && displayTab !== 'sales-analysis' && displayTab !== 'dashboard' && displayTab !== 'stock-transfer' && displayTab !== 'user-management' && activeTab !== 'user-management' && (
+              <header className="content-top-header">
                 <div className="content-header-left">
-                  <h1 className="content-page-title wholesale-page-title">
-                    Wholesale Billing &amp; B2B Tax Invoices
-                  </h1>
-                </div>
-              </header>
-            ) : (
-              !hideBusinessBar && displayTab !== 'pos' && displayTab !== 'shifts' && displayTab !== 'sales-analysis' && displayTab !== 'dashboard' && displayTab !== 'stock-transfer' && displayTab !== 'user-management' && activeTab !== 'user-management' && (
-                <header className="content-top-header">
-                  <div className="content-header-left">
-                    <h1 className="content-page-title">
-                      {displayTab === 'items' && 'Product & Stock Catalog'}
+                  <h1 className="content-page-title">
+                    {displayTab === 'items' && 'Product & Stock Catalog'}
                       {displayTab === 'purchases' && 'Purchases & Stock Inward'}
                       {displayTab === 'invoices' && 'Sales Invoices & Bills'}
                       {displayTab === 'customers' && 'Customer Directory & Loyalty Points'}
@@ -7853,7 +7845,7 @@ export function App() {
                   </div>
                 </header>
               )
-            )}
+            }
 
             {/* TAB 0: DASHBOARD (TODAY'S LIVE OVERVIEW) */}
             {displayTab === 'dashboard' && user && user.role !== 'cashier' && (
