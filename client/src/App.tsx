@@ -549,6 +549,17 @@ export const getBusinessLabel = (type?: string) => {
 
 export const CASHIER_ALLOWED_TABS = new Set<string>(['pos', 'shifts', 'invoices']);
 
+export interface PosCartItem {
+  item: Item;
+  qty: number;
+  isReturn?: boolean;
+  origInvoiceId?: string;
+  origInvoiceNumber?: string;
+  origLineId?: string;
+  restock?: boolean;
+  returnReason?: string;
+}
+
 export function App() {
   const [user, setUser] = useState<User | null>(null);
   const [shop, setShop] = useState<Shop | null>(null);
@@ -863,7 +874,7 @@ export function App() {
   const [categoriesList, setCategoriesList] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
-  const [cart, setCart] = useState<{ item: Item; qty: number }[]>([]);
+  const [cart, setCart] = useState<PosCartItem[]>([]);
   const [parties, setParties] = useState<Party[]>([]);
   const [selectedPartyId, setSelectedPartyId] = useState<string>('');
   const [selectedPayMode, setSelectedPayMode] = useState<'cash' | 'upi' | 'card' | 'bank' | 'split'>('cash');
@@ -1349,6 +1360,18 @@ export function App() {
   const [cnWhatsAppSendState, setCnWhatsAppSendState] = useState<'idle' | 'sending' | 'sent'>('idle');
   const [cnWhatsAppPhone, setCnWhatsAppPhone] = useState<string>('');
   const [cnWhatsAppPhoneError, setCnWhatsAppPhoneError] = useState<string>('');
+
+  // POS Return & Exchange State (Way 2: Barcode & Phone Number lookup only)
+  const [showPosExchangeModal, setShowPosExchangeModal] = useState(false);
+  const [posExchangeQuery, setPosExchangeQuery] = useState('');
+  const [posExchangeLoading, setPosExchangeLoading] = useState(false);
+  const [posExchangeInvoices, setPosExchangeInvoices] = useState<any[]>([]);
+  const [posExchangeSelectedInvoice, setPosExchangeSelectedInvoice] = useState<any | null>(null);
+  const [posExchangeReturnInfo, setPosExchangeReturnInfo] = useState<any | null>(null);
+  const [posExchangeLinesInput, setPosExchangeLinesInput] = useState<{
+    [lineId: string]: { returnQty: number; restock: boolean; reason: string };
+  }>({});
+  const [posExchangeError, setPosExchangeError] = useState<string | null>(null);
 
   // Master Data: Item Form Modal (Add & Edit)
   const [showItemModal, setShowItemModal] = useState(false);
@@ -2748,6 +2771,10 @@ export function App() {
   const updateCartQty = (itemId: string, delta: number) => {
     if (delta > 0) {
       const existing = cart.find((c) => c.item.id === itemId);
+      if (existing?.isReturn) {
+        showToast('Return item quantity cannot be increased beyond original returned amount.', 'warning');
+        return;
+      }
       const currentQty = existing ? existing.qty : 0;
       const avail = getAvailableStockUnits(itemId, existing?.item);
       if (currentQty + delta > avail) {
@@ -3303,9 +3330,10 @@ export function App() {
   };
 
   // Cart MRP, Savings, and Category Breakdown
-  const cartTotalMrpMinor = cart.reduce((acc, c) => acc + getItemMrp(c.item) * c.qty, 0);
-  const totalMrpSavingsMinor = Math.max(0, cartTotalMrpMinor - cartSubtotalMinor) + discountMinor;
+  const cartTotalMrpMinor = cart.reduce((acc, c) => acc + (c.isReturn ? 0 : getItemMrp(c.item) * c.qty), 0);
+  const totalMrpSavingsMinor = Math.max(0, cartTotalMrpMinor - Math.max(0, cartSubtotalMinor)) + discountMinor;
   const cartCategoryBreakdown = cart.reduce((acc: { [cat: string]: { name: string; count: number; totalMinor: number } }, c) => {
+    if (c.isReturn) return acc;
     const cat = c.item.category?.trim() || 'General';
     if (!acc[cat]) {
       acc[cat] = { name: cat, count: 0, totalMinor: 0 };
@@ -3780,6 +3808,109 @@ export function App() {
     }
   };
 
+  const handleSearchExchangeBills = async () => {
+    const q = posExchangeQuery.trim();
+    if (!q) return;
+    setPosExchangeLoading(true);
+    setPosExchangeError(null);
+    try {
+      const res = await api<{ invoices: any[] }>(`/api/invoices?q=${encodeURIComponent(q)}&limit=20`);
+      const list = (res.invoices || []).filter((inv: any) => inv.kind !== 'credit_note' && inv.status !== 'cancelled');
+      if (list.length === 0) {
+        setPosExchangeError('No bills found matching this Barcode / Bill # or Customer Mobile Number.');
+        setPosExchangeInvoices([]);
+      } else {
+        setPosExchangeInvoices(list);
+        if (list.length === 1 && !list[0].fullyReturned) {
+          handleSelectExchangeInvoice(list[0]);
+        }
+      }
+    } catch (err: any) {
+      setPosExchangeError(err.message || 'Failed to search bills');
+    } finally {
+      setPosExchangeLoading(false);
+    }
+  };
+
+  const handleSelectExchangeInvoice = async (inv: any) => {
+    setPosExchangeSelectedInvoice(inv);
+    setPosExchangeLoading(true);
+    setPosExchangeError(null);
+    try {
+      const res = await api<any>(`/api/invoices/${inv.id}/return-info`);
+      setPosExchangeReturnInfo(res);
+      const initInputs: { [lineId: string]: { returnQty: number; restock: boolean; reason: string } } = {};
+      for (const l of res.lines || []) {
+        initInputs[l.id] = {
+          returnQty: l.returnableQtyMilli > 0 ? 1 : 0,
+          restock: true,
+          reason: 'Size / Fit Mismatch',
+        };
+      }
+      setPosExchangeLinesInput(initInputs);
+    } catch (err: any) {
+      setPosExchangeError(err.message || 'Failed to load bill return information');
+    } finally {
+      setPosExchangeLoading(false);
+    }
+  };
+
+  const handleConfirmAddExchangeToCart = () => {
+    if (!posExchangeReturnInfo || !posExchangeSelectedInvoice) return;
+    const linesToAdd = posExchangeReturnInfo.lines.filter((l: any) => {
+      const q = posExchangeLinesInput[l.id]?.returnQty || 0;
+      return q > 0;
+    });
+
+    if (linesToAdd.length === 0) {
+      showToast('Please select at least 1 item with return quantity > 0', 'warning');
+      return;
+    }
+
+    const newCartItems: PosCartItem[] = linesToAdd.map((l: any) => {
+      const inp = posExchangeLinesInput[l.id];
+      const returnQty = inp.returnQty;
+      return {
+        item: {
+          id: `return-${l.id}-${Date.now()}`,
+          name: l.name,
+          priceMinor: -Math.abs(l.priceMinor),
+          costMinor: 0,
+          taxRateBp: l.taxRateBp,
+          taxInclusive: l.inclusive,
+          unit: l.unit || 'pcs',
+          hsn: l.hsn,
+          category: 'Return / Exchange',
+          active: true,
+          currentStockMilli: 0,
+          favorite: false,
+        },
+        qty: returnQty,
+        isReturn: true,
+        origInvoiceId: posExchangeSelectedInvoice.id,
+        origInvoiceNumber: posExchangeSelectedInvoice.number,
+        origLineId: l.id,
+        restock: inp.restock !== false,
+        returnReason: inp.reason || 'Customer Exchange',
+      };
+    });
+
+    setCart((prev) => [...prev, ...newCartItems]);
+
+    // If bill has a customer phone and no customer currently set, auto-link customer
+    if (posExchangeSelectedInvoice.customerPhone) {
+      const cleanPh = posExchangeSelectedInvoice.customerPhone.replace(/\D/g, '').slice(-10);
+      const existing = parties.find((p) => p.type === 'customer' && p.phone && p.phone.replace(/\D/g, '').endsWith(cleanPh));
+      if (existing) {
+        setSelectedPartyId(existing.id);
+      }
+      setCustomerSearch(cleanPh);
+    }
+
+    setShowPosExchangeModal(false);
+    showToast('✓ Added return item(s) to cart. You can now scan replacement products.');
+  };
+
   const handleCheckout = async (isKot = false) => {
     if (cart.length === 0) return;
 
@@ -3804,9 +3935,67 @@ export function App() {
 
     const selectedCustomer = parties.find((p) => p.id === selectedPartyId);
 
+    // Strictly enforce customer phone number for every POS billing transaction
+    const cleanSearchDigits = customerSearch.trim().replace(/\D/g, '');
+    const checkoutPhone = selectedCustomer?.phone 
+      ? selectedCustomer.phone.replace(/\D/g, '').slice(-10) 
+      : (cleanSearchDigits.length >= 10 ? cleanSearchDigits.slice(-10) : undefined);
+
+    if (!checkoutPhone || checkoutPhone.length !== 10) {
+      showToast('Customer mobile number is strictly required for billing (10 digits).', 'error');
+      setShowCustomerPickerModal(true);
+      return;
+    }
+
     setIsCheckingOut(true);
     try {
-      const lines = cart.map((c, idx) => ({
+      const normalCartItems = cart.filter((c) => !c.isReturn);
+      const returnCartItems = cart.filter((c) => c.isReturn);
+
+      // If cart has return items, issue the linked Credit Note(s) first
+      let lastCreditNoteNum = '';
+      if (returnCartItems.length > 0) {
+        const returnsByOrigInvoice: { [origId: string]: typeof returnCartItems } = {};
+        for (const ret of returnCartItems) {
+          const origId = ret.origInvoiceId;
+          if (origId) {
+            returnsByOrigInvoice[origId] = returnsByOrigInvoice[origId] || [];
+            returnsByOrigInvoice[origId].push(ret);
+          }
+        }
+
+        for (const [origInvId, retItems] of Object.entries(returnsByOrigInvoice)) {
+          const linesPayload = retItems.map((r) => ({
+            origLineId: r.origLineId,
+            returnQtyMilli: Math.round(r.qty * 1000),
+            restock: r.restock !== false,
+            reason: r.returnReason || 'Exchange on new bill',
+          }));
+
+          const cnRes = await api<{ creditNoteNumber: string }>(`/api/invoices/${origInvId}/returns`, {
+            method: 'POST',
+            body: JSON.stringify({
+              lines: linesPayload,
+              settlementType: 'advance',
+              note: `Customer exchange against new purchase on counter ${selectedCounter}`,
+            }),
+          });
+          if (cnRes?.creditNoteNumber) {
+            lastCreditNoteNum = cnRes.creditNoteNumber;
+          }
+        }
+      }
+
+      // If there are no normal items (a pure return), complete right here
+      if (normalCartItems.length === 0) {
+        setCart([]);
+        setCashReceived('');
+        showToast(`✓ Return processed successfully! Credit Note ${lastCreditNoteNum} issued.`);
+        setIsCheckingOut(false);
+        return;
+      }
+
+      const lines = normalCartItems.map((c, idx) => ({
         itemId: c.item.id?.startsWith('custom-') ? undefined : c.item.id,
         name: c.item.name,
         qtyMilli: Math.round(c.qty * 1000),
@@ -7876,6 +8065,41 @@ export function App() {
                             </svg>
                             <span>{heldOrders.length > 0 ? `Held (${heldOrders.length})` : 'Hold'}</span>
                           </button>
+                          <button
+                            type="button"
+                            className="bento-exchange-btn"
+                            onClick={() => {
+                              setShowPosExchangeModal(true);
+                              setPosExchangeQuery('');
+                              setPosExchangeInvoices([]);
+                              setPosExchangeSelectedInvoice(null);
+                              setPosExchangeReturnInfo(null);
+                              setPosExchangeLinesInput({});
+                              setPosExchangeError(null);
+                            }}
+                            title="Return or exchange past items using Bill Barcode or Customer Phone Number"
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '5px',
+                              padding: '0.32rem 0.65rem',
+                              borderRadius: '8px',
+                              border: '1px solid #c7d2fe',
+                              background: '#eef2ff',
+                              color: '#4338ca',
+                              fontSize: '0.78rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              transition: 'all 0.15s ease',
+                            }}
+                          >
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="23 4 23 10 17 10"></polyline>
+                              <polyline points="1 20 1 14 7 14"></polyline>
+                              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                            </svg>
+                            <span>Exchange / Return</span>
+                          </button>
                         </div>
                       </div>
 
@@ -7969,37 +8193,66 @@ export function App() {
 
                             {/* Cart Rows: NO SEPARATE GST ON PRODUCT; SHOWS QTY, MRP, STORE PRICE, TOTAL PRICE, CATEGORY */}
                             <div className="bento-cart-rows-scroll">
-                              {cart.map(({ item, qty }, cartIdx) => {
+                              {cart.map((cartItem, cartIdx) => {
+                                const { item, qty, isReturn, origInvoiceNumber } = cartItem;
                                 const mrp = getItemMrp(item);
                                 const storePrice = item.priceMinor;
                                 const lineTotal = storePrice * qty;
-                                const lineSavings = Math.max(0, (mrp - storePrice) * qty);
-                                const availStock = getAvailableStockUnits(item.id, item);
-                                const isMaxStock = availStock !== Infinity && qty >= availStock;
+                                const lineSavings = isReturn ? 0 : Math.max(0, (mrp - storePrice) * qty);
+                                const availStock = isReturn ? qty : getAvailableStockUnits(item.id, item);
+                                const isMaxStock = isReturn || (availStock !== Infinity && qty >= availStock);
 
                                 return (
-                                  <div key={item.id} className="bento-cart-row">
+                                  <div
+                                    key={item.id}
+                                    className={`bento-cart-row ${isReturn ? 'return-row' : ''}`}
+                                    style={isReturn ? { background: '#fff5f5', borderLeft: '3.5px solid #ef4444' } : undefined}
+                                  >
                                     {/* Col 1: Product Name & Category Badge */}
                                     <div className="bento-row-item-col">
-                                      <div className="bento-cart-item-name" title={item.name}>
+                                      <div className="bento-cart-item-name" title={item.name} style={isReturn ? { color: '#991b1b', fontWeight: 700 } : undefined}>
                                         {item.name}
                                       </div>
                                       <div className="bento-cart-item-meta">
-                                        <span className="bento-cart-cat-badge">
-                                          {item.category || 'General'}
-                                        </span>
-                                        {lineSavings > 0 && (
-                                          <span className="bento-cart-savings-tag">
-                                            Save {formatRupees(lineSavings)}
-                                          </span>
-                                        )}
-                                        {promoEvalResult?.lineDiscounts[cartIdx] && promoEvalResult.lineDiscounts[cartIdx] > 0 && (
-                                          <span
-                                            className="bento-cart-savings-tag"
-                                            style={{ background: '#dcfce7', color: '#15803d', border: '1px solid #86efac' }}
-                                          >
-                                            🏷️ Offer: -{formatRupees(promoEvalResult.lineDiscounts[cartIdx])}
-                                          </span>
+                                        {isReturn ? (
+                                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                                            <span
+                                              style={{
+                                                background: '#fee2e2',
+                                                color: '#b91c1c',
+                                                border: '1px solid #fca5a5',
+                                                padding: '1px 6px',
+                                                borderRadius: '4px',
+                                                fontSize: '0.68rem',
+                                                fontWeight: 800,
+                                                letterSpacing: '0.3px',
+                                              }}
+                                            >
+                                              RETURN / EXCHANGE
+                                            </span>
+                                            <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600 }}>
+                                              Ref: Bill #{origInvoiceNumber || ''}
+                                            </span>
+                                          </div>
+                                        ) : (
+                                          <>
+                                            <span className="bento-cart-cat-badge">
+                                              {item.category || 'General'}
+                                            </span>
+                                            {lineSavings > 0 && (
+                                              <span className="bento-cart-savings-tag">
+                                                Save {formatRupees(lineSavings)}
+                                              </span>
+                                            )}
+                                            {promoEvalResult?.lineDiscounts[cartIdx] && promoEvalResult.lineDiscounts[cartIdx] > 0 && (
+                                              <span
+                                                className="bento-cart-savings-tag"
+                                                style={{ background: '#dcfce7', color: '#15803d', border: '1px solid #86efac' }}
+                                              >
+                                                Offer: -{formatRupees(promoEvalResult.lineDiscounts[cartIdx])}
+                                              </span>
+                                            )}
+                                          </>
                                         )}
                                       </div>
                                     </div>
@@ -8021,7 +8274,7 @@ export function App() {
                                           className={`bento-qty-btn ${isMaxStock ? 'disabled' : ''}`}
                                           disabled={isMaxStock}
                                           onClick={() => updateCartQty(item.id, 1)}
-                                          title={isMaxStock ? `Insufficient stock. Only ${availStock} units available.` : "Increase quantity"}
+                                          title={isReturn ? 'Return quantity cannot exceed original bill quantity' : (isMaxStock ? `Insufficient stock. Only ${availStock} units available.` : 'Increase quantity')}
                                         >
                                           +
                                         </button>
@@ -8030,21 +8283,25 @@ export function App() {
 
                                     {/* Col 3: MRP */}
                                     <div className="bento-row-mrp-col">
-                                      <span className="bento-mrp-val mono">
-                                        {formatRupees(mrp)}
+                                      <span className="bento-mrp-val mono" style={isReturn ? { color: '#94a3b8' } : undefined}>
+                                        {isReturn ? '-' : formatRupees(mrp)}
                                       </span>
                                     </div>
 
                                     {/* Col 4: Store Price */}
                                     <div className="bento-row-store-col">
-                                      <span className="bento-store-val mono">
-                                        {formatRupees(storePrice)}
+                                      <span className="bento-store-val mono" style={isReturn ? { color: '#dc2626', fontWeight: 700 } : undefined}>
+                                        {isReturn ? `-${formatRupees(Math.abs(storePrice))}` : formatRupees(storePrice)}
                                       </span>
                                     </div>
 
                                     {/* Col 5: Total Product Price */}
                                     <div className="bento-row-total-col">
-                                      {promoEvalResult?.lineDiscounts[cartIdx] && promoEvalResult.lineDiscounts[cartIdx] > 0 ? (
+                                      {isReturn ? (
+                                        <span className="bento-total-val mono" style={{ color: '#dc2626', fontWeight: 800 }}>
+                                          -{formatRupees(Math.abs(lineTotal))}
+                                        </span>
+                                      ) : promoEvalResult?.lineDiscounts[cartIdx] && promoEvalResult.lineDiscounts[cartIdx] > 0 ? (
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
                                           <span style={{ fontSize: '0.72rem', textDecoration: 'line-through', color: '#94a3b8' }} className="mono">
                                             {formatRupees(lineTotal)}
@@ -8066,7 +8323,7 @@ export function App() {
                                         type="button"
                                         className="bento-row-remove-btn"
                                         onClick={() => updateCartQty(item.id, -qty)}
-                                        title="Remove item"
+                                        title={isReturn ? 'Remove return item' : 'Remove item'}
                                       >
                                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round">
                                           <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -8267,30 +8524,38 @@ export function App() {
                         </div>
 
                         {/* Compact Customer Status in Billing Terminal */}
-                        <div className="bento-billing-customer-chip">
+                        <div className="bento-billing-customer-chip" style={{
+                          border: (selectedParty?.phone || customerSearch.replace(/\D/g, '').length >= 10) ? '1px solid #bbf7d0' : '1.5px solid #fca5a5',
+                          background: (selectedParty?.phone || customerSearch.replace(/\D/g, '').length >= 10) ? '#f0fdf4' : '#fff1f2',
+                        }}>
                           <div className="cust-chip-info">
                             <span className="cust-chip-icon">
-                              {selectedParty ? (
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
-                                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                                  <circle cx="12" cy="7" r="4"></circle>
+                              {(selectedParty?.phone || customerSearch.replace(/\D/g, '').length >= 10) ? (
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
                                 </svg>
                               ) : (
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
-                                  <circle cx="9" cy="21" r="1"></circle>
-                                  <circle cx="20" cy="21" r="1"></circle>
-                                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                                  <circle cx="12" cy="12" r="10"></circle>
+                                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
                                 </svg>
                               )}
                             </span>
-                            <span className="cust-chip-label">Customer:</span>
-                            {selectedParty ? (
+                            <span className="cust-chip-label">Customer Mobile:</span>
+                            {(selectedParty?.phone || customerSearch.replace(/\D/g, '').length >= 10) ? (
                               <>
-                                <span className="chip-walkin-text" style={{ fontWeight: 700, color: '#1e293b' }}>{selectedParty.name}</span>
-                                {selectedParty.phone && <span className="chip-phone">({selectedParty.phone})</span>}
+                                <span className="chip-phone-verified" style={{ fontWeight: 800, color: '#15803d', background: '#dcfce7', padding: '2px 8px', borderRadius: '4px', fontSize: '0.78rem' }}>
+                                  📱 {selectedParty?.phone || customerSearch.replace(/\D/g, '').slice(-10)}
+                                </span>
+                                <span className="chip-walkin-text" style={{ fontWeight: 600, color: '#334155', marginLeft: '4px' }}>
+                                  ({selectedParty?.name || 'Customer'})
+                                </span>
                               </>
                             ) : (
-                              <span className="chip-walkin-text">Walk-in Customer (Default)</span>
+                              <span className="chip-phone-required" style={{ fontWeight: 700, color: '#b91c1c', fontSize: '0.76rem' }}>
+                                ⚠️ Mobile Number Required for Bill (Click to Enter)
+                              </span>
                             )}
                           </div>
                           <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
@@ -9592,13 +9857,12 @@ export function App() {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
                           <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#ede9fe', color: '#6366f1', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                              <circle cx="12" cy="7" r="4"></circle>
+                              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
                             </svg>
                           </div>
                           <div>
-                            <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#0f172a' }}>Select Customer</h3>
-                            <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Search customer by name or phone (Press Esc to close)</span>
+                            <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#0f172a' }}>Customer Mobile Number (Mandatory)</h3>
+                            <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Enter 10-digit mobile number to generate invoice (Press Esc to close)</span>
                           </div>
                         </div>
                         <button
@@ -9616,15 +9880,48 @@ export function App() {
 
                       <div style={{ position: 'relative', marginBottom: '0.85rem' }}>
                         <input
-                          type="text"
+                          type="tel"
                           autoFocus
                           className="form-input"
-                          style={{ paddingLeft: '2.4rem', fontSize: '0.9rem', width: '100%', boxSizing: 'border-box' }}
-                          placeholder="Search customer name or mobile..."
+                          style={{ paddingLeft: '2.4rem', fontSize: '0.95rem', width: '100%', boxSizing: 'border-box', fontWeight: 600, letterSpacing: '0.5px' }}
+                          placeholder="Enter 10-digit mobile number (e.g. 9876543210)..."
                           value={customerSearch}
                           onChange={(e) => setCustomerSearch(e.target.value)}
                           onKeyDown={(e) => {
                             if (e.key === 'Escape') setShowCustomerPickerModal(false);
+                            if (e.key === 'Enter') {
+                              const d = customerSearch.replace(/\D/g, '');
+                              if (d.length >= 10) {
+                                e.preventDefault();
+                                const phone10 = d.slice(-10);
+                                const existing = parties.find((p) => p.type === 'customer' && p.phone && p.phone.replace(/\D/g, '').endsWith(phone10));
+                                if (existing) {
+                                  setSelectedPartyId(existing.id);
+                                  setCustomerSearch(phone10);
+                                  showToast(`Linked customer: ${existing.name} (+91 ${phone10})`);
+                                } else {
+                                  api<{ party: Party }>('/api/parties', {
+                                    method: 'POST',
+                                    body: JSON.stringify({
+                                      name: `Customer ${phone10.slice(-4)}`,
+                                      phone: phone10,
+                                      type: 'customer',
+                                    }),
+                                  }).then((res) => {
+                                    if (res?.party) {
+                                      setParties((prev) => [res.party, ...prev]);
+                                      setSelectedPartyId(res.party.id);
+                                      setCustomerSearch(phone10);
+                                      showToast(`Registered & linked customer: +91 ${phone10}`);
+                                    }
+                                  }).catch(() => {
+                                    setCustomerSearch(phone10);
+                                    showToast(`Linked customer mobile: +91 ${phone10}`);
+                                  });
+                                }
+                                setShowCustomerPickerModal(false);
+                              }
+                            }
                           }}
                         />
                         <svg
@@ -9636,17 +9933,68 @@ export function App() {
                           strokeWidth="2.2"
                           style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)' }}
                         >
-                          <circle cx="11" cy="11" r="8"></circle>
-                          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                          <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                          <line x1="12" y1="18" x2="12.01" y2="18"></line>
                         </svg>
                       </div>
 
-                      <div style={{ maxHeight: '240px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.4rem', marginBottom: '1rem' }}>
+                      {/* Quick 1-click confirmation when 10 digits are typed */}
+                      {customerSearch.replace(/\D/g, '').length >= 10 && (
+                        <div style={{ background: '#f0fdf4', border: '1.5px dashed #16a34a', borderRadius: '10px', padding: '0.75rem', marginBottom: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                          <div>
+                            <div style={{ fontWeight: 800, fontSize: '0.92rem', color: '#166534' }}>
+                              📱 +91 {customerSearch.replace(/\D/g, '').slice(-10)}
+                            </div>
+                            <div style={{ fontSize: '0.74rem', color: '#15803d' }}>
+                              Press Enter or click to use this customer mobile number
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            className="btn btn-primary"
+                            style={{ background: '#16a34a', borderColor: '#15803d', fontSize: '0.8rem', padding: '0.45rem 0.85rem', fontWeight: 700, whiteSpace: 'nowrap' }}
+                            onClick={() => {
+                              const phone10 = customerSearch.replace(/\D/g, '').slice(-10);
+                              const existing = parties.find((p) => p.type === 'customer' && p.phone && p.phone.replace(/\D/g, '').endsWith(phone10));
+                              if (existing) {
+                                setSelectedPartyId(existing.id);
+                                setCustomerSearch(phone10);
+                                showToast(`Linked customer: ${existing.name} (+91 ${phone10})`);
+                              } else {
+                                api<{ party: Party }>('/api/parties', {
+                                  method: 'POST',
+                                  body: JSON.stringify({
+                                    name: `Customer ${phone10.slice(-4)}`,
+                                    phone: phone10,
+                                    type: 'customer',
+                                  }),
+                                }).then((res) => {
+                                  if (res?.party) {
+                                    setParties((prev) => [res.party, ...prev]);
+                                    setSelectedPartyId(res.party.id);
+                                    setCustomerSearch(phone10);
+                                    showToast(`Registered & linked customer: +91 ${phone10}`);
+                                  }
+                                }).catch(() => {
+                                  setCustomerSearch(phone10);
+                                  showToast(`Linked customer mobile: +91 ${phone10}`);
+                                });
+                              }
+                              setShowCustomerPickerModal(false);
+                            }}
+                          >
+                            ✓ Use Number
+                          </button>
+                        </div>
+                      )}
+
+                      <div style={{ maxHeight: '220px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.4rem', marginBottom: '1rem' }}>
                         {filteredParties.slice(0, 15).map((p) => (
                           <div
                             key={p.id}
                             onClick={() => {
                               setSelectedPartyId(p.id);
+                              if (p.phone) setCustomerSearch(p.phone.replace(/\D/g, '').slice(-10));
                               setShowCustomerPickerModal(false);
                               showToast(`Linked customer: ${p.name}`);
                             }}
@@ -9693,25 +10041,15 @@ export function App() {
 
                         {filteredParties.length === 0 && (
                           <div style={{ textAlign: 'center', padding: '1.25rem 0', color: '#64748b', fontSize: '0.84rem' }}>
-                            No customer found matching "{customerSearch}"
+                            {customerSearch.trim() ? `No customer found matching "${customerSearch}"` : 'Type 10-digit mobile number above'}
                           </div>
                         )}
                       </div>
 
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #e2e8f0', paddingTop: '0.85rem' }}>
-                        <button
-                          type="button"
-                          className="btn btn-secondary"
-                          onClick={() => {
-                            setSelectedPartyId('');
-                            setCustomerSearch('');
-                            setShowCustomerPickerModal(false);
-                            showToast('Reset to Walk-in Customer');
-                          }}
-                          style={{ fontSize: '0.8rem' }}
-                        >
-                          Reset to Walk-in
-                        </button>
+                        <div style={{ fontSize: '0.76rem', color: '#dc2626', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <span>* 10-digit customer mobile number is mandatory for all bills</span>
+                        </div>
                         <button
                           type="button"
                           className="btn btn-primary"
@@ -9723,6 +10061,369 @@ export function App() {
                         >
                           + Add New Customer
                         </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* POS Return & Exchange Modal (Way 2: Barcode & Phone Number lookup only) */}
+                {showPosExchangeModal && (
+                  <div className="modal-overlay" style={{ zIndex: 120 }} onClick={() => setShowPosExchangeModal(false)}>
+                    <div
+                      className="modal-content"
+                      style={{
+                        maxWidth: posExchangeSelectedInvoice ? '760px' : '560px',
+                        width: '94%',
+                        borderRadius: '16px',
+                        padding: '1.5rem',
+                        background: '#ffffff',
+                        boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
+                        maxHeight: '90vh',
+                        display: 'flex',
+                        flexDirection: 'column',
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {/* Modal Header */}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.9rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: '#e0e7ff', color: '#4f46e5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="23 4 23 10 17 10"></polyline>
+                              <polyline points="1 20 1 14 7 14"></polyline>
+                              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                            </svg>
+                          </div>
+                          <div>
+                            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 750, color: '#0f172a' }}>POS Return & Exchange</h3>
+                            <span style={{ fontSize: '0.78rem', color: '#64748b' }}>
+                              Search original bill using Bill Barcode/Number or Customer Mobile Number
+                            </span>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setShowPosExchangeModal(false)}
+                          style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          title="Close"
+                        >
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                          </svg>
+                        </button>
+                      </div>
+
+                      {/* Modal Body */}
+                      <div style={{ overflowY: 'auto', flex: 1, paddingRight: '4px' }}>
+                        {/* Search Input Bar (Strictly Barcode / Bill # or Customer Mobile Number) */}
+                        <div style={{ marginBottom: '1.25rem' }}>
+                          <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 650, color: '#334155', marginBottom: '0.4rem' }}>
+                            Bill Barcode / Bill Number or Customer Mobile Number
+                          </label>
+                          <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            <div style={{ position: 'relative', flex: 1 }}>
+                              <input
+                                type="text"
+                                autoFocus
+                                className="form-input"
+                                style={{ paddingLeft: '2.5rem', fontSize: '0.92rem', width: '100%', boxSizing: 'border-box', fontWeight: 600 }}
+                                placeholder="Scan bill barcode, enter WH-1005 or 10-digit mobile number..."
+                                value={posExchangeQuery}
+                                onChange={(e) => setPosExchangeQuery(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    handleSearchExchangeBills();
+                                  }
+                                }}
+                              />
+                              <svg
+                                width="18"
+                                height="18"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="#94a3b8"
+                                strokeWidth="2.2"
+                                style={{ position: 'absolute', left: '0.8rem', top: '50%', transform: 'translateY(-50%)' }}
+                              >
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                              </svg>
+                            </div>
+                            <button
+                              type="button"
+                              className="btn btn-primary"
+                              disabled={posExchangeLoading || !posExchangeQuery.trim()}
+                              onClick={handleSearchExchangeBills}
+                              style={{ padding: '0.55rem 1.1rem', fontWeight: 650, fontSize: '0.86rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                            >
+                              {posExchangeLoading ? 'Searching...' : 'Find Bill'}
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Error Banner */}
+                        {posExchangeError && (
+                          <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: '8px', padding: '0.75rem 1rem', color: '#b91c1c', fontSize: '0.82rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                              <circle cx="12" cy="12" r="10"></circle>
+                              <line x1="12" y1="8" x2="12" y2="12"></line>
+                              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                            </svg>
+                            <span>{posExchangeError}</span>
+                          </div>
+                        )}
+
+                        {/* Multiple Matching Bills List */}
+                        {!posExchangeSelectedInvoice && posExchangeInvoices.length > 0 && (
+                          <div>
+                            <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#475569', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                              Matching Past Bills ({posExchangeInvoices.length})
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                              {posExchangeInvoices.map((inv) => (
+                                <div
+                                  key={inv.id}
+                                  style={{
+                                    border: '1px solid #e2e8f0',
+                                    borderRadius: '10px',
+                                    padding: '0.85rem 1rem',
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    background: '#f8fafc',
+                                  }}
+                                >
+                                  <div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                      <span style={{ fontWeight: 750, color: '#0f172a', fontSize: '0.92rem' }}>#{inv.number}</span>
+                                      <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                                        {new Date(inv.createdAt || inv.created_at || Date.now()).toLocaleDateString('en-IN')}
+                                      </span>
+                                    </div>
+                                    <div style={{ fontSize: '0.78rem', color: '#475569', marginTop: '2px' }}>
+                                      Customer: <strong>{inv.customerName || inv.customer_name || 'Walk-in'}</strong>
+                                      {(inv.customerPhone || inv.customer_phone) && (
+                                        <span style={{ marginLeft: '6px', color: '#16a34a', fontWeight: 600 }}>
+                                          (+91 {inv.customerPhone || inv.customer_phone})
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                    <div style={{ textAlign: 'right' }}>
+                                      <div style={{ fontWeight: 800, color: '#0f172a', fontSize: '0.95rem' }} className="mono">
+                                        {formatRupees(inv.grandTotalMinor ?? inv.grand_total_minor ?? inv.totalMinor ?? inv.total_minor ?? 0)}
+                                      </div>
+                                      <div style={{ fontSize: '0.72rem', color: '#64748b', textTransform: 'capitalize' }}>
+                                        {inv.paymentMethod || inv.payment_method || 'Paid'}
+                                      </div>
+                                    </div>
+                                    <button
+                                      type="button"
+                                      className="btn btn-primary"
+                                      style={{ padding: '0.4rem 0.85rem', fontSize: '0.8rem' }}
+                                      onClick={() => handleSelectExchangeInvoice(inv)}
+                                    >
+                                      Select Bill
+                                    </button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Selected Bill & Returnable Items Table */}
+                        {posExchangeSelectedInvoice && posExchangeReturnInfo && (
+                          <div>
+                            {/* Selected Bill Header Banner */}
+                            <div style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '10px', padding: '0.85rem 1rem', marginBottom: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <span style={{ fontWeight: 800, color: '#1e293b', fontSize: '0.98rem' }}>
+                                    Bill #{posExchangeSelectedInvoice.number}
+                                  </span>
+                                  <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                                    {new Date(posExchangeSelectedInvoice.createdAt || posExchangeSelectedInvoice.created_at || Date.now()).toLocaleDateString('en-IN')}
+                                  </span>
+                                </div>
+                                <div style={{ fontSize: '0.8rem', color: '#475569', marginTop: '3px' }}>
+                                  Customer: <strong>{posExchangeSelectedInvoice.customerName || posExchangeSelectedInvoice.customer_name || 'Walk-in'}</strong>
+                                  {(posExchangeSelectedInvoice.customerPhone || posExchangeSelectedInvoice.customer_phone) && (
+                                    <span style={{ marginLeft: '6px', color: '#15803d', fontWeight: 600 }}>
+                                      (Mobile: {posExchangeSelectedInvoice.customerPhone || posExchangeSelectedInvoice.customer_phone})
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              <button
+                                type="button"
+                                className="btn btn-secondary"
+                                style={{ fontSize: '0.76rem', padding: '0.35rem 0.7rem' }}
+                                onClick={() => {
+                                  setPosExchangeSelectedInvoice(null);
+                                  setPosExchangeReturnInfo(null);
+                                }}
+                              >
+                                Change Bill
+                              </button>
+                            </div>
+
+                            {/* Returnable Items */}
+                            <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '0.6rem' }}>
+                              Select Items to Return / Exchange:
+                            </div>
+
+                            <div style={{ border: '1px solid #e2e8f0', borderRadius: '10px', overflow: 'hidden', marginBottom: '1.25rem' }}>
+                              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+                                <thead>
+                                  <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569', textAlign: 'left' }}>
+                                    <th style={{ padding: '0.65rem 0.85rem' }}>Item</th>
+                                    <th style={{ padding: '0.65rem 0.5rem', textAlign: 'center' }}>Billed</th>
+                                    <th style={{ padding: '0.65rem 0.5rem', textAlign: 'center' }}>Returnable</th>
+                                    <th style={{ padding: '0.65rem 0.5rem', textAlign: 'center', width: '90px' }}>Return Qty</th>
+                                    <th style={{ padding: '0.65rem 0.5rem', textAlign: 'center' }}>Restock</th>
+                                    <th style={{ padding: '0.65rem 0.85rem' }}>Reason</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {posExchangeReturnInfo.lines.map((l: any) => {
+                                    const billedQty = Math.round(l.billedQtyMilli / 1000);
+                                    const returnableQty = Math.round(l.returnableQtyMilli / 1000);
+                                    const inp = posExchangeLinesInput[l.id] || { returnQty: 0, restock: true, reason: 'Size / Fit Mismatch' };
+
+                                    return (
+                                      <tr key={l.id} style={{ borderBottom: '1px solid #f1f5f9', background: inp.returnQty > 0 ? '#fef2f2' : '#ffffff' }}>
+                                        <td style={{ padding: '0.65rem 0.85rem' }}>
+                                          <div style={{ fontWeight: 650, color: '#0f172a' }}>{l.name}</div>
+                                          <div style={{ fontSize: '0.74rem', color: '#64748b' }} className="mono">
+                                            {formatRupees(l.priceMinor)} / {l.unit || 'pcs'}
+                                          </div>
+                                        </td>
+                                        <td style={{ padding: '0.65rem 0.5rem', textAlign: 'center' }} className="mono">
+                                          {billedQty}
+                                        </td>
+                                        <td style={{ padding: '0.65rem 0.5rem', textAlign: 'center' }} className="mono">
+                                          {returnableQty}
+                                        </td>
+                                        <td style={{ padding: '0.65rem 0.5rem', textAlign: 'center' }}>
+                                          <input
+                                            type="number"
+                                            min="0"
+                                            max={returnableQty}
+                                            disabled={returnableQty <= 0}
+                                            value={inp.returnQty}
+                                            onChange={(e) => {
+                                              const val = Math.max(0, Math.min(returnableQty, parseInt(e.target.value, 10) || 0));
+                                              setPosExchangeLinesInput((prev) => ({
+                                                ...prev,
+                                                [l.id]: { ...inp, returnQty: val },
+                                              }));
+                                            }}
+                                            style={{
+                                              width: '60px',
+                                              padding: '0.3rem 0.4rem',
+                                              borderRadius: '6px',
+                                              border: '1px solid #cbd5e1',
+                                              textAlign: 'center',
+                                              fontWeight: 700,
+                                            }}
+                                          />
+                                        </td>
+                                        <td style={{ padding: '0.65rem 0.5rem', textAlign: 'center' }}>
+                                          <input
+                                            type="checkbox"
+                                            disabled={inp.returnQty <= 0}
+                                            checked={inp.restock}
+                                            onChange={(e) => {
+                                              setPosExchangeLinesInput((prev) => ({
+                                                ...prev,
+                                                [l.id]: { ...inp, restock: e.target.checked },
+                                              }));
+                                            }}
+                                            title="Return item back to inventory stock"
+                                          />
+                                        </td>
+                                        <td style={{ padding: '0.65rem 0.85rem' }}>
+                                          <select
+                                            disabled={inp.returnQty <= 0}
+                                            value={inp.reason}
+                                            onChange={(e) => {
+                                              setPosExchangeLinesInput((prev) => ({
+                                                ...prev,
+                                                [l.id]: { ...inp, reason: e.target.value },
+                                              }));
+                                            }}
+                                            style={{
+                                              padding: '0.3rem 0.5rem',
+                                              borderRadius: '6px',
+                                              border: '1px solid #cbd5e1',
+                                              fontSize: '0.76rem',
+                                              background: '#ffffff',
+                                            }}
+                                          >
+                                            <option value="Size / Fit Mismatch">Size / Fit Mismatch</option>
+                                            <option value="Defective / Damaged">Defective / Damaged</option>
+                                            <option value="Customer Changed Mind">Customer Changed Mind</option>
+                                            <option value="Color / Style Exchange">Color / Style Exchange</option>
+                                            <option value="Incorrect Item Billed">Incorrect Item Billed</option>
+                                          </select>
+                                        </td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Modal Footer */}
+                      <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '1rem', marginTop: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                          {posExchangeSelectedInvoice && posExchangeReturnInfo && (
+                            <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                              <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>Total Exchange Credit:</span>
+                              <span style={{ fontSize: '1.05rem', fontWeight: 800, color: '#dc2626' }} className="mono">
+                                -{formatRupees(
+                                  posExchangeReturnInfo.lines.reduce((acc: number, l: any) => {
+                                    const q = posExchangeLinesInput[l.id]?.returnQty || 0;
+                                    return acc + (l.priceMinor * q);
+                                  }, 0)
+                                )}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.6rem' }}>
+                          <button
+                            type="button"
+                            className="btn btn-secondary"
+                            onClick={() => setShowPosExchangeModal(false)}
+                            style={{ fontSize: '0.85rem', padding: '0.5rem 1rem' }}
+                          >
+                            Cancel
+                          </button>
+                          {posExchangeSelectedInvoice && posExchangeReturnInfo && (
+                            <button
+                              type="button"
+                              className="btn btn-primary"
+                              onClick={handleConfirmAddExchangeToCart}
+                              style={{
+                                background: '#dc2626',
+                                borderColor: '#b91c1c',
+                                fontSize: '0.85rem',
+                                padding: '0.5rem 1.1rem',
+                                fontWeight: 700,
+                              }}
+                            >
+                              Add Return Item(s) to Cart
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
