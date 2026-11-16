@@ -881,6 +881,10 @@ export function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [cart, setCart] = useState<PosCartItem[]>([]);
   const [showReturnExchangeModal, setShowReturnExchangeModal] = useState<boolean>(false);
+  const showReturnExchangeModalRef = useRef(showReturnExchangeModal);
+  useEffect(() => {
+    showReturnExchangeModalRef.current = showReturnExchangeModal;
+  }, [showReturnExchangeModal]);
   const [activeExchangeLines, setActiveExchangeLines] = useState<ReturnSelectedLine[]>([]);
   const [activeExchangeOrigBill, setActiveExchangeOrigBill] = useState<string>('');
   const [parties, setParties] = useState<Party[]>([]);
@@ -1048,6 +1052,7 @@ export function App() {
   });
   const [showMobileScannerModal, setShowMobileScannerModal] = useState(false);
   const [isPhoneScannerConnected, setIsPhoneScannerConnected] = useState(false);
+  const [externalBarcodeScan, setExternalBarcodeScan] = useState<{ barcode: string; timestamp: number } | null>(null);
   // Inline POS Camera Scanner States
   const [isPosCameraActive, setIsPosCameraActive] = useState(false);
   const [isPosCameraStarting, setIsPosCameraStarting] = useState(false);
@@ -1064,6 +1069,19 @@ export function App() {
   const [customTunnelUrl, setCustomTunnelUrl] = useState('');
   const [showCfdModal, setShowCfdModal] = useState(false);
   const [isCfdConnected, setIsCfdConnected] = useState(false);
+
+  const scannerPairingUrl = useMemo(() => {
+    const localIp = scannerNetworkInfo?.localIp || window.location.hostname;
+    const port = scannerProtocol === 'https'
+      ? (scannerNetworkInfo?.httpsPort || 3444)
+      : (scannerNetworkInfo?.httpPort || 3001);
+    const effectiveProto = scannerProtocol === 'https' ? 'https' : 'http';
+    return customTunnelUrl.trim()
+      ? `${customTunnelUrl.trim().replace(/\/+$/, '')}/scanner?session=${encodeURIComponent(scannerSessionId)}`
+      : scannerNetworkInfo?.tunnelUrl
+        ? `${scannerNetworkInfo.tunnelUrl.replace(/\/+$/, '')}/scanner?session=${encodeURIComponent(scannerSessionId)}`
+        : `${effectiveProto}://${localIp}:${port}/scanner?session=${encodeURIComponent(scannerSessionId)}`;
+  }, [scannerNetworkInfo, scannerProtocol, customTunnelUrl, scannerSessionId]);
 
   // Modern Image 2 POS State
   const [customerSearch, setCustomerSearch] = useState('');
@@ -3001,6 +3019,22 @@ export function App() {
   // Barcode scanned from phone or physical USB barcode gun
   const handleBarcodeScanned = async (barcode: string) => {
     const rawClean = (barcode || '').trim();
+    if (!rawClean) return;
+
+    // 0. If POS Return & Exchange Modal is currently open, forward scan directly to it
+    if (showReturnExchangeModalRef.current) {
+      setExternalBarcodeScan({ barcode: rawClean, timestamp: Date.now() });
+      return;
+    }
+
+    // 0b. If barcode matches an invoice or credit note pattern (e.g. WH-1005, INV-1001, CN-1001), auto-launch Return & Exchange
+    if (/^(WH-|INV-|CN-)/i.test(rawClean)) {
+      setShowReturnExchangeModal(true);
+      setExternalBarcodeScan({ barcode: rawClean, timestamp: Date.now() });
+      showToast(`🔍 Opening Return & Exchange for ${rawClean}...`);
+      return;
+    }
+
     const clean = rawClean.replace(/[\s\-]/g, '');
     if (!clean) return;
 
@@ -3273,9 +3307,9 @@ export function App() {
     };
   }, []);
 
-  // Fetch local LAN network info when opening mobile scanner modal
+  // Fetch local LAN network info when opening mobile scanner modal or return & exchange modal
   useEffect(() => {
-    if (!showMobileScannerModal) return;
+    if (!showMobileScannerModal && !showReturnExchangeModal) return;
 
     const fetchInfo = () => {
       fetch('/api/scanner/network-info')
@@ -3292,7 +3326,7 @@ export function App() {
     fetchInfo();
     const timer = setInterval(fetchInfo, 3000);
     return () => clearInterval(timer);
-  }, [showMobileScannerModal, customTunnelUrl]);
+  }, [showMobileScannerModal, showReturnExchangeModal, customTunnelUrl]);
 
   // Real-time listener: receives barcodes scanned from mobile phone instantly
   useEffect(() => {
@@ -3320,7 +3354,11 @@ export function App() {
               lastScanId = ev.id;
               if (processedScanIdsRef.current.has(ev.id)) continue;
               processedScanIdsRef.current.add(ev.id);
-              await handleBarcodeScanned(ev.barcode);
+              if (showReturnExchangeModalRef.current) {
+                setExternalBarcodeScan({ barcode: ev.barcode, timestamp: Date.now() });
+              } else {
+                await handleBarcodeScanned(ev.barcode);
+              }
             }
           }
         } catch {
@@ -22451,6 +22489,10 @@ export function App() {
         <PosReturnExchangeModal
           isOpen={showReturnExchangeModal}
           onClose={() => setShowReturnExchangeModal(false)}
+          isPhoneScannerConnected={isPhoneScannerConnected}
+          scannerPairingUrl={scannerPairingUrl}
+          externalBarcodeScan={externalBarcodeScan}
+          onOpenMobileScannerModal={() => setShowMobileScannerModal(true)}
           onSelectForExchange={(lines, origInv) => {
             setActiveExchangeLines(lines);
             setActiveExchangeOrigBill(origInv);
