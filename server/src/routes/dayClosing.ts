@@ -109,18 +109,20 @@ export function registerDayClosing(r: Router) {
 
     // Cancelled / Voided Invoices
     const voidedRow = await ctx.db.one<any>(
-      `SELECT COUNT(*)::int AS voided_count, COALESCE(SUM(total_minor), 0)::bigint AS voided_total_minor
+      `SELECT COUNT(*)::int AS voided_count, COALESCE(SUM(i.total_minor), 0)::bigint AS voided_total_minor
        FROM invoices i
-       WHERE i.tenant_id = ? AND i.branch_id = ? AND i.bdate = ? AND i.status = 'voided'`,
-      [tenantId, branchId, bdate],
+       WHERE i.tenant_id = ? AND i.branch_id = ? AND i.bdate = ? AND i.status = 'voided'
+         ${shiftClause} ${cashierClause}`,
+      [tenantId, branchId, bdate, ...shiftParams, ...cashierParams],
     );
 
     // Customer Outstanding (Credit / Partial unpaid invoices for this date)
     const outstandingRow = await ctx.db.one<any>(
-      `SELECT COALESCE(SUM(total_minor - paid_minor), 0)::bigint AS outstanding_minor
+      `SELECT COALESCE(SUM(i.total_minor - i.paid_minor), 0)::bigint AS outstanding_minor
        FROM invoices i
-       WHERE i.tenant_id = ? AND i.branch_id = ? AND i.bdate = ? AND i.status = 'posted' AND i.total_minor > i.paid_minor`,
-      [tenantId, branchId, bdate],
+       WHERE i.tenant_id = ? AND i.branch_id = ? AND i.bdate = ? AND i.status = 'posted' AND i.total_minor > i.paid_minor
+         ${shiftClause} ${cashierClause}`,
+      [tenantId, branchId, bdate, ...shiftParams, ...cashierParams],
     );
 
     // Product Quantity & Lines Totals
@@ -172,9 +174,9 @@ export function registerDayClosing(r: Router) {
     );
 
     const exchangeAdjustRow = await ctx.db.one<any>(
-      `SELECT COALESCE(SUM(exchange_adjusted_minor), 0)::bigint AS exchange_adjusted_minor
-       FROM invoices
-       WHERE tenant_id = ? AND branch_id = ? AND bdate = ? AND is_exchange = TRUE AND kind = 'sale'
+      `SELECT COALESCE(SUM(i.exchange_adjusted_minor), 0)::bigint AS exchange_adjusted_minor
+       FROM invoices i
+       WHERE i.tenant_id = ? AND i.branch_id = ? AND i.bdate = ? AND i.is_exchange = TRUE AND i.kind = 'sale'
          ${shiftClause} ${cashierClause}`,
       [tenantId, branchId, bdate, ...shiftParams, ...cashierParams],
     );
@@ -188,11 +190,11 @@ export function registerDayClosing(r: Router) {
     // Exchanges Summary
     const exchangeStatsRow = await ctx.db.one<any>(
       `SELECT
-        COUNT(DISTINCT exchange_id)::int AS exchanges_count,
-        COALESCE(SUM(CASE WHEN kind = 'sale' THEN total_minor ELSE 0 END), 0)::bigint AS new_sold_minor,
-        COALESCE(SUM(CASE WHEN kind = 'credit_note' THEN total_minor ELSE 0 END), 0)::bigint AS old_returned_minor
-       FROM invoices
-       WHERE tenant_id = ? AND branch_id = ? AND bdate = ? AND is_exchange = TRUE AND status = 'posted'
+        COUNT(DISTINCT i.exchange_id)::int AS exchanges_count,
+        COALESCE(SUM(CASE WHEN i.kind = 'sale' THEN i.total_minor ELSE 0 END), 0)::bigint AS new_sold_minor,
+        COALESCE(SUM(CASE WHEN i.kind = 'credit_note' THEN i.total_minor ELSE 0 END), 0)::bigint AS old_returned_minor
+       FROM invoices i
+       WHERE i.tenant_id = ? AND i.branch_id = ? AND i.bdate = ? AND i.is_exchange = TRUE AND i.status = 'posted'
          ${shiftClause} ${cashierClause}`,
       [tenantId, branchId, bdate, ...shiftParams, ...cashierParams],
     );
