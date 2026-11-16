@@ -1,5 +1,5 @@
 import { PDFParse } from 'pdf-parse';
-import { createWorker } from 'tesseract.js';
+import { createWorker, PSM } from 'tesseract.js';
 import ExcelJS from 'exceljs';
 
 export interface ExtractedProductItem {
@@ -28,6 +28,14 @@ export interface InvoiceMetadata {
   invoiceDate: string;
   totalAmount: number | null;
   rawText: string;
+  subtotalAmount?: number | null;
+  cgstAmount?: number | null;
+  sgstAmount?: number | null;
+  igstAmount?: number | null;
+  buyerName?: string;
+  buyerAddress?: string;
+  buyerGstin?: string;
+  discrepancyWarning?: string;
 }
 
 export interface ColumnMapping {
@@ -191,7 +199,7 @@ export async function extractTextFromInvoice(
   buffer: Buffer,
   fileName: string,
   mimeType?: string
-): Promise<{ text: string; pages: number; isOcr: boolean; tableData?: string[][] }> {
+): Promise<{ text: string; pages: number; isOcr: boolean; tableData?: string[][]; sparseText?: string }> {
   // Plain text fallback (e.g. for testing or raw text dumps)
   if (mimeType?.startsWith('text/') || fileName.toLowerCase().endsWith('.txt')) {
     return { text: buffer.toString('utf8'), pages: 1, isOcr: false };
@@ -228,6 +236,7 @@ export async function extractTextFromInvoice(
         const imageResult = await pdfParser.getImage({ imageBuffer: true });
         if (imageResult?.pages?.length) {
           const worker = await createWorker('eng');
+          await worker.setParameters({ tessedit_pageseg_mode: PSM.AUTO });
           for (const page of imageResult.pages) {
             for (const img of page.images) {
               if (img.data && img.data.byteLength > 1000) {
@@ -260,84 +269,210 @@ export async function extractTextFromInvoice(
   // Image files (JPG, JPEG, PNG)
   try {
     const worker = await createWorker('eng');
+    // Mode 3: Fully automatic page segmentation (preserves multi-column layout and horizontal rows)
+    await worker.setParameters({ tessedit_pageseg_mode: PSM.AUTO });
     const ret = await worker.recognize(buffer);
+
+    // Mode 11: Sparse text - finds text blocks and isolated header boxes (Invoice No, Supplier Name, etc.)
+    let sparseText = '';
+    try {
+      await worker.setParameters({ tessedit_pageseg_mode: PSM.SPARSE_TEXT });
+      const sparseRet = await worker.recognize(buffer);
+      sparseText = (sparseRet.data.text || '').trim();
+    } catch {
+      // Sparse pass optional
+    }
+
     await worker.terminate();
-    return { text: (ret.data.text || '').trim(), pages: 1, isOcr: true };
+    return { text: (ret.data.text || '').trim(), pages: 1, isOcr: true, sparseText };
   } catch (err: any) {
     throw new Error(`OCR processing failed for image: ${err.message || String(err)}`);
   }
 }
 
 // ── Rule-Based Invoice Metadata Extraction ────────────────────────────────────
-export function parseInvoiceMetadata(rawText: string): InvoiceMetadata {
+export function parseInvoiceMetadata(rawText: string, sparseText = ''): InvoiceMetadata {
+  const fullText = (sparseText ? sparseText + '\n' + rawText : rawText).trim();
   const lines = rawText.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
 
-  // 1. GSTIN (15-character Indian GST format: 2 digits + 5 alpha + 4 digits + 1 alpha + 1 alpha/digit + Z + 1 alpha/digit)
-  const GSTIN_REGEX = /\b([0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1})\b/gi;
+  // 1. GSTIN Extraction & OCR Correction
+  // (15-character Indian GST format: 2 digits + 5 alpha + 4 digits + 1 alpha + 1 alpha/digit + Z + 1 alpha/digit)
+  const GSTIN_REGEX = /\b([0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}[Z20O][0-9A-Z]{1})\b/gi;
   const gstinMatches: string[] = [];
-  let m: RegExpExecArray | null;
-  while ((m = GSTIN_REGEX.exec(rawText)) !== null) {
-    gstinMatches.push(m[1].toUpperCase());
+  let gm: RegExpExecArray | null;
+  while ((gm = GSTIN_REGEX.exec(fullText)) !== null) {
+    let g = gm[1].toUpperCase();
+    if (g[13] === '2' || g[13] === '0' || g[13] === 'O') {
+      g = g.slice(0, 13) + 'Z' + g.slice(14);
+    }
+    if (!gstinMatches.includes(g)) {
+      gstinMatches.push(g);
+    }
   }
 
-  // The supplier GSTIN is usually the first one found or associated with Seller/From/M/s
+  // Detect Buyer GSTIN (e.g. from "Bill To", "Buyer", "Recipient")
+  let buyerGstin = '';
+  const billToIdx = rawText.search(/Bill\s*To|Buyer|Customer|Consignee/i);
+  if (billToIdx >= 0) {
+    const billToSnippet = rawText.slice(billToIdx, billToIdx + 400);
+    const buyerMatch = billToSnippet.match(GSTIN_REGEX);
+    if (buyerMatch && buyerMatch[0]) {
+      let bg = buyerMatch[0].toUpperCase();
+      if (bg[13] === '2' || bg[13] === '0' || bg[13] === 'O') bg = bg.slice(0, 13) + 'Z' + bg.slice(14);
+      buyerGstin = bg;
+    }
+  }
+
+  // Supplier GSTIN is the first GSTIN or the one not matching buyerGstin
   let supplierGstin = '';
   if (gstinMatches.length > 0) {
-    supplierGstin = gstinMatches[0];
+    supplierGstin = buyerGstin && gstinMatches.length > 1
+      ? (gstinMatches.find((g) => g !== buyerGstin) || gstinMatches[0])
+      : gstinMatches[0];
   }
 
   // 2. Supplier Name Detection
   let supplierName = '';
-  for (let i = 0; i < Math.min(lines.length, 12); i++) {
-    const line = lines[i];
-    // Ignore standard title headers
-    if (/^(?:tax invoice|invoice|cash memo|bill of supply|original for recipient|duplicate for supplier|triplicate)/i.test(line)) {
-      continue;
+
+  // Strategy A: "For <Company Name> Authorised Signatory"
+  const forSignatoryMatch = rawText.match(/For\s+([A-Za-z0-9&.,\- ]+?)(?:\s*\n|\s+Authorised|\s+Authorized)/i);
+  if (forSignatoryMatch && forSignatoryMatch[1].trim().length > 3) {
+    const cand = forSignatoryMatch[1].trim();
+    if (!/terms|conditions|payment|goods/i.test(cand)) {
+      supplierName = cand;
     }
-    // Pattern: M/s. Name or Sold By: Name or From: Name
-    const prefixMatch = line.match(/^(?:m\/s\.?|sold by|from|supplier|vendor|seller)\s*[:.-]?\s*([A-Za-z0-9&.,\- ]+)/i);
-    if (prefixMatch && prefixMatch[1].trim().length > 3) {
-      supplierName = prefixMatch[1].trim();
-      break;
+  }
+
+  // Strategy B: Brand / Header block followed by "Wholesale Distributors", "Distributors", "Traders", etc.
+  if (!supplierName || supplierName.length < 5) {
+    const brandMatch = fullText.match(/(?:=\s*)?([A-Za-z0-9&.,\- ]+?)\s*\n\s*(?:®\s*)*(?:Wholesale\s*Distributors|Distributors|Traders|Enterprises|Foods|Agency|Agencies|Wholesalers)/i);
+    if (brandMatch) {
+      const brand = brandMatch[1].trim().replace(/^[^a-zA-Z0-9]+/, '');
+      if (brand.length >= 3 && !/terms|invoice|bill\s*to/i.test(brand)) {
+        supplierName = `${brand} Wholesale Distributors`;
+      }
     }
-    // If line has letters, no digits or colons, and looks like a store name
-    if (line.length >= 4 && !line.includes(':') && !/gstin|pan|ph:|phone|date|invoice/i.test(line) && /^[A-Za-z0-9&.,\- ]+$/.test(line)) {
-      if (!supplierName) {
+  }
+
+  // Strategy C: Check prefix lines: "M/s. Name", "Sold By: Name", "From: Name", "Supplier: Name"
+  if (!supplierName) {
+    for (let i = 0; i < Math.min(lines.length, 12); i++) {
+      const line = lines[i];
+      if (/^(?:tax invoice|invoice|cash memo|bill of supply|original|duplicate|triplicate)/i.test(line)) continue;
+      const prefixMatch = line.match(/^(?:m\/s\.?|sold by|from|supplier|vendor|seller)\s*[:.-]?\s*([A-Za-z0-9&.,\- ]+)/i);
+      if (prefixMatch && prefixMatch[1].trim().length > 3) {
+        supplierName = prefixMatch[1].trim();
+        break;
+      }
+      if (line.length >= 4 && !line.includes(':') && !/gstin|pan|ph:|phone|date|invoice|bill\s*to/i.test(line) && /^[A-Za-z0-9&.,\- ]+$/.test(line)) {
         supplierName = line;
+        break;
       }
     }
   }
 
   // 3. Invoice Number
   let invoiceNumber = '';
-  const invNoMatch = rawText.match(
-    /(?:invoice\s*(?:no\.?|num\.?|number|#)|inv\s*(?:no\.?|#)|bill\s*(?:no\.?|#)|tax\s*invoice\s*no\.?)[\s.:#-]*([a-zA-Z0-9/_-]+)/i
-  );
-  if (invNoMatch && invNoMatch[1].trim()) {
-    const val = invNoMatch[1].trim().replace(/[.,;]$/, '');
-    if (val.toLowerCase() !== 'invoice' && val.toLowerCase() !== 'date' && val.length >= 2) {
-      invoiceNumber = val;
+  // Strategy A: Sparse text discrete line: "Invoice No\nFM/2025-26/1048"
+  if (sparseText) {
+    const invMatchSparse = sparseText.match(/(?:Invoice\s*No|Inv\s*No|Bill\s*No|Tax\s*Invoice\s*No)[^\w\n]*\n\s*([a-zA-Z0-9/_-]+)/i);
+    if (invMatchSparse && invMatchSparse[1].trim().length >= 3) {
+      const v = invMatchSparse[1].trim();
+      if (!/invoice|date|bill|gstin|phone/i.test(v)) {
+        invoiceNumber = v;
+      }
+    }
+  }
+
+  // Strategy B: Explicit label match: "Invoice No: ABC/123", "Invoice No: INV-2026-888"
+  if (!invoiceNumber) {
+    const invNoMatch = fullText.match(
+      /(?:invoice\s*(?:no\.?|num\.?|number|#)|inv\s*(?:no\.?|#)|bill\s*(?:no\.?|#)|tax\s*invoice\s*no\.?)[\s.:#-]+([a-zA-Z0-9/_-]+)/i
+    );
+    if (invNoMatch && invNoMatch[1].trim()) {
+      const val = invNoMatch[1].trim().replace(/[.,;]$/, '');
+      if (val.toLowerCase() !== 'invoice' && val.toLowerCase() !== 'date' && val.length >= 2) {
+        invoiceNumber = val;
+      }
+    }
+  }
+
+  // Strategy C: Standard structured invoice number patterns like "FM/2025-26/1048", "INV-2026-888", "SB/2026/1042"
+  if (!invoiceNumber) {
+    const invPattern = fullText.match(
+      /\b([A-Z]{2,5}\/[0-9]{4}-[0-9]{2}\/[0-9]+|[A-Z]{2,5}\/[0-9]{4}\/[0-9]+|[A-Z]{2,5}(?:-[0-9a-zA-Z]+)+|[A-Z]{2,4}\/[0-9]{2,4}\/[0-9]+)\b/
+    );
+    if (invPattern) {
+      invoiceNumber = invPattern[1];
     }
   }
 
   // 4. Invoice Date
   let invoiceDate = '';
-  const dateMatch = rawText.match(
-    /(?:invoice\s*date|inv\s*date|bill\s*date|date\s*of\s*issue|dated?|date)[\s.:#-]*([0-9]{1,2}[-/.][0-9]{1,2}[-/.][0-9]{2,4}|[0-9]{1,2}\s+[a-zA-Z]{3,9}\s+[0-9]{2,4})/i
+  const dateMatch = fullText.match(
+    /(?:invoice\s*date|inv\s*date|bill\s*date|date\s*of\s*issue|dated?|date)[\s.:#-]*\n?\s*([0-9]{1,2}[-/.][0-9]{1,2}[-/.][0-9]{2,4}|[0-9]{1,2}\s+[a-zA-Z]{3,9}\s+[0-9]{2,4})/i
   );
   if (dateMatch && dateMatch[1].trim()) {
     invoiceDate = dateMatch[1].trim();
   }
 
-  // 5. Total Amount
+  // 5. Grand Total
   let totalAmount: number | null = null;
   const totalMatch = rawText.match(
-    /(?:grand\s*total|invoice\s*total|total\s*amount|net\s*payable|total\s*payable|round\s*off\s*total|net\s*amount|total\s*\(₹\)|total\s*\(rs\))[\s.:₹Rs]*([0-9,]+(?:\.[0-9]{1,2})?)/i
+    /(?:grand\s*total|invoice\s*total|net\s*payable|total\s*payable|net\s*amount)[\s.:¥₹$€RsINR]*([0-9,]+(?:\.[0-9]{1,2})?)/i
   );
   if (totalMatch && totalMatch[1]) {
     const parsed = parseFloat(totalMatch[1].replace(/,/g, ''));
-    if (!isNaN(parsed) && parsed > 0) {
-      totalAmount = parsed;
+    if (!isNaN(parsed) && parsed > 0) totalAmount = parsed;
+  }
+  if (!totalAmount) {
+    const altTotal = rawText.match(/(?:total\s*amount|total\s*\(₹\)|total\s*\(rs\))[\s.:¥₹$€RsINR]*([0-9,]+(?:\.[0-9]{1,2})?)/i);
+    if (altTotal && altTotal[1]) {
+      const parsed = parseFloat(altTotal[1].replace(/,/g, ''));
+      if (!isNaN(parsed) && parsed > 0) totalAmount = parsed;
+    }
+  }
+
+  // 6. Subtotal & Taxes
+  let subtotalAmount: number | null = null;
+  const subMatch = rawText.match(/(?:subtotal|sub\s*total)[\s.:¥₹$€RsINR]*([0-9,]+(?:\.[0-9]{1,2})?)/i);
+  if (subMatch && subMatch[1]) {
+    const parsed = parseFloat(subMatch[1].replace(/,/g, ''));
+    if (!isNaN(parsed) && parsed > 0) subtotalAmount = parsed;
+  }
+
+  let cgstAmount: number | null = null;
+  const cgstMatch = rawText.match(/CGST\s*(?:\([0-9.]*%\))?[\s.:¥₹$€RsINR]*([0-9,]+(?:\.[0-9]{1,2})?)/i);
+  if (cgstMatch && cgstMatch[1]) {
+    const parsed = parseFloat(cgstMatch[1].replace(/,/g, ''));
+    if (!isNaN(parsed) && parsed >= 0) cgstAmount = parsed;
+  }
+
+  let sgstAmount: number | null = null;
+  const sgstMatch = rawText.match(/SGST\s*(?:\([0-9.]*%\))?[\s.:¥₹$€RsINR]*([0-9,]+(?:\.[0-9]{1,2})?)/i);
+  if (sgstMatch && sgstMatch[1]) {
+    const parsed = parseFloat(sgstMatch[1].replace(/,/g, ''));
+    if (!isNaN(parsed) && parsed >= 0) sgstAmount = parsed;
+  }
+
+  let igstAmount: number | null = null;
+  const igstMatch = rawText.match(/IGST\s*(?:\([0-9.]*%\))?[\s.:¥₹$€RsINR]*([0-9,]+(?:\.[0-9]{1,2})?)/i);
+  if (igstMatch && igstMatch[1]) {
+    const parsed = parseFloat(igstMatch[1].replace(/,/g, ''));
+    if (!isNaN(parsed) && parsed >= 0) igstAmount = parsed;
+  }
+
+  // 7. Buyer details
+  let buyerName = '';
+  let buyerAddress = '';
+  if (billToIdx >= 0) {
+    const billToSnippet = rawText.slice(billToIdx, billToIdx + 300);
+    const snipLines = billToSnippet.split('\n').map((l) => l.trim()).filter(Boolean);
+    if (snipLines.length > 1) {
+      buyerName = snipLines[1].replace(/^(?:bill to[:\s]*)/i, '').trim();
+      if (snipLines.length > 2) {
+        buyerAddress = snipLines.slice(2, 4).filter((l) => !/gstin|invoice|date/i.test(l)).join(', ');
+      }
     }
   }
 
@@ -348,6 +483,13 @@ export function parseInvoiceMetadata(rawText: string): InvoiceMetadata {
     invoiceDate,
     totalAmount,
     rawText,
+    subtotalAmount,
+    cgstAmount,
+    sgstAmount,
+    igstAmount,
+    buyerName,
+    buyerAddress,
+    buyerGstin,
   };
 }
 
@@ -356,7 +498,8 @@ export function splitHeaderLine(rawHeader: string): string[] {
   if (rawHeader.includes('\t')) {
     return rawHeader.split('\t').map((h) => h.trim()).filter(Boolean);
   }
-  if (rawHeader.includes('|')) {
+  const pipeCount = (rawHeader.match(/\|/g) || []).length;
+  if (pipeCount >= 2) {
     return rawHeader.split('|').map((h) => h.trim()).filter(Boolean);
   }
   const multiSpace = rawHeader.split(/\s{2,}/).map((h) => h.trim()).filter(Boolean);
@@ -366,12 +509,11 @@ export function splitHeaderLine(rawHeader: string): string[] {
 
   // Single-space fallback: identify known header boundary positions
   const knownKeywords = [
+    'product name',
     'item description',
     'product description',
     'particulars',
     'description',
-    'product name',
-    'item name',
     'hsn/sac',
     'hsn code',
     'hsn',
@@ -387,6 +529,7 @@ export function splitHeaderLine(rawHeader: string): string[] {
     'unit',
     'pkg',
     'unit rate',
+    'unit price',
     'basic rate',
     'rate',
     'price',
@@ -399,6 +542,9 @@ export function splitHeaderLine(rawHeader: string): string[] {
     'cgst',
     'sgst',
     'igst',
+    'sub total',
+    'subtotal',
+    'tax amount',
     'taxable value',
     'taxable amount',
     'basic amount',
@@ -408,6 +554,10 @@ export function splitHeaderLine(rawHeader: string): string[] {
     'total amount',
     'item total',
     'total',
+    's.no',
+    'sno',
+    'sl no',
+    'sl.no',
   ].sort((a, b) => b.length - a.length);
 
   const matchedPositions: { start: number; end: number; text: string }[] = [];
@@ -416,8 +566,8 @@ export function splitHeaderLine(rawHeader: string): string[] {
   for (const kw of knownKeywords) {
     let pos = 0;
     while ((pos = lower.indexOf(kw, pos)) !== -1) {
-      const isWordStart = pos === 0 || /\s/.test(rawHeader[pos - 1]);
-      const isWordEnd = pos + kw.length === rawHeader.length || /[\s%]/.test(rawHeader[pos + kw.length]);
+      const isWordStart = pos === 0 || /[\s|]/.test(rawHeader[pos - 1]);
+      const isWordEnd = pos + kw.length === rawHeader.length || /[\s|%]/.test(rawHeader[pos + kw.length]);
       if (isWordStart) {
         const overlaps = matchedPositions.some((m) => !(pos + kw.length <= m.start || pos >= m.end));
         if (!overlaps) {
@@ -438,6 +588,165 @@ export function splitHeaderLine(rawHeader: string): string[] {
   }
 
   return rawHeader.split(/\s+/).filter(Boolean);
+}
+
+// ── Smart Semantic Line Parser ────────────────────────────────────────────────
+export interface SmartParsedRow {
+  sno?: string;
+  name: string;
+  hsn: string;
+  qty: string;
+  uom: string;
+  unitPrice: string;
+  subtotal: string;
+  gstRate: string;
+  taxAmount: string;
+  total: string;
+}
+
+export function parseSmartProductLine(line: string): SmartParsedRow | null {
+  const cleanLine = line.trim();
+  if (!cleanLine) return null;
+
+  const lower = cleanLine.toLowerCase();
+  if (/^(?:subtotal|sub\s*total|grand\s*total|total|cgst|sgst|igst|tax\s*amount|amount\s*in\s*words|terms|terms\s*&|authorised|authorized|for\s+|s\.no|product\s*name|item\s*description|particulars)/i.test(lower)) {
+    return null;
+  }
+
+  let rawTokens: string[] = [];
+  if (cleanLine.includes('\t')) {
+    rawTokens = cleanLine.split('\t').map((t) => t.trim()).filter(Boolean);
+  } else if (cleanLine.includes('|') && (cleanLine.match(/\|/g) || []).length >= 2) {
+    rawTokens = cleanLine.split('|').map((t) => t.trim()).filter(Boolean);
+  } else {
+    rawTokens = cleanLine.split(/\s+/).map((t) => t.trim()).filter(Boolean);
+  }
+
+  if (rawTokens.length < 3) return null;
+
+  let sno = '';
+  let tokens = [...rawTokens];
+  if (/^[0-9]+[.)]?$/.test(tokens[0]) && tokens.length > 3) {
+    sno = tokens[0].replace(/[.)]/g, '');
+    tokens = tokens.slice(1);
+  }
+
+  let gstRate = '5%';
+  for (let i = tokens.length - 1; i >= 0; i--) {
+    if (/^[0-9]+(?:\.[0-9]+)?%$/.test(tokens[i]) || /^(?:0|2\.5|5|12|18|28)%?$/.test(tokens[i])) {
+      gstRate = tokens[i].endsWith('%') ? tokens[i] : `${tokens[i]}%`;
+      break;
+    }
+  }
+
+  let hsn = '';
+  let hsnIdx = -1;
+  for (let i = 0; i < tokens.length; i++) {
+    if (/^[0-9]{4,8}$/.test(tokens[i])) {
+      if (i > 0 && i < tokens.length - 1) {
+        hsn = tokens[i];
+        hsnIdx = i;
+        break;
+      }
+    }
+  }
+
+  let name = '';
+  let remainingTokens: string[] = [];
+  if (hsnIdx > 0) {
+    name = tokens.slice(0, hsnIdx).join(' ').trim();
+    remainingTokens = tokens.slice(hsnIdx + 1);
+  } else {
+    const firstNumIdx = tokens.findIndex((t, i) => i > 0 && /^[0-9]+(?:\.[0-9]+)?$/.test(t.replace(/,/g, '')));
+    if (firstNumIdx > 0) {
+      name = tokens.slice(0, firstNumIdx).join(' ').trim();
+      remainingTokens = tokens.slice(firstNumIdx);
+    } else {
+      return null;
+    }
+  }
+
+  if (!name || name.length < 2) return null;
+
+  const nums = remainingTokens
+    .filter((t) => !t.includes('%'))
+    .map((t) => {
+      const clean = t.replace(/,/g, '').replace(/[^\d.-]/g, '');
+      return { raw: t, val: parseFloat(clean) };
+    })
+    .filter((n) => !isNaN(n.val) && n.val >= 0);
+
+  let qty = '1';
+  let unitPrice = '';
+  let subtotal = '';
+  let taxAmount = '';
+
+  if (nums.length >= 3) {
+    let matched = false;
+    for (let q = 0; q < nums.length - 1; q++) {
+      for (let p = 0; p < nums.length; p++) {
+        if (p === q) continue;
+        for (let s = 0; s < nums.length; s++) {
+          if (s === q || s === p) continue;
+          const expected = nums[q].val * nums[p].val;
+          if (Math.abs(expected - nums[s].val) < 0.1 && nums[q].val > 0 && nums[p].val > 0) {
+            qty = nums[q].val.toString();
+            unitPrice = nums[p].val.toFixed(2);
+            subtotal = nums[s].val.toFixed(2);
+            matched = true;
+            const rem = nums.filter((_, idx) => idx !== q && idx !== p && idx !== s);
+            if (rem.length > 0) {
+              taxAmount = rem[0].val.toFixed(2);
+            }
+            break;
+          }
+        }
+        if (matched) break;
+      }
+      if (matched) break;
+    }
+
+    if (!matched) {
+      qty = nums[0].val.toString();
+      unitPrice = nums[1].val.toFixed(2);
+      subtotal = nums[2].val.toFixed(2);
+      if (nums.length > 3) taxAmount = nums[3].val.toFixed(2);
+    }
+  } else if (nums.length === 2) {
+    qty = nums[0].val.toString();
+    unitPrice = nums[1].val.toFixed(2);
+  } else if (nums.length === 1) {
+    unitPrice = nums[0].val.toFixed(2);
+  }
+
+  let uom = '';
+  const uomMatch = name.match(/\b([0-9]+(?:\.[0-9]+)?\s*)?(kg|kgs|g|gm|gms|ltr|lt|liter|litre|l|ml|pcs|pc|box|pack|pkt|bag|bottle|tin|can)\b/i);
+  if (uomMatch) {
+    const ru = uomMatch[2].toLowerCase();
+    if (['kg', 'kgs'].includes(ru)) uom = 'kg';
+    else if (['g', 'gm', 'gms'].includes(ru)) uom = 'g';
+    else if (['ltr', 'lt', 'liter', 'litre', 'l'].includes(ru)) uom = 'ltr';
+    else if (ru === 'ml') uom = 'ml';
+    else if (['pcs', 'pc'].includes(ru)) uom = 'pcs';
+    else if (['pack', 'pkt'].includes(ru)) uom = 'pack';
+    else if (['bag', 'bags'].includes(ru)) uom = 'bag';
+    else if (['box', 'boxes'].includes(ru)) uom = 'box';
+    else if (['bottle', 'bottles'].includes(ru)) uom = 'bottle';
+    else uom = ru;
+  }
+
+  return {
+    sno,
+    name,
+    hsn,
+    qty,
+    uom: uom || 'pcs',
+    unitPrice,
+    subtotal,
+    gstRate,
+    taxAmount,
+    total: subtotal && taxAmount ? (parseFloat(subtotal) + parseFloat(taxAmount)).toFixed(2) : subtotal,
+  };
 }
 
 // ── Detect Table Columns & Headers ───────────────────────────────────────────
@@ -545,6 +854,40 @@ export function parseLineItems(
         currentItem = null;
       }
       break;
+    }
+
+    // Attempt smart semantic line parsing first
+    const smart = parseSmartProductLine(line);
+    if (smart && smart.name && smart.unitPrice && parseFloat(smart.unitPrice) > 0) {
+      if (currentItem) {
+        items.push(currentItem);
+      }
+      const parsedQty = parseFloat(smart.qty.replace(/,/g, '')) || 1;
+      const parsedRate = parseFloat(smart.unitPrice.replace(/,/g, '')) || 0;
+      const costPriceStr = parsedRate > 0 ? parsedRate.toFixed(2) : '';
+
+      currentItem = {
+        id: `inv-item-${rowSeq++}`,
+        name: smart.name,
+        uom: smart.uom || 'pcs',
+        sellingPrice: '',
+        costPrice: costPriceStr,
+        hsn: smart.hsn || '',
+        gstRate: smart.gstRate || '5%',
+        priceInclusive: 'No',
+        openingStock: parsedQty.toString(),
+        rawRate: smart.unitPrice,
+        rawQty: smart.qty,
+        rawTaxable: smart.subtotal,
+        rawTotal: smart.total,
+        confidence: 'high',
+        flags: [],
+      };
+
+      if (!costPriceStr) currentItem.flags?.push('Cost Price uncertain');
+      if (!smart.hsn) currentItem.flags?.push('HSN missing');
+      if (!currentItem.sellingPrice) currentItem.flags?.push('Selling Price required');
+      continue;
     }
 
     // Split line tokens (by tab, pipe, or multiple spaces)

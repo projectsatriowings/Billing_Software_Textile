@@ -420,3 +420,74 @@ test('9. Extract from binary PDF document using pdf-parse', async () => {
     throw err;
   }
 });
+
+test('10. End-to-end OCR extraction of FreshMart invoice image extracts 3 items, correct metadata & discrepancy warning', { timeout: 60000 }, async () => {
+  const fs = await import('fs');
+  const path = await import('path');
+
+  const testFilePaths = [
+    'C:/Users/I S Manish Madhava/Downloads/FreshMart Blue Tax Invoice.png',
+    'C:/Users/I S Manish Madhava/.gemini/antigravity/brain/9997d043-54ff-4b9b-8345-936187dfb219/.user_uploaded/media_1794811882390_fcfc81f0.jpg',
+  ];
+  const validPath = testFilePaths.find((p) => fs.existsSync(p));
+  if (!validPath) {
+    console.log('Skipping test 10: FreshMart test image not found locally');
+    return;
+  }
+
+  const fileBuf = fs.readFileSync(validPath);
+  const base64Data = fileBuf.toString('base64');
+  const mimeType = validPath.endsWith('.png') ? 'image/png' : 'image/jpeg';
+
+  const res = await api(
+    'POST',
+    '/api/supplier-invoices/extract',
+    {},
+    {
+      fileName: path.basename(validPath),
+      fileData: base64Data,
+      mimeType,
+    },
+    ownerToken
+  );
+
+  assert.equal(res.status, 200);
+  assert.equal(res.body.ok, true);
+
+  // Metadata verification
+  assert.ok(res.body.metadata.supplierName.includes('FreshMart'));
+  assert.equal(res.body.metadata.supplierGstin, '33ABCDE1234F1Z5');
+  assert.equal(res.body.metadata.invoiceNumber, 'FM/2025-26/1048');
+  assert.equal(res.body.metadata.totalAmount, 17900.26);
+  assert.ok(res.body.metadata.discrepancyWarning);
+
+  // Products verification: 3 detected products
+  assert.equal(res.body.products.length, 3);
+
+  const rice = res.body.products.find((p: any) => p.name.toLowerCase().includes('rice'));
+  assert.ok(rice, 'Rice product should be found');
+  assert.equal(rice.hsn, '1006');
+  assert.equal(rice.openingStock, '10');
+  assert.equal(rice.costPrice, '1200.00');
+  assert.equal(rice.gstRate, '5%');
+  assert.equal(rice.priceInclusive, 'No');
+  assert.equal(rice.sellingPrice, '');
+
+  const oil = res.body.products.find((p: any) => p.name.toLowerCase().includes('sunflower oil'));
+  assert.ok(oil, 'Sunflower Oil product should be found');
+  assert.equal(oil.hsn, '1507');
+  assert.equal(oil.openingStock, '20');
+  assert.equal(oil.costPrice, '140.00');
+  assert.equal(oil.gstRate, '5%');
+  assert.equal(oil.priceInclusive, 'No');
+  assert.equal(oil.sellingPrice, '');
+
+  const sugar = res.body.products.find((p: any) => p.name.toLowerCase().includes('sugar'));
+  assert.ok(sugar, 'Sugar product should be found');
+  assert.equal(sugar.hsn, '1701');
+  assert.equal(sugar.openingStock, '50');
+  assert.equal(sugar.costPrice, '45.00');
+  assert.equal(sugar.gstRate, '5%');
+  assert.equal(sugar.priceInclusive, 'No');
+  assert.equal(sugar.sellingPrice, '');
+});

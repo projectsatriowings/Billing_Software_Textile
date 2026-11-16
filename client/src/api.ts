@@ -2631,6 +2631,14 @@ export interface SupplierInvoiceMetadata {
   invoiceDate: string;
   totalAmount: number | null;
   rawText: string;
+  subtotalAmount?: number | null;
+  cgstAmount?: number | null;
+  sgstAmount?: number | null;
+  igstAmount?: number | null;
+  buyerName?: string;
+  buyerAddress?: string;
+  buyerGstin?: string;
+  discrepancyWarning?: string;
 }
 
 export interface SupplierInvoiceExtractionResult {

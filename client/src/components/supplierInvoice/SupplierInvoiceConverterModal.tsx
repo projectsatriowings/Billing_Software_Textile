@@ -765,20 +765,22 @@ export function SupplierInvoiceConverterModal({
                     type="button"
                     id="export-invoice-to-excel-btn"
                     onClick={handleGenerateExcel}
-                    disabled={isGeneratingExcel}
+                    disabled={isGeneratingExcel || products.length === 0}
+                    title={products.length === 0 ? 'Add at least one product row to download Excel' : 'Download Excel'}
                     style={{
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '0.45rem',
                       padding: '0.45rem 1.15rem',
                       borderRadius: '8px',
-                      background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
+                      background: products.length === 0 ? '#94a3b8' : 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
                       color: '#ffffff',
                       border: 'none',
                       fontWeight: 700,
                       fontSize: '0.88rem',
-                      cursor: 'pointer',
-                      boxShadow: '0 2px 8px rgba(22, 163, 74, 0.3)',
+                      cursor: products.length === 0 ? 'not-allowed' : 'pointer',
+                      boxShadow: products.length === 0 ? 'none' : '0 2px 8px rgba(22, 163, 74, 0.3)',
+                      opacity: products.length === 0 ? 0.7 : 1,
                     }}
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
@@ -786,6 +788,14 @@ export function SupplierInvoiceConverterModal({
                   </button>
                 </div>
               </div>
+
+              {/* Financial Discrepancy Alert */}
+              {metadata.discrepancyWarning && (
+                <div style={{ padding: '0.65rem 1.5rem', background: '#fffbeb', borderBottom: '1px solid #fde68a', display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.82rem', color: '#92400e' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                  <span><strong>Tax Reconciliation Warning:</strong> {metadata.discrepancyWarning}</span>
+                </div>
+              )}
 
               {/* Collapsible Column Mapping Drawer */}
               {showMappingDrawer && (
@@ -881,189 +891,225 @@ export function SupplierInvoiceConverterModal({
                     </tr>
                   </thead>
                   <tbody>
-                    {products.map((p, idx) => {
-                      const isSpMissing = !p.sellingPrice || !p.sellingPrice.trim();
-                      const isCpMissing = !p.costPrice || !p.costPrice.trim();
+                    {products.length === 0 ? (
+                      <tr>
+                        <td colSpan={10} style={{ padding: '3.5rem 1.5rem', textAlign: 'center', color: '#64748b' }}>
+                          <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '52px', height: '52px', borderRadius: '50%', background: '#fef2f2', color: '#ef4444', marginBottom: '0.85rem' }}>
+                            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                          </div>
+                          <div style={{ fontWeight: 700, color: '#1e293b', fontSize: '1rem', marginBottom: '0.35rem' }}>
+                            No product rows detected
+                          </div>
+                          <p style={{ margin: '0 auto 1.25rem', maxWidth: '440px', fontSize: '0.84rem', color: '#64748b', lineHeight: 1.5 }}>
+                            We could not automatically detect line items from the uploaded invoice. You can add product rows manually or adjust the column mapping.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={handleAddRow}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.45rem',
+                              padding: '0.55rem 1.15rem',
+                              borderRadius: '8px',
+                              background: '#4f46e5',
+                              color: '#ffffff',
+                              border: 'none',
+                              fontWeight: 600,
+                              fontSize: '0.85rem',
+                              cursor: 'pointer',
+                              boxShadow: '0 2px 4px rgba(79, 70, 229, 0.2)',
+                            }}
+                          >
+                            + Add Product Row Manually
+                          </button>
+                        </td>
+                      </tr>
+                    ) : (
+                      products.map((p, idx) => {
+                        const isSpMissing = !p.sellingPrice || !p.sellingPrice.trim();
+                        const isCpMissing = !p.costPrice || !p.costPrice.trim();
 
-                      return (
-                        <tr key={p.id} style={{ borderBottom: '1px solid #f1f5f9', background: idx % 2 === 0 ? '#ffffff' : '#fafafa' }}>
-                          <td style={{ padding: '0.5rem 0.75rem', textAlign: 'center', color: '#94a3b8', fontSize: '0.78rem' }}>
-                            {idx + 1}
-                          </td>
+                        return (
+                          <tr key={p.id} style={{ borderBottom: '1px solid #f1f5f9', background: idx % 2 === 0 ? '#ffffff' : '#fafafa' }}>
+                            <td style={{ padding: '0.5rem 0.75rem', textAlign: 'center', color: '#94a3b8', fontSize: '0.78rem' }}>
+                              {idx + 1}
+                            </td>
 
-                          {/* 1. PRODUCT NAME */}
-                          <td style={{ padding: '0.4rem 0.5rem' }}>
-                            <input
-                              type="text"
-                              value={p.name}
-                              onChange={(e) => handleCellChange(idx, 'name', e.target.value)}
-                              placeholder="Product description"
-                              style={{
-                                width: '100%',
-                                padding: '0.35rem 0.55rem',
-                                borderRadius: '6px',
-                                border: '1px solid #cbd5e1',
-                                fontSize: '0.84rem',
-                                fontWeight: 600,
-                                color: '#1e293b',
-                              }}
-                            />
-                          </td>
-
-                          {/* 2. UOM */}
-                          <td style={{ padding: '0.4rem 0.5rem' }}>
-                            <input
-                              type="text"
-                              value={p.uom}
-                              onChange={(e) => handleCellChange(idx, 'uom', e.target.value)}
-                              placeholder="pcs"
-                              style={{
-                                width: '100%',
-                                padding: '0.35rem 0.45rem',
-                                borderRadius: '6px',
-                                border: '1px solid #cbd5e1',
-                                fontSize: '0.84rem',
-                                textAlign: 'center',
-                              }}
-                            />
-                          </td>
-
-                          {/* 3. SELLING PRICE */}
-                          <td style={{ padding: '0.4rem 0.5rem' }}>
-                            <div style={{ position: 'relative' }}>
+                            {/* 1. PRODUCT NAME */}
+                            <td style={{ padding: '0.4rem 0.5rem' }}>
                               <input
                                 type="text"
-                                value={p.sellingPrice}
-                                onChange={(e) => handleCellChange(idx, 'sellingPrice', e.target.value)}
-                                placeholder="Enter SP"
+                                value={p.name}
+                                onChange={(e) => handleCellChange(idx, 'name', e.target.value)}
+                                placeholder="Product description"
                                 style={{
                                   width: '100%',
                                   padding: '0.35rem 0.55rem',
                                   borderRadius: '6px',
-                                  border: isSpMissing ? '1.5px solid #f59e0b' : '1px solid #cbd5e1',
-                                  background: isSpMissing ? '#fffbeb' : '#ffffff',
+                                  border: '1px solid #cbd5e1',
                                   fontSize: '0.84rem',
                                   fontWeight: 600,
-                                  textAlign: 'right',
-                                  color: isSpMissing ? '#b45309' : '#1e293b',
+                                  color: '#1e293b',
                                 }}
                               />
-                            </div>
-                          </td>
+                            </td>
 
-                          {/* 4. COST PRICE */}
-                          <td style={{ padding: '0.4rem 0.5rem' }}>
-                            <input
-                              type="text"
-                              value={p.costPrice}
-                              onChange={(e) => handleCellChange(idx, 'costPrice', e.target.value)}
-                              placeholder="Cost"
-                              style={{
-                                width: '100%',
-                                padding: '0.35rem 0.55rem',
-                                borderRadius: '6px',
-                                border: isCpMissing ? '1.5px solid #f59e0b' : '1px solid #cbd5e1',
-                                background: isCpMissing ? '#fffbeb' : '#ffffff',
-                                fontSize: '0.84rem',
-                                textAlign: 'right',
-                              }}
-                            />
-                          </td>
+                            {/* 2. UOM */}
+                            <td style={{ padding: '0.4rem 0.5rem' }}>
+                              <input
+                                type="text"
+                                value={p.uom}
+                                onChange={(e) => handleCellChange(idx, 'uom', e.target.value)}
+                                placeholder="pcs"
+                                style={{
+                                  width: '100%',
+                                  padding: '0.35rem 0.45rem',
+                                  borderRadius: '6px',
+                                  border: '1px solid #cbd5e1',
+                                  fontSize: '0.84rem',
+                                  textAlign: 'center',
+                                }}
+                              />
+                            </td>
 
-                          {/* 5. HSN */}
-                          <td style={{ padding: '0.4rem 0.5rem' }}>
-                            <input
-                              type="text"
-                              value={p.hsn}
-                              onChange={(e) => handleCellChange(idx, 'hsn', e.target.value)}
-                              placeholder="HSN"
-                              style={{
-                                width: '100%',
-                                padding: '0.35rem 0.45rem',
-                                borderRadius: '6px',
-                                border: '1px solid #cbd5e1',
-                                fontSize: '0.84rem',
-                                textAlign: 'center',
-                              }}
-                            />
-                          </td>
+                            {/* 3. SELLING PRICE */}
+                            <td style={{ padding: '0.4rem 0.5rem' }}>
+                              <div style={{ position: 'relative' }}>
+                                <input
+                                  type="text"
+                                  value={p.sellingPrice}
+                                  onChange={(e) => handleCellChange(idx, 'sellingPrice', e.target.value)}
+                                  placeholder="Enter SP"
+                                  style={{
+                                    width: '100%',
+                                    padding: '0.35rem 0.55rem',
+                                    borderRadius: '6px',
+                                    border: isSpMissing ? '1.5px solid #f59e0b' : '1px solid #cbd5e1',
+                                    background: isSpMissing ? '#fffbeb' : '#ffffff',
+                                    fontSize: '0.84rem',
+                                    fontWeight: 600,
+                                    textAlign: 'right',
+                                    color: isSpMissing ? '#b45309' : '#1e293b',
+                                  }}
+                                />
+                              </div>
+                            </td>
 
-                          {/* 6. GST RATE */}
-                          <td style={{ padding: '0.4rem 0.5rem' }}>
-                            <input
-                              type="text"
-                              value={p.gstRate}
-                              onChange={(e) => handleCellChange(idx, 'gstRate', e.target.value)}
-                              placeholder="5%"
-                              style={{
-                                width: '100%',
-                                padding: '0.35rem 0.45rem',
-                                borderRadius: '6px',
-                                border: '1px solid #cbd5e1',
-                                fontSize: '0.84rem',
-                                textAlign: 'center',
-                              }}
-                            />
-                          </td>
+                            {/* 4. COST PRICE */}
+                            <td style={{ padding: '0.4rem 0.5rem' }}>
+                              <input
+                                type="text"
+                                value={p.costPrice}
+                                onChange={(e) => handleCellChange(idx, 'costPrice', e.target.value)}
+                                placeholder="Cost"
+                                style={{
+                                  width: '100%',
+                                  padding: '0.35rem 0.55rem',
+                                  borderRadius: '6px',
+                                  border: isCpMissing ? '1.5px solid #f59e0b' : '1px solid #cbd5e1',
+                                  background: isCpMissing ? '#fffbeb' : '#ffffff',
+                                  fontSize: '0.84rem',
+                                  textAlign: 'right',
+                                }}
+                              />
+                            </td>
 
-                          {/* 7. PRICE INCLUSIVE */}
-                          <td style={{ padding: '0.4rem 0.5rem' }}>
-                            <select
-                              value={p.priceInclusive}
-                              onChange={(e) => handleCellChange(idx, 'priceInclusive', e.target.value as 'Yes' | 'No')}
-                              style={{
-                                width: '100%',
-                                padding: '0.35rem 0.45rem',
-                                borderRadius: '6px',
-                                border: '1px solid #cbd5e1',
-                                fontSize: '0.82rem',
-                              }}
-                            >
-                              <option value="Yes">Yes</option>
-                              <option value="No">No</option>
-                            </select>
-                          </td>
+                            {/* 5. HSN */}
+                            <td style={{ padding: '0.4rem 0.5rem' }}>
+                              <input
+                                type="text"
+                                value={p.hsn}
+                                onChange={(e) => handleCellChange(idx, 'hsn', e.target.value)}
+                                placeholder="HSN"
+                                style={{
+                                  width: '100%',
+                                  padding: '0.35rem 0.45rem',
+                                  borderRadius: '6px',
+                                  border: '1px solid #cbd5e1',
+                                  fontSize: '0.84rem',
+                                  textAlign: 'center',
+                                }}
+                              />
+                            </td>
 
-                          {/* 8. OPENING STOCK */}
-                          <td style={{ padding: '0.4rem 0.5rem' }}>
-                            <input
-                              type="text"
-                              value={p.openingStock}
-                              onChange={(e) => handleCellChange(idx, 'openingStock', e.target.value)}
-                              placeholder="Qty"
-                              style={{
-                                width: '100%',
-                                padding: '0.35rem 0.45rem',
-                                borderRadius: '6px',
-                                border: '1px solid #cbd5e1',
-                                fontSize: '0.84rem',
-                                textAlign: 'right',
-                                fontWeight: 600,
-                              }}
-                            />
-                          </td>
+                            {/* 6. GST RATE */}
+                            <td style={{ padding: '0.4rem 0.5rem' }}>
+                              <input
+                                type="text"
+                                value={p.gstRate}
+                                onChange={(e) => handleCellChange(idx, 'gstRate', e.target.value)}
+                                placeholder="5%"
+                                style={{
+                                  width: '100%',
+                                  padding: '0.35rem 0.45rem',
+                                  borderRadius: '6px',
+                                  border: '1px solid #cbd5e1',
+                                  fontSize: '0.84rem',
+                                  textAlign: 'center',
+                                }}
+                              />
+                            </td>
 
-                          {/* Actions: Delete */}
-                          <td style={{ padding: '0.4rem 0.5rem', textAlign: 'center' }}>
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteRow(idx)}
-                              style={{
-                                background: 'transparent',
-                                border: 'none',
-                                color: '#94a3b8',
-                                cursor: 'pointer',
-                                padding: '0.2rem',
-                                borderRadius: '4px',
-                              }}
-                              title="Delete row"
-                            >
-                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
+                            {/* 7. PRICE INCLUSIVE */}
+                            <td style={{ padding: '0.4rem 0.5rem' }}>
+                              <select
+                                value={p.priceInclusive}
+                                onChange={(e) => handleCellChange(idx, 'priceInclusive', e.target.value as 'Yes' | 'No')}
+                                style={{
+                                  width: '100%',
+                                  padding: '0.35rem 0.45rem',
+                                  borderRadius: '6px',
+                                  border: '1px solid #cbd5e1',
+                                  fontSize: '0.82rem',
+                                }}
+                              >
+                                <option value="Yes">Yes</option>
+                                <option value="No">No</option>
+                              </select>
+                            </td>
+
+                            {/* 8. OPENING STOCK */}
+                            <td style={{ padding: '0.4rem 0.5rem' }}>
+                              <input
+                                type="text"
+                                value={p.openingStock}
+                                onChange={(e) => handleCellChange(idx, 'openingStock', e.target.value)}
+                                placeholder="Qty"
+                                style={{
+                                  width: '100%',
+                                  padding: '0.35rem 0.45rem',
+                                  borderRadius: '6px',
+                                  border: '1px solid #cbd5e1',
+                                  fontSize: '0.84rem',
+                                  textAlign: 'right',
+                                  fontWeight: 600,
+                                }}
+                              />
+                            </td>
+
+                            {/* Actions: Delete */}
+                            <td style={{ padding: '0.4rem 0.5rem', textAlign: 'center' }}>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteRow(idx)}
+                                style={{
+                                  background: 'transparent',
+                                  border: 'none',
+                                  color: '#94a3b8',
+                                  cursor: 'pointer',
+                                  padding: '0.2rem',
+                                  borderRadius: '4px',
+                                }}
+                                title="Delete row"
+                              >
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
                   </tbody>
                 </table>
               </div>

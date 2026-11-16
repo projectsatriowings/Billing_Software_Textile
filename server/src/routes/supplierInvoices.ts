@@ -52,7 +52,7 @@ export function registerSupplierInvoices(r: Router): void {
     }
 
     // Extract text and tables
-    const { text, pages, isOcr, tableData } = await extractTextFromInvoice(buffer, fileName, mimeType);
+    const { text, pages, isOcr, tableData, sparseText } = await extractTextFromInvoice(buffer, fileName, mimeType);
 
     if (!text || text.trim().length === 0) {
       throw bad(
@@ -62,7 +62,7 @@ export function registerSupplierInvoices(r: Router): void {
     }
 
     // Parse metadata (Supplier name, GSTIN, Inv No, Date, Total)
-    const metadata = parseInvoiceMetadata(text);
+    const metadata = parseInvoiceMetadata(text, sparseText);
 
     // If no saved mapping by supplierId, attempt match by extracted GSTIN or Name
     if (!savedMapping && metadata.supplierGstin) {
@@ -112,14 +112,23 @@ export function registerSupplierInvoices(r: Router): void {
 
     const enrichedProducts = enrichWithCatalog(rawProducts, catalogRows);
 
-    // Calculate sum of extracted item costs
+    // Calculate sum of extracted item costs & line item tax
     let calculatedTotalCost = 0;
+    let calculatedItemTax = 0;
     for (const p of enrichedProducts) {
       const cp = parseFloat(p.costPrice || '0');
       const qty = parseFloat(p.openingStock || '0');
+      const rateBp = p.gstRate ? parseFloat(p.gstRate.replace('%', '')) * 100 : 500;
       if (!isNaN(cp) && !isNaN(qty) && cp > 0 && qty > 0) {
-        calculatedTotalCost += cp * qty;
+        const lineCost = cp * qty;
+        calculatedTotalCost += lineCost;
+        calculatedItemTax += (lineCost * rateBp) / 10000;
       }
+    }
+
+    const invoiceTaxSummary = (metadata.cgstAmount ?? 0) + (metadata.sgstAmount ?? 0) + (metadata.igstAmount ?? 0);
+    if (invoiceTaxSummary > 0 && Math.abs(invoiceTaxSummary - calculatedItemTax) > 1.0) {
+      metadata.discrepancyWarning = `Tax discrepancy: Calculated item tax (₹${calculatedItemTax.toFixed(2)}) differs from invoice tax summary (₹${invoiceTaxSummary.toFixed(2)}) by ₹${Math.abs(invoiceTaxSummary - calculatedItemTax).toFixed(2)}. Please verify.`;
     }
 
     await audit(ctx.db, ctx, {
