@@ -628,6 +628,9 @@ export function registerDayClosing(r: Router) {
                submitted_at = NOW(),
                approved_by = ?,
                approved_at = ?,
+               reopened_by = NULL,
+               reopened_at = NULL,
+               reopen_reason = NULL,
                opening_cash_minor = ?, cash_sales_minor = ?, cash_refunds_minor = ?, cash_expenses_minor = ?,
                cash_in_minor = ?, cash_out_minor = ?, expected_cash_minor = ?, actual_cash_minor = ?, variance_minor = ?,
                gross_sales_minor = ?, returns_total_minor = ?, net_sales_minor = ?, invoices_count = ?, returns_count = ?,
@@ -757,11 +760,38 @@ export function registerDayClosing(r: Router) {
     const dcBdate = dc.bdate;
 
     await ctx.db.tx(async (q) => {
+      // Re-aggregate authoritative figures in case new bills/returns were added while reopened
+      const salesRow = await q.one<any>(
+        `SELECT COUNT(*)::int AS count, COALESCE(SUM(total_minor), 0)::bigint AS total
+         FROM invoices WHERE tenant_id = ? AND branch_id = ? AND bdate = ? AND status = 'posted' AND kind = 'sale'`,
+        [tenantId, dcBranchId, dcBdate],
+      );
+      const returnsRow = await q.one<any>(
+        `SELECT COUNT(*)::int AS count, COALESCE(SUM(total_minor), 0)::bigint AS total
+         FROM invoices WHERE tenant_id = ? AND branch_id = ? AND bdate = ? AND status = 'posted' AND kind = 'credit_note'`,
+        [tenantId, dcBranchId, dcBdate],
+      );
+      const grossSalesMinor = Number(salesRow?.total || 0);
+      const returnsTotalMinor = Number(returnsRow?.total || 0);
+      const netSalesMinor = Math.max(0, grossSalesMinor - returnsTotalMinor);
+      const invoicesCount = Number(salesRow?.count || 0);
+      const returnsCount = Number(returnsRow?.count || 0);
+
       await q.exec(
         `UPDATE day_closings
-         SET status = 'approved', approved_by = ?, approved_at = NOW()
+         SET status = 'approved',
+             approved_by = ?,
+             approved_at = NOW(),
+             reopened_by = NULL,
+             reopened_at = NULL,
+             reopen_reason = NULL,
+             gross_sales_minor = ?,
+             returns_total_minor = ?,
+             net_sales_minor = ?,
+             invoices_count = ?,
+             returns_count = ?
          WHERE id = ? AND tenant_id = ?`,
-        [ctx.user!.id, id, tenantId],
+        [ctx.user!.id, grossSalesMinor, returnsTotalMinor, netSalesMinor, invoicesCount, returnsCount, id, tenantId],
       );
 
       // Lock invoices for this day

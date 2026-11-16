@@ -709,14 +709,15 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
             </div>
 
             <div className="status-banner-actions">
-              {closingStatus === 'submitted' && isManagerOrOwner && closedRecord?.id && (
+              {(closingStatus === 'submitted' || closingStatus === 'reopened') && isManagerOrOwner && closedRecord?.id && (
                 <button
                   onClick={() => handleApproveClosing(closedRecord.id)}
                   disabled={actionLoading}
                   className="btn-approve"
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
                 >
                   <CheckCircle2Icon size={15} />
-                  Approve & Lock Day Closing
+                  {closingStatus === 'reopened' ? 'Approve & Re-Seal Day Closing' : 'Approve & Lock Day Closing'}
                 </button>
               )}
 
@@ -1062,6 +1063,8 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                         <LockIcon size={16} />
                         {submitting
                           ? 'Submitting Closing...'
+                          : closingStatus === 'reopened'
+                          ? 'Submit & Re-Seal Day Closing'
                           : selectedCashierId || isCashierUser
                           ? 'Submit Cashier Register Closing'
                           : 'Submit Day Closing'}
