@@ -408,7 +408,7 @@ export const CustomerDisplay: React.FC<CustomerDisplayProps> = ({ counterId = 'c
                     <th style={{ minWidth: '180px' }}>Item Description</th>
                     <th style={{ textAlign: 'center', width: '75px' }}>Qty</th>
                     <th style={{ textAlign: 'right', width: '90px' }}>MRP</th>
-                    <th style={{ textAlign: 'right', width: '100px' }}>Store Price</th>
+                    <th style={{ textAlign: 'right', width: '100px' }}>Rate</th>
                     <th style={{ textAlign: 'right', width: '110px' }}>Total</th>
                   </tr>
                 </thead>

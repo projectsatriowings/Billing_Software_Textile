@@ -550,7 +550,7 @@ export const getBusinessLabel = (type?: string) => {
   }
 };
 
-export const CASHIER_ALLOWED_TABS = new Set<string>(['pos', 'wholesale', 'shifts', 'invoices', 'day-closing']);
+export const CASHIER_ALLOWED_TABS = new Set<string>(['pos', 'shifts', 'invoices', 'day-closing']);
 
 export interface PosCartItem {
   item: Item;
@@ -6801,22 +6801,24 @@ export function App() {
                 <span className="nav-text">POS Counter</span>
               </button>
 
-              {/* 2b. Wholesale Billing (Traditional A4 Tax Invoices) */}
-              <button
-                type="button"
-                className={`sidebar-nav-item ${activeTab === 'wholesale' ? 'active' : ''}`}
-                onClick={() => setActiveTab('wholesale')}
-                title="Wholesale Billing (B2B Tax Invoices)"
-              >
-                <span className="nav-icon">
-                  <img
-                    src={WHOLESALE_BILLING_ICON}
-                    alt="Wholesale Billing"
-                    className="wholesale-nav-icon"
-                  />
-                </span>
-                <span className="nav-text">Wholesale Billing</span>
-              </button>
+              {/* 2b. Wholesale Billing (Traditional A4 Tax Invoices) - STRICTLY ADMIN ONLY */}
+              {user?.role !== 'cashier' && (
+                <button
+                  type="button"
+                  className={`sidebar-nav-item ${activeTab === 'wholesale' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('wholesale')}
+                  title="Wholesale Billing (B2B Tax Invoices)"
+                >
+                  <span className="nav-icon">
+                    <img
+                      src={WHOLESALE_BILLING_ICON}
+                      alt="Wholesale Billing"
+                      className="wholesale-nav-icon"
+                    />
+                  </span>
+                  <span className="nav-text">Wholesale Billing</span>
+                </button>
+              )}
 
               {/* 3. Cashier Shifts: ONLY for Cashier */}
               {user?.role === 'cashier' && (
@@ -8572,7 +8574,7 @@ export function App() {
                               <span className="th-item" title="Product & Category">Product</span>
                               <span className="th-qty" title="Quantity">Qty</span>
                               <span className="th-mrp" title="Maximum Retail Price">MRP</span>
-                              <span className="th-price" title="Store Selling Price">Store Price</span>
+                              <span className="th-price" title="Selling Rate per unit">Rate</span>
                               <span className="th-total" title="Total Product Price">Total Price</span>
                               <span className="th-action"></span>
                             </div>
@@ -11184,8 +11186,8 @@ export function App() {
               </div>
             )}
 
-            {/* TAB: WHOLESALE BILLING & B2B TAX INVOICES */}
-            {displayTab === 'wholesale' && user && (
+            {/* TAB: WHOLESALE BILLING & B2B TAX INVOICES - STRICTLY ADMIN ONLY */}
+            {displayTab === 'wholesale' && user && user.role !== 'cashier' && (
               <div className="tab-content-wrapper" key={`wholesale-${selectedBranchScope}`}>
                 <WholesaleBillingView
                   user={user}
