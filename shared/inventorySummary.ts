@@ -183,3 +183,4 @@ export function calculateInventorySummary(items: InventoryItemLike[] = []): Inve
     outOfStockPct,
   };
 }
+
