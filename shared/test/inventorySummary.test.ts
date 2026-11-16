@@ -198,3 +198,4 @@ test('inventory classification: determineStockStatus', () => {
   // In stock when no reorder level is set
   assert.equal(determineStockStatus(5, 0), 'in_stock');
 });
+
