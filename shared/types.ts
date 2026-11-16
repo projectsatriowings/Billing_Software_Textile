@@ -41,7 +41,7 @@ export const PERMS = {
   'expenses.void': ['owner', 'manager'],
   'gst.view': ['owner', 'manager', 'accountant'],
   'gst.manage': ['owner', 'accountant'],
-  'promotions.view': ['owner', 'manager'],
+  'promotions.view': ['owner', 'manager', 'cashier'],
   'promotions.write': ['owner', 'manager'],
   'promotions.reports': ['owner', 'manager'],
   'promotions.apply': ['owner', 'manager', 'cashier'],

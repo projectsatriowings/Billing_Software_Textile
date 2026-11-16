@@ -1987,9 +1987,11 @@ export function App() {
       isFreeItem: Boolean((c as any).isFreeItem),
       appliedPromotionId: (c as any).appliedPromotionId,
     }));
+    const currentBranchCode = activeBranch?.code || user?.assignedLocation || branches[0]?.code || 'MAIN';
+    const currentCounterCode = user?.assignedCounter || 'COUNTER-1';
     const evalRes = evaluatePromotions(cartEvalInput, activePromotionsList, {
-      branchCode: branches[0]?.code || 'MAIN',
-      counterCode: 'COUNTER-1',
+      branchCode: currentBranchCode,
+      counterCode: currentCounterCode,
       partyId: selectedPartyId || undefined,
     });
     setPromoEvalResult(evalRes);
@@ -2040,6 +2042,13 @@ export function App() {
       }
     }
   }, [cart, activePromotionsList, selectedPartyId, branches, items]);
+
+  // Keep active promotions refreshed whenever the user enters or works in the POS tab
+  useEffect(() => {
+    if (activeTab === 'pos') {
+      loadActivePromotions();
+    }
+  }, [activeTab]);
 
   const checkActiveShift = async () => {
     try {
