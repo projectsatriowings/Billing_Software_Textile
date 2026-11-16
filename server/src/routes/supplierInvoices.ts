@@ -10,6 +10,7 @@ import {
   parseLineItems,
   enrichWithCatalog,
   generateTemplateExcel,
+  isValidProductRow,
   type ColumnMapping,
   type ExtractedProductItem,
 } from '../services/supplierInvoiceParser.ts';
@@ -96,6 +97,8 @@ export function registerSupplierInvoices(r: Router): void {
       const colDet = detectTableColumns(tableLines, initialMapping);
       rawProducts = parseLineItems(colDet.dataLines, colDet.columnMap, colDet.headers, sparseText);
     }
+
+    rawProducts = rawProducts.filter(isValidProductRow);
 
     // Cross-reference existing items in catalog to fill Selling Price
     const catalogRows = await ctx.db.query<{

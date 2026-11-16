@@ -564,6 +564,7 @@ test('11. End-to-end OCR extraction of Sharma Grocery Shop invoice extracts 2 it
   assert.equal(curd.openingStock, '5');
   assert.equal(curd.costPrice, '35.71');
   assert.equal(curd.gstRate, '12%');
+  assert.equal(curd.uom, 'PKT');
 
   const juice = res.body.products.find((p: any) => p.name.toLowerCase().includes('juice'));
   assert.ok(juice, 'Real Fruit Juice product should be found');
@@ -571,4 +572,5 @@ test('11. End-to-end OCR extraction of Sharma Grocery Shop invoice extracts 2 it
   assert.equal(juice.openingStock, '5');
   assert.equal(juice.costPrice, '94.29');
   assert.equal(juice.gstRate, '5%');
+  assert.equal(juice.uom, 'PAC');
 });

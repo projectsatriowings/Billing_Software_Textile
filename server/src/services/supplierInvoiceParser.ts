@@ -172,7 +172,9 @@ export function normalizeUom(raw: string, productNameHint = ''): string {
   if (['ml', 'milli'].includes(clean)) return 'ml';
   if (['pcs', 'pc', 'piece', 'pieces', 'nos', 'no', 'unit', 'units', 'each'].includes(clean)) return 'pcs';
   if (['box', 'boxes', 'bx'].includes(clean)) return 'box';
-  if (['pack', 'pkt', 'packets', 'packet', 'pouch'].includes(clean)) return 'pack';
+  if (['pkt'].includes(clean)) return 'PKT';
+  if (['pac'].includes(clean)) return 'PAC';
+  if (['pack', 'packets', 'packet', 'pouch'].includes(clean)) return 'pack';
   if (['bag', 'bags'].includes(clean)) return 'bag';
   if (['tin', 'tins'].includes(clean)) return 'tin';
   if (['bottle', 'bottles', 'btl'].includes(clean)) return 'bottle';
@@ -186,13 +188,16 @@ export function normalizeUom(raw: string, productNameHint = ''): string {
   if (/\b(?:gm|gms|g)\b/.test(pLower)) return 'g';
   if (/\b(?:ltr|liter|litre|l)\b/.test(pLower)) return 'ltr';
   if (/\b(?:ml)\b/.test(pLower)) return 'ml';
-  if (/\b(?:pack|pkt|box|bag|tin|btl)\b/.test(pLower)) {
-    const match = pLower.match(/\b(pack|pkt|box|bag|tin|btl)\b/);
-    if (match?.[1] === 'pkt') return 'pack';
+  if (/\bpkt\b/.test(pLower)) return 'PKT';
+  if (/\bpac\b/.test(pLower)) return 'PAC';
+  if (/\b(?:pack|box|bag|tin|btl)\b/.test(pLower)) {
+    const match = pLower.match(/\b(pack|box|bag|tin|btl)\b/);
     if (match?.[1] === 'btl') return 'bottle';
     return match?.[1] || 'pcs';
   }
 
+  if (clean.toUpperCase() === 'PKT') return 'PKT';
+  if (clean.toUpperCase() === 'PAC') return 'PAC';
   return clean || 'pcs';
 }
 
@@ -455,6 +460,15 @@ export function parseInvoiceMetadata(rawText: string, sparseText = ''): InvoiceM
       : gstinMatches[0];
   }
 
+  // Helper to reject address lines, locations, or buyer headers from being picked as supplier name
+  const isAddressOrLocation = (str: string): boolean => {
+    if (!str) return false;
+    const l = str.toLowerCase();
+    if (/\b\d{6}\b/.test(l)) return true; // 6-digit pin code
+    if (/\b(?:bangalore|bengaluru|chennai|mumbai|delhi|kolkata|hyderabad|karnataka|tamil\s*nadu|maharashtra|layout|nagar|street|road|floor|building|cross|btm|heron|attn:)\b/i.test(l)) return true;
+    return false;
+  };
+
   // 2. Supplier Name Detection
   let supplierName = '';
 
@@ -464,7 +478,7 @@ export function parseInvoiceMetadata(rawText: string, sparseText = ''): InvoiceM
   );
   if (forSignatoryMatch) {
     const cand = (forSignatoryMatch[1] || forSignatoryMatch[2] || '').trim();
-    if (cand.length > 3 && !/recipient|terms|conditions|payment|goods|bank|customer|buyer|signature/i.test(cand)) {
+    if (cand.length > 3 && !/recipient|terms|conditions|payment|goods|bank|customer|buyer|signature/i.test(cand) && !isAddressOrLocation(cand)) {
       supplierName = cand;
     }
   }
@@ -474,7 +488,7 @@ export function parseInvoiceMetadata(rawText: string, sparseText = ''): InvoiceM
     const brandMatch = fullText.match(/(?:=\s*)?([A-Za-z0-9&.,\- ]+?)\s*\n\s*(?:®\s*)*(?:Wholesale\s*Distributors|Distributors|Traders|Enterprises|Foods|Agency|Agencies|Wholesalers)/i);
     if (brandMatch) {
       const brand = brandMatch[1].trim().replace(/^[^a-zA-Z0-9]+/, '');
-      if (brand.length >= 3 && !/terms|invoice|bill\s*to/i.test(brand)) {
+      if (brand.length >= 3 && !/terms|invoice|bill\s*to/i.test(brand) && !isAddressOrLocation(brand)) {
         supplierName = `${brand} Wholesale Distributors`;
       }
     }
@@ -486,8 +500,9 @@ export function parseInvoiceMetadata(rawText: string, sparseText = ''): InvoiceM
       const line = lines[i];
       if (/^(?:\[?\s*(?:tax invoice|invoice|cash memo|bill of supply|original|duplicate|triplicate)|bringing energy)/i.test(line)) continue;
       if (/recipient/i.test(line)) continue;
+      if (isAddressOrLocation(line)) continue;
       const prefixMatch = line.match(/^(?:m\/s\.?|sold by|from|supplier|vendor|seller)\s*[:.-]?\s*([A-Za-z0-9&.,\- ]+)/i);
-      if (prefixMatch && prefixMatch[1].trim().length > 3) {
+      if (prefixMatch && prefixMatch[1].trim().length > 3 && !isAddressOrLocation(prefixMatch[1])) {
         supplierName = prefixMatch[1].trim();
         break;
       }
@@ -495,7 +510,7 @@ export function parseInvoiceMetadata(rawText: string, sparseText = ''): InvoiceM
         supplierName = line.replace(/^[^a-zA-Z0-9]+/, '').trim();
         break;
       }
-      if (line.length >= 4 && !line.includes(':') && !/gstin|pan|ph:|phone|date|invoice|bill\s*to/i.test(line) && /^[A-Za-z0-9&.,\- ]+$/.test(line)) {
+      if (line.length >= 4 && !line.includes(':') && !/gstin|pan|ph:|phone|date|invoice|bill\s*to/i.test(line) && /^[A-Za-z0-9&.,\- ]+$/.test(line) && !isAddressOrLocation(line)) {
         supplierName = line;
         break;
       }
@@ -964,6 +979,67 @@ export function detectTableColumns(
   };
 }
 
+// ── Product Row Sanitization & Validation ────────────────────────────────────
+export function isValidProductRow(item: ExtractedProductItem): boolean {
+  if (!item || !item.name) return false;
+  const name = item.name.trim();
+  const lower = name.toLowerCase();
+
+  // 1. Min name length & must contain letters
+  if (name.length < 2 || !/[a-zA-Z]/.test(name)) return false;
+
+  // 2. Reject if name matches bank details or payment metadata
+  if (
+    /\b(?:account\s*(?:no|num|number)?|a\/c|ifsc(?:\s*code)?|bank|state\s*bank|sbi|hdfc|icici|axis)\b/i.test(lower) ||
+    lower.includes('account no') ||
+    lower.includes('payment qr') ||
+    lower.includes('upi id') ||
+    lower.includes('@sbi')
+  ) {
+    return false;
+  }
+
+  // 3. Reject if name matches supplier / buyer / address lines
+  if (
+    lower.includes('bill to') ||
+    lower.includes('ship to') ||
+    lower.includes('consignee') ||
+    lower.includes('original for') ||
+    lower.includes('tax invoice') ||
+    lower.includes('heron 104') ||
+    lower.includes('btm bangalore') ||
+    lower.includes('btm layout') ||
+    lower.includes('bringing energy') ||
+    lower.includes('authorised signatory') ||
+    lower.includes('authorized signatory') ||
+    lower.includes('terms & conditions') ||
+    lower.includes('terms and conditions') ||
+    lower.includes('amount in words') ||
+    lower.includes('rupees only') ||
+    lower.includes('aadhaar number') ||
+    lower.includes('pan number')
+  ) {
+    return false;
+  }
+
+  // 4. Reject if name matches metadata labels
+  if (
+    /^(?:invoice\s*(?:no|date)|inv\s*no|date|gstin|pan|mobile|phone|email)\b/i.test(lower)
+  ) {
+    return false;
+  }
+
+  // 5. Cost price sanity: Reject astronomical cost prices like bank account numbers or phone numbers
+  const cost = parseFloat((item.costPrice || '0').replace(/,/g, ''));
+  if (!isNaN(cost) && cost > 100000) return false;
+
+  // 6. Quantity / stock sanity
+  const qty = parseFloat((item.openingStock || '0').replace(/,/g, ''));
+  if (!isNaN(qty) && qty > 100000) return false;
+
+  return true;
+}
+
 // ── Line Items Parser ─────────────────────────────────────────────────────────
 export function parseSparseTable(sparseText: string): ExtractedProductItem[] {
   if (!sparseText) return [];
@@ -1071,7 +1147,12 @@ export function parseSparseTable(sparseText: string): ExtractedProductItem[] {
     if (qtyMatch) {
       const qStr = qtyMatch[1].replace(/^S/i, '5');
       qty = qStr || '1';
-      if (qtyMatch[2]) uom = qtyMatch[2].toLowerCase();
+      if (qtyMatch[2]) {
+        const uRaw = qtyMatch[2].trim().toUpperCase();
+        if (uRaw === 'PKT') uom = 'PKT';
+        else if (uRaw === 'PAC') uom = 'PAC';
+        else uom = normalizeUom(uRaw, name);
+      }
     } else {
       const numMatch = rawQty.match(/([0-9]+)/);
       if (numMatch) qty = numMatch[1];
@@ -1099,7 +1180,7 @@ export function parseSparseTable(sparseText: string): ExtractedProductItem[] {
       id: `inv-item-${rowSeq++}`,
       name,
       hsn,
-      uom: uom === 'pkt' ? 'pack' : (uom === 'pac' ? 'pack' : uom),
+      uom: uom === 'PKT' ? 'PKT' : (uom === 'PAC' ? 'PAC' : (uom.toLowerCase() === 'pkt' ? 'PKT' : (uom.toLowerCase() === 'pac' ? 'PAC' : normalizeUom(uom, name)))),
       costPrice,
       gstRate,
       openingStock: qty,
@@ -1113,7 +1194,7 @@ export function parseSparseTable(sparseText: string): ExtractedProductItem[] {
     });
   }
 
-  return items;
+  return items.filter(isValidProductRow);
 }
 
 export function parseLineItems(
@@ -1395,11 +1476,13 @@ export function parseLineItems(
     items.push(currentItem);
   }
 
-  if (items.length === 0 && sparseText) {
-    return parseSparseTable(sparseText);
+  const validItems = items.filter(isValidProductRow);
+
+  if (validItems.length === 0 && sparseText) {
+    return parseSparseTable(sparseText).filter(isValidProductRow);
   }
 
-  return items;
+  return validItems;
 }
 
 // ── Cross-Reference Catalog & Fill Selling Prices ────────────────────────────
