@@ -2545,11 +2545,19 @@ export const submitExchange = (data: {
     body: JSON.stringify(data),
   });
 
-export const fetchDayClosingPreview = (params: { bdate?: string; date?: string; branchId?: string } = {}) => {
+export const fetchDayClosingPreview = (params: {
+  bdate?: string;
+  date?: string;
+  branchId?: string;
+  shiftId?: string;
+  cashierId?: string;
+} = {}) => {
   const q = new URLSearchParams();
   const bdate = params.bdate || params.date;
   if (bdate) q.set('bdate', bdate);
   if (params.branchId) q.set('branchId', params.branchId);
+  if (params.shiftId) q.set('shiftId', params.shiftId);
+  if (params.cashierId) q.set('cashierId', params.cashierId);
   return api<any>(`/api/day-closing/preview?${q.toString()}`);
 };
 
@@ -2557,20 +2565,102 @@ export const submitDayClosing = (data: {
   bdate?: string;
   date?: string;
   branchId?: string;
+  shiftId?: string;
   actualCashMinor?: number;
   actualClosingCashMinor?: number;
   remarks?: string;
   closingRemarks?: string;
+  tenderReconciliation?: Record<string, { expectedMinor: number; actualMinor: number; differenceMinor: number }>;
 }) =>
   api<{ success: boolean; dayClosing: any }>('/api/day-closing/submit', {
     method: 'POST',
     body: JSON.stringify({
       bdate: data.bdate || data.date,
       branchId: data.branchId,
+      shiftId: data.shiftId,
       actualCashMinor: data.actualCashMinor ?? data.actualClosingCashMinor,
       remarks: data.remarks || data.closingRemarks,
+      tenderReconciliation: data.tenderReconciliation,
     }),
   });
+
+export const approveDayClosing = (closingId: string) =>
+  api<{ success: boolean; dayClosing: any }>(`/api/day-closing/${closingId}/approve`, {
+    method: 'POST',
+  });
+
+export const reopenDayClosing = (closingId: string, reason: string) =>
+  api<{ success: boolean; dayClosing: any }>(`/api/day-closing/${closingId}/reopen`, {
+    method: 'POST',
+    body: JSON.stringify({ reason }),
+  });
+
+export const fetchDayClosingComparison = (params: { branchId?: string; date?: string } = {}) => {
+  const q = new URLSearchParams();
+  if (params.branchId) q.set('branchId', params.branchId);
+  if (params.date) q.set('date', params.date);
+  return api<{
+    bdate: string;
+    previousDate: string;
+    branchId: string;
+    metrics: Record<string, { current: number; previous: number; diff: number; growthPct: number }>;
+    last7DaysTrend: Array<{ date: string; grossSalesMinor: number; netSalesMinor: number; grossProfitMinor: number; invoicesCount: number }>;
+  }>(`/api/day-closing/comparison?${q.toString()}`);
+};
+
+export const fetchDayClosingAnalytics = (params: {
+  branchId?: string;
+  startDate?: string;
+  endDate?: string;
+  comparisonMode?: 'previous_period' | 'same_period_last_year' | 'none';
+} = {}) => {
+  const q = new URLSearchParams();
+  if (params.branchId) q.set('branchId', params.branchId);
+  if (params.startDate) q.set('startDate', params.startDate);
+  if (params.endDate) q.set('endDate', params.endDate);
+  if (params.comparisonMode) q.set('comparisonMode', params.comparisonMode);
+  return api<{
+    period: { startDate: string; endDate: string; comparisonMode: string; daysInPeriod: number };
+    current: any;
+    comparison: any;
+    dailySeries: Array<{ date: string; grossSalesMinor: number; netSalesMinor: number; grossProfitMinor: number; invoicesCount: number }>;
+  }>(`/api/day-closing/analytics?${q.toString()}`);
+};
+
+export const fetchProductProfitability = (params: {
+  branchId?: string;
+  startDate?: string;
+  endDate?: string;
+  filter?: 'top_selling' | 'highest_revenue' | 'highest_profit' | 'lowest_profit' | 'loss_making' | 'most_returned';
+  limit?: number;
+} = {}) => {
+  const q = new URLSearchParams();
+  if (params.branchId) q.set('branchId', params.branchId);
+  if (params.startDate) q.set('startDate', params.startDate);
+  if (params.endDate) q.set('endDate', params.endDate);
+  if (params.filter) q.set('filter', params.filter);
+  if (params.limit) q.set('limit', String(params.limit));
+  return api<{
+    period: { startDate: string; endDate: string; filter: string };
+    totalProductsCount: number;
+    products: Array<{
+      id: string;
+      barcode: string;
+      name: string;
+      category_name: string;
+      qty_sold: number;
+      qty_returned: number;
+      net_qty: number;
+      gross_sales_minor: number;
+      returns_minor: number;
+      net_sales_minor: number;
+      cogs_minor: number;
+      gross_profit_minor: number;
+      gross_margin_pct: number;
+      return_rate_pct: number;
+    }>;
+  }>(`/api/day-closing/product-profitability?${q.toString()}`);
+};
 
 export const fetchDayClosingHistory = (params: { branchId?: string; limit?: number } = {}) => {
   const q = new URLSearchParams();
