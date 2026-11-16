@@ -142,6 +142,12 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
     return isCashierUser ? user.id : '';
   });
 
+  useEffect(() => {
+    if (isCashierUser && selectedCashierId !== user.id) {
+      setSelectedCashierId(user.id);
+    }
+  }, [user.id, isCashierUser]);
+
   const fmt = (minor: number = 0) =>
     `₹${((minor || 0) / 100).toLocaleString('en-IN', {
       minimumFractionDigits: 2,

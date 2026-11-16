@@ -18,7 +18,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   onBackToHome,
   onRequirePasswordChange,
 }) => {
-  const [selectedRole, setSelectedRole] = useState<'super_admin' | 'store_manager' | 'cashier'>('super_admin');
+  const [selectedRole, setSelectedRole] = useState<'super_admin' | 'store_manager' | 'cashier' | 'cashier2'>('super_admin');
   const [email, setEmail] = useState('demo@billing.local');
   const [password, setPassword] = useState('Password123!');
   const [showPassword, setShowPassword] = useState(false);
@@ -26,7 +26,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   const [error, setError] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleRoleTabChange = (role: 'super_admin' | 'store_manager' | 'cashier') => {
+  const handleRoleTabChange = (role: 'super_admin' | 'store_manager' | 'cashier' | 'cashier2') => {
     setSelectedRole(role);
     setError('');
     if (role === 'super_admin') {
@@ -34,6 +34,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       setPassword('Password123!');
     } else if (role === 'store_manager') {
       setEmail('manager@billing.local');
+      setPassword('Password123!');
+    } else if (role === 'cashier2') {
+      setEmail('lakshmi@billing.local');
       setPassword('Password123!');
     } else {
       setEmail('cashier@billing.local');
@@ -419,7 +422,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             {/* Quick 1-Click Role Logins */}
             <div className="demo-accounts-box" style={{ marginTop: '1.25rem' }}>
               <div className="demo-accounts-title">1-Click Role Demonstrations</div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px', marginTop: '6px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px', marginTop: '6px' }}>
                 <button
                   type="button"
                   onClick={() => handleRoleTabChange('super_admin')}
@@ -440,7 +443,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   title="Super Admin (demo@billing.local)"
                 >
                   <span>👑 Admin</span>
-                  <span style={{ fontSize: '0.65rem', color: '#6366f1', fontWeight: 600 }}>demo@billing.local</span>
+                  <span style={{ fontSize: '0.62rem', color: '#6366f1', fontWeight: 600 }}>demo@billing.local</span>
                 </button>
 
                 <button
@@ -463,7 +466,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   title="Store Manager (manager@billing.local)"
                 >
                   <span>🏪 Manager</span>
-                  <span style={{ fontSize: '0.65rem', color: '#0284c7', fontWeight: 600 }}>manager@billing.local</span>
+                  <span style={{ fontSize: '0.62rem', color: '#0284c7', fontWeight: 600 }}>manager@billing.local</span>
                 </button>
 
                 <button
@@ -483,10 +486,33 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                     alignItems: 'center',
                     gap: '2px',
                   }}
-                  title="Cashier (cashier@billing.local)"
+                  title="Cashier 1 (cashier@billing.local)"
                 >
-                  <span>💳 Cashier</span>
-                  <span style={{ fontSize: '0.65rem', color: '#059669', fontWeight: 600 }}>cashier@billing.local</span>
+                  <span>💳 Cashier 1</span>
+                  <span style={{ fontSize: '0.62rem', color: '#059669', fontWeight: 600 }}>cashier@billing.local</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleRoleTabChange('cashier2')}
+                  style={{
+                    padding: '8px 4px',
+                    borderRadius: '8px',
+                    border: '1px solid #fed7aa',
+                    background: selectedRole === 'cashier2' ? '#fff7ed' : '#ffffff',
+                    color: '#c2410c',
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '2px',
+                  }}
+                  title="Cashier 2 - Lakshmi (lakshmi@billing.local)"
+                >
+                  <span>💳 Cashier 2</span>
+                  <span style={{ fontSize: '0.62rem', color: '#ea580c', fontWeight: 600 }}>lakshmi@billing.local</span>
                 </button>
               </div>
             </div>
