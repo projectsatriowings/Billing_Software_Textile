@@ -88,6 +88,7 @@ export function registerInvoices(r: Router) {
         location: r.location || 'MAIN',
         counter: r.counter || 'COUNTER-1',
         shareToken: r.shareToken ?? r.share_token,
+        invoiceType: r.invoiceType ?? r.invoice_type ?? 'retail',
       })),
     };
   });
@@ -228,6 +229,7 @@ export function registerInvoices(r: Router) {
         whatsappLastLanguage: inv.whatsappLastLanguage ?? inv.whatsapp_last_language,
         whatsappLastSentBy: inv.whatsappLastSentBy ?? inv.whatsapp_last_sent_by,
         shareToken: inv.shareToken ?? inv.share_token,
+        invoiceType: inv.invoiceType ?? inv.invoice_type ?? 'retail',
         tender: (typeof inv.custom === 'string' ? JSON.parse(inv.custom || '{}') : (inv.custom || {}))?.tender || null,
       },
       lines: lines.map((l: any) => ({
@@ -925,6 +927,7 @@ export function registerInvoices(r: Router) {
       invoiceId,
       number: assignedNumber,
       invoiceType: isWholesale ? 'wholesale' : 'retail',
+      shareToken,
       totalMinor: calculated.totalMinor,
       paidMinor: totalPaidMinor,
       balanceMinor: Math.max(0, calculated.totalMinor - totalPaidMinor),
@@ -938,6 +941,7 @@ export function registerInvoices(r: Router) {
         number: assignedNumber,
         totalMinor: calculated.totalMinor,
         invoiceType: isWholesale ? 'wholesale' : 'retail',
+        shareToken,
         customerName: customerName || null,
         customerPhone: customerPhone || null,
         customerGstin: customerGstin || null,
@@ -980,8 +984,8 @@ export function registerInvoices(r: Router) {
     );
     const payments = await ctx.db.query('SELECT * FROM payments WHERE invoice_id = ? ORDER BY created_at ASC', [inv.id]);
 
-    const isWholesale = (inv.invoice_type === 'wholesale' || inv.invoiceType === 'wholesale' || ctx.query.paper === 'wholesale_a4' || ctx.query.template === 'wholesale_a4');
-    const paper = isWholesale ? 'wholesale_a4' : ((ctx.query.paper === 'a4' || ctx.query.paper === 'thermal58') ? ctx.query.paper : 'thermal80');
+    const rawType = inv.invoiceType ?? inv.invoice_type;
+    const isWholesale = rawType === 'wholesale';
     const autoPrint = ctx.query.autoprint === 'true';
 
     const custName = inv.customerName ?? inv.customer_name;
@@ -999,6 +1003,9 @@ export function registerInvoices(r: Router) {
     const wholesaleProfile = (isWholesale && profileSnapshot) ? profileSnapshot : (shopProfiles?.wholesale || {});
     const retailProfile = (!isWholesale && profileSnapshot) ? profileSnapshot : (shopProfiles?.retail || {});
     const activeProfile = isWholesale ? wholesaleProfile : retailProfile;
+    const paper = isWholesale
+      ? 'wholesale_a4'
+      : ((ctx.query.paper === 'thermal58' || retailProfile?.paper === 'thermal58') ? 'thermal58' : 'thermal80');
 
     const customFields: { label: string; value: string }[] = [];
     const pId = inv.partyId ?? inv.party_id;
@@ -1058,6 +1065,7 @@ export function registerInvoices(r: Router) {
     const printable: PrintableBill = {
       number: inv.number,
       kind: 'sale',
+      invoiceType: isWholesale ? 'wholesale' : 'retail',
       dateText: new Date(createdAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' }),
       shop: {
         name: isWholesale
@@ -1257,6 +1265,7 @@ export function registerInvoices(r: Router) {
     const rawShopProfiles = shop.invoiceProfiles ?? shop.invoice_profiles;
     const shopProfiles = typeof rawShopProfiles === 'string' ? JSON.parse(rawShopProfiles) : (rawShopProfiles || null);
     const wholesaleProfile = shopProfiles?.wholesale;
+    const retailProfile = shopProfiles?.retail;
     const wholesaleDisplayName = (
       wholesaleProfile?.displayName ||
       shop.wholesaleBusinessName ||
@@ -1287,6 +1296,7 @@ export function registerInvoices(r: Router) {
     const printable: PrintableBill = {
       number: inv.number,
       kind: 'sale',
+      invoiceType: isWholesale ? 'wholesale' : 'retail',
       dateText: new Date(createdAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' }),
       shop: {
         name: isWholesale
@@ -1373,7 +1383,8 @@ export function registerInvoices(r: Router) {
       qrSvgMarkup = qrSvg(upi, { size: 120 });
     }
 
-    const html = renderBillDoc(printable, { ...DEFAULT_CONFIG.template, paper: isWholesale ? 'wholesale_a4' : 'a4' }, { qrSvg: qrSvgMarkup, qrCaption: 'Scan UPI to pay balance', autoPrint: false });
+    const paper = isWholesale ? 'wholesale_a4' : ((retailProfile?.paper === 'thermal58') ? 'thermal58' : 'thermal80');
+    const html = renderBillDoc(printable, { ...DEFAULT_CONFIG.template, paper }, { qrSvg: qrSvgMarkup, qrCaption: 'Scan UPI to pay balance', autoPrint: false });
     return new HtmlResponse(html);
   });
 }

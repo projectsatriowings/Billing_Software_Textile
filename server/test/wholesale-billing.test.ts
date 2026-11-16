@@ -554,3 +554,104 @@ test('5. Wholesale Billing displays customer actual details across invoice gener
   assert.ok(unregPrintRes.text.includes('Unregistered'), 'Unregistered customer must show Unregistered for GST');
   assert.equal(unregPrintRes.text.includes('Cash Customer'), false, 'Must NOT display Cash Customer for Balaji');
 });
+
+test('6. Invoice template selection strictly isolates Retail (Thermal) and Wholesale (A4)', async () => {
+  // 1. Create a retail invoice
+  const retRes = await api('POST', '/api/invoices', {}, {
+    invoiceType: 'retail',
+    branchId: BRANCH_ID,
+    customerName: 'Retail Buyer',
+    customerPhone: '9840199999',
+    lines: [
+      {
+        name: 'Sunflower Oil 1L',
+        qtyMilli: 2000,
+        priceMinor: 14000,
+        taxRateBp: 500,
+        unit: 'Pcs',
+      },
+    ],
+    payments: [{ mode: 'cash', amountMinor: 28000 }],
+  }, ownerToken);
+  assert.equal(retRes.status, 200);
+  const retailInv = retRes.body.invoice || retRes.body;
+
+  // 2. Create a wholesale invoice
+  const whRes = await api('POST', '/api/invoices', {}, {
+    invoiceType: 'wholesale',
+    branchId: BRANCH_ID,
+    customerName: 'B2B Wholesale Traders',
+    customerPhone: '9840188888',
+    lines: [
+      {
+        name: 'Rice 25kg Bulk',
+        qtyMilli: 250000,
+        priceMinor: 120000,
+        taxRateBp: 500,
+        unit: 'Bag',
+      },
+    ],
+    payments: [{ mode: 'bank', amountMinor: 1260000 }],
+  }, ownerToken);
+  assert.equal(whRes.status, 200);
+  const whInv = whRes.body.invoice || whRes.body;
+
+  // 3. Verify GET /api/invoices list exposes invoiceType
+  const listRes = await api('GET', '/api/invoices?limit=10', {}, undefined, ownerToken);
+  assert.equal(listRes.status, 200);
+  const foundRetailInList = listRes.body.invoices.find((i: any) => i.id === retailInv.id);
+  const foundWhInList = listRes.body.invoices.find((i: any) => i.id === whInv.id);
+  assert.ok(foundRetailInList);
+  assert.equal(foundRetailInList.invoiceType, 'retail');
+  assert.ok(foundWhInList);
+  assert.equal(foundWhInList.invoiceType, 'wholesale');
+
+  // 4. Verify GET /api/invoices/:id detail exposes invoiceType
+  const getRetail = await api('GET', `/api/invoices/${retailInv.id}`, {}, undefined, ownerToken);
+  assert.equal(getRetail.status, 200);
+  assert.equal(getRetail.body.invoice.invoiceType, 'retail');
+  const getWh = await api('GET', `/api/invoices/${whInv.id}`, {}, undefined, ownerToken);
+  assert.equal(getWh.status, 200);
+  assert.equal(getWh.body.invoice.invoiceType, 'wholesale');
+
+  // 5. Verify Retail Print generates thermal receipt (even if query requests ?paper=a4)
+  const retPrint = await api('GET', `/api/invoices/${retailInv.id}/print`, {}, undefined, ownerToken);
+  assert.equal(retPrint.status, 200);
+  assert.ok(retPrint.text.includes('@page{size:80mm auto;margin:0}'), 'Retail print must use 80mm thermal page');
+  assert.ok(retPrint.text.includes('th-bill-table'), 'Retail print must use thermal bill table');
+  assert.equal(retPrint.text.includes('copy wholesale-a4'), false, 'Retail print must NEVER use wholesale-a4');
+  assert.equal(retPrint.text.includes('@page { size: A4 portrait; margin: 8mm; }'), false, 'Retail print must NEVER use A4 page');
+
+  // Pass ?paper=a4 to retail print -> must STILL force thermal receipt
+  const retPrintA4Query = await api('GET', `/api/invoices/${retailInv.id}/print?paper=a4`, {}, undefined, ownerToken);
+  assert.equal(retPrintA4Query.status, 200);
+  assert.ok(retPrintA4Query.text.includes('@page{size:80mm auto;margin:0}'), 'Retail print must ignore ?paper=a4 and remain thermal');
+  assert.equal(retPrintA4Query.text.includes('copy wholesale-a4'), false);
+
+  // 6. Verify Wholesale Print generates Wholesale A4 Tax Invoice (even if query requests ?paper=thermal80)
+  const whPrint = await api('GET', `/api/invoices/${whInv.id}/print`, {}, undefined, ownerToken);
+  assert.equal(whPrint.status, 200);
+  assert.ok(whPrint.text.includes('copy wholesale-a4'), 'Wholesale print must use wholesale-a4 layout');
+  assert.ok(whPrint.text.includes('@page { size: A4 portrait; margin: 8mm; }'), 'Wholesale print must use A4 page');
+  assert.equal(whPrint.text.includes('th-bill-table'), false, 'Wholesale print must NEVER use thermal table');
+
+  const whPrintThermalQuery = await api('GET', `/api/invoices/${whInv.id}/print?paper=thermal80`, {}, undefined, ownerToken);
+  assert.equal(whPrintThermalQuery.status, 200);
+  assert.ok(whPrintThermalQuery.text.includes('copy wholesale-a4'), 'Wholesale print must ignore ?paper=thermal80 and remain A4');
+  assert.equal(whPrintThermalQuery.text.includes('th-bill-table'), false);
+
+  // 7. Verify Public Share URL /b/:token respects invoice type
+  const retShareToken = retailInv.shareToken || getRetail.body.invoice.shareToken;
+  assert.ok(retShareToken, 'Retail invoice must have shareToken');
+  const retPublic = await api('GET', `/b/${retShareToken}`);
+  assert.equal(retPublic.status, 200);
+  assert.ok(retPublic.text.includes('@page{size:80mm auto;margin:0}'), 'Public bill for retail must be thermal');
+  assert.equal(retPublic.text.includes('copy wholesale-a4'), false);
+
+  const whShareToken = whInv.shareToken || getWh.body.invoice.shareToken;
+  assert.ok(whShareToken, 'Wholesale invoice must have shareToken');
+  const whPublic = await api('GET', `/b/${whShareToken}`);
+  assert.equal(whPublic.status, 200);
+  assert.ok(whPublic.text.includes('copy wholesale-a4'), 'Public bill for wholesale must be wholesale A4');
+  assert.equal(whPublic.text.includes('th-bill-table'), false);
+});

@@ -47,6 +47,7 @@ export interface PrintableWholesaleMeta {
 export interface PrintableBill {
   number: string;
   kind: 'sale' | 'credit_note';
+  invoiceType?: 'retail' | 'wholesale';
   status?: string;
   dateText: string; // already formatted, e.g. 16 Oct 2026, 11:45
   shop: { name: string; address?: string | null; phone?: string | null; gstin?: string | null; stateName?: string | null; upiId?: string | null; logoUrl?: string | null };
@@ -940,16 +941,16 @@ table{border-collapse:collapse;width:100%}table.items th{background:#111;color:#
 /** Full HTML document for one bill (all requested copies). Used for printing, the public bill page and PDF-by-browser. */
 export function renderBillDoc(bill: PrintableBill, tpl: PrintTemplate, opts: RenderOpts = {}): string {
   const L = LABELS[tpl.language] ?? LABELS.en;
-  const isWholesale = bill.wholesale?.invoiceType === 'wholesale' || tpl.paper === 'wholesale_a4';
-  const thermal = !isWholesale && (tpl.paper === 'thermal58' || tpl.paper === 'thermal80');
+  const isWholesale = bill.invoiceType === 'wholesale'
+    || (!bill.invoiceType && (bill.wholesale?.invoiceType === 'wholesale' || tpl.paper === 'wholesale_a4'));
+  const effectivePaper = isWholesale ? 'wholesale_a4' : (tpl.paper === 'thermal58' ? 'thermal58' : 'thermal80');
+  const thermal = !isWholesale;
   const labels = ['', L.copy2, L.copy3];
   const copies = Array.from({ length: tpl.copies }, (_, i) => (i === 0 ? (tpl.copies > 1 ? L.original : '') : labels[i]));
   const sections = copies.map((c) => {
-    if (thermal) return thermalCopy(bill, tpl, L, c, opts);
-    if (isWholesale) return wholesaleA4Copy(bill, tpl, L, c, opts);
-    return a4Copy(bill, tpl, L, c, opts);
+    if (thermal) return thermalCopy(bill, { ...tpl, paper: effectivePaper }, L, c, opts);
+    return wholesaleA4Copy(bill, { ...tpl, paper: effectivePaper }, L, c, opts);
   }).join('\n');
-  const effectivePaper = isWholesale ? 'wholesale_a4' : tpl.paper;
   return `<!doctype html><html lang="${tpl.language}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(bill.number)}</title><style>${CSS(effectivePaper)}</style></head><body>${sections}${opts.autoPrint ? '<script>window.addEventListener("load",function(){setTimeout(function(){window.focus();window.print()},250)})</script>' : ''}</body></html>`;
 }
 

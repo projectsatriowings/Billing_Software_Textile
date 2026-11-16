@@ -3644,8 +3644,8 @@ export function App() {
       showToast('No past bills available to reprint');
       return;
     }
-    const lastInvoice = invoices[0];
-    setPrintModalInvoiceId(lastInvoice.id);
+    const lastRetail = invoices.find(inv => (inv.invoiceType || (inv as any).invoice_type) !== 'wholesale') || invoices[0];
+    setPrintModalInvoiceId(lastRetail.id);
   };
 
   const handleAddCustomItem = (e: React.FormEvent) => {
@@ -4115,6 +4115,7 @@ export function App() {
         method: 'POST',
         body: JSON.stringify({
           lines,
+          invoiceType: 'retail',
           location: user?.assignedLocation || currentBranchCode || undefined,
           counter: selectedCounter,
           counterId: checkoutCounterId || selectedCounterId || undefined,
@@ -15029,54 +15030,90 @@ export function App() {
         </main>
 
         {/* PRINT RECEIPT MODAL */}
-        {printModalInvoiceId && (
-          <div className="modal-overlay">
-            <div className="modal-content" style={{ maxWidth: '440px', background: '#ffffff', color: '#111827' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem', borderBottom: '1px solid #e5e7eb', alignItems: 'center' }}>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#111827' }}>Invoice Receipt Preview</h3>
-                <button
-                  style={{ background: 'none', border: 'none', fontSize: '1.25rem', cursor: 'pointer', color: '#6b7280' }}
-                  onClick={() => setPrintModalInvoiceId(null)}
-                >
-                  ✕
-                </button>
-              </div>
-              <div style={{ padding: '0.5rem', maxHeight: '520px', overflowY: 'auto' }}>
-                <iframe
-                  src={`/api/invoices/${printModalInvoiceId}/print?paper=thermal80`}
-                  style={{ width: '100%', height: '480px', border: 'none' }}
-                  title="Thermal Receipt"
-                />
-              </div>
-              <div style={{ padding: '0.75rem 1rem', display: 'flex', gap: '0.5rem', borderTop: '1px solid #e5e7eb' }}>
-                <a
-                  href={`/api/invoices/${printModalInvoiceId}/print?paper=thermal80&autoprint=true`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="btn btn-primary"
-                  style={{ flex: 1, textDecoration: 'none', textAlign: 'center' }}
-                >
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><PrinterIcon size={12} /> Thermal</span> Slip
-                </a>
-                <a
-                  href={`/api/invoices/${printModalInvoiceId}/print?paper=a4`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="btn btn-secondary"
-                  style={{ flex: 1, textDecoration: 'none', textAlign: 'center' }}
-                >
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><FileTextIcon size={12} /> A4</span> GST Copy
-                </a>
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => setPrintModalInvoiceId(null)}
-                >
-                  Close
-                </button>
+        {printModalInvoiceId && (() => {
+          const targetInv = invoices.find(i => i.id === printModalInvoiceId);
+          const isTargetWholesale = (targetInv?.invoiceType || (targetInv as any)?.invoice_type) === 'wholesale';
+          return (
+            <div className="modal-overlay">
+              <div
+                className="modal-content"
+                style={{
+                  maxWidth: isTargetWholesale ? '920px' : '440px',
+                  width: '95%',
+                  background: '#ffffff',
+                  color: '#111827',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem', borderBottom: '1px solid #e5e7eb', alignItems: 'center' }}>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#111827' }}>
+                    {isTargetWholesale
+                      ? `Wholesale Tax Invoice: ${targetInv?.number || ''}`
+                      : 'Retail Thermal Receipt Preview'}
+                  </h3>
+                  <button
+                    style={{ background: 'none', border: 'none', fontSize: '1.25rem', cursor: 'pointer', color: '#6b7280' }}
+                    onClick={() => setPrintModalInvoiceId(null)}
+                  >
+                    ✕
+                  </button>
+                </div>
+                <div style={{ padding: '0.5rem', maxHeight: isTargetWholesale ? '75vh' : '520px', overflowY: 'auto' }}>
+                  <iframe
+                    src={
+                      isTargetWholesale
+                        ? `/api/invoices/${printModalInvoiceId}/print?paper=wholesale_a4`
+                        : `/api/invoices/${printModalInvoiceId}/print?paper=thermal80`
+                    }
+                    style={{ width: '100%', height: isTargetWholesale ? '680px' : '480px', border: 'none' }}
+                    title={isTargetWholesale ? 'Wholesale A4 Tax Invoice' : 'Thermal Receipt'}
+                  />
+                </div>
+                <div style={{ padding: '0.75rem 1rem', display: 'flex', gap: '0.5rem', borderTop: '1px solid #e5e7eb' }}>
+                  {isTargetWholesale ? (
+                    <>
+                      <a
+                        href={`/api/invoices/${printModalInvoiceId}/print?paper=wholesale_a4&autoprint=true`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="btn btn-primary"
+                        style={{ flex: 1, textDecoration: 'none', textAlign: 'center' }}
+                      >
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><PrinterIcon size={12} /> Print A4 Invoice</span>
+                      </a>
+                      <a
+                        href={`/api/invoices/${printModalInvoiceId}/print?paper=wholesale_a4`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="btn btn-secondary"
+                        style={{ flex: 1, textDecoration: 'none', textAlign: 'center' }}
+                      >
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><FileTextIcon size={12} /> Download / View</span>
+                      </a>
+                    </>
+                  ) : (
+                    <>
+                      <a
+                        href={`/api/invoices/${printModalInvoiceId}/print?paper=thermal80&autoprint=true`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="btn btn-primary"
+                        style={{ flex: 1, textDecoration: 'none', textAlign: 'center' }}
+                      >
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><PrinterIcon size={12} /> Print Thermal Receipt</span>
+                      </a>
+                    </>
+                  )}
+                  <button
+                    className="btn btn-secondary"
+                    onClick={() => setPrintModalInvoiceId(null)}
+                  >
+                    Close
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* CASHIER KEYBOARD SHORTCUTS CHEATSHEET MODAL */}
         {showShortcutsModal && (
@@ -19458,23 +19495,19 @@ export function App() {
                         <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
                         <rect x="6" y="14" width="12" height="8"></rect>
                       </svg>
-                      <span>Print Thermal Slip</span>
+                      <span>Print Thermal Receipt</span>
                     </a>
-                    <a
-                      href={`/api/invoices/${checkoutSuccess.invoiceId}/print?paper=a4`}
-                      target="_blank"
-                      rel="noreferrer"
+                    <button
+                      type="button"
                       className="btn btn-secondary checkout-action-btn"
+                      onClick={() => setPrintModalInvoiceId(checkoutSuccess.invoiceId)}
                     >
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                        <polyline points="14 2 14 8 20 8"></polyline>
-                        <line x1="16" y1="13" x2="8" y2="13"></line>
-                        <line x1="16" y1="17" x2="8" y2="17"></line>
-                        <polyline points="10 9 9 9 8 9"></polyline>
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
                       </svg>
-                      <span>View A4 GST PDF</span>
-                    </a>
+                      <span>Preview Receipt</span>
+                    </button>
                   </div>
 
                   {/* Start New Bill */}
