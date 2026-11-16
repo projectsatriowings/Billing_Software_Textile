@@ -8270,17 +8270,42 @@ export function App() {
                         <div className="terminal-actions">
                           <button
                             type="button"
-                            className="bento-hold-cart-btn"
-                            style={{ background: '#4f46e5', color: '#ffffff', borderColor: '#4338ca', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                            className="bento-exchange-btn"
+                            style={{
+                              background: '#4f46e5',
+                              color: '#ffffff',
+                              border: '1px solid #4338ca',
+                              padding: '0.36rem 0.75rem',
+                              borderRadius: '8px',
+                              fontSize: '0.8rem',
+                              fontWeight: 750,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              cursor: 'pointer',
+                              boxShadow: '0 2px 4px rgba(79, 70, 229, 0.2)',
+                            }}
                             onClick={() => setShowReturnExchangeModal(true)}
-                            title="Sales Return or Exchange (F3)"
+                            title="Scan bill barcode or search by phone to return/exchange items (F3)"
                           >
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                              <polyline points="1 4 1 10 7 10"></polyline>
-                              <polyline points="23 20 23 14 17 14"></polyline>
-                              <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
+                              <polyline points="23 4 23 10 17 10"></polyline>
+                              <polyline points="1 20 1 14 7 14"></polyline>
+                              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
                             </svg>
                             <span>Return / Exchange</span>
+                          </button>
+                          <button
+                            type="button"
+                            className="bento-hold-cart-btn"
+                            onClick={handleHoldOrder}
+                            title="Hold or restore order"
+                          >
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                              <rect x="6" y="4" width="4" height="16" rx="1"></rect>
+                              <rect x="14" y="4" width="4" height="16" rx="1"></rect>
+                            </svg>
+                            <span>{heldOrders.length > 0 ? `Held (${heldOrders.length})` : 'Hold'}</span>
                           </button>
                           <button
                             type="button"
@@ -8304,53 +8329,6 @@ export function App() {
                               <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                             </svg>
                             <span>Clear</span>
-                          </button>
-                          <button
-                            type="button"
-                            className="bento-hold-cart-btn"
-                            onClick={handleHoldOrder}
-                            title="Hold or restore order"
-                          >
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                              <rect x="6" y="4" width="4" height="16" rx="1"></rect>
-                              <rect x="14" y="4" width="4" height="16" rx="1"></rect>
-                            </svg>
-                            <span>{heldOrders.length > 0 ? `Held (${heldOrders.length})` : 'Hold'}</span>
-                          </button>
-                          <button
-                            type="button"
-                            className="bento-exchange-btn"
-                            onClick={() => {
-                              setShowPosExchangeModal(true);
-                              setPosExchangeQuery('');
-                              setPosExchangeInvoices([]);
-                              setPosExchangeSelectedInvoice(null);
-                              setPosExchangeReturnInfo(null);
-                              setPosExchangeLinesInput({});
-                              setPosExchangeError(null);
-                            }}
-                            title="Return or exchange past items using Bill Barcode or Customer Phone Number"
-                            style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '5px',
-                              padding: '0.32rem 0.65rem',
-                              borderRadius: '8px',
-                              border: '1px solid #c7d2fe',
-                              background: '#eef2ff',
-                              color: '#4338ca',
-                              fontSize: '0.78rem',
-                              fontWeight: 700,
-                              cursor: 'pointer',
-                              transition: 'all 0.15s ease',
-                            }}
-                          >
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
-                              <polyline points="23 4 23 10 17 10"></polyline>
-                              <polyline points="1 20 1 14 7 14"></polyline>
-                              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-                            </svg>
-                            <span>Exchange / Return</span>
                           </button>
                         </div>
                       </div>
@@ -10381,369 +10359,6 @@ export function App() {
                         >
                           + Add New Customer
                         </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* POS Return & Exchange Modal (Way 2: Barcode & Phone Number lookup only) */}
-                {showPosExchangeModal && (
-                  <div className="modal-overlay" style={{ zIndex: 120 }} onClick={() => setShowPosExchangeModal(false)}>
-                    <div
-                      className="modal-content"
-                      style={{
-                        maxWidth: posExchangeSelectedInvoice ? '760px' : '560px',
-                        width: '94%',
-                        borderRadius: '16px',
-                        padding: '1.5rem',
-                        background: '#ffffff',
-                        boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
-                        maxHeight: '90vh',
-                        display: 'flex',
-                        flexDirection: 'column',
-                      }}
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {/* Modal Header */}
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.9rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                          <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: '#e0e7ff', color: '#4f46e5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
-                              <polyline points="23 4 23 10 17 10"></polyline>
-                              <polyline points="1 20 1 14 7 14"></polyline>
-                              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-                            </svg>
-                          </div>
-                          <div>
-                            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 750, color: '#0f172a' }}>POS Return & Exchange</h3>
-                            <span style={{ fontSize: '0.78rem', color: '#64748b' }}>
-                              Search original bill using Bill Barcode/Number or Customer Mobile Number
-                            </span>
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setShowPosExchangeModal(false)}
-                          style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                          title="Close"
-                        >
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                            <line x1="18" y1="6" x2="6" y2="18"></line>
-                            <line x1="6" y1="6" x2="18" y2="18"></line>
-                          </svg>
-                        </button>
-                      </div>
-
-                      {/* Modal Body */}
-                      <div style={{ overflowY: 'auto', flex: 1, paddingRight: '4px' }}>
-                        {/* Search Input Bar (Strictly Barcode / Bill # or Customer Mobile Number) */}
-                        <div style={{ marginBottom: '1.25rem' }}>
-                          <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 650, color: '#334155', marginBottom: '0.4rem' }}>
-                            Bill Barcode / Bill Number or Customer Mobile Number
-                          </label>
-                          <div style={{ display: 'flex', gap: '0.5rem' }}>
-                            <div style={{ position: 'relative', flex: 1 }}>
-                              <input
-                                type="text"
-                                autoFocus
-                                className="form-input"
-                                style={{ paddingLeft: '2.5rem', fontSize: '0.92rem', width: '100%', boxSizing: 'border-box', fontWeight: 600 }}
-                                placeholder="Scan bill barcode, enter WH-1005 or 10-digit mobile number..."
-                                value={posExchangeQuery}
-                                onChange={(e) => setPosExchangeQuery(e.target.value)}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') {
-                                    e.preventDefault();
-                                    handleSearchExchangeBills();
-                                  }
-                                }}
-                              />
-                              <svg
-                                width="18"
-                                height="18"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="#94a3b8"
-                                strokeWidth="2.2"
-                                style={{ position: 'absolute', left: '0.8rem', top: '50%', transform: 'translateY(-50%)' }}
-                              >
-                                <circle cx="11" cy="11" r="8"></circle>
-                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                              </svg>
-                            </div>
-                            <button
-                              type="button"
-                              className="btn btn-primary"
-                              disabled={posExchangeLoading || !posExchangeQuery.trim()}
-                              onClick={handleSearchExchangeBills}
-                              style={{ padding: '0.55rem 1.1rem', fontWeight: 650, fontSize: '0.86rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-                            >
-                              {posExchangeLoading ? 'Searching...' : 'Find Bill'}
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Error Banner */}
-                        {posExchangeError && (
-                          <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: '8px', padding: '0.75rem 1rem', color: '#b91c1c', fontSize: '0.82rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                              <circle cx="12" cy="12" r="10"></circle>
-                              <line x1="12" y1="8" x2="12" y2="12"></line>
-                              <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                            </svg>
-                            <span>{posExchangeError}</span>
-                          </div>
-                        )}
-
-                        {/* Multiple Matching Bills List */}
-                        {!posExchangeSelectedInvoice && posExchangeInvoices.length > 0 && (
-                          <div>
-                            <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#475569', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                              Matching Past Bills ({posExchangeInvoices.length})
-                            </div>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                              {posExchangeInvoices.map((inv) => (
-                                <div
-                                  key={inv.id}
-                                  style={{
-                                    border: '1px solid #e2e8f0',
-                                    borderRadius: '10px',
-                                    padding: '0.85rem 1rem',
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                    background: '#f8fafc',
-                                  }}
-                                >
-                                  <div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                      <span style={{ fontWeight: 750, color: '#0f172a', fontSize: '0.92rem' }}>#{inv.number}</span>
-                                      <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
-                                        {new Date(inv.createdAt || inv.created_at || Date.now()).toLocaleDateString('en-IN')}
-                                      </span>
-                                    </div>
-                                    <div style={{ fontSize: '0.78rem', color: '#475569', marginTop: '2px' }}>
-                                      Customer: <strong>{inv.customerName || inv.customer_name || 'Walk-in'}</strong>
-                                      {(inv.customerPhone || inv.customer_phone) && (
-                                        <span style={{ marginLeft: '6px', color: '#16a34a', fontWeight: 600 }}>
-                                          (+91 {inv.customerPhone || inv.customer_phone})
-                                        </span>
-                                      )}
-                                    </div>
-                                  </div>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                    <div style={{ textAlign: 'right' }}>
-                                      <div style={{ fontWeight: 800, color: '#0f172a', fontSize: '0.95rem' }} className="mono">
-                                        {formatRupees(inv.grandTotalMinor ?? inv.grand_total_minor ?? inv.totalMinor ?? inv.total_minor ?? 0)}
-                                      </div>
-                                      <div style={{ fontSize: '0.72rem', color: '#64748b', textTransform: 'capitalize' }}>
-                                        {inv.paymentMethod || inv.payment_method || 'Paid'}
-                                      </div>
-                                    </div>
-                                    <button
-                                      type="button"
-                                      className="btn btn-primary"
-                                      style={{ padding: '0.4rem 0.85rem', fontSize: '0.8rem' }}
-                                      onClick={() => handleSelectExchangeInvoice(inv)}
-                                    >
-                                      Select Bill
-                                    </button>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Selected Bill & Returnable Items Table */}
-                        {posExchangeSelectedInvoice && posExchangeReturnInfo && (
-                          <div>
-                            {/* Selected Bill Header Banner */}
-                            <div style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '10px', padding: '0.85rem 1rem', marginBottom: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                  <span style={{ fontWeight: 800, color: '#1e293b', fontSize: '0.98rem' }}>
-                                    Bill #{posExchangeSelectedInvoice.number}
-                                  </span>
-                                  <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
-                                    {new Date(posExchangeSelectedInvoice.createdAt || posExchangeSelectedInvoice.created_at || Date.now()).toLocaleDateString('en-IN')}
-                                  </span>
-                                </div>
-                                <div style={{ fontSize: '0.8rem', color: '#475569', marginTop: '3px' }}>
-                                  Customer: <strong>{posExchangeSelectedInvoice.customerName || posExchangeSelectedInvoice.customer_name || 'Walk-in'}</strong>
-                                  {(posExchangeSelectedInvoice.customerPhone || posExchangeSelectedInvoice.customer_phone) && (
-                                    <span style={{ marginLeft: '6px', color: '#15803d', fontWeight: 600 }}>
-                                      (Mobile: {posExchangeSelectedInvoice.customerPhone || posExchangeSelectedInvoice.customer_phone})
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                              <button
-                                type="button"
-                                className="btn btn-secondary"
-                                style={{ fontSize: '0.76rem', padding: '0.35rem 0.7rem' }}
-                                onClick={() => {
-                                  setPosExchangeSelectedInvoice(null);
-                                  setPosExchangeReturnInfo(null);
-                                }}
-                              >
-                                Change Bill
-                              </button>
-                            </div>
-
-                            {/* Returnable Items */}
-                            <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '0.6rem' }}>
-                              Select Items to Return / Exchange:
-                            </div>
-
-                            <div style={{ border: '1px solid #e2e8f0', borderRadius: '10px', overflow: 'hidden', marginBottom: '1.25rem' }}>
-                              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
-                                <thead>
-                                  <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569', textAlign: 'left' }}>
-                                    <th style={{ padding: '0.65rem 0.85rem' }}>Item</th>
-                                    <th style={{ padding: '0.65rem 0.5rem', textAlign: 'center' }}>Billed</th>
-                                    <th style={{ padding: '0.65rem 0.5rem', textAlign: 'center' }}>Returnable</th>
-                                    <th style={{ padding: '0.65rem 0.5rem', textAlign: 'center', width: '90px' }}>Return Qty</th>
-                                    <th style={{ padding: '0.65rem 0.5rem', textAlign: 'center' }}>Restock</th>
-                                    <th style={{ padding: '0.65rem 0.85rem' }}>Reason</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {posExchangeReturnInfo.lines.map((l: any) => {
-                                    const billedQty = Math.round(l.billedQtyMilli / 1000);
-                                    const returnableQty = Math.round(l.returnableQtyMilli / 1000);
-                                    const inp = posExchangeLinesInput[l.id] || { returnQty: 0, restock: true, reason: 'Size / Fit Mismatch' };
-
-                                    return (
-                                      <tr key={l.id} style={{ borderBottom: '1px solid #f1f5f9', background: inp.returnQty > 0 ? '#fef2f2' : '#ffffff' }}>
-                                        <td style={{ padding: '0.65rem 0.85rem' }}>
-                                          <div style={{ fontWeight: 650, color: '#0f172a' }}>{l.name}</div>
-                                          <div style={{ fontSize: '0.74rem', color: '#64748b' }} className="mono">
-                                            {formatRupees(l.priceMinor)} / {l.unit || 'pcs'}
-                                          </div>
-                                        </td>
-                                        <td style={{ padding: '0.65rem 0.5rem', textAlign: 'center' }} className="mono">
-                                          {billedQty}
-                                        </td>
-                                        <td style={{ padding: '0.65rem 0.5rem', textAlign: 'center' }} className="mono">
-                                          {returnableQty}
-                                        </td>
-                                        <td style={{ padding: '0.65rem 0.5rem', textAlign: 'center' }}>
-                                          <input
-                                            type="number"
-                                            min="0"
-                                            max={returnableQty}
-                                            disabled={returnableQty <= 0}
-                                            value={inp.returnQty}
-                                            onChange={(e) => {
-                                              const val = Math.max(0, Math.min(returnableQty, parseInt(e.target.value, 10) || 0));
-                                              setPosExchangeLinesInput((prev) => ({
-                                                ...prev,
-                                                [l.id]: { ...inp, returnQty: val },
-                                              }));
-                                            }}
-                                            style={{
-                                              width: '60px',
-                                              padding: '0.3rem 0.4rem',
-                                              borderRadius: '6px',
-                                              border: '1px solid #cbd5e1',
-                                              textAlign: 'center',
-                                              fontWeight: 700,
-                                            }}
-                                          />
-                                        </td>
-                                        <td style={{ padding: '0.65rem 0.5rem', textAlign: 'center' }}>
-                                          <input
-                                            type="checkbox"
-                                            disabled={inp.returnQty <= 0}
-                                            checked={inp.restock}
-                                            onChange={(e) => {
-                                              setPosExchangeLinesInput((prev) => ({
-                                                ...prev,
-                                                [l.id]: { ...inp, restock: e.target.checked },
-                                              }));
-                                            }}
-                                            title="Return item back to inventory stock"
-                                          />
-                                        </td>
-                                        <td style={{ padding: '0.65rem 0.85rem' }}>
-                                          <select
-                                            disabled={inp.returnQty <= 0}
-                                            value={inp.reason}
-                                            onChange={(e) => {
-                                              setPosExchangeLinesInput((prev) => ({
-                                                ...prev,
-                                                [l.id]: { ...inp, reason: e.target.value },
-                                              }));
-                                            }}
-                                            style={{
-                                              padding: '0.3rem 0.5rem',
-                                              borderRadius: '6px',
-                                              border: '1px solid #cbd5e1',
-                                              fontSize: '0.76rem',
-                                              background: '#ffffff',
-                                            }}
-                                          >
-                                            <option value="Size / Fit Mismatch">Size / Fit Mismatch</option>
-                                            <option value="Defective / Damaged">Defective / Damaged</option>
-                                            <option value="Customer Changed Mind">Customer Changed Mind</option>
-                                            <option value="Color / Style Exchange">Color / Style Exchange</option>
-                                            <option value="Incorrect Item Billed">Incorrect Item Billed</option>
-                                          </select>
-                                        </td>
-                                      </tr>
-                                    );
-                                  })}
-                                </tbody>
-                              </table>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Modal Footer */}
-                      <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '1rem', marginTop: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div>
-                          {posExchangeSelectedInvoice && posExchangeReturnInfo && (
-                            <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                              <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>Total Exchange Credit:</span>
-                              <span style={{ fontSize: '1.05rem', fontWeight: 800, color: '#dc2626' }} className="mono">
-                                -{formatRupees(
-                                  posExchangeReturnInfo.lines.reduce((acc: number, l: any) => {
-                                    const q = posExchangeLinesInput[l.id]?.returnQty || 0;
-                                    return acc + (l.priceMinor * q);
-                                  }, 0)
-                                )}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                        <div style={{ display: 'flex', gap: '0.6rem' }}>
-                          <button
-                            type="button"
-                            className="btn btn-secondary"
-                            onClick={() => setShowPosExchangeModal(false)}
-                            style={{ fontSize: '0.85rem', padding: '0.5rem 1rem' }}
-                          >
-                            Cancel
-                          </button>
-                          {posExchangeSelectedInvoice && posExchangeReturnInfo && (
-                            <button
-                              type="button"
-                              className="btn btn-primary"
-                              onClick={handleConfirmAddExchangeToCart}
-                              style={{
-                                background: '#dc2626',
-                                borderColor: '#b91c1c',
-                                fontSize: '0.85rem',
-                                padding: '0.5rem 1.1rem',
-                                fontWeight: 700,
-                              }}
-                            >
-                              Add Return Item(s) to Cart
-                            </button>
-                          )}
-                        </div>
                       </div>
                     </div>
                   </div>
@@ -22839,8 +22454,31 @@ export function App() {
           onSelectForExchange={(lines, origInv) => {
             setActiveExchangeLines(lines);
             setActiveExchangeOrigBill(origInv);
+            const returnCartItems: PosCartItem[] = lines.map((l) => ({
+              item: {
+                id: `return-${l.origLineId}-${Date.now()}`,
+                name: l.name,
+                priceMinor: -Math.abs(l.priceMinor),
+                costMinor: 0,
+                taxRateBp: l.taxRateBp,
+                taxInclusive: l.inclusive,
+                unit: l.unit || 'pcs',
+                category: 'Return / Exchange',
+                active: true,
+                currentStockMilli: 0,
+                favorite: false,
+              },
+              qty: l.returnQtyMilli / 1000,
+              isReturn: true,
+              origInvoiceId: l.origInvoiceId,
+              origInvoiceNumber: l.origInvoiceNumber,
+              origLineId: l.origLineId,
+              restock: l.condition === 'resellable',
+              returnReason: l.reason,
+            }));
+            setCart((prev) => [...prev, ...returnCartItems]);
             setShowReturnExchangeModal(false);
-            showToast(`✓ Added ${lines.length} return item(s) from ${origInv} to exchange! Select new garments to complete.`);
+            showToast(`✓ Added ${lines.length} return item(s) from ${origInv} to exchange! Select new items to complete.`);
           }}
           onReturnCompleted={(_cnId, cnNumber) => {
             showToast(`✓ Return processed successfully! Credit Note: ${cnNumber}`);
