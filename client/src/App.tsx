@@ -3759,7 +3759,12 @@ export function App() {
   };
 
   const focusCustomerMobile = () => {
-    setShowCustomerPickerModal(true);
+    if (customerMobileInputRef.current) {
+      customerMobileInputRef.current.focus();
+      customerMobileInputRef.current.select();
+    } else {
+      setShowCustomerPickerModal(true);
+    }
   };
 
   const focusCustomerName = () => {
@@ -4147,7 +4152,12 @@ export function App() {
 
     if (!checkoutPhone || checkoutPhone.length !== 10) {
       showToast('Customer mobile number is strictly required for billing (10 digits).', 'error');
-      setShowCustomerPickerModal(true);
+      if (customerMobileInputRef.current) {
+        customerMobileInputRef.current.focus();
+        customerMobileInputRef.current.select();
+      } else {
+        setShowCustomerPickerModal(true);
+      }
       return;
     }
 
@@ -8841,101 +8851,227 @@ export function App() {
                           )}
                         </div>
 
-                        {/* Compact Customer Status in Billing Terminal */}
-                        <div className="bento-billing-customer-chip" style={{
-                          border: (selectedParty?.phone || customerSearch.replace(/\D/g, '').length >= 10) ? '1px solid #bbf7d0' : '1.5px solid #fca5a5',
-                          background: (selectedParty?.phone || customerSearch.replace(/\D/g, '').length >= 10) ? '#f0fdf4' : '#fff1f2',
-                        }}>
-                          <div className="cust-chip-info">
-                            <span className="cust-chip-icon">
-                              {(selectedParty?.phone || customerSearch.replace(/\D/g, '').length >= 10) ? (
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-                                </svg>
-                              ) : (
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                                  <circle cx="12" cy="12" r="10"></circle>
-                                  <line x1="12" y1="8" x2="12" y2="12"></line>
-                                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                                </svg>
-                              )}
-                            </span>
-                            <span className="cust-chip-label">Customer Mobile:</span>
-                            {(selectedParty?.phone || customerSearch.replace(/\D/g, '').length >= 10) ? (
-                              <>
-                                <span className="chip-phone-verified" style={{ fontWeight: 800, color: '#15803d', background: '#dcfce7', padding: '2px 8px', borderRadius: '4px', fontSize: '0.78rem' }}>
-                                  📱 {selectedParty?.phone || customerSearch.replace(/\D/g, '').slice(-10)}
-                                </span>
-                                <span className="chip-walkin-text" style={{ fontWeight: 600, color: '#334155', marginLeft: '4px' }}>
-                                  ({selectedParty?.name || 'Customer'})
-                                </span>
-                              </>
-                            ) : (
-                              <span className="chip-phone-required" style={{ fontWeight: 700, color: '#b91c1c', fontSize: '0.76rem' }}>
-                                ⚠️ Mobile Number Required for Bill (Click to Enter)
-                              </span>
-                            )}
-                          </div>
-                          <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
-                            {selectedParty && (
-                              <button
-                                type="button"
-                                className="cust-chip-clear-btn"
-                                style={{
-                                  background: '#fee2e2',
-                                  color: '#b91c1c',
-                                  border: '1px solid #fca5a5',
-                                  padding: '0.24rem 0.55rem',
-                                  borderRadius: '6px',
-                                  fontSize: '0.72rem',
-                                  fontWeight: 700,
-                                  cursor: 'pointer',
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: '4px',
-                                }}
-                                onClick={() => {
-                                  setSelectedPartyId('');
-                                  setCustomerSearch('');
-                                  setRedeemPoints(false);
-                                }}
-                                title="Reset to Walk-in Customer"
-                              >
-                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                                </svg>
-                                <span>Walk-in</span>
-                              </button>
-                            )}
-                            <button
-                              type="button"
-                              className="cust-chip-focus-btn"
-                              onClick={() => setShowCustomerPickerModal(true)}
-                              title="Select customer or enter phone number (F3)"
-                              style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}
+                        {/* Direct Inline Customer Entry Bento Box */}
+                        {(() => {
+                          const currentPhone = selectedParty?.phone || customerSearch;
+                          const cleanDigits = currentPhone.replace(/\D/g, '');
+                          const isPhoneValid = cleanDigits.length >= 10;
+                          const currentName = selectedParty ? selectedParty.name : quickCustomerName;
+
+                          return (
+                            <div
+                              className="bento-billing-customer-box"
+                              style={{
+                                margin: '0.65rem 0 0.85rem 0',
+                                padding: '0.75rem 0.9rem',
+                                borderRadius: '12px',
+                                background: isPhoneValid ? '#f0fdf4' : '#fff7ed',
+                                border: isPhoneValid ? '1.5px solid #86efac' : '1.5px solid #fed7aa',
+                                transition: 'all 0.2s ease',
+                              }}
                             >
-                              {selectedParty ? (
-                                <>
-                                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                                    <circle cx="8.5" cy="7" r="4"></circle>
-                                    <polyline points="17 11 19 13 23 9"></polyline>
+                              {/* Header Bar: Title, Validation Badge, and Action Buttons */}
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem', flexWrap: 'wrap', gap: '4px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={isPhoneValid ? '#16a34a' : '#ea580c'} strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
                                   </svg>
-                                  <span>Change Customer</span>
-                                </>
-                              ) : (
-                                <>
-                                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                  <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#0f172a' }}>
+                                    Customer Details
+                                  </span>
+                                  <span
+                                    style={{
+                                      fontSize: '0.68rem',
+                                      fontWeight: 750,
+                                      padding: '2px 7px',
+                                      borderRadius: '6px',
+                                      background: isPhoneValid ? '#dcfce7' : '#fee2e2',
+                                      color: isPhoneValid ? '#15803d' : '#b91c1c',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '3px',
+                                    }}
+                                  >
+                                    {isPhoneValid ? (
+                                      <>
+                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                          <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                        <span>Mobile Verified</span>
+                                      </>
+                                    ) : (
+                                      <span>10-Digit Mobile Required *</span>
+                                    )}
+                                  </span>
+                                </div>
+
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                  {(selectedParty || customerSearch || quickCustomerName) && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setSelectedPartyId('');
+                                        setCustomerSearch('');
+                                        setQuickCustomerName('');
+                                        setRedeemPoints(false);
+                                      }}
+                                      style={{
+                                        background: '#ffffff',
+                                        border: '1px solid #cbd5e1',
+                                        borderRadius: '6px',
+                                        fontSize: '0.72rem',
+                                        fontWeight: 700,
+                                        padding: '2px 7px',
+                                        cursor: 'pointer',
+                                        color: '#64748b',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '3px',
+                                      }}
+                                      title="Clear customer details"
+                                    >
+                                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                                      </svg>
+                                      <span>Clear</span>
+                                    </button>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => setShowCustomerPickerModal(true)}
+                                    style={{
+                                      background: '#ffffff',
+                                      border: '1px solid #cbd5e1',
+                                      borderRadius: '6px',
+                                      fontSize: '0.72rem',
+                                      fontWeight: 700,
+                                      padding: '2px 8px',
+                                      cursor: 'pointer',
+                                      color: '#4338ca',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '4px',
+                                    }}
+                                    title="Search existing customers directory (F3)"
+                                  >
+                                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                                      <circle cx="11" cy="11" r="8"></circle>
+                                      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                    </svg>
+                                    <span>Browse</span>
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Direct Inline Inputs: Mobile Number and Customer Name */}
+                              <div style={{ display: 'grid', gridTemplateColumns: '1.15fr 1fr', gap: '0.5rem' }}>
+                                {/* 1. Customer Mobile Input */}
+                                <div style={{ position: 'relative' }}>
+                                  <input
+                                    ref={customerMobileInputRef}
+                                    type="tel"
+                                    placeholder="Customer Mobile (10 digits) *"
+                                    maxLength={10}
+                                    value={selectedParty ? (selectedParty.phone || '') : customerSearch}
+                                    onChange={(e) => {
+                                      const digits = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                      setCustomerSearch(digits);
+                                      if (selectedParty && digits !== selectedParty.phone) {
+                                        setSelectedPartyId('');
+                                      }
+                                      if (digits.length === 10) {
+                                        const match = parties.find(
+                                          (p) => p.type === 'customer' && p.phone && p.phone.replace(/\D/g, '').endsWith(digits)
+                                        );
+                                        if (match) {
+                                          setSelectedPartyId(match.id);
+                                          setQuickCustomerName(match.name);
+                                          showToast(`Customer recognized: ${match.name}`);
+                                        }
+                                      }
+                                    }}
+                                    style={{
+                                      width: '100%',
+                                      boxSizing: 'border-box',
+                                      padding: '0.45rem 0.65rem 0.45rem 1.85rem',
+                                      fontSize: '0.84rem',
+                                      borderRadius: '8px',
+                                      border: isPhoneValid ? '1.5px solid #16a34a' : '1.5px solid #f97316',
+                                      background: '#ffffff',
+                                      fontWeight: 700,
+                                      letterSpacing: '0.5px',
+                                      color: '#0f172a',
+                                      outline: 'none',
+                                    }}
+                                  />
+                                  <svg
+                                    width="13"
+                                    height="13"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke={isPhoneValid ? '#16a34a' : '#f97316'}
+                                    strokeWidth="2.3"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    style={{ position: 'absolute', left: '0.55rem', top: '50%', transform: 'translateY(-50%)' }}
+                                  >
+                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
                                   </svg>
-                                  <span>Select Customer</span>
-                                </>
+                                </div>
+
+                                {/* 2. Customer Name Input */}
+                                <div style={{ position: 'relative' }}>
+                                  <input
+                                    ref={customerNameInputRef}
+                                    type="text"
+                                    placeholder="Customer Name (Optional)"
+                                    value={currentName}
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      setQuickCustomerName(val);
+                                    }}
+                                    style={{
+                                      width: '100%',
+                                      boxSizing: 'border-box',
+                                      padding: '0.45rem 0.65rem 0.45rem 1.75rem',
+                                      fontSize: '0.84rem',
+                                      borderRadius: '8px',
+                                      border: '1.5px solid #cbd5e1',
+                                      background: '#ffffff',
+                                      fontWeight: 650,
+                                      color: '#0f172a',
+                                      outline: 'none',
+                                    }}
+                                  />
+                                  <svg
+                                    width="13"
+                                    height="13"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="#94a3b8"
+                                    strokeWidth="2.3"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    style={{ position: 'absolute', left: '0.55rem', top: '50%', transform: 'translateY(-50%)' }}
+                                  >
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
+                                  </svg>
+                                </div>
+                              </div>
+
+                              {/* Recognized Customer Loyalty Details Footer */}
+                              {selectedParty && (
+                                <div style={{ marginTop: '0.4rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.74rem', color: '#15803d', fontWeight: 650 }}>
+                                  <span>Linked Member: <strong>{selectedParty.name}</strong></span>
+                                  <span>Available Loyalty Points: <strong>{selectedParty.loyaltyPoints ?? 0} pts</strong></span>
+                                </div>
                               )}
-                            </button>
-                          </div>
-                        </div>
+                            </div>
+                          );
+                        })()}
 
                         {/* Pharmacy Doctor Field */}
                         {shop?.businessType === 'pharmacy' && (
