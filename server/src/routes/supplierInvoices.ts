@@ -14,6 +14,7 @@ import {
   type ColumnMapping,
   type ExtractedProductItem,
 } from '../services/supplierInvoiceParser.ts';
+import { parseImportNumeric } from '../../../shared/bulkImport.ts';
 
 export function registerSupplierInvoices(r: Router): void {
   // ── 1. EXTRACT INVOICE DATA (PDF / OCR) ──────────────────────────────────────
@@ -119,10 +120,11 @@ export function registerSupplierInvoices(r: Router): void {
     let calculatedTotalCost = 0;
     let calculatedItemTax = 0;
     for (const p of enrichedProducts) {
-      const cp = parseFloat(p.costPrice || '0');
-      const qty = parseFloat(p.openingStock || '0');
-      const rateBp = p.gstRate ? parseFloat(p.gstRate.replace('%', '')) * 100 : 500;
-      if (!isNaN(cp) && !isNaN(qty) && cp > 0 && qty > 0) {
+      const cp = parseImportNumeric(p.costPrice) || 0;
+      const qty = parseImportNumeric(p.openingStock) || 0;
+      const gstNum = parseImportNumeric(p.gstRate ? p.gstRate.replace('%', '') : null);
+      const rateBp = gstNum !== null ? Math.round(gstNum * 100) : 500;
+      if (cp > 0 && qty > 0) {
         const lineCost = cp * qty;
         calculatedTotalCost += lineCost;
         calculatedItemTax += (lineCost * rateBp) / 10000;
@@ -149,12 +151,12 @@ export function registerSupplierInvoices(r: Router): void {
       columnMap,
       savedMapping: savedMapping
         ? {
-            id: savedMapping.id,
-            supplierId: savedMapping.supplier_id,
-            supplierName: savedMapping.supplier_name,
-            supplierGstin: savedMapping.supplier_gstin,
-            mapping: typeof savedMapping.mapping === 'string' ? JSON.parse(savedMapping.mapping) : savedMapping.mapping,
-          }
+          id: savedMapping.id,
+          supplierId: savedMapping.supplier_id,
+          supplierName: savedMapping.supplier_name,
+          supplierGstin: savedMapping.supplier_gstin,
+          mapping: typeof savedMapping.mapping === 'string' ? JSON.parse(savedMapping.mapping) : savedMapping.mapping,
+        }
         : null,
       pageCount: pages,
       isOcr,
@@ -195,9 +197,9 @@ export function registerSupplierInvoices(r: Router): void {
 
     let calculatedTotalCost = 0;
     for (const p of enrichedProducts) {
-      const cp = parseFloat(p.costPrice || '0');
-      const qty = parseFloat(p.openingStock || '0');
-      if (!isNaN(cp) && !isNaN(qty) && cp > 0 && qty > 0) {
+      const cp = parseImportNumeric(p.costPrice) || 0;
+      const qty = parseImportNumeric(p.openingStock) || 0;
+      if (cp > 0 && qty > 0) {
         calculatedTotalCost += cp * qty;
       }
     }

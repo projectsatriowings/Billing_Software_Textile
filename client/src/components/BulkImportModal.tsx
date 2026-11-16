@@ -43,6 +43,9 @@ import {
   classifyProductNature,
   type ProductNature,
   type NatureConfidence,
+  parseImportNumeric,
+  parseImportMoneyMinor,
+  parseImportQtyMilli,
 } from '../../../shared/bulkImport.ts';
 import { ScanManufacturerBarcodeModal } from './ScanManufacturerBarcodeModal.tsx';
 import { fileToOptimizedDataUrl, resolveDriveImageUrl, isGoogleDriveUrl, handleProductImageError } from '../imageUtils';
@@ -424,8 +427,8 @@ const SCIENTIFIC_NOTATION_RE = /^[0-9]+(\.[0-9]+)?[eE]\+[0-9]+$/;
 export function parseGstToBp(raw: string): number | null {
   if (!raw || !raw.trim()) return 500; // default 5%
   const clean = raw.replace('%', '').trim();
-  const num = parseFloat(clean);
-  if (!Number.isFinite(num)) return null;
+  const num = parseImportNumeric(clean);
+  if (num === null || !Number.isFinite(num)) return null;
   if (num > 0 && num < 1) {
     const bp = Math.round(num * 10000);
     return VALID_GST_BPS.has(bp) ? bp : null;
@@ -783,37 +786,37 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
 
       // 2. Validate Selling Price
       const priceTrim = r.sellingPrice.trim();
-      const priceVal = parseFloat(priceTrim);
+      const priceVal = parseImportNumeric(priceTrim);
       if (!priceTrim) {
         errors.push({ field: 'sellingPrice', message: 'Selling price is required' });
-      } else if (!Number.isFinite(priceVal) || priceVal < 0) {
-        errors.push({ field: 'sellingPrice', message: 'Selling price must be a non-negative number' });
+      } else if (priceVal === null || priceVal < 0) {
+        errors.push({ field: 'sellingPrice', message: 'Selling price must be a valid non-negative number' });
       }
 
       // 3. Validate Cost Price
       const costTrim = r.costPrice.trim();
       if (costTrim) {
-        const costVal = parseFloat(costTrim);
-        if (!Number.isFinite(costVal) || costVal < 0) {
-          errors.push({ field: 'costPrice', message: 'Cost price must be a non-negative number' });
+        const costVal = parseImportNumeric(costTrim);
+        if (costVal === null || costVal < 0) {
+          errors.push({ field: 'costPrice', message: 'Cost price must be a valid non-negative number' });
         }
       }
 
       // 4. Validate Opening / Incoming Stock
       const stockTrim = r.openingStock.trim();
       if (stockTrim) {
-        const stockVal = parseFloat(stockTrim);
-        if (!Number.isFinite(stockVal) || stockVal < 0) {
-          errors.push({ field: 'openingStock', message: 'Incoming stock must be a non-negative number' });
+        const stockVal = parseImportNumeric(stockTrim);
+        if (stockVal === null || stockVal < 0) {
+          errors.push({ field: 'openingStock', message: 'Incoming stock must be a valid non-negative number' });
         }
       }
 
       // Validate Reorder Level
       const reorderTrim = (r.reorderLevel ?? '').trim();
       if (reorderTrim) {
-        const reorderVal = parseFloat(reorderTrim);
-        if (!Number.isFinite(reorderVal) || reorderVal < 0) {
-          errors.push({ field: 'reorderLevel', message: 'Reorder level must be a non-negative number' });
+        const reorderVal = parseImportNumeric(reorderTrim);
+        if (reorderVal === null || reorderVal < 0) {
+          errors.push({ field: 'reorderLevel', message: 'Reorder level must be a valid non-negative number' });
         }
       }
 
@@ -1045,13 +1048,23 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
 
       const name     = getVal(parts, iName, 0);
       const unitRaw  = getVal(parts, iUnit, 1);
-      const price    = getVal(parts, iPrice, 2);
-      const cost     = getVal(parts, iCost, 3);
+      const rawPrice = getVal(parts, iPrice, 2);
+      const rawCost  = getVal(parts, iCost, 3);
       const hsn      = getVal(parts, iHsn, 4);
       const gst      = getVal(parts, iGst, 5);
       const incl     = getVal(parts, iInclusive, 6);
-      const stock    = getVal(parts, iStock, 7);
+      const rawStock = getVal(parts, iStock, 7);
       const reorderRaw = getVal(parts, iReorder, -1);
+
+      // Clean numeric fields while preserving valid decimals (handles "90,000.00", "1,00,000", "4,50,000.50", etc.)
+      const numP = parseImportNumeric(rawPrice);
+      const price = numP !== null ? String(numP) : rawPrice;
+
+      const numC = parseImportNumeric(rawCost);
+      const cost = numC !== null ? String(numC) : rawCost;
+
+      const numS = parseImportNumeric(rawStock);
+      const stock = numS !== null ? String(numS) : rawStock;
       // Extract image URL: check iImage header first, or inspect all row cells for a web/Drive link
       let imageRaw = getVal(parts, iImage, -1);
       if (!imageRaw) {
@@ -1154,8 +1167,9 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
 
       let initialReorder = globalReorderLevel || '20';
       let initialReorderModified = false;
-      if (reorderRaw && !isNaN(parseFloat(reorderRaw)) && parseFloat(reorderRaw) >= 0) {
-        initialReorder = String(parseFloat(reorderRaw));
+      const numReorder = parseImportNumeric(reorderRaw);
+      if (numReorder !== null && numReorder >= 0) {
+        initialReorder = String(numReorder);
         initialReorderModified = true;
       } else if (matchResult.classification === 'RESTOCK' && matchResult.matchedItem) {
         initialReorder = matchResult.matchedItem.reorderMilli != null
@@ -1583,8 +1597,8 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
       });
       return;
     }
-    const num = parseFloat(val);
-    if (isNaN(num) || num < 0) {
+    const num = parseImportNumeric(val);
+    if (num === null || num < 0) {
       showToast({
         type: 'error',
         message: 'Reorder level must be a valid non-negative number.',
@@ -1641,12 +1655,12 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
       barcodeType: r.barcodeType,
       category: r.category,
       priceFormatted: (() => {
-        const p = r.sellingPrice !== undefined && r.sellingPrice !== null && String(r.sellingPrice).trim() !== '' ? parseFloat(String(r.sellingPrice).replace(/[^0-9.-]/g, '')) : NaN;
-        return !isNaN(p) && p >= 0 ? `₹${p.toFixed(2)}` : null;
+        const p = parseImportNumeric(r.sellingPrice);
+        return p !== null && p >= 0 ? `₹${p.toFixed(2)}` : null;
       })(),
       priceMinor: (() => {
-        const p = r.sellingPrice !== undefined && r.sellingPrice !== null && String(r.sellingPrice).trim() !== '' ? parseFloat(String(r.sellingPrice).replace(/[^0-9.-]/g, '')) : NaN;
-        return !isNaN(p) && p >= 0 ? Math.round(p * 100) : null;
+        const p = parseImportNumeric(r.sellingPrice);
+        return p !== null && p >= 0 ? Math.round(p * 100) : null;
       })(),
       unit: r.unit,
       scannedInSession: r.scannedInSession,
@@ -1854,9 +1868,15 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
     try {
       const payloadRows: BulkImportRow[] = eligibleRows.map((r) => {
         const isRestock = r.status === 'RESTOCK' && Boolean(r.matchedItem);
-        const price = Math.round(parseFloat(r.sellingPrice) * 100);
-        const cost = r.costPrice.trim() ? Math.round(parseFloat(r.costPrice) * 100) : 0;
-        const stock = r.openingStock.trim() ? Math.round(parseFloat(r.openingStock) * 1000) : 0;
+        const parsedPrice = parseImportNumeric(r.sellingPrice);
+        const price = parsedPrice !== null ? Math.round(parsedPrice * 100) : 0;
+
+        const parsedCost = parseImportNumeric(r.costPrice);
+        const cost = parsedCost !== null ? Math.round(parsedCost * 100) : 0;
+
+        const parsedStock = parseImportNumeric(r.openingStock);
+        const stock = parsedStock !== null ? Math.round(parsedStock * 1000) : 0;
+
         const taxRateBp = parseGstToBp(r.gstRate) ?? 500;
         const finalBarcode = r.barcode && r.barcode.trim() ? r.barcode.trim() : null;
         const finalBarcodeType = r.barcodeType || (r.isBarcodeAutoGenerated ? 'INTERNAL' : (finalBarcode ? 'MANUFACTURER' : null));
@@ -1878,9 +1898,9 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
         }
 
         let reorderMilli: number | null = null;
-        const rReorderTrim = (r.reorderLevel ?? '').trim();
-        if (rReorderTrim !== '' && !isNaN(Number(rReorderTrim))) {
-          reorderMilli = Math.max(0, Math.round(parseFloat(rReorderTrim) * 1000));
+        const parsedReorder = parseImportNumeric(r.reorderLevel);
+        if (parsedReorder !== null && parsedReorder >= 0) {
+          reorderMilli = Math.round(parsedReorder * 1000);
         } else if (isRestock && r.matchedItem && !r.reorderLevelModified) {
           reorderMilli = r.matchedItem.reorderMilli ?? null;
         } else {
@@ -1957,7 +1977,7 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
 
   // ── Total inward stock calculation ──────────────────────────────────────────
   const totalInwardStock = useMemo(() => {
-    return eligibleRows.reduce((sum, r) => sum + (parseFloat(r.openingStock) || 0), 0);
+    return eligibleRows.reduce((sum, r) => sum + (parseImportNumeric(r.openingStock) || 0), 0);
   }, [eligibleRows]);
 
   // ── RENDER ──────────────────────────────────────────────────────────────────
@@ -3354,7 +3374,7 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
                       </tr>
                     ) : (
                       visibleRows.map((row, idx) => {
-                        const incomingStock = parseFloat(row.openingStock) || 0;
+                        const incomingStock = parseImportNumeric(row.openingStock) || 0;
                         const existingStock = row.matchedItem ? row.matchedItem.currentStockMilli / 1000 : 0;
                         const finalStock = existingStock + incomingStock;
 
@@ -3985,11 +4005,15 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
                                         <span><strong>Restocking existing item:</strong> &quot;{row.matchedItem.name}&quot; (ID: {row.matchedItem.id}, SKU: {row.matchedItem.sku})</span>
                                       </span>
                                       <span>• Existing Stock: {existingStock} + Incoming: {incomingStock} = <strong>Final: {finalStock}</strong></span>
-                                      {row.matchedItem.priceMinor !== Math.round(parseFloat(row.sellingPrice) * 100) && (
-                                        <span style={{ color: '#b45309' }}>
-                                          (Current price ₹{(row.matchedItem.priceMinor / 100).toFixed(2)} → New: ₹{row.sellingPrice})
-                                        </span>
-                                      )}
+                                      {(() => {
+                                        const parsedSp = parseImportNumeric(row.sellingPrice);
+                                        const spMinor = parsedSp !== null ? Math.round(parsedSp * 100) : 0;
+                                        return row.matchedItem.priceMinor !== spMinor ? (
+                                          <span style={{ color: '#b45309' }}>
+                                            (Current price ₹{(row.matchedItem.priceMinor / 100).toFixed(2)} → New: ₹{row.sellingPrice})
+                                          </span>
+                                        ) : null;
+                                      })()}
                                       <button
                                         type="button"
                                         onClick={() => createAsNewProduct(row._id)}

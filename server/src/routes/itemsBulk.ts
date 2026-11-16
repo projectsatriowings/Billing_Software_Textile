@@ -3,7 +3,7 @@ import { resolveBranchScope } from '../branchScope.ts';
 import { bad, conflict, type Router } from '../http.ts';
 import { newId } from '../security.ts';
 import { audit } from '../audit.ts';
-import { generateUniqueShortSku, generateUniqueInternalBarcode } from '../../../shared/bulkImport.ts';
+import { generateUniqueShortSku, generateUniqueInternalBarcode, parseImportNumeric } from '../../../shared/bulkImport.ts';
 
 // ── Supported GST rates (basis points) ──────────────────────────────────────
 const VALID_GST_RATES_BP = new Set([0, 250, 500, 1200, 1800, 2800]);
@@ -54,11 +54,9 @@ interface RowResult {
   reason?: string;
 }
 
-/** Coerce a value to number or null (handles empty strings). */
+/** Coerce a value to number or null (handles direct numbers, formatted strings with commas/lakhs, etc.). */
 function toNum(v: unknown): number | null {
-  if (v === null || v === undefined || v === '') return null;
-  const n = Number(v);
-  return Number.isFinite(n) ? n : null;
+  return parseImportNumeric(v);
 }
 
 /** Trim string or return null. */

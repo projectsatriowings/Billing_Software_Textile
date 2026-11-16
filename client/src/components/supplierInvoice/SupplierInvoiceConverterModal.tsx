@@ -14,6 +14,7 @@ import {
   type Party,
   type Item,
 } from '../../api';
+import { parseImportNumeric } from '../../../../shared/bulkImport.ts';
 
 interface Props {
   suppliers?: Party[];
@@ -252,7 +253,8 @@ export function SupplierInvoiceConverterModal({
       }
       if (field === 'costPrice') {
         const flagIdx = flags.indexOf('Cost Price uncertain');
-        if (val.trim() && parseFloat(val) > 0) {
+        const cpNum = parseImportNumeric(val);
+        if (val.trim() && cpNum !== null && cpNum > 0) {
           if (flagIdx >= 0) flags.splice(flagIdx, 1);
         }
       }
@@ -287,9 +289,9 @@ export function SupplierInvoiceConverterModal({
   // Calculate sum of extracted items cost
   const totalExtractedCost = useMemo(() => {
     return products.reduce((acc, p) => {
-      const cp = parseFloat(p.costPrice || '0');
-      const qty = parseFloat(p.openingStock || '0');
-      if (!isNaN(cp) && !isNaN(qty) && cp > 0 && qty > 0) {
+      const cp = parseImportNumeric(p.costPrice) || 0;
+      const qty = parseImportNumeric(p.openingStock) || 0;
+      if (cp > 0 && qty > 0) {
         return acc + cp * qty;
       }
       return acc;
@@ -298,7 +300,11 @@ export function SupplierInvoiceConverterModal({
 
   // Verified items count
   const verifiedCount = useMemo(() => {
-    return products.filter((p) => p.name.trim() && p.sellingPrice.trim() && p.costPrice.trim() && parseFloat(p.costPrice) > 0).length;
+    return products.filter((p) => {
+      const sp = parseImportNumeric(p.sellingPrice);
+      const cp = parseImportNumeric(p.costPrice);
+      return p.name.trim() && sp !== null && sp > 0 && cp !== null && cp > 0;
+    }).length;
   }, [products]);
 
   // Generate Excel and Proceed to Download Step

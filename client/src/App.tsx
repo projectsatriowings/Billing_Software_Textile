@@ -7368,31 +7368,6 @@ export function App() {
               </h1>
             ) : displayTab === 'dashboard' && user ? (
               <div className="top-dash-greeting-group-left" style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                {shop?.logoUrl && (
-                  <div
-                    style={{
-                      width: '46px',
-                      height: '46px',
-                      borderRadius: '12px',
-                      background: '#ffffff',
-                      border: '1px solid #e2e8f0',
-                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      padding: '3px',
-                      overflow: 'hidden',
-                      flexShrink: 0,
-                    }}
-                    title={shop.name}
-                  >
-                    <img
-                      src={shop.logoUrl}
-                      alt={shop.name}
-                      style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
-                    />
-                  </div>
-                )}
                 <div>
                   <h1 className="header-greeting-title">
                     {dashboardGreeting}, {userFirstName}
@@ -7778,85 +7753,85 @@ export function App() {
           <div key={displayTab} className={`app-view-stage ${hideBusinessBar ? 'stage-business-bar-hidden' : ''}`}>
             {/* Tab Headers */}
             {!hideBusinessBar && displayTab !== 'pos' && displayTab !== 'shifts' && displayTab !== 'sales-analysis' && displayTab !== 'dashboard' && displayTab !== 'stock-transfer' && displayTab !== 'wholesale' && activeTab !== 'wholesale' && displayTab !== 'user-management' && activeTab !== 'user-management' && (
-                <header className="content-top-header">
-                  <div className="content-header-left">
-                    <h1 className="content-page-title">
-                      {displayTab === 'items' && 'Product & Stock Catalog'}
-                      {displayTab === 'purchases' && 'Purchases & Stock Inward'}
-                      {displayTab === 'invoices' && 'Sales Invoices & Bills'}
-                      {displayTab === 'customers' && 'Customer Directory & Loyalty Points'}
-                      {displayTab === 'suppliers' && 'Supplier Directory'}
-                      {displayTab === 'reports' && 'Business Analytics & Reports'}
-                      {displayTab === 'settings' && 'Business Configuration & Settings'}
-                      {displayTab === 'payments' && 'Supplier Payments & Disbursements'}
-                      {displayTab === 'expenses' && 'Business Operational Expenses'}
-                      {displayTab === 'receivables' && 'Accounts Receivable & Customer Dues'}
-                      {displayTab === 'payables' && 'Accounts Payable & Vendor Balances'}
-                      {displayTab === 'gst-overview' && 'GST Compliance & Filing Overview'}
-                      {displayTab === 'gst-sales-register' && 'GST Sales Register (Outward)'}
-                      {displayTab === 'gst-purchase-register' && 'GST Purchase & Inward Register'}
-                      {displayTab === 'gst-itc-reconciliation' && 'Input Tax Credit (ITC) Register & Reconciliation'}
-                      {displayTab === 'gst-gstr3b' && 'GSTR-3B Preparation & Filing'}
-                      {displayTab === 'gst-gstr1' && 'GSTR-1 Outward Supplies'}
-                      {displayTab === 'gst-import-export' && 'GST Import & Export Hub'}
-                      {displayTab === 'gst-filing-history' && 'GST Returns & Audit Filing History'}
-                    </h1>
-                    <span className="content-page-subtitle">
-                      {displayTab === 'items' && 'Manage your catalog, stock balances, tax rates, and barcodes'}
-                      {displayTab === 'purchases' && 'Record supplier invoices, inward goods stock into ledger, and track purchase GST'}
-                      {displayTab === 'invoices' && 'View issued invoices, audit trails, and print thermal receipts'}
-                      {displayTab === 'customers' && 'Manage customer directory, contact numbers, GSTINs, and loyalty points'}
-                      {displayTab === 'suppliers' && 'Manage vendors, purchase distributors, GSTIN verification, and credit limits'}
-                      {displayTab === 'reports' && 'Real-time sales revenue, tax breakdown, and top selling items'}
-                      {displayTab === 'settings' && 'Store profile, GST settings, and tailored trade packs'}
-                      {displayTab === 'payments' && 'Manage supplier payments, vendor disbursements, and payment vouchers'}
-                      {displayTab === 'expenses' && 'Record, categorize, track vendor GSTINs, and manage business overhead expenditures'}
-                      {displayTab === 'receivables' && 'Outstanding customer credits, ageing analysis, and receivables'}
-                      {displayTab === 'payables' && 'Outstanding supplier invoices, vendor dues, and settlement schedules'}
-                      {displayTab === 'gst-overview' && 'Period sales, outward GST, purchases, potential vs reviewed ITC, and estimated net liability'}
-                      {displayTab === 'gst-sales-register' && 'Complete outward invoices register with B2B/B2C categorization and GST breakdown'}
-                      {displayTab === 'gst-purchase-register' && 'Consolidated statutory record of stock purchases and business expense vouchers'}
-                      {displayTab === 'gst-itc-reconciliation' && 'Reconcile purchases and expenses against GSTR-2B and record authoritative ITC decisions'}
-                      {displayTab === 'gst-gstr3b' && 'Draft and verify Table 3.1 outward liabilities, Table 4 reviewed eligible ITC, and net cash tax payable'}
-                      {displayTab === 'gst-gstr1' && 'B2B supplies (Table 4) and B2C retail counter sales (Table 7) return preparation'}
-                      {displayTab === 'gst-import-export' && 'Upload GSTR-2B JSON/CSV statements and download statutory GST worksheets and audit reports'}
-                      {displayTab === 'gst-filing-history' && 'Historical archive of submitted GSTR-1, GSTR-3B summaries, ARN receipts, and tax review logs'}
+              <header className="content-top-header">
+                <div className="content-header-left">
+                  <h1 className="content-page-title">
+                    {displayTab === 'items' && 'Product & Stock Catalog'}
+                    {displayTab === 'purchases' && 'Purchases & Stock Inward'}
+                    {displayTab === 'invoices' && 'Sales Invoices & Bills'}
+                    {displayTab === 'customers' && 'Customer Directory & Loyalty Points'}
+                    {displayTab === 'suppliers' && 'Supplier Directory'}
+                    {displayTab === 'reports' && 'Business Analytics & Reports'}
+                    {displayTab === 'settings' && 'Business Configuration & Settings'}
+                    {displayTab === 'payments' && 'Supplier Payments & Disbursements'}
+                    {displayTab === 'expenses' && 'Business Operational Expenses'}
+                    {displayTab === 'receivables' && 'Accounts Receivable & Customer Dues'}
+                    {displayTab === 'payables' && 'Accounts Payable & Vendor Balances'}
+                    {displayTab === 'gst-overview' && 'GST Compliance & Filing Overview'}
+                    {displayTab === 'gst-sales-register' && 'GST Sales Register (Outward)'}
+                    {displayTab === 'gst-purchase-register' && 'GST Purchase & Inward Register'}
+                    {displayTab === 'gst-itc-reconciliation' && 'Input Tax Credit (ITC) Register & Reconciliation'}
+                    {displayTab === 'gst-gstr3b' && 'GSTR-3B Preparation & Filing'}
+                    {displayTab === 'gst-gstr1' && 'GSTR-1 Outward Supplies'}
+                    {displayTab === 'gst-import-export' && 'GST Import & Export Hub'}
+                    {displayTab === 'gst-filing-history' && 'GST Returns & Audit Filing History'}
+                  </h1>
+                  <span className="content-page-subtitle">
+                    {displayTab === 'items' && 'Manage your catalog, stock balances, tax rates, and barcodes'}
+                    {displayTab === 'purchases' && 'Record supplier invoices, inward goods stock into ledger, and track purchase GST'}
+                    {displayTab === 'invoices' && 'View issued invoices, audit trails, and print thermal receipts'}
+                    {displayTab === 'customers' && 'Manage customer directory, contact numbers, GSTINs, and loyalty points'}
+                    {displayTab === 'suppliers' && 'Manage vendors, purchase distributors, GSTIN verification, and credit limits'}
+                    {displayTab === 'reports' && 'Real-time sales revenue, tax breakdown, and top selling items'}
+                    {displayTab === 'settings' && 'Store profile, GST settings, and tailored trade packs'}
+                    {displayTab === 'payments' && 'Manage supplier payments, vendor disbursements, and payment vouchers'}
+                    {displayTab === 'expenses' && 'Record, categorize, track vendor GSTINs, and manage business overhead expenditures'}
+                    {displayTab === 'receivables' && 'Outstanding customer credits, ageing analysis, and receivables'}
+                    {displayTab === 'payables' && 'Outstanding supplier invoices, vendor dues, and settlement schedules'}
+                    {displayTab === 'gst-overview' && 'Period sales, outward GST, purchases, potential vs reviewed ITC, and estimated net liability'}
+                    {displayTab === 'gst-sales-register' && 'Complete outward invoices register with B2B/B2C categorization and GST breakdown'}
+                    {displayTab === 'gst-purchase-register' && 'Consolidated statutory record of stock purchases and business expense vouchers'}
+                    {displayTab === 'gst-itc-reconciliation' && 'Reconcile purchases and expenses against GSTR-2B and record authoritative ITC decisions'}
+                    {displayTab === 'gst-gstr3b' && 'Draft and verify Table 3.1 outward liabilities, Table 4 reviewed eligible ITC, and net cash tax payable'}
+                    {displayTab === 'gst-gstr1' && 'B2B supplies (Table 4) and B2C retail counter sales (Table 7) return preparation'}
+                    {displayTab === 'gst-import-export' && 'Upload GSTR-2B JSON/CSV statements and download statutory GST worksheets and audit reports'}
+                    {displayTab === 'gst-filing-history' && 'Historical archive of submitted GSTR-1, GSTR-3B summaries, ARN receipts, and tax review logs'}
+                  </span>
+                </div>
+
+                <div className="content-header-right" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                  <div className="header-store-chip" title="Active Branch Scope">
+                    <span className="store-chip-dot"></span>
+                    <span className="store-chip-text">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" style={{ marginRight: '5px', verticalAlign: '-1px' }}>
+                        <path d="M3 21h18M3 7v14M21 7v14M6 7V3h12v4M9 10h1M14 10h1M9 14h1M14 14h1M9 18h1M14 18h1" />
+                      </svg>
+                      <strong>{currentBranchName}</strong>
                     </span>
                   </div>
-
-                  <div className="content-header-right" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-                    <div className="header-store-chip" title="Active Branch Scope">
+                  <div className="header-store-chip" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}>
+                    {shop?.logoUrl ? (
+                      <img
+                        src={shop.logoUrl}
+                        alt="Store Logo"
+                        style={{
+                          width: '18px',
+                          height: '18px',
+                          borderRadius: '4px',
+                          objectFit: 'contain',
+                          background: '#ffffff',
+                        }}
+                      />
+                    ) : (
                       <span className="store-chip-dot"></span>
-                      <span className="store-chip-text">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" style={{ marginRight: '5px', verticalAlign: '-1px' }}>
-                          <path d="M3 21h18M3 7v14M21 7v14M6 7V3h12v4M9 10h1M14 10h1M9 14h1M14 14h1M9 18h1M14 18h1" />
-                        </svg>
-                        <strong>{currentBranchName}</strong>
-                      </span>
-                    </div>
-                    <div className="header-store-chip" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}>
-                      {shop?.logoUrl ? (
-                        <img
-                          src={shop.logoUrl}
-                          alt="Store Logo"
-                          style={{
-                            width: '18px',
-                            height: '18px',
-                            borderRadius: '4px',
-                            objectFit: 'contain',
-                            background: '#ffffff',
-                          }}
-                        />
-                      ) : (
-                        <span className="store-chip-dot"></span>
-                      )}
-                      <span className="store-chip-text">
-                        {shop?.name} • <strong>{shop?.gstin || 'B2C Retail'}</strong>
-                      </span>
-                    </div>
+                    )}
+                    <span className="store-chip-text">
+                      {shop?.name} • <strong>{shop?.gstin || 'B2C Retail'}</strong>
+                    </span>
                   </div>
-                </header>
-              )
+                </div>
+              </header>
+            )
             }
 
             {/* TAB 0: DASHBOARD (TODAY'S LIVE OVERVIEW) */}

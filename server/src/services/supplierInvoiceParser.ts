@@ -217,7 +217,7 @@ export function preprocessInvoiceImage(buffer: Buffer): Buffer {
         height = img.height;
         rgba = new Uint8Array(upng.toRGBA8(img)[0]);
       }
-    } catch {}
+    } catch { }
 
     // 2. Try JPEG decode with jpeg-js
     if (!rgba) {
@@ -229,7 +229,7 @@ export function preprocessInvoiceImage(buffer: Buffer): Buffer {
           height = dec.height;
           rgba = new Uint8Array(dec.data);
         }
-      } catch {}
+      } catch { }
     }
 
     if (!rgba || width <= 0 || height <= 0) return buffer;
@@ -370,7 +370,7 @@ export async function extractTextFromInvoice(
       return { text: extractedText, pages: totalPages, isOcr: false };
     } catch (err: any) {
       if (pdfParser) {
-        try { await pdfParser.destroy(); } catch {}
+        try { await pdfParser.destroy(); } catch { }
       }
       throw new Error(`Failed to parse PDF document: ${err.message || String(err)}`);
     }

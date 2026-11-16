@@ -1530,6 +1530,39 @@ export const deleteProduct = (id: string) =>
     method: 'DELETE',
   });
 
+export interface TodayWholesaleData {
+  totalSalesMinor: number;
+  grossSalesMinor?: number;
+  returnsMinor?: number;
+  invoicesCount: number;
+  totalUnitsSold: number;
+  distinctProductsCount: number;
+  taxableMinor: number;
+  cgstMinor: number;
+  sgstMinor: number;
+  igstMinor: number;
+  totalGstMinor: number;
+  outstandingCreditMinor: number;
+  paidMinor: number;
+  compTotalSalesMinor: number;
+  compInvoicesCount: number;
+  salesChangePct: number | null;
+  topItems: Array<{
+    itemId: string;
+    name: string;
+    unit: string;
+    quantity: number;
+    salesMinor: number;
+  }>;
+  paymentModes: Array<{
+    key: string;
+    name: string;
+    amountMinor: number;
+    percentage: number;
+    color: string;
+  }>;
+}
+
 export interface TodayDashboardData {
   serverTime: string;
   nowKolkata: {
@@ -1709,6 +1742,7 @@ export interface TodayDashboardData {
     totalMinor: number;
     formattedTotal: string;
   };
+  wholesale?: TodayWholesaleData;
 }
 
 export const fetchTodayDashboard = (branch?: string) =>

@@ -27764,6 +27764,12 @@ select.expense-input-control {
   border: 1px solid #fee2e2;
 }
 
+.kpi-icon-badge.neutral {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+}
+
 .kpi-value-row {
   display: flex;
   align-items: baseline;
