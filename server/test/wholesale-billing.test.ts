@@ -30,7 +30,7 @@ async function api(method: string, path: string, headers: Record<string, string>
   const text = await res.text();
   let json: any = null;
   try { json = JSON.parse(text); } catch { }
-  return { status: res.status, body: json, text };
+  return { status: res.status, body: json, text, headers: Object.fromEntries(res.headers.entries()) };
 }
 
 before(async () => {
@@ -262,6 +262,9 @@ test('3. Generates Wholesale Invoice with WH prefix, shared inventory deduction,
   assert.ok(printRes.text.includes('Reverse Charge'), 'Must contain Reverse Charge');
   assert.ok(printRes.text.includes('HSN CODE'), 'Must have HSN summary table');
   assert.ok(printRes.text.includes('Authorised Signatory'), 'Must have Authorised Signatory');
+  assert.ok(printRes.text.includes('Suhani Fashions Surat'), 'Must include customer firm name');
+  assert.ok(printRes.text.includes('27AAPFU0939F1ZV'), 'Must include customer GSTIN');
+  assert.equal(printRes.text.includes('Cash Customer'), false, 'Must NOT display Cash Customer');
 });
 
 test('4. Separate Business Identity for Retail (POS) and Wholesale (B2B)', async () => {
@@ -410,4 +413,324 @@ test('4. Separate Business Identity for Retail (POS) and Wholesale (B2B)', async
   const updatedShop = updateNameRes.body.shop || updateNameRes.body;
   assert.equal(updatedShop.wholesaleBusinessName, 'ABC Wholesale Traders');
   assert.equal(updatedShop.invoiceProfiles.wholesale.displayName, 'ABC Wholesale Traders');
+});
+
+test('5. Wholesale Billing displays customer actual details across invoice generation, preview and print', async () => {
+  // 1. Create product item
+  const itRes = await api('POST', '/api/items', {}, {
+    name: 'Basmati Rice Premium 25kg',
+    sku: 'BASMATI-PREM-25',
+    priceMinor: 250000,
+    wholesalePriceMinor: 210000,
+    minWholesaleQtyMilli: 25000,
+    taxRateBp: 500,
+    unit: 'Bag',
+  }, ownerToken);
+  assert.equal(itRes.status, 200);
+  const it = itRes.body.item;
+
+  await db.exec(
+    `INSERT INTO stock_moves (id, tenant_id, branch_id, item_id, kind, qty_milli, created_at)
+     VALUES (?, ?, ?, ?, 'opening', 500000, now())`,
+    ['sm_in_b_' + Date.now(), TEST_TENANT, BRANCH_ID, it.id]
+  );
+
+  // 2. Create wholesale customer PV (Attn: Ram, Phone: 919638521478, GSTIN: 33ABCDE1234F1Z5, Tamil Nadu)
+  const pvRes = await api('POST', '/api/parties', {}, {
+    name: 'PV',
+    type: 'customer',
+    customerType: 'wholesale',
+    contactPerson: 'Ram',
+    phone: '919638521478',
+    gstin: '33ABCDE1234F1Z5',
+    creditLimitMinor: 10000000, // ₹1,00,000
+    // Note: billing address not configured to test fallback
+  }, ownerToken);
+  assert.equal(pvRes.status, 200);
+  const pv = pvRes.body.party;
+  assert.equal(pv.name, 'PV');
+  assert.equal(pv.gstin, '33ABCDE1234F1Z5');
+
+  // 3. Generate Wholesale Invoice for PV
+  const invRes = await api('POST', '/api/invoices', {}, {
+    invoiceType: 'wholesale',
+    branchId: BRANCH_ID,
+    partyId: pv.id,
+    customerId: pv.id,
+    customerName: pv.name,
+    customerPhone: pv.phone,
+    customerGstin: pv.gstin,
+    customer: {
+      id: pv.id,
+      name: pv.name,
+      phone: pv.phone,
+      gstin: pv.gstin,
+      contactPerson: 'Ram',
+      stateCode: '33',
+      stateName: 'Tamil Nadu',
+    },
+    lines: [
+      {
+        itemId: it.id,
+        name: it.name,
+        qtyMilli: 25000,
+        priceMinor: 210000,
+        taxRateBp: 500,
+        discountMinor: 0,
+        unit: 'Bag',
+      },
+    ],
+    payments: [{ mode: 'bank', amountMinor: 220500 }],
+    custom: {
+      paymentTerms: 'NEFT / RTGS',
+      customerGstin: pv.gstin,
+      customerState: 'Tamil Nadu',
+      customerStateCode: '33',
+      contactPerson: 'Ram',
+    },
+  }, ownerToken);
+
+  assert.equal(invRes.status, 200);
+  const inv = invRes.body.invoice || invRes.body;
+  assert.equal(inv.customerName, 'PV');
+  assert.equal(inv.customerPhone, '919638521478');
+  assert.equal(inv.customerGstin, '33ABCDE1234F1Z5');
+  assert.equal(inv.partyId, pv.id);
+
+  // 4. Verify Invoice Details via GET /api/invoices/:id
+  const getInvRes = await api('GET', `/api/invoices/${inv.id}`, {}, undefined, ownerToken);
+  assert.equal(getInvRes.status, 200);
+  assert.equal(getInvRes.body.invoice.customerName, 'PV');
+  assert.equal(getInvRes.body.invoice.customerPhone, '919638521478');
+
+  // 5. Verify Invoice Print output
+  const printRes = await api('GET', `/api/invoices/${inv.id}/print`, {}, undefined, ownerToken);
+  assert.equal(printRes.status, 200);
+
+  // Assertions ensuring NO "Cash Customer" or "Unregistered" replacement
+  assert.ok(printRes.text.includes('PV'), 'Must display buyer name PV');
+  assert.equal(printRes.text.includes('Cash Customer'), false, 'Must NOT display Cash Customer');
+  assert.ok(printRes.text.includes('919638521478'), 'Must display customer phone 919638521478');
+  assert.ok(printRes.text.includes('33ABCDE1234F1Z5'), 'Must display customer GSTIN 33ABCDE1234F1Z5');
+  assert.ok(printRes.text.includes('Ram'), 'Must display contact person Ram');
+  assert.ok(printRes.text.includes('Tamil Nadu'), 'Must display state Tamil Nadu');
+  assert.ok(printRes.text.includes('Address not configured'), 'Must display address not configured fallback');
+
+  // 6. Test Unregistered wholesale customer
+  const unregRes = await api('POST', '/api/parties', {}, {
+    name: 'Balaji Retail Store',
+    type: 'customer',
+    customerType: 'wholesale',
+    phone: '9840123999',
+    address: '45 M.G. Road Salem',
+  }, ownerToken);
+  assert.equal(unregRes.status, 200);
+  const unreg = unregRes.body.party;
+
+  const unregInvRes = await api('POST', '/api/invoices', {}, {
+    invoiceType: 'wholesale',
+    branchId: BRANCH_ID,
+    partyId: unreg.id,
+    customerName: unreg.name,
+    customerPhone: unreg.phone,
+    lines: [
+      {
+        itemId: it.id,
+        name: it.name,
+        qtyMilli: 25000,
+        priceMinor: 210000,
+        taxRateBp: 500,
+        unit: 'Bag',
+      },
+    ],
+    payments: [{ mode: 'cash', amountMinor: 220500 }],
+  }, ownerToken);
+  assert.equal(unregInvRes.status, 200);
+
+  const unregPrintRes = await api('GET', `/api/invoices/${unregInvRes.body.id}/print`, {}, undefined, ownerToken);
+  assert.equal(unregPrintRes.status, 200);
+  assert.ok(unregPrintRes.text.includes('Balaji Retail Store'), 'Must display Balaji Retail Store');
+  assert.ok(unregPrintRes.text.includes('9840123999'), 'Must display phone 9840123999');
+  assert.ok(unregPrintRes.text.includes('Unregistered'), 'Unregistered customer must show Unregistered for GST');
+  assert.equal(unregPrintRes.text.includes('Cash Customer'), false, 'Must NOT display Cash Customer for Balaji');
+});
+
+test('6. Invoice template selection strictly isolates Retail (Thermal) and Wholesale (A4)', async () => {
+  // 1. Create a retail invoice
+  const retRes = await api('POST', '/api/invoices', {}, {
+    invoiceType: 'retail',
+    branchId: BRANCH_ID,
+    customerName: 'Retail Buyer',
+    customerPhone: '9840199999',
+    lines: [
+      {
+        name: 'Sunflower Oil 1L',
+        qtyMilli: 2000,
+        priceMinor: 14000,
+        taxRateBp: 500,
+        unit: 'Pcs',
+      },
+    ],
+    payments: [{ mode: 'cash', amountMinor: 28000 }],
+  }, ownerToken);
+  assert.equal(retRes.status, 200);
+  const retailInv = retRes.body.invoice || retRes.body;
+
+  // 2. Create a wholesale invoice
+  const whRes = await api('POST', '/api/invoices', {}, {
+    invoiceType: 'wholesale',
+    branchId: BRANCH_ID,
+    customerName: 'B2B Wholesale Traders',
+    customerPhone: '9840188888',
+    lines: [
+      {
+        name: 'Rice 25kg Bulk',
+        qtyMilli: 250000,
+        priceMinor: 120000,
+        taxRateBp: 500,
+        unit: 'Bag',
+      },
+    ],
+    payments: [{ mode: 'bank', amountMinor: 1260000 }],
+  }, ownerToken);
+  assert.equal(whRes.status, 200);
+  const whInv = whRes.body.invoice || whRes.body;
+
+  // 3. Verify GET /api/invoices list exposes invoiceType
+  const listRes = await api('GET', '/api/invoices?limit=10', {}, undefined, ownerToken);
+  assert.equal(listRes.status, 200);
+  const foundRetailInList = listRes.body.invoices.find((i: any) => i.id === retailInv.id);
+  const foundWhInList = listRes.body.invoices.find((i: any) => i.id === whInv.id);
+  assert.ok(foundRetailInList);
+  assert.equal(foundRetailInList.invoiceType, 'retail');
+  assert.ok(foundWhInList);
+  assert.equal(foundWhInList.invoiceType, 'wholesale');
+
+  // 4. Verify GET /api/invoices/:id detail exposes invoiceType
+  const getRetail = await api('GET', `/api/invoices/${retailInv.id}`, {}, undefined, ownerToken);
+  assert.equal(getRetail.status, 200);
+  assert.equal(getRetail.body.invoice.invoiceType, 'retail');
+  const getWh = await api('GET', `/api/invoices/${whInv.id}`, {}, undefined, ownerToken);
+  assert.equal(getWh.status, 200);
+  assert.equal(getWh.body.invoice.invoiceType, 'wholesale');
+
+  // 5. Verify Retail Print generates thermal receipt (even if query requests ?paper=a4)
+  const retPrint = await api('GET', `/api/invoices/${retailInv.id}/print`, {}, undefined, ownerToken);
+  assert.equal(retPrint.status, 200);
+  assert.ok(retPrint.text.includes('@page{size:80mm auto;margin:0}'), 'Retail print must use 80mm thermal page');
+  assert.ok(retPrint.text.includes('th-bill-table'), 'Retail print must use thermal bill table');
+  assert.equal(retPrint.text.includes('copy wholesale-a4'), false, 'Retail print must NEVER use wholesale-a4');
+  assert.equal(retPrint.text.includes('@page { size: A4 portrait; margin: 8mm; }'), false, 'Retail print must NEVER use A4 page');
+
+  // Pass ?paper=a4 to retail print -> must STILL force thermal receipt
+  const retPrintA4Query = await api('GET', `/api/invoices/${retailInv.id}/print?paper=a4`, {}, undefined, ownerToken);
+  assert.equal(retPrintA4Query.status, 200);
+  assert.ok(retPrintA4Query.text.includes('@page{size:80mm auto;margin:0}'), 'Retail print must ignore ?paper=a4 and remain thermal');
+  assert.equal(retPrintA4Query.text.includes('copy wholesale-a4'), false);
+
+  // 6. Verify Wholesale Print generates Wholesale A4 Tax Invoice (even if query requests ?paper=thermal80)
+  const whPrint = await api('GET', `/api/invoices/${whInv.id}/print`, {}, undefined, ownerToken);
+  assert.equal(whPrint.status, 200);
+  assert.ok(whPrint.text.includes('copy wholesale-a4'), 'Wholesale print must use wholesale-a4 layout');
+  assert.ok(whPrint.text.includes('@page { size: A4 portrait; margin: 8mm; }'), 'Wholesale print must use A4 page');
+  assert.equal(whPrint.text.includes('th-bill-table'), false, 'Wholesale print must NEVER use thermal table');
+
+  const whPrintThermalQuery = await api('GET', `/api/invoices/${whInv.id}/print?paper=thermal80`, {}, undefined, ownerToken);
+  assert.equal(whPrintThermalQuery.status, 200);
+  assert.ok(whPrintThermalQuery.text.includes('copy wholesale-a4'), 'Wholesale print must ignore ?paper=thermal80 and remain A4');
+  assert.equal(whPrintThermalQuery.text.includes('th-bill-table'), false);
+
+  // 7. Verify Public Share URL /b/:token respects invoice type
+  const retShareToken = retailInv.shareToken || getRetail.body.invoice.shareToken;
+  assert.ok(retShareToken, 'Retail invoice must have shareToken');
+  const retPublic = await api('GET', `/b/${retShareToken}`);
+  assert.equal(retPublic.status, 200);
+  assert.ok(retPublic.text.includes('@page{size:80mm auto;margin:0}'), 'Public bill for retail must be thermal');
+  assert.equal(retPublic.text.includes('copy wholesale-a4'), false);
+
+  const whShareToken = whInv.shareToken || getWh.body.invoice.shareToken;
+  assert.ok(whShareToken, 'Wholesale invoice must have shareToken');
+  const whPublic = await api('GET', `/b/${whShareToken}`);
+  assert.equal(whPublic.status, 200);
+  assert.ok(whPublic.text.includes('copy wholesale-a4'), 'Public bill for wholesale must be wholesale A4');
+  assert.equal(whPublic.text.includes('th-bill-table'), false);
+});
+
+test('11. Invoice PDF Download functionality for Wholesale Billing', async () => {
+  // Create a wholesale customer
+  const custRes = await api(
+    'POST',
+    '/api/parties',
+    {},
+    {
+      name: 'PV Wholesale Mart',
+      type: 'customer',
+      customerType: 'wholesale',
+      branchId: BRANCH_ID,
+      phone: '9196385' + Math.floor(10000 + Math.random() * 90000),
+      gstin: '33ABCDE5678F1Z5',
+      address: 'Plot 45 SIPCOT Industrial Complex Hosur',
+      stateCode: '33',
+    },
+    ownerToken
+  );
+  assert.equal(custRes.status, 200);
+  const custId = custRes.body.party ? custRes.body.party.id : custRes.body.id;
+
+  // Create a wholesale invoice
+  const invCreateRes = await api(
+    'POST',
+    '/api/invoices',
+    {},
+    {
+      invoiceType: 'wholesale',
+      branchId: BRANCH_ID,
+      partyId: custId,
+      customerId: custId,
+      lines: [
+        {
+          name: 'Colgate Strong Teeth 200g',
+          hsn: '3306',
+          unit: 'pcs',
+          qtyMilli: 10000,
+          priceMinor: 11500,
+          discountMinor: 0,
+          taxRateBp: 1800,
+        },
+      ],
+      paymentMode: 'bank',
+      paidAmountRupees: '1150.00',
+    },
+    ownerToken
+  );
+  assert.equal(invCreateRes.status, 200);
+  const invoiceId = invCreateRes.body.invoice ? invCreateRes.body.invoice.id : invCreateRes.body.id;
+  const invoiceNumber = invCreateRes.body.invoice ? invCreateRes.body.invoice.number : invCreateRes.body.number;
+
+  // 1. Verify unauthenticated call to /api/invoices/:id/download-pdf returns 401
+  const unauthRes = await api('GET', `/api/invoices/${invoiceId}/download-pdf`);
+  assert.equal(unauthRes.status, 401);
+
+  // 2. Verify authenticated call to /api/invoices/:id/download-pdf returns PDF
+  const pdfRes = await api('GET', `/api/invoices/${invoiceId}/download-pdf`, {}, undefined, ownerToken);
+  assert.equal(pdfRes.status, 200);
+  assert.equal(pdfRes.headers['content-type'], 'application/pdf');
+  assert.ok(pdfRes.headers['content-disposition']?.includes('attachment; filename='));
+  assert.ok(pdfRes.headers['content-disposition']?.includes(`Wholesale_Invoice_${invoiceNumber}.pdf`));
+  assert.ok(pdfRes.text.startsWith('%PDF-'));
+  assert.ok(pdfRes.text.length > 500);
+
+  // 3. Verify /api/invoices/:id/print?format=pdf downloads PDF
+  const printPdfRes = await api('GET', `/api/invoices/${invoiceId}/print?format=pdf`, {}, undefined, ownerToken);
+  assert.equal(printPdfRes.status, 200);
+  assert.equal(printPdfRes.headers['content-type'], 'application/pdf');
+  assert.ok(printPdfRes.headers['content-disposition']?.includes(`Wholesale_Invoice_${invoiceNumber}.pdf`));
+  assert.ok(printPdfRes.text.startsWith('%PDF-'));
+
+  // 4. Verify /api/invoices/:id/print (without pdf param) remains print HTML view
+  const printHtmlRes = await api('GET', `/api/invoices/${invoiceId}/print?paper=wholesale_a4&autoprint=true`, {}, undefined, ownerToken);
+  assert.equal(printHtmlRes.status, 200);
+  assert.ok(printHtmlRes.headers['content-type']?.includes('text/html'));
+  assert.ok(printHtmlRes.text.includes('copy wholesale-a4'));
+  assert.ok(printHtmlRes.text.includes('window.print()'));
 });

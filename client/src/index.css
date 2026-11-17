@@ -1152,6 +1152,61 @@ body {
   margin-top: 0.2rem;
 }
 
+/* Wholesale Billing Top Header Layout */
+.top-wholesale-header-left {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  flex: 0 1 auto;
+}
+
+.top-wholesale-title {
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-main, #1e1b4b);
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  margin: 0;
+  padding: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 768px) {
+  .top-wholesale-title {
+    font-size: 1.25rem;
+    white-space: normal;
+  }
+}
+
+.wholesale-page-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-main, #1e1b4b);
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  margin: 0.5rem 0 1rem 0;
+  padding: 0;
+  text-align: left;
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .wholesale-page-title {
+    font-size: 1.25rem;
+    white-space: normal;
+    margin: 0.25rem 0 0.75rem 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .business-profile-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
 .header-store-chip {
   display: inline-flex;
   align-items: center;
@@ -9432,13 +9487,34 @@ body {
 }
 
 .supplier-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   background: #eff6ff;
-  color: #1e40af;
+  color: #1d4ed8;
   border: 1px solid #bfdbfe;
-  padding: 0.2rem 0.55rem;
-  border-radius: 4px;
-  font-size: 0.78rem;
+  padding: 0.22rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.76rem;
   font-weight: 600;
+  max-width: 100%;
+  box-sizing: border-box;
+  vertical-align: middle;
+  line-height: 1.25;
+  transition: all 0.15s ease;
+}
+
+.supplier-chip:hover {
+  background: #dbeafe;
+  border-color: #93c5fd;
+}
+
+.supplier-chip .supplier-name-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: inline-block;
+  max-width: 155px;
 }
 
 .table-actions-cluster {
@@ -27709,6 +27785,12 @@ select.expense-input-control {
   border: 1px solid #fee2e2;
 }
 
+.kpi-icon-badge.neutral {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+}
+
 .kpi-value-row {
   display: flex;
   align-items: baseline;
@@ -36243,5 +36325,26 @@ select.expense-input-control {
   50% {
     transform: scale(1.05);
     box-shadow: 0 0 14px 4px rgba(225, 29, 72, 0.5);
+  }
+}
+
+/* Bento Confirm Modal Animations */
+@keyframes fadeInModal {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleInModal {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }

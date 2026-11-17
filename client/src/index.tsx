@@ -5,6 +5,7 @@ import { MobileScanner } from './components/MobileScanner';
 import { CustomerDisplay } from './components/CustomerDisplay';
 import './index.css';
 import './components/inventory/PurchaseBentoModal.css';
+import './components/cashier-login.css';
 
 interface ErrorBoundaryProps {
   children: ReactNode;

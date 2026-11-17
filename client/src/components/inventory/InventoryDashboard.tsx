@@ -41,6 +41,7 @@ import {
   Edit3Icon,
   InfoIcon,
   PhoneIcon,
+  Building2Icon,
   DownloadIcon,
   ClockIcon,
   BarChart3Icon,
@@ -65,6 +66,7 @@ interface InventoryDashboardProps {
   onNavigateToPurchases?: (supplierId?: string, itemId?: string) => void;
   onNavigateToCategories?: () => void;
   onNavigateToProductAnalysis?: () => void;
+  onOpenSupplierInvoiceConverter?: () => void;
   showToast: (msg: string) => void;
   onReloadItems: () => void;
 }
@@ -84,6 +86,7 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
   onNavigateToPurchases,
   onNavigateToCategories,
   onNavigateToProductAnalysis,
+  onOpenSupplierInvoiceConverter,
   showToast,
   onReloadItems,
 }) => {
@@ -825,6 +828,31 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
                   <SlidersIcon size={14} /> Stock Adjustment
                 </button>
               )}
+              {isOwnerOrManager && onOpenSupplierInvoiceConverter && (
+                <button
+                  type="button"
+                  className="cat-btn-secondary"
+                  onClick={onOpenSupplierInvoiceConverter}
+                  title="Convert Supplier Invoice PDF/Image into Excel for Import"
+                  style={{
+                    height: '38px',
+                    borderRadius: '10px',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    padding: '0 14px',
+                    background: '#FFFFFF',
+                    color: '#4338CA',
+                    border: '1.5px solid #C7D2FE',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    whiteSpace: 'nowrap',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <FileTextIcon size={14} /> Convert Invoice to Excel
+                </button>
+              )}
               {/* Category Filter */}
               <select
                 className="inv-select"
@@ -943,7 +971,7 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
                     <th style={{ minWidth: '95px', textAlign: 'right' }}>Reorder Level</th>
                     {isAuthorizedForCost && <th style={{ minWidth: '85px', textAlign: 'right' }}>Unit Cost</th>}
                     {isAuthorizedForCost && <th style={{ minWidth: '95px', textAlign: 'right' }}>Total Value</th>}
-                    <th style={{ minWidth: '110px' }}>Supplier</th>
+                    <th style={{ minWidth: '160px', width: '190px', textAlign: 'left' }}>Supplier</th>
                     <th style={{ minWidth: '120px', textAlign: 'right' }}>Actions</th>
                   </tr>
                 </thead>
@@ -1113,13 +1141,17 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
                             {formatIndianCurrency((item.stockValueMinor || 0) / 100)}
                           </td>
                         )}
-                        <td>
+                        <td style={{ minWidth: '160px', width: '190px' }}>
                           {item.preferredSupplierName ? (
-                            <span className="supplier-chip" title={item.preferredSupplierPhone || ''}>
-                              {item.preferredSupplierName}
+                            <span
+                              className="supplier-chip"
+                              title={item.preferredSupplierPhone ? `${item.preferredSupplierName} • Phone: ${item.preferredSupplierPhone}` : item.preferredSupplierName}
+                            >
+                              <Building2Icon size={12} style={{ flexShrink: 0, opacity: 0.75 }} />
+                              <span className="supplier-name-text">{item.preferredSupplierName}</span>
                             </span>
                           ) : (
-                            <span style={{ color: 'var(--text-dim)', fontSize: '0.8rem' }}>--</span>
+                            <span style={{ color: 'var(--text-dim)', fontSize: '0.8rem', paddingLeft: '0.25rem' }}>--</span>
                           )}
                         </td>
                         <td style={{ textAlign: 'right' }}>

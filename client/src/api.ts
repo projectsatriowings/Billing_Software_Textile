@@ -111,6 +111,75 @@ export async function api<T = any>(path: string, options: RequestInit = {}): Pro
   return data as T;
 }
 
+export interface DownloadBlobResult {
+  blob: Blob;
+  filename?: string;
+  contentType: string;
+}
+
+export async function apiBlob(
+  path: string,
+  options: RequestInit = {}
+): Promise<DownloadBlobResult> {
+  const token = getToken();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(options.headers as Record<string, string>),
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  const selectedBranch = getActiveBranchScope();
+  if (selectedBranch && selectedBranch.toLowerCase() !== 'all') {
+    headers['x-branch-id'] = selectedBranch;
+  }
+
+  const res = await fetch(path, {
+    ...options,
+    headers,
+  });
+
+  if (res.status === 401) {
+    clearToken();
+    window.dispatchEvent(new Event('auth_required'));
+    const errJson = await res.json().catch(() => ({}));
+    const msg = errJson?.error?.message || errJson?.message || 'Please sign in again';
+    throw new Error(msg);
+  }
+
+  if (res.status === 403) {
+    const clone = res.clone();
+    const data = await clone.json().catch(() => ({}));
+    if (data?.code === 'PASSWORD_CHANGE_REQUIRED' || data?.error?.code === 'PASSWORD_CHANGE_REQUIRED') {
+      window.dispatchEvent(new CustomEvent('password_change_required'));
+    }
+  }
+
+  if (!res.ok) {
+    const errJson = await res.json().catch(() => ({}));
+    const msg = errJson?.error?.message || errJson?.message || `Download failed with HTTP ${res.status}`;
+    throw new Error(msg);
+  }
+
+  const contentType = res.headers.get('content-type') || '';
+  if (contentType.includes('application/json')) {
+    const json = await res.json().catch(() => ({}));
+    if (json?.error) {
+      throw new Error(json.error.message || 'Server error occurred during download');
+    }
+  }
+
+  const disposition = res.headers.get('content-disposition') || '';
+  let filename: string | undefined;
+  if (disposition && disposition.includes('filename=')) {
+    const match = disposition.match(/filename="?([^";]+)"?/);
+    if (match && match[1]) filename = match[1];
+  }
+
+  const blob = await res.blob();
+  return { blob, filename, contentType };
+}
+
 export async function changePassword(
   currentPassword: string,
   newPassword: string,
@@ -1467,6 +1536,39 @@ export const deleteProduct = (id: string) =>
     method: 'DELETE',
   });
 
+export interface TodayWholesaleData {
+  totalSalesMinor: number;
+  grossSalesMinor?: number;
+  returnsMinor?: number;
+  invoicesCount: number;
+  totalUnitsSold: number;
+  distinctProductsCount: number;
+  taxableMinor: number;
+  cgstMinor: number;
+  sgstMinor: number;
+  igstMinor: number;
+  totalGstMinor: number;
+  outstandingCreditMinor: number;
+  paidMinor: number;
+  compTotalSalesMinor: number;
+  compInvoicesCount: number;
+  salesChangePct: number | null;
+  topItems: Array<{
+    itemId: string;
+    name: string;
+    unit: string;
+    quantity: number;
+    salesMinor: number;
+  }>;
+  paymentModes: Array<{
+    key: string;
+    name: string;
+    amountMinor: number;
+    percentage: number;
+    color: string;
+  }>;
+}
+
 export interface TodayDashboardData {
   serverTime: string;
   nowKolkata: {
@@ -1646,6 +1748,7 @@ export interface TodayDashboardData {
     totalMinor: number;
     formattedTotal: string;
   };
+  wholesale?: TodayWholesaleData;
 }
 
 export const fetchTodayDashboard = (branch?: string) =>
@@ -2546,6 +2649,8 @@ export const submitExchange = (data: {
     customerPayableMinor: number;
     customerRefundMinor: number;
     exchangeAdjustedMinor: number;
+    netLoyaltyPointsAdjusted?: number;
+    customerLoyaltyPoints?: number;
   }>('/api/exchanges', {
     method: 'POST',
     body: JSON.stringify(data),
@@ -2923,5 +3028,173 @@ export const fetchReturnReports = (params: {
   if (params.branchId) q.set('branchId', params.branchId);
   return api<any>(`/api/reports/returns-module?${q.toString()}`);
 };
+
+// ── Supplier Invoice to Excel Converter ───────────────────────────────────────
+export interface ExtractedSupplierInvoiceItem {
+  id: string;
+  name: string;
+  uom: string;
+  sellingPrice: string;
+  costPrice: string;
+  hsn: string;
+  gstRate: string;
+  priceInclusive: 'Yes' | 'No';
+  openingStock: string;
+  rawRate?: string;
+  rawQty?: string;
+  rawDiscount?: string;
+  rawTaxable?: string;
+  rawTotal?: string;
+  confidence?: 'high' | 'medium' | 'low';
+  flags?: string[];
+}
+
+export interface SupplierInvoiceMetadata {
+  supplierName: string;
+  supplierGstin: string;
+  invoiceNumber: string;
+  invoiceDate: string;
+  totalAmount: number | null;
+  rawText: string;
+  subtotalAmount?: number | null;
+  cgstAmount?: number | null;
+  sgstAmount?: number | null;
+  igstAmount?: number | null;
+  buyerName?: string;
+  buyerAddress?: string;
+  buyerGstin?: string;
+  discrepancyWarning?: string;
+}
+
+export interface SupplierInvoiceExtractionResult {
+  ok: boolean;
+  metadata: SupplierInvoiceMetadata;
+  headers: string[];
+  detectedColumns: string[];
+  columnMap: Record<string, string | undefined>;
+  savedMapping: {
+    id: string;
+    supplierId?: string;
+    supplierName: string;
+    supplierGstin?: string;
+    mapping: Record<string, string | undefined>;
+  } | null;
+  pageCount: number;
+  isOcr: boolean;
+  products: ExtractedSupplierInvoiceItem[];
+  calculatedTotalCost: number;
+  dataLinesPreview: string[];
+}
+
+export interface SupplierInvoiceMapping {
+  id: string;
+  supplierId?: string | null;
+  supplierName: string;
+  supplierGstin?: string | null;
+  mapping: Record<string, string | undefined>;
+  headerSample?: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const extractSupplierInvoice = (payload: {
+  fileName: string;
+  fileData: string;
+  mimeType?: string;
+  supplierId?: string;
+}) =>
+  api<SupplierInvoiceExtractionResult>('/api/supplier-invoices/extract', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+
+export const reparseSupplierInvoice = (payload: {
+  dataLines: string[];
+  headers: string[];
+  columnMap: Record<string, string | undefined>;
+}) =>
+  api<{
+    ok: boolean;
+    products: ExtractedSupplierInvoiceItem[];
+    calculatedTotalCost: number;
+    columnMap: Record<string, string | undefined>;
+  }>('/api/supplier-invoices/reparse', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+
+export const fetchSupplierInvoiceMappings = () =>
+  api<{ ok: boolean; mappings: SupplierInvoiceMapping[] }>('/api/supplier-invoices/mappings');
+
+export const saveSupplierInvoiceMapping = (data: {
+  id?: string;
+  supplierId?: string | null;
+  supplierName: string;
+  supplierGstin?: string | null;
+  mapping: Record<string, string | undefined>;
+  headerSample?: string[];
+}) =>
+  api<{ ok: boolean; id: string; created?: boolean; updated?: boolean }>('/api/supplier-invoices/mappings', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+export const deleteSupplierInvoiceMapping = (id: string) =>
+  api<{ ok: boolean; deleted: boolean }>(`/api/supplier-invoices/mappings/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+  });
+
+export interface DownloadableExcelBlob extends Blob {
+  filename?: string;
+}
+
+export interface DownloadableInvoiceBlob extends Blob {
+  filename?: string;
+}
+
+export const downloadInvoicePdf = async (
+  invoiceId: string,
+  paper: string = 'wholesale_a4'
+): Promise<DownloadableInvoiceBlob> => {
+  const { blob, filename } = await apiBlob(
+    `/api/invoices/${encodeURIComponent(invoiceId)}/download-pdf?paper=${encodeURIComponent(paper)}`
+  );
+  const resBlob = blob as DownloadableInvoiceBlob;
+  resBlob.filename = filename || `Wholesale_Invoice_${invoiceId}.pdf`;
+  return resBlob;
+};
+
+export function triggerBlobDownload(blob: Blob, fallbackFilename: string = 'Invoice.pdf') {
+  const filename = (blob as any).filename || fallbackFilename;
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, 100);
+}
+
+export const exportSupplierInvoiceExcel = async (payload: {
+  products: ExtractedSupplierInvoiceItem[];
+  invoiceNumber?: string;
+}): Promise<DownloadableExcelBlob> => {
+  const invoiceNum = (payload.invoiceNumber || 'INV').replace(/[^\w-]/g, '_');
+  const dateStr = new Date().toISOString().slice(0, 10);
+  const fallbackFilename = `Supplier_Product_Import_${invoiceNum}_${dateStr}.xlsx`;
+
+  const { blob, filename } = await apiBlob('/api/supplier-invoices/export-excel', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+
+  const resBlob = blob as DownloadableExcelBlob;
+  resBlob.filename = filename || fallbackFilename;
+  return resBlob;
+};
+
 
 

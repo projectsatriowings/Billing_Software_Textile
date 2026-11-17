@@ -367,7 +367,31 @@ export function registerDashboard(r: Router) {
 
     const assignedCounters: string[] = activeCounters.map((c) => c.code);
 
-    // 4. PARALLELIZE ALL 12 DATABASE QUERIES CONCURRENTLY VIA Promise.all
+    // ── STRICT ISOLATION: RETAIL VS WHOLESALE B2B INVOICES ──────────────────
+    // Does not identify transaction types using product or customer names.
+    // Strictly uses stored invoice_type, invoice number prefix (WH-), and wholesale counter.
+    const WHOLESALE_CONDITION = `(
+      i.invoice_type = 'wholesale'
+      OR i.number LIKE 'WH-%'
+      OR i.number LIKE 'WH%'
+      OR i.counter = 'WHOLESALE'
+    )`;
+
+    const RETAIL_CONDITION = `NOT (
+      i.invoice_type = 'wholesale'
+      OR i.number LIKE 'WH-%'
+      OR i.number LIKE 'WH%'
+      OR i.counter = 'WHOLESALE'
+    )`;
+
+    const RETAIL_DIRECT_CONDITION = `NOT (
+      invoice_type = 'wholesale'
+      OR number LIKE 'WH-%'
+      OR number LIKE 'WH%'
+      OR counter = 'WHOLESALE'
+    )`;
+
+    // 4. PARALLELIZE ALL DATABASE QUERIES CONCURRENTLY VIA Promise.all
     const [
       todaySalesRes,
       compSalesRes,
@@ -381,8 +405,13 @@ export function registerDashboard(r: Router) {
       stockAttentionRows,
       shiftRow,
       todayCounterInvoicesRows,
+      todayWholesaleSalesRes,
+      todayWholesaleItemsRes,
+      compWholesaleSalesRes,
+      wholesaleTopItemsRows,
+      wholesalePaymentRows,
     ] = await Promise.all([
-      // 1. Today sales
+      // 1. Today sales (Retail Only)
       ctx.db.one<any>(
         `SELECT
           COUNT(DISTINCT CASE WHEN i.kind = 'sale' THEN i.id END)::int AS bills_count,
@@ -402,11 +431,12 @@ export function registerDashboard(r: Router) {
            AND (i.bdate = ? OR (i.created_at AT TIME ZONE ?)::date = ?::date)
            AND i.status = 'posted'
            AND i.kind IN ('sale', 'credit_note')
+           AND ${RETAIL_CONDITION}
            ${invBranchClause}`,
         [tenantId, todayYMD, tz, todayYMD, ...invBranchParams],
       ),
 
-      // 2. Comparison sales (yesterday)
+      // 2. Comparison sales (yesterday, Retail Only)
       ctx.db.one<any>(
         `SELECT
           COUNT(DISTINCT CASE WHEN i.kind = 'sale' THEN i.id END)::int AS bills_count,
@@ -418,11 +448,12 @@ export function registerDashboard(r: Router) {
            AND i.status = 'posted'
            AND i.kind IN ('sale', 'credit_note')
            AND i.created_at <= ?
+           AND ${RETAIL_CONDITION}
            ${invBranchClause}`,
         [tenantId, compDateYMD, tz, compDateYMD, compCutoff.toISOString(), ...invBranchParams],
       ),
 
-      // 3. COGS (if owner or manager)
+      // 3. COGS (if owner or manager, Retail Only)
       isOwnerOrManager
         ? ctx.db.one<any>(
           `SELECT
@@ -441,12 +472,13 @@ export function registerDashboard(r: Router) {
                AND (i.bdate = ? OR (i.created_at AT TIME ZONE ?)::date = ?::date)
                AND i.status = 'posted'
                AND i.kind IN ('sale', 'credit_note')
+               AND ${RETAIL_CONDITION}
                ${invBranchClause}`,
           [tenantId, todayYMD, tz, todayYMD, ...invBranchParams],
         )
         : Promise.resolve(null),
 
-      // 4. Items sold today
+      // 4. Items sold today (Retail Only - Wholesale quantities strictly excluded)
       ctx.db.one<any>(
         `SELECT
           COALESCE(SUM(
@@ -463,11 +495,12 @@ export function registerDashboard(r: Router) {
            AND (i.bdate = ? OR (i.created_at AT TIME ZONE ?)::date = ?::date)
            AND i.status = 'posted'
            AND i.kind = 'sale'
+           AND ${RETAIL_CONDITION}
            ${invBranchClause}`,
         [tenantId, todayYMD, tz, todayYMD, ...invBranchParams],
       ),
 
-      // 5. Today hourly breakdown
+      // 5. Today hourly breakdown (Retail Only)
       ctx.db.query<any>(
         `WITH inv_summary AS (
           SELECT
@@ -480,6 +513,7 @@ export function registerDashboard(r: Router) {
             AND (i.bdate = ? OR (i.created_at AT TIME ZONE ?)::date = ?::date)
             AND i.status = 'posted'
             AND i.kind IN ('sale', 'credit_note')
+            AND ${RETAIL_CONDITION}
             ${invBranchClause}
         ),
         hourly_invoices AS (
@@ -507,6 +541,7 @@ export function registerDashboard(r: Router) {
             AND (i.bdate = ? OR (i.created_at AT TIME ZONE ?)::date = ?::date)
             AND i.status = 'posted'
             AND i.kind IN ('sale', 'credit_note')
+            AND ${RETAIL_CONDITION}
             ${invBranchClause}
           GROUP BY hr
         )
@@ -521,7 +556,7 @@ export function registerDashboard(r: Router) {
         [tz, tenantId, todayYMD, tz, todayYMD, ...invBranchParams, tz, tenantId, todayYMD, tz, todayYMD, ...invBranchParams],
       ),
 
-      // 6. Comparison hourly breakdown (yesterday)
+      // 6. Comparison hourly breakdown (yesterday, Retail Only)
       ctx.db.query<any>(
         `WITH inv_summary AS (
           SELECT
@@ -534,6 +569,7 @@ export function registerDashboard(r: Router) {
             AND (i.bdate = ? OR (i.created_at AT TIME ZONE ?)::date = ?::date)
             AND i.status = 'posted'
             AND i.kind IN ('sale', 'credit_note')
+            AND ${RETAIL_CONDITION}
             ${invBranchClause}
         ),
         hourly_invoices AS (
@@ -561,6 +597,7 @@ export function registerDashboard(r: Router) {
             AND (i.bdate = ? OR (i.created_at AT TIME ZONE ?)::date = ?::date)
             AND i.status = 'posted'
             AND i.kind IN ('sale', 'credit_note')
+            AND ${RETAIL_CONDITION}
             ${invBranchClause}
           GROUP BY hr
         )
@@ -575,7 +612,7 @@ export function registerDashboard(r: Router) {
         [tz, tenantId, compDateYMD, tz, compDateYMD, ...invBranchParams, tz, tenantId, compDateYMD, tz, compDateYMD, ...invBranchParams],
       ),
 
-      // 7. Payment modes breakdown
+      // 7. Payment modes breakdown (Retail Only - Wholesale receipts excluded)
       ctx.db.query<any>(
         `SELECT
           LOWER(COALESCE(p.mode, p.method, 'cash')) AS mode,
@@ -587,7 +624,7 @@ export function registerDashboard(r: Router) {
            AND (p.status IS NULL OR p.status = 'posted')
            AND COALESCE(p.kind, 'receipt') = 'receipt'
            AND (
-             (p.invoice_id IS NOT NULL AND (i.bdate = ? OR (i.created_at AT TIME ZONE ?)::date = ?::date) AND i.status = 'posted' AND i.kind = 'sale')
+             (p.invoice_id IS NOT NULL AND (i.bdate = ? OR (i.created_at AT TIME ZONE ?)::date = ?::date) AND i.status = 'posted' AND i.kind = 'sale' AND ${RETAIL_CONDITION})
              OR
              (p.invoice_id IS NULL AND (p.bdate = ? OR (p.created_at AT TIME ZONE ?)::date = ?::date))
            )
@@ -596,7 +633,7 @@ export function registerDashboard(r: Router) {
         [tenantId, todayYMD, tz, todayYMD, todayYMD, tz, todayYMD, ...payBranchParams],
       ),
 
-      // 8. Refunds breakdown
+      // 8. Refunds breakdown (Retail Only)
       ctx.db.query<any>(
         `SELECT
           LOWER(COALESCE(refund_mode, 'cash')) AS mode,
@@ -607,12 +644,13 @@ export function registerDashboard(r: Router) {
            AND kind = 'credit_note'
            AND status = 'posted'
            AND refund_amount_minor > 0
+           AND ${RETAIL_DIRECT_CONDITION}
            ${invDirectBranchClause}
          GROUP BY LOWER(COALESCE(refund_mode, 'cash'))`,
         [tenantId, todayYMD, tz, todayYMD, ...invDirectBranchParams],
       ),
 
-      // 9. Top 5 sellers
+      // 9. Top 5 sellers (Retail Only - Wholesale sales strictly excluded)
       ctx.db.query<any>(
         `SELECT
           COALESCE(it.id, il.item_id) AS item_id,
@@ -639,6 +677,7 @@ export function registerDashboard(r: Router) {
            AND (i.bdate = ? OR (i.created_at AT TIME ZONE ?)::date = ?::date)
            AND i.status = 'posted'
            AND i.kind IN ('sale', 'credit_note')
+           AND ${RETAIL_CONDITION}
            ${invBranchClause}
          GROUP BY COALESCE(it.id, il.item_id), COALESCE(it.name, il.name, 'Item'), COALESCE(it.unit, il.unit, 'pcs')
          HAVING SUM(CASE WHEN i.kind = 'sale' THEN il.total_minor WHEN i.kind = 'credit_note' THEN -il.total_minor ELSE 0 END) > 0
@@ -647,7 +686,7 @@ export function registerDashboard(r: Router) {
         [tenantId, todayYMD, tz, todayYMD, ...invBranchParams],
       ),
 
-      // 10. Stock attention (optimized CTE aggregation instead of correlated subquery per row)
+      // 10. Stock attention (Retail sold today)
       ctx.db.query<any>(
         `WITH sm_agg AS (
           SELECT sm.item_id, SUM(sm.qty_milli)::bigint AS stock_milli
@@ -666,6 +705,7 @@ export function registerDashboard(r: Router) {
             AND (i.bdate = ? OR (i.created_at AT TIME ZONE ?)::date = ?::date)
             AND i.status = 'posted'
             AND i.kind = 'sale'
+            AND ${RETAIL_CONDITION}
             ${invBranchClause}
           GROUP BY il.item_id
         ),
@@ -711,7 +751,7 @@ export function registerDashboard(r: Router) {
       // 11. Shift row
       ctx.db.one<any>(shiftSql, shiftParams),
 
-      // 12. Counter sales from invoices (Authoritative, zero duplicate JOINs)
+      // 12. Counter sales from invoices (Retail checkout counters only)
       ctx.db.query<any>(
         `SELECT 
            i.id,
@@ -726,8 +766,124 @@ export function registerDashboard(r: Router) {
            AND (i.bdate = ? OR (i.created_at AT TIME ZONE ?)::date = ?::date)
            AND i.status = 'posted'
            AND i.kind IN ('sale', 'credit_note')
+           AND ${RETAIL_CONDITION}
            ${invBranchClause}`,
         [tenantId, todayYMD, tz, todayYMD, ...invBranchParams],
+      ),
+
+      // 13. Wholesale Today Sales Analysis (B2B Tax Invoices only)
+      ctx.db.one<any>(
+        `SELECT
+          COUNT(DISTINCT CASE WHEN i.kind = 'sale' THEN i.id END)::int AS invoices_count,
+          COALESCE(SUM(CASE WHEN i.kind = 'sale' THEN i.total_minor ELSE 0 END), 0)::bigint AS gross_sales,
+          COALESCE(SUM(CASE WHEN i.kind = 'credit_note' THEN i.total_minor ELSE 0 END), 0)::bigint AS returns_total,
+          COALESCE(SUM(CASE WHEN i.kind = 'sale' THEN i.total_minor WHEN i.kind = 'credit_note' THEN -i.total_minor ELSE 0 END), 0)::bigint AS total_sales,
+          COALESCE(SUM(CASE WHEN i.kind = 'sale' THEN i.taxable_minor WHEN i.kind = 'credit_note' THEN -i.taxable_minor ELSE 0 END), 0)::bigint AS taxable_amount,
+          COALESCE(SUM(CASE WHEN i.kind = 'sale' THEN i.cgst_minor WHEN i.kind = 'credit_note' THEN -i.cgst_minor ELSE 0 END), 0)::bigint AS cgst_amount,
+          COALESCE(SUM(CASE WHEN i.kind = 'sale' THEN i.sgst_minor WHEN i.kind = 'credit_note' THEN -i.sgst_minor ELSE 0 END), 0)::bigint AS sgst_amount,
+          COALESCE(SUM(CASE WHEN i.kind = 'sale' THEN i.igst_minor WHEN i.kind = 'credit_note' THEN -i.igst_minor ELSE 0 END), 0)::bigint AS igst_amount,
+          COALESCE(SUM(CASE WHEN i.kind = 'sale' THEN i.balance_minor ELSE 0 END), 0)::bigint AS outstanding_credit,
+          COALESCE(SUM(CASE WHEN i.kind = 'sale' THEN i.paid_minor ELSE 0 END), 0)::bigint AS paid_amount
+         FROM invoices i
+         WHERE i.tenant_id = ?
+           AND (i.bdate = ? OR (i.created_at AT TIME ZONE ?)::date = ?::date)
+           AND i.status = 'posted'
+           AND i.kind IN ('sale', 'credit_note')
+           AND ${WHOLESALE_CONDITION}
+           ${invBranchClause}`,
+        [tenantId, todayYMD, tz, todayYMD, ...invBranchParams],
+      ),
+
+      // 14. Wholesale Items Sold Today
+      ctx.db.one<any>(
+        `SELECT
+          COALESCE(SUM(
+            CASE
+              WHEN i.kind = 'sale' THEN il.qty_milli / 1000
+              WHEN i.kind = 'credit_note' THEN -(il.qty_milli / 1000)
+              ELSE 0
+            END
+          ), 0)::bigint AS total_units,
+          COUNT(DISTINCT il.item_id)::int AS distinct_products
+         FROM invoice_lines il
+         JOIN invoices i ON i.id = il.invoice_id
+         WHERE i.tenant_id = ?
+           AND (i.bdate = ? OR (i.created_at AT TIME ZONE ?)::date = ?::date)
+           AND i.status = 'posted'
+           AND i.kind IN ('sale', 'credit_note')
+           AND ${WHOLESALE_CONDITION}
+           ${invBranchClause}`,
+        [tenantId, todayYMD, tz, todayYMD, ...invBranchParams],
+      ),
+
+      // 15. Wholesale Comparison Sales (yesterday)
+      ctx.db.one<any>(
+        `SELECT
+          COUNT(DISTINCT CASE WHEN i.kind = 'sale' THEN i.id END)::int AS invoices_count,
+          COALESCE(SUM(CASE WHEN i.kind = 'sale' THEN i.total_minor WHEN i.kind = 'credit_note' THEN -i.total_minor ELSE 0 END), 0)::bigint AS total_sales
+         FROM invoices i
+         WHERE i.tenant_id = ?
+           AND (i.bdate = ? OR (i.created_at AT TIME ZONE ?)::date = ?::date)
+           AND i.status = 'posted'
+           AND i.kind IN ('sale', 'credit_note')
+           AND i.created_at <= ?
+           AND ${WHOLESALE_CONDITION}
+           ${invBranchClause}`,
+        [tenantId, compDateYMD, tz, compDateYMD, compCutoff.toISOString(), ...invBranchParams],
+      ),
+
+      // 16. Wholesale Top 5 Items
+      ctx.db.query<any>(
+        `SELECT
+          COALESCE(it.id, il.item_id) AS item_id,
+          COALESCE(it.name, il.name, 'Wholesale Product') AS name,
+          COALESCE(it.unit, il.unit, 'pcs') AS unit,
+          COALESCE(SUM(
+            CASE
+              WHEN i.kind = 'sale' THEN il.qty_milli
+              WHEN i.kind = 'credit_note' THEN -il.qty_milli
+              ELSE 0
+            END
+          ), 0)::bigint AS qty_milli,
+          COALESCE(SUM(
+            CASE
+              WHEN i.kind = 'sale' THEN il.total_minor
+              WHEN i.kind = 'credit_note' THEN -il.total_minor
+              ELSE 0
+            END
+          ), 0)::bigint AS sales_minor
+         FROM invoice_lines il
+         JOIN invoices i ON i.id = il.invoice_id
+         LEFT JOIN items it ON it.id = il.item_id AND it.tenant_id = il.tenant_id
+         WHERE i.tenant_id = ?
+           AND (i.bdate = ? OR (i.created_at AT TIME ZONE ?)::date = ?::date)
+           AND i.status = 'posted'
+           AND i.kind IN ('sale', 'credit_note')
+           AND ${WHOLESALE_CONDITION}
+           ${invBranchClause}
+         GROUP BY COALESCE(it.id, il.item_id), COALESCE(it.name, il.name, 'Wholesale Product'), COALESCE(it.unit, il.unit, 'pcs')
+         HAVING SUM(CASE WHEN i.kind = 'sale' THEN il.total_minor WHEN i.kind = 'credit_note' THEN -il.total_minor ELSE 0 END) > 0
+         ORDER BY sales_minor DESC
+         LIMIT 5`,
+        [tenantId, todayYMD, tz, todayYMD, ...invBranchParams],
+      ),
+
+      // 17. Wholesale Payment modes breakdown
+      ctx.db.query<any>(
+        `SELECT
+          LOWER(COALESCE(p.mode, p.method, 'bank')) AS mode,
+          COALESCE(SUM(p.amount_minor), 0)::bigint AS total_minor
+         FROM payments p
+         JOIN invoices i ON i.id = p.invoice_id
+         WHERE p.tenant_id = ?
+           AND (p.status IS NULL OR p.status = 'posted')
+           AND COALESCE(p.kind, 'receipt') = 'receipt'
+           AND (i.bdate = ? OR (i.created_at AT TIME ZONE ?)::date = ?::date)
+           AND i.status = 'posted'
+           AND ${WHOLESALE_CONDITION}
+           ${payBranchClause}
+         GROUP BY LOWER(COALESCE(p.mode, p.method, 'bank'))`,
+        [tenantId, todayYMD, tz, todayYMD, ...payBranchParams],
       ),
     ]);
 
@@ -1203,6 +1359,69 @@ export function registerDashboard(r: Router) {
       formattedTotal: formatCounterRupees(countersTotalMinor),
     };
 
+    // ── WHOLESALE B2B METRICS CALCULATION (ISOLATED FROM RETAIL) ────────────
+    const wsInvoicesCount = Number(todayWholesaleSalesRes?.invoicesCount ?? todayWholesaleSalesRes?.invoices_count ?? 0);
+    const wsTotalSalesMinor = Math.max(0, Number(todayWholesaleSalesRes?.totalSales ?? todayWholesaleSalesRes?.total_sales ?? 0));
+    const wsGrossSalesMinor = Number(todayWholesaleSalesRes?.grossSales ?? todayWholesaleSalesRes?.gross_sales ?? 0);
+    const wsReturnsMinor = Number(todayWholesaleSalesRes?.returnsTotal ?? todayWholesaleSalesRes?.returns_total ?? 0);
+    const wsTaxableMinor = Math.max(0, Number(todayWholesaleSalesRes?.taxableAmount ?? todayWholesaleSalesRes?.taxable_amount ?? 0));
+    const wsCgstMinor = Math.max(0, Number(todayWholesaleSalesRes?.cgstAmount ?? todayWholesaleSalesRes?.cgst_amount ?? 0));
+    const wsSgstMinor = Math.max(0, Number(todayWholesaleSalesRes?.sgstAmount ?? todayWholesaleSalesRes?.sgst_amount ?? 0));
+    const wsIgstMinor = Math.max(0, Number(todayWholesaleSalesRes?.igstAmount ?? todayWholesaleSalesRes?.igst_amount ?? 0));
+    const wsTotalGstMinor = wsCgstMinor + wsSgstMinor + wsIgstMinor;
+    const wsOutstandingCreditMinor = Math.max(0, Number(todayWholesaleSalesRes?.outstandingCredit ?? todayWholesaleSalesRes?.outstanding_credit ?? 0));
+    const wsPaidMinor = Math.max(0, Number(todayWholesaleSalesRes?.paidAmount ?? todayWholesaleSalesRes?.paid_amount ?? 0));
+    const wsTotalUnitsSold = Math.max(0, Number(todayWholesaleItemsRes?.totalUnits ?? todayWholesaleItemsRes?.total_units ?? 0));
+    const wsDistinctProducts = Number(todayWholesaleItemsRes?.distinctProducts ?? todayWholesaleItemsRes?.distinct_products ?? 0);
+
+    const compWsTotalSalesMinor = Math.max(0, Number(compWholesaleSalesRes?.totalSales ?? compWholesaleSalesRes?.total_sales ?? 0));
+    const compWsInvoicesCount = Number(compWholesaleSalesRes?.invoicesCount ?? compWholesaleSalesRes?.invoices_count ?? 0);
+    const wsSalesChangePct = compWsTotalSalesMinor > 0
+      ? Number((((wsTotalSalesMinor - compWsTotalSalesMinor) / compWsTotalSalesMinor) * 100).toFixed(1))
+      : null;
+
+    const wsTopItems = (wholesaleTopItemsRows || []).map((r: any) => {
+      const rawQtyMilli = Number(r.qtyMilli ?? r.qty_milli ?? 0);
+      const quantity = Math.round((rawQtyMilli / 1000) * 100) / 100;
+      const salesMinor = Number(r.salesMinor ?? r.sales_minor ?? 0);
+      return {
+        itemId: r.itemId ?? r.item_id ?? '',
+        name: r.name || 'Wholesale Product',
+        unit: r.unit || 'pcs',
+        quantity,
+        salesMinor,
+      };
+    });
+
+    const wsPaymentModesMap = new Map<string, number>();
+    for (const r of wholesalePaymentRows || []) {
+      const mode = String(r.mode || 'bank').toLowerCase();
+      const amt = Number(r.totalMinor ?? r.total_minor ?? 0);
+      if (amt > 0) {
+        wsPaymentModesMap.set(mode, (wsPaymentModesMap.get(mode) || 0) + amt);
+      }
+    }
+    const wsCollectedTotalMinor = Array.from(wsPaymentModesMap.values()).reduce((sum, v) => sum + v, 0);
+    const wsPaymentModes = Array.from(wsPaymentModesMap.entries()).map(([modeKey, amt]) => {
+      const name =
+        modeKey === 'neft' || modeKey === 'rtgs' ? 'NEFT / RTGS' :
+        modeKey === 'bank' ? 'Bank Transfer' :
+        modeKey === 'cheque' ? 'Cheque' :
+        modeKey === 'upi' ? 'UPI' :
+        modeKey === 'cash' ? 'Cash' :
+        modeKey === 'credit' ? 'Trade Credit' :
+        modeKey.toUpperCase();
+      const percentage = wsCollectedTotalMinor > 0 ? Math.round((amt / wsCollectedTotalMinor) * 100) : 0;
+      const color = PAYMENT_MODE_COLORS[modeKey] || '#0284c7';
+      return {
+        key: modeKey,
+        name,
+        amountMinor: amt,
+        percentage,
+        color,
+      };
+    }).sort((a, b) => b.amountMinor - a.amountMinor);
+
     const responsePayload = {
       serverTime: now.toISOString(),
       selectedBranch: {
@@ -1301,6 +1520,26 @@ export function registerDashboard(r: Router) {
       stockAttention,
       shiftDrawer,
       countersToday,
+      wholesale: {
+        totalSalesMinor: wsTotalSalesMinor,
+        grossSalesMinor: wsGrossSalesMinor,
+        returnsMinor: wsReturnsMinor,
+        invoicesCount: wsInvoicesCount,
+        totalUnitsSold: wsTotalUnitsSold,
+        distinctProductsCount: wsDistinctProducts,
+        taxableMinor: wsTaxableMinor,
+        cgstMinor: wsCgstMinor,
+        sgstMinor: wsSgstMinor,
+        igstMinor: wsIgstMinor,
+        totalGstMinor: wsTotalGstMinor,
+        outstandingCreditMinor: wsOutstandingCreditMinor,
+        paidMinor: wsPaidMinor,
+        compTotalSalesMinor: compWsTotalSalesMinor,
+        compInvoicesCount: compWsInvoicesCount,
+        salesChangePct: wsSalesChangePct,
+        topItems: wsTopItems,
+        paymentModes: wsPaymentModes,
+      },
     };
 
     // Cache response for 3.5s

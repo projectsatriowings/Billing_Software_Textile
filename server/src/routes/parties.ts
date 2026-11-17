@@ -233,12 +233,15 @@ export function registerParties(r: Router) {
     const scope = await resolveBranchScope(ctx);
     const raw = ctx.params.phone || '';
     const digits = raw.replace(/\D/g, '');
+    if (digits.length < 10) {
+      return { party: null };
+    }
     const last10 = digits.slice(-10);
 
     const branchFilter = (!scope.isSuperAdminAll && scope.branchId) ? ' AND p.branch_id = ?' : '';
     const branchParams = (!scope.isSuperAdminAll && scope.branchId) ? [scope.branchId] : [];
 
-    const row = await ctx.db.one(
+    let row = await ctx.db.one(
       `SELECT p.*,
               COALESCE((SELECT SUM(i.balance_minor) FROM invoices i WHERE i.party_id = p.id AND i.tenant_id = p.tenant_id AND i.branch_id = p.branch_id AND i.status = 'posted'), 0)::bigint AS unpaid_invoices_minor
        FROM parties p
@@ -248,8 +251,46 @@ export function registerParties(r: Router) {
       [tenantId, ...branchParams, raw, `%${last10}`, `%${last10}`],
     );
 
-    if (!row) return { party: null };
-    return { party: formatParty(row) };
+    // Fallback 1: check tenant-wide customers across any branch
+    if (!row && branchFilter) {
+      row = await ctx.db.one(
+        `SELECT p.*,
+                COALESCE((SELECT SUM(i.balance_minor) FROM invoices i WHERE i.party_id = p.id AND i.tenant_id = p.tenant_id AND i.status = 'posted'), 0)::bigint AS unpaid_invoices_minor
+         FROM parties p
+         WHERE p.tenant_id = ? AND p.type = 'customer' AND p.active = true
+           AND (p.phone = ? OR REPLACE(p.phone, ' ', '') LIKE ? OR p.phone LIKE ?)
+         LIMIT 1`,
+        [tenantId, raw, `%${last10}`, `%${last10}`],
+      );
+    }
+
+    if (row) return { party: formatParty(row) };
+
+    // Fallback 2: check past invoices for this customer phone
+    const pastInv = await ctx.db.one(
+      `SELECT customer_name, customer_phone
+       FROM invoices
+       WHERE tenant_id = ? AND customer_phone IS NOT NULL AND customer_name IS NOT NULL
+         AND (customer_phone = ? OR REPLACE(customer_phone, ' ', '') LIKE ? OR customer_phone LIKE ?)
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      [tenantId, raw, `%${last10}`, `%${last10}`],
+    );
+
+    if (pastInv && pastInv.customer_name && pastInv.customer_name.trim() && !pastInv.customer_name.toLowerCase().includes('walk-in')) {
+      return {
+        party: {
+          id: '',
+          name: pastInv.customer_name.trim(),
+          phone: pastInv.customer_phone,
+          type: 'customer',
+          active: true,
+          loyaltyPoints: 0,
+        }
+      };
+    }
+
+    return { party: null };
   });
 
   // Get party by ID

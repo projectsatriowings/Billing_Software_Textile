@@ -59,6 +59,8 @@ export function registerExchanges(r: Router) {
     let exchangeAdjustedMinor = 0;
     let customerPayableMinor = 0;
     let customerRefundMinor = 0;
+    let netLoyaltyPointsAdjusted = 0;
+    let customerLoyaltyPoints: number | null = null;
 
     await ctx.db.tx(async (q) => {
       // 1. Lock and validate return items
@@ -571,6 +573,45 @@ export function registerExchanges(r: Router) {
         }
       }
 
+      // 9.5 Customer Loyalty Points update on Exchange (earn on new items, reverse on returned items)
+      const exchangePartyId = customerInput.id || (primaryOrigInv.partyId ?? primaryOrigInv.party_id) || null;
+      let finalPartyId = exchangePartyId;
+
+      if (!finalPartyId && customerInput.phone) {
+        const foundParty = await q.one<any>(
+          'SELECT id FROM parties WHERE tenant_id = ? AND phone = ? LIMIT 1',
+          [tenantId, customerInput.phone]
+        );
+        if (foundParty?.id) {
+          finalPartyId = foundParty.id;
+        }
+      }
+
+      netLoyaltyPointsAdjusted = 0;
+      customerLoyaltyPoints = null;
+      if (finalPartyId) {
+        const shop = await q.one<any>('SELECT * FROM tenants WHERE id = ?', [tenantId]);
+        const isLoyaltyActive = Boolean(shop?.loyaltyEnabled ?? shop?.loyalty_enabled ?? true);
+        const ptsPer100 = Number(shop?.loyaltyPointsPer100 ?? shop?.loyalty_points_per_100 ?? 10);
+
+        if (isLoyaltyActive && ptsPer100 > 0) {
+          const earnedOnNew = Math.floor((newTotalMinor * ptsPer100) / 10000);
+          const reversedOnReturn = Math.floor((returnTotalMinor * ptsPer100) / 10000);
+          netLoyaltyPointsAdjusted = earnedOnNew - reversedOnReturn;
+
+          if (netLoyaltyPointsAdjusted !== 0) {
+            const updated = await q.one<any>(
+              `UPDATE parties
+               SET loyalty_points = GREATEST(0, loyalty_points + ?)
+               WHERE id = ? AND tenant_id = ?
+               RETURNING loyalty_points`,
+              [netLoyaltyPointsAdjusted, finalPartyId, tenantId]
+            );
+            customerLoyaltyPoints = Number(updated?.loyaltyPoints ?? updated?.loyalty_points ?? 0);
+          }
+        }
+      }
+
       // 10. Audit log
       await audit(q, ctx, {
         action: 'exchange.create',
@@ -609,28 +650,36 @@ export function registerExchanges(r: Router) {
       customerPayableMinor,
       customerRefundMinor,
       paymentMethod,
+      netLoyaltyPointsAdjusted,
+      customerLoyaltyPoints,
     };
   });
 
   // 2. Printable Exchange Invoice
   r.get('/api/exchanges/:exchangeId/print', async (ctx) => {
     const exchangeId = ctx.params.exchangeId;
-    const tenantId = (ctx.query.tenantId as string) || (ctx.user?.tenantId);
+
+    // Look up exchange invoices by unique exchange_id
+    const invSale = await ctx.db.one<any>(
+      `SELECT * FROM invoices WHERE exchange_id = ? AND kind = 'sale' AND status = 'posted' LIMIT 1`,
+      [exchangeId],
+    );
+    const invCn = await ctx.db.one<any>(
+      `SELECT * FROM invoices WHERE exchange_id = ? AND kind = 'credit_note' AND status = 'posted' LIMIT 1`,
+      [exchangeId],
+    );
+
+    if (!invSale && !invCn) throw notFound('Exchange record');
+
+    const tenantId =
+      (ctx.query.tenantId as string) ||
+      ctx.user?.tenantId ||
+      (invSale?.tenantId ?? invSale?.tenant_id) ||
+      (invCn?.tenantId ?? invCn?.tenant_id);
     if (!tenantId) throw bad('Missing tenantId');
 
     const shop = await ctx.db.one<any>('SELECT * FROM tenants WHERE id = ?', [tenantId]);
     if (!shop) throw notFound('Shop');
-
-    const invSale = await ctx.db.one<any>(
-      `SELECT * FROM invoices WHERE tenant_id = ? AND exchange_id = ? AND kind = 'sale' AND status = 'posted'`,
-      [tenantId, exchangeId],
-    );
-    const invCn = await ctx.db.one<any>(
-      `SELECT * FROM invoices WHERE tenant_id = ? AND exchange_id = ? AND kind = 'credit_note' AND status = 'posted'`,
-      [tenantId, exchangeId],
-    );
-
-    if (!invSale && !invCn) throw notFound('Exchange record');
 
     const saleLines = invSale ? await ctx.db.query<any>('SELECT * FROM invoice_lines WHERE invoice_id = ? ORDER BY pos ASC', [invSale.id]) : [];
     const cnLines = invCn ? await ctx.db.query<any>('SELECT * FROM invoice_lines WHERE invoice_id = ? ORDER BY pos ASC', [invCn.id]) : [];

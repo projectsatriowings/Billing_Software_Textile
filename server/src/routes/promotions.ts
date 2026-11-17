@@ -66,19 +66,24 @@ export function registerPromotions(r: Router) {
     let sql = 'SELECT * FROM promotions WHERE tenant_id = ?';
     const params: unknown[] = [tenantId];
     if (!scope.isSuperAdminAll && scope.branchId) {
-      sql += ' AND branch_id = ?';
-      params.push(scope.branchId);
-    }
-
-    // Branch authorization for Store Managers
-    if (role === 'manager') {
-      const allowed = ctx.user!.allowedLocations?.length
+      const branchRow = await ctx.db.one<{ id: string; code: string }>(
+        'SELECT id, code FROM branches WHERE tenant_id = ? AND (id = ? OR UPPER(code) = UPPER(?)) LIMIT 1',
+        [tenantId, scope.branchId, scope.branchId]
+      );
+      const bCode = branchRow?.code || scope.branchId;
+      const bId = branchRow?.id || scope.branchId;
+      const allowed = role === 'manager' && ctx.user!.allowedLocations?.length
         ? ctx.user!.allowedLocations
-        : [ctx.user!.assignedLocation || 'MAIN'];
-      // Manager can see promotions where branches contains 'ALL' or any of their allowed branches
+        : [bCode, bId, ctx.user!.assignedLocation || 'MAIN'];
+
+      // Cashier and Manager can see promotions applicable to their branch or store-wide 'ALL'
       // Use jsonb_exists_any() function to prevent `?` operator collision with `toPgPlaceholders`
-      sql += ` AND (branches @> '["ALL"]'::jsonb OR jsonb_exists_any(branches, ARRAY[${allowed.map(() => '?').join(', ')}]::text[]))`;
-      params.push(...allowed);
+      sql += ` AND (
+        branch_id = ?
+        OR branches @> '["ALL"]'::jsonb
+        OR jsonb_exists_any(branches, ARRAY[${allowed.map(() => '?').join(', ')}]::text[])
+      )`;
+      params.push(bId, ...allowed);
     }
 
     if (search) {

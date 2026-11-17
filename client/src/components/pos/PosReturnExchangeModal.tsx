@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { searchInvoicesForReturn, fetchInvoiceReturnInfo, createReturnCreditNote } from '../../api.ts';
 import { RETURN_REASONS, RETURN_CONDITIONS, REFUND_METHODS } from '../../../../shared/returns.ts';
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
+import { qrSvg } from '../../../../shared/qr.ts';
 
 export interface ReturnSelectedLine {
   origInvoiceId: string;
@@ -27,6 +28,10 @@ interface PosReturnExchangeModalProps {
   onClose: () => void;
   onSelectForExchange: (returnLines: ReturnSelectedLine[], invoiceNumber: string) => void;
   onReturnCompleted: (cnId: string, cnNumber: string) => void;
+  isPhoneScannerConnected?: boolean;
+  scannerPairingUrl?: string;
+  externalBarcodeScan?: { barcode: string; timestamp: number } | null;
+  onOpenMobileScannerModal?: () => void;
 }
 
 export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
@@ -34,6 +39,10 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
   onClose,
   onSelectForExchange,
   onReturnCompleted,
+  isPhoneScannerConnected = false,
+  scannerPairingUrl = '',
+  externalBarcodeScan = null,
+  onOpenMobileScannerModal,
 }) => {
   // Search & Lookup State
   const [lookupMode, setLookupMode] = useState<'barcode' | 'phone' | 'invoice'>('barcode');
@@ -43,6 +52,9 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
   const [selectedInvoice, setSelectedInvoice] = useState<any | null>(null);
   const [loadingInvoice, setLoadingInvoice] = useState(false);
   const [returnInfo, setReturnInfo] = useState<any | null>(null);
+
+  // Wireless Mobile Phone Scanner State
+  const [showPhonePairing, setShowPhonePairing] = useState(false);
 
   // Camera Barcode Scanner State
   const [isCameraActive, setIsCameraActive] = useState(false);
@@ -82,6 +94,15 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
       stopCameraScanner();
     };
   }, []);
+
+  // Listen to external barcode scans from paired mobile phone or physical gun scanner
+  useEffect(() => {
+    if (externalBarcodeScan && externalBarcodeScan.barcode && isOpen) {
+      playScanBeep();
+      setSearchQuery(externalBarcodeScan.barcode);
+      executeSearch(externalBarcodeScan.barcode);
+    }
+  }, [externalBarcodeScan]);
 
   const playScanBeep = () => {
     try {
@@ -351,7 +372,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
         className="modal-content bento-modal"
         style={{
           width: '95%',
-          maxWidth: selectedInvoice ? '960px' : '640px',
+          maxWidth: selectedInvoice ? '960px' : '680px',
           maxHeight: '90vh',
           display: 'flex',
           flexDirection: 'column',
@@ -399,27 +420,48 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                 <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: '#0f172a' }}>
                   POS Return & Exchange Terminal
                 </h3>
-                <span
-                  style={{
-                    background: '#dcfce7',
-                    color: '#15803d',
-                    border: '1px solid #bbf7d0',
-                    padding: '2px 8px',
-                    borderRadius: '12px',
-                    fontSize: '0.7rem',
-                    fontWeight: 750,
-                    letterSpacing: '0.3px',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                  }}
-                >
-                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#16a34a' }}></span>
-                  Scanner Ready
-                </span>
+                {isPhoneScannerConnected ? (
+                  <span
+                    style={{
+                      background: '#dcfce7',
+                      color: '#15803d',
+                      border: '1px solid #bbf7d0',
+                      padding: '2px 8px',
+                      borderRadius: '12px',
+                      fontSize: '0.7rem',
+                      fontWeight: 750,
+                      letterSpacing: '0.3px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                  >
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#16a34a' }}></span>
+                    Mobile Scanner Connected
+                  </span>
+                ) : (
+                  <span
+                    style={{
+                      background: '#dcfce7',
+                      color: '#15803d',
+                      border: '1px solid #bbf7d0',
+                      padding: '2px 8px',
+                      borderRadius: '12px',
+                      fontSize: '0.7rem',
+                      fontWeight: 750,
+                      letterSpacing: '0.3px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                  >
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#16a34a' }}></span>
+                    Scanner Ready
+                  </span>
+                )}
               </div>
               <p style={{ margin: '2px 0 0 0', fontSize: '0.78rem', color: '#64748b' }}>
-                Scan original bill barcode or lookup by customer mobile number to issue exchange or refund
+                Scan original bill barcode via mobile phone or scanner gun, or lookup by customer mobile
               </p>
             </div>
           </div>
@@ -653,8 +695,8 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                   <div style={{ fontWeight: 800, fontSize: '0.98rem', color: '#1e293b', marginBottom: '4px' }}>
                     Scan Bill Receipt Barcode
                   </div>
-                  <div style={{ fontSize: '0.78rem', color: '#64748b', maxWidth: '420px', margin: '0 auto 1.25rem auto' }}>
-                    Point your barcode scanner gun at the barcode printed at the top/bottom of the customer's bill receipt.
+                  <div style={{ fontSize: '0.78rem', color: '#64748b', maxWidth: '440px', margin: '0 auto 1.25rem auto' }}>
+                    Point your barcode scanner gun or your wireless smartphone scanner at the bill barcode.
                   </div>
 
                   {/* High-Visibility Scanner Input */}
@@ -715,19 +757,60 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                     </button>
                   </form>
 
-                  {/* Optional Camera Scanner Toggle */}
-                  <div style={{ marginTop: '1rem' }}>
+                  {/* Device Scan Options: Mobile Phone Scanner vs Desktop Webcam */}
+                  <div style={{ marginTop: '1.1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+                    {/* Option 1: Mobile Phone Scanner */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        stopCameraScanner();
+                        setShowPhonePairing((prev) => !prev);
+                      }}
+                      style={{
+                        background: isPhoneScannerConnected ? '#f0fdf4' : '#eef2ff',
+                        border: isPhoneScannerConnected ? '1.5px solid #86efac' : '1.5px solid #c7d2fe',
+                        color: isPhoneScannerConnected ? '#15803d' : '#4338ca',
+                        borderRadius: '9px',
+                        padding: '0.45rem 0.9rem',
+                        fontSize: '0.8rem',
+                        fontWeight: 750,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                        <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                      </svg>
+                      <span>
+                        {isPhoneScannerConnected ? 'Mobile Phone Connected' : 'Scan with Mobile Phone Camera'}
+                      </span>
+                      {isPhoneScannerConnected && (
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                      )}
+                    </button>
+
+                    {/* Option 2: Desktop Camera Scanner */}
                     {!isCameraActive ? (
                       <button
                         type="button"
-                        onClick={startCameraScanner}
+                        onClick={() => {
+                          setShowPhonePairing(false);
+                          startCameraScanner();
+                        }}
                         style={{
-                          background: 'none',
+                          background: '#ffffff',
                           border: '1px solid #cbd5e1',
                           color: '#475569',
-                          borderRadius: '8px',
-                          padding: '0.4rem 0.85rem',
-                          fontSize: '0.78rem',
+                          borderRadius: '9px',
+                          padding: '0.45rem 0.85rem',
+                          fontSize: '0.8rem',
                           fontWeight: 650,
                           cursor: 'pointer',
                           display: 'inline-flex',
@@ -739,45 +822,187 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                           <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
                           <circle cx="12" cy="13" r="4"></circle>
                         </svg>
-                        <span>Or Click to Use Device Camera Scanner</span>
+                        <span>Desktop Webcam</span>
                       </button>
                     ) : (
-                      <div style={{ marginTop: '0.85rem' }}>
-                        <div
-                          id="pos-return-camera-view"
-                          style={{
-                            maxWidth: '360px',
-                            margin: '0 auto',
-                            borderRadius: '12px',
-                            overflow: 'hidden',
-                            border: '2px solid #4f46e5',
-                          }}
-                        />
-                        <button
-                          type="button"
-                          onClick={stopCameraScanner}
-                          style={{
-                            marginTop: '0.5rem',
-                            background: '#fee2e2',
-                            color: '#b91c1c',
-                            border: '1px solid #fca5a5',
-                            borderRadius: '6px',
-                            padding: '0.35rem 0.75rem',
-                            fontSize: '0.76rem',
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                          }}
-                        >
-                          Stop Camera
-                        </button>
-                      </div>
-                    )}
-                    {cameraError && (
-                      <div style={{ color: '#dc2626', fontSize: '0.74rem', marginTop: '4px' }}>
-                        {cameraError}
-                      </div>
+                      <button
+                        type="button"
+                        onClick={stopCameraScanner}
+                        style={{
+                          background: '#fee2e2',
+                          color: '#b91c1c',
+                          border: '1px solid #fca5a5',
+                          borderRadius: '9px',
+                          padding: '0.45rem 0.85rem',
+                          fontSize: '0.8rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Stop Webcam
+                      </button>
                     )}
                   </div>
+
+                  {/* ACTIVE MOBILE PHONE SCANNER VIEW (WHEN EXPANDED OR CONNECTED) */}
+                  {showPhonePairing && (
+                    <div
+                      style={{
+                        background: '#ffffff',
+                        border: '1.5px solid #cbd5e1',
+                        borderRadius: '14px',
+                        padding: '1.25rem',
+                        marginTop: '1rem',
+                        textAlign: 'center',
+                        boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
+                      }}
+                    >
+                      {isPhoneScannerConnected ? (
+                        <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '10px', padding: '1rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', color: '#166534', fontWeight: 800, fontSize: '0.94rem' }}>
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.4">
+                              <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                              <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                            </svg>
+                            <span>Wireless Mobile Phone Scanner Active & Ready!</span>
+                          </div>
+                          <p style={{ margin: '8px 0 0 0', fontSize: '0.82rem', color: '#15803d', lineHeight: 1.5 }}>
+                            Your connected phone camera is ready. Point your phone at the bill receipt barcode to scan. The barcode will automatically appear on this screen and identify the bill from the database wirelessly!
+                          </p>
+                        </div>
+                      ) : (
+                        <div>
+                          <div style={{ fontWeight: 800, fontSize: '0.94rem', color: '#0f172a', marginBottom: '4px' }}>
+                            Connect Your Smartphone as a Wireless Barcode Scanner
+                          </div>
+                          <div style={{ fontSize: '0.78rem', color: '#64748b', marginBottom: '0.85rem', maxWidth: '420px', margin: '0 auto 0.85rem auto' }}>
+                            Zero installation required! Open your phone's camera, scan the QR code below, and your smartphone will instantly function as a high-speed wireless barcode scanner gun for this terminal.
+                          </div>
+
+                          {scannerPairingUrl ? (
+                            <div style={{ display: 'inline-block', background: '#ffffff', padding: '10px', borderRadius: '12px', border: '1.5px solid #cbd5e1', boxShadow: '0 4px 12px rgba(99, 102, 241, 0.08)' }}>
+                              <div dangerouslySetInnerHTML={{ __html: qrSvg(scannerPairingUrl, { size: 145, margin: 1 }) }} />
+                              <div style={{ fontSize: '0.72rem', color: '#4f46e5', fontWeight: 750, marginTop: '4px' }}>
+                                Point Phone Camera Here
+                              </div>
+                            </div>
+                          ) : (
+                            <div style={{ padding: '1rem', color: '#64748b', fontSize: '0.8rem' }}>
+                              Generating wireless pairing link...
+                            </div>
+                          )}
+
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginTop: '10px', fontSize: '0.76rem', color: '#d97706', fontWeight: 650 }}>
+                            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#f59e0b', animation: 'pulse 1.5s infinite' }}></span>
+                            <span>Waiting for phone camera to scan QR code and connect...</span>
+                          </div>
+
+                          {scannerPairingUrl && (
+                            <div style={{ marginTop: '0.75rem' }}>
+                              <button
+                                type="button"
+                                style={{
+                                  background: '#f8fafc',
+                                  border: '1px solid #cbd5e1',
+                                  borderRadius: '6px',
+                                  fontSize: '0.74rem',
+                                  fontWeight: 700,
+                                  padding: '0.35rem 0.75rem',
+                                  cursor: 'pointer',
+                                  color: '#334155',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '6px',
+                                }}
+                                onClick={() => {
+                                  navigator.clipboard?.writeText(scannerPairingUrl);
+                                  alert('Copied scanner link to clipboard!');
+                                }}
+                              >
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                </svg>
+                                <span>Copy Link to Open in Phone Browser</span>
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* ACTIVE CAMERA SCANNER VIEWFINDER */}
+                  {isCameraActive && (
+                    <div style={{ marginTop: '0.85rem' }}>
+                      <div
+                        id="pos-return-camera-view"
+                        style={{
+                          maxWidth: '360px',
+                          margin: '0 auto',
+                          borderRadius: '12px',
+                          overflow: 'hidden',
+                          border: '2px solid #4f46e5',
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  {/* CAMERA ERROR BANNER WITH 1-CLICK MOBILE SCANNER RECOMMENDATION */}
+                  {cameraError && (
+                    <div
+                      style={{
+                        background: '#fef2f2',
+                        border: '1.5px solid #fecaca',
+                        borderRadius: '12px',
+                        padding: '0.85rem 1rem',
+                        marginTop: '0.85rem',
+                        textAlign: 'left',
+                        color: '#991b1b',
+                      }}
+                    >
+                      <div style={{ fontWeight: 800, fontSize: '0.84rem', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                          <line x1="12" y1="9" x2="12" y2="13"></line>
+                          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        </svg>
+                        <span>Desktop Camera Inaccessible</span>
+                      </div>
+                      <div style={{ fontSize: '0.78rem', color: '#7f1d1d', lineHeight: 1.4 }}>
+                        Your computer does not have an active camera or permission is disabled. You can easily use your <strong>smartphone camera as a wireless scanner</strong> instead!
+                      </div>
+                      <div style={{ marginTop: '8px', display: 'flex', gap: '6px', alignItems: 'center' }}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCameraError(null);
+                            setShowPhonePairing(true);
+                          }}
+                          style={{
+                            background: '#16a34a',
+                            color: '#ffffff',
+                            border: 'none',
+                            padding: '0.35rem 0.8rem',
+                            borderRadius: '6px',
+                            fontSize: '0.78rem',
+                            fontWeight: 750,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                          }}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                            <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                          </svg>
+                          <span>Scan via Mobile Phone Instead</span>
+                        </button>
+                        <span style={{ fontSize: '0.74rem', color: '#64748b' }}>or type the barcode above</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -984,9 +1209,13 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                           <button
                             type="button"
                             className="btn btn-primary"
-                            style={{ padding: '0.35rem 0.8rem', fontSize: '0.78rem', fontWeight: 700 }}
+                            style={{ padding: '0.35rem 0.8rem', fontSize: '0.78rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                           >
-                            Select ➔
+                            <span>Select</span>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                              <line x1="5" y1="12" x2="19" y2="12"></line>
+                              <polyline points="12 5 19 12 12 19"></polyline>
+                            </svg>
                           </button>
                         </div>
                       </div>
@@ -1000,7 +1229,11 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
           {/* Loading invoice items spinner */}
           {loadingInvoice && (
             <div style={{ textAlign: 'center', padding: '2.5rem', color: '#64748b' }}>
-              <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>⏳</div>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'spin 1s linear infinite' }}>
+                  <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
+                </svg>
+              </div>
               <div style={{ fontWeight: 700, color: '#1e293b' }}>Loading bill items from database...</div>
               <div style={{ fontSize: '0.78rem' }}>Verifying previously returned units & remaining quantities</div>
             </div>
@@ -1202,9 +1435,9 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                                 background: '#ffffff',
                               }}
                             >
-                              <option value="resellable">🟢 Resellable (Restock to Shelf)</option>
-                              <option value="damaged">🟡 Damaged (Hold for Inspection)</option>
-                              <option value="defective">🔴 Defective (Defective Bin)</option>
+                              <option value="resellable">Resellable (Restock to Shelf)</option>
+                              <option value="damaged">Damaged (Hold for Inspection)</option>
+                              <option value="defective">Defective (Defective Bin)</option>
                             </select>
                           </td>
                           <td style={{ padding: '0.65rem 0.75rem' }}>
@@ -1431,9 +1664,18 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                         border: 'none',
                         cursor: selectedLinesList.length === 0 || submitting ? 'not-allowed' : 'pointer',
                         boxShadow: '0 4px 12px rgba(5, 150, 105, 0.25)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
                       }}
                     >
-                      {submitting ? 'Processing Return & Refund...' : `Confirm Return & Refund ${formatRupees(totalEstimatedCreditMinor)} ✓`}
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                      </svg>
+                      <span>
+                        {submitting ? 'Processing Return & Refund...' : `Confirm Return & Refund ${formatRupees(totalEstimatedCreditMinor)}`}
+                      </span>
                     </button>
                   </div>
                 )}
