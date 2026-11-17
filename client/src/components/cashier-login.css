@@ -3273,13 +3273,51 @@ body.theme-cashier .report-table tr.highlight-row td,
 body.theme-cashier .select-counter-card,
 .theme-cashier .select-counter-card {
   background: var(--surface) !important;
-  border: 1px solid var(--border) !important;
+  border: 1.5px solid var(--border) !important;
+}
+
+body.theme-cashier .select-counter-card:hover,
+.theme-cashier .select-counter-card:hover {
+  border-color: var(--primary) !important;
+  box-shadow: 0 4px 14px rgba(15, 118, 110, 0.12) !important;
 }
 
 body.theme-cashier .select-counter-card-active,
 .theme-cashier .select-counter-card-active {
   background: linear-gradient(135deg, var(--primary-soft) 0%, var(--surface) 100%) !important;
   border: 2px solid var(--primary) !important;
+  box-shadow: 0 8px 20px -3px rgba(15, 118, 110, 0.25), 0 2px 6px rgba(15, 118, 110, 0.1) !important;
+}
+
+body.theme-cashier .select-counter-card .counter-card-icon,
+.theme-cashier .select-counter-card .counter-card-icon {
+  background: var(--primary-soft) !important;
+  color: var(--primary) !important;
+}
+
+body.theme-cashier .select-counter-card-active .counter-card-icon,
+.theme-cashier .select-counter-card-active .counter-card-icon {
+  background: var(--primary) !important;
+  color: #FFFFFF !important;
+}
+
+body.theme-cashier .select-counter-card-active .counter-card-tag,
+.theme-cashier .select-counter-card-active .counter-card-tag {
+  background: var(--primary) !important;
+  color: #FFFFFF !important;
+}
+
+body.theme-cashier .select-counter-card .counter-card-radio,
+.theme-cashier .select-counter-card .counter-card-radio {
+  border: 1.5px solid var(--border) !important;
+  background: var(--surface) !important;
+}
+
+body.theme-cashier .select-counter-card-active .counter-card-radio,
+.theme-cashier .select-counter-card-active .counter-card-radio {
+  border: 2px solid var(--primary) !important;
+  background: var(--primary) !important;
+  color: #FFFFFF !important;
 }
 
 /* Day Closing View in Cashier Role */
@@ -3307,4 +3345,519 @@ body.theme-cashier .day-closing-table-card,
   border: 1px solid var(--border) !important;
   border-radius: 16px !important;
   box-shadow: 0 4px 18px rgba(15, 45, 46, 0.06), 0 1px 3px rgba(15, 45, 46, 0.04) !important;
+}
+
+/* --------------------------------------------------------------------------
+   5.9 NOTIFICATIONS POPOVER (Teal & Slate Theme)
+   -------------------------------------------------------------------------- */
+body.theme-cashier .top-notif-popover.bento-notif-popover,
+.theme-cashier .top-notif-popover.bento-notif-popover {
+  background: var(--surface) !important;
+  border: 1.5px solid var(--border) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 20px 45px rgba(15, 45, 46, 0.22), 0 4px 12px rgba(15, 45, 46, 0.08) !important;
+}
+
+body.theme-cashier .bento-notif-header,
+.theme-cashier .bento-notif-header {
+  background: var(--surface) !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+
+body.theme-cashier .bento-notif-title,
+.theme-cashier .bento-notif-title {
+  color: var(--sidebar) !important;
+  font-weight: 800 !important;
+}
+
+body.theme-cashier .bento-notif-icon-bubble,
+.theme-cashier .bento-notif-icon-bubble {
+  background: var(--primary-soft) !important;
+  border: 1px solid rgba(20, 184, 166, 0.35) !important;
+  color: var(--primary) !important;
+}
+
+body.theme-cashier .bento-notif-icon-bubble svg,
+.theme-cashier .bento-notif-icon-bubble svg {
+  stroke: var(--primary) !important;
+}
+
+body.theme-cashier .bento-notif-role-badge.cashier,
+.theme-cashier .bento-notif-role-badge.cashier {
+  background: var(--primary-soft) !important;
+  color: var(--primary) !important;
+  border: 1px solid rgba(20, 184, 166, 0.35) !important;
+  font-weight: 800 !important;
+}
+
+body.theme-cashier .bento-notif-body,
+.theme-cashier .bento-notif-body {
+  background: var(--bg) !important;
+}
+
+body.theme-cashier .bento-notif-card,
+.theme-cashier .bento-notif-card {
+  background: var(--surface) !important;
+  border: 1.5px solid var(--border) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 1px 3px rgba(15, 45, 46, 0.04) !important;
+}
+
+body.theme-cashier .bento-notif-card:hover,
+.theme-cashier .bento-notif-card:hover {
+  border-color: var(--primary) !important;
+  box-shadow: 0 4px 14px rgba(15, 118, 110, 0.12) !important;
+}
+
+body.theme-cashier .bento-notif-card.active-shift,
+.theme-cashier .bento-notif-card.active-shift {
+  border-left: 4px solid var(--primary) !important;
+}
+
+body.theme-cashier .bento-notif-card.warning-shift,
+.theme-cashier .bento-notif-card.warning-shift {
+  border-left: 4px solid #D97706 !important;
+  background: #FFFDF9 !important;
+}
+
+body.theme-cashier .bento-notif-card-icon,
+.theme-cashier .bento-notif-card-icon {
+  background: var(--surface) !important;
+  color: var(--primary) !important;
+}
+
+body.theme-cashier .bento-notif-card-icon.pos,
+.theme-cashier .bento-notif-card-icon.pos {
+  background: var(--primary-soft) !important;
+  color: var(--primary) !important;
+}
+
+body.theme-cashier .bento-notif-card-icon.pos svg,
+.theme-cashier .bento-notif-card-icon.pos svg {
+  stroke: var(--primary) !important;
+}
+
+body.theme-cashier .bento-notif-card-icon.invoices,
+.theme-cashier .bento-notif-card-icon.invoices {
+  background: var(--primary-soft) !important;
+  color: var(--primary) !important;
+}
+
+body.theme-cashier .bento-notif-card-icon.invoices svg,
+.theme-cashier .bento-notif-card-icon.invoices svg {
+  stroke: var(--primary) !important;
+}
+
+body.theme-cashier .bento-notif-card-title,
+.theme-cashier .bento-notif-card-title {
+  color: var(--sidebar) !important;
+  font-weight: 800 !important;
+}
+
+body.theme-cashier .bento-notif-status-pill.live,
+.theme-cashier .bento-notif-status-pill.live {
+  background: var(--primary-soft) !important;
+  color: var(--primary) !important;
+  border: 1px solid rgba(20, 184, 166, 0.35) !important;
+  font-weight: 700 !important;
+}
+
+body.theme-cashier .bento-notif-status-pill.pos,
+.theme-cashier .bento-notif-status-pill.pos {
+  background: var(--primary-soft) !important;
+  color: var(--primary) !important;
+  border: 1px solid rgba(20, 184, 166, 0.35) !important;
+  font-weight: 700 !important;
+}
+
+body.theme-cashier .bento-notif-status-pill.invoices,
+.theme-cashier .bento-notif-status-pill.invoices {
+  background: var(--primary-soft) !important;
+  color: var(--primary) !important;
+  border: 1px solid rgba(20, 184, 166, 0.35) !important;
+  font-weight: 700 !important;
+}
+
+body.theme-cashier .bento-notif-card-desc,
+.theme-cashier .bento-notif-card-desc {
+  color: var(--text-muted) !important;
+}
+
+body.theme-cashier .bento-notif-action-btn,
+.theme-cashier .bento-notif-action-btn {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--primary) !important;
+  font-weight: 700 !important;
+  border-radius: 8px !important;
+}
+
+body.theme-cashier .bento-notif-action-btn:hover,
+.theme-cashier .bento-notif-action-btn:hover {
+  background: var(--primary-soft) !important;
+  border-color: var(--primary) !important;
+  color: var(--primary-hover) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 6px rgba(15, 118, 110, 0.15) !important;
+}
+
+body.theme-cashier .bento-notif-action-btn.primary,
+.theme-cashier .bento-notif-action-btn.primary {
+  background: var(--primary) !important;
+  border-color: var(--primary-hover) !important;
+  color: #FFFFFF !important;
+}
+
+body.theme-cashier .bento-notif-action-btn.primary:hover,
+.theme-cashier .bento-notif-action-btn.primary:hover {
+  background: var(--primary-hover) !important;
+}
+
+body.theme-cashier .bento-notif-footer,
+.theme-cashier .bento-notif-footer {
+  background: var(--surface) !important;
+  border-top: 1px solid var(--border) !important;
+  color: var(--text-muted) !important;
+}
+
+/* --------------------------------------------------------------------------
+   5.10 RECENT BILLS / INVOICES BENTO VIEW (Teal & Slate Theme)
+   -------------------------------------------------------------------------- */
+body.theme-cashier .invoices-bento-root,
+.theme-cashier .invoices-bento-root,
+.theme-cashier.invoices-bento-root {
+  background-color: var(--bg);
+}
+
+/* Context Strip */
+body.theme-cashier .invoices-context-strip,
+.theme-cashier .invoices-context-strip {
+  background: var(--surface) !important;
+  border: 1.5px solid var(--border) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 1px 3px rgba(15, 45, 46, 0.04) !important;
+}
+
+body.theme-cashier .invoices-branch-pill,
+.theme-cashier .invoices-branch-pill {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--sidebar) !important;
+}
+
+body.theme-cashier .invoices-branch-icon,
+.theme-cashier .invoices-branch-icon {
+  color: var(--primary) !important;
+}
+
+body.theme-cashier .invoices-branch-label,
+.theme-cashier .invoices-branch-label {
+  color: var(--text-muted) !important;
+}
+
+body.theme-cashier .invoices-branch-name,
+.theme-cashier .invoices-branch-name {
+  color: var(--sidebar) !important;
+  font-weight: 800 !important;
+}
+
+body.theme-cashier .invoices-status-pill,
+.theme-cashier .invoices-status-pill {
+  background: var(--primary-soft) !important;
+  border: 1px solid rgba(20, 184, 166, 0.35) !important;
+  color: var(--primary) !important;
+}
+
+body.theme-cashier .invoices-live-dot,
+.theme-cashier .invoices-live-dot {
+  background: var(--ring) !important;
+  box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.3) !important;
+}
+
+body.theme-cashier .invoices-quick-pos-btn,
+.theme-cashier .invoices-quick-pos-btn {
+  background: var(--primary) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 8px rgba(15, 118, 110, 0.3) !important;
+}
+
+body.theme-cashier .invoices-quick-pos-btn:hover,
+.theme-cashier .invoices-quick-pos-btn:hover {
+  background: var(--primary-hover) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.35) !important;
+}
+
+/* KPI Summary Cards */
+body.theme-cashier .invoices-kpi-card,
+.theme-cashier .invoices-kpi-card {
+  background: var(--surface) !important;
+  border: 1.5px solid var(--border) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 1px 3px rgba(15, 45, 46, 0.04) !important;
+}
+
+body.theme-cashier .invoices-kpi-card:hover,
+.theme-cashier .invoices-kpi-card:hover {
+  border-color: var(--primary) !important;
+  box-shadow: 0 6px 16px rgba(15, 118, 110, 0.12) !important;
+}
+
+body.theme-cashier .invoices-kpi-icon-wrap.indigo,
+.theme-cashier .invoices-kpi-icon-wrap.indigo {
+  background: var(--primary-soft) !important;
+  color: var(--primary) !important;
+  border: 1px solid rgba(20, 184, 166, 0.35) !important;
+}
+
+body.theme-cashier .invoices-kpi-badge.indigo,
+.theme-cashier .invoices-kpi-badge.indigo {
+  background: var(--primary-soft) !important;
+  color: var(--primary) !important;
+  border: 1px solid rgba(20, 184, 166, 0.35) !important;
+}
+
+body.theme-cashier .invoices-kpi-sub-amount,
+.theme-cashier .invoices-kpi-sub-amount {
+  background: var(--primary-soft) !important;
+  color: var(--primary) !important;
+  border: 1px solid rgba(20, 184, 166, 0.35) !important;
+}
+
+body.theme-cashier .invoices-kpi-icon-wrap.violet,
+.theme-cashier .invoices-kpi-icon-wrap.violet {
+  background: var(--primary-soft) !important;
+  color: var(--primary) !important;
+  border: 1px solid rgba(20, 184, 166, 0.35) !important;
+}
+
+body.theme-cashier .invoices-kpi-badge.violet,
+.theme-cashier .invoices-kpi-badge.violet {
+  background: var(--primary-soft) !important;
+  color: var(--primary) !important;
+  border: 1px solid rgba(20, 184, 166, 0.35) !important;
+}
+
+body.theme-cashier .invoices-kpi-label,
+.theme-cashier .invoices-kpi-label {
+  color: var(--text-muted) !important;
+}
+
+body.theme-cashier .invoices-kpi-value,
+.theme-cashier .invoices-kpi-value {
+  color: var(--sidebar) !important;
+  font-weight: 800 !important;
+}
+
+body.theme-cashier .invoices-kpi-sub,
+.theme-cashier .invoices-kpi-sub {
+  color: var(--text-muted) !important;
+}
+
+/* Controls Bar & Filters */
+body.theme-cashier .invoices-controls-bar,
+.theme-cashier .invoices-controls-bar {
+  background: var(--surface) !important;
+  border: 1.5px solid var(--border) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 1px 3px rgba(15, 45, 46, 0.04) !important;
+}
+
+body.theme-cashier .invoices-search-box,
+.theme-cashier .invoices-search-box {
+  background: var(--surface) !important;
+  border: 1.5px solid var(--border) !important;
+}
+
+body.theme-cashier .invoices-search-box:focus-within,
+.theme-cashier .invoices-search-box:focus-within {
+  background: var(--surface) !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.22) !important;
+}
+
+body.theme-cashier .invoices-search-input,
+.theme-cashier .invoices-search-input {
+  color: var(--text) !important;
+}
+
+body.theme-cashier .invoices-filter-pill,
+.theme-cashier .invoices-filter-pill {
+  background: var(--surface) !important;
+  border: 1.5px solid var(--border) !important;
+  color: var(--text-muted) !important;
+}
+
+body.theme-cashier .invoices-filter-pill:hover,
+.theme-cashier .invoices-filter-pill:hover {
+  background: var(--primary-soft) !important;
+  border-color: var(--primary) !important;
+  color: var(--primary-hover) !important;
+}
+
+body.theme-cashier .invoices-filter-pill.active,
+.theme-cashier .invoices-filter-pill.active {
+  background: var(--primary) !important;
+  border-color: var(--primary-hover) !important;
+  color: #FFFFFF !important;
+  font-weight: 700 !important;
+  box-shadow: 0 2px 6px rgba(15, 118, 110, 0.25) !important;
+}
+
+/* Table Card */
+body.theme-cashier .invoices-bento-table-card,
+.theme-cashier .invoices-bento-table-card {
+  background: var(--surface) !important;
+  border: 1.5px solid var(--border) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 1px 3px rgba(15, 45, 46, 0.04) !important;
+}
+
+body.theme-cashier .invoices-table-header-bar,
+.theme-cashier .invoices-table-header-bar {
+  background: var(--surface) !important;
+  border-bottom: 1.5px solid var(--border) !important;
+}
+
+body.theme-cashier .invoices-table-title,
+.theme-cashier .invoices-table-title {
+  color: var(--sidebar) !important;
+  font-weight: 800 !important;
+}
+
+body.theme-cashier .invoices-count-badge,
+.theme-cashier .invoices-count-badge {
+  background: var(--primary-soft) !important;
+  color: var(--primary) !important;
+  border: 1px solid rgba(20, 184, 166, 0.35) !important;
+  font-weight: 800 !important;
+}
+
+body.theme-cashier .invoices-bento-table thead th,
+.theme-cashier .invoices-bento-table thead th {
+  background: #E2DACD !important;
+  color: var(--sidebar) !important;
+  border-bottom: 1.5px solid var(--border) !important;
+  font-weight: 800 !important;
+}
+
+body.theme-cashier .invoices-bento-table tbody tr,
+.theme-cashier .invoices-bento-table tbody tr {
+  border-bottom: 1px solid rgba(208, 199, 184, 0.45) !important;
+}
+
+body.theme-cashier .invoices-bento-table tbody tr:hover,
+.theme-cashier .invoices-bento-table tbody tr:hover {
+  background-color: var(--primary-soft) !important;
+}
+
+body.theme-cashier .bento-bill-btn,
+.theme-cashier .bento-bill-btn {
+  background: var(--primary-soft) !important;
+  border: 1px solid rgba(20, 184, 166, 0.35) !important;
+  color: var(--primary) !important;
+  font-weight: 800 !important;
+}
+
+body.theme-cashier .bento-bill-btn:hover,
+.theme-cashier .bento-bill-btn:hover {
+  background: var(--primary) !important;
+  border-color: var(--primary-hover) !important;
+  color: #FFFFFF !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 6px rgba(15, 118, 110, 0.25) !important;
+}
+
+body.theme-cashier .invoices-tag-credit-note,
+.theme-cashier .invoices-tag-credit-note {
+  background: #FEF3C7 !important;
+  color: #92400E !important;
+  border: 1px solid #FDE68A !important;
+  font-weight: 800 !important;
+}
+
+body.theme-cashier .invoices-branch-tag,
+.theme-cashier .invoices-branch-tag {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text-muted) !important;
+}
+
+body.theme-cashier .invoices-cust-name,
+.theme-cashier .invoices-cust-name {
+  color: var(--sidebar) !important;
+  font-weight: 700 !important;
+}
+
+body.theme-cashier .invoices-amount-total,
+.theme-cashier .invoices-amount-total {
+  color: var(--sidebar) !important;
+  font-weight: 800 !important;
+}
+
+body.theme-cashier .invoices-pmt-pill.upi,
+.theme-cashier .invoices-pmt-pill.upi,
+body.theme-cashier .invoices-pmt-pill.card,
+.theme-cashier .invoices-pmt-pill.card {
+  background: var(--primary-soft) !important;
+  color: var(--primary) !important;
+  border: 1px solid rgba(20, 184, 166, 0.35) !important;
+  font-weight: 800 !important;
+}
+
+body.theme-cashier .bento-act-btn.view,
+body.theme-cashier .bento-act-btn.a4,
+.theme-cashier .bento-act-btn.view,
+.theme-cashier .bento-act-btn.a4 {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text-muted) !important;
+}
+
+body.theme-cashier .bento-act-btn.view:hover,
+body.theme-cashier .bento-act-btn.a4:hover,
+.theme-cashier .bento-act-btn.view:hover,
+.theme-cashier .bento-act-btn.a4:hover {
+  background: var(--primary-soft) !important;
+  border-color: var(--primary) !important;
+  color: var(--primary-hover) !important;
+  transform: translateY(-1px) !important;
+}
+
+body.theme-cashier .bento-act-btn.thermal,
+.theme-cashier .bento-act-btn.thermal {
+  background: var(--primary-soft) !important;
+  border: 1px solid rgba(20, 184, 166, 0.4) !important;
+  color: var(--primary) !important;
+}
+
+body.theme-cashier .bento-act-btn.thermal:hover,
+.theme-cashier .bento-act-btn.thermal:hover {
+  background: var(--primary) !important;
+  border-color: var(--primary-hover) !important;
+  color: #FFFFFF !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 6px rgba(15, 118, 110, 0.2) !important;
+}
+
+body.theme-cashier .bento-act-btn.return,
+.theme-cashier .bento-act-btn.return {
+  background: #FEF3C7 !important;
+  border: 1px solid #FDE68A !important;
+  color: #92400E !important;
+}
+
+body.theme-cashier .bento-act-btn.return:hover,
+.theme-cashier .bento-act-btn.return:hover {
+  background: #FDE68A !important;
+  color: #78350F !important;
+  transform: translateY(-1px) !important;
+}
+
+body.theme-cashier .bento-act-btn.return:disabled,
+.theme-cashier .bento-act-btn.return:disabled {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+  color: var(--border) !important;
+  opacity: 0.6 !important;
 }

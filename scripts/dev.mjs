@@ -43,8 +43,8 @@ async function startDev() {
   await ctx.watch();
   console.log('Client esbuild watcher active.');
 
-  console.log('Starting backend server with tsx and --watch (scoped to server/src, shared/src)...');
-  const server = spawn('node', ['--watch-path=server/src', '--watch-path=shared/src', '--import', 'tsx', 'server/src/index.ts'], {
+  console.log('Starting backend server with tsx and --watch (scoped to server/src, shared)...');
+  const server = spawn('node', ['--watch-path=server/src', '--watch-path=shared', '--import', 'tsx', 'server/src/index.ts'], {
     stdio: 'inherit',
     env: process.env,
   });

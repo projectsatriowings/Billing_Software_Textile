@@ -1068,8 +1068,26 @@ export type {
 } from '../../shared/types.ts';
 
 // Cashier Shifts & Day-End Closing API
+export interface OccupiedCounterInfo {
+  shiftId?: string | null;
+  shiftNumber?: string | null;
+  counter: string;
+  counterId?: string | null;
+  counterName?: string | null;
+  branchId: string;
+  userId: string;
+  userName: string;
+  isCurrentUser: boolean;
+  openedAt?: string;
+}
+
 export const fetchActiveShift = () =>
   api<{ ok: boolean; activeShift: import('../../shared/types.ts').Shift | null }>('/api/shifts/active');
+
+export const fetchOccupiedCounters = (branchId?: string) => {
+  const qs = branchId ? `?branchId=${encodeURIComponent(branchId)}` : '';
+  return api<{ ok: boolean; occupiedCounters: OccupiedCounterInfo[] }>(`/api/shifts/occupied-counters${qs}`);
+};
 
 export const openShift = (data: { openingCashMinor: number; location?: string; counter?: string; counterId?: string; branchId?: string; notes?: string }) =>
   api<{ ok: boolean; shift: import('../../shared/types.ts').Shift }>('/api/shifts', {

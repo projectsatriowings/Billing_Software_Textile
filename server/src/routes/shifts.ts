@@ -326,6 +326,30 @@ export function registerShifts(r: Router) {
         );
       }
 
+      // Check if counter is already occupied by another cashier with an open shift
+      const counterOccupant = await q.one<any>(
+        `SELECT s.id, u.name AS user_name, s.counter, s.counter_name_snapshot
+         FROM shifts s
+         JOIN users u ON u.id = s.user_id
+         WHERE s.tenant_id = ?
+           AND s.branch_id = ?
+           AND s.status = 'open'
+           AND s.user_id != ?
+           AND (
+             (s.counter_id IS NOT NULL AND s.counter_id = ?)
+             OR UPPER(COALESCE(s.counter, '')) = UPPER(?)
+             OR LOWER(COALESCE(s.counter_name_snapshot, '')) = LOWER(?)
+           )
+         LIMIT 1`,
+        [tenantId, branchId, userId, resolvedCounterId, resolvedCounterCode, resolvedCounterName],
+      );
+      if (counterOccupant) {
+        throw bad(
+          `Billing counter "${resolvedCounterName}" (${resolvedCounterCode}) is already in use by ${counterOccupant.user_name}. Please select an available counter.`,
+          'COUNTER_OCCUPIED',
+        );
+      }
+
       // 2. Generate sequential shift number (SHF-1001) using number_series
       const seriesRow = await q.one<{ assignedNo?: number; assigned_no?: number }>(
         `INSERT INTO number_series (tenant_id, branch_id, series, next_no)
@@ -363,6 +387,14 @@ export function registerShifts(r: Router) {
           now,
         ],
       );
+
+      // Record active counter on user record
+      try {
+        await q.exec(
+          'UPDATE users SET counter_id = ?, assigned_counter = ?, updated_at = now() WHERE id = ? AND tenant_id = ?',
+          [resolvedCounterId, resolvedCounterCode, userId, tenantId],
+        );
+      } catch {}
 
       await audit(q, ctx, {
         action: 'shift.open',
@@ -443,6 +475,105 @@ export function registerShifts(r: Router) {
         },
       };
     });
+  });
+
+  // 1b. List occupied counters in a branch (open shifts or active cashier stations)
+  r.get('/api/shifts/occupied-counters', requirePerm('shift'), async (ctx) => {
+    const tenantId = ctx.user!.tenantId;
+    const currentUserId = ctx.user!.id;
+    const scope = await resolveBranchScope(ctx);
+    const branchId = (ctx.query.branchId as string) || scope.branchId;
+
+    let sql = `
+      SELECT 
+        s.id AS shift_id,
+        s.shift_number,
+        s.counter,
+        s.counter_id,
+        s.counter_name_snapshot,
+        s.branch_id,
+        s.user_id,
+        u.name AS user_name,
+        u.email AS user_email,
+        s.opened_at
+      FROM shifts s
+      JOIN users u ON u.id = s.user_id
+      WHERE s.tenant_id = ?
+        AND s.status = 'open'
+    `;
+    const params: any[] = [tenantId];
+
+    if (branchId) {
+      sql += ' AND s.branch_id = ?';
+      params.push(branchId);
+    }
+
+    const shiftRows = await ctx.db.query<any>(sql, params);
+
+    // Also check active users who assigned this counter recently
+    let userSql = `
+      SELECT
+        u.id AS user_id,
+        u.name AS user_name,
+        u.email AS user_email,
+        u.assigned_counter AS counter,
+        u.counter_id,
+        u.branch_id,
+        u.updated_at
+      FROM users u
+      WHERE u.tenant_id = ?
+        AND (u.counter_id IS NOT NULL OR u.assigned_counter IS NOT NULL)
+        AND u.updated_at > now() - interval '3 hours'
+    `;
+    const userParams: any[] = [tenantId];
+    if (branchId) {
+      userSql += ' AND (u.branch_id = ? OR u.branch_id IS NULL)';
+      userParams.push(branchId);
+    }
+    const userRows = await ctx.db.query<any>(userSql, userParams);
+
+    const occupiedMap = new Map<string, any>();
+
+    for (const r of shiftRows) {
+      const key = (r.counter_id || r.counter || '').trim().toUpperCase();
+      if (!key) continue;
+      occupiedMap.set(key, {
+        shiftId: r.shift_id,
+        shiftNumber: r.shift_number,
+        counter: r.counter,
+        counterId: r.counter_id,
+        counterName: r.counter_name_snapshot,
+        branchId: r.branch_id,
+        userId: r.user_id,
+        userName: r.user_name,
+        isCurrentUser: r.user_id === currentUserId,
+        openedAt: r.opened_at,
+      });
+    }
+
+    for (const u of userRows) {
+      const key = (u.counter_id || u.counter || '').trim().toUpperCase();
+      if (!key) continue;
+      if (!occupiedMap.has(key)) {
+        occupiedMap.set(key, {
+          shiftId: null,
+          shiftNumber: null,
+          counter: u.counter,
+          counterId: u.counter_id,
+          counterName: u.counter,
+          branchId: u.branch_id,
+          userId: u.user_id,
+          userName: u.user_name,
+          isCurrentUser: u.user_id === currentUserId,
+          openedAt: u.updated_at,
+        });
+      }
+    }
+
+    return {
+      ok: true,
+      occupiedCounters: Array.from(occupiedMap.values()),
+    };
   });
 
   // 2. Get active shift for current cashier (with owner/manager fallback)
@@ -555,12 +686,44 @@ export function registerShifts(r: Router) {
       throw bad(`Billing counter "${counterRow.name}" is currently disabled. Please select an active counter.`, 'COUNTER_DISABLED');
     }
 
+    // Ensure no other active cashier is currently occupying this counter
+    const existingOccupant: any = await ctx.db.one(
+      `SELECT s.id, s.user_id, u.name AS user_name, s.counter, s.counter_name_snapshot
+       FROM shifts s
+       JOIN users u ON u.id = s.user_id
+       WHERE s.tenant_id = ?
+         AND s.branch_id = ?
+         AND s.status = 'open'
+         AND s.user_id != ?
+         AND (
+           (s.counter_id IS NOT NULL AND s.counter_id = ?)
+           OR UPPER(COALESCE(s.counter, '')) = UPPER(?)
+           OR LOWER(COALESCE(s.counter_name_snapshot, '')) = LOWER(?)
+         )
+       LIMIT 1`,
+      [tenantId, branchId, userId, counterRow.id, counterRow.code, counterRow.name],
+    );
+    if (existingOccupant) {
+      throw bad(
+        `Billing counter "${counterRow.name}" (${counterRow.code}) is currently in use by ${existingOccupant.user_name}. Please choose another available counter.`,
+        'COUNTER_OCCUPIED',
+      );
+    }
+
     if (activeShift) {
       await ctx.db.exec(
         'UPDATE shifts SET counter_id = ?, counter = ?, counter_name_snapshot = ?, updated_at = now() WHERE id = ?',
         [counterRow.id, counterRow.code, counterRow.name, activeShift.id],
       );
     }
+
+    // Record active counter on user record
+    try {
+      await ctx.db.exec(
+        'UPDATE users SET counter_id = ?, assigned_counter = ?, updated_at = now() WHERE id = ? AND tenant_id = ?',
+        [counterRow.id, counterRow.code, userId, tenantId],
+      );
+    } catch {}
 
     return {
       ok: true,
@@ -938,6 +1101,14 @@ export function registerShifts(r: Router) {
            AND created_at <= ?`,
         [shiftId, tenantId, shiftUserId, openedAt, now],
       );
+
+      // Clear user active counter assignment when shift closes
+      try {
+        await q.exec(
+          'UPDATE users SET counter_id = NULL, assigned_counter = NULL, updated_at = now() WHERE id = ? AND tenant_id = ?',
+          [shiftUserId, tenantId],
+        );
+      } catch {}
 
       await audit(q, ctx, {
         action: 'shift.close',

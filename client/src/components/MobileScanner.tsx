@@ -13,6 +13,8 @@ interface ScannedHistoryItem {
 }
 
 export const MobileScanner: React.FC<MobileScannerProps> = ({ sessionId }) => {
+  const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+  const counterParam = urlParams?.get('counter') || '';
   const isSecure = typeof window !== 'undefined' && (Boolean(window.isSecureContext) || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
   const [activeMode, setActiveMode] = useState<'live' | 'snap' | 'manual'>(isSecure ? 'live' : 'snap');
   const [isConnected, setIsConnected] = useState<boolean | null>(null);
@@ -343,7 +345,7 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ sessionId }) => {
           <div>
             <h1 className="mobile-brand-title">AtrioWings Mobile Scanner</h1>
             <div className="mobile-session-tag">
-              <span>Terminal #{sessionId}</span>
+              <span>{counterParam ? `${counterParam} • ` : ''}Terminal #{sessionId}</span>
             </div>
           </div>
         </div>
@@ -351,7 +353,7 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ sessionId }) => {
         <div className="mobile-header-status">
           <div className={`mobile-status-pill ${isConnected ? 'online' : 'connecting'}`}>
             <span className="mobile-status-dot"></span>
-            <span>{isConnected ? 'POS Connected' : 'Connecting...'}</span>
+            <span>{isConnected ? (counterParam ? `${counterParam} Connected` : 'POS Connected') : 'Connecting...'}</span>
           </div>
         </div>
       </header>
@@ -389,7 +391,8 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ sessionId }) => {
             <button
               type="button"
               onClick={() => {
-                window.location.href = `${networkInfo.tunnelUrl}/scanner?session=${encodeURIComponent(sessionId)}`;
+                const cQuery = counterParam ? `&counter=${encodeURIComponent(counterParam)}` : '';
+                window.location.href = `${networkInfo.tunnelUrl}/scanner?session=${encodeURIComponent(sessionId)}${cQuery}`;
               }}
               style={{
                 padding: '8px 14px',
@@ -420,7 +423,8 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ sessionId }) => {
                   const res = await fetch('/api/scanner/restart-tunnel', { method: 'POST' });
                   const data = await res.json();
                   if (data.ok && data.tunnelUrl) {
-                    window.location.href = `${data.tunnelUrl}/scanner?session=${encodeURIComponent(sessionId)}`;
+                    const cQuery = counterParam ? `&counter=${encodeURIComponent(counterParam)}` : '';
+                    window.location.href = `${data.tunnelUrl}/scanner?session=${encodeURIComponent(sessionId)}${cQuery}`;
                   }
                 } catch {}
               }}

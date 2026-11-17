@@ -199,7 +199,7 @@ export const RecentBillsBentoView: React.FC<RecentBillsBentoViewProps> = ({
   }, [filteredInvoices]);
 
   return (
-    <div className="invoices-bento-root">
+    <div className={`invoices-bento-root ${isCashier ? 'theme-cashier' : ''}`}>
       {/* 1. Bento Top Context Strip */}
       <div className="invoices-context-strip">
         <div className="invoices-context-left">
@@ -410,7 +410,7 @@ export const RecentBillsBentoView: React.FC<RecentBillsBentoViewProps> = ({
         {!isCashier && branches.length > 0 && (
           <div className="invoices-controls-right">
             <div className="invoices-admin-branch-select-wrap">
-              <Building2Icon size={13} style={{ color: '#6366f1' }} />
+              <Building2Icon size={13} style={{ color: 'var(--primary, #0F766E)' }} />
               <span style={{ fontSize: '0.74rem', fontWeight: 700, color: '#475569' }}>Branch:</span>
               <select
                 className="invoices-branch-dropdown"
@@ -512,7 +512,7 @@ export const RecentBillsBentoView: React.FC<RecentBillsBentoViewProps> = ({
                     {/* Branch */}
                     <td>
                       <span className="invoices-branch-tag">
-                        <Building2Icon size={12} style={{ color: '#6366f1' }} />
+                        <Building2Icon size={12} style={{ color: 'var(--primary, #0F766E)' }} />
                         <span>
                           {branches.find((b) => b.id === inv.branchId || b.code === (inv as any).location)?.code ||
                             currentBranchCode ||
