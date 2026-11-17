@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
   fetchTodayDashboard,
+  fetchDayClosingCompliance,
   type TodayDashboardData,
   type User,
   type Shop,
@@ -43,6 +44,13 @@ interface TodayDashboardViewProps {
   onManageBranches?: () => void;
   selectedBranch?: string;
   onBranchChange?: (branch: string) => void;
+  onNavigateToDayClosing?: () => void;
+  overdueClosing?: {
+    isOverdue: boolean;
+    expectedClosingTime: string;
+    minutesOverdue: number;
+    lastReminderSentAt?: string | null;
+  } | null;
 }
 
 type ChartMetric = 'sales' | 'bills' | 'profit';
@@ -300,6 +308,8 @@ export const TodayDashboardView: React.FC<TodayDashboardViewProps> = ({
   onManageBranches,
   selectedBranch,
   onBranchChange,
+  onNavigateToDayClosing,
+  overdueClosing,
 }) => {
   // SWR: Initialize state immediately from cache if available (0ms instant render!)
   const [data, setData] = useState<TodayDashboardData | null>(() => cachedTodayDashboard);
@@ -308,6 +318,54 @@ export const TodayDashboardView: React.FC<TodayDashboardViewProps> = ({
   const [chartMetric, setChartMetric] = useState<ChartMetric>('sales');
   const [chartAnimKey, setChartAnimKey] = useState<number>(0);
   const [hoveredPointIndex, setHoveredPointIndex] = useState<number | null>(null);
+
+  // Day Closing Overdue Alert state
+  const [internalOverdueClosing, setInternalOverdueClosing] = useState(overdueClosing || null);
+
+  useEffect(() => {
+    if (overdueClosing !== undefined) {
+      setInternalOverdueClosing(overdueClosing);
+    }
+  }, [overdueClosing]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const checkOverdue = async () => {
+      try {
+        const activeBranch = selectedBranch || 'MAIN';
+        const res = await fetchDayClosingCompliance({ branchId: activeBranch });
+        if (isMounted) {
+          if (res.success && res.isBranchOverdue) {
+            setInternalOverdueClosing({
+              isOverdue: true,
+              expectedClosingTime: res.expectedClosingTime || '22:00',
+              minutesOverdue: res.minutesOverdue || 0,
+              lastReminderSentAt: res.lastReminderSentAt || null,
+            });
+          } else {
+            setInternalOverdueClosing(null);
+          }
+        }
+      } catch {
+        // silent
+      }
+    };
+
+    checkOverdue();
+    const interval = setInterval(checkOverdue, 30000);
+    const onClosingUpdated = () => checkOverdue();
+    window.addEventListener('day_closing_updated', onClosingUpdated);
+    window.addEventListener('day_closing_submitted', onClosingUpdated);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+      window.removeEventListener('day_closing_updated', onClosingUpdated);
+      window.removeEventListener('day_closing_submitted', onClosingUpdated);
+    };
+  }, [selectedBranch]);
+
+  const effectiveOverdue = internalOverdueClosing || overdueClosing;
 
   const handleMetricChange = useCallback((metric: ChartMetric) => {
     if (metric === chartMetric) return;
@@ -815,6 +873,33 @@ export const TodayDashboardView: React.FC<TodayDashboardViewProps> = ({
 
   return (
     <div className="today-dash-root">
+
+      {/* Overdue Register Alert (Blinking Button & Banner matching Image 1) */}
+      {effectiveOverdue?.isOverdue && (
+        <div
+          className="dashboard-overdue-alert-banner"
+          onClick={() => (onNavigateToDayClosing ? onNavigateToDayClosing() : null)}
+        >
+          <div className="dashboard-overdue-alert-left">
+            <AlertTriangleIcon size={18} style={{ color: '#e11d48', flexShrink: 0 }} />
+            <div>
+              <strong>Overdue Register Alert:</strong> Expected closing time was{' '}
+              <strong>{effectiveOverdue.expectedClosingTime}</strong> ({effectiveOverdue.minutesOverdue} mins overdue). Please complete cash count and submit day closing.
+            </div>
+          </div>
+          <button
+            type="button"
+            className="dashboard-overdue-blink-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              onNavigateToDayClosing?.();
+            }}
+          >
+            <span>Close Register Now</span>
+            <span style={{ fontSize: '1rem', lineHeight: 1 }}>&rarr;</span>
+          </button>
+        </div>
+      )}
 
       {/* Empty State Banner if 0 bills today */}
       {isBilledEmpty && (

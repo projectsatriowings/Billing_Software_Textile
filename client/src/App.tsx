@@ -49,6 +49,7 @@ import {
   getActiveBranchScope,
   setActiveBranchScope,
   selectActiveShiftCounter,
+  fetchDayClosingCompliance,
 } from './api';
 import { BranchProvider } from './contexts/BranchContext';
 import { moneyInWords } from '../../shared/money.ts';
@@ -772,6 +773,49 @@ export function App() {
   // Top header notifications popover state and ref
   const [showTopNotifPopover, setShowTopNotifPopover] = useState(false);
   const notifPopoverRef = useRef<HTMLDivElement | null>(null);
+
+  // Day Closing Overdue Alert state for top global header bar
+  const [topOverdueClosing, setTopOverdueClosing] = useState<{
+    isOverdue: boolean;
+    expectedClosingTime: string;
+    minutesOverdue: number;
+  } | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    const checkTopOverdue = async () => {
+      try {
+        const branch = selectedBranchScope || 'MAIN';
+        const res = await fetchDayClosingCompliance({ branchId: branch });
+        if (isMounted) {
+          if (res.success && res.isBranchOverdue) {
+            setTopOverdueClosing({
+              isOverdue: true,
+              expectedClosingTime: res.expectedClosingTime || '22:00',
+              minutesOverdue: res.minutesOverdue || 0,
+            });
+          } else {
+            setTopOverdueClosing(null);
+          }
+        }
+      } catch {
+        // background silent catch
+      }
+    };
+
+    checkTopOverdue();
+    const interval = setInterval(checkTopOverdue, 30000);
+    const onClosingUpdated = () => checkTopOverdue();
+    window.addEventListener('day_closing_updated', onClosingUpdated);
+    window.addEventListener('day_closing_submitted', onClosingUpdated);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+      window.removeEventListener('day_closing_updated', onClosingUpdated);
+      window.removeEventListener('day_closing_submitted', onClosingUpdated);
+    };
+  }, [selectedBranchScope]);
 
   // Close notifications popover on outside click or Escape key without blurring background
   useEffect(() => {
@@ -7595,6 +7639,19 @@ export function App() {
               <div className="top-header-title-spacer" />
             )}
             <div className="top-global-actions">
+              {/* Overdue Day Closing Blinking Alert Pill */}
+              {topOverdueClosing?.isOverdue && (
+                <button
+                  type="button"
+                  className="top-overdue-closing-btn blink-alert"
+                  onClick={() => setActiveTab('day-closing')}
+                  title={`Overdue Register Alert: Expected closing time was ${topOverdueClosing.expectedClosingTime} (${topOverdueClosing.minutesOverdue} mins overdue). Click to open Day Closing.`}
+                >
+                  <AlertTriangleIcon size={15} />
+                  <span>Closing Overdue ({topOverdueClosing.expectedClosingTime})</span>
+                </button>
+              )}
+
               {(user.role === 'owner' || user.role === 'admin' || String(user.role).toUpperCase() === 'SUPER_ADMIN') && branches.length > 0 && (
                 <BranchSelector
                   branches={branches}
@@ -8041,6 +8098,8 @@ export function App() {
                   selectedBranch={selectedBranchScope}
                   onBranchChange={handleGlobalBranchChange}
                   onNavigateToPos={() => setActiveTab('pos')}
+                  onNavigateToDayClosing={() => setActiveTab('day-closing')}
+                  overdueClosing={topOverdueClosing}
                   onNavigateToInventory={() => setActiveTab('inventory')}
                   onNavigateToSalesAnalysis={() => setActiveTab('sales-analysis')}
                   onNavigateToPurchases={() => {

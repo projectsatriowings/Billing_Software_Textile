@@ -794,6 +794,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
         auditSummary: auditData || preview?.audit,
       });
       setSuccessMsg(`Day closing submitted successfully! Reference: ${res.dayClosing?.id || 'OK'}`);
+      window.dispatchEvent(new Event('day_closing_submitted'));
       await loadPreview();
     } catch (err: any) {
       setError(err.message || 'Failed to submit day closing');
@@ -809,6 +810,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
       setError(null);
       await approveDayClosing(closingId);
       setSuccessMsg('Day closing approved and locked successfully!');
+      window.dispatchEvent(new Event('day_closing_updated'));
       await loadPreview();
       await loadHistory();
     } catch (err: any) {
