@@ -60,6 +60,9 @@ import {
   CheckIcon,
   ChevronDownIcon,
   ChevronUpIcon,
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  LayersIcon,
 } from '../inventory/InventoryIcons.tsx';
 import './dayClosing.css';
 
@@ -1210,8 +1213,36 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
           )}
         </div>
 
-        <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>
-          Tenant: <strong style={{ color: '#0f172a' }}>{shop?.name || 'Main Organization'}</strong>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {activeTab === 'closing' && !isCashierUser && (
+            <button
+              type="button"
+              onClick={() => setActiveTab('breakdown')}
+              className="btn-link"
+              style={{
+                fontSize: '0.8rem',
+                color: '#4f46e5',
+                fontWeight: 700,
+                background: '#eef2ff',
+                border: '1px solid #c7d2fe',
+                padding: '6px 14px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+              title="View Multi-Counter & Cashier Breakdown Reports"
+            >
+              <LayersIcon size={14} />
+              <span>Counter & Cashier Breakdown</span>
+              <ArrowRightIcon size={12} />
+            </button>
+          )}
+
+          <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>
+            Tenant: <strong style={{ color: '#0f172a' }}>{shop?.name || 'Main Organization'}</strong>
+          </div>
         </div>
       </div>
 
@@ -1298,6 +1329,122 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
           ==================================================================== */}
       {activeTab === 'closing' && (
         <>
+          {/* Active Specific Counter / Cashier Navigation Banner */}
+          {selectedCounterId && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              background: '#f0fdfa',
+              border: '1px solid #99f6e4',
+              borderRadius: '10px',
+              padding: '10px 16px',
+              marginBottom: '14px',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Building2Icon size={18} style={{ color: '#0d9488' }} />
+                <span style={{ fontSize: '0.875rem', color: '#134e4a', fontWeight: 600 }}>
+                  Filtering Register Closing for Counter: <strong>{preview?.availableCounters?.find((cnt: any) => cnt.id === selectedCounterId || cnt.code === selectedCounterId)?.name || selectedCounterId}</strong>
+                </span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('breakdown')}
+                  style={{
+                    fontSize: '0.78rem',
+                    padding: '5px 12px',
+                    borderRadius: '6px',
+                    border: '1px solid #99f6e4',
+                    background: '#ffffff',
+                    color: '#0d9488',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                >
+                  <LayersIcon size={13} />
+                  <span>All Counters Breakdown</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedCounterId('')}
+                  style={{
+                    fontSize: '0.78rem',
+                    padding: '5px 12px',
+                    borderRadius: '6px',
+                    border: '1px solid #14b8a6',
+                    background: '#0d9488',
+                    color: '#ffffff',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Reset to Store-wide
+                </button>
+              </div>
+            </div>
+          )}
+
+          {selectedCashierId && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              background: '#eff6ff',
+              border: '1px solid #bfdbfe',
+              borderRadius: '10px',
+              padding: '10px 16px',
+              marginBottom: '14px',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <UserIcon size={18} style={{ color: '#2563eb' }} />
+                <span style={{ fontSize: '0.875rem', color: '#1e3a8a', fontWeight: 600 }}>
+                  Filtering Register Closing for Cashier: <strong>{preview?.availableCashiers?.find((c: any) => c.id === selectedCashierId)?.name || selectedCashierId}</strong>
+                </span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('breakdown')}
+                  style={{
+                    fontSize: '0.78rem',
+                    padding: '5px 12px',
+                    borderRadius: '6px',
+                    border: '1px solid #bfdbfe',
+                    background: '#ffffff',
+                    color: '#2563eb',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                >
+                  <LayersIcon size={13} />
+                  <span>All Cashiers Breakdown</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedCashierId('')}
+                  style={{
+                    fontSize: '0.78rem',
+                    padding: '5px 12px',
+                    borderRadius: '6px',
+                    border: '1px solid #3b82f6',
+                    background: '#2563eb',
+                    color: '#ffffff',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Reset to Store-wide
+                </button>
+              </div>
+            </div>
+          )}
           {/* --------------------------------------------------------------------
               Smart Closing Audit & Detector Overview Bar & Expandable Panel
               -------------------------------------------------------------------- */}
@@ -2192,51 +2339,78 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
           ==================================================================== */}
       {activeTab === 'breakdown' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          {/* Sub-navigation pill toggle: Counter vs Cashier */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#ffffff', padding: '12px 18px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-            <div style={{ display: 'flex', gap: '8px' }}>
+          {/* Sub-navigation & Return pill bar */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#ffffff', padding: '12px 18px', borderRadius: '12px', border: '1px solid #e2e8f0', flexWrap: 'wrap', gap: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
               <button
-                onClick={() => setBreakdownSubTab('counter')}
-                style={{
-                  padding: '8px 16px',
-                  borderRadius: '8px',
-                  border: breakdownSubTab === 'counter' ? '2px solid #4f46e5' : '1px solid #cbd5e1',
-                  background: breakdownSubTab === 'counter' ? '#eef2ff' : '#ffffff',
-                  color: breakdownSubTab === 'counter' ? '#4338ca' : '#475569',
-                  fontWeight: 700,
-                  fontSize: '0.85rem',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                }}
+                type="button"
+                onClick={() => setActiveTab('closing')}
+                className="btn-nav-back"
+                title="Return to Register Closing & Reconciliation"
               >
-                <Building2Icon size={16} />
-                Counter-wise Sales Report
+                <ArrowLeftIcon size={14} />
+                <span>Back to Register Closing</span>
               </button>
 
-              <button
-                onClick={() => setBreakdownSubTab('cashier')}
-                style={{
-                  padding: '8px 16px',
-                  borderRadius: '8px',
-                  border: breakdownSubTab === 'cashier' ? '2px solid #4f46e5' : '1px solid #cbd5e1',
-                  background: breakdownSubTab === 'cashier' ? '#eef2ff' : '#ffffff',
-                  color: breakdownSubTab === 'cashier' ? '#4338ca' : '#475569',
-                  fontWeight: 700,
-                  fontSize: '0.85rem',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                }}
-              >
-                <UserIcon size={16} />
-                Cashier-wise Sales Report
-              </button>
+              <div style={{ width: '1px', height: '24px', background: '#e2e8f0' }} />
+
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  type="button"
+                  onClick={() => setBreakdownSubTab('counter')}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    border: breakdownSubTab === 'counter' ? '2px solid #4f46e5' : '1px solid #cbd5e1',
+                    background: breakdownSubTab === 'counter' ? '#eef2ff' : '#ffffff',
+                    color: breakdownSubTab === 'counter' ? '#4338ca' : '#475569',
+                    fontWeight: 700,
+                    fontSize: '0.85rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
+                >
+                  <Building2Icon size={16} />
+                  Counter-wise Sales Report
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setBreakdownSubTab('cashier')}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    border: breakdownSubTab === 'cashier' ? '2px solid #4f46e5' : '1px solid #cbd5e1',
+                    background: breakdownSubTab === 'cashier' ? '#eef2ff' : '#ffffff',
+                    color: breakdownSubTab === 'cashier' ? '#4338ca' : '#475569',
+                    fontWeight: 700,
+                    fontSize: '0.85rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
+                >
+                  <UserIcon size={16} />
+                  Cashier-wise Sales Report
+                </button>
+              </div>
             </div>
 
-            <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              {breakdownSubTab === 'counter' && counterSalesData?.consolidatedTotal && (
+                <div style={{ fontSize: '0.82rem', color: '#64748b', background: '#f8fafc', padding: '6px 12px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                  Consolidated Net Sales: <strong style={{ color: '#16a34a' }}>{fmt(counterSalesData.consolidatedTotal.netSalesMinor)}</strong>
+                </div>
+              )}
+              {breakdownSubTab === 'cashier' && cashierSalesData?.consolidatedTotal && (
+                <div style={{ fontSize: '0.82rem', color: '#64748b', background: '#f8fafc', padding: '6px 12px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                  Consolidated Net Sales: <strong style={{ color: '#16a34a' }}>{fmt(cashierSalesData.consolidatedTotal.netSalesMinor)}</strong>
+                </div>
+              )}
+
               {breakdownSubTab === 'counter' ? (
                 <button
                   onClick={handleExportCounterCsv}
@@ -2271,39 +2445,6 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                 </div>
               ) : counterSalesData ? (
                 <>
-                  {/* KPI Summary Cards */}
-                  <div className="fin-kpi-grid">
-                    <div className="fin-kpi-card blue">
-                      <span className="fin-kpi-title">Gross Sales</span>
-                      <div className="fin-kpi-val">{fmt(counterSalesData.consolidatedTotal?.grossSalesMinor)}</div>
-                      <span className="fin-kpi-sub">{counterSalesData.consolidatedTotal?.invoicesCount || 0} Bills Across Counters</span>
-                    </div>
-
-                    <div className="fin-kpi-card rose">
-                      <span className="fin-kpi-title">Sales Returns</span>
-                      <div className="fin-kpi-val">-{fmt(counterSalesData.consolidatedTotal?.returnsTotalMinor)}</div>
-                      <span className="fin-kpi-sub">{counterSalesData.consolidatedTotal?.returnsCount || 0} Credit Notes</span>
-                    </div>
-
-                    <div className="fin-kpi-card emerald">
-                      <span className="fin-kpi-title">Net Sales</span>
-                      <div className="fin-kpi-val">{fmt(counterSalesData.consolidatedTotal?.netSalesMinor)}</div>
-                      <span className="fin-kpi-sub">Total Counter Revenue</span>
-                    </div>
-
-                    <div className="fin-kpi-card purple">
-                      <span className="fin-kpi-title">Gross Profit</span>
-                      <div className="fin-kpi-val">{fmt(counterSalesData.consolidatedTotal?.grossProfitMinor)}</div>
-                      <span className="fin-kpi-sub">{counterSalesData.consolidatedTotal?.marginPct || 0}% Overall Margin</span>
-                    </div>
-
-                    <div className="fin-kpi-card orange">
-                      <span className="fin-kpi-title">Total Collections</span>
-                      <div className="fin-kpi-val">{fmt(counterSalesData.consolidatedTotal?.collections?.total)}</div>
-                      <span className="fin-kpi-sub">Cash: {fmt(counterSalesData.consolidatedTotal?.collections?.cash)}</span>
-                    </div>
-                  </div>
-
                   {counterSalesData.exceptionCount > 0 && (
                     <div style={{ background: '#fef3c7', border: '1px solid #fde68a', borderRadius: '8px', padding: '10px 14px', color: '#92400e', display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <AlertTriangleIcon size={16} />
@@ -2342,6 +2483,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                             <th>UPI</th>
                             <th>Card</th>
                             <th>Credit Sales</th>
+                            <th style={{ textAlign: 'center' }}>Action</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -2377,6 +2519,25 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                               <td style={{ color: c.creditSalesMinor > 0 ? '#7e22ce' : 'inherit', fontWeight: c.creditSalesMinor > 0 ? 600 : 400 }}>
                                 {fmt(c.creditSalesMinor)}
                               </td>
+                              <td style={{ textAlign: 'center' }}>
+                                {!c.isException ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setSelectedCounterId(c.counterId || c.counterCode);
+                                      setSelectedCashierId('');
+                                      setActiveTab('closing');
+                                    }}
+                                    className="btn-reconcile-nav"
+                                    title={`Open Register Closing for ${c.counterName}`}
+                                  >
+                                    <span>Open Register</span>
+                                    <ArrowRightIcon size={12} />
+                                  </button>
+                                ) : (
+                                  <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Unassigned</span>
+                                )}
+                              </td>
                             </tr>
                           ))}
                         </tbody>
@@ -2397,6 +2558,21 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                             <td>{fmt(counterSalesData.consolidatedTotal?.collections?.upi)}</td>
                             <td>{fmt(counterSalesData.consolidatedTotal?.collections?.card)}</td>
                             <td>{fmt(counterSalesData.consolidatedTotal?.creditSalesMinor)}</td>
+                            <td style={{ textAlign: 'center' }}>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedCounterId('');
+                                  setSelectedCashierId('');
+                                  setActiveTab('closing');
+                                }}
+                                className="btn-reconcile-nav-all"
+                                title="Open Store-wide Consolidated Register Closing"
+                              >
+                                <span>Full Register</span>
+                                <ArrowRightIcon size={12} />
+                              </button>
+                            </td>
                           </tr>
                         </tfoot>
                       </table>
@@ -2417,38 +2593,6 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                 </div>
               ) : cashierSalesData ? (
                 <>
-                  {/* KPI Summary Cards */}
-                  <div className="fin-kpi-grid">
-                    <div className="fin-kpi-card blue">
-                      <span className="fin-kpi-title">Gross Sales</span>
-                      <div className="fin-kpi-val">{fmt(cashierSalesData.consolidatedTotal?.grossSalesMinor)}</div>
-                      <span className="fin-kpi-sub">{cashierSalesData.consolidatedTotal?.invoicesCount || 0} Bills Across Cashiers</span>
-                    </div>
-
-                    <div className="fin-kpi-card rose">
-                      <span className="fin-kpi-title">Sales Returns</span>
-                      <div className="fin-kpi-val">-{fmt(cashierSalesData.consolidatedTotal?.returnsTotalMinor)}</div>
-                      <span className="fin-kpi-sub">{cashierSalesData.consolidatedTotal?.returnsCount || 0} Credit Notes</span>
-                    </div>
-
-                    <div className="fin-kpi-card emerald">
-                      <span className="fin-kpi-title">Net Sales</span>
-                      <div className="fin-kpi-val">{fmt(cashierSalesData.consolidatedTotal?.netSalesMinor)}</div>
-                      <span className="fin-kpi-sub">Total Cashier Revenue</span>
-                    </div>
-
-                    <div className="fin-kpi-card purple">
-                      <span className="fin-kpi-title">Gross Profit</span>
-                      <div className="fin-kpi-val">{fmt(cashierSalesData.consolidatedTotal?.grossProfitMinor)}</div>
-                      <span className="fin-kpi-sub">{cashierSalesData.consolidatedTotal?.marginPct || 0}% Overall Margin</span>
-                    </div>
-
-                    <div className="fin-kpi-card orange">
-                      <span className="fin-kpi-title">Total Collections</span>
-                      <div className="fin-kpi-val">{fmt(cashierSalesData.consolidatedTotal?.collections?.total)}</div>
-                      <span className="fin-kpi-sub">Cash: {fmt(cashierSalesData.consolidatedTotal?.collections?.cash)}</span>
-                    </div>
-                  </div>
 
                   {cashierSalesData.exceptionCount > 0 && (
                     <div style={{ background: '#fef3c7', border: '1px solid #fde68a', borderRadius: '8px', padding: '10px 14px', color: '#92400e', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -2489,6 +2633,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                             <th>Actual Counted</th>
                             <th>Expected Cash</th>
                             <th>Difference</th>
+                            <th style={{ textAlign: 'center' }}>Action</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -2538,6 +2683,25 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                               }}>
                                 {c.varianceMinor != null ? ((c.varianceMinor > 0 ? '+' : '') + fmt(c.varianceMinor)) : '—'}
                               </td>
+                              <td style={{ textAlign: 'center' }}>
+                                {!c.isException && c.cashierId ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setSelectedCashierId(c.cashierId);
+                                      setSelectedCounterId('');
+                                      setActiveTab('closing');
+                                    }}
+                                    className="btn-reconcile-nav"
+                                    title={`Open Register Closing for ${c.cashierName}`}
+                                  >
+                                    <span>Open Register</span>
+                                    <ArrowRightIcon size={12} />
+                                  </button>
+                                ) : (
+                                  <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Unassigned</span>
+                                )}
+                              </td>
                             </tr>
                           ))}
                         </tbody>
@@ -2554,7 +2718,22 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                             <td>{fmt(cashierSalesData.consolidatedTotal?.collections?.cash)}</td>
                             <td>{fmt(cashierSalesData.consolidatedTotal?.collections?.upi)}</td>
                             <td>{fmt(cashierSalesData.consolidatedTotal?.collections?.card)}</td>
-                            <td colSpan={3}>—</td>
+                            <td colSpan={2}>—</td>
+                            <td style={{ textAlign: 'center' }}>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedCounterId('');
+                                  setSelectedCashierId('');
+                                  setActiveTab('closing');
+                                }}
+                                className="btn-reconcile-nav-all"
+                                title="Open Store-wide Consolidated Register Closing"
+                              >
+                                <span>Full Register</span>
+                                <ArrowRightIcon size={12} />
+                              </button>
+                            </td>
                           </tr>
                         </tfoot>
                       </table>
