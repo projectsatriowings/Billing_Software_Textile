@@ -8,10 +8,10 @@
   --primary: #0F766E;
   --primary-hover: #115E59;
   --primary-soft: #E6F4F3;
-  --bg: #FAF7F2;          /* Light cream page canvas */
-  --bg-cream: #FAF7F2;
-  --surface: #FAF7F2;     /* Light cream for all bento cards */
-  --border: #D8D0C5;      /* Warm defined border for light cream cards */
+  --bg: #E8E1D5;          /* Deeper warm sand/oat cream canvas to contrast with bento cards */
+  --bg-cream: #E8E1D5;
+  --surface: #FAF7F2;     /* Light cream for all elevated bento cards */
+  --border: #D0C7B8;      /* Warm defined border for card boundaries */
   --text: #0F172A;
   --text-muted: #475569;
   --text-on-primary: #FFFFFF;
@@ -1072,7 +1072,7 @@ body.theme-cashier .kpi-tile-turnover:hover,
 div.app-container.theme-cashier .shifts-bento-nav-tabs,
 body.theme-cashier .shifts-bento-nav-tabs,
 .theme-cashier .shifts-bento-nav-tabs {
-  background: #EAE5DC !important;
+  background: #DDD5C6 !important;
   border: 1px solid var(--border) !important;
   box-shadow: inset 0 2px 4px rgba(15, 45, 46, 0.05) !important;
 }
@@ -1306,14 +1306,14 @@ body.theme-cashier .formula-step-box:hover,
 div.app-container.theme-cashier .step-box-badge,
 body.theme-cashier .step-box-badge,
 .theme-cashier .step-box-badge {
-  background: #EAE5DC !important;
+  background: #DDD5C6 !important;
   color: var(--text-muted) !important;
 }
 
 div.app-container.theme-cashier .formula-op-pill,
 body.theme-cashier .formula-op-pill,
 .theme-cashier .formula-op-pill {
-  background: #EAE5DC !important;
+  background: #DDD5C6 !important;
   border: 1px solid var(--border) !important;
   color: var(--text-muted) !important;
 }
@@ -1452,7 +1452,7 @@ body.theme-cashier .shifts-table,
 div.app-container.theme-cashier .shifts-table th,
 body.theme-cashier .shifts-table th,
 .theme-cashier .shifts-table th {
-  background: #EFECE6 !important;
+  background: #E2DACD !important;
   color: var(--text-muted) !important;
   border-bottom: 1.5px solid var(--border) !important;
 }
@@ -1470,7 +1470,7 @@ body.theme-cashier .table-total-row,
 body.theme-cashier .table-total-row td,
 .theme-cashier .table-total-row,
 .theme-cashier .table-total-row td {
-  background: #EFECE6 !important;
+  background: #E2DACD !important;
   border-top: 2px solid var(--border) !important;
 }
 
@@ -1484,7 +1484,7 @@ body.theme-cashier .table-total-row .text-primary,
 div.app-container.theme-cashier .bento-filter-pill,
 body.theme-cashier .bento-filter-pill,
 .theme-cashier .bento-filter-pill {
-  background: #FAF7F2 !important;
+  background: var(--surface) !important;
   border: 1px solid var(--border) !important;
   color: var(--text-muted) !important;
 }
@@ -1975,7 +1975,7 @@ body.theme-cashier .report-table,
 
 body.theme-cashier .report-table th,
 .theme-cashier .report-table th {
-  background: #EFECE6 !important;
+  background: #E2DACD !important;
   color: var(--text-muted) !important;
   border-bottom: 1.5px solid var(--border) !important;
 }
