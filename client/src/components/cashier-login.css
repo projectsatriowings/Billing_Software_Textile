@@ -819,9 +819,11 @@ body.theme-cashier .shifts-bento-header-card,
 .theme-cashier .cat-bento-header-card,
 .theme-cashier .shifts-bento-header-card {
   background: var(--surface) !important;
+  background-color: var(--surface) !important;
+  background-image: none !important;
   border: 1px solid var(--border) !important;
   border-radius: 20px !important;
-  box-shadow: 0 4px 20px rgba(15, 45, 46, 0.05), inset 0 1px 0 #FFFFFF !important;
+  box-shadow: 0 4px 18px rgba(15, 45, 46, 0.06), 0 1px 3px rgba(15, 45, 46, 0.04) !important;
 }
 
 div.app-container.theme-cashier .cat-bento-icon-box,
@@ -1084,8 +1086,8 @@ body.theme-cashier .bento-nav-tab,
 div.app-container.theme-cashier .bento-nav-tab:hover,
 body.theme-cashier .bento-nav-tab:hover,
 .theme-cashier .bento-nav-tab:hover {
-  color: var(--sidebar) !important;
-  background: rgba(255, 255, 255, 0.8) !important;
+  color: var(--primary-hover) !important;
+  background: var(--primary-soft) !important;
 }
 
 div.app-container.theme-cashier .bento-nav-tab.active,
@@ -1094,7 +1096,7 @@ body.theme-cashier .bento-nav-tab.active,
   background: var(--surface) !important;
   color: var(--primary) !important;
   font-weight: 700 !important;
-  box-shadow: 0 2px 8px rgba(15, 45, 46, 0.08), inset 0 1px 0 #FFFFFF !important;
+  box-shadow: 0 2px 8px rgba(15, 45, 46, 0.08) !important;
 }
 
 div.app-container.theme-cashier .bento-nav-tab svg,
@@ -1124,23 +1126,116 @@ body.theme-cashier .bento-nav-tab.active .bento-tab-counter,
   color: #FFFFFF !important;
 }
 
-/* 5.5 Authoritative Expected Cash Formula Card */
+/* 5.5 Bento Section Cards & Layout Containers (Strict Light Cream Theme) */
 div.app-container.theme-cashier .cat-bento-card,
+div.app-container.theme-cashier .cat-bento-card.bento-card-3d,
+div.app-container.theme-cashier .formula-container-card,
+div.app-container.theme-cashier .side-actions-bento-card,
 div.app-container.theme-cashier .shifts-bento-card,
+div.app-container.theme-cashier .shifts-bento-hero,
+div.app-container.theme-cashier .shifts-overview-layout > div,
+div.app-container.theme-cashier .shifts-tab-content > div,
+div.app-container.theme-cashier .bento-empty-shift-card,
+div.app-container.theme-cashier .bento-empty-state,
 body.theme-cashier .cat-bento-card,
+body.theme-cashier .cat-bento-card.bento-card-3d,
+body.theme-cashier .formula-container-card,
+body.theme-cashier .side-actions-bento-card,
 body.theme-cashier .shifts-bento-card,
+body.theme-cashier .shifts-bento-hero,
+body.theme-cashier .shifts-overview-layout > div,
+body.theme-cashier .shifts-tab-content > div,
+body.theme-cashier .bento-empty-shift-card,
+body.theme-cashier .bento-empty-state,
 .theme-cashier .cat-bento-card,
-.theme-cashier .shifts-bento-card {
+.theme-cashier .cat-bento-card.bento-card-3d,
+.theme-cashier .formula-container-card,
+.theme-cashier .side-actions-bento-card,
+.theme-cashier .shifts-bento-card,
+.theme-cashier .shifts-bento-hero,
+.theme-cashier .shifts-overview-layout > div,
+.theme-cashier .shifts-tab-content > div,
+.theme-cashier .bento-empty-shift-card,
+.theme-cashier .bento-empty-state {
   background: var(--surface) !important;
+  background-color: var(--surface) !important;
+  background-image: none !important;
   border: 1px solid var(--border) !important;
   border-radius: 20px !important;
-  box-shadow: 0 4px 20px rgba(15, 45, 46, 0.05), inset 0 1px 0 #FFFFFF !important;
+  box-shadow: 0 4px 18px rgba(15, 45, 46, 0.06), 0 1px 3px rgba(15, 45, 46, 0.04) !important;
 }
 
+div.app-container.theme-cashier .cat-bento-card:hover,
+div.app-container.theme-cashier .shifts-bento-card:hover,
+div.app-container.theme-cashier .formula-container-card:hover,
+div.app-container.theme-cashier .side-actions-bento-card:hover,
+body.theme-cashier .cat-bento-card:hover,
+body.theme-cashier .shifts-bento-card:hover,
+body.theme-cashier .formula-container-card:hover,
+body.theme-cashier .side-actions-bento-card:hover,
+.theme-cashier .cat-bento-card:hover,
+.theme-cashier .shifts-bento-card:hover,
+.theme-cashier .formula-container-card:hover,
+.theme-cashier .side-actions-bento-card:hover {
+  border-color: rgba(20, 184, 166, 0.5) !important;
+  box-shadow: 0 8px 24px rgba(15, 45, 46, 0.08), 0 2px 6px rgba(15, 45, 46, 0.04) !important;
+}
+
+/* Eliminate white top shimmer pseudo-elements across all cashier cards */
+div.app-container.theme-cashier .cat-bento-header-card::before,
+div.app-container.theme-cashier .shifts-bento-header-card::before,
+div.app-container.theme-cashier .shifts-bento-hero::before,
+div.app-container.theme-cashier .cat-bento-card::before,
+div.app-container.theme-cashier .cat-bento-kpi-card::before,
+div.app-container.theme-cashier .shifts-bento-card::before,
+div.app-container.theme-cashier .shifts-bento-kpi-tile::before,
+div.app-container.theme-cashier .bento-card-3d::before,
+div.app-container.theme-cashier .today-section-card.bento-card-3d::before,
+div.app-container.theme-cashier .formula-container-card::before,
+div.app-container.theme-cashier .side-actions-bento-card::before,
+body.theme-cashier .cat-bento-header-card::before,
+body.theme-cashier .shifts-bento-header-card::before,
+body.theme-cashier .shifts-bento-hero::before,
+body.theme-cashier .cat-bento-card::before,
+body.theme-cashier .cat-bento-kpi-card::before,
+body.theme-cashier .shifts-bento-card::before,
+body.theme-cashier .shifts-bento-kpi-tile::before,
+body.theme-cashier .bento-card-3d::before,
+body.theme-cashier .today-section-card.bento-card-3d::before,
+body.theme-cashier .formula-container-card::before,
+body.theme-cashier .side-actions-bento-card::before,
+.theme-cashier .cat-bento-header-card::before,
+.theme-cashier .shifts-bento-header-card::before,
+.theme-cashier .shifts-bento-hero::before,
+.theme-cashier .cat-bento-card::before,
+.theme-cashier .cat-bento-kpi-card::before,
+.theme-cashier .shifts-bento-card::before,
+.theme-cashier .shifts-bento-kpi-tile::before,
+.theme-cashier .bento-card-3d::before,
+.theme-cashier .today-section-card.bento-card-3d::before,
+.theme-cashier .formula-container-card::before,
+.theme-cashier .side-actions-bento-card::before {
+  display: none !important;
+  content: none !important;
+}
+
+/* Bento card headers & title groups (force transparent background over cream cards) */
 div.app-container.theme-cashier .bento-card-header,
+div.app-container.theme-cashier .cat-card-header,
+div.app-container.theme-cashier .bento-card-title-group,
+div.app-container.theme-cashier .cat-bento-header-content,
 body.theme-cashier .bento-card-header,
-.theme-cashier .bento-card-header {
-  border-bottom: 1px solid rgba(217, 229, 229, 0.6) !important;
+body.theme-cashier .cat-card-header,
+body.theme-cashier .bento-card-title-group,
+body.theme-cashier .cat-bento-header-content,
+.theme-cashier .bento-card-header,
+.theme-cashier .cat-card-header,
+.theme-cashier .bento-card-title-group,
+.theme-cashier .cat-bento-header-content {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border-bottom: 1px solid var(--border) !important;
 }
 
 div.app-container.theme-cashier .bento-card-title,
@@ -1194,21 +1289,31 @@ div.app-container.theme-cashier .formula-step-box,
 body.theme-cashier .formula-step-box,
 .theme-cashier .formula-step-box {
   background: var(--surface) !important;
+  background-color: var(--surface) !important;
+  background-image: none !important;
   border: 1px solid var(--border) !important;
   border-radius: 14px !important;
+  box-shadow: 0 1px 3px rgba(15, 45, 46, 0.04) !important;
+}
+
+div.app-container.theme-cashier .formula-step-box:hover,
+body.theme-cashier .formula-step-box:hover,
+.theme-cashier .formula-step-box:hover {
+  border-color: var(--primary) !important;
+  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.1) !important;
 }
 
 div.app-container.theme-cashier .step-box-badge,
 body.theme-cashier .step-box-badge,
 .theme-cashier .step-box-badge {
-  background: #FAF7F2 !important;
+  background: #EAE5DC !important;
   color: var(--text-muted) !important;
 }
 
 div.app-container.theme-cashier .formula-op-pill,
 body.theme-cashier .formula-op-pill,
 .theme-cashier .formula-op-pill {
-  background: #FAF7F2 !important;
+  background: #EAE5DC !important;
   border: 1px solid var(--border) !important;
   color: var(--text-muted) !important;
 }
@@ -1219,7 +1324,7 @@ body.theme-cashier .formula-step-box.result,
 .theme-cashier .formula-step-box.result {
   background: linear-gradient(145deg, var(--primary-soft) 0%, #D8EEEE 100%) !important;
   border: 2px solid var(--primary) !important;
-  box-shadow: 0 4px 18px rgba(15, 118, 110, 0.22), inset 0 1px 0 #FFFFFF !important;
+  box-shadow: 0 4px 18px rgba(15, 118, 110, 0.22) !important;
 }
 
 div.app-container.theme-cashier .step-box-badge.result,
@@ -1259,7 +1364,7 @@ body.theme-cashier .bento-safety-guarantee,
 .theme-cashier .bento-safety-guarantee {
   background: linear-gradient(135deg, var(--primary-soft) 0%, #EBF6F6 100%) !important;
   border: 1px solid rgba(20, 184, 166, 0.45) !important;
-  box-shadow: 0 2px 8px rgba(15, 118, 110, 0.08), inset 0 1px 0 #FFFFFF !important;
+  box-shadow: 0 2px 8px rgba(15, 118, 110, 0.08) !important;
 }
 
 div.app-container.theme-cashier .safety-guarantee-icon,
@@ -1285,7 +1390,18 @@ div.app-container.theme-cashier .bento-action-card,
 body.theme-cashier .bento-action-card,
 .theme-cashier .bento-action-card {
   background: var(--surface) !important;
+  background-color: var(--surface) !important;
+  background-image: none !important;
   border: 1px solid var(--border) !important;
+  transition: all 0.2s ease !important;
+}
+
+div.app-container.theme-cashier .bento-action-card:hover,
+body.theme-cashier .bento-action-card:hover,
+.theme-cashier .bento-action-card:hover {
+  background: var(--primary-soft) !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 6px 18px rgba(15, 118, 110, 0.14) !important;
 }
 
 /* Open POS Counter Card (indigo -> teal) */
@@ -1308,7 +1424,7 @@ div.app-container.theme-cashier .bento-action-card.indigo:hover,
 body.theme-cashier .bento-action-card.indigo:hover,
 .theme-cashier .bento-action-card.indigo:hover {
   border-color: var(--primary) !important;
-  box-shadow: 0 6px 18px rgba(15, 118, 110, 0.16), inset 0 1px 0 #FFFFFF !important;
+  box-shadow: 0 6px 18px rgba(15, 118, 110, 0.16) !important;
 }
 
 div.app-container.theme-cashier .bento-action-card:hover .action-card-arrow,
@@ -1318,16 +1434,25 @@ body.theme-cashier .bento-action-card:hover .action-card-arrow,
 }
 
 /* 5.7 Shift Tables & Tab Content */
+div.app-container.theme-cashier .bento-table-wrapper,
+body.theme-cashier .bento-table-wrapper,
+.theme-cashier .bento-table-wrapper {
+  background: var(--surface) !important;
+  background-color: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+}
+
 div.app-container.theme-cashier .shifts-table,
 body.theme-cashier .shifts-table,
 .theme-cashier .shifts-table {
   background: var(--surface) !important;
+  background-color: var(--surface) !important;
 }
 
 div.app-container.theme-cashier .shifts-table th,
 body.theme-cashier .shifts-table th,
 .theme-cashier .shifts-table th {
-  background: #FAF7F2 !important;
+  background: #EFECE6 !important;
   color: var(--text-muted) !important;
   border-bottom: 1.5px solid var(--border) !important;
 }
@@ -1335,13 +1460,17 @@ body.theme-cashier .shifts-table th,
 div.app-container.theme-cashier .shifts-table td,
 body.theme-cashier .shifts-table td,
 .theme-cashier .shifts-table td {
+  background: var(--surface) !important;
   border-bottom: 1px solid rgba(217, 229, 229, 0.5) !important;
 }
 
 div.app-container.theme-cashier .table-total-row,
+div.app-container.theme-cashier .table-total-row td,
 body.theme-cashier .table-total-row,
-.theme-cashier .table-total-row {
-  background: #FAF7F2 !important;
+body.theme-cashier .table-total-row td,
+.theme-cashier .table-total-row,
+.theme-cashier .table-total-row td {
+  background: #EFECE6 !important;
   border-top: 2px solid var(--border) !important;
 }
 
@@ -1419,9 +1548,19 @@ body.theme-cashier .bento-empty-icon-ring,
 /* 5.8 Shift Modals (Portaled into document.body with .theme-cashier) */
 body.theme-cashier .shift-bento-dialog,
 .theme-cashier .shift-bento-dialog {
+  background: var(--surface) !important;
+  background-color: var(--surface) !important;
+  background-image: none !important;
   border-radius: 20px !important;
   border: 1px solid var(--border) !important;
   box-shadow: 0 12px 40px rgba(15, 45, 46, 0.16) !important;
+}
+
+body.theme-cashier .shift-bento-header,
+.theme-cashier .shift-bento-header {
+  background: transparent !important;
+  background-color: transparent !important;
+  border-bottom: 1px solid var(--border) !important;
 }
 
 body.theme-cashier .modal-top-accent.purple-accent,
@@ -1451,8 +1590,14 @@ body.theme-cashier .panel-header-title svg[style*="color: #6366f1"],
 }
 
 /* Select Counter Modal cards */
+body.theme-cashier .select-counter-card,
+.theme-cashier .select-counter-card {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+}
+
 body.theme-cashier .select-counter-card-active,
 .theme-cashier .select-counter-card-active {
-  background: linear-gradient(135deg, var(--primary-soft) 0%, #FFFFFF 100%) !important;
+  background: linear-gradient(135deg, var(--primary-soft) 0%, var(--surface) 100%) !important;
   border: 2px solid var(--primary) !important;
 }
