@@ -8543,9 +8543,9 @@ export function App() {
                             type="button"
                             className="bento-exchange-btn"
                             style={{
-                              background: '#4f46e5',
+                              background: user?.role === 'cashier' ? 'var(--primary)' : '#4f46e5',
                               color: '#ffffff',
-                              border: '1px solid #4338ca',
+                              border: user?.role === 'cashier' ? '1px solid var(--primary-hover)' : '1px solid #4338ca',
                               padding: '0.36rem 0.75rem',
                               borderRadius: '8px',
                               fontSize: '0.8rem',
@@ -8554,7 +8554,7 @@ export function App() {
                               alignItems: 'center',
                               gap: '6px',
                               cursor: 'pointer',
-                              boxShadow: '0 2px 4px rgba(79, 70, 229, 0.2)',
+                              boxShadow: user?.role === 'cashier' ? '0 2px 4px rgba(15, 118, 110, 0.25)' : '0 2px 4px rgba(79, 70, 229, 0.2)',
                             }}
                             onClick={() => setShowReturnExchangeModal(true)}
                             title="Scan bill barcode or search by phone to return/exchange items (F3)"
@@ -8727,7 +8727,7 @@ export function App() {
                         {cart.length === 0 ? (
                           <div className="bento-empty-cart">
                             <div className="bento-empty-icon-wrap">
-                              <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                              <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke={user?.role === 'cashier' ? 'var(--primary)' : '#6366f1'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                                 <circle cx="9" cy="21" r="1"></circle>
                                 <circle cx="20" cy="21" r="1"></circle>
                                 <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
