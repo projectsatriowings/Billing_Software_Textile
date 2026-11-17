@@ -1943,4 +1943,10 @@ export const MIGRATIONS: Migration[] = [
       `CREATE UNIQUE INDEX IF NOT EXISTS idx_day_closings_tenant_branch_bdate_cashier ON day_closings (tenant_id, branch_id, bdate, COALESCE(cashier_id, 'CONSOLIDATED'))`,
     ],
   },
+  {
+    version: 71,
+    statements: [
+      `ALTER TABLE day_closings ADD COLUMN IF NOT EXISTS audit_summary JSONB DEFAULT '{}'::jsonb`,
+    ],
+  },
 ];

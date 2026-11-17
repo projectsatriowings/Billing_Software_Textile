@@ -2575,12 +2575,14 @@ export const submitDayClosing = (data: {
   branchId?: string;
   shiftId?: string;
   cashierId?: string;
+  counterId?: string;
   status?: string;
   actualCashMinor?: number;
   actualClosingCashMinor?: number;
   remarks?: string;
   closingRemarks?: string;
   tenderReconciliation?: Record<string, { expectedMinor: number; actualMinor: number; differenceMinor: number }>;
+  auditSummary?: any;
 }) =>
   api<{ success: boolean; dayClosing: any }>('/api/day-closing/submit', {
     method: 'POST',
@@ -2589,10 +2591,12 @@ export const submitDayClosing = (data: {
       branchId: data.branchId,
       shiftId: data.shiftId,
       cashierId: data.cashierId,
+      counterId: data.counterId,
       status: data.status,
       actualCashMinor: data.actualCashMinor ?? data.actualClosingCashMinor,
       remarks: data.remarks || data.closingRemarks,
       tenderReconciliation: data.tenderReconciliation,
+      auditSummary: data.auditSummary,
     }),
   });
 
@@ -2824,6 +2828,79 @@ export const markDayClosingNotificationRead = (id: string) =>
   api<{ success: boolean }>(`/api/day-closing/notifications/${id}/read`, {
     method: 'POST',
   });
+
+export type SmartAuditSeverity = 'critical' | 'warning' | 'info';
+
+export type SmartAuditDetectorId =
+  | 'cash_shortage'
+  | 'cash_excess'
+  | 'sales_mismatch'
+  | 'payment_mismatch'
+  | 'duplicate_transactions'
+  | 'missing_transactions'
+  | 'unusual_refund'
+  | 'pending_bills'
+  | 'unusual_discount'
+  | 'stock_sales_consistency'
+  | 'unassigned_transactions'
+  | 'closing_readiness';
+
+export interface SmartAuditIssue {
+  id: string;
+  detector: SmartAuditDetectorId;
+  severity: SmartAuditSeverity;
+  title: string;
+  description: string;
+  amountMinor?: number | null;
+  count?: number;
+  counterId?: string | null;
+  counterCode?: string | null;
+  cashierId?: string | null;
+  cashierName?: string | null;
+  bdate: string;
+  recommendedAction: string;
+  details?: Record<string, any>;
+}
+
+export interface SmartAuditResult {
+  evaluatedAt: string;
+  bdate: string;
+  branchId: string;
+  counterId?: string | null;
+  cashierId?: string | null;
+  readinessStatus: 'ready_to_submit' | 'ready_with_warnings' | 'action_required';
+  readinessScore: number;
+  summaryMessage: string;
+  criticalCount: number;
+  warningCount: number;
+  infoCount: number;
+  totalChecks: number;
+  issues: SmartAuditIssue[];
+  detectorSummary: Record<SmartAuditDetectorId, { status: 'passed' | 'warning' | 'failed'; issueCount: number }>;
+}
+
+export const fetchDayClosingAudit = (params: {
+  branchId?: string;
+  bdate?: string;
+  date?: string;
+  counterId?: string;
+  cashierId?: string;
+  shiftId?: string;
+  actualCashMinor?: number;
+} = {}) => {
+  const q = new URLSearchParams();
+  const bdate = params.bdate || params.date;
+  if (bdate) q.set('bdate', bdate);
+  if (params.branchId) q.set('branchId', params.branchId);
+  if (params.counterId) q.set('counterId', params.counterId);
+  if (params.cashierId) q.set('cashierId', params.cashierId);
+  if (params.shiftId) q.set('shiftId', params.shiftId);
+  if (params.actualCashMinor != null) q.set('actualCashMinor', String(params.actualCashMinor));
+  return api<{
+    success: boolean;
+    audit: SmartAuditResult;
+  }>(`/api/day-closing/audit?${q.toString()}`);
+};
 
 export const fetchReturnReports = (params: {
   reportType?: string;

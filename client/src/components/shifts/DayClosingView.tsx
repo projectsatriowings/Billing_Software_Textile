@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   fetchDayClosingPreview,
+  fetchDayClosingAudit,
   submitDayClosing,
   approveDayClosing,
   rejectDayClosing,
@@ -19,6 +20,10 @@ import {
   withAuthToken,
   type User,
   type Shop,
+  type SmartAuditResult,
+  type SmartAuditIssue,
+  type SmartAuditSeverity,
+  type SmartAuditDetectorId,
 } from '../../api.ts';
 import {
   RupeeIcon,
@@ -50,6 +55,11 @@ import {
   PrinterIcon,
   InfoIcon,
   UserIcon,
+  ShieldAlertIcon,
+  ShieldCheckIcon,
+  CheckIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
 } from '../inventory/InventoryIcons.tsx';
 import './dayClosing.css';
 
@@ -61,6 +71,99 @@ interface DayClosingViewProps {
 }
 
 type TabType = 'closing' | 'breakdown' | 'comparison' | 'analytics' | 'compliance' | 'history';
+
+const ALL_DETECTORS: Array<{
+  id: SmartAuditDetectorId;
+  name: string;
+  category: 'accuracy' | 'activity' | 'readiness';
+  categoryLabel: string;
+  description: string;
+}> = [
+  {
+    id: 'cash_shortage',
+    name: 'Cash Shortage Detector',
+    category: 'accuracy',
+    categoryLabel: 'Financial Accuracy',
+    description: 'Compares expected closing cash with physical counted cash to detect and quantify cash drawer deficits.',
+  },
+  {
+    id: 'cash_excess',
+    name: 'Cash Excess Detector',
+    category: 'accuracy',
+    categoryLabel: 'Financial Accuracy',
+    description: 'Identifies cash surplus in drawer above expected tender collections and opening floats.',
+  },
+  {
+    id: 'sales_mismatch',
+    name: 'Sales Mismatch Detector',
+    category: 'accuracy',
+    categoryLabel: 'Financial Accuracy',
+    description: 'Cross-verifies individual invoice line-item pricing and GST tax calculations against header totals.',
+  },
+  {
+    id: 'payment_mismatch',
+    name: 'Payment Mismatch Detector',
+    category: 'accuracy',
+    categoryLabel: 'Financial Accuracy',
+    description: 'Reconciles invoice settlement records against ledger receipts and detects orphan or split discrepancies.',
+  },
+  {
+    id: 'duplicate_transactions',
+    name: 'Duplicate Transaction Detector',
+    category: 'accuracy',
+    categoryLabel: 'Financial Accuracy',
+    description: 'Identifies rapid identical billings (< 3 mins) and cross-invoice payment reference collisions.',
+  },
+  {
+    id: 'missing_transactions',
+    name: 'Missing Transaction Detector',
+    category: 'accuracy',
+    categoryLabel: 'Financial Accuracy',
+    description: 'Detects business date attribution anomalies, unfinalized receipts, or cross-midnight timestamp drift.',
+  },
+  {
+    id: 'unusual_refund',
+    name: 'Unusual Refund Detector',
+    category: 'activity',
+    categoryLabel: 'Business Activity',
+    description: 'Flags exceptional refund volumes, single credit notes ≥ ₹2,000, or refunds exceeding 150% average bill.',
+  },
+  {
+    id: 'pending_bills',
+    name: 'Pending Bill Detector',
+    category: 'activity',
+    categoryLabel: 'Business Activity',
+    description: 'Identifies unsettled credit invoices and active unclosed cashier shifts prior to day sealing.',
+  },
+  {
+    id: 'unusual_discount',
+    name: 'Unusual Discount Detector',
+    category: 'activity',
+    categoryLabel: 'Business Activity',
+    description: 'Monitors high-percentage (≥ 20%) or large nominal (≥ ₹500) promotional markdowns for audit review.',
+  },
+  {
+    id: 'stock_sales_consistency',
+    name: 'Stock & Sales Consistency Detector',
+    category: 'activity',
+    categoryLabel: 'Business Activity',
+    description: 'Validates that completed inventory-tracked sales have corresponding stock deduction ledger entries.',
+  },
+  {
+    id: 'unassigned_transactions',
+    name: 'Unassigned Transaction Detector',
+    category: 'activity',
+    categoryLabel: 'Business Activity',
+    description: 'Isolates transactions lacking confirmed Counter ID, Cashier ID, or Shift ID attribution.',
+  },
+  {
+    id: 'closing_readiness',
+    name: 'Closing Readiness Detector',
+    category: 'readiness',
+    categoryLabel: 'Closing Readiness',
+    description: 'Aggregates all 11 diagnostic checks to formulate overall readiness score and definitive closing guidance.',
+  },
+];
 
 export const DayClosingView: React.FC<DayClosingViewProps> = ({
   user,
@@ -88,6 +191,14 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
   const [closingRemarks, setClosingRemarks] = useState<string>('');
   const [submitting, setSubmitting] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+
+  // Smart Closing Audit & Detector Engine state
+  const [auditData, setAuditData] = useState<SmartAuditResult | null>(null);
+  const [auditExpanded, setAuditExpanded] = useState<boolean>(false);
+  const [auditFilter, setAuditFilter] = useState<'all' | 'critical' | 'warning' | 'info' | 'detectors'>('all');
+  const [expandedIssueIds, setExpandedIssueIds] = useState<Record<string, boolean>>({});
+  const [reviewedIssueIds, setReviewedIssueIds] = useState<Record<string, boolean>>({});
+  const [runningLiveAudit, setRunningLiveAudit] = useState<boolean>(false);
 
   // Tab: Counter & Cashier Sales Reports Breakdown
   const [breakdownSubTab, setBreakdownSubTab] = useState<'counter' | 'cashier'>('counter');
@@ -203,6 +314,11 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
         counterId: selectedCounterId || undefined,
       });
       setPreview(res);
+      if (res.closedRecord?.audit_summary && Object.keys(res.closedRecord.audit_summary).length > 0) {
+        setAuditData(res.closedRecord.audit_summary);
+      } else if (res.audit) {
+        setAuditData(res.audit);
+      }
       const expected = res.cashReconciliation?.expectedClosingCashMinor ?? 0;
       if (res.status === 'open' || res.status === 'reopened') {
         setActualCashStr(((expected || 0) / 100).toFixed(2));
@@ -219,6 +335,54 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
       setLoadingPreview(false);
     }
   };
+
+  const handleRunLiveAudit = async (customActualCash?: number) => {
+    try {
+      setRunningLiveAudit(true);
+      const actualVal = customActualCash !== undefined
+        ? customActualCash
+        : Math.round((parseFloat(actualCashStr) || 0) * 100);
+
+      const res = await fetchDayClosingAudit({
+        branchId: activeBranchId,
+        date: selectedDate,
+        shiftId: selectedShiftId || undefined,
+        cashierId: selectedCashierId || undefined,
+        counterId: selectedCounterId || undefined,
+        actualCashMinor: actualVal,
+      });
+      if (res.success && res.audit) {
+        setAuditData(res.audit);
+      }
+    } catch (err: any) {
+      console.error('Failed to run live audit:', err);
+    } finally {
+      setRunningLiveAudit(false);
+    }
+  };
+
+  const toggleIssueReviewed = (issueId: string) => {
+    setReviewedIssueIds(prev => ({
+      ...prev,
+      [issueId]: !prev[issueId],
+    }));
+  };
+
+  const toggleIssueExpanded = (issueId: string) => {
+    setExpandedIssueIds(prev => ({
+      ...prev,
+      [issueId]: !prev[issueId],
+    }));
+  };
+
+  const filteredAuditIssues = React.useMemo(() => {
+    if (!auditData?.issues) return [];
+    if (auditFilter === 'all') return auditData.issues;
+    if (auditFilter === 'critical') return auditData.issues.filter(i => i.severity === 'critical');
+    if (auditFilter === 'warning') return auditData.issues.filter(i => i.severity === 'warning');
+    if (auditFilter === 'info') return auditData.issues.filter(i => i.severity === 'info');
+    return auditData.issues;
+  }, [auditData, auditFilter]);
 
   const loadNotifications = async () => {
     try {
@@ -623,9 +787,11 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
         date: preview.bdate || selectedDate,
         shiftId: selectedShiftId || undefined,
         cashierId: selectedCashierId || undefined,
+        counterId: selectedCounterId || undefined,
         status: isCashierUser ? 'submitted' : undefined,
         actualCashMinor,
         remarks: closingRemarks.trim(),
+        auditSummary: auditData || preview?.audit,
       });
       setSuccessMsg(`Day closing submitted successfully! Reference: ${res.dayClosing?.id || 'OK'}`);
       await loadPreview();
@@ -1130,6 +1296,336 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
           ==================================================================== */}
       {activeTab === 'closing' && (
         <>
+          {/* --------------------------------------------------------------------
+              Smart Closing Audit & Detector Overview Bar & Expandable Panel
+              -------------------------------------------------------------------- */}
+          {auditData && (
+            <>
+              <div className="smart-audit-bar">
+                <div className="smart-audit-bar-left">
+                  {/* Readiness Status Badge */}
+                  <div className={`smart-audit-status-badge ${auditData.readinessStatus}`}>
+                    {auditData.readinessStatus === 'ready_to_submit' ? (
+                      <ShieldCheckIcon size={16} />
+                    ) : (
+                      <ShieldAlertIcon size={16} />
+                    )}
+                    <span>
+                      {auditData.readinessStatus === 'ready_to_submit' && 'Ready to Submit'}
+                      {auditData.readinessStatus === 'ready_with_warnings' && 'Ready with Warnings'}
+                      {auditData.readinessStatus === 'action_required' && 'Action Required'}
+                    </span>
+                  </div>
+
+                  {/* Diagnostic Metric Pills */}
+                  <div className="smart-audit-pills-group">
+                    <span className="smart-audit-counter-pill score" title="Overall closing compliance & readiness score">
+                      <strong>Score:</strong> {auditData.readinessScore}/100
+                    </span>
+
+                    {auditData.criticalCount > 0 && (
+                      <span className="smart-audit-counter-pill critical">
+                        <AlertOctagonIcon size={13} />
+                        <strong>{auditData.criticalCount}</strong> Critical
+                      </span>
+                    )}
+
+                    {auditData.warningCount > 0 && (
+                      <span className="smart-audit-counter-pill warning">
+                        <AlertTriangleIcon size={13} />
+                        <strong>{auditData.warningCount}</strong> Warnings
+                      </span>
+                    )}
+
+                    {auditData.infoCount > 0 && (
+                      <span className="smart-audit-counter-pill info">
+                        <InfoIcon size={13} />
+                        <strong>{auditData.infoCount}</strong> Observations
+                      </span>
+                    )}
+
+                    {auditData.issues.length === 0 && (
+                      <span className="smart-audit-counter-pill" style={{ background: '#ecfdf5', borderColor: '#a7f3d0', color: '#047857' }}>
+                        <CheckIcon size={13} />
+                        All 12 Detectors Clear
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="smart-audit-bar-right">
+                  <button
+                    type="button"
+                    onClick={() => handleRunLiveAudit()}
+                    disabled={runningLiveAudit || loadingPreview}
+                    className="smart-audit-run-btn"
+                    title="Re-run all 12 financial and operational audit detectors in real time"
+                  >
+                    <RefreshCwIcon size={13} className={runningLiveAudit ? 'animate-spin' : ''} />
+                    {runningLiveAudit ? 'Auditing...' : 'Run Audit Check'}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setAuditExpanded(!auditExpanded)}
+                    className="smart-audit-toggle-btn"
+                    title={auditExpanded ? 'Collapse audit details' : 'Expand detailed detector report and formula breakdown'}
+                  >
+                    <span>{auditExpanded ? 'Hide Details' : `Audit Details (${auditData.issues.length})`}</span>
+                    {auditExpanded ? <ChevronUpIcon size={14} /> : <ChevronDownIcon size={14} />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Expandable Audit Details Panel */}
+              {auditExpanded && (
+                <div className="smart-audit-panel">
+                  <div className="smart-audit-header">
+                    <div className="smart-audit-header-title">
+                      <h3>Smart Closing Audit & Verification Report</h3>
+                      <p>
+                        Intelligent multi-point financial mismatch detection, transaction ledger reconciliation, and business anomaly analysis.
+                      </p>
+                    </div>
+
+                    <div className="smart-audit-filter-tabs">
+                      <button
+                        type="button"
+                        onClick={() => setAuditFilter('all')}
+                        className={`smart-audit-filter-tab ${auditFilter === 'all' ? 'active' : ''}`}
+                      >
+                        All Issues ({auditData.issues.length})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAuditFilter('critical')}
+                        className={`smart-audit-filter-tab ${auditFilter === 'critical' ? 'active' : ''}`}
+                      >
+                        Critical ({auditData.criticalCount})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAuditFilter('warning')}
+                        className={`smart-audit-filter-tab ${auditFilter === 'warning' ? 'active' : ''}`}
+                      >
+                        Warnings ({auditData.warningCount})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAuditFilter('info')}
+                        className={`smart-audit-filter-tab ${auditFilter === 'info' ? 'active' : ''}`}
+                      >
+                        Observations ({auditData.infoCount})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAuditFilter('detectors')}
+                        className={`smart-audit-filter-tab ${auditFilter === 'detectors' ? 'active' : ''}`}
+                      >
+                        All 12 Detectors
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Panel Content: Issues List or Detectors Grid */}
+                  {auditFilter === 'detectors' ? (
+                    <div className="smart-audit-detectors-grid">
+                      {ALL_DETECTORS.map((detector) => {
+                        const matchingIssues = auditData.issues.filter((i) => i.detector === detector.id);
+                        const hasCritical = matchingIssues.some((i) => i.severity === 'critical');
+                        const hasWarning = matchingIssues.some((i) => i.severity === 'warning');
+                        const hasInfo = matchingIssues.some((i) => i.severity === 'info');
+                        const statusClass = hasCritical ? 'failed' : hasWarning ? 'warning' : hasInfo ? 'info' : 'passed';
+
+                        return (
+                          <div key={detector.id} className={`smart-audit-detector-card ${statusClass}`}>
+                            <div className="smart-audit-detector-top">
+                              <span className="smart-audit-detector-name">{detector.name}</span>
+                              <span className={`smart-audit-detector-badge ${statusClass}`}>
+                                {statusClass === 'passed' && 'Passed'}
+                                {statusClass === 'failed' && 'Action Required'}
+                                {statusClass === 'warning' && 'Warning'}
+                                {statusClass === 'info' && 'Observation'}
+                              </span>
+                            </div>
+                            <div className="smart-audit-detector-cat">{detector.categoryLabel}</div>
+                            <p className="smart-audit-detector-desc">{detector.description}</p>
+                            {matchingIssues.length > 0 && (
+                              <div style={{ marginTop: '0.65rem', fontSize: '0.75rem', fontWeight: 700, color: '#0f172a' }}>
+                                {matchingIssues.length} issue(s) flagged
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="smart-audit-issues-list">
+                      {filteredAuditIssues.length === 0 ? (
+                        <div className="smart-audit-clean-state">
+                          <ShieldCheckIcon size={44} style={{ color: '#059669', marginBottom: '8px' }} />
+                          <div style={{ fontSize: '1rem', fontWeight: 800, color: '#0f172a' }}>
+                            {auditFilter === 'all'
+                              ? 'All 12 Reconciliation Checks Passed Cleanly'
+                              : `No ${auditFilter.toUpperCase()} issues detected`}
+                          </div>
+                          <div style={{ fontSize: '0.825rem', color: '#64748b', maxWidth: '460px', marginTop: '4px' }}>
+                            All ledger entries, tender settlements, invoice line totals, and cashier attributions match expected values.
+                          </div>
+                        </div>
+                      ) : (
+                        filteredAuditIssues.map((issue) => {
+                          const isExpanded = !!expandedIssueIds[issue.id];
+                          const isReviewed = !!reviewedIssueIds[issue.id];
+                          const detName = ALL_DETECTORS.find(d => d.id === issue.detector)?.name || issue.detector;
+                          const formulaBreakdown = issue.details?.formulaBreakdown;
+                          const supportingItems = (
+                            issue.details?.supportingItems ||
+                            issue.details?.items ||
+                            issue.details?.invoices ||
+                            issue.details?.affectedInvoices ||
+                            issue.details?.pairs ||
+                            issue.details?.highDiscounts ||
+                            issue.details?.unusualRefunds ||
+                            issue.details?.affectedLines ||
+                            []
+                          ) as any[];
+
+                          return (
+                            <div
+                              key={issue.id}
+                              className={`smart-audit-issue-card ${issue.severity} ${isReviewed ? 'reviewed' : ''}`}
+                            >
+                              <div
+                                className="smart-audit-issue-header"
+                                onClick={() => toggleIssueExpanded(issue.id)}
+                              >
+                                <div>
+                                  <div className="smart-audit-issue-title-row">
+                                    <span className={`smart-audit-severity-tag ${issue.severity}`}>
+                                      {issue.severity === 'critical' ? (
+                                        <AlertOctagonIcon size={12} />
+                                      ) : issue.severity === 'warning' ? (
+                                        <AlertTriangleIcon size={12} />
+                                      ) : (
+                                        <InfoIcon size={12} />
+                                      )}
+                                      {issue.severity.toUpperCase()}
+                                    </span>
+                                    <h4 className="smart-audit-issue-title">{issue.title}</h4>
+                                  </div>
+                                  <p className="smart-audit-issue-desc">{issue.description}</p>
+
+                                  <div className="smart-audit-context-tags">
+                                    <span className="smart-audit-context-tag">
+                                      {detName}
+                                    </span>
+                                    {(issue.counterCode || issue.counterId) && (
+                                      <span className="smart-audit-context-tag">
+                                        Counter: {issue.counterCode || issue.counterId}
+                                      </span>
+                                    )}
+                                    {(issue.cashierName || issue.cashierId) && (
+                                      <span className="smart-audit-context-tag">
+                                        Cashier: {issue.cashierName || issue.cashierId}
+                                      </span>
+                                    )}
+                                    {issue.count != null && issue.count > 0 && (
+                                      <span className="smart-audit-context-tag">
+                                        {issue.count} Record(s)
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+
+                                <div className="smart-audit-issue-metrics">
+                                  {issue.amountMinor != null && (
+                                    <div className="smart-audit-metric-badge">
+                                      <span className="smart-audit-metric-label">Amount</span>
+                                      <span className="smart-audit-metric-value">{fmt(issue.amountMinor)}</span>
+                                    </div>
+                                  )}
+                                  <div className={`smart-audit-chevron ${isExpanded ? 'open' : ''}`}>
+                                    <ChevronDownIcon size={16} />
+                                  </div>
+                                </div>
+                              </div>
+
+                              {isExpanded && (
+                                <div className="smart-audit-issue-expanded">
+                                  <div className="smart-audit-action-callout">
+                                    <strong>Recommended Action:</strong> {issue.recommendedAction || issue.details?.actionRequired || 'Review records.'}
+                                  </div>
+
+                                  {formulaBreakdown && (
+                                    <div className="smart-audit-detail-block">
+                                      <div className="smart-audit-detail-title">Reconciliation Breakdown</div>
+                                      <div className="smart-audit-formula-box">{formulaBreakdown}</div>
+                                    </div>
+                                  )}
+
+                                  {supportingItems.length > 0 && (
+                                    <div className="smart-audit-detail-block">
+                                      <div className="smart-audit-detail-title">
+                                        Supporting Records ({supportingItems.length})
+                                      </div>
+                                      <table className="smart-audit-supporting-table">
+                                        <thead>
+                                          <tr>
+                                            <th>Reference / ID</th>
+                                            <th>Description / Reason</th>
+                                            <th style={{ textAlign: 'right' }}>Amount</th>
+                                          </tr>
+                                        </thead>
+                                        <tbody>
+                                          {supportingItems.slice(0, 8).map((item, idx) => (
+                                            <tr key={idx}>
+                                              <td><code>{item.reference || item.invoiceNumber || item.invoice1 || item.id || `Item #${idx + 1}`}</code></td>
+                                              <td>{item.description || item.reason || item.type || item.paymentMethod || '—'}</td>
+                                              <td style={{ textAlign: 'right', fontWeight: 600 }}>
+                                                {item.amountMinor != null
+                                                  ? fmt(item.amountMinor)
+                                                  : (item.totalMinor != null
+                                                      ? fmt(item.totalMinor)
+                                                      : (item.discountMinor != null ? fmt(item.discountMinor) : '—'))}
+                                              </td>
+                                            </tr>
+                                          ))}
+                                        </tbody>
+                                      </table>
+                                      {supportingItems.length > 8 && (
+                                        <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '6px', textAlign: 'right' }}>
+                                          + {supportingItems.length - 8} additional records
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+
+                                  <div className="smart-audit-expanded-footer">
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        toggleIssueReviewed(issue.id);
+                                      }}
+                                      className={`smart-audit-review-btn ${isReviewed ? 'active' : ''}`}
+                                    >
+                                      <CheckIcon size={14} />
+                                      {isReviewed ? 'Marked as Reviewed' : 'Mark as Reviewed'}
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
+          )}
           {/* Closing Reminder Alert Banner */}
           {preview?.closingReminder?.hasUnclosedPrevDay && (
             <div className="day-closing-alert warning">
@@ -1557,6 +2053,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                             required
                             value={actualCashStr}
                             onChange={(e) => setActualCashStr(e.target.value)}
+                            onBlur={() => handleRunLiveAudit()}
                             placeholder="0.00"
                             className="cash-rec-input"
                           />

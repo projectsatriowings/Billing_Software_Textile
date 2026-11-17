@@ -15,6 +15,718 @@ function calcGrowth(current: number, previous: number): number {
   return Math.round(pct * 10) / 10;
 }
 
+// ============================================================================
+// SMART CLOSING AUDIT & DETECTOR ENGINE
+// ============================================================================
+
+export type SmartAuditSeverity = 'critical' | 'warning' | 'info';
+
+export type SmartAuditDetectorId =
+  | 'cash_shortage'
+  | 'cash_excess'
+  | 'sales_mismatch'
+  | 'payment_mismatch'
+  | 'duplicate_transactions'
+  | 'missing_transactions'
+  | 'unusual_refund'
+  | 'pending_bills'
+  | 'unusual_discount'
+  | 'stock_sales_consistency'
+  | 'unassigned_transactions'
+  | 'closing_readiness';
+
+export interface SmartAuditIssue {
+  id: string;
+  detector: SmartAuditDetectorId;
+  severity: SmartAuditSeverity;
+  title: string;
+  description: string;
+  amountMinor?: number | null;
+  count?: number;
+  counterId?: string | null;
+  counterCode?: string | null;
+  cashierId?: string | null;
+  cashierName?: string | null;
+  bdate: string;
+  recommendedAction: string;
+  details?: Record<string, any>;
+}
+
+export interface SmartAuditResult {
+  evaluatedAt: string;
+  bdate: string;
+  branchId: string;
+  counterId?: string | null;
+  cashierId?: string | null;
+  readinessStatus: 'ready_to_submit' | 'ready_with_warnings' | 'action_required';
+  readinessScore: number;
+  summaryMessage: string;
+  criticalCount: number;
+  warningCount: number;
+  infoCount: number;
+  totalChecks: number;
+  issues: SmartAuditIssue[];
+  detectorSummary: Record<SmartAuditDetectorId, { status: 'passed' | 'warning' | 'failed'; issueCount: number }>;
+}
+
+export async function runSmartClosingAudit(
+  db: any,
+  params: {
+    tenantId: string;
+    branchId: string;
+    bdate: string;
+    counterId?: string | null;
+    cashierId?: string | null;
+    shiftId?: string | null;
+    actualCashMinor?: number | null;
+  },
+): Promise<SmartAuditResult> {
+  const { tenantId, branchId, bdate, counterId, cashierId, shiftId, actualCashMinor } = params;
+
+  const issues: SmartAuditIssue[] = [];
+
+  const detectorSummary: Record<SmartAuditDetectorId, { status: 'passed' | 'warning' | 'failed'; issueCount: number }> = {
+    cash_shortage: { status: 'passed', issueCount: 0 },
+    cash_excess: { status: 'passed', issueCount: 0 },
+    sales_mismatch: { status: 'passed', issueCount: 0 },
+    payment_mismatch: { status: 'passed', issueCount: 0 },
+    duplicate_transactions: { status: 'passed', issueCount: 0 },
+    missing_transactions: { status: 'passed', issueCount: 0 },
+    unusual_refund: { status: 'passed', issueCount: 0 },
+    pending_bills: { status: 'passed', issueCount: 0 },
+    unusual_discount: { status: 'passed', issueCount: 0 },
+    stock_sales_consistency: { status: 'passed', issueCount: 0 },
+    unassigned_transactions: { status: 'passed', issueCount: 0 },
+    closing_readiness: { status: 'passed', issueCount: 0 },
+  };
+
+  const registerIssue = (issue: SmartAuditIssue) => {
+    issues.push(issue);
+    const d = issue.detector;
+    detectorSummary[d].issueCount++;
+    if (issue.severity === 'critical') {
+      detectorSummary[d].status = 'failed';
+    } else if (issue.severity === 'warning' && detectorSummary[d].status !== 'failed') {
+      detectorSummary[d].status = 'warning';
+    }
+  };
+
+  // Scoped SQL fragments
+  const shiftClause = shiftId ? ' AND i.shift_id = ?' : '';
+  const shiftParams = shiftId ? [shiftId] : [];
+  const cashierClause = cashierId ? ' AND i.created_by = ?' : '';
+  const cashierParams = cashierId ? [cashierId] : [];
+  const counterClause = counterId
+    ? (counterId === 'unassigned'
+        ? " AND (i.counter_id IS NULL AND (i.counter IS NULL OR i.counter = ''))"
+        : " AND (i.counter_id = ? OR (i.counter_id IS NULL AND i.counter = ?))")
+    : '';
+  const counterParams = (counterId && counterId !== 'unassigned') ? [counterId, counterId] : [];
+
+  // --------------------------------------------------------------------------
+  // DETECTORS 1 & 2: Cash Shortage & Excess Detectors
+  // --------------------------------------------------------------------------
+  let shiftFilterSql = shiftId ? ' AND id = ?' : '';
+  const shiftFilterParams: any[] = shiftId ? [shiftId] : [];
+  if (cashierId) {
+    shiftFilterSql += ' AND user_id = ?';
+    shiftFilterParams.push(cashierId);
+  }
+  const shiftsRow = await db.one<any>(
+    `SELECT COALESCE(SUM(opening_cash_minor), 0)::bigint AS opening_cash_minor
+     FROM shifts
+     WHERE tenant_id = ? AND (location = ? OR branch_id = ?)
+       AND (DATE(opened_at) = ?::date OR (created_at)::date = ?::date)
+       ${shiftFilterSql}`,
+    [tenantId, branchId, branchId, bdate, bdate, ...shiftFilterParams],
+  );
+  const openingCashMinor = Number(shiftsRow?.openingCashMinor ?? shiftsRow?.opening_cash_minor ?? 0);
+
+  let cashPaySql = `
+    SELECT COALESCE(SUM(p.amount_minor), 0)::bigint AS cash_sales_minor
+    FROM payments p
+    LEFT JOIN invoices i ON i.id = p.invoice_id
+    WHERE p.tenant_id = ? AND (p.status IS NULL OR p.status = 'posted')
+      AND p.method = 'cash' AND p.kind = 'receipt'
+      AND (p.bdate = ? OR (p.created_at)::date = ?::date)
+      AND (p.invoice_id IS NULL OR i.branch_id IS NULL OR i.branch_id = ?)
+  `;
+  const cashPayParams: any[] = [tenantId, bdate, bdate, branchId];
+  if (cashierId) {
+    cashPaySql += ' AND (p.created_by = ? OR (p.created_by IS NULL AND i.created_by = ?))';
+    cashPayParams.push(cashierId, cashierId);
+  }
+  if (counterId) {
+    if (counterId === 'unassigned') {
+      cashPaySql += " AND (COALESCE(p.counter_id, p.counter, i.counter_id, i.counter) IS NULL OR COALESCE(p.counter_id, p.counter, i.counter_id, i.counter) = '')";
+    } else {
+      cashPaySql += " AND (p.counter_id = ? OR p.counter = ? OR (p.counter_id IS NULL AND (i.counter_id = ? OR i.counter = ?)))";
+      cashPayParams.push(counterId, counterId, counterId, counterId);
+    }
+  }
+  const cashPayRow = await db.one<any>(cashPaySql, cashPayParams);
+  const cashSalesMinor = Number(cashPayRow?.cashSalesMinor ?? cashPayRow?.cash_sales_minor ?? 0);
+
+  const retRow = await db.one<any>(
+    `SELECT COALESCE(SUM(i.total_minor), 0)::bigint AS cash_refunds_minor
+     FROM invoices i
+     WHERE i.tenant_id = ? AND i.branch_id = ? AND i.bdate = ? AND i.kind = 'credit_note' AND i.status = 'posted'
+       AND (i.refund_mode = 'cash' OR i.refund_mode IS NULL)
+       ${shiftClause} ${cashierClause} ${counterClause}`,
+    [tenantId, branchId, bdate, ...shiftParams, ...cashierParams, ...counterParams],
+  );
+  const cashRefundsMinor = Number(retRow?.cashRefundsMinor ?? retRow?.cash_refunds_minor ?? 0);
+
+  const expRow = await db.one<any>(
+    `SELECT COALESCE(SUM(CASE WHEN payment_method = 'cash' THEN total_minor ELSE 0 END), 0)::bigint AS cash_expenses_minor
+     FROM expenses
+     WHERE tenant_id = ? AND branch_id = ? AND expense_date = ? AND status = 'posted'
+       ${cashierId ? ' AND created_by = ?' : ''}`,
+    [tenantId, branchId, bdate, ...(cashierId ? [cashierId] : [])],
+  );
+  const cashExpensesMinor = Number(expRow?.cashExpensesMinor ?? expRow?.cash_expenses_minor ?? 0);
+
+  let cmSql = `SELECT
+      COALESCE(SUM(CASE WHEN cm.movement_type = 'cash_in' THEN cm.amount_minor ELSE 0 END), 0)::bigint AS cash_in_minor,
+      COALESCE(SUM(CASE WHEN cm.movement_type = 'cash_out' THEN cm.amount_minor ELSE 0 END), 0)::bigint AS cash_out_minor
+     FROM cash_movements cm
+     JOIN shifts s ON s.id = cm.shift_id
+     WHERE cm.tenant_id = ? AND (s.location = ? OR s.branch_id = ?) AND (DATE(cm.created_at) = ?::date)`;
+  const cmParams: any[] = [tenantId, branchId, branchId, bdate];
+  if (shiftId) { cmSql += ' AND s.id = ?'; cmParams.push(shiftId); }
+  if (cashierId) { cmSql += ' AND s.user_id = ?'; cmParams.push(cashierId); }
+  const cmRow = await db.one<any>(cmSql, cmParams);
+  const cashInMinor = Number(cmRow?.cashInMinor ?? cmRow?.cash_in_minor ?? 0);
+  const cashOutMinor = Number(cmRow?.cashOutMinor ?? cmRow?.cash_out_minor ?? 0);
+
+  const expectedClosingCashMinor = openingCashMinor + cashSalesMinor - cashRefundsMinor - cashExpensesMinor - cashOutMinor + cashInMinor;
+
+  if (actualCashMinor !== null && actualCashMinor !== undefined) {
+    const varianceMinor = actualCashMinor - expectedClosingCashMinor;
+    if (varianceMinor < 0) {
+      const shortageMinor = Math.abs(varianceMinor);
+      registerIssue({
+        id: 'det_cash_shortage',
+        detector: 'cash_shortage',
+        severity: 'critical',
+        title: 'Cash Drawer Shortage Detected',
+        description: `Physical counted cash (₹${(actualCashMinor / 100).toFixed(2)}) is ₹${(shortageMinor / 100).toFixed(2)} less than drawer expected cash (₹${(expectedClosingCashMinor / 100).toFixed(2)}).`,
+        amountMinor: shortageMinor,
+        bdate,
+        counterId: counterId || null,
+        cashierId: cashierId || null,
+        recommendedAction: 'Verify physical cash count, review cash expense slips, and document shortage reason before submitting closing.',
+        details: {
+          expectedCashMinor: expectedClosingCashMinor,
+          actualCashMinor,
+          varianceMinor,
+          openingCashMinor,
+          cashSalesMinor,
+          cashInMinor,
+          cashOutMinor,
+          cashRefundsMinor,
+          cashExpensesMinor,
+          formula: 'Expected Cash = Opening Cash (₹' + (openingCashMinor / 100).toFixed(2) + ') + Cash Sales (₹' + (cashSalesMinor / 100).toFixed(2) + ') + Deposits (₹' + (cashInMinor / 100).toFixed(2) + ') - Cash Refunds (₹' + (cashRefundsMinor / 100).toFixed(2) + ') - Cash Expenses (₹' + (cashExpensesMinor / 100).toFixed(2) + ') - Withdrawals (₹' + (cashOutMinor / 100).toFixed(2) + ')',
+        },
+      });
+    } else if (varianceMinor > 0) {
+      registerIssue({
+        id: 'det_cash_excess',
+        detector: 'cash_excess',
+        severity: 'warning',
+        title: 'Cash Drawer Surplus Detected',
+        description: `Physical counted cash (₹${(actualCashMinor / 100).toFixed(2)}) is ₹${(varianceMinor / 100).toFixed(2)} higher than drawer expected cash (₹${(expectedClosingCashMinor / 100).toFixed(2)}).`,
+        amountMinor: varianceMinor,
+        bdate,
+        counterId: counterId || null,
+        cashierId: cashierId || null,
+        recommendedAction: 'Verify whether all cash sales and customer advances were recorded in the system, and document the surplus reason.',
+        details: {
+          expectedCashMinor: expectedClosingCashMinor,
+          actualCashMinor,
+          varianceMinor,
+          openingCashMinor,
+          cashSalesMinor,
+          cashInMinor,
+          cashOutMinor,
+          cashRefundsMinor,
+          cashExpensesMinor,
+          formula: 'Expected Cash = Opening Cash (₹' + (openingCashMinor / 100).toFixed(2) + ') + Cash Sales (₹' + (cashSalesMinor / 100).toFixed(2) + ') + Deposits (₹' + (cashInMinor / 100).toFixed(2) + ') - Cash Refunds (₹' + (cashRefundsMinor / 100).toFixed(2) + ') - Cash Expenses (₹' + (cashExpensesMinor / 100).toFixed(2) + ') - Withdrawals (₹' + (cashOutMinor / 100).toFixed(2) + ')',
+        },
+      });
+    }
+  }
+
+  // --------------------------------------------------------------------------
+  // DETECTOR 3: Sales Mismatch Detector
+  // --------------------------------------------------------------------------
+  const salesMismatches = await db.query<any>(
+    `SELECT i.id, i.number, i.total_minor, i.subtotal_minor, i.discount_minor,
+            i.cgst_minor, i.sgst_minor, i.igst_minor, i.round_off_minor,
+            COALESCE(SUM(il.total_minor), 0)::bigint AS lines_total_minor
+     FROM invoices i
+     LEFT JOIN invoice_lines il ON il.invoice_id = i.id
+     WHERE i.tenant_id = ? AND i.branch_id = ? AND i.bdate = ? AND i.status = 'posted' AND i.kind = 'sale'
+       ${shiftClause} ${cashierClause} ${counterClause}
+     GROUP BY i.id, i.number, i.total_minor, i.subtotal_minor, i.discount_minor, i.cgst_minor, i.sgst_minor, i.igst_minor, i.round_off_minor
+     HAVING i.total_minor != (i.subtotal_minor - i.discount_minor + i.cgst_minor + i.sgst_minor + i.igst_minor + i.round_off_minor)
+        OR ABS(i.total_minor - (COALESCE(SUM(il.total_minor), 0)::bigint + i.round_off_minor)) > 5
+     LIMIT 15`,
+    [tenantId, branchId, bdate, ...shiftParams, ...cashierParams, ...counterParams],
+  );
+  if (salesMismatches.length > 0) {
+    const totalDiffMinor = salesMismatches.reduce((acc: number, m: any) => {
+      const calcTotal = Number(m.subtotalMinor ?? m.subtotal_minor ?? 0) - Number(m.discountMinor ?? m.discount_minor ?? 0) +
+        Number(m.cgstMinor ?? m.cgst_minor ?? 0) + Number(m.sgstMinor ?? m.sgst_minor ?? 0) +
+        Number(m.igstMinor ?? m.igst_minor ?? 0) + Number(m.roundOffMinor ?? m.round_off_minor ?? 0);
+      return acc + Math.abs(Number(m.totalMinor ?? m.total_minor ?? 0) - calcTotal);
+    }, 0);
+
+    registerIssue({
+      id: 'det_sales_mismatch',
+      detector: 'sales_mismatch',
+      severity: 'critical',
+      title: 'Invoice Sales Calculation Mismatch',
+      description: `${salesMismatches.length} completed invoice(s) have bill header totals that do not match line items or tax component sums.`,
+      amountMinor: totalDiffMinor,
+      count: salesMismatches.length,
+      bdate,
+      recommendedAction: 'Audit affected invoices to verify line items, discounts, and GST tax calculations.',
+      details: {
+        affectedInvoices: salesMismatches.map((m: any) => ({
+          id: m.id,
+          number: m.number,
+          totalMinor: Number(m.totalMinor ?? m.total_minor),
+          linesTotalMinor: Number(m.linesTotalMinor ?? m.lines_total_minor),
+          subtotalMinor: Number(m.subtotalMinor ?? m.subtotal_minor),
+          discountMinor: Number(m.discountMinor ?? m.discount_minor),
+          taxMinor: Number(m.cgstMinor ?? m.cgst_minor) + Number(m.sgstMinor ?? m.sgst_minor) + Number(m.igstMinor ?? m.igst_minor),
+        })),
+      },
+    });
+  }
+
+  // --------------------------------------------------------------------------
+  // DETECTOR 4: Payment Mismatch Detector
+  // --------------------------------------------------------------------------
+  const paymentMismatches = await db.query<any>(
+    `SELECT i.id, i.number, i.total_minor, i.paid_minor,
+            COALESCE(SUM(p.amount_minor), 0)::bigint AS ledger_payments_minor
+     FROM invoices i
+     LEFT JOIN payments p ON p.invoice_id = i.id AND (p.status IS NULL OR p.status = 'posted') AND p.kind = 'receipt'
+     WHERE i.tenant_id = ? AND i.branch_id = ? AND i.bdate = ? AND i.status = 'posted' AND i.kind = 'sale'
+       ${shiftClause} ${cashierClause} ${counterClause}
+     GROUP BY i.id, i.number, i.total_minor, i.paid_minor
+     HAVING i.paid_minor != COALESCE(SUM(p.amount_minor), 0)::bigint
+     LIMIT 15`,
+    [tenantId, branchId, bdate, ...shiftParams, ...cashierParams, ...counterParams],
+  );
+
+  const orphanPayments = await db.query<any>(
+    `SELECT p.id, p.method, p.amount_minor, p.reference, p.created_at
+     FROM payments p
+     WHERE p.tenant_id = ? AND p.branch_id = ? AND p.bdate = ? AND (p.status IS NULL OR p.status = 'posted')
+       AND p.invoice_id IS NULL AND p.kind = 'receipt'
+     LIMIT 15`,
+    [tenantId, branchId, bdate],
+  );
+
+  if (paymentMismatches.length > 0 || orphanPayments.length > 0) {
+    const totalDiscrepancyMinor = paymentMismatches.reduce((acc: number, m: any) => {
+      return acc + Math.abs(Number(m.paidMinor ?? m.paid_minor ?? 0) - Number(m.ledgerPaymentsMinor ?? m.ledger_payments_minor ?? 0));
+    }, 0) + orphanPayments.reduce((acc: number, p: any) => acc + Number(p.amountMinor ?? p.amount_minor ?? 0), 0);
+
+    registerIssue({
+      id: 'det_payment_mismatch',
+      detector: 'payment_mismatch',
+      severity: 'critical',
+      title: 'Payment & Settlement Ledger Mismatch',
+      description: `${paymentMismatches.length} invoice(s) have payments that differ from the recorded paid amounts, and ${orphanPayments.length} orphan payment receipt(s) were found.`,
+      amountMinor: totalDiscrepancyMinor,
+      count: paymentMismatches.length + orphanPayments.length,
+      bdate,
+      recommendedAction: 'Verify payment method allocation logs and ensure each collection receipt is linked to a valid invoice.',
+      details: {
+        affectedInvoices: paymentMismatches.map((m: any) => ({
+          id: m.id,
+          number: m.number,
+          totalMinor: Number(m.totalMinor ?? m.total_minor),
+          paidMinor: Number(m.paidMinor ?? m.paid_minor),
+          ledgerPaymentsMinor: Number(m.ledgerPaymentsMinor ?? m.ledger_payments_minor),
+          diffMinor: Math.abs(Number(m.paidMinor ?? m.paid_minor) - Number(m.ledgerPaymentsMinor ?? m.ledger_payments_minor)),
+        })),
+        orphanPayments: orphanPayments.map((p: any) => ({
+          id: p.id,
+          method: p.method,
+          amountMinor: Number(p.amountMinor ?? p.amount_minor),
+          reference: p.reference,
+        })),
+      },
+    });
+  }
+
+  // --------------------------------------------------------------------------
+  // DETECTOR 5: Duplicate Transaction Detector
+  // --------------------------------------------------------------------------
+  const duplicateInvoices = await db.query<any>(
+    `SELECT i1.id AS id1, i1.number AS num1, i2.id AS id2, i2.number AS num2,
+            i1.total_minor, i1.customer_phone, i1.created_at AS time1, i2.created_at AS time2
+     FROM invoices i1
+     JOIN invoices i2 ON i1.tenant_id = i2.tenant_id AND i1.branch_id = i2.branch_id
+                     AND i1.bdate = i2.bdate AND i1.id < i2.id
+                     AND i1.total_minor = i2.total_minor
+                     AND i1.customer_phone = i2.customer_phone
+                     AND i1.customer_phone IS NOT NULL AND i1.customer_phone != ''
+                     AND ABS(EXTRACT(EPOCH FROM (i1.created_at - i2.created_at))) < 180
+     WHERE i1.tenant_id = ? AND i1.branch_id = ? AND i1.bdate = ?
+       AND i1.status = 'posted' AND i2.status = 'posted'
+     LIMIT 10`,
+    [tenantId, branchId, bdate],
+  );
+
+  const duplicateReferences = await db.query<any>(
+    `SELECT p1.id AS pay1, p1.reference, p1.amount_minor, p1.invoice_id AS inv1,
+            p2.id AS pay2, p2.invoice_id AS inv2, i1.number AS num1, i2.number AS num2
+     FROM payments p1
+     JOIN payments p2 ON p1.tenant_id = p2.tenant_id AND p1.bdate = p2.bdate
+                     AND p1.id < p2.id AND p1.reference = p2.reference
+                     AND p1.invoice_id != p2.invoice_id
+     JOIN invoices i1 ON i1.id = p1.invoice_id
+     JOIN invoices i2 ON i2.id = p2.invoice_id
+     WHERE p1.tenant_id = ? AND p1.branch_id = ? AND p1.bdate = ?
+       AND p1.reference IS NOT NULL AND TRIM(p1.reference) != ''
+       AND LENGTH(TRIM(p1.reference)) >= 4
+     LIMIT 10`,
+    [tenantId, branchId, bdate],
+  );
+
+  if (duplicateInvoices.length > 0 || duplicateReferences.length > 0) {
+    registerIssue({
+      id: 'det_duplicate_transactions',
+      detector: 'duplicate_transactions',
+      severity: 'warning',
+      title: 'Potential Duplicate Transactions Detected',
+      description: `Identified ${duplicateInvoices.length} invoice pair(s) with identical customer and amount within 3 minutes, and ${duplicateReferences.length} duplicate payment reference code(s).`,
+      count: duplicateInvoices.length + duplicateReferences.length,
+      bdate,
+      recommendedAction: 'Verify billing receipts to ensure customer was not charged twice and payment UTR/authorization was not duplicated.',
+      details: {
+        duplicateInvoices: duplicateInvoices.map((d: any) => ({
+          invoice1: d.num1 || d.id1,
+          invoice2: d.num2 || d.id2,
+          amountMinor: Number(d.totalMinor ?? d.total_minor),
+          customerPhone: d.customerPhone ?? d.customer_phone,
+        })),
+        duplicatePaymentReferences: duplicateReferences.map((d: any) => ({
+          reference: d.reference,
+          amountMinor: Number(d.amountMinor ?? d.amount_minor),
+          invoice1: d.num1 || d.inv1,
+          invoice2: d.num2 || d.inv2,
+        })),
+      },
+    });
+  }
+
+  // --------------------------------------------------------------------------
+  // DETECTOR 6: Missing / Date Attribution Anomaly Detector
+  // --------------------------------------------------------------------------
+  const dateAnomalies = await db.query<any>(
+    `SELECT id, number, bdate, DATE(created_at) AS created_date, total_minor, status
+     FROM invoices
+     WHERE tenant_id = ? AND branch_id = ?
+       AND (bdate IS NULL OR bdate = '' OR (DATE(created_at) = ?::date AND bdate != ?))
+       AND status = 'posted'
+     LIMIT 10`,
+    [tenantId, branchId, bdate, bdate],
+  );
+
+  if (dateAnomalies.length > 0) {
+    registerIssue({
+      id: 'det_missing_transactions',
+      detector: 'missing_transactions',
+      severity: 'warning',
+      title: 'Transaction Date Attribution Anomaly',
+      description: `${dateAnomalies.length} transaction(s) have timestamp/business date mismatches or missing date values.`,
+      count: dateAnomalies.length,
+      bdate,
+      recommendedAction: 'Confirm whether offline or delayed terminal bills were assigned to the intended business date.',
+      details: {
+        anomalies: dateAnomalies.map((a: any) => ({
+          id: a.id,
+          number: a.number,
+          bdate: a.bdate,
+          createdDate: a.createdDate ?? a.created_date,
+          totalMinor: Number(a.totalMinor ?? a.total_minor),
+        })),
+      },
+    });
+  }
+
+  // --------------------------------------------------------------------------
+  // DETECTOR 7: Unusual Refund Detector
+  // --------------------------------------------------------------------------
+  const unusualRefunds = await db.query<any>(
+    `SELECT i.id, i.number, i.total_minor, i.customer_name, i.customer_phone,
+            i.reason, i.created_by, u.name AS cashier_name, i.created_at
+     FROM invoices i
+     LEFT JOIN users u ON u.id = i.created_by
+     WHERE i.tenant_id = ? AND i.branch_id = ? AND i.bdate = ? AND i.kind = 'credit_note' AND i.status = 'posted'
+       ${shiftClause} ${cashierClause} ${counterClause}
+       AND (i.total_minor >= 200000 OR i.total_minor >= (
+         SELECT COALESCE(AVG(total_minor) * 1.5, 200000)
+         FROM invoices WHERE tenant_id = i.tenant_id AND branch_id = i.branch_id AND bdate = i.bdate AND kind = 'sale' AND status = 'posted'
+       ))
+     LIMIT 10`,
+    [tenantId, branchId, bdate, ...shiftParams, ...cashierParams, ...counterParams],
+  );
+
+  if (unusualRefunds.length > 0) {
+    const refundTotalMinor = unusualRefunds.reduce((acc: number, r: any) => acc + Number(r.totalMinor ?? r.total_minor ?? 0), 0);
+    registerIssue({
+      id: 'det_unusual_refund',
+      detector: 'unusual_refund',
+      severity: 'warning',
+      title: 'High-Value Return / Refund Detected',
+      description: `${unusualRefunds.length} return note(s) totaling ₹${(refundTotalMinor / 100).toFixed(2)} exceed ₹2,000 or 150% of the day’s average sales bill.`,
+      amountMinor: refundTotalMinor,
+      count: unusualRefunds.length,
+      bdate,
+      recommendedAction: 'Verify physical returned inventory condition, original sales bill reference, and manager authorization.',
+      details: {
+        refunds: unusualRefunds.map((r: any) => ({
+          id: r.id,
+          number: r.number,
+          totalMinor: Number(r.totalMinor ?? r.total_minor),
+          customer: r.customerName ?? r.customer_name,
+          cashier: r.cashierName ?? r.cashier_name,
+          reason: r.reason || 'N/A',
+        })),
+      },
+    });
+  }
+
+  // --------------------------------------------------------------------------
+  // DETECTOR 8: Pending Bill Detector
+  // --------------------------------------------------------------------------
+  const pendingCreditInvoices = await db.query<any>(
+    `SELECT i.id, i.number, i.customer_name, i.total_minor, i.balance_minor, i.payment_status
+     FROM invoices i
+     WHERE i.tenant_id = ? AND i.branch_id = ? AND i.bdate = ? AND i.status = 'posted' AND i.kind = 'sale'
+       AND i.balance_minor > 0
+       ${shiftClause} ${cashierClause} ${counterClause}
+     LIMIT 10`,
+    [tenantId, branchId, bdate, ...shiftParams, ...cashierParams, ...counterParams],
+  );
+
+  const activeOpenShifts = await db.query<any>(
+    `SELECT s.id, s.user_id, u.name AS cashier_name, s.status, s.opened_at, s.opening_cash_minor
+     FROM shifts s
+     LEFT JOIN users u ON u.id = s.user_id
+     WHERE s.tenant_id = ? AND (s.location = ? OR s.branch_id = ?)
+       AND DATE(s.opened_at) = ?::date AND s.status = 'open'`,
+    [tenantId, branchId, branchId, bdate],
+  );
+
+  if (pendingCreditInvoices.length > 0 || activeOpenShifts.length > 0) {
+    const unpaidMinor = pendingCreditInvoices.reduce((acc: number, p: any) => acc + Number(p.balanceMinor ?? p.balance_minor ?? 0), 0);
+    registerIssue({
+      id: 'det_pending_bills',
+      detector: 'pending_bills',
+      severity: activeOpenShifts.length > 0 ? 'warning' : 'info',
+      title: activeOpenShifts.length > 0 ? 'Open Cashier Shifts & Pending Dues' : 'Unsettled Credit Sales Recorded',
+      description: `${pendingCreditInvoices.length} bill(s) have pending customer credit balances (₹${(unpaidMinor / 100).toFixed(2)}), and ${activeOpenShifts.length} cashier shift(s) are currently still open.`,
+      amountMinor: unpaidMinor,
+      count: pendingCreditInvoices.length + activeOpenShifts.length,
+      bdate,
+      recommendedAction: 'Verify that customer dues are registered in Accounts Receivable and remind cashiers to submit shifts before daily closing.',
+      details: {
+        creditInvoices: pendingCreditInvoices.map((p: any) => ({
+          number: p.number,
+          customer: p.customerName ?? p.customer_name,
+          totalMinor: Number(p.totalMinor ?? p.total_minor),
+          balanceMinor: Number(p.balanceMinor ?? p.balance_minor),
+          paymentStatus: p.paymentStatus ?? p.payment_status,
+        })),
+        openShifts: activeOpenShifts.map((s: any) => ({
+          id: s.id,
+          cashier: s.cashierName ?? s.cashier_name,
+          openedAt: s.openedAt ?? s.opened_at,
+          openingCashMinor: Number(s.openingCashMinor ?? s.opening_cash_minor),
+        })),
+      },
+    });
+  }
+
+  // --------------------------------------------------------------------------
+  // DETECTOR 9: Unusual Discount Detector
+  // --------------------------------------------------------------------------
+  const highDiscounts = await db.query<any>(
+    `SELECT i.id, i.number, i.customer_name, i.subtotal_minor, i.discount_minor, i.total_minor,
+            ROUND((i.discount_minor * 100.0) / NULLIF(i.subtotal_minor, 0), 1) AS discount_pct,
+            u.name AS cashier_name
+     FROM invoices i
+     LEFT JOIN users u ON u.id = i.created_by
+     WHERE i.tenant_id = ? AND i.branch_id = ? AND i.bdate = ? AND i.status = 'posted' AND i.kind = 'sale'
+       AND i.discount_minor > 0
+       AND (i.discount_minor >= 50000 OR (i.subtotal_minor > 0 AND (i.discount_minor * 100) / i.subtotal_minor >= 20))
+       ${shiftClause} ${cashierClause} ${counterClause}
+     ORDER BY i.discount_minor DESC
+     LIMIT 10`,
+    [tenantId, branchId, bdate, ...shiftParams, ...cashierParams, ...counterParams],
+  );
+
+  if (highDiscounts.length > 0) {
+    const totalDiscountMinor = highDiscounts.reduce((acc: number, d: any) => acc + Number(d.discountMinor ?? d.discount_minor ?? 0), 0);
+    registerIssue({
+      id: 'det_unusual_discount',
+      detector: 'unusual_discount',
+      severity: 'warning',
+      title: 'High Discount Billing Detected',
+      description: `${highDiscounts.length} invoice(s) have discounts exceeding 20% or ₹500.00 (Total discounts: ₹${(totalDiscountMinor / 100).toFixed(2)}).`,
+      amountMinor: totalDiscountMinor,
+      count: highDiscounts.length,
+      bdate,
+      recommendedAction: 'Verify whether discounts were manager-approved and match active promotional rules.',
+      details: {
+        discounts: highDiscounts.map((d: any) => ({
+          number: d.number,
+          customer: d.customerName ?? d.customer_name,
+          subtotalMinor: Number(d.subtotalMinor ?? d.subtotal_minor),
+          discountMinor: Number(d.discountMinor ?? d.discount_minor),
+          discountPct: Number(d.discountPct ?? d.discount_pct),
+          cashier: d.cashierName ?? d.cashier_name,
+        })),
+      },
+    });
+  }
+
+  // --------------------------------------------------------------------------
+  // DETECTOR 10: Stock and Sales Consistency Detector
+  // --------------------------------------------------------------------------
+  const missingStockMoves = await db.query<any>(
+    `SELECT i.number, il.id AS line_id, il.name, il.qty_milli, il.item_id
+     FROM invoice_lines il
+     JOIN invoices i ON i.id = il.invoice_id
+     JOIN items it ON it.id = il.item_id
+     WHERE i.tenant_id = ? AND i.branch_id = ? AND i.bdate = ? AND i.status = 'posted' AND i.kind = 'sale'
+       AND it.track_stock = true
+       ${shiftClause} ${cashierClause} ${counterClause}
+       AND NOT EXISTS (
+         SELECT 1 FROM stock_moves sm
+         WHERE sm.tenant_id = i.tenant_id AND sm.ref_id = i.id AND sm.item_id = il.item_id AND sm.kind = 'sale'
+       )
+     LIMIT 10`,
+    [tenantId, branchId, bdate, ...shiftParams, ...cashierParams, ...counterParams],
+  );
+
+  if (missingStockMoves.length > 0) {
+    registerIssue({
+      id: 'det_stock_sales_consistency',
+      detector: 'stock_sales_consistency',
+      severity: 'critical',
+      title: 'Missing Stock Ledger Depletion Moves',
+      description: `${missingStockMoves.length} sold stock-tracked line items do not have corresponding stock depletion moves in the inventory ledger.`,
+      count: missingStockMoves.length,
+      bdate,
+      recommendedAction: 'Stock ledger synchronization required. Do not modify inventory records manually.',
+      details: {
+        affectedLines: missingStockMoves.map((m: any) => ({
+          invoiceNumber: m.number,
+          itemName: m.name,
+          qtyMilli: Number(m.qtyMilli ?? m.qty_milli),
+        })),
+      },
+    });
+  }
+
+  // --------------------------------------------------------------------------
+  // DETECTOR 11: Unassigned Transaction Detector
+  // --------------------------------------------------------------------------
+  const unassignedTransactions = await db.query<any>(
+    `SELECT i.id, i.number, i.total_minor, i.created_by, i.counter_id, i.counter
+     FROM invoices i
+     WHERE i.tenant_id = ? AND i.branch_id = ? AND i.bdate = ? AND i.status = 'posted'
+       AND (
+         (i.counter_id IS NULL AND (i.counter IS NULL OR i.counter = ''))
+         OR (i.created_by IS NULL OR i.created_by = '')
+       )
+     LIMIT 15`,
+    [tenantId, branchId, bdate],
+  );
+
+  if (unassignedTransactions.length > 0) {
+    const unassignedTotalMinor = unassignedTransactions.reduce((acc: number, u: any) => acc + Number(u.totalMinor ?? u.total_minor ?? 0), 0);
+    registerIssue({
+      id: 'det_unassigned_transactions',
+      detector: 'unassigned_transactions',
+      severity: 'warning',
+      title: 'Unassigned Register / Cashier Transactions',
+      description: `${unassignedTransactions.length} transaction(s) totaling ₹${(unassignedTotalMinor / 100).toFixed(2)} have missing counter code or cashier attribution.`,
+      amountMinor: unassignedTotalMinor,
+      count: unassignedTransactions.length,
+      bdate,
+      recommendedAction: 'Inspect unassigned transactions in the Counter & Cashier Reports tab and attribute to correct billing register.',
+      details: {
+        unassignedInvoices: unassignedTransactions.map((u: any) => ({
+          id: u.id,
+          number: u.number,
+          totalMinor: Number(u.totalMinor ?? u.total_minor),
+          hasCounter: Boolean(u.counterId || u.counter),
+          hasCashier: Boolean(u.createdBy || u.created_by),
+        })),
+      },
+    });
+  }
+
+  // --------------------------------------------------------------------------
+  // DETECTOR 12: Smart Closing Readiness
+  // --------------------------------------------------------------------------
+  const criticalCount = issues.filter((i) => i.severity === 'critical').length;
+  const warningCount = issues.filter((i) => i.severity === 'warning').length;
+  const infoCount = issues.filter((i) => i.severity === 'info').length;
+
+  let readinessStatus: 'ready_to_submit' | 'ready_with_warnings' | 'action_required' = 'ready_to_submit';
+  if (criticalCount > 0) {
+    readinessStatus = 'action_required';
+    detectorSummary.closing_readiness.status = 'failed';
+  } else if (warningCount > 0) {
+    readinessStatus = 'ready_with_warnings';
+    detectorSummary.closing_readiness.status = 'warning';
+  } else {
+    readinessStatus = 'ready_to_submit';
+    detectorSummary.closing_readiness.status = 'passed';
+  }
+
+  let readinessScore = 100 - (criticalCount * 25) - (warningCount * 10);
+  if (readinessScore < 0) readinessScore = 0;
+
+  let summaryMessage = '';
+  if (readinessStatus === 'action_required') {
+    summaryMessage = `${criticalCount} critical financial issue(s) require resolution before submitting Day Closing.`;
+  } else if (readinessStatus === 'ready_with_warnings') {
+    summaryMessage = `${warningCount} warning observation(s) noted. Register is eligible to submit with acknowledged warnings.`;
+  } else {
+    summaryMessage = 'All 12 financial audit detectors passed. Financial ledgers, cash drawer floats, and transaction records are fully balanced.';
+  }
+
+  return {
+    evaluatedAt: new Date().toISOString(),
+    bdate,
+    branchId,
+    counterId: counterId || null,
+    cashierId: cashierId || null,
+    readinessStatus,
+    readinessScore,
+    summaryMessage,
+    criticalCount,
+    warningCount,
+    infoCount,
+    totalChecks: 12,
+    issues,
+    detectorSummary,
+  };
+}
+
 export function registerDayClosing(r: Router) {
   // --------------------------------------------------------------------------
   // 1. Live preview / aggregation for a business day & shift
@@ -465,6 +1177,16 @@ export function registerDayClosing(r: Router) {
       (!prevDayRecord || prevDayRecord.status === 'open' || prevDayRecord.status === 'submitted')
     );
 
+    const audit = await runSmartClosingAudit(ctx.db, {
+      tenantId,
+      branchId,
+      bdate,
+      counterId,
+      cashierId,
+      shiftId,
+      actualCashMinor: closedRecord ? Number(closedRecord.actual_cash_minor) : null,
+    });
+
     return {
       bdate,
       branchId,
@@ -568,6 +1290,45 @@ export function registerDayClosing(r: Router) {
         prevDayDate: yesterdayDate,
         message: hasUnclosedPrevDay ? `Notice: Previous business day (${yesterdayDate}) register has not been sealed yet.` : null,
       },
+
+      // H. Smart Closing Audit & Detector Results
+      audit,
+    };
+  });
+
+  // --------------------------------------------------------------------------
+  // 1b. Smart Closing Audit & Detector endpoint
+  // --------------------------------------------------------------------------
+  r.get('/api/day-closing/audit', requireUser, async (ctx) => {
+    const tenantId = ctx.user!.tenantId;
+    const scope = await resolveBranchScope(ctx);
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const bdate = String(ctx.query.bdate || ctx.query.date || todayStr).trim();
+    const branchId = (!scope.isSuperAdminAll && scope.branchId) ? scope.branchId : String(ctx.query.branchId || 'MAIN').trim();
+    const shiftId = ctx.query.shiftId ? String(ctx.query.shiftId).trim() : null;
+    const userRole = String(ctx.user!.role || '').toUpperCase();
+    const isCashier = userRole === 'CASHIER' || userRole === 'COUNTER';
+    const cashierId = isCashier
+      ? ctx.user!.id
+      : (ctx.query.cashierId ? String(ctx.query.cashierId).trim() : null);
+    const counterId = ctx.query.counterId ? String(ctx.query.counterId).trim() : null;
+    const actualCashMinor = ctx.query.actualCashMinor != null && ctx.query.actualCashMinor !== ''
+      ? Number(ctx.query.actualCashMinor)
+      : null;
+
+    const audit = await runSmartClosingAudit(ctx.db, {
+      tenantId,
+      branchId,
+      bdate,
+      counterId,
+      cashierId,
+      shiftId,
+      actualCashMinor,
+    });
+
+    return {
+      success: true,
+      audit,
     };
   });
 
@@ -765,6 +1526,15 @@ export function registerDayClosing(r: Router) {
       const closingId = existing?.id || newId('dc');
       const isAutoApprove = targetStatus === 'approved' || targetStatus === 'closed';
 
+      const auditSnapshot = await runSmartClosingAudit(q, {
+        tenantId,
+        branchId,
+        bdate,
+        cashierId,
+        shiftId,
+        actualCashMinor,
+      });
+
       if (existing) {
         await q.exec(
           `UPDATE day_closings
@@ -784,7 +1554,7 @@ export function registerDayClosing(r: Router) {
                exchanges_count = ?, refunds_count = ?, cogs_minor = ?, returned_cogs_minor = ?, net_cogs_minor = ?,
                gross_profit_minor = ?, operating_expenses_minor = ?, net_profit_minor = ?,
                collections_summary = ?, returns_summary = ?, exchanges_summary = ?,
-               remarks = ?, closed_by = ?, closed_at = NOW()
+               remarks = ?, audit_summary = ?, closed_by = ?, closed_at = NOW()
            WHERE id = ?`,
           [
             targetStatus,
@@ -801,7 +1571,7 @@ export function registerDayClosing(r: Router) {
             j({ cash: cashSalesMinor, upi: upiCollectionsMinor, card: cardCollectionsMinor }),
             j({ totalValueMinor: returnsTotalMinor, cashRefundsMinor, upiRefundsMinor, exchangeAdjustedMinor, storeCreditsIssuedMinor }),
             j({ count: exchangesCount, oldReturnedMinor, newSoldMinor, diffCollectedMinor: Math.max(0, newSoldMinor - oldReturnedMinor), remainingCreditMinor: Math.max(0, oldReturnedMinor - newSoldMinor) }),
-            remarks || null, ctx.user!.id, closingId,
+            remarks || null, j(auditSnapshot), ctx.user!.id, closingId,
           ],
         );
       } else {
@@ -815,7 +1585,7 @@ export function registerDayClosing(r: Router) {
             exchanges_count, refunds_count, cogs_minor, returned_cogs_minor, net_cogs_minor,
             gross_profit_minor, operating_expenses_minor, net_profit_minor,
             collections_summary, returns_summary, exchanges_summary,
-            remarks, closed_by, closed_at, created_at
+            remarks, audit_summary, closed_by, closed_at, created_at
           ) VALUES (
             ?, ?, ?, ?, ?, ?, ?, ?, NOW(),
             ?, ?,
@@ -825,7 +1595,7 @@ export function registerDayClosing(r: Router) {
             ?, ?, ?, ?, ?,
             ?, ?, ?,
             ?, ?, ?,
-            ?, ?, NOW(), NOW()
+            ?, ?, ?, NOW(), NOW()
           )`,
           [
             closingId, tenantId, branchId, bdate, targetStatus, shiftId || null, cashierId || null, ctx.user!.id,
@@ -839,7 +1609,7 @@ export function registerDayClosing(r: Router) {
             j({ cash: cashSalesMinor, upi: upiCollectionsMinor, card: cardCollectionsMinor }),
             j({ totalValueMinor: returnsTotalMinor, cashRefundsMinor, upiRefundsMinor, exchangeAdjustedMinor, storeCreditsIssuedMinor }),
             j({ count: exchangesCount, oldReturnedMinor, newSoldMinor, diffCollectedMinor: Math.max(0, newSoldMinor - oldReturnedMinor), remainingCreditMinor: Math.max(0, oldReturnedMinor - newSoldMinor) }),
-            remarks || null, ctx.user!.id,
+            remarks || null, j(auditSnapshot), ctx.user!.id,
           ],
         );
       }

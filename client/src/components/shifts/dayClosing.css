@@ -975,3 +975,545 @@
   border-color: #4f46e5;
   color: #ffffff;
 }
+
+/* ==========================================================================
+   SMART CLOSING AUDIT & DETECTOR - PREMIUM FINANCE DESIGN
+   ========================================================================== */
+.smart-audit-bar {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 0.85rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  transition: all 0.2s ease;
+}
+
+.smart-audit-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.smart-audit-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.smart-audit-status-badge.ready_to_submit {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #047857;
+}
+
+.smart-audit-status-badge.ready_with_warnings {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #b45309;
+}
+
+.smart-audit-status-badge.action_required {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+}
+
+.smart-audit-pills-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.smart-audit-counter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 8px;
+  font-size: 0.775rem;
+  font-weight: 700;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+}
+
+.smart-audit-counter-pill.critical {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+
+.smart-audit-counter-pill.warning {
+  background: #fffbeb;
+  border-color: #fde68a;
+  color: #b45309;
+}
+
+.smart-audit-counter-pill.info {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+
+.smart-audit-counter-pill.score {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+.smart-audit-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.smart-audit-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.95rem;
+  border-radius: 9px;
+  background: #4f46e5;
+  color: #ffffff;
+  border: none;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(79, 70, 229, 0.25);
+}
+
+.smart-audit-toggle-btn:hover {
+  background: #4338ca;
+}
+
+.smart-audit-toggle-btn.expanded {
+  background: #1e293b;
+  box-shadow: none;
+}
+
+.smart-audit-refresh-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.smart-audit-refresh-icon-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+/* Expanded Audit Panel Container */
+.smart-audit-panel {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  animation: fadeInDown 0.25s ease-out;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.smart-audit-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 1rem;
+}
+
+.smart-audit-panel-title-area {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.smart-audit-panel-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #eef2ff;
+  color: #4f46e5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.smart-audit-panel-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+}
+
+.smart-audit-panel-desc {
+  margin: 0.2rem 0 0 0;
+  font-size: 0.8rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.smart-audit-filter-tabs {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: #f8fafc;
+  padding: 0.25rem;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.smart-audit-filter-btn {
+  padding: 0.35rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.775rem;
+  font-weight: 700;
+  color: #64748b;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.smart-audit-filter-btn.active {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+/* Zero Issues / All Passed Card */
+.smart-audit-clean-state {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+}
+
+.smart-audit-clean-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: #dcfce7;
+  color: #16a34a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.smart-audit-clean-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #166534;
+  margin: 0;
+}
+
+.smart-audit-clean-desc {
+  font-size: 0.825rem;
+  color: #15803d;
+  margin: 0.25rem 0 0 0;
+  line-height: 1.4;
+}
+
+/* Issues List */
+.smart-audit-issues-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.smart-audit-issue-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.smart-audit-issue-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+}
+
+.smart-audit-issue-card.critical {
+  border-left: 4px solid #ef4444;
+}
+
+.smart-audit-issue-card.warning {
+  border-left: 4px solid #f59e0b;
+}
+
+.smart-audit-issue-card.info {
+  border-left: 4px solid #3b82f6;
+}
+
+.smart-audit-issue-card.reviewed {
+  opacity: 0.75;
+  background: #f8fafc;
+}
+
+.smart-audit-issue-row {
+  padding: 0.9rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.smart-audit-issue-main {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.smart-audit-severity-tag {
+  font-size: 0.675rem;
+  font-weight: 800;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  flex-shrink: 0;
+}
+
+.smart-audit-severity-tag.critical {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.smart-audit-severity-tag.warning {
+  background: #fffbeb;
+  color: #d97706;
+  border: 1px solid #fde68a;
+}
+
+.smart-audit-severity-tag.info {
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+}
+
+.smart-audit-issue-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.smart-audit-issue-title {
+  font-size: 0.875rem;
+  font-weight: 800;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.smart-audit-detector-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 0.15rem 0.45rem;
+  border-radius: 5px;
+}
+
+.smart-audit-issue-summary {
+  font-size: 0.8rem;
+  color: #475569;
+  line-height: 1.35;
+}
+
+.smart-audit-issue-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-shrink: 0;
+}
+
+.smart-audit-amount-badge {
+  font-size: 0.875rem;
+  font-weight: 800;
+  color: #0f172a;
+  background: #f8fafc;
+  padding: 0.3rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.smart-audit-reviewed-badge {
+  font-size: 0.725rem;
+  font-weight: 700;
+  color: #059669;
+  background: #ecfdf5;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid #a7f3d0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.smart-audit-chevron {
+  color: #94a3b8;
+  transition: transform 0.2s ease;
+}
+
+.smart-audit-chevron.open {
+  transform: rotate(180deg);
+}
+
+/* Expanded Issue Details */
+.smart-audit-issue-expanded {
+  padding: 1.15rem 1.25rem;
+  background: #f8fafc;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  font-size: 0.825rem;
+  animation: fadeInDown 0.2s ease-out;
+}
+
+.smart-audit-detail-block {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+}
+
+.smart-audit-detail-title {
+  font-size: 0.775rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #64748b;
+  margin-bottom: 0.45rem;
+  letter-spacing: 0.03em;
+}
+
+.smart-audit-formula-box {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.775rem;
+  background: #f1f5f9;
+  color: #0f172a;
+  padding: 0.5rem 0.75rem;
+  border-radius: 7px;
+  border-left: 3px solid #6366f1;
+  line-height: 1.4;
+  word-break: break-all;
+}
+
+.smart-audit-action-callout {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 9px;
+  padding: 0.65rem 0.85rem;
+  color: #92400e;
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.smart-audit-supporting-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.775rem;
+}
+
+.smart-audit-supporting-table th {
+  background: #f8fafc;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  font-weight: 700;
+  color: #475569;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.smart-audit-supporting-table td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid #f1f5f9;
+  color: #1e293b;
+}
+
+.smart-audit-expanded-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  padding-top: 0.45rem;
+}
+
+.smart-audit-review-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 8px;
+  font-size: 0.775rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+  transition: all 0.15s ease;
+}
+
+.smart-audit-review-btn:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+.smart-audit-review-btn.active {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #047857;
+}
