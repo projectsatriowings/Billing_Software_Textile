@@ -2,9 +2,15 @@
 import type { StockTransfer, StockTransferLine, CreateStockTransferInput, StockMove } from '../../shared/types.ts';
 
 export const getToken = (): string =>
+  sessionStorage.getItem('billing_token') || sessionStorage.getItem('token') ||
   localStorage.getItem('billing_token') || localStorage.getItem('token') || '';
-export const setToken = (t: string) => localStorage.setItem('billing_token', t);
+export const setToken = (t: string) => {
+  sessionStorage.setItem('billing_token', t);
+  localStorage.setItem('billing_token', t);
+};
 export const clearToken = () => {
+  sessionStorage.removeItem('billing_token');
+  sessionStorage.removeItem('token');
   localStorage.removeItem('billing_token');
   localStorage.removeItem('token');
 };

@@ -55,8 +55,8 @@ export function registerDayClosing(r: Router) {
     const closedRecordParams: any[] = [tenantId, branchId, bdate];
 
     if (cashierId) {
-      closedRecordQuery += ` AND (dc.cashier_id = ? OR (dc.cashier_id IS NULL AND (dc.submitted_by = ? OR dc.closed_by = ?)))`;
-      closedRecordParams.push(cashierId, cashierId, cashierId);
+      closedRecordQuery += ` AND dc.cashier_id = ?`;
+      closedRecordParams.push(cashierId);
       closedRecordQuery += ` ORDER BY dc.created_at DESC LIMIT 1`;
     } else {
       // In consolidated store view: prefer store-wide closing (cashier_id IS NULL), or latest branch closing if none
@@ -1526,8 +1526,8 @@ export function registerDayClosing(r: Router) {
       params.push(branchId);
     }
     if (cashierId) {
-      sql += ` AND (dc.cashier_id = ? OR (dc.cashier_id IS NULL AND (dc.submitted_by = ? OR dc.closed_by = ?)))`;
-      params.push(cashierId, cashierId, cashierId);
+      sql += ` AND dc.cashier_id = ?`;
+      params.push(cashierId);
     }
 
     sql += ` ORDER BY dc.bdate DESC, dc.created_at DESC LIMIT ?`;
