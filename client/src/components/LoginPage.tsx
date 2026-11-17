@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { api, setToken, type User, type Shop } from '../api';
+import './cashier-login.css';
 
 interface LoginPageProps {
+  initialRole?: 'super_admin' | 'store_manager' | 'cashier';
   onSuccess: (data: { token: string; user: User; shop: Shop }) => void;
   onNavigateRegister: () => void;
   onBackToHome: () => void;
@@ -13,13 +15,30 @@ interface LoginPageProps {
 }
 
 export const LoginPage: React.FC<LoginPageProps> = ({
+  initialRole,
   onSuccess,
   onNavigateRegister,
   onBackToHome,
   onRequirePasswordChange,
 }) => {
-  const [selectedRole, setSelectedRole] = useState<'super_admin' | 'store_manager' | 'cashier'>('super_admin');
-  const [email, setEmail] = useState('demo@billing.local');
+  const detectInitialRole = (): 'super_admin' | 'store_manager' | 'cashier' => {
+    if (initialRole) return initialRole;
+    try {
+      const hash = (typeof window !== 'undefined' ? window.location.hash : '').toLowerCase();
+      const search = (typeof window !== 'undefined' ? window.location.search : '').toLowerCase();
+      if (hash.includes('cashier') || search.includes('cashier')) return 'cashier';
+      if (hash.includes('manager') || search.includes('manager')) return 'store_manager';
+    } catch { }
+    return 'super_admin';
+  };
+
+  const [selectedRole, setSelectedRole] = useState<'super_admin' | 'store_manager' | 'cashier'>(detectInitialRole);
+  const [email, setEmail] = useState(() => {
+    const role = detectInitialRole();
+    if (role === 'cashier') return 'cashier@billing.local';
+    if (role === 'store_manager') return 'manager@billing.local';
+    return 'demo@billing.local';
+  });
   const [password, setPassword] = useState('Password123!');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
@@ -126,7 +145,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   };
 
   return (
-    <div className="login-split-page">
+    <div className={`login-split-page ${selectedRole === 'cashier' ? 'theme-cashier' : ''}`}>
       {/* Left Branding Pane - Matching Screen 7 */}
       <div className="login-left-pane">
         <div className="login-left-content">
@@ -137,11 +156,22 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
           <div className="login-hero-copy">
             <h1 className="login-hero-title">
-              Your Business. <br />
-              <span className="login-hero-highlight">Our Platform.</span>
+              {selectedRole === 'cashier' ? (
+                <>
+                  Cashier POS. <br />
+                  <span className="login-hero-highlight">High Speed.</span>
+                </>
+              ) : (
+                <>
+                  Your Business. <br />
+                  <span className="login-hero-highlight">Our Platform.</span>
+                </>
+              )}
             </h1>
             <p className="login-hero-sub">
-              Manage sales, inventory, customers and more — all in one place.
+              {selectedRole === 'cashier'
+                ? 'High-speed billing counter, cash drawer balancing & instant barcode checkout.'
+                : 'Manage sales, inventory, customers and more — all in one place.'}
             </p>
           </div>
 
@@ -273,10 +303,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   flexDirection: 'column',
                   alignItems: 'center',
                   gap: '4px',
-                  background: selectedRole === 'cashier' ? '#ffffff' : 'transparent',
-                  color: selectedRole === 'cashier' ? '#059669' : '#64748b',
-                  boxShadow: selectedRole === 'cashier' ? '0 2px 8px rgba(5, 150, 105, 0.15)' : 'none',
-                  borderBottom: selectedRole === 'cashier' ? '2px solid #059669' : 'none',
+                  background: selectedRole === 'cashier' ? '#0F766E' : 'transparent',
+                  color: selectedRole === 'cashier' ? '#ffffff' : '#64748b',
+                  boxShadow: selectedRole === 'cashier' ? '0 2px 8px rgba(15, 118, 110, 0.25)' : 'none',
+                  borderBottom: selectedRole === 'cashier' ? '2px solid #115E59' : 'none',
                   transition: 'all 0.15s ease',
                 }}
               >
@@ -320,6 +350,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                     type={selectedRole === 'super_admin' ? 'email' : 'text'}
                     className="form-input"
                     required
+                    autoFocus
                     placeholder={selectedRole === 'cashier' ? 'e.g. CSH-101 or cashier@billing.local' : selectedRole === 'store_manager' ? 'e.g. @karthik.r or manager@store.com' : 'you@business.com'}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -391,14 +422,16 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 type="submit"
                 className="btn-primary-login"
                 disabled={isLoading}
-                style={{
-                  background:
-                    selectedRole === 'super_admin'
-                      ? 'linear-gradient(135deg, #4338ca 0%, #6d4aff 100%)'
-                      : selectedRole === 'store_manager'
-                      ? 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)'
-                      : 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
-                }}
+                style={
+                  selectedRole === 'cashier'
+                    ? { background: 'var(--primary)', color: 'var(--text-on-primary)' }
+                    : {
+                        background:
+                          selectedRole === 'super_admin'
+                            ? 'linear-gradient(135deg, #4338ca 0%, #6d4aff 100%)'
+                            : 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+                      }
+                }
               >
                 {isLoading ? (
                   <span className="btn-loading-content">
@@ -472,9 +505,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   style={{
                     padding: '8px 4px',
                     borderRadius: '8px',
-                    border: '1px solid #a7f3d0',
-                    background: selectedRole === 'cashier' ? '#ecfdf5' : '#ffffff',
-                    color: '#047857',
+                    border: selectedRole === 'cashier' ? '1px solid #14B8A6' : '1px solid #D9E5E5',
+                    background: selectedRole === 'cashier' ? '#E6F4F3' : '#ffffff',
+                    color: selectedRole === 'cashier' ? '#0F766E' : '#475569',
                     fontSize: '0.72rem',
                     fontWeight: 700,
                     cursor: 'pointer',
@@ -486,7 +519,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   title="Cashier (cashier@billing.local)"
                 >
                   <span>💳 Cashier</span>
-                  <span style={{ fontSize: '0.65rem', color: '#059669', fontWeight: 600 }}>cashier@billing.local</span>
+                  <span style={{ fontSize: '0.65rem', color: selectedRole === 'cashier' ? '#0F766E' : '#0F766E', fontWeight: 600 }}>cashier@billing.local</span>
                 </button>
               </div>
             </div>

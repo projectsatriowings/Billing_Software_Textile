@@ -1,0 +1,371 @@
+/* ==========================================================================
+   CASHIER THEME: "TEAL & SLATE"
+   Scoped strictly under .theme-cashier to avoid any leakage to other roles
+   ========================================================================== */
+
+.theme-cashier {
+  --sidebar: #0F2D2E;
+  --primary: #0F766E;
+  --primary-hover: #115E59;
+  --primary-soft: #E6F4F3;
+  --bg: #F4F8F8;
+  --surface: #FFFFFF;
+  --border: #D9E5E5;
+  --text: #0F172A;
+  --text-muted: #475569;
+  --text-on-primary: #FFFFFF;
+  --danger: #B91C1C;
+  --danger-bg: #FEE2E2;
+  --success: #15803D;
+  --success-bg: #DCFCE7;
+  --ring: #14B8A6;
+  color-scheme: light;
+}
+
+/* --------------------------------------------------------------------------
+   1. CASHIER LOGIN SCREEN STYLES
+   -------------------------------------------------------------------------- */
+.theme-cashier.login-split-page,
+.theme-cashier .login-split-page {
+  background-color: var(--bg) !important;
+  color: var(--text) !important;
+  font-family: 'Plus Jakarta Sans', 'Geist', system-ui, -apple-system, sans-serif;
+}
+
+/* Desktop Left Brand Panel */
+.theme-cashier.login-split-page .login-left-pane,
+.theme-cashier .login-left-pane {
+  background: var(--sidebar) !important;
+  border-right: 1px solid rgba(217, 229, 229, 0.15) !important;
+  color: #FFFFFF !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.theme-cashier.login-split-page .login-left-pane::before,
+.theme-cashier .login-left-pane::before {
+  background: radial-gradient(circle, rgba(20, 184, 166, 0.22) 0%, transparent 70%) !important;
+}
+
+.theme-cashier.login-split-page .login-brand,
+.theme-cashier .login-brand {
+  color: #FFFFFF !important;
+}
+
+.theme-cashier.login-split-page .brand-name,
+.theme-cashier .brand-name {
+  color: #FFFFFF !important;
+}
+
+.theme-cashier.login-split-page .login-hero-title,
+.theme-cashier .login-hero-title {
+  color: #FFFFFF !important;
+}
+
+.theme-cashier.login-split-page .login-hero-highlight,
+.theme-cashier .login-hero-highlight {
+  color: var(--ring) !important;
+}
+
+.theme-cashier.login-split-page .login-hero-sub,
+.theme-cashier .login-hero-sub {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.theme-cashier.login-split-page .preview-tablet-frame,
+.theme-cashier .preview-tablet-frame {
+  background: #FFFFFF !important;
+  border: 1px solid rgba(217, 229, 229, 0.3) !important;
+  box-shadow: 0 20px 45px -10px rgba(15, 45, 46, 0.45) !important;
+}
+
+.theme-cashier.login-split-page .tablet-title-bar,
+.theme-cashier .tablet-title-bar {
+  border-color: var(--border) !important;
+  color: var(--text-muted) !important;
+}
+
+.theme-cashier.login-split-page .chip-val,
+.theme-cashier .chip-val {
+  color: var(--primary) !important;
+}
+
+.theme-cashier.login-split-page .value-tag,
+.theme-cashier .value-tag {
+  background: rgba(20, 184, 166, 0.15) !important;
+  border: 1px solid rgba(20, 184, 166, 0.3) !important;
+  color: #FFFFFF !important;
+}
+
+/* Right Form Pane & Centered Login Card */
+.theme-cashier.login-split-page .login-right-pane,
+.theme-cashier .login-right-pane {
+  background: var(--bg) !important;
+}
+
+.theme-cashier.login-split-page .nav-back-home-btn,
+.theme-cashier .nav-back-home-btn {
+  background: var(--surface) !important;
+  color: var(--primary) !important;
+  border: 1px solid var(--border) !important;
+  min-height: 44px;
+}
+
+.theme-cashier.login-split-page .nav-back-home-btn:hover,
+.theme-cashier .nav-back-home-btn:hover {
+  background: var(--primary-soft) !important;
+  color: var(--primary-hover) !important;
+  border-color: var(--ring) !important;
+}
+
+.theme-cashier.login-split-page .login-card,
+.theme-cashier .login-card {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 24px rgba(15, 45, 46, 0.08) !important;
+  padding: 2.5rem 2rem !important;
+}
+
+.theme-cashier.login-split-page .login-card-title,
+.theme-cashier .login-card-title {
+  color: var(--text) !important;
+}
+
+.theme-cashier.login-split-page .login-card-subtitle,
+.theme-cashier .login-card-subtitle {
+  color: var(--text-muted) !important;
+}
+
+/* Inputs & Form Groups */
+.theme-cashier.login-split-page .login-auth-form .form-group,
+.theme-cashier .login-auth-form .form-group {
+  gap: 0.4rem;
+}
+
+.theme-cashier.login-split-page .login-auth-form .form-label,
+.theme-cashier .login-auth-form .form-label {
+  color: var(--text-muted) !important;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.theme-cashier.login-split-page .form-input,
+.theme-cashier .form-input {
+  background: #FFFFFF !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 8px !important;
+  height: 48px !important;
+  min-height: 48px !important;
+  font-size: 16px !important;
+  color: var(--text) !important;
+  padding: 0 1rem !important;
+  box-sizing: border-box !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+.theme-cashier.login-split-page .form-input:focus,
+.theme-cashier .form-input:focus {
+  border-color: var(--primary) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px var(--ring) !important;
+}
+
+.theme-cashier.login-split-page .password-input-wrapper .form-input,
+.theme-cashier .password-input-wrapper .form-input {
+  padding-right: 3rem !important;
+}
+
+.theme-cashier.login-split-page .password-toggle-btn,
+.theme-cashier .password-toggle-btn {
+  color: var(--text-muted) !important;
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.theme-cashier.login-split-page .password-toggle-btn:hover,
+.theme-cashier .password-toggle-btn:hover {
+  color: var(--primary) !important;
+}
+
+/* Checkbox and Forgot Password Link */
+.theme-cashier.login-split-page .checkbox-label,
+.theme-cashier .checkbox-label {
+  color: var(--text-muted) !important;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+}
+
+.theme-cashier.login-split-page .forgot-password-link,
+.theme-cashier .forgot-password-link {
+  color: var(--primary) !important;
+  font-weight: 600 !important;
+  font-size: 0.9rem !important;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.theme-cashier.login-split-page .forgot-password-link:hover,
+.theme-cashier .forgot-password-link:hover {
+  color: var(--primary-hover) !important;
+  text-decoration: underline !important;
+}
+
+/* Primary Login Button */
+.theme-cashier.login-split-page .btn-primary-login,
+.theme-cashier .btn-primary-login {
+  background: var(--primary) !important;
+  color: var(--text-on-primary) !important;
+  height: 48px !important;
+  min-height: 48px !important;
+  border-radius: 8px !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  width: 100% !important;
+  border: none !important;
+  cursor: pointer !important;
+  box-shadow: 0 4px 14px rgba(15, 118, 110, 0.25) !important;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease !important;
+}
+
+.theme-cashier.login-split-page .btn-primary-login:hover:not(:disabled),
+.theme-cashier .btn-primary-login:hover:not(:disabled) {
+  background: var(--primary-hover) !important;
+  box-shadow: 0 6px 18px rgba(17, 94, 89, 0.35) !important;
+  transform: translateY(-1px);
+}
+
+.theme-cashier.login-split-page .btn-primary-login:disabled,
+.theme-cashier .btn-primary-login:disabled {
+  opacity: 0.7 !important;
+  cursor: not-allowed !important;
+}
+
+/* Error message / invalid input */
+.theme-cashier.login-split-page .login-alert-error,
+.theme-cashier .login-alert-error {
+  background: var(--danger-bg) !important;
+  border: 1px solid var(--danger) !important;
+  color: var(--danger) !important;
+  border-radius: 8px !important;
+  padding: 0.75rem 1rem !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+}
+
+/* Quick Role Tab & Demo buttons for Cashier */
+.theme-cashier .role-tab-cashier-active {
+  background: var(--primary) !important;
+  color: var(--text-on-primary) !important;
+  box-shadow: 0 2px 8px rgba(15, 118, 110, 0.3) !important;
+  border-bottom: 2px solid var(--primary-hover) !important;
+}
+
+.theme-cashier .demo-cashier-active {
+  background: var(--primary-soft) !important;
+  border-color: var(--ring) !important;
+  color: var(--primary) !important;
+}
+
+/* Footer Register link */
+.theme-cashier.login-split-page .register-highlight-link,
+.theme-cashier .register-highlight-link {
+  color: var(--primary) !important;
+  font-weight: 700 !important;
+}
+
+.theme-cashier.login-split-page .register-highlight-link:hover,
+.theme-cashier .register-highlight-link:hover {
+  color: var(--primary-hover) !important;
+  text-decoration: underline !important;
+}
+
+/* --------------------------------------------------------------------------
+   2. CASHIER LOGGED-IN WORKSPACE ("IN THE CASHIER LOGIN")
+   Applies to the Cashier Terminal as shown in the screenshot
+   -------------------------------------------------------------------------- */
+.theme-cashier.app-container,
+.theme-cashier .app-sidebar {
+  background: var(--sidebar) !important;
+  border-right: 1px solid rgba(217, 229, 229, 0.12) !important;
+  box-shadow: 4px 0 24px rgba(15, 45, 46, 0.25) !important;
+}
+
+.theme-cashier .sidebar-brand-icon {
+  background: rgba(20, 184, 166, 0.15) !important;
+  color: var(--ring) !important;
+}
+
+.theme-cashier .sidebar-nav-item {
+  color: #E2E8F0 !important;
+}
+
+.theme-cashier .sidebar-nav-item:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #FFFFFF !important;
+}
+
+.theme-cashier .sidebar-nav-item.active {
+  background: var(--primary) !important;
+  color: var(--text-on-primary) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 2px 10px rgba(15, 118, 110, 0.35) !important;
+}
+
+.theme-cashier .sidebar-nav-item.active .nav-icon {
+  color: #FFFFFF !important;
+}
+
+.theme-cashier .sidebar-nav-item .nav-shift-badge.active {
+  background: var(--ring) !important;
+  color: #0F2D2E !important;
+  font-weight: 800 !important;
+}
+
+.theme-cashier .sidebar-user-avatar {
+  background: var(--primary) !important;
+  color: var(--text-on-primary) !important;
+}
+
+.theme-cashier .user-status-dot {
+  background: var(--ring) !important;
+}
+
+/* Cashier POS Badges & Accent Buttons */
+.theme-cashier .top-pos-bento-badge {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+}
+
+.theme-cashier .top-pos-badge-icon.branch,
+.theme-cashier .top-pos-badge-icon.register {
+  color: var(--primary) !important;
+  background: var(--primary-soft) !important;
+}
+
+.theme-cashier .btn-cash-primary,
+.theme-cashier .btn-tender-cash,
+.theme-cashier .btn-primary,
+.theme-cashier .btn-checkout-bento,
+.theme-cashier .find-products-btn,
+.theme-cashier button.btn-tender-active {
+  background: var(--primary) !important;
+  color: var(--text-on-primary) !important;
+}
+
+.theme-cashier .btn-cash-primary:hover,
+.theme-cashier .btn-tender-cash:hover,
+.theme-cashier .btn-primary:hover,
+.theme-cashier .btn-checkout-bento:hover,
+.theme-cashier .find-products-btn:hover {
+  background: var(--primary-hover) !important;
+}

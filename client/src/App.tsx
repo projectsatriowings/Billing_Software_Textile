@@ -1766,8 +1766,12 @@ export function App() {
       if (path === '/user-management') {
         setView('dashboard');
         setActiveTab('user-management');
-      } else if (['landing', 'login', 'register', 'selector', 'dashboard'].includes(hash)) {
-        setView(hash as any);
+      } else if (['landing', 'login', 'register', 'selector', 'dashboard'].includes(hash) || hash === 'cashier-login' || hash.startsWith('login')) {
+        if (hash === 'cashier-login') {
+          setView('login');
+        } else {
+          setView(hash.split('?')[0] as any);
+        }
       } else if (hash === 'stock-transfer' || path === '/stock-transfer') {
         setView('dashboard');
         setActiveTab('stock-transfer');
@@ -1794,8 +1798,8 @@ export function App() {
       const currentHash = window.location.hash.replace('#', '');
       if (!token) {
         setLoading(false);
-        if (currentHash === 'login' || currentHash === 'register') {
-          setView(currentHash);
+        if (currentHash === 'login' || currentHash === 'register' || currentHash === 'cashier-login' || currentHash.startsWith('login')) {
+          setView(currentHash === 'cashier-login' ? 'login' : currentHash.split('?')[0] as any);
         } else {
           setView('landing');
         }
@@ -1856,7 +1860,7 @@ export function App() {
           setView('selector');
         } else if (currentHash === 'register') {
           setView('register');
-        } else if (currentHash === 'login') {
+        } else if (currentHash === 'login' || currentHash === 'cashier-login' || currentHash.startsWith('login')) {
           setView('login');
         } else {
           setView('dashboard');
@@ -6641,7 +6645,7 @@ export function App() {
       branches={branches}
       onGlobalBranchChange={handleGlobalBranchChange}
     >
-      <div className="app-container">
+      <div className={`app-container ${user?.role === 'cashier' ? 'theme-cashier' : ''}`}>
         {/* Enterprise Custom Toast Notifications */}
         {toasts.length > 0 && (
           <div className="enterprise-toast-container" aria-live="polite">
