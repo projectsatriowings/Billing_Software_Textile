@@ -262,21 +262,22 @@ export async function runSmartClosingAudit(
   // --------------------------------------------------------------------------
   const salesMismatches = await db.query<any>(
     `SELECT i.id, i.number, i.total_minor, i.subtotal_minor, i.discount_minor,
-            i.cgst_minor, i.sgst_minor, i.igst_minor, i.round_off_minor,
-            COALESCE(SUM(il.total_minor), 0)::bigint AS lines_total_minor
+            i.taxable_minor, i.cgst_minor, i.sgst_minor, i.igst_minor, i.round_off_minor,
+            COALESCE(SUM(il.total_minor), 0)::bigint AS lines_total_minor,
+            COUNT(il.id) AS lines_count
      FROM invoices i
      LEFT JOIN invoice_lines il ON il.invoice_id = i.id
      WHERE i.tenant_id = ? AND i.branch_id = ? AND i.bdate = ? AND i.status = 'posted' AND i.kind = 'sale'
        ${shiftClause} ${cashierClause} ${counterClause}
-     GROUP BY i.id, i.number, i.total_minor, i.subtotal_minor, i.discount_minor, i.cgst_minor, i.sgst_minor, i.igst_minor, i.round_off_minor
-     HAVING i.total_minor != (i.subtotal_minor - i.discount_minor + i.cgst_minor + i.sgst_minor + i.igst_minor + i.round_off_minor)
-        OR ABS(i.total_minor - (COALESCE(SUM(il.total_minor), 0)::bigint + i.round_off_minor)) > 5
+     GROUP BY i.id, i.number, i.total_minor, i.subtotal_minor, i.discount_minor, i.taxable_minor, i.cgst_minor, i.sgst_minor, i.igst_minor, i.round_off_minor
+     HAVING ABS(i.total_minor - (COALESCE(i.taxable_minor, i.subtotal_minor - COALESCE(i.discount_minor, 0)) + i.cgst_minor + i.sgst_minor + i.igst_minor + i.round_off_minor)) > 2
+        OR (COUNT(il.id) > 0 AND ABS(i.total_minor - (COALESCE(SUM(il.total_minor), 0)::bigint - COALESCE(i.discount_minor, 0) + i.round_off_minor)) > 5)
      LIMIT 15`,
     [tenantId, branchId, bdate, ...shiftParams, ...cashierParams, ...counterParams],
   );
   if (salesMismatches.length > 0) {
     const totalDiffMinor = salesMismatches.reduce((acc: number, m: any) => {
-      const calcTotal = Number(m.subtotalMinor ?? m.subtotal_minor ?? 0) - Number(m.discountMinor ?? m.discount_minor ?? 0) +
+      const calcTotal = Number(m.taxableMinor ?? m.taxable_minor ?? (Number(m.subtotalMinor ?? m.subtotal_minor ?? 0) - Number(m.discountMinor ?? m.discount_minor ?? 0))) +
         Number(m.cgstMinor ?? m.cgst_minor ?? 0) + Number(m.sgstMinor ?? m.sgst_minor ?? 0) +
         Number(m.igstMinor ?? m.igst_minor ?? 0) + Number(m.roundOffMinor ?? m.round_off_minor ?? 0);
       return acc + Math.abs(Number(m.totalMinor ?? m.total_minor ?? 0) - calcTotal);
@@ -311,13 +312,14 @@ export async function runSmartClosingAudit(
   // --------------------------------------------------------------------------
   const paymentMismatches = await db.query<any>(
     `SELECT i.id, i.number, i.total_minor, i.paid_minor,
+            GREATEST(COALESCE(i.applied_minor, 0), COALESCE(i.exchange_adjusted_minor, 0))::bigint AS applied_minor,
             COALESCE(SUM(p.amount_minor), 0)::bigint AS ledger_payments_minor
      FROM invoices i
      LEFT JOIN payments p ON p.invoice_id = i.id AND (p.status IS NULL OR p.status = 'posted') AND p.kind = 'receipt'
      WHERE i.tenant_id = ? AND i.branch_id = ? AND i.bdate = ? AND i.status = 'posted' AND i.kind = 'sale'
        ${shiftClause} ${cashierClause} ${counterClause}
-     GROUP BY i.id, i.number, i.total_minor, i.paid_minor
-     HAVING i.paid_minor != COALESCE(SUM(p.amount_minor), 0)::bigint
+     GROUP BY i.id, i.number, i.total_minor, i.paid_minor, i.applied_minor, i.exchange_adjusted_minor
+     HAVING ABS(i.paid_minor - (COALESCE(SUM(p.amount_minor), 0)::bigint + GREATEST(COALESCE(i.applied_minor, 0), COALESCE(i.exchange_adjusted_minor, 0))::bigint)) > 2
      LIMIT 15`,
     [tenantId, branchId, bdate, ...shiftParams, ...cashierParams, ...counterParams],
   );
@@ -333,7 +335,8 @@ export async function runSmartClosingAudit(
 
   if (paymentMismatches.length > 0 || orphanPayments.length > 0) {
     const totalDiscrepancyMinor = paymentMismatches.reduce((acc: number, m: any) => {
-      return acc + Math.abs(Number(m.paidMinor ?? m.paid_minor ?? 0) - Number(m.ledgerPaymentsMinor ?? m.ledger_payments_minor ?? 0));
+      const settled = Number(m.ledgerPaymentsMinor ?? m.ledger_payments_minor ?? 0) + Number(m.appliedMinor ?? m.applied_minor ?? 0);
+      return acc + Math.abs(Number(m.paidMinor ?? m.paid_minor ?? 0) - settled);
     }, 0) + orphanPayments.reduce((acc: number, p: any) => acc + Number(p.amountMinor ?? p.amount_minor ?? 0), 0);
 
     registerIssue({
@@ -352,8 +355,9 @@ export async function runSmartClosingAudit(
           number: m.number,
           totalMinor: Number(m.totalMinor ?? m.total_minor),
           paidMinor: Number(m.paidMinor ?? m.paid_minor),
+          appliedMinor: Number(m.appliedMinor ?? m.applied_minor),
           ledgerPaymentsMinor: Number(m.ledgerPaymentsMinor ?? m.ledger_payments_minor),
-          diffMinor: Math.abs(Number(m.paidMinor ?? m.paid_minor) - Number(m.ledgerPaymentsMinor ?? m.ledger_payments_minor)),
+          diffMinor: Math.abs(Number(m.paidMinor ?? m.paid_minor) - (Number(m.ledgerPaymentsMinor ?? m.ledger_payments_minor) + Number(m.appliedMinor ?? m.applied_minor))),
         })),
         orphanPayments: orphanPayments.map((p: any) => ({
           id: p.id,

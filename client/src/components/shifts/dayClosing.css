@@ -1080,6 +1080,33 @@
   flex-wrap: wrap;
 }
 
+.smart-audit-run-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.95rem;
+  border-radius: 9px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.smart-audit-run-btn:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
+.smart-audit-run-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .smart-audit-toggle-btn {
   display: inline-flex;
   align-items: center;
@@ -1148,7 +1175,8 @@
   }
 }
 
-.smart-audit-panel-header {
+.smart-audit-panel-header,
+.smart-audit-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -1156,6 +1184,27 @@
   flex-wrap: wrap;
   border-bottom: 1px solid #f1f5f9;
   padding-bottom: 1rem;
+}
+
+.smart-audit-header-title {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.smart-audit-header-title h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+}
+
+.smart-audit-header-title p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #64748b;
+  font-weight: 500;
 }
 
 .smart-audit-panel-title-area {
@@ -1201,7 +1250,8 @@
   border: 1px solid #e2e8f0;
 }
 
-.smart-audit-filter-btn {
+.smart-audit-filter-btn,
+.smart-audit-filter-tab {
   padding: 0.35rem 0.75rem;
   border-radius: 8px;
   font-size: 0.775rem;
@@ -1213,7 +1263,14 @@
   transition: all 0.15s ease;
 }
 
-.smart-audit-filter-btn.active {
+.smart-audit-filter-btn:hover,
+.smart-audit-filter-tab:hover {
+  color: #0f172a;
+  background: #f1f5f9;
+}
+
+.smart-audit-filter-btn.active,
+.smart-audit-filter-tab.active {
   background: #ffffff;
   color: #0f172a;
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
@@ -1293,7 +1350,8 @@
   background: #f8fafc;
 }
 
-.smart-audit-issue-row {
+.smart-audit-issue-row,
+.smart-audit-issue-header {
   padding: 0.9rem 1.25rem;
   display: flex;
   align-items: center;
@@ -1319,6 +1377,9 @@
   text-transform: uppercase;
   letter-spacing: 0.03em;
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
 }
 
 .smart-audit-severity-tag.critical {
@@ -1342,18 +1403,32 @@
 .smart-audit-issue-info {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: 0.25rem;
   min-width: 0;
+  flex: 1;
+}
+
+.smart-audit-issue-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
 }
 
 .smart-audit-issue-title {
-  font-size: 0.875rem;
+  margin: 0;
+  font-size: 0.925rem;
   font-weight: 800;
   color: #0f172a;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  flex-wrap: wrap;
+}
+
+.smart-audit-issue-title-text {
+  font-size: 0.925rem;
+  font-weight: 800;
+  color: #0f172a;
 }
 
 .smart-audit-detector-badge {
@@ -1365,27 +1440,77 @@
   border-radius: 5px;
 }
 
-.smart-audit-issue-summary {
-  font-size: 0.8rem;
+.smart-audit-issue-summary,
+.smart-audit-issue-desc {
+  margin: 0.15rem 0 0 0;
+  font-size: 0.815rem;
   color: #475569;
-  line-height: 1.35;
+  line-height: 1.4;
 }
 
-.smart-audit-issue-meta {
+.smart-audit-context-tags {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-top: 0.35rem;
+}
+
+.smart-audit-context-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #475569;
+  background: #f1f5f9;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.smart-audit-context-tag.detector-name {
+  background: #eef2ff;
+  border-color: #c7d2fe;
+  color: #4338ca;
+  font-weight: 700;
+}
+
+.smart-audit-issue-meta,
+.smart-audit-issue-metrics {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
   flex-shrink: 0;
 }
 
-.smart-audit-amount-badge {
-  font-size: 0.875rem;
-  font-weight: 800;
-  color: #0f172a;
+.smart-audit-amount-badge,
+.smart-audit-metric-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.1rem;
   background: #f8fafc;
-  padding: 0.3rem 0.65rem;
+  padding: 0.35rem 0.7rem;
   border-radius: 8px;
   border: 1px solid #e2e8f0;
+}
+
+.smart-audit-amount-label,
+.smart-audit-metric-label {
+  font-size: 0.675rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.smart-audit-amount-value,
+.smart-audit-metric-value {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #0f172a;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 .smart-audit-reviewed-badge {
@@ -1516,4 +1641,100 @@
   background: #ecfdf5;
   border-color: #a7f3d0;
   color: #047857;
+}
+
+/* Detectors Grid (All 12 Detectors tab) */
+.smart-audit-detectors-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.85rem;
+}
+
+.smart-audit-detector-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1rem 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  transition: all 0.15s ease;
+}
+
+.smart-audit-detector-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+}
+
+.smart-audit-detector-card.passed {
+  border-left: 4px solid #10b981;
+}
+
+.smart-audit-detector-card.failed {
+  border-left: 4px solid #ef4444;
+}
+
+.smart-audit-detector-card.warning {
+  border-left: 4px solid #f59e0b;
+}
+
+.smart-audit-detector-card.info {
+  border-left: 4px solid #3b82f6;
+}
+
+.smart-audit-detector-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.smart-audit-detector-name {
+  font-size: 0.875rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.smart-audit-detector-badge {
+  font-size: 0.675rem;
+  font-weight: 700;
+  padding: 0.18rem 0.5rem;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.smart-audit-detector-badge.passed {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.smart-audit-detector-badge.failed {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.smart-audit-detector-badge.warning {
+  background: #fffbeb;
+  color: #d97706;
+}
+
+.smart-audit-detector-badge.info {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.smart-audit-detector-cat {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #64748b;
+  letter-spacing: 0.04em;
+}
+
+.smart-audit-detector-desc {
+  font-size: 0.785rem;
+  color: #475569;
+  line-height: 1.4;
+  margin: 0;
 }

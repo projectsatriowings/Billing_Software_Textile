@@ -1382,47 +1382,52 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
               {/* Expandable Audit Details Panel */}
               {auditExpanded && (
                 <div className="smart-audit-panel">
-                  <div className="smart-audit-header">
-                    <div className="smart-audit-header-title">
-                      <h3>Smart Closing Audit & Verification Report</h3>
-                      <p>
-                        Intelligent multi-point financial mismatch detection, transaction ledger reconciliation, and business anomaly analysis.
-                      </p>
+                  <div className="smart-audit-panel-header">
+                    <div className="smart-audit-panel-title-area">
+                      <div className="smart-audit-panel-icon">
+                        <ShieldAlertIcon size={20} />
+                      </div>
+                      <div className="smart-audit-header-title">
+                        <h3>Smart Closing Audit & Verification Report</h3>
+                        <p>
+                          Intelligent multi-point financial mismatch detection, transaction ledger reconciliation, and business anomaly analysis.
+                        </p>
+                      </div>
                     </div>
 
                     <div className="smart-audit-filter-tabs">
                       <button
                         type="button"
                         onClick={() => setAuditFilter('all')}
-                        className={`smart-audit-filter-tab ${auditFilter === 'all' ? 'active' : ''}`}
+                        className={`smart-audit-filter-btn ${auditFilter === 'all' ? 'active' : ''}`}
                       >
                         All Issues ({auditData.issues.length})
                       </button>
                       <button
                         type="button"
                         onClick={() => setAuditFilter('critical')}
-                        className={`smart-audit-filter-tab ${auditFilter === 'critical' ? 'active' : ''}`}
+                        className={`smart-audit-filter-btn ${auditFilter === 'critical' ? 'active' : ''}`}
                       >
                         Critical ({auditData.criticalCount})
                       </button>
                       <button
                         type="button"
                         onClick={() => setAuditFilter('warning')}
-                        className={`smart-audit-filter-tab ${auditFilter === 'warning' ? 'active' : ''}`}
+                        className={`smart-audit-filter-btn ${auditFilter === 'warning' ? 'active' : ''}`}
                       >
                         Warnings ({auditData.warningCount})
                       </button>
                       <button
                         type="button"
                         onClick={() => setAuditFilter('info')}
-                        className={`smart-audit-filter-tab ${auditFilter === 'info' ? 'active' : ''}`}
+                        className={`smart-audit-filter-btn ${auditFilter === 'info' ? 'active' : ''}`}
                       >
                         Observations ({auditData.infoCount})
                       </button>
                       <button
                         type="button"
                         onClick={() => setAuditFilter('detectors')}
-                        className={`smart-audit-filter-tab ${auditFilter === 'detectors' ? 'active' : ''}`}
+                        className={`smart-audit-filter-btn ${auditFilter === 'detectors' ? 'active' : ''}`}
                       >
                         All 12 Detectors
                       </button>
@@ -1499,52 +1504,54 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                               className={`smart-audit-issue-card ${issue.severity} ${isReviewed ? 'reviewed' : ''}`}
                             >
                               <div
-                                className="smart-audit-issue-header"
+                                className="smart-audit-issue-row"
                                 onClick={() => toggleIssueExpanded(issue.id)}
                               >
-                                <div>
-                                  <div className="smart-audit-issue-title-row">
-                                    <span className={`smart-audit-severity-tag ${issue.severity}`}>
-                                      {issue.severity === 'critical' ? (
-                                        <AlertOctagonIcon size={12} />
-                                      ) : issue.severity === 'warning' ? (
-                                        <AlertTriangleIcon size={12} />
-                                      ) : (
-                                        <InfoIcon size={12} />
-                                      )}
-                                      {issue.severity.toUpperCase()}
-                                    </span>
-                                    <h4 className="smart-audit-issue-title">{issue.title}</h4>
-                                  </div>
-                                  <p className="smart-audit-issue-desc">{issue.description}</p>
+                                <div className="smart-audit-issue-main">
+                                  <div className="smart-audit-issue-info">
+                                    <div className="smart-audit-issue-title-row">
+                                      <span className={`smart-audit-severity-tag ${issue.severity}`}>
+                                        {issue.severity === 'critical' ? (
+                                          <AlertOctagonIcon size={12} />
+                                        ) : issue.severity === 'warning' ? (
+                                          <AlertTriangleIcon size={12} />
+                                        ) : (
+                                          <InfoIcon size={12} />
+                                        )}
+                                        {issue.severity.toUpperCase()}
+                                      </span>
+                                      <span className="smart-audit-issue-title-text">{issue.title}</span>
+                                    </div>
+                                    <p className="smart-audit-issue-summary">{issue.description}</p>
 
-                                  <div className="smart-audit-context-tags">
-                                    <span className="smart-audit-context-tag">
-                                      {detName}
-                                    </span>
-                                    {(issue.counterCode || issue.counterId) && (
-                                      <span className="smart-audit-context-tag">
-                                        Counter: {issue.counterCode || issue.counterId}
+                                    <div className="smart-audit-context-tags">
+                                      <span className="smart-audit-context-tag detector-name">
+                                        {detName}
                                       </span>
-                                    )}
-                                    {(issue.cashierName || issue.cashierId) && (
-                                      <span className="smart-audit-context-tag">
-                                        Cashier: {issue.cashierName || issue.cashierId}
-                                      </span>
-                                    )}
-                                    {issue.count != null && issue.count > 0 && (
-                                      <span className="smart-audit-context-tag">
-                                        {issue.count} Record(s)
-                                      </span>
-                                    )}
+                                      {(issue.counterCode || issue.counterId) && (
+                                        <span className="smart-audit-context-tag">
+                                          Counter: {issue.counterCode || issue.counterId}
+                                        </span>
+                                      )}
+                                      {(issue.cashierName || issue.cashierId) && (
+                                        <span className="smart-audit-context-tag">
+                                          Cashier: {issue.cashierName || issue.cashierId}
+                                        </span>
+                                      )}
+                                      {issue.count != null && issue.count > 0 && (
+                                        <span className="smart-audit-context-tag">
+                                          {issue.count} Record(s)
+                                        </span>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
 
-                                <div className="smart-audit-issue-metrics">
+                                <div className="smart-audit-issue-meta">
                                   {issue.amountMinor != null && (
-                                    <div className="smart-audit-metric-badge">
-                                      <span className="smart-audit-metric-label">Amount</span>
-                                      <span className="smart-audit-metric-value">{fmt(issue.amountMinor)}</span>
+                                    <div className="smart-audit-amount-badge">
+                                      <span className="smart-audit-amount-label">Variance</span>
+                                      <span className="smart-audit-amount-value">{fmt(issue.amountMinor)}</span>
                                     </div>
                                   )}
                                   <div className={`smart-audit-chevron ${isExpanded ? 'open' : ''}`}>
