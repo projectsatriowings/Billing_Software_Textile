@@ -1545,7 +1545,13 @@ body.theme-cashier .bento-empty-icon-ring,
   border: 2px solid var(--ring) !important;
 }
 
-/* 5.8 Shift Modals (Portaled into document.body with .theme-cashier) */
+/* --------------------------------------------------------------------------
+   5.8 SHIFT & CASHIER MODALS (Portaled into document.body with .theme-cashier)
+   Covers CashMovementModal, CloseShiftModal, OpenShiftModal, SelectCounterModal,
+   and ShiftClosingReportModal in complete Teal & Slate + Light Cream Theme.
+   -------------------------------------------------------------------------- */
+
+/* Modal Dialog Frame */
 body.theme-cashier .shift-bento-dialog,
 .theme-cashier .shift-bento-dialog {
   background: var(--surface) !important;
@@ -1553,40 +1559,438 @@ body.theme-cashier .shift-bento-dialog,
   background-image: none !important;
   border-radius: 20px !important;
   border: 1px solid var(--border) !important;
-  box-shadow: 0 12px 40px rgba(15, 45, 46, 0.16) !important;
+  box-shadow: 0 16px 48px rgba(15, 45, 46, 0.18), 0 4px 12px rgba(15, 45, 46, 0.08) !important;
 }
 
-body.theme-cashier .shift-bento-header,
-.theme-cashier .shift-bento-header {
-  background: transparent !important;
-  background-color: transparent !important;
-  border-bottom: 1px solid var(--border) !important;
-}
-
+/* Modal Top Accent Gradient Bars */
+body.theme-cashier .modal-top-accent.green-accent,
 body.theme-cashier .modal-top-accent.purple-accent,
+.theme-cashier .modal-top-accent.green-accent,
 .theme-cashier .modal-top-accent.purple-accent {
   background: linear-gradient(90deg, var(--sidebar) 0%, var(--primary) 50%, var(--ring) 100%) !important;
 }
 
+body.theme-cashier .modal-top-accent.amber-accent,
+.theme-cashier .modal-top-accent.amber-accent {
+  background: linear-gradient(90deg, #92400e 0%, #d97706 50%, #f59e0b 100%) !important;
+}
+
+/* Modal Header */
+body.theme-cashier .shift-bento-header,
+.theme-cashier .shift-bento-header {
+  background: var(--surface) !important;
+  background-color: var(--surface) !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+
+body.theme-cashier .shift-bento-title-wrap h3,
+.theme-cashier .shift-bento-title-wrap h3 {
+  color: var(--sidebar) !important;
+  font-weight: 800 !important;
+}
+
+body.theme-cashier .shift-bento-title-wrap p,
+.theme-cashier .shift-bento-title-wrap p {
+  color: var(--text-muted) !important;
+}
+
+body.theme-cashier .shift-bento-title-wrap p strong,
+.theme-cashier .shift-bento-title-wrap p strong {
+  color: var(--sidebar) !important;
+}
+
+body.theme-cashier .shift-ref-pill,
+.theme-cashier .shift-ref-pill {
+  background: var(--primary-soft) !important;
+  color: var(--primary) !important;
+  border: 1px solid rgba(20, 184, 166, 0.35) !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  font-weight: 700 !important;
+}
+
+body.theme-cashier .modal-close-btn,
+.theme-cashier .modal-close-btn {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text-muted) !important;
+  border-radius: 10px !important;
+}
+
+body.theme-cashier .modal-close-btn:hover,
+.theme-cashier .modal-close-btn:hover {
+  background: var(--danger-bg) !important;
+  border-color: var(--danger) !important;
+  color: var(--danger) !important;
+}
+
+/* Modal Header Icon Badges */
+body.theme-cashier .shift-bento-icon-badge.green,
+body.theme-cashier .shift-bento-icon-badge.purple,
+body.theme-cashier .shift-bento-icon-badge.indigo,
 body.theme-cashier .modal-icon-badge.purple,
+.theme-cashier .shift-bento-icon-badge.green,
+.theme-cashier .shift-bento-icon-badge.purple,
+.theme-cashier .shift-bento-icon-badge.indigo,
 .theme-cashier .modal-icon-badge.purple {
-  background: var(--primary) !important;
-  color: #FFFFFF !important;
-  box-shadow: 0 6px 16px rgba(15, 118, 110, 0.3) !important;
+  background: var(--primary-soft) !important;
+  color: var(--primary) !important;
+  border: 1px solid rgba(20, 184, 166, 0.4) !important;
+  box-shadow: 0 2px 6px rgba(15, 118, 110, 0.15) !important;
+}
+
+body.theme-cashier .shift-bento-icon-badge.green svg,
+body.theme-cashier .shift-bento-icon-badge.purple svg,
+body.theme-cashier .shift-bento-icon-badge.indigo svg,
+.theme-cashier .shift-bento-icon-badge.green svg,
+.theme-cashier .shift-bento-icon-badge.purple svg,
+.theme-cashier .shift-bento-icon-badge.indigo svg {
+  color: var(--primary) !important;
+  stroke: var(--primary) !important;
+}
+
+body.theme-cashier .shift-bento-icon-badge.amber,
+.theme-cashier .shift-bento-icon-badge.amber {
+  background: #FEF3C7 !important;
+  color: #D97706 !important;
+  border: 1px solid #FDE68A !important;
+}
+
+/* Modal Body */
+body.theme-cashier .shift-bento-body,
+.theme-cashier .shift-bento-body {
+  background: var(--bg) !important;
+  background-color: var(--bg) !important;
+}
+
+/* 4-Tile and 3-Tile Ribbon in Modals */
+body.theme-cashier .shift-bento-ribbon-tile,
+.theme-cashier .shift-bento-ribbon-tile {
+  background: var(--surface) !important;
+  background-color: var(--surface) !important;
+  background-image: none !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 1px 3px rgba(15, 45, 46, 0.04) !important;
+}
+
+body.theme-cashier .shift-bento-ribbon-tile.highlight,
+.theme-cashier .shift-bento-ribbon-tile.highlight {
+  background: linear-gradient(135deg, var(--primary-soft) 0%, #FAF7F2 100%) !important;
+  border: 1.5px solid var(--primary) !important;
+  box-shadow: 0 2px 8px rgba(15, 118, 110, 0.12) !important;
+}
+
+body.theme-cashier .ribbon-tile-label,
+.theme-cashier .ribbon-tile-label {
+  color: var(--text-muted) !important;
+  font-weight: 800 !important;
+}
+
+body.theme-cashier .ribbon-tile-label svg,
+.theme-cashier .ribbon-tile-label svg {
+  color: var(--primary) !important;
+}
+
+body.theme-cashier .ribbon-tile-val,
+.theme-cashier .ribbon-tile-val {
+  color: var(--sidebar) !important;
+  font-weight: 800 !important;
 }
 
 body.theme-cashier .ribbon-tile-val[style*="color: #4338ca"],
 body.theme-cashier .ribbon-tile-val[style*="color: #4f46e5"],
+body.theme-cashier .ribbon-tile-val[style*="color: #6366f1"],
+body.theme-cashier .ribbon-tile-val[style*="color: #7c3aed"],
 .theme-cashier .ribbon-tile-val[style*="color: #4338ca"],
-.theme-cashier .ribbon-tile-val[style*="color: #4f46e5"] {
+.theme-cashier .ribbon-tile-val[style*="color: #4f46e5"],
+.theme-cashier .ribbon-tile-val[style*="color: #6366f1"],
+.theme-cashier .ribbon-tile-val[style*="color: #7c3aed"] {
   color: var(--primary) !important;
 }
 
+body.theme-cashier .ribbon-tile-sub,
+.theme-cashier .ribbon-tile-sub {
+  color: var(--text-muted) !important;
+}
+
+/* Modal Panels */
+body.theme-cashier .shift-bento-panel,
+.theme-cashier .shift-bento-panel {
+  background: var(--surface) !important;
+  background-color: var(--surface) !important;
+  background-image: none !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 1px 3px rgba(15, 45, 46, 0.04) !important;
+}
+
+body.theme-cashier .shift-bento-panel-header,
+.theme-cashier .shift-bento-panel-header {
+  background: transparent !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+
+body.theme-cashier .panel-header-title,
+.theme-cashier .panel-header-title {
+  color: var(--sidebar) !important;
+  font-weight: 800 !important;
+}
+
+body.theme-cashier .panel-header-title-box svg,
+.theme-cashier .panel-header-title-box svg,
 body.theme-cashier .panel-header-title svg[style*="color: #4f46e5"],
 body.theme-cashier .panel-header-title svg[style*="color: #6366f1"],
 .theme-cashier .panel-header-title svg[style*="color: #4f46e5"],
 .theme-cashier .panel-header-title svg[style*="color: #6366f1"] {
   color: var(--primary) !important;
+}
+
+/* Movement Type Toggle Buttons */
+body.theme-cashier .movement-toggle-btn,
+.theme-cashier .movement-toggle-btn {
+  background: var(--surface) !important;
+  border: 2px solid var(--border) !important;
+  color: var(--text-muted) !important;
+  border-radius: 14px !important;
+  transition: all 0.18s ease !important;
+}
+
+body.theme-cashier .movement-toggle-btn:hover,
+.theme-cashier .movement-toggle-btn:hover {
+  background: var(--primary-soft) !important;
+  border-color: var(--primary) !important;
+  color: var(--primary-hover) !important;
+}
+
+body.theme-cashier .movement-toggle-btn.in.active,
+.theme-cashier .movement-toggle-btn.in.active {
+  background: var(--primary-soft) !important;
+  border-color: var(--primary) !important;
+  color: var(--primary-hover) !important;
+  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.2) !important;
+}
+
+body.theme-cashier .movement-toggle-btn.out.active,
+.theme-cashier .movement-toggle-btn.out.active {
+  background: #FEF3C7 !important;
+  border-color: #D97706 !important;
+  color: #92400E !important;
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.2) !important;
+}
+
+/* Rupee Input Box & Currency Badge */
+body.theme-cashier .rupee-input-wrapper,
+.theme-cashier .rupee-input-wrapper {
+  background: var(--surface) !important;
+  border: 2px solid var(--border) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 1px 3px rgba(15, 45, 46, 0.04) !important;
+  transition: all 0.2s ease !important;
+}
+
+body.theme-cashier .rupee-input-wrapper:focus-within,
+.theme-cashier .rupee-input-wrapper:focus-within {
+  background: var(--surface) !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.22), 0 4px 12px rgba(15, 118, 110, 0.08) !important;
+}
+
+body.theme-cashier .rupee-badge-prefix,
+.theme-cashier .rupee-badge-prefix {
+  background: var(--primary-soft) !important;
+  color: var(--primary) !important;
+  border: 1px solid rgba(20, 184, 166, 0.35) !important;
+  box-shadow: 0 2px 6px rgba(15, 118, 110, 0.15) !important;
+  border-radius: 10px !important;
+}
+
+body.theme-cashier .rupee-input,
+.theme-cashier .rupee-input {
+  color: var(--sidebar) !important;
+}
+
+/* Quick Amount Pills */
+body.theme-cashier .quick-pill,
+.theme-cashier .quick-pill {
+  background: var(--surface) !important;
+  border: 1.5px solid var(--border) !important;
+  color: var(--text) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 1px 2px rgba(15, 45, 46, 0.03) !important;
+  transition: all 0.18s ease !important;
+}
+
+body.theme-cashier .quick-pill:hover,
+.theme-cashier .quick-pill:hover {
+  border-color: var(--primary) !important;
+  background: var(--primary-soft) !important;
+  color: var(--primary-hover) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 3px 8px rgba(15, 118, 110, 0.14) !important;
+}
+
+body.theme-cashier .quick-pill.active,
+.theme-cashier .quick-pill.active {
+  background: var(--primary) !important;
+  border-color: var(--primary-hover) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 14px rgba(15, 118, 110, 0.35) !important;
+  transform: translateY(-1px) !important;
+}
+
+body.theme-cashier .quick-pill.active .quick-pill-check,
+.theme-cashier .quick-pill.active .quick-pill-check {
+  color: #FFFFFF !important;
+}
+
+/* Form Controls & Selects */
+body.theme-cashier .form-label,
+.theme-cashier .form-label {
+  color: var(--text-muted) !important;
+  font-weight: 700 !important;
+}
+
+body.theme-cashier .form-input,
+body.theme-cashier .form-select,
+body.theme-cashier select.form-input,
+.theme-cashier .form-input,
+.theme-cashier .form-select,
+.theme-cashier select.form-input {
+  background: var(--surface) !important;
+  border: 1.5px solid var(--border) !important;
+  color: var(--text) !important;
+  border-radius: 10px !important;
+}
+
+body.theme-cashier .form-input:focus,
+body.theme-cashier .form-select:focus,
+body.theme-cashier select.form-input:focus,
+.theme-cashier .form-input:focus,
+.theme-cashier .form-select:focus,
+.theme-cashier select.form-input:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.25) !important;
+}
+
+/* Right Column Live Calculation Card */
+body.theme-cashier .live-calc-box,
+.theme-cashier .live-calc-box {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 12px !important;
+}
+
+body.theme-cashier .live-calc-row,
+.theme-cashier .live-calc-row {
+  color: var(--text-muted) !important;
+}
+
+body.theme-cashier .live-calc-row strong,
+.theme-cashier .live-calc-row strong {
+  color: var(--sidebar) !important;
+}
+
+body.theme-cashier .live-calc-divider,
+.theme-cashier .live-calc-divider {
+  background: var(--border) !important;
+}
+
+body.theme-cashier .live-calc-result-box,
+.theme-cashier .live-calc-result-box {
+  background: var(--primary-soft) !important;
+  border: 1.5px solid rgba(20, 184, 166, 0.5) !important;
+  border-radius: 10px !important;
+}
+
+body.theme-cashier .calc-result-title,
+.theme-cashier .calc-result-title {
+  color: var(--primary) !important;
+}
+
+body.theme-cashier .calc-result-amount,
+.theme-cashier .calc-result-amount {
+  color: var(--primary-hover) !important;
+}
+
+/* Context & Policy Notice Cards in Panels */
+body.theme-cashier .shift-bento-panel > div[style*="background: #f8fafc"],
+.theme-cashier .shift-bento-panel > div[style*="background: #f8fafc"] {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+}
+
+body.theme-cashier .shift-bento-panel > div[style*="background: #f8fafc"] span,
+.theme-cashier .shift-bento-panel > div[style*="background: #f8fafc"] span {
+  color: var(--text-muted) !important;
+}
+
+body.theme-cashier .shift-bento-panel > div[style*="background: #f8fafc"] strong,
+.theme-cashier .shift-bento-panel > div[style*="background: #f8fafc"] strong {
+  color: var(--sidebar) !important;
+}
+
+body.theme-cashier .shift-bento-panel > div[style*="background: #f0fdf4"],
+.theme-cashier .shift-bento-panel > div[style*="background: #f0fdf4"] {
+  background: var(--primary-soft) !important;
+  border: 1px solid rgba(20, 184, 166, 0.35) !important;
+}
+
+body.theme-cashier .shift-bento-panel > div[style*="background: #f0fdf4"] div,
+.theme-cashier .shift-bento-panel > div[style*="background: #f0fdf4"] div {
+  color: var(--sidebar) !important;
+}
+
+body.theme-cashier .shift-bento-panel > div[style*="background: #f0fdf4"] strong,
+.theme-cashier .shift-bento-panel > div[style*="background: #f0fdf4"] strong {
+  color: var(--primary) !important;
+}
+
+body.theme-cashier .shift-bento-panel > div[style*="background: #f0fdf4"] svg,
+.theme-cashier .shift-bento-panel > div[style*="background: #f0fdf4"] svg {
+  color: var(--primary) !important;
+}
+
+/* Modal Footer */
+body.theme-cashier .shift-bento-footer,
+.theme-cashier .shift-bento-footer {
+  background: var(--surface) !important;
+  border-top: 1px solid var(--border) !important;
+}
+
+body.theme-cashier .shift-bento-footer-left,
+.theme-cashier .shift-bento-footer-left {
+  color: var(--text-muted) !important;
+}
+
+body.theme-cashier .shift-bento-footer-left svg,
+.theme-cashier .shift-bento-footer-left svg {
+  color: var(--primary) !important;
+}
+
+/* Report Table & Highlight Rows in ShiftClosingReportModal */
+body.theme-cashier .report-table,
+.theme-cashier .report-table {
+  background: var(--surface) !important;
+}
+
+body.theme-cashier .report-table th,
+.theme-cashier .report-table th {
+  background: #EFECE6 !important;
+  color: var(--text-muted) !important;
+  border-bottom: 1.5px solid var(--border) !important;
+}
+
+body.theme-cashier .report-table td,
+.theme-cashier .report-table td {
+  border-bottom: 1px solid rgba(217, 229, 229, 0.5) !important;
+  color: var(--text) !important;
+}
+
+body.theme-cashier .report-table tr.highlight-row,
+body.theme-cashier .report-table tr.highlight-row td,
+.theme-cashier .report-table tr.highlight-row,
+.theme-cashier .report-table tr.highlight-row td {
+  background: var(--primary-soft) !important;
 }
 
 /* Select Counter Modal cards */
@@ -1600,4 +2004,31 @@ body.theme-cashier .select-counter-card-active,
 .theme-cashier .select-counter-card-active {
   background: linear-gradient(135deg, var(--primary-soft) 0%, var(--surface) 100%) !important;
   border: 2px solid var(--primary) !important;
+}
+
+/* Day Closing View in Cashier Role */
+div.app-container.theme-cashier .day-closing-wrapper,
+body.theme-cashier .day-closing-wrapper,
+.theme-cashier .day-closing-wrapper {
+  background-color: var(--bg) !important;
+}
+
+div.app-container.theme-cashier .day-closing-header-card,
+div.app-container.theme-cashier .day-closing-kpi-card,
+div.app-container.theme-cashier .day-closing-panel,
+div.app-container.theme-cashier .day-closing-table-card,
+body.theme-cashier .day-closing-header-card,
+body.theme-cashier .day-closing-kpi-card,
+body.theme-cashier .day-closing-panel,
+body.theme-cashier .day-closing-table-card,
+.theme-cashier .day-closing-header-card,
+.theme-cashier .day-closing-kpi-card,
+.theme-cashier .day-closing-panel,
+.theme-cashier .day-closing-table-card {
+  background: var(--surface) !important;
+  background-color: var(--surface) !important;
+  background-image: none !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 4px 18px rgba(15, 45, 46, 0.06), 0 1px 3px rgba(15, 45, 46, 0.04) !important;
 }
