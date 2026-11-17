@@ -31,12 +31,19 @@ export function registerDayClosing(r: Router) {
     const cashierId = isCashier
       ? ctx.user!.id
       : (ctx.query.cashierId ? String(ctx.query.cashierId).trim() : null);
+    const counterId = ctx.query.counterId ? String(ctx.query.counterId).trim() : null;
 
-    // Optional shift and cashier SQL filter fragments
+    // Optional shift, cashier, and counter SQL filter fragments
     const shiftClause = shiftId ? ' AND i.shift_id = ?' : '';
     const shiftParams = shiftId ? [shiftId] : [];
     const cashierClause = cashierId ? ' AND i.created_by = ?' : '';
     const cashierParams = cashierId ? [cashierId] : [];
+    const counterClause = counterId
+      ? (counterId === 'unassigned'
+          ? " AND (i.counter_id IS NULL AND (i.counter IS NULL OR i.counter = ''))"
+          : " AND (i.counter_id = ? OR (i.counter_id IS NULL AND i.counter = ?))")
+      : '';
+    const counterParams = (counterId && counterId !== 'unassigned') ? [counterId, counterId] : [];
 
     // Check existing day closing record: scoped to individual cashier if cashierId is specified,
     // otherwise looks for the store-wide consolidated closing (cashier_id IS NULL).
@@ -98,6 +105,68 @@ export function registerDayClosing(r: Router) {
       [tenantId, branchId, bdate, branchId, branchId, bdate],
     );
 
+    // List counters configured or used for billing
+    const availableCounters = await ctx.db.query<any>(
+      `SELECT DISTINCT c.id, c.name, c.code
+       FROM (
+         SELECT id, name, code, tenant_id, branch_id FROM counters WHERE status = 'ACTIVE'
+         UNION
+         SELECT DISTINCT i.counter_id AS id, COALESCE(NULLIF(i.counter_name_snapshot, ''), i.counter, 'Counter') AS name, COALESCE(NULLIF(i.counter, ''), i.counter_id) AS code, i.tenant_id, i.branch_id
+         FROM invoices i WHERE i.counter_id IS NOT NULL OR (i.counter IS NOT NULL AND i.counter != '')
+       ) c
+       WHERE c.tenant_id = ? AND (c.branch_id = ? OR c.branch_id IS NULL)
+       ORDER BY c.code ASC`,
+      [tenantId, branchId],
+    );
+
+    // Day Closing Schedule & Overdue status calculation
+    const schedule = await ctx.db.one<any>(
+      `SELECT * FROM day_closing_schedules
+       WHERE tenant_id = ? AND branch_id = ? AND (counter_id = ? OR counter_id IS NULL)
+       ORDER BY (counter_id IS NOT NULL) DESC LIMIT 1`,
+      [tenantId, branchId, counterId || null],
+    );
+
+    const expectedClosingTime = schedule?.expectedClosingTime || schedule?.expected_closing_time || '22:00';
+    const now = new Date();
+    const istDate = new Date(now.getTime() + 5.5 * 3600000);
+    const todayIstStr = istDate.toISOString().slice(0, 10);
+    const currentIstTimeStr = istDate.toISOString().slice(11, 16);
+
+    let isOverdue = false;
+    let minutesOverdue = 0;
+    const isClosedOrApproved = Boolean(closedRecord && (closedRecord.status === 'closed' || closedRecord.status === 'approved'));
+
+    if (!isClosedOrApproved) {
+      if (bdate < todayIstStr) {
+        isOverdue = true;
+        minutesOverdue = 1440;
+      } else if (bdate === todayIstStr) {
+        const [expH, expM] = expectedClosingTime.split(':').map(Number);
+        const [curH, curM] = currentIstTimeStr.split(':').map(Number);
+        const expTotalMin = (expH || 0) * 60 + (expM || 0);
+        const curTotalMin = (curH || 0) * 60 + (curM || 0);
+        if (curTotalMin > expTotalMin) {
+          isOverdue = true;
+          minutesOverdue = curTotalMin - expTotalMin;
+        }
+      }
+    }
+
+    const scheduleInfo = {
+      expectedClosingTime,
+      firstReminderMinutesBefore: schedule?.firstReminderMinutesBefore ?? schedule?.first_reminder_minutes_before ?? 30,
+      secondReminderMinutesBefore: schedule?.secondReminderMinutesBefore ?? schedule?.second_reminder_minutes_before ?? 15,
+      finalReminderAtClosing: schedule?.finalReminderAtClosing ?? schedule?.final_reminder_at_closing ?? true,
+      overdueReminderIntervalMinutes: schedule?.overdueReminderIntervalMinutes ?? schedule?.overdue_reminder_interval_minutes ?? 30,
+      autoAlertOverdue: schedule?.autoAlertOverdue ?? schedule?.auto_alert_overdue ?? true,
+      enabled: schedule?.enabled ?? true,
+      isOverdue,
+      minutesOverdue,
+      lastReminderSentAt: schedule?.lastReminderSentAt || schedule?.last_reminder_sent_at || null,
+      lastReminderType: schedule?.lastReminderType || schedule?.last_reminder_type || null,
+    };
+
     // Sales Summary (kind = 'sale')
     const salesRow = await ctx.db.one<any>(
       `SELECT
@@ -109,8 +178,8 @@ export function registerDayClosing(r: Router) {
         COUNT(DISTINCT NULLIF(customer_phone, ''))::int AS unique_customers_count
        FROM invoices i
        WHERE i.tenant_id = ? AND i.branch_id = ? AND i.bdate = ? AND i.status = 'posted' AND i.kind = 'sale'
-         ${shiftClause} ${cashierClause}`,
-      [tenantId, branchId, bdate, ...shiftParams, ...cashierParams],
+         ${shiftClause} ${cashierClause} ${counterClause}`,
+      [tenantId, branchId, bdate, ...shiftParams, ...cashierParams, ...counterParams],
     );
 
     // Returns Summary (kind = 'credit_note')
@@ -121,8 +190,8 @@ export function registerDayClosing(r: Router) {
         COALESCE(SUM(taxable_minor), 0)::bigint AS returns_taxable_minor
        FROM invoices i
        WHERE i.tenant_id = ? AND i.branch_id = ? AND i.bdate = ? AND i.status = 'posted' AND i.kind = 'credit_note'
-         ${shiftClause} ${cashierClause}`,
-      [tenantId, branchId, bdate, ...shiftParams, ...cashierParams],
+         ${shiftClause} ${cashierClause} ${counterClause}`,
+      [tenantId, branchId, bdate, ...shiftParams, ...cashierParams, ...counterParams],
     );
 
     // Cancelled / Voided Invoices
@@ -130,8 +199,8 @@ export function registerDayClosing(r: Router) {
       `SELECT COUNT(*)::int AS voided_count, COALESCE(SUM(i.total_minor), 0)::bigint AS voided_total_minor
        FROM invoices i
        WHERE i.tenant_id = ? AND i.branch_id = ? AND i.bdate = ? AND i.status = 'voided'
-         ${shiftClause} ${cashierClause}`,
-      [tenantId, branchId, bdate, ...shiftParams, ...cashierParams],
+         ${shiftClause} ${cashierClause} ${counterClause}`,
+      [tenantId, branchId, bdate, ...shiftParams, ...cashierParams, ...counterParams],
     );
 
     // Customer Outstanding (Credit / Partial unpaid invoices for this date)
@@ -139,8 +208,8 @@ export function registerDayClosing(r: Router) {
       `SELECT COALESCE(SUM(i.total_minor - i.paid_minor), 0)::bigint AS outstanding_minor
        FROM invoices i
        WHERE i.tenant_id = ? AND i.branch_id = ? AND i.bdate = ? AND i.status = 'posted' AND i.total_minor > i.paid_minor
-         ${shiftClause} ${cashierClause}`,
-      [tenantId, branchId, bdate, ...shiftParams, ...cashierParams],
+         ${shiftClause} ${cashierClause} ${counterClause}`,
+      [tenantId, branchId, bdate, ...shiftParams, ...cashierParams, ...counterParams],
     );
 
     // Product Quantity & Lines Totals
@@ -151,8 +220,8 @@ export function registerDayClosing(r: Router) {
        FROM invoice_lines il
        JOIN invoices i ON i.id = il.invoice_id
        WHERE i.tenant_id = ? AND i.branch_id = ? AND i.bdate = ? AND i.status = 'posted' AND i.kind = 'sale'
-         ${shiftClause} ${cashierClause}`,
-      [tenantId, branchId, bdate, ...shiftParams, ...cashierParams],
+         ${shiftClause} ${cashierClause} ${counterClause}`,
+      [tenantId, branchId, bdate, ...shiftParams, ...cashierParams, ...counterParams],
     );
 
     const grossSalesMinor = Number(salesRow?.grossSalesMinor ?? salesRow?.gross_sales_minor ?? 0);
@@ -198,8 +267,8 @@ export function registerDayClosing(r: Router) {
       `SELECT COALESCE(SUM(i.exchange_adjusted_minor), 0)::bigint AS exchange_adjusted_minor
        FROM invoices i
        WHERE i.tenant_id = ? AND i.branch_id = ? AND i.bdate = ? AND i.is_exchange = TRUE AND i.kind = 'sale'
-         ${shiftClause} ${cashierClause}`,
-      [tenantId, branchId, bdate, ...shiftParams, ...cashierParams],
+         ${shiftClause} ${cashierClause} ${counterClause}`,
+      [tenantId, branchId, bdate, ...shiftParams, ...cashierParams, ...counterParams],
     );
 
     const cashRefundsPaidMinor = Number(refundsRow?.cashRefundsMinor ?? refundsRow?.cash_refunds_minor ?? 0);
@@ -216,8 +285,8 @@ export function registerDayClosing(r: Router) {
         COALESCE(SUM(CASE WHEN i.kind = 'credit_note' THEN i.total_minor ELSE 0 END), 0)::bigint AS old_returned_minor
        FROM invoices i
        WHERE i.tenant_id = ? AND i.branch_id = ? AND i.bdate = ? AND i.is_exchange = TRUE AND i.status = 'posted'
-         ${shiftClause} ${cashierClause}`,
-      [tenantId, branchId, bdate, ...shiftParams, ...cashierParams],
+         ${shiftClause} ${cashierClause} ${counterClause}`,
+      [tenantId, branchId, bdate, ...shiftParams, ...cashierParams, ...counterParams],
     );
 
     const exchangesCount = Number(exchangeStatsRow?.exchangesCount ?? exchangeStatsRow?.exchanges_count ?? 0);
@@ -245,6 +314,14 @@ export function registerDayClosing(r: Router) {
     if (cashierId) {
       paymentSql += ' AND (p.created_by = ? OR (p.created_by IS NULL AND i.created_by = ?))';
       paymentParams.push(cashierId, cashierId);
+    }
+    if (counterId) {
+      if (counterId === 'unassigned') {
+        paymentSql += " AND (COALESCE(p.counter_id, p.counter, i.counter_id, i.counter) IS NULL OR COALESCE(p.counter_id, p.counter, i.counter_id, i.counter) = '')";
+      } else {
+        paymentSql += " AND (p.counter_id = ? OR p.counter = ? OR (p.counter_id IS NULL AND (i.counter_id = ? OR i.counter = ?)))";
+        paymentParams.push(counterId, counterId, counterId, counterId);
+      }
     }
     paymentSql += ` GROUP BY COALESCE(p.method, 'cash')`;
 
@@ -330,8 +407,8 @@ export function registerDayClosing(r: Router) {
        JOIN invoices i ON i.id = il.invoice_id
        LEFT JOIN items it ON it.id = il.item_id
        WHERE i.tenant_id = ? AND i.branch_id = ? AND i.bdate = ? AND i.kind = 'sale' AND i.status = 'posted'
-         ${shiftClause} ${cashierClause}`,
-      [tenantId, branchId, bdate, ...shiftParams, ...cashierParams],
+         ${shiftClause} ${cashierClause} ${counterClause}`,
+      [tenantId, branchId, bdate, ...shiftParams, ...cashierParams, ...counterParams],
     );
     const cogsMinor = Number(salesCogsRow?.cogsMinor ?? salesCogsRow?.cogs_minor ?? 0);
 
@@ -343,8 +420,8 @@ export function registerDayClosing(r: Router) {
        LEFT JOIN items it ON it.id = il.item_id
        WHERE i.tenant_id = ? AND i.branch_id = ? AND i.bdate = ? AND i.kind = 'credit_note' AND i.status = 'posted'
          AND (il.item_condition IS NULL OR il.item_condition = 'resellable')
-         ${shiftClause} ${cashierClause}`,
-      [tenantId, branchId, bdate, ...shiftParams, ...cashierParams],
+         ${shiftClause} ${cashierClause} ${counterClause}`,
+      [tenantId, branchId, bdate, ...shiftParams, ...cashierParams, ...counterParams],
     );
     const returnedCogsMinor = Number(returnedCogsRow?.returnedCogsMinor ?? returnedCogsRow?.returned_cogs_minor ?? 0);
 
@@ -393,8 +470,11 @@ export function registerDayClosing(r: Router) {
       branchId,
       shiftId: shiftId || null,
       cashierId: cashierId || null,
+      counterId: counterId || null,
       availableShifts,
       availableCashiers,
+      availableCounters,
+      scheduleInfo,
       isClosed: Boolean(closedRecord && (closedRecord.status === 'closed' || closedRecord.status === 'approved')),
       isSubmitted: Boolean(closedRecord && closedRecord.status === 'submitted'),
       isReopened: Boolean(closedRecord && closedRecord.status === 'reopened'),
@@ -885,6 +965,14 @@ export function registerDayClosing(r: Router) {
         entityId: id,
         detail: { bdate: dcBdate, branchId: dcBranchId, cashierId: dcCashierId, approvedBy: ctx.user!.id },
       });
+
+      await q.exec(
+        `INSERT INTO day_closing_notifications (
+           id, tenant_id, branch_id, cashier_id, bdate, type, title, message, severity
+         ) VALUES (?, ?, ?, ?, ?, 'approval', 'Day Closing Approved', ?, 'success')`,
+        [newId('dcn'), tenantId, dcBranchId, dcCashierId || dc.submitted_by || null, dcBdate,
+         `Day Closing for date ${dcBdate} was verified and approved by ${ctx.user!.name || 'Management'}.`],
+      );
     });
 
     return {
@@ -947,6 +1035,14 @@ export function registerDayClosing(r: Router) {
         entityId: id,
         detail: { bdate: dcBdate, branchId: dcBranchId, cashierId: dcCashierId, rejectedBy: ctx.user!.id, reason },
       });
+
+      await q.exec(
+        `INSERT INTO day_closing_notifications (
+           id, tenant_id, branch_id, cashier_id, bdate, type, title, message, severity
+         ) VALUES (?, ?, ?, ?, ?, 'rejection', 'Day Closing Recount Requested', ?, 'warning')`,
+        [newId('dcn'), tenantId, dcBranchId, dcCashierId || dc.submitted_by || null, dcBdate,
+         `Management requested a recount for date ${dcBdate}. Reason: ${reason}`],
+      );
     });
 
     return {
@@ -1493,6 +1589,769 @@ export function registerDayClosing(r: Router) {
       totalProductsCount: products.length,
       products,
     };
+  });
+
+  // --------------------------------------------------------------------------
+  // 7b. Counter-wise Sales Breakdown Report (Day Closing Scope Only)
+  // --------------------------------------------------------------------------
+  r.get('/api/day-closing/counter-sales', requireUser, async (ctx) => {
+    const tenantId = ctx.user!.tenantId;
+    const scope = await resolveBranchScope(ctx);
+    const branchId = (!scope.isSuperAdminAll && scope.branchId) ? scope.branchId : String(ctx.query.branchId || 'MAIN').trim();
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const date = String(ctx.query.date || ctx.query.bdate || todayStr).trim();
+    const startDate = (ctx.query.startDate as string) || date;
+    const endDate = (ctx.query.endDate as string) || date;
+
+    // 1. Group invoices by counter
+    const invoiceRows = await ctx.db.query<any>(
+      `SELECT
+        COALESCE(NULLIF(i.counter_id, ''), NULLIF(i.counter, ''), 'UNASSIGNED') AS counter_key,
+        COALESCE(NULLIF(i.counter_id, ''), NULLIF(i.counter, '')) AS counter_identifier,
+        COALESCE(NULLIF(i.counter_name_snapshot, ''), c.name, i.counter, 'Unassigned Counter') AS counter_name,
+        COALESCE(c.code, i.counter, 'UNASSIGNED') AS counter_code,
+        COUNT(CASE WHEN i.kind = 'sale' AND i.status = 'posted' THEN 1 END)::int AS invoices_count,
+        COUNT(CASE WHEN i.kind = 'credit_note' AND i.status = 'posted' THEN 1 END)::int AS returns_count,
+        COALESCE(SUM(CASE WHEN i.kind = 'sale' AND i.status = 'posted' THEN i.total_minor ELSE 0 END), 0)::bigint AS gross_sales_minor,
+        COALESCE(SUM(CASE WHEN i.kind = 'sale' AND i.status = 'posted' THEN i.discount_minor ELSE 0 END), 0)::bigint AS discounts_total_minor,
+        COALESCE(SUM(CASE WHEN i.kind = 'sale' AND i.status = 'posted' THEN i.taxable_minor ELSE 0 END), 0)::bigint AS taxable_sales_minor,
+        COALESCE(SUM(CASE WHEN i.kind = 'sale' AND i.status = 'posted' THEN (i.cgst_minor + i.sgst_minor + i.igst_minor) ELSE 0 END), 0)::bigint AS gst_collected_minor,
+        COALESCE(SUM(CASE WHEN i.kind = 'credit_note' AND i.status = 'posted' THEN i.total_minor ELSE 0 END), 0)::bigint AS returns_total_minor,
+        COALESCE(SUM(CASE WHEN i.status = 'posted' AND i.total_minor > i.paid_minor THEN (i.total_minor - i.paid_minor) ELSE 0 END), 0)::bigint AS credit_sales_minor
+       FROM invoices i
+       LEFT JOIN counters c ON (c.id = i.counter_id OR c.code = i.counter) AND c.tenant_id = i.tenant_id
+       WHERE i.tenant_id = ? AND i.branch_id = ? AND i.bdate >= ? AND i.bdate <= ?
+         AND i.status = 'posted'
+       GROUP BY
+        COALESCE(NULLIF(i.counter_id, ''), NULLIF(i.counter, ''), 'UNASSIGNED'),
+        COALESCE(NULLIF(i.counter_id, ''), NULLIF(i.counter, '')),
+        COALESCE(NULLIF(i.counter_name_snapshot, ''), c.name, i.counter, 'Unassigned Counter'),
+        COALESCE(c.code, i.counter, 'UNASSIGNED')
+       ORDER BY counter_code ASC`,
+      [tenantId, branchId, startDate, endDate],
+    );
+
+    // 2. COGS by counter
+    const cogsRows = await ctx.db.query<any>(
+      `SELECT
+        COALESCE(NULLIF(i.counter_id, ''), NULLIF(i.counter, ''), 'UNASSIGNED') AS counter_key,
+        COALESCE(SUM(CASE WHEN i.kind = 'sale' THEN il.qty_milli * COALESCE(NULLIF(il.cost_minor, 0), it.cost_minor, 0) / 1000 ELSE 0 END), 0)::bigint AS cogs_minor,
+        COALESCE(SUM(CASE WHEN i.kind = 'credit_note' AND (il.item_condition IS NULL OR il.item_condition = 'resellable') THEN il.qty_milli * COALESCE(NULLIF(il.cost_minor, 0), it.cost_minor, 0) / 1000 ELSE 0 END), 0)::bigint AS returned_cogs_minor
+       FROM invoice_lines il
+       JOIN invoices i ON i.id = il.invoice_id
+       LEFT JOIN items it ON it.id = il.item_id
+       WHERE i.tenant_id = ? AND i.branch_id = ? AND i.bdate >= ? AND i.bdate <= ?
+         AND i.status = 'posted'
+       GROUP BY COALESCE(NULLIF(i.counter_id, ''), NULLIF(i.counter, ''), 'UNASSIGNED')`,
+      [tenantId, branchId, startDate, endDate],
+    );
+    const cogsMap = new Map<string, { cogsMinor: number; returnedCogsMinor: number }>();
+    for (const r of cogsRows) {
+      cogsMap.set(r.counter_key || r.counterKey, {
+        cogsMinor: Number(r.cogs_minor ?? r.cogsMinor ?? 0),
+        returnedCogsMinor: Number(r.returned_cogs_minor ?? r.returnedCogsMinor ?? 0),
+      });
+    }
+
+    // 3. Payment Collections by counter
+    const paymentRows = await ctx.db.query<any>(
+      `SELECT
+        COALESCE(NULLIF(p.counter_id, ''), NULLIF(p.counter, ''), NULLIF(i.counter_id, ''), NULLIF(i.counter, ''), 'UNASSIGNED') AS counter_key,
+        COALESCE(p.method, 'cash') AS method,
+        COALESCE(SUM(p.amount_minor), 0)::bigint AS total_minor
+       FROM payments p
+       LEFT JOIN invoices i ON i.id = p.invoice_id
+       WHERE p.tenant_id = ? AND (p.status IS NULL OR p.status = 'posted')
+         AND (
+           (p.bdate >= ? AND p.bdate <= ?)
+           OR ((p.created_at)::date >= ?::date AND (p.created_at)::date <= ?::date)
+         )
+         AND (p.invoice_id IS NULL OR i.branch_id IS NULL OR i.branch_id = ?)
+       GROUP BY
+        COALESCE(NULLIF(p.counter_id, ''), NULLIF(p.counter, ''), NULLIF(i.counter_id, ''), NULLIF(i.counter, ''), 'UNASSIGNED'),
+        COALESCE(p.method, 'cash')`,
+      [tenantId, startDate, endDate, startDate, endDate, branchId],
+    );
+
+    const paymentMap = new Map<string, { cash: number; upi: number; card: number; bank: number; store_credit: number; total: number }>();
+    for (const pr of paymentRows) {
+      const key = pr.counter_key || pr.counterKey;
+      if (!paymentMap.has(key)) {
+        paymentMap.set(key, { cash: 0, upi: 0, card: 0, bank: 0, store_credit: 0, total: 0 });
+      }
+      const pObj = paymentMap.get(key)!;
+      const m = String(pr.method).toLowerCase();
+      const amt = Number(pr.total_minor ?? pr.totalMinor ?? 0);
+      if (m === 'cash') pObj.cash += amt;
+      else if (m === 'upi') pObj.upi += amt;
+      else if (m === 'card') pObj.card += amt;
+      else if (m === 'bank' || m === 'bank_transfer') pObj.bank += amt;
+      else if (m === 'store_credit') pObj.store_credit += amt;
+      pObj.total += amt;
+    }
+
+    const counters: any[] = [];
+    let consolidatedGross = 0;
+    let consolidatedReturns = 0;
+    let consolidatedNet = 0;
+    let consolidatedTaxable = 0;
+    let consolidatedGst = 0;
+    let consolidatedDiscounts = 0;
+    let consolidatedInvoices = 0;
+    let consolidatedReturnsCount = 0;
+    let consolidatedCogs = 0;
+    let consolidatedNetCogs = 0;
+    let consolidatedProfit = 0;
+    let consolidatedCreditSales = 0;
+    const consolidatedCollections = { cash: 0, upi: 0, card: 0, bank: 0, storeCredit: 0, total: 0 };
+    let exceptionCount = 0;
+
+    for (const ir of invoiceRows) {
+      const key = ir.counter_key || ir.counterKey;
+      const isException = key === 'UNASSIGNED';
+      if (isException) exceptionCount++;
+
+      const gross = Number(ir.gross_sales_minor ?? ir.grossSalesMinor ?? 0);
+      const ret = Number(ir.returns_total_minor ?? ir.returnsTotalMinor ?? 0);
+      const net = Math.max(0, gross - ret);
+      const invCount = Number(ir.invoices_count ?? ir.invoicesCount ?? 0);
+      const retCount = Number(ir.returns_count ?? ir.returnsCount ?? 0);
+      const discounts = Number(ir.discounts_total_minor ?? ir.discountsTotalMinor ?? 0);
+      const taxable = Number(ir.taxable_sales_minor ?? ir.taxableSalesMinor ?? 0);
+      const gst = Number(ir.gst_collected_minor ?? ir.gstCollectedMinor ?? 0);
+      const creditSales = Number(ir.credit_sales_minor ?? ir.creditSalesMinor ?? 0);
+
+      const cogsObj = cogsMap.get(key) || { cogsMinor: 0, returnedCogsMinor: 0 };
+      const netCogs = Math.max(0, cogsObj.cogsMinor - cogsObj.returnedCogsMinor);
+      const grossProfit = net - netCogs;
+      const marginPct = net > 0 ? (grossProfit / net) * 100 : 0;
+
+      const pObj = paymentMap.get(key) || { cash: 0, upi: 0, card: 0, bank: 0, store_credit: 0, total: 0 };
+
+      consolidatedGross += gross;
+      consolidatedReturns += ret;
+      consolidatedNet += net;
+      consolidatedTaxable += taxable;
+      consolidatedGst += gst;
+      consolidatedDiscounts += discounts;
+      consolidatedInvoices += invCount;
+      consolidatedReturnsCount += retCount;
+      consolidatedCogs += cogsObj.cogsMinor;
+      consolidatedNetCogs += netCogs;
+      consolidatedProfit += grossProfit;
+      consolidatedCreditSales += creditSales;
+      consolidatedCollections.cash += pObj.cash;
+      consolidatedCollections.upi += pObj.upi;
+      consolidatedCollections.card += pObj.card;
+      consolidatedCollections.bank += pObj.bank;
+      consolidatedCollections.storeCredit += pObj.store_credit;
+      consolidatedCollections.total += pObj.total;
+
+      counters.push({
+        counterKey: key,
+        counterId: isException ? null : (ir.counter_identifier || ir.counterIdentifier || key),
+        counterCode: ir.counter_code || ir.counterCode || (isException ? 'UNASSIGNED' : key),
+        counterName: isException ? 'Unassigned Transactions (Exception)' : (ir.counter_name || ir.counterName || key),
+        isException,
+        invoicesCount: invCount,
+        returnsCount: retCount,
+        grossSalesMinor: gross,
+        discountsTotalMinor: discounts,
+        returnsTotalMinor: ret,
+        netSalesMinor: net,
+        taxableSalesMinor: taxable,
+        gstCollectedMinor: gst,
+        cogsMinor: cogsObj.cogsMinor,
+        returnedCogsMinor: cogsObj.returnedCogsMinor,
+        netCogsMinor: netCogs,
+        grossProfitMinor: grossProfit,
+        marginPct: Math.round(marginPct * 10) / 10,
+        creditSalesMinor: creditSales,
+        collections: {
+          cash: pObj.cash,
+          upi: pObj.upi,
+          card: pObj.card,
+          bank: pObj.bank,
+          storeCredit: pObj.store_credit,
+          total: pObj.total,
+        },
+      });
+    }
+
+    const consolidatedTotal = {
+      invoicesCount: consolidatedInvoices,
+      returnsCount: consolidatedReturnsCount,
+      grossSalesMinor: consolidatedGross,
+      discountsTotalMinor: consolidatedDiscounts,
+      returnsTotalMinor: consolidatedReturns,
+      netSalesMinor: consolidatedNet,
+      taxableSalesMinor: consolidatedTaxable,
+      gstCollectedMinor: consolidatedGst,
+      cogsMinor: consolidatedCogs,
+      netCogsMinor: consolidatedNetCogs,
+      grossProfitMinor: consolidatedProfit,
+      marginPct: consolidatedNet > 0 ? Math.round((consolidatedProfit / consolidatedNet) * 1000) / 10 : 0,
+      creditSalesMinor: consolidatedCreditSales,
+      collections: consolidatedCollections,
+    };
+
+    return {
+      success: true,
+      branchId,
+      date,
+      startDate,
+      endDate,
+      counters,
+      consolidatedTotal,
+      exceptionCount,
+    };
+  });
+
+  // --------------------------------------------------------------------------
+  // 7c. Cashier-wise Sales Breakdown Report (Day Closing Scope Only)
+  // --------------------------------------------------------------------------
+  r.get('/api/day-closing/cashier-sales', requireUser, async (ctx) => {
+    const tenantId = ctx.user!.tenantId;
+    const scope = await resolveBranchScope(ctx);
+    const branchId = (!scope.isSuperAdminAll && scope.branchId) ? scope.branchId : String(ctx.query.branchId || 'MAIN').trim();
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const date = String(ctx.query.date || ctx.query.bdate || todayStr).trim();
+    const startDate = (ctx.query.startDate as string) || date;
+    const endDate = (ctx.query.endDate as string) || date;
+
+    // 1. Group invoices by cashier
+    const invoiceRows = await ctx.db.query<any>(
+      `SELECT
+        COALESCE(NULLIF(i.created_by, ''), 'UNASSIGNED') AS cashier_key,
+        COALESCE(u.name, 'Unassigned Cashier') AS cashier_name,
+        COALESCE(u.role, 'CASHIER') AS cashier_role,
+        COUNT(CASE WHEN i.kind = 'sale' AND i.status = 'posted' THEN 1 END)::int AS invoices_count,
+        COUNT(CASE WHEN i.kind = 'credit_note' AND i.status = 'posted' THEN 1 END)::int AS returns_count,
+        COALESCE(SUM(CASE WHEN i.kind = 'sale' AND i.status = 'posted' THEN i.total_minor ELSE 0 END), 0)::bigint AS gross_sales_minor,
+        COALESCE(SUM(CASE WHEN i.kind = 'sale' AND i.status = 'posted' THEN i.discount_minor ELSE 0 END), 0)::bigint AS discounts_total_minor,
+        COALESCE(SUM(CASE WHEN i.kind = 'sale' AND i.status = 'posted' THEN i.taxable_minor ELSE 0 END), 0)::bigint AS taxable_sales_minor,
+        COALESCE(SUM(CASE WHEN i.kind = 'sale' AND i.status = 'posted' THEN (i.cgst_minor + i.sgst_minor + i.igst_minor) ELSE 0 END), 0)::bigint AS gst_collected_minor,
+        COALESCE(SUM(CASE WHEN i.kind = 'credit_note' AND i.status = 'posted' THEN i.total_minor ELSE 0 END), 0)::bigint AS returns_total_minor,
+        COALESCE(SUM(CASE WHEN i.status = 'posted' AND i.total_minor > i.paid_minor THEN (i.total_minor - i.paid_minor) ELSE 0 END), 0)::bigint AS credit_sales_minor
+       FROM invoices i
+       LEFT JOIN users u ON u.id = i.created_by AND u.tenant_id = i.tenant_id
+       WHERE i.tenant_id = ? AND i.branch_id = ? AND i.bdate >= ? AND i.bdate <= ?
+         AND i.status = 'posted'
+       GROUP BY
+        COALESCE(NULLIF(i.created_by, ''), 'UNASSIGNED'),
+        COALESCE(u.name, 'Unassigned Cashier'),
+        COALESCE(u.role, 'CASHIER')
+       ORDER BY cashier_name ASC`,
+      [tenantId, branchId, startDate, endDate],
+    );
+
+    // 2. Cashier COGS
+    const cogsRows = await ctx.db.query<any>(
+      `SELECT
+        COALESCE(NULLIF(i.created_by, ''), 'UNASSIGNED') AS cashier_key,
+        COALESCE(SUM(CASE WHEN i.kind = 'sale' THEN il.qty_milli * COALESCE(NULLIF(il.cost_minor, 0), it.cost_minor, 0) / 1000 ELSE 0 END), 0)::bigint AS cogs_minor,
+        COALESCE(SUM(CASE WHEN i.kind = 'credit_note' AND (il.item_condition IS NULL OR il.item_condition = 'resellable') THEN il.qty_milli * COALESCE(NULLIF(il.cost_minor, 0), it.cost_minor, 0) / 1000 ELSE 0 END), 0)::bigint AS returned_cogs_minor
+       FROM invoice_lines il
+       JOIN invoices i ON i.id = il.invoice_id
+       LEFT JOIN items it ON it.id = il.item_id
+       WHERE i.tenant_id = ? AND i.branch_id = ? AND i.bdate >= ? AND i.bdate <= ?
+         AND i.status = 'posted'
+       GROUP BY COALESCE(NULLIF(i.created_by, ''), 'UNASSIGNED')`,
+      [tenantId, branchId, startDate, endDate],
+    );
+    const cogsMap = new Map<string, { cogsMinor: number; returnedCogsMinor: number }>();
+    for (const r of cogsRows) {
+      cogsMap.set(r.cashier_key || r.cashierKey, {
+        cogsMinor: Number(r.cogs_minor ?? r.cogsMinor ?? 0),
+        returnedCogsMinor: Number(r.returned_cogs_minor ?? r.returnedCogsMinor ?? 0),
+      });
+    }
+
+    // 3. Payment Collections by Cashier
+    const paymentRows = await ctx.db.query<any>(
+      `SELECT
+        COALESCE(NULLIF(p.created_by, ''), NULLIF(i.created_by, ''), 'UNASSIGNED') AS cashier_key,
+        COALESCE(p.method, 'cash') AS method,
+        COALESCE(SUM(p.amount_minor), 0)::bigint AS total_minor
+       FROM payments p
+       LEFT JOIN invoices i ON i.id = p.invoice_id
+       WHERE p.tenant_id = ? AND (p.status IS NULL OR p.status = 'posted')
+         AND (
+           (p.bdate >= ? AND p.bdate <= ?)
+           OR ((p.created_at)::date >= ?::date AND (p.created_at)::date <= ?::date)
+         )
+         AND (p.invoice_id IS NULL OR i.branch_id IS NULL OR i.branch_id = ?)
+       GROUP BY
+        COALESCE(NULLIF(p.created_by, ''), NULLIF(i.created_by, ''), 'UNASSIGNED'),
+        COALESCE(p.method, 'cash')`,
+      [tenantId, startDate, endDate, startDate, endDate, branchId],
+    );
+    const paymentMap = new Map<string, { cash: number; upi: number; card: number; bank: number; store_credit: number; total: number }>();
+    for (const pr of paymentRows) {
+      const key = pr.cashier_key || pr.cashierKey;
+      if (!paymentMap.has(key)) {
+        paymentMap.set(key, { cash: 0, upi: 0, card: 0, bank: 0, store_credit: 0, total: 0 });
+      }
+      const pObj = paymentMap.get(key)!;
+      const m = String(pr.method).toLowerCase();
+      const amt = Number(pr.total_minor ?? pr.totalMinor ?? 0);
+      if (m === 'cash') pObj.cash += amt;
+      else if (m === 'upi') pObj.upi += amt;
+      else if (m === 'card') pObj.card += amt;
+      else if (m === 'bank' || m === 'bank_transfer') pObj.bank += amt;
+      else if (m === 'store_credit') pObj.store_credit += amt;
+      pObj.total += amt;
+    }
+
+    // 4. Closing status per cashier for date
+    const closingRows = await ctx.db.query<any>(
+      `SELECT cashier_id, status, actual_cash_minor, expected_cash_minor, variance_minor, submitted_at, approved_at
+       FROM day_closings
+       WHERE tenant_id = ? AND branch_id = ? AND bdate = ? AND cashier_id IS NOT NULL`,
+      [tenantId, branchId, date],
+    );
+    const closingMap = new Map<string, any>();
+    for (const cl of closingRows) {
+      closingMap.set(cl.cashier_id || cl.cashierId, cl);
+    }
+
+    const cashiers: any[] = [];
+    let consolidatedGross = 0;
+    let consolidatedReturns = 0;
+    let consolidatedNet = 0;
+    let consolidatedTaxable = 0;
+    let consolidatedGst = 0;
+    let consolidatedDiscounts = 0;
+    let consolidatedInvoices = 0;
+    let consolidatedReturnsCount = 0;
+    let consolidatedCogs = 0;
+    let consolidatedNetCogs = 0;
+    let consolidatedProfit = 0;
+    let consolidatedCreditSales = 0;
+    const consolidatedCollections = { cash: 0, upi: 0, card: 0, bank: 0, storeCredit: 0, total: 0 };
+    let exceptionCount = 0;
+
+    for (const ir of invoiceRows) {
+      const key = ir.cashier_key || ir.cashierKey;
+      const isException = key === 'UNASSIGNED';
+      if (isException) exceptionCount++;
+
+      const gross = Number(ir.gross_sales_minor ?? ir.grossSalesMinor ?? 0);
+      const ret = Number(ir.returns_total_minor ?? ir.returnsTotalMinor ?? 0);
+      const net = Math.max(0, gross - ret);
+      const invCount = Number(ir.invoices_count ?? ir.invoicesCount ?? 0);
+      const retCount = Number(ir.returns_count ?? ir.returnsCount ?? 0);
+      const discounts = Number(ir.discounts_total_minor ?? ir.discountsTotalMinor ?? 0);
+      const taxable = Number(ir.taxable_sales_minor ?? ir.taxableSalesMinor ?? 0);
+      const gst = Number(ir.gst_collected_minor ?? ir.gstCollectedMinor ?? 0);
+      const creditSales = Number(ir.credit_sales_minor ?? ir.creditSalesMinor ?? 0);
+
+      const cogsObj = cogsMap.get(key) || { cogsMinor: 0, returnedCogsMinor: 0 };
+      const netCogs = Math.max(0, cogsObj.cogsMinor - cogsObj.returnedCogsMinor);
+      const grossProfit = net - netCogs;
+      const marginPct = net > 0 ? (grossProfit / net) * 100 : 0;
+
+      const pObj = paymentMap.get(key) || { cash: 0, upi: 0, card: 0, bank: 0, store_credit: 0, total: 0 };
+      const clObj = closingMap.get(key);
+
+      consolidatedGross += gross;
+      consolidatedReturns += ret;
+      consolidatedNet += net;
+      consolidatedTaxable += taxable;
+      consolidatedGst += gst;
+      consolidatedDiscounts += discounts;
+      consolidatedInvoices += invCount;
+      consolidatedReturnsCount += retCount;
+      consolidatedCogs += cogsObj.cogsMinor;
+      consolidatedNetCogs += netCogs;
+      consolidatedProfit += grossProfit;
+      consolidatedCreditSales += creditSales;
+      consolidatedCollections.cash += pObj.cash;
+      consolidatedCollections.upi += pObj.upi;
+      consolidatedCollections.card += pObj.card;
+      consolidatedCollections.bank += pObj.bank;
+      consolidatedCollections.storeCredit += pObj.store_credit;
+      consolidatedCollections.total += pObj.total;
+
+      cashiers.push({
+        cashierKey: key,
+        cashierId: isException ? null : key,
+        cashierName: isException ? 'Unassigned Transactions (Exception)' : (ir.cashier_name || ir.cashierName || key),
+        cashierRole: ir.cashier_role || ir.cashierRole || 'CASHIER',
+        isException,
+        invoicesCount: invCount,
+        returnsCount: retCount,
+        grossSalesMinor: gross,
+        discountsTotalMinor: discounts,
+        returnsTotalMinor: ret,
+        netSalesMinor: net,
+        taxableSalesMinor: taxable,
+        gstCollectedMinor: gst,
+        cogsMinor: cogsObj.cogsMinor,
+        returnedCogsMinor: cogsObj.returnedCogsMinor,
+        netCogsMinor: netCogs,
+        grossProfitMinor: grossProfit,
+        marginPct: Math.round(marginPct * 10) / 10,
+        creditSalesMinor: creditSales,
+        collections: {
+          cash: pObj.cash,
+          upi: pObj.upi,
+          card: pObj.card,
+          bank: pObj.bank,
+          storeCredit: pObj.store_credit,
+          total: pObj.total,
+        },
+        closingStatus: clObj ? (clObj.status || 'open') : 'not_started',
+        actualCashMinor: clObj ? Number(clObj.actual_cash_minor ?? clObj.actualCashMinor ?? 0) : null,
+        expectedCashMinor: clObj ? Number(clObj.expected_cash_minor ?? clObj.expectedCashMinor ?? 0) : null,
+        varianceMinor: clObj ? Number(clObj.variance_minor ?? clObj.varianceMinor ?? 0) : null,
+      });
+    }
+
+    const consolidatedTotal = {
+      invoicesCount: consolidatedInvoices,
+      returnsCount: consolidatedReturnsCount,
+      grossSalesMinor: consolidatedGross,
+      discountsTotalMinor: consolidatedDiscounts,
+      returnsTotalMinor: consolidatedReturns,
+      netSalesMinor: consolidatedNet,
+      taxableSalesMinor: consolidatedTaxable,
+      gstCollectedMinor: consolidatedGst,
+      cogsMinor: consolidatedCogs,
+      netCogsMinor: consolidatedNetCogs,
+      grossProfitMinor: consolidatedProfit,
+      marginPct: consolidatedNet > 0 ? Math.round((consolidatedProfit / consolidatedNet) * 1000) / 10 : 0,
+      creditSalesMinor: consolidatedCreditSales,
+      collections: consolidatedCollections,
+    };
+
+    return {
+      success: true,
+      branchId,
+      date,
+      startDate,
+      endDate,
+      cashiers,
+      consolidatedTotal,
+      exceptionCount,
+    };
+  });
+
+  // --------------------------------------------------------------------------
+  // 7d. Smart Day Closing Schedule & Reminder Settings
+  // --------------------------------------------------------------------------
+  r.get('/api/day-closing/schedules', requireUser, async (ctx) => {
+    const tenantId = ctx.user!.tenantId;
+    const scope = await resolveBranchScope(ctx);
+    const branchId = (!scope.isSuperAdminAll && scope.branchId) ? scope.branchId : String(ctx.query.branchId || 'MAIN').trim();
+    const counterId = ctx.query.counterId ? String(ctx.query.counterId).trim() : null;
+
+    const schedules = await ctx.db.query<any>(
+      `SELECT * FROM day_closing_schedules
+       WHERE tenant_id = ? AND branch_id = ?
+       ORDER BY (counter_id IS NOT NULL) DESC, created_at ASC`,
+      [tenantId, branchId],
+    );
+
+    const defaultSchedule = {
+      expectedClosingTime: '22:00',
+      firstReminderMinutesBefore: 30,
+      secondReminderMinutesBefore: 15,
+      finalReminderAtClosing: true,
+      overdueReminderIntervalMinutes: 30,
+      autoAlertOverdue: true,
+      enabled: true,
+    };
+
+    const targetSchedule = counterId
+      ? (schedules.find((s: any) => s.counter_id === counterId || s.counterId === counterId) || schedules.find((s: any) => !s.counter_id && !s.counterId) || defaultSchedule)
+      : (schedules.find((s: any) => !s.counter_id && !s.counterId) || defaultSchedule);
+
+    return {
+      success: true,
+      branchId,
+      counterId,
+      schedule: targetSchedule,
+      allSchedules: schedules,
+    };
+  });
+
+  r.post('/api/day-closing/schedules', requirePerm('shift'), async (ctx) => {
+    const tenantId = ctx.user!.tenantId;
+    const b = ctx.body ?? {};
+    const scope = await resolveBranchScope(ctx);
+    const branchId = (!scope.isSuperAdminAll && scope.branchId) ? scope.branchId : String(b.branchId || 'MAIN').trim();
+    const counterId = b.counterId ? String(b.counterId).trim() : null;
+    const expectedClosingTime = String(b.expectedClosingTime || '22:00').trim();
+    const firstReminderMinutesBefore = Number(b.firstReminderMinutesBefore ?? 30);
+    const secondReminderMinutesBefore = Number(b.secondReminderMinutesBefore ?? 15);
+    const finalReminderAtClosing = Boolean(b.finalReminderAtClosing ?? true);
+    const overdueReminderIntervalMinutes = Number(b.overdueReminderIntervalMinutes ?? 30);
+    const autoAlertOverdue = Boolean(b.autoAlertOverdue ?? true);
+    const enabled = Boolean(b.enabled ?? true);
+
+    const existing = await ctx.db.one<any>(
+      `SELECT id FROM day_closing_schedules
+       WHERE tenant_id = ? AND branch_id = ? AND counter_id IS NOT DISTINCT FROM ?`,
+      [tenantId, branchId, counterId],
+    );
+
+    const id = existing?.id || newId('dcs');
+    if (existing) {
+      await ctx.db.exec(
+        `UPDATE day_closing_schedules
+         SET expected_closing_time = ?,
+             first_reminder_minutes_before = ?,
+             second_reminder_minutes_before = ?,
+             final_reminder_at_closing = ?,
+             overdue_reminder_interval_minutes = ?,
+             auto_alert_overdue = ?,
+             enabled = ?,
+             updated_at = NOW()
+         WHERE id = ?`,
+        [expectedClosingTime, firstReminderMinutesBefore, secondReminderMinutesBefore, finalReminderAtClosing, overdueReminderIntervalMinutes, autoAlertOverdue, enabled, id],
+      );
+    } else {
+      await ctx.db.exec(
+        `INSERT INTO day_closing_schedules (
+           id, tenant_id, branch_id, counter_id,
+           expected_closing_time, first_reminder_minutes_before, second_reminder_minutes_before,
+           final_reminder_at_closing, overdue_reminder_interval_minutes, auto_alert_overdue,
+           enabled
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [id, tenantId, branchId, counterId, expectedClosingTime, firstReminderMinutesBefore, secondReminderMinutesBefore, finalReminderAtClosing, overdueReminderIntervalMinutes, autoAlertOverdue, enabled],
+      );
+    }
+
+    return {
+      success: true,
+      id,
+      schedule: {
+        id,
+        branchId,
+        counterId,
+        expectedClosingTime,
+        firstReminderMinutesBefore,
+        secondReminderMinutesBefore,
+        finalReminderAtClosing,
+        overdueReminderIntervalMinutes,
+        autoAlertOverdue,
+        enabled,
+      },
+    };
+  });
+
+  // --------------------------------------------------------------------------
+  // 7e. Manager & Admin Closing Compliance Monitoring
+  // --------------------------------------------------------------------------
+  r.get('/api/day-closing/compliance', requireUser, async (ctx) => {
+    const tenantId = ctx.user!.tenantId;
+    const scope = await resolveBranchScope(ctx);
+    const branchId = (!scope.isSuperAdminAll && scope.branchId) ? scope.branchId : String(ctx.query.branchId || 'MAIN').trim();
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const date = String(ctx.query.date || ctx.query.bdate || todayStr).trim();
+
+    // 1. Fetch Schedule
+    const schedule = await ctx.db.one<any>(
+      `SELECT * FROM day_closing_schedules
+       WHERE tenant_id = ? AND branch_id = ? AND counter_id IS NULL
+       LIMIT 1`,
+      [tenantId, branchId],
+    );
+    const expectedClosingTime = schedule?.expectedClosingTime || schedule?.expected_closing_time || '22:00';
+
+    const now = new Date();
+    const istDate = new Date(now.getTime() + 5.5 * 3600000);
+    const todayIstStr = istDate.toISOString().slice(0, 10);
+    const currentIstTimeStr = istDate.toISOString().slice(11, 16);
+
+    let isBranchOverdue = false;
+    let minutesOverdue = 0;
+    if (date < todayIstStr) {
+      isBranchOverdue = true;
+      minutesOverdue = 1440;
+    } else if (date === todayIstStr) {
+      const [expH, expM] = expectedClosingTime.split(':').map(Number);
+      const [curH, curM] = currentIstTimeStr.split(':').map(Number);
+      const expTotalMin = (expH || 0) * 60 + (expM || 0);
+      const curTotalMin = (curH || 0) * 60 + (curM || 0);
+      if (curTotalMin > expTotalMin) {
+        isBranchOverdue = true;
+        minutesOverdue = curTotalMin - expTotalMin;
+      }
+    }
+
+    // 2. Fetch all Active Counters for this branch
+    const counters = await ctx.db.query<any>(
+      `SELECT c.id, c.name, c.code, c.status
+       FROM counters c
+       WHERE c.tenant_id = ? AND c.branch_id = ? AND c.status = 'ACTIVE'
+       ORDER BY c.code ASC`,
+      [tenantId, branchId],
+    );
+
+    // 3. Fetch all Cashiers active or with sales on this date
+    const cashiers = await ctx.db.query<any>(
+      `SELECT DISTINCT u.id, u.name, u.role
+       FROM users u
+       WHERE u.tenant_id = ?
+         AND (
+           EXISTS (SELECT 1 FROM invoices i WHERE i.tenant_id = u.tenant_id AND i.branch_id = ? AND i.bdate = ? AND i.created_by = u.id)
+           OR EXISTS (SELECT 1 FROM shifts s WHERE s.tenant_id = u.tenant_id AND (s.location = ? OR s.branch_id = ?) AND DATE(s.opened_at) = ?::date AND s.user_id = u.id)
+           OR LOWER(u.role) IN ('cashier', 'counter')
+         )
+       ORDER BY u.name ASC`,
+      [tenantId, branchId, date, branchId, branchId, date],
+    );
+
+    // 4. Fetch Day Closings for this date
+    const dayClosings = await ctx.db.query<any>(
+      `SELECT dc.*, u.name AS cashier_name, su.name AS submitted_by_name, au.name AS approved_by_name
+       FROM day_closings dc
+       LEFT JOIN users u ON u.id = dc.cashier_id
+       LEFT JOIN users su ON su.id = dc.submitted_by
+       LEFT JOIN users au ON au.id = dc.approved_by
+       WHERE dc.tenant_id = ? AND dc.branch_id = ? AND dc.bdate = ?`,
+      [tenantId, branchId, date],
+    );
+
+    const consolidatedClosing = dayClosings.find((dc: any) => !dc.cashier_id && !dc.cashierId);
+
+    // Calculate status per cashier
+    const cashierMatrix = cashiers.map((c: any) => {
+      const closing = dayClosings.find((dc: any) => (dc.cashier_id || dc.cashierId) === c.id);
+      const st = closing ? closing.status : 'pending';
+      const isOverdue = (st === 'open' || st === 'pending') && isBranchOverdue;
+      return {
+        cashierId: c.id,
+        cashierName: c.name,
+        role: c.role,
+        status: st,
+        isOverdue,
+        submittedAt: closing?.submitted_at || null,
+        approvedAt: closing?.approved_at || null,
+        actualCashMinor: closing ? Number(closing.actual_cash_minor || 0) : null,
+        varianceMinor: closing ? Number(closing.variance_minor || 0) : null,
+      };
+    });
+
+    const totalRegisters = Math.max(counters.length, cashierMatrix.length, 1);
+    const closedCount = cashierMatrix.filter((c: any) => c.status === 'approved' || c.status === 'closed').length;
+    const submittedCount = cashierMatrix.filter((c: any) => c.status === 'submitted').length;
+    const pendingCount = cashierMatrix.filter((c: any) => c.status === 'pending' || c.status === 'open').length;
+    const overdueCount = cashierMatrix.filter((c: any) => c.isOverdue).length;
+    const completionPct = totalRegisters > 0 ? Math.round((closedCount / totalRegisters) * 100) : 0;
+
+    return {
+      success: true,
+      branchId,
+      date,
+      expectedClosingTime,
+      isBranchOverdue,
+      minutesOverdue,
+      lastReminderSentAt: schedule?.lastReminderSentAt || schedule?.last_reminder_sent_at || null,
+      lastReminderType: schedule?.lastReminderType || schedule?.last_reminder_type || null,
+      summary: {
+        totalRegisters,
+        closedCount,
+        submittedCount,
+        pendingCount,
+        overdueCount,
+        completionPct,
+        isStoreClosed: consolidatedClosing ? (consolidatedClosing.status === 'approved' || consolidatedClosing.status === 'closed') : false,
+        storeStatus: consolidatedClosing?.status || 'open',
+      },
+      cashierMatrix,
+      counters,
+    };
+  });
+
+  // --------------------------------------------------------------------------
+  // 7f. In-App Notifications & Manual Reminder Trigger
+  // --------------------------------------------------------------------------
+  r.post('/api/day-closing/send-reminder', requirePerm('shift'), async (ctx) => {
+    const tenantId = ctx.user!.tenantId;
+    const b = ctx.body ?? {};
+    const scope = await resolveBranchScope(ctx);
+    const branchId = (!scope.isSuperAdminAll && scope.branchId) ? scope.branchId : String(b.branchId || 'MAIN').trim();
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const bdate = String(b.date || b.bdate || todayStr).trim();
+    const cashierId = b.cashierId ? String(b.cashierId).trim() : null;
+    const counterId = b.counterId ? String(b.counterId).trim() : null;
+    const reminderType = String(b.reminderType || 'manual').trim();
+
+    const title = reminderType === 'overdue'
+      ? 'Day Closing OVERDUE Alert'
+      : (reminderType === 'final' ? 'Final Closing Reminder' : 'Day Closing Reminder');
+    const message = b.message || `Please count physical cash drawer and submit your end-of-day register reconciliation for ${bdate}.`;
+    const severity = reminderType === 'overdue' ? 'error' : (reminderType === 'final' ? 'warning' : 'info');
+
+    const notifId = newId('dcn');
+    await ctx.db.exec(
+      `INSERT INTO day_closing_notifications (
+         id, tenant_id, branch_id, counter_id, cashier_id, bdate, type, title, message, severity
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [notifId, tenantId, branchId, counterId, cashierId, bdate, reminderType, title, message, severity],
+    );
+
+    await ctx.db.exec(
+      `UPDATE day_closing_schedules
+       SET last_reminder_sent_at = NOW(),
+           last_reminder_type = ?
+       WHERE tenant_id = ? AND branch_id = ? AND counter_id IS NOT DISTINCT FROM ?`,
+      [reminderType, tenantId, branchId, counterId],
+    );
+
+    return {
+      success: true,
+      message: 'Reminder sent successfully.',
+      notificationId: notifId,
+    };
+  });
+
+  r.get('/api/day-closing/notifications', requireUser, async (ctx) => {
+    const tenantId = ctx.user!.tenantId;
+    const scope = await resolveBranchScope(ctx);
+    const branchId = (!scope.isSuperAdminAll && scope.branchId) ? scope.branchId : String(ctx.query.branchId || 'MAIN').trim();
+    const userRole = String(ctx.user!.role || '').toUpperCase();
+    const isCashier = userRole === 'CASHIER' || userRole === 'COUNTER';
+
+    let notifSql = `
+      SELECT n.*, u.name AS cashier_name
+      FROM day_closing_notifications n
+      LEFT JOIN users u ON u.id = n.cashier_id
+      WHERE n.tenant_id = ? AND n.branch_id = ?
+    `;
+    const notifParams: any[] = [tenantId, branchId];
+
+    if (isCashier) {
+      notifSql += ' AND (n.cashier_id = ? OR n.cashier_id IS NULL)';
+      notifParams.push(ctx.user!.id);
+    }
+    notifSql += ' ORDER BY n.created_at DESC LIMIT 20';
+
+    const notifications = await ctx.db.query<any>(notifSql, notifParams);
+    const unreadCount = notifications.filter((n: any) => !n.is_read && !n.isRead).length;
+
+    return {
+      success: true,
+      notifications,
+      unreadCount,
+    };
+  });
+
+  r.post('/api/day-closing/notifications/:id/read', requireUser, async (ctx) => {
+    const tenantId = ctx.user!.tenantId;
+    const id = ctx.params.id;
+
+    await ctx.db.exec(
+      `UPDATE day_closing_notifications
+       SET is_read = TRUE, read_at = NOW()
+       WHERE id = ? AND tenant_id = ?`,
+      [id, tenantId],
+    );
+
+    return { success: true };
   });
 
   // --------------------------------------------------------------------------

@@ -1896,4 +1896,51 @@ export const MIGRATIONS: Migration[] = [
       `CREATE INDEX IF NOT EXISTS idx_day_closings_cashier ON day_closings (tenant_id, branch_id, bdate, cashier_id)`,
     ],
   },
+  {
+    version: 69,
+    statements: [
+      `CREATE TABLE IF NOT EXISTS day_closing_schedules (
+        id TEXT PRIMARY KEY,
+        tenant_id TEXT NOT NULL REFERENCES tenants(id),
+        branch_id TEXT NOT NULL,
+        counter_id TEXT,
+        expected_closing_time TEXT NOT NULL DEFAULT '22:00',
+        first_reminder_minutes_before INT NOT NULL DEFAULT 30,
+        second_reminder_minutes_before INT NOT NULL DEFAULT 15,
+        final_reminder_at_closing BOOLEAN NOT NULL DEFAULT true,
+        overdue_reminder_interval_minutes INT NOT NULL DEFAULT 30,
+        auto_alert_overdue BOOLEAN NOT NULL DEFAULT true,
+        enabled BOOLEAN NOT NULL DEFAULT true,
+        last_reminder_sent_at TIMESTAMPTZ,
+        last_reminder_type TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_dc_schedules_lookup ON day_closing_schedules (tenant_id, branch_id, counter_id)`,
+      `CREATE TABLE IF NOT EXISTS day_closing_notifications (
+        id TEXT PRIMARY KEY,
+        tenant_id TEXT NOT NULL REFERENCES tenants(id),
+        branch_id TEXT NOT NULL,
+        counter_id TEXT,
+        cashier_id TEXT,
+        bdate DATE NOT NULL,
+        type TEXT NOT NULL,
+        title TEXT NOT NULL,
+        message TEXT NOT NULL,
+        severity TEXT NOT NULL DEFAULT 'info',
+        is_read BOOLEAN NOT NULL DEFAULT false,
+        read_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_dc_notif_tenant ON day_closing_notifications (tenant_id, branch_id, bdate)`,
+      `CREATE INDEX IF NOT EXISTS idx_dc_notif_cashier ON day_closing_notifications (tenant_id, cashier_id, is_read)`,
+    ],
+  },
+  {
+    version: 70,
+    statements: [
+      `ALTER TABLE day_closings DROP CONSTRAINT IF EXISTS day_closings_tenant_id_branch_id_bdate_key`,
+      `CREATE UNIQUE INDEX IF NOT EXISTS idx_day_closings_tenant_branch_bdate_cashier ON day_closings (tenant_id, branch_id, bdate, COALESCE(cashier_id, 'CONSOLIDATED'))`,
+    ],
+  },
 ];

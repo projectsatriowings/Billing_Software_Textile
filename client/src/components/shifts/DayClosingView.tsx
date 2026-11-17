@@ -8,6 +8,14 @@ import {
   fetchDayClosingComparison,
   fetchDayClosingAnalytics,
   fetchDayClosingHistory,
+  fetchCounterSalesReport,
+  fetchCashierSalesReport,
+  fetchDayClosingSchedules,
+  saveDayClosingSchedule,
+  fetchDayClosingCompliance,
+  sendDayClosingReminder,
+  fetchDayClosingNotifications,
+  markDayClosingNotificationRead,
   withAuthToken,
   type User,
   type Shop,
@@ -52,7 +60,7 @@ interface DayClosingViewProps {
   branches?: any[];
 }
 
-type TabType = 'closing' | 'comparison' | 'analytics' | 'history';
+type TabType = 'closing' | 'breakdown' | 'comparison' | 'analytics' | 'compliance' | 'history';
 
 export const DayClosingView: React.FC<DayClosingViewProps> = ({
   user,
@@ -60,7 +68,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
   selectedBranch,
   branches,
 }) => {
-  // Navigation: 4 clean, dedicated tabs
+  // Navigation: Clean, dedicated tabs
   const [activeTab, setActiveTab] = useState<TabType>('closing');
 
   // Branch & Filter states
@@ -71,6 +79,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
     new Date().toISOString().slice(0, 10)
   );
   const [selectedShiftId, setSelectedShiftId] = useState<string>('');
+  const [selectedCounterId, setSelectedCounterId] = useState<string>('');
 
   // Tab 1: Day Closing Live Preview & Reconciliation state
   const [loadingPreview, setLoadingPreview] = useState(true);
@@ -79,6 +88,31 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
   const [closingRemarks, setClosingRemarks] = useState<string>('');
   const [submitting, setSubmitting] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+
+  // Tab: Counter & Cashier Sales Reports Breakdown
+  const [breakdownSubTab, setBreakdownSubTab] = useState<'counter' | 'cashier'>('counter');
+  const [counterSalesData, setCounterSalesData] = useState<any | null>(null);
+  const [loadingCounterSales, setLoadingCounterSales] = useState(false);
+  const [cashierSalesData, setCashierSalesData] = useState<any | null>(null);
+  const [loadingCashierSales, setLoadingCashierSales] = useState(false);
+
+  // Tab: Schedules & Compliance Monitoring
+  const [complianceData, setComplianceData] = useState<any | null>(null);
+  const [loadingCompliance, setLoadingCompliance] = useState(false);
+  const [scheduleData, setScheduleData] = useState<any | null>(null);
+  const [loadingSchedule, setLoadingSchedule] = useState(false);
+  const [expClosingTime, setExpClosingTime] = useState('22:00');
+  const [firstReminderMin, setFirstReminderMin] = useState<number>(30);
+  const [secondReminderMin, setSecondReminderMin] = useState<number>(15);
+  const [finalReminder, setFinalReminder] = useState<boolean>(true);
+  const [overdueIntervalMin, setOverdueIntervalMin] = useState<number>(30);
+  const [autoAlert, setAutoAlert] = useState<boolean>(true);
+  const [savingSchedule, setSavingSchedule] = useState(false);
+  const [sendingReminder, setSendingReminder] = useState(false);
+
+  // In-app Notifications & Alerts
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadNotifCount, setUnreadNotifCount] = useState<number>(0);
 
   // Tab 2: Comparison state
   const [comparisonData, setComparisonData] = useState<any | null>(null);
@@ -166,6 +200,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
         date: selectedDate,
         shiftId: selectedShiftId || undefined,
         cashierId: selectedCashierId || undefined,
+        counterId: selectedCounterId || undefined,
       });
       setPreview(res);
       const expected = res.cashReconciliation?.expectedClosingCashMinor ?? 0;
@@ -183,6 +218,262 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
     } finally {
       setLoadingPreview(false);
     }
+  };
+
+  const loadNotifications = async () => {
+    try {
+      const res = await fetchDayClosingNotifications({ branchId: activeBranchId });
+      if (res.success) {
+        setNotifications(res.notifications || []);
+        setUnreadNotifCount(res.unreadCount || 0);
+      }
+    } catch {
+      // background silent catch
+    }
+  };
+
+  const handleDismissNotification = async (notifId: string) => {
+    try {
+      await markDayClosingNotificationRead(notifId);
+      setNotifications(prev => prev.filter(n => n.id !== notifId));
+      setUnreadNotifCount(prev => Math.max(0, prev - 1));
+    } catch {
+      // ignore
+    }
+  };
+
+  const loadCounterSales = async () => {
+    try {
+      setLoadingCounterSales(true);
+      setError(null);
+      const res = await fetchCounterSalesReport({
+        branchId: activeBranchId,
+        date: selectedDate,
+      });
+      setCounterSalesData(res);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load counter sales report');
+    } finally {
+      setLoadingCounterSales(false);
+    }
+  };
+
+  const loadCashierSales = async () => {
+    try {
+      setLoadingCashierSales(true);
+      setError(null);
+      const res = await fetchCashierSalesReport({
+        branchId: activeBranchId,
+        date: selectedDate,
+      });
+      setCashierSalesData(res);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load cashier sales report');
+    } finally {
+      setLoadingCashierSales(false);
+    }
+  };
+
+  const loadCompliance = async () => {
+    try {
+      setLoadingCompliance(true);
+      setError(null);
+      const res = await fetchDayClosingCompliance({
+        branchId: activeBranchId,
+        date: selectedDate,
+      });
+      setComplianceData(res);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load closing compliance');
+    } finally {
+      setLoadingCompliance(false);
+    }
+  };
+
+  const loadSchedule = async () => {
+    try {
+      setLoadingSchedule(true);
+      const res = await fetchDayClosingSchedules(activeBranchId);
+      if (res.success && res.schedule) {
+        setScheduleData(res.schedule);
+        setExpClosingTime(res.schedule.expectedClosingTime || res.schedule.expected_closing_time || '22:00');
+        setFirstReminderMin(res.schedule.firstReminderMinutesBefore ?? res.schedule.first_reminder_minutes_before ?? 30);
+        setSecondReminderMin(res.schedule.secondReminderMinutesBefore ?? res.schedule.second_reminder_minutes_before ?? 15);
+        setFinalReminder(res.schedule.finalReminderAtClosing ?? res.schedule.final_reminder_at_closing ?? true);
+        setOverdueIntervalMin(res.schedule.overdueReminderIntervalMinutes ?? res.schedule.overdue_reminder_interval_minutes ?? 30);
+        setAutoAlert(res.schedule.autoAlertOverdue ?? res.schedule.auto_alert_overdue ?? true);
+      }
+    } catch {
+      // ignore
+    } finally {
+      setLoadingSchedule(false);
+    }
+  };
+
+  const handleSaveSchedule = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setSavingSchedule(true);
+      setError(null);
+      await saveDayClosingSchedule({
+        branchId: activeBranchId,
+        expectedClosingTime: expClosingTime,
+        firstReminderMinutesBefore: firstReminderMin,
+        secondReminderMinutesBefore: secondReminderMin,
+        finalReminderAtClosing: finalReminder,
+        overdueReminderIntervalMinutes: overdueIntervalMin,
+        autoAlertOverdue: autoAlert,
+        enabled: true,
+      });
+      setSuccessMsg('Closing schedule and reminder settings saved successfully.');
+      loadSchedule();
+      loadCompliance();
+    } catch (err: any) {
+      setError(err.message || 'Failed to save schedule settings');
+    } finally {
+      setSavingSchedule(false);
+    }
+  };
+
+  const handleSendReminder = async (cashierId?: string | null) => {
+    try {
+      setSendingReminder(true);
+      setError(null);
+      const res = await sendDayClosingReminder({
+        branchId: activeBranchId,
+        cashierId: cashierId || null,
+        date: selectedDate,
+        reminderType: 'manual',
+        message: `Management Reminder: Please count physical cash and submit your register reconciliation for ${selectedDate}.`,
+      });
+      setSuccessMsg(res.message || 'Closing reminder sent successfully.');
+      loadCompliance();
+      loadNotifications();
+    } catch (err: any) {
+      setError(err.message || 'Failed to send closing reminder');
+    } finally {
+      setSendingReminder(false);
+    }
+  };
+
+  const handleExportCounterCsv = () => {
+    if (!counterSalesData?.counters?.length) return;
+    const header = [
+      'Counter Code',
+      'Counter Name',
+      'Is Exception',
+      'Invoices Count',
+      'Returns Count',
+      'Gross Sales (Rs)',
+      'Discounts (Rs)',
+      'Returns Value (Rs)',
+      'Net Sales (Rs)',
+      'Taxable Sales (Rs)',
+      'GST Collected (Rs)',
+      'COGS (Rs)',
+      'Gross Profit (Rs)',
+      'Margin %',
+      'Credit Sales (Rs)',
+      'Cash Collections (Rs)',
+      'UPI Collections (Rs)',
+      'Card Collections (Rs)',
+      'Total Collections (Rs)',
+    ];
+    const escapeCsv = (str: any) => `"${String(str ?? '').replace(/"/g, '""')}"`;
+    const rows = counterSalesData.counters.map((c: any) => [
+      c.counterCode,
+      c.counterName,
+      c.isException ? 'YES (UNASSIGNED)' : 'NO',
+      c.invoicesCount,
+      c.returnsCount,
+      (c.grossSalesMinor / 100).toFixed(2),
+      (c.discountsTotalMinor / 100).toFixed(2),
+      (c.returnsTotalMinor / 100).toFixed(2),
+      (c.netSalesMinor / 100).toFixed(2),
+      (c.taxableSalesMinor / 100).toFixed(2),
+      (c.gstCollectedMinor / 100).toFixed(2),
+      (c.netCogsMinor / 100).toFixed(2),
+      (c.grossProfitMinor / 100).toFixed(2),
+      c.marginPct + '%',
+      (c.creditSalesMinor / 100).toFixed(2),
+      (c.collections.cash / 100).toFixed(2),
+      (c.collections.upi / 100).toFixed(2),
+      (c.collections.card / 100).toFixed(2),
+      (c.collections.total / 100).toFixed(2),
+    ]);
+    const csv = [header, ...rows].map(r => r.map(escapeCsv).join(',')).join('\r\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `Counter_Sales_Report_${selectedDate}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleExportCashierCsv = () => {
+    if (!cashierSalesData?.cashiers?.length) return;
+    const header = [
+      'Cashier Name',
+      'Role',
+      'Closing Status',
+      'Is Exception',
+      'Invoices Count',
+      'Returns Count',
+      'Gross Sales (Rs)',
+      'Discounts (Rs)',
+      'Returns Value (Rs)',
+      'Net Sales (Rs)',
+      'Taxable Sales (Rs)',
+      'GST Collected (Rs)',
+      'COGS (Rs)',
+      'Gross Profit (Rs)',
+      'Margin %',
+      'Credit Sales (Rs)',
+      'Cash Collections (Rs)',
+      'UPI Collections (Rs)',
+      'Card Collections (Rs)',
+      'Total Collections (Rs)',
+      'Actual Cash (Rs)',
+      'Expected Cash (Rs)',
+      'Cash Difference (Rs)',
+    ];
+    const escapeCsv = (str: any) => `"${String(str ?? '').replace(/"/g, '""')}"`;
+    const rows = cashierSalesData.cashiers.map((c: any) => [
+      c.cashierName,
+      c.cashierRole,
+      c.closingStatus,
+      c.isException ? 'YES (UNASSIGNED)' : 'NO',
+      c.invoicesCount,
+      c.returnsCount,
+      (c.grossSalesMinor / 100).toFixed(2),
+      (c.discountsTotalMinor / 100).toFixed(2),
+      (c.returnsTotalMinor / 100).toFixed(2),
+      (c.netSalesMinor / 100).toFixed(2),
+      (c.taxableSalesMinor / 100).toFixed(2),
+      (c.gstCollectedMinor / 100).toFixed(2),
+      (c.netCogsMinor / 100).toFixed(2),
+      (c.grossProfitMinor / 100).toFixed(2),
+      c.marginPct + '%',
+      (c.creditSalesMinor / 100).toFixed(2),
+      (c.collections.cash / 100).toFixed(2),
+      (c.collections.upi / 100).toFixed(2),
+      (c.collections.card / 100).toFixed(2),
+      (c.collections.total / 100).toFixed(2),
+      c.actualCashMinor != null ? (c.actualCashMinor / 100).toFixed(2) : '—',
+      c.expectedCashMinor != null ? (c.expectedCashMinor / 100).toFixed(2) : '—',
+      c.varianceMinor != null ? (c.varianceMinor / 100).toFixed(2) : '—',
+    ]);
+    const csv = [header, ...rows].map(r => r.map(escapeCsv).join(',')).join('\r\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `Cashier_Sales_Report_${selectedDate}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const loadComparison = async () => {
@@ -235,16 +526,26 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
   };
 
   useEffect(() => {
+    loadNotifications();
+  }, [activeBranchId]);
+
+  useEffect(() => {
     if (activeTab === 'closing') {
       loadPreview();
+    } else if (activeTab === 'breakdown') {
+      loadCounterSales();
+      loadCashierSales();
     } else if (activeTab === 'comparison') {
       loadComparison();
     } else if (activeTab === 'analytics') {
       loadAnalytics();
+    } else if (activeTab === 'compliance') {
+      loadCompliance();
+      loadSchedule();
     } else if (activeTab === 'history') {
       loadHistory();
     }
-  }, [activeBranchId, selectedDate, selectedShiftId, selectedCashierId, activeTab]);
+  }, [activeBranchId, selectedDate, selectedShiftId, selectedCashierId, selectedCounterId, activeTab]);
 
   const handleApplyPreset = (preset: string) => {
     setAnalyticsPreset(preset);
@@ -574,6 +875,14 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
         {!isCashierUser && (
           <>
             <button
+              onClick={() => setActiveTab('breakdown')}
+              className={`day-closing-tab-btn ${activeTab === 'breakdown' ? 'active' : ''}`}
+            >
+              <FileSpreadsheetIcon size={15} />
+              Counter & Cashier Reports
+            </button>
+
+            <button
               onClick={() => setActiveTab('comparison')}
               className={`day-closing-tab-btn ${activeTab === 'comparison' ? 'active' : ''}`}
             >
@@ -587,6 +896,14 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
             >
               <BarChart3Icon size={15} />
               Custom Date Range Analytics
+            </button>
+
+            <button
+              onClick={() => setActiveTab('compliance')}
+              className={`day-closing-tab-btn ${activeTab === 'compliance' ? 'active' : ''}`}
+            >
+              <CheckCircleIcon size={15} />
+              Schedules & Compliance
             </button>
 
             <button
@@ -686,6 +1003,26 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
             </>
           )}
 
+          {/* Counter Filter */}
+          {activeTab === 'closing' && !isCashierUser && preview?.availableCounters && preview.availableCounters.length > 0 && (
+            <div className="day-closing-filter-item">
+              <Building2Icon size={14} style={{ color: '#0d9488' }} />
+              <select
+                value={selectedCounterId}
+                onChange={(e) => setSelectedCounterId(e.target.value)}
+                className="day-closing-select"
+                title="Filter by Counter Terminal"
+              >
+                <option value="">All Counters (Store-wide)</option>
+                {preview.availableCounters.map((cnt: any) => (
+                  <option key={cnt.id} value={cnt.id || cnt.code}>
+                    Counter: {cnt.name} ({cnt.code})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           {activeTab === 'closing' && preview?.availableShifts && preview.availableShifts.length > 0 && (
             <div className="day-closing-filter-item">
               <FilterIcon size={14} style={{ color: '#6366f1' }} />
@@ -709,6 +1046,63 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
           Tenant: <strong style={{ color: '#0f172a' }}>{shop?.name || 'Main Organization'}</strong>
         </div>
       </div>
+
+      {/* Overdue Register Alert */}
+      {preview?.scheduleInfo?.isOverdue && (
+        <div style={{
+          background: '#fff1f2',
+          border: '1px solid #fecdd3',
+          borderRadius: '8px',
+          padding: '12px 16px',
+          marginBottom: '16px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          color: '#9f1239',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <AlertTriangleIcon size={18} style={{ color: '#e11d48' }} />
+            <div>
+              <strong>Overdue Register Alert:</strong> Expected closing time was{' '}
+              <strong>{preview.scheduleInfo.expectedClosingTime}</strong> ({preview.scheduleInfo.minutesOverdue} mins overdue). Please complete cash count and submit day closing.
+            </div>
+          </div>
+          {preview.scheduleInfo.lastReminderSentAt && (
+            <span style={{ fontSize: '0.75rem', color: '#be123c' }}>
+              Last reminder: {new Date(preview.scheduleInfo.lastReminderSentAt).toLocaleTimeString()}
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* In-app Notifications Banner */}
+      {notifications && notifications.length > 0 && notifications.map((n: any) => (
+        <div key={n.id} style={{
+          background: n.type === 'rejection' ? '#fffbeb' : (n.type === 'approval' ? '#f0fdf4' : '#eff6ff'),
+          border: `1px solid ${n.type === 'rejection' ? '#fde68a' : (n.type === 'approval' ? '#bbf7d0' : '#bfdbfe')}`,
+          borderRadius: '8px',
+          padding: '10px 14px',
+          marginBottom: '12px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          color: n.type === 'rejection' ? '#92400e' : (n.type === 'approval' ? '#166534' : '#1e40af'),
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {n.type === 'rejection' ? <AlertTriangleIcon size={16} /> : (n.type === 'approval' ? <CheckCircleIcon size={16} /> : <InfoIcon size={16} />)}
+            <div>
+              <strong>{n.title}:</strong> {n.message}
+            </div>
+          </div>
+          <button
+            onClick={() => handleDismissNotification(n.id)}
+            style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '0.8rem', color: 'inherit' }}
+            title="Dismiss notification"
+          >
+            ✕
+          </button>
+        </div>
+      ))}
 
       {/* Alerts */}
       {error && (
@@ -1288,6 +1682,386 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
       )}
 
       {/* ====================================================================
+          TAB: COUNTER & CASHIER SALES REPORTS
+          ==================================================================== */}
+      {activeTab === 'breakdown' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          {/* Sub-navigation pill toggle: Counter vs Cashier */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#ffffff', padding: '12px 18px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                onClick={() => setBreakdownSubTab('counter')}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  border: breakdownSubTab === 'counter' ? '2px solid #4f46e5' : '1px solid #cbd5e1',
+                  background: breakdownSubTab === 'counter' ? '#eef2ff' : '#ffffff',
+                  color: breakdownSubTab === 'counter' ? '#4338ca' : '#475569',
+                  fontWeight: 700,
+                  fontSize: '0.85rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                <Building2Icon size={16} />
+                Counter-wise Sales Report
+              </button>
+
+              <button
+                onClick={() => setBreakdownSubTab('cashier')}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  border: breakdownSubTab === 'cashier' ? '2px solid #4f46e5' : '1px solid #cbd5e1',
+                  background: breakdownSubTab === 'cashier' ? '#eef2ff' : '#ffffff',
+                  color: breakdownSubTab === 'cashier' ? '#4338ca' : '#475569',
+                  fontWeight: 700,
+                  fontSize: '0.85rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                <UserIcon size={16} />
+                Cashier-wise Sales Report
+              </button>
+            </div>
+
+            <div>
+              {breakdownSubTab === 'counter' ? (
+                <button
+                  onClick={handleExportCounterCsv}
+                  disabled={!counterSalesData?.counters?.length}
+                  className="btn-export"
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <FileSpreadsheetIcon size={15} />
+                  Export Counter CSV
+                </button>
+              ) : (
+                <button
+                  onClick={handleExportCashierCsv}
+                  disabled={!cashierSalesData?.cashiers?.length}
+                  className="btn-export"
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <FileSpreadsheetIcon size={15} />
+                  Export Cashier CSV
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* COUNTER REPORT CONTENT */}
+          {breakdownSubTab === 'counter' && (
+            <>
+              {loadingCounterSales ? (
+                <div style={{ padding: '3rem', textAlign: 'center', background: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+                  <RefreshCwIcon size={32} className="animate-spin" style={{ margin: '0 auto 12px auto', color: '#4f46e5' }} />
+                  <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#64748b' }}>Aggregating counter-wise sales records...</p>
+                </div>
+              ) : counterSalesData ? (
+                <>
+                  {/* KPI Summary Cards */}
+                  <div className="fin-kpi-grid">
+                    <div className="fin-kpi-card blue">
+                      <span className="fin-kpi-title">Gross Sales</span>
+                      <div className="fin-kpi-val">{fmt(counterSalesData.consolidatedTotal?.grossSalesMinor)}</div>
+                      <span className="fin-kpi-sub">{counterSalesData.consolidatedTotal?.invoicesCount || 0} Bills Across Counters</span>
+                    </div>
+
+                    <div className="fin-kpi-card rose">
+                      <span className="fin-kpi-title">Sales Returns</span>
+                      <div className="fin-kpi-val">-{fmt(counterSalesData.consolidatedTotal?.returnsTotalMinor)}</div>
+                      <span className="fin-kpi-sub">{counterSalesData.consolidatedTotal?.returnsCount || 0} Credit Notes</span>
+                    </div>
+
+                    <div className="fin-kpi-card emerald">
+                      <span className="fin-kpi-title">Net Sales</span>
+                      <div className="fin-kpi-val">{fmt(counterSalesData.consolidatedTotal?.netSalesMinor)}</div>
+                      <span className="fin-kpi-sub">Total Counter Revenue</span>
+                    </div>
+
+                    <div className="fin-kpi-card purple">
+                      <span className="fin-kpi-title">Gross Profit</span>
+                      <div className="fin-kpi-val">{fmt(counterSalesData.consolidatedTotal?.grossProfitMinor)}</div>
+                      <span className="fin-kpi-sub">{counterSalesData.consolidatedTotal?.marginPct || 0}% Overall Margin</span>
+                    </div>
+
+                    <div className="fin-kpi-card orange">
+                      <span className="fin-kpi-title">Total Collections</span>
+                      <div className="fin-kpi-val">{fmt(counterSalesData.consolidatedTotal?.collections?.total)}</div>
+                      <span className="fin-kpi-sub">Cash: {fmt(counterSalesData.consolidatedTotal?.collections?.cash)}</span>
+                    </div>
+                  </div>
+
+                  {counterSalesData.exceptionCount > 0 && (
+                    <div style={{ background: '#fef3c7', border: '1px solid #fde68a', borderRadius: '8px', padding: '10px 14px', color: '#92400e', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <AlertTriangleIcon size={16} />
+                      <span><strong>Notice:</strong> {counterSalesData.exceptionCount} unassigned counter transaction group(s) detected. Shown separately below for audit compliance.</span>
+                    </div>
+                  )}
+
+                  {/* Counter Table */}
+                  <div className="day-closing-card">
+                    <div className="day-closing-card-header">
+                      <div className="day-closing-card-title-group">
+                        <Building2Icon size={18} style={{ color: '#4f46e5' }} />
+                        <span>Counter Sales & Collections Breakdown ({selectedDate})</span>
+                      </div>
+                      <span className="day-closing-card-badge">
+                        {counterSalesData.counters.length} Counter Registers
+                      </span>
+                    </div>
+
+                    <div className="data-table-container">
+                      <table className="analytics-table">
+                        <thead>
+                          <tr>
+                            <th>Counter</th>
+                            <th>Invoices</th>
+                            <th>Gross Sales</th>
+                            <th>Discounts</th>
+                            <th>Returns</th>
+                            <th>Net Sales</th>
+                            <th>Taxable</th>
+                            <th>GST</th>
+                            <th>COGS</th>
+                            <th>Gross Profit</th>
+                            <th>Margin</th>
+                            <th>Cash</th>
+                            <th>UPI</th>
+                            <th>Card</th>
+                            <th>Credit Sales</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {counterSalesData.counters.map((c: any) => (
+                            <tr key={c.counterKey} style={c.isException ? { background: '#fffbeb' } : {}}>
+                              <td>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  <strong>{c.counterName}</strong>
+                                  {c.isException ? (
+                                    <span style={{ fontSize: '0.68rem', background: '#fef3c7', color: '#92400e', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>
+                                      EXCEPTION
+                                    </span>
+                                  ) : (
+                                    <span style={{ fontSize: '0.72rem', color: '#64748b' }}>({c.counterCode})</span>
+                                  )}
+                                </div>
+                              </td>
+                              <td>{c.invoicesCount}</td>
+                              <td>{fmt(c.grossSalesMinor)}</td>
+                              <td>{fmt(c.discountsTotalMinor)}</td>
+                              <td style={{ color: c.returnsTotalMinor > 0 ? '#dc2626' : 'inherit' }}>
+                                {c.returnsTotalMinor > 0 ? `-${fmt(c.returnsTotalMinor)}` : '₹0.00'}
+                              </td>
+                              <td style={{ fontWeight: 700, color: '#16a34a' }}>{fmt(c.netSalesMinor)}</td>
+                              <td>{fmt(c.taxableSalesMinor)}</td>
+                              <td>{fmt(c.gstCollectedMinor)}</td>
+                              <td>{fmt(c.netCogsMinor)}</td>
+                              <td style={{ fontWeight: 700, color: '#4f46e5' }}>{fmt(c.grossProfitMinor)}</td>
+                              <td>{c.marginPct}%</td>
+                              <td>{fmt(c.collections.cash)}</td>
+                              <td>{fmt(c.collections.upi)}</td>
+                              <td>{fmt(c.collections.card)}</td>
+                              <td style={{ color: c.creditSalesMinor > 0 ? '#7e22ce' : 'inherit', fontWeight: c.creditSalesMinor > 0 ? 600 : 400 }}>
+                                {fmt(c.creditSalesMinor)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                        <tfoot>
+                          <tr style={{ background: '#f8fafc', fontWeight: 800, borderTop: '2px solid #cbd5e1' }}>
+                            <td>CONSOLIDATED TOTAL</td>
+                            <td>{counterSalesData.consolidatedTotal?.invoicesCount}</td>
+                            <td>{fmt(counterSalesData.consolidatedTotal?.grossSalesMinor)}</td>
+                            <td>{fmt(counterSalesData.consolidatedTotal?.discountsTotalMinor)}</td>
+                            <td style={{ color: '#dc2626' }}>-{fmt(counterSalesData.consolidatedTotal?.returnsTotalMinor)}</td>
+                            <td style={{ color: '#16a34a' }}>{fmt(counterSalesData.consolidatedTotal?.netSalesMinor)}</td>
+                            <td>{fmt(counterSalesData.consolidatedTotal?.taxableSalesMinor)}</td>
+                            <td>{fmt(counterSalesData.consolidatedTotal?.gstCollectedMinor)}</td>
+                            <td>{fmt(counterSalesData.consolidatedTotal?.netCogsMinor)}</td>
+                            <td style={{ color: '#4f46e5' }}>{fmt(counterSalesData.consolidatedTotal?.grossProfitMinor)}</td>
+                            <td>{counterSalesData.consolidatedTotal?.marginPct}%</td>
+                            <td>{fmt(counterSalesData.consolidatedTotal?.collections?.cash)}</td>
+                            <td>{fmt(counterSalesData.consolidatedTotal?.collections?.upi)}</td>
+                            <td>{fmt(counterSalesData.consolidatedTotal?.collections?.card)}</td>
+                            <td>{fmt(counterSalesData.consolidatedTotal?.creditSalesMinor)}</td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                  </div>
+                </>
+              ) : null}
+            </>
+          )}
+
+          {/* CASHIER REPORT CONTENT */}
+          {breakdownSubTab === 'cashier' && (
+            <>
+              {loadingCashierSales ? (
+                <div style={{ padding: '3rem', textAlign: 'center', background: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+                  <RefreshCwIcon size={32} className="animate-spin" style={{ margin: '0 auto 12px auto', color: '#4f46e5' }} />
+                  <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#64748b' }}>Aggregating cashier-wise sales and registers...</p>
+                </div>
+              ) : cashierSalesData ? (
+                <>
+                  {/* KPI Summary Cards */}
+                  <div className="fin-kpi-grid">
+                    <div className="fin-kpi-card blue">
+                      <span className="fin-kpi-title">Gross Sales</span>
+                      <div className="fin-kpi-val">{fmt(cashierSalesData.consolidatedTotal?.grossSalesMinor)}</div>
+                      <span className="fin-kpi-sub">{cashierSalesData.consolidatedTotal?.invoicesCount || 0} Bills Across Cashiers</span>
+                    </div>
+
+                    <div className="fin-kpi-card rose">
+                      <span className="fin-kpi-title">Sales Returns</span>
+                      <div className="fin-kpi-val">-{fmt(cashierSalesData.consolidatedTotal?.returnsTotalMinor)}</div>
+                      <span className="fin-kpi-sub">{cashierSalesData.consolidatedTotal?.returnsCount || 0} Credit Notes</span>
+                    </div>
+
+                    <div className="fin-kpi-card emerald">
+                      <span className="fin-kpi-title">Net Sales</span>
+                      <div className="fin-kpi-val">{fmt(cashierSalesData.consolidatedTotal?.netSalesMinor)}</div>
+                      <span className="fin-kpi-sub">Total Cashier Revenue</span>
+                    </div>
+
+                    <div className="fin-kpi-card purple">
+                      <span className="fin-kpi-title">Gross Profit</span>
+                      <div className="fin-kpi-val">{fmt(cashierSalesData.consolidatedTotal?.grossProfitMinor)}</div>
+                      <span className="fin-kpi-sub">{cashierSalesData.consolidatedTotal?.marginPct || 0}% Overall Margin</span>
+                    </div>
+
+                    <div className="fin-kpi-card orange">
+                      <span className="fin-kpi-title">Total Collections</span>
+                      <div className="fin-kpi-val">{fmt(cashierSalesData.consolidatedTotal?.collections?.total)}</div>
+                      <span className="fin-kpi-sub">Cash: {fmt(cashierSalesData.consolidatedTotal?.collections?.cash)}</span>
+                    </div>
+                  </div>
+
+                  {cashierSalesData.exceptionCount > 0 && (
+                    <div style={{ background: '#fef3c7', border: '1px solid #fde68a', borderRadius: '8px', padding: '10px 14px', color: '#92400e', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <AlertTriangleIcon size={16} />
+                      <span><strong>Notice:</strong> {cashierSalesData.exceptionCount} unassigned cashier transaction group(s) detected. Shown separately below for audit compliance.</span>
+                    </div>
+                  )}
+
+                  {/* Cashier Table */}
+                  <div className="day-closing-card">
+                    <div className="day-closing-card-header">
+                      <div className="day-closing-card-title-group">
+                        <UserIcon size={18} style={{ color: '#4f46e5' }} />
+                        <span>Cashier Sales & Closing Status Breakdown ({selectedDate})</span>
+                      </div>
+                      <span className="day-closing-card-badge">
+                        {cashierSalesData.cashiers.length} Active Cashiers
+                      </span>
+                    </div>
+
+                    <div className="data-table-container">
+                      <table className="analytics-table">
+                        <thead>
+                          <tr>
+                            <th>Cashier Name</th>
+                            <th>Role</th>
+                            <th>Closing Status</th>
+                            <th>Invoices</th>
+                            <th>Gross Sales</th>
+                            <th>Returns</th>
+                            <th>Net Sales</th>
+                            <th>Taxable</th>
+                            <th>GST</th>
+                            <th>Gross Profit</th>
+                            <th>Cash Collections</th>
+                            <th>UPI</th>
+                            <th>Card</th>
+                            <th>Actual Counted</th>
+                            <th>Expected Cash</th>
+                            <th>Difference</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {cashierSalesData.cashiers.map((c: any) => (
+                            <tr key={c.cashierKey} style={c.isException ? { background: '#fffbeb' } : {}}>
+                              <td>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  <strong>{c.cashierName}</strong>
+                                  {c.isException && (
+                                    <span style={{ fontSize: '0.68rem', background: '#fef3c7', color: '#92400e', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>
+                                      EXCEPTION
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
+                              <td style={{ fontSize: '0.75rem', color: '#64748b' }}>{c.cashierRole}</td>
+                              <td>
+                                <span style={{
+                                  fontSize: '0.72rem',
+                                  padding: '2px 8px',
+                                  borderRadius: '9999px',
+                                  fontWeight: 700,
+                                  textTransform: 'uppercase',
+                                  background: c.closingStatus === 'approved' || c.closingStatus === 'closed' ? '#dcfce7' : (c.closingStatus === 'submitted' ? '#dbeafe' : (c.closingStatus === 'reopened' ? '#fee2e2' : '#f1f5f9')),
+                                  color: c.closingStatus === 'approved' || c.closingStatus === 'closed' ? '#15803d' : (c.closingStatus === 'submitted' ? '#1d4ed8' : (c.closingStatus === 'reopened' ? '#b91c1c' : '#64748b')),
+                                }}>
+                                  {c.closingStatus}
+                                </span>
+                              </td>
+                              <td>{c.invoicesCount}</td>
+                              <td>{fmt(c.grossSalesMinor)}</td>
+                              <td style={{ color: c.returnsTotalMinor > 0 ? '#dc2626' : 'inherit' }}>
+                                {c.returnsTotalMinor > 0 ? `-${fmt(c.returnsTotalMinor)}` : '₹0.00'}
+                              </td>
+                              <td style={{ fontWeight: 700, color: '#16a34a' }}>{fmt(c.netSalesMinor)}</td>
+                              <td>{fmt(c.taxableSalesMinor)}</td>
+                              <td>{fmt(c.gstCollectedMinor)}</td>
+                              <td style={{ fontWeight: 700, color: '#4f46e5' }}>{fmt(c.grossProfitMinor)}</td>
+                              <td>{fmt(c.collections.cash)}</td>
+                              <td>{fmt(c.collections.upi)}</td>
+                              <td>{fmt(c.collections.card)}</td>
+                              <td>{c.actualCashMinor != null ? fmt(c.actualCashMinor) : '—'}</td>
+                              <td>{c.expectedCashMinor != null ? fmt(c.expectedCashMinor) : '—'}</td>
+                              <td style={{
+                                fontWeight: 700,
+                                color: (c.varianceMinor || 0) === 0 ? '#15803d' : ((c.varianceMinor || 0) > 0 ? '#2563eb' : '#dc2626')
+                              }}>
+                                {c.varianceMinor != null ? ((c.varianceMinor > 0 ? '+' : '') + fmt(c.varianceMinor)) : '—'}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                        <tfoot>
+                          <tr style={{ background: '#f8fafc', fontWeight: 800, borderTop: '2px solid #cbd5e1' }}>
+                            <td colSpan={3}>CONSOLIDATED TOTAL</td>
+                            <td>{cashierSalesData.consolidatedTotal?.invoicesCount}</td>
+                            <td>{fmt(cashierSalesData.consolidatedTotal?.grossSalesMinor)}</td>
+                            <td style={{ color: '#dc2626' }}>-{fmt(cashierSalesData.consolidatedTotal?.returnsTotalMinor)}</td>
+                            <td style={{ color: '#16a34a' }}>{fmt(cashierSalesData.consolidatedTotal?.netSalesMinor)}</td>
+                            <td>{fmt(cashierSalesData.consolidatedTotal?.taxableSalesMinor)}</td>
+                            <td>{fmt(cashierSalesData.consolidatedTotal?.gstCollectedMinor)}</td>
+                            <td style={{ color: '#4f46e5' }}>{fmt(cashierSalesData.consolidatedTotal?.grossProfitMinor)}</td>
+                            <td>{fmt(cashierSalesData.consolidatedTotal?.collections?.cash)}</td>
+                            <td>{fmt(cashierSalesData.consolidatedTotal?.collections?.upi)}</td>
+                            <td>{fmt(cashierSalesData.consolidatedTotal?.collections?.card)}</td>
+                            <td colSpan={3}>—</td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                  </div>
+                </>
+              ) : null}
+            </>
+          )}
+        </div>
+      )}
+
+      {/* ====================================================================
           TAB 2: TODAY VS PREVIOUS DAY COMPARISON
           ==================================================================== */}
       {activeTab === 'comparison' && (
@@ -1541,6 +2315,276 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                   </div>
                 </div>
               )}
+            </>
+          ) : null}
+        </div>
+      )}
+
+      {/* ====================================================================
+          TAB: SCHEDULES & COMPLIANCE MONITORING
+          ==================================================================== */}
+      {activeTab === 'compliance' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          {loadingCompliance ? (
+            <div style={{ padding: '3rem', textAlign: 'center', background: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+              <RefreshCwIcon size={32} className="animate-spin" style={{ margin: '0 auto 12px auto', color: '#4f46e5' }} />
+              <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#64748b' }}>Checking closing compliance and register schedules...</p>
+            </div>
+          ) : complianceData ? (
+            <>
+              {/* Compliance KPI summary */}
+              <div className="fin-kpi-grid">
+                <div className="fin-kpi-card blue">
+                  <span className="fin-kpi-title">Expected Closing Time</span>
+                  <div className="fin-kpi-val" style={{ fontSize: '1.4rem' }}>{complianceData.expectedClosingTime}</div>
+                  <span className="fin-kpi-sub">
+                    {complianceData.isBranchOverdue ? (
+                      <span style={{ color: '#dc2626', fontWeight: 700 }}>⚠️ {complianceData.minutesOverdue} mins Overdue</span>
+                    ) : (
+                      <span style={{ color: '#16a34a', fontWeight: 700 }}>✓ On Schedule</span>
+                    )}
+                  </span>
+                </div>
+
+                <div className="fin-kpi-card purple">
+                  <span className="fin-kpi-title">Closing Progress</span>
+                  <div className="fin-kpi-val">{complianceData.summary.completionPct}%</div>
+                  <span className="fin-kpi-sub">{complianceData.summary.closedCount} of {complianceData.summary.totalRegisters} Registers Sealed</span>
+                </div>
+
+                <div className="fin-kpi-card emerald">
+                  <span className="fin-kpi-title">Approved Registers</span>
+                  <div className="fin-kpi-val">{complianceData.summary.closedCount}</div>
+                  <span className="fin-kpi-sub">Audited & Reconciled</span>
+                </div>
+
+                <div className="fin-kpi-card orange">
+                  <span className="fin-kpi-title">Pending / Submitted</span>
+                  <div className="fin-kpi-val">{complianceData.summary.pendingCount + complianceData.summary.submittedCount}</div>
+                  <span className="fin-kpi-sub">{complianceData.summary.submittedCount} Awaiting Review</span>
+                </div>
+
+                <div className="fin-kpi-card rose">
+                  <span className="fin-kpi-title">Overdue Registers</span>
+                  <div className="fin-kpi-val">{complianceData.summary.overdueCount}</div>
+                  <span className="fin-kpi-sub">Past Expected Time</span>
+                </div>
+              </div>
+
+              {/* Action Banner: Send Reminder */}
+              <div style={{
+                background: '#ffffff',
+                border: '1px solid #e2e8f0',
+                borderRadius: '12px',
+                padding: '16px 20px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: '#0f172a' }}>
+                    Cashier Closing Reminders & Alerts
+                  </h3>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>
+                    Send in-app reminder notification to all pending cashiers to seal their registers.
+                    {complianceData.lastReminderSentAt && (
+                      <span style={{ marginLeft: '8px', color: '#4f46e5', fontWeight: 600 }}>
+                        (Last sent: {new Date(complianceData.lastReminderSentAt).toLocaleTimeString()} - {complianceData.lastReminderType})
+                      </span>
+                    )}
+                  </p>
+                </div>
+                <button
+                  onClick={() => handleSendReminder(null)}
+                  disabled={sendingReminder}
+                  className="btn-approve"
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <ClockIcon size={15} />
+                  {sendingReminder ? 'Sending...' : 'Send Reminder to All'}
+                </button>
+              </div>
+
+              {/* Two columns: Register Compliance Matrix (left 65%) and Schedule Settings Form (right 35%) */}
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.25rem' }}>
+                {/* Cashier Register Status Grid */}
+                <div className="day-closing-card">
+                  <div className="day-closing-card-header">
+                    <div className="day-closing-card-title-group">
+                      <CheckCircleIcon size={18} style={{ color: '#4f46e5' }} />
+                      <span>Cashier Register Compliance Matrix</span>
+                    </div>
+                    <span className="day-closing-card-badge">
+                      {complianceData.cashierMatrix.length} Cashiers
+                    </span>
+                  </div>
+
+                  <div className="data-table-container">
+                    <table className="analytics-table">
+                      <thead>
+                        <tr>
+                          <th>Cashier</th>
+                          <th>Role</th>
+                          <th>Status</th>
+                          <th>Physical Counted</th>
+                          <th>Variance</th>
+                          <th>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {complianceData.cashierMatrix.map((cm: any) => (
+                          <tr key={cm.cashierId}>
+                            <td>
+                              <strong>{cm.cashierName}</strong>
+                            </td>
+                            <td style={{ fontSize: '0.75rem', color: '#64748b' }}>{cm.role}</td>
+                            <td>
+                              <span style={{
+                                fontSize: '0.72rem',
+                                padding: '2px 8px',
+                                borderRadius: '9999px',
+                                fontWeight: 700,
+                                textTransform: 'uppercase',
+                                background: cm.status === 'approved' || cm.status === 'closed' ? '#dcfce7' : (cm.status === 'submitted' ? '#dbeafe' : (cm.isOverdue ? '#fee2e2' : '#fef3c7')),
+                                color: cm.status === 'approved' || cm.status === 'closed' ? '#15803d' : (cm.status === 'submitted' ? '#1d4ed8' : (cm.isOverdue ? '#b91c1c' : '#92400e')),
+                              }}>
+                                {cm.isOverdue ? 'OVERDUE' : cm.status}
+                              </span>
+                            </td>
+                            <td>{cm.actualCashMinor != null ? fmt(cm.actualCashMinor) : '—'}</td>
+                            <td style={{
+                              fontWeight: 700,
+                              color: cm.varianceMinor == null ? 'inherit' : (cm.varianceMinor === 0 ? '#15803d' : (cm.varianceMinor > 0 ? '#2563eb' : '#dc2626'))
+                            }}>
+                              {cm.varianceMinor != null ? ((cm.varianceMinor > 0 ? '+' : '') + fmt(cm.varianceMinor)) : '—'}
+                            </td>
+                            <td>
+                              {cm.status !== 'approved' && cm.status !== 'closed' && (
+                                <button
+                                  onClick={() => handleSendReminder(cm.cashierId)}
+                                  disabled={sendingReminder}
+                                  className="day-closing-refresh-btn"
+                                  style={{ padding: '0.25rem 0.5rem', fontSize: '0.72rem' }}
+                                  title="Send individual reminder"
+                                >
+                                  Remind
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Schedule Settings Editor Form */}
+                <div className="day-closing-card">
+                  <div className="day-closing-card-header">
+                    <div className="day-closing-card-title-group">
+                      <ClockIcon size={18} style={{ color: '#4f46e5' }} />
+                      <span>Closing Schedule Settings</span>
+                    </div>
+                  </div>
+
+                  <form onSubmit={handleSaveSchedule} style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                        Expected Closing Time (24h)
+                      </label>
+                      <input
+                        type="time"
+                        value={expClosingTime}
+                        onChange={(e) => setExpClosingTime(e.target.value)}
+                        className="day-closing-input"
+                        style={{ width: '100%' }}
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                        1st Reminder (Minutes Before)
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="180"
+                        value={firstReminderMin}
+                        onChange={(e) => setFirstReminderMin(Number(e.target.value))}
+                        className="day-closing-input"
+                        style={{ width: '100%' }}
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                        2nd Reminder (Minutes Before)
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="60"
+                        value={secondReminderMin}
+                        onChange={(e) => setSecondReminderMin(Number(e.target.value))}
+                        className="day-closing-input"
+                        style={{ width: '100%' }}
+                        required
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <input
+                        type="checkbox"
+                        id="finalRemCheckbox"
+                        checked={finalReminder}
+                        onChange={(e) => setFinalReminder(e.target.checked)}
+                      />
+                      <label htmlFor="finalRemCheckbox" style={{ fontSize: '0.8rem', color: '#334155', fontWeight: 600, cursor: 'pointer' }}>
+                        Send Final Reminder at Expected Time
+                      </label>
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                        Overdue Alert Repeat (Minutes)
+                      </label>
+                      <input
+                        type="number"
+                        min="5"
+                        max="120"
+                        value={overdueIntervalMin}
+                        onChange={(e) => setOverdueIntervalMin(Number(e.target.value))}
+                        className="day-closing-input"
+                        style={{ width: '100%' }}
+                        required
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <input
+                        type="checkbox"
+                        id="autoAlertCheckbox"
+                        checked={autoAlert}
+                        onChange={(e) => setAutoAlert(e.target.checked)}
+                      />
+                      <label htmlFor="autoAlertCheckbox" style={{ fontSize: '0.8rem', color: '#334155', fontWeight: 600, cursor: 'pointer' }}>
+                        Auto-Alert When Overdue
+                      </label>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={savingSchedule}
+                      className="cash-rec-submit-btn"
+                      style={{ marginTop: '8px' }}
+                    >
+                      {savingSchedule ? 'Saving...' : 'Save Schedule Settings'}
+                    </button>
+                  </form>
+                </div>
+              </div>
             </>
           ) : null}
         </div>

@@ -2557,6 +2557,7 @@ export const fetchDayClosingPreview = (params: {
   branchId?: string;
   shiftId?: string;
   cashierId?: string;
+  counterId?: string;
 } = {}) => {
   const q = new URLSearchParams();
   const bdate = params.bdate || params.date;
@@ -2564,6 +2565,7 @@ export const fetchDayClosingPreview = (params: {
   if (params.branchId) q.set('branchId', params.branchId);
   if (params.shiftId) q.set('shiftId', params.shiftId);
   if (params.cashierId) q.set('cashierId', params.cashierId);
+  if (params.counterId) q.set('counterId', params.counterId);
   return api<any>(`/api/day-closing/preview?${q.toString()}`);
 };
 
@@ -2687,6 +2689,141 @@ export const fetchDayClosingHistory = (params: { branchId?: string; limit?: numb
     records: res.history || [],
   }));
 };
+
+export const fetchCounterSalesReport = (params: {
+  branchId?: string;
+  date?: string;
+  bdate?: string;
+  startDate?: string;
+  endDate?: string;
+} = {}) => {
+  const q = new URLSearchParams();
+  const date = params.date || params.bdate;
+  if (date) q.set('date', date);
+  if (params.branchId) q.set('branchId', params.branchId);
+  if (params.startDate) q.set('startDate', params.startDate);
+  if (params.endDate) q.set('endDate', params.endDate);
+  return api<{
+    success: boolean;
+    branchId: string;
+    date: string;
+    startDate: string;
+    endDate: string;
+    counters: any[];
+    consolidatedTotal: any;
+    exceptionCount: number;
+  }>(`/api/day-closing/counter-sales?${q.toString()}`);
+};
+
+export const fetchCashierSalesReport = (params: {
+  branchId?: string;
+  date?: string;
+  bdate?: string;
+  startDate?: string;
+  endDate?: string;
+} = {}) => {
+  const q = new URLSearchParams();
+  const date = params.date || params.bdate;
+  if (date) q.set('date', date);
+  if (params.branchId) q.set('branchId', params.branchId);
+  if (params.startDate) q.set('startDate', params.startDate);
+  if (params.endDate) q.set('endDate', params.endDate);
+  return api<{
+    success: boolean;
+    branchId: string;
+    date: string;
+    startDate: string;
+    endDate: string;
+    cashiers: any[];
+    consolidatedTotal: any;
+    exceptionCount: number;
+  }>(`/api/day-closing/cashier-sales?${q.toString()}`);
+};
+
+export const fetchDayClosingSchedules = (branchId?: string, counterId?: string) => {
+  const q = new URLSearchParams();
+  if (branchId) q.set('branchId', branchId);
+  if (counterId) q.set('counterId', counterId);
+  return api<{
+    success: boolean;
+    branchId: string;
+    counterId?: string | null;
+    schedule: any;
+    allSchedules: any[];
+  }>(`/api/day-closing/schedules?${q.toString()}`);
+};
+
+export const saveDayClosingSchedule = (data: {
+  branchId?: string;
+  counterId?: string | null;
+  expectedClosingTime: string;
+  firstReminderMinutesBefore?: number;
+  secondReminderMinutesBefore?: number;
+  finalReminderAtClosing?: boolean;
+  overdueReminderIntervalMinutes?: number;
+  autoAlertOverdue?: boolean;
+  enabled?: boolean;
+}) =>
+  api<{ success: boolean; id: string; schedule: any }>('/api/day-closing/schedules', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+export const fetchDayClosingCompliance = (params: { branchId?: string; date?: string } = {}) => {
+  const q = new URLSearchParams();
+  if (params.branchId) q.set('branchId', params.branchId);
+  if (params.date) q.set('date', params.date);
+  return api<{
+    success: boolean;
+    branchId: string;
+    date: string;
+    expectedClosingTime: string;
+    isBranchOverdue: boolean;
+    minutesOverdue: number;
+    lastReminderSentAt: string | null;
+    lastReminderType: string | null;
+    summary: {
+      totalRegisters: number;
+      closedCount: number;
+      submittedCount: number;
+      pendingCount: number;
+      overdueCount: number;
+      completionPct: number;
+      isStoreClosed: boolean;
+      storeStatus: string;
+    };
+    cashierMatrix: any[];
+    counters: any[];
+  }>(`/api/day-closing/compliance?${q.toString()}`);
+};
+
+export const sendDayClosingReminder = (data: {
+  branchId?: string;
+  cashierId?: string | null;
+  counterId?: string | null;
+  reminderType?: string;
+  message?: string;
+  date?: string;
+}) =>
+  api<{ success: boolean; message: string; notificationId: string }>('/api/day-closing/send-reminder', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+export const fetchDayClosingNotifications = (params: { branchId?: string } = {}) => {
+  const q = new URLSearchParams();
+  if (params.branchId) q.set('branchId', params.branchId);
+  return api<{
+    success: boolean;
+    notifications: any[];
+    unreadCount: number;
+  }>(`/api/day-closing/notifications?${q.toString()}`);
+};
+
+export const markDayClosingNotificationRead = (id: string) =>
+  api<{ success: boolean }>(`/api/day-closing/notifications/${id}/read`, {
+    method: 'POST',
+  });
 
 export const fetchReturnReports = (params: {
   reportType?: string;
