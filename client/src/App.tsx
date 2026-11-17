@@ -644,6 +644,18 @@ export function App() {
     }
   }, [user?.role, activeTabRaw]);
 
+  // Synchronize .theme-cashier on document.body for cashier session & portaled modals
+  useEffect(() => {
+    if (user?.role === 'cashier') {
+      document.body.classList.add('theme-cashier');
+    } else {
+      document.body.classList.remove('theme-cashier');
+    }
+    return () => {
+      document.body.classList.remove('theme-cashier');
+    };
+  }, [user?.role]);
+
   // Collapsible sidebar accordion sections
   const isAccountsTabActive = ['invoices', 'purchases', 'payments', 'expenses', 'payables', 'reports'].includes(activeTab);
   const isGstTabActive = [
