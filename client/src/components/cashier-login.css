@@ -1617,6 +1617,453 @@ div.app-container.theme-cashier span[style*="background: #4f46e5"],
 }
 
 /* ==========================================================================
+   4.14 QUICK PRODUCT CATALOG FLYOUT DRAWER (.bento-catalog-drawer)
+   ========================================================================== */
+
+body.theme-cashier .bento-catalog-drawer-overlay,
+.theme-cashier .bento-catalog-drawer-overlay,
+.bento-catalog-drawer-overlay.theme-cashier {
+  background: rgba(15, 45, 46, 0.45) !important;
+  backdrop-filter: blur(4px) !important;
+}
+
+body.theme-cashier .bento-catalog-drawer,
+.theme-cashier .bento-catalog-drawer,
+.bento-catalog-drawer.theme-cashier {
+  background: var(--bg) !important;
+  background-color: var(--bg) !important;
+  border-left: 1.5px solid var(--border) !important;
+  box-shadow: -14px 0 45px rgba(15, 45, 46, 0.25) !important;
+}
+
+body.theme-cashier .bento-drawer-header,
+.theme-cashier .bento-drawer-header {
+  background: var(--surface) !important;
+  background-color: var(--surface) !important;
+  border-bottom: 1.5px solid var(--border) !important;
+}
+
+body.theme-cashier .bento-drawer-header h3,
+.theme-cashier .bento-drawer-header h3 {
+  color: var(--sidebar) !important;
+  font-weight: 800 !important;
+}
+
+body.theme-cashier .bento-drawer-header span,
+.theme-cashier .bento-drawer-header span {
+  color: var(--text-muted) !important;
+}
+
+body.theme-cashier .bento-drawer-header .bento-icon-circle.indigo,
+.theme-cashier .bento-drawer-header .bento-icon-circle.indigo {
+  background: var(--primary-soft) !important;
+  border: 1px solid rgba(15, 118, 110, 0.25) !important;
+  color: var(--primary) !important;
+}
+
+body.theme-cashier .bento-drawer-header .bento-icon-circle.indigo svg,
+.theme-cashier .bento-drawer-header .bento-icon-circle.indigo svg {
+  stroke: var(--primary) !important;
+}
+
+body.theme-cashier .bento-drawer-close-btn,
+.theme-cashier .bento-drawer-close-btn {
+  background: #EFE9DE !important;
+  border: 1px solid var(--border) !important;
+  color: var(--sidebar) !important;
+}
+
+body.theme-cashier .bento-drawer-close-btn:hover,
+.theme-cashier .bento-drawer-close-btn:hover {
+  background: #FEE2E2 !important;
+  border-color: #FECACA !important;
+  color: #DC2626 !important;
+}
+
+body.theme-cashier .bento-add-btn,
+.theme-cashier .bento-add-btn {
+  background: var(--primary) !important;
+  background-image: none !important;
+  color: #FFFFFF !important;
+  border: 1px solid var(--primary-hover) !important;
+  box-shadow: 0 2px 6px rgba(15, 118, 110, 0.25) !important;
+}
+
+body.theme-cashier .bento-add-btn:hover,
+.theme-cashier .bento-add-btn:hover {
+  background: var(--primary-hover) !important;
+}
+
+body.theme-cashier .bento-drawer-search-bar,
+.theme-cashier .bento-drawer-search-bar {
+  background: var(--surface) !important;
+  background-color: var(--surface) !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+
+body.theme-cashier .bento-drawer-search-bar svg,
+.theme-cashier .bento-drawer-search-bar svg {
+  stroke: var(--primary) !important;
+}
+
+body.theme-cashier .bento-drawer-search-input,
+body.theme-cashier #pos-catalog-search-input,
+.theme-cashier .bento-drawer-search-input,
+.theme-cashier #pos-catalog-search-input {
+  background: #FAF7F2 !important;
+  background-color: #FAF7F2 !important;
+  border: 1.5px solid var(--border) !important;
+  color: var(--text) !important;
+}
+
+body.theme-cashier .bento-drawer-search-input:focus,
+body.theme-cashier #pos-catalog-search-input:focus,
+.theme-cashier .bento-drawer-search-input:focus,
+.theme-cashier #pos-catalog-search-input:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.2) !important;
+}
+
+body.theme-cashier .bento-drawer-cats,
+.theme-cashier .bento-drawer-cats {
+  background: #EFE9DE !important;
+  background-color: #EFE9DE !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+
+body.theme-cashier .bento-drawer-cat-pill,
+.theme-cashier .bento-drawer-cat-pill {
+  background: var(--surface) !important;
+  background-color: var(--surface) !important;
+  border: 1.5px solid var(--border) !important;
+  color: var(--sidebar) !important;
+  font-weight: 600 !important;
+}
+
+body.theme-cashier .bento-drawer-cat-pill:hover,
+.theme-cashier .bento-drawer-cat-pill:hover {
+  border-color: var(--primary) !important;
+  color: var(--primary) !important;
+}
+
+body.theme-cashier .bento-drawer-cat-pill.active,
+.theme-cashier .bento-drawer-cat-pill.active {
+  background: var(--primary) !important;
+  background-color: var(--primary) !important;
+  border-color: var(--primary-hover) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 8px rgba(15, 118, 110, 0.3) !important;
+}
+
+body.theme-cashier .bento-drawer-grid,
+.theme-cashier .bento-drawer-grid {
+  background: var(--bg) !important;
+  background-color: var(--bg) !important;
+}
+
+body.theme-cashier .bento-product-tile,
+.theme-cashier .bento-product-tile {
+  background: var(--surface) !important;
+  background-color: var(--surface) !important;
+  border: 1.5px solid var(--border) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 2px 6px rgba(15, 45, 46, 0.05) !important;
+}
+
+body.theme-cashier .bento-product-tile:hover,
+.theme-cashier .bento-product-tile:hover {
+  border-color: var(--primary) !important;
+  box-shadow: 0 8px 22px -4px rgba(15, 118, 110, 0.22) !important;
+  transform: translateY(-2px) !important;
+}
+
+body.theme-cashier .bento-product-tile.in-cart,
+.theme-cashier .bento-product-tile.in-cart {
+  border-color: var(--primary) !important;
+  background: #FAF7F2 !important;
+  box-shadow: 0 0 0 1.5px var(--primary), 0 6px 18px rgba(15, 118, 110, 0.16) !important;
+}
+
+body.theme-cashier .bento-product-tile.keyboard-selected,
+.theme-cashier .bento-product-tile.keyboard-selected {
+  outline: 3px solid var(--primary) !important;
+  box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.35), 0 8px 20px rgba(15, 45, 46, 0.15) !important;
+  background: var(--primary-soft) !important;
+}
+
+body.theme-cashier .bento-tile-cat,
+.theme-cashier .bento-tile-cat {
+  background: var(--primary-soft) !important;
+  border: 1px solid rgba(15, 118, 110, 0.25) !important;
+  color: var(--primary) !important;
+  font-weight: 700 !important;
+}
+
+body.theme-cashier .bento-stock-tag.in,
+.theme-cashier .bento-stock-tag.in {
+  background: #DCFCE7 !important;
+  border: 1px solid #BBF7D0 !important;
+  color: #15803D !important;
+}
+
+body.theme-cashier .bento-stock-tag.out,
+.theme-cashier .bento-stock-tag.out {
+  background: #FEE2E2 !important;
+  border: 1px solid #FECACA !important;
+  color: #B91C1C !important;
+}
+
+body.theme-cashier .bento-product-tile .bento-tile-title,
+.theme-cashier .bento-product-tile .bento-tile-title {
+  color: var(--sidebar) !important;
+  font-weight: 700 !important;
+}
+
+body.theme-cashier .pricing-store-val,
+.theme-cashier .pricing-store-val {
+  color: var(--sidebar) !important;
+  font-weight: 800 !important;
+}
+
+body.theme-cashier .mrp-strikethrough,
+.theme-cashier .mrp-strikethrough {
+  color: var(--text-muted) !important;
+}
+
+body.theme-cashier .pricing-save-badge,
+.theme-cashier .pricing-save-badge {
+  background: #DCFCE7 !important;
+  border: 1px solid #BBF7D0 !important;
+  color: #15803D !important;
+}
+
+body.theme-cashier .bento-tile-sku,
+.theme-cashier .bento-tile-sku {
+  background: #EFE9DE !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text-muted) !important;
+}
+
+body.theme-cashier .bento-quick-add-btn,
+.theme-cashier .bento-quick-add-btn {
+  background: var(--primary) !important;
+  background-image: none !important;
+  color: #FFFFFF !important;
+  border: 1px solid var(--primary-hover) !important;
+  box-shadow: 0 2px 6px rgba(15, 118, 110, 0.25) !important;
+}
+
+body.theme-cashier .bento-quick-add-btn:hover:not(:disabled),
+.theme-cashier .bento-quick-add-btn:hover:not(:disabled) {
+  background: var(--primary-hover) !important;
+  background-image: none !important;
+  box-shadow: 0 4px 10px rgba(15, 118, 110, 0.35) !important;
+}
+
+body.theme-cashier .bento-quick-add-btn:disabled,
+.theme-cashier .bento-quick-add-btn:disabled {
+  background: #EFE9DE !important;
+  color: var(--text-muted) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: none !important;
+}
+
+body.theme-cashier .bento-tile-stepper,
+.theme-cashier .bento-tile-stepper {
+  background: #EFE9DE !important;
+  border: 1px solid var(--border) !important;
+}
+
+body.theme-cashier .tile-stepper-btn,
+.theme-cashier .tile-stepper-btn {
+  background: var(--surface) !important;
+  color: var(--sidebar) !important;
+  border: 1px solid var(--border) !important;
+}
+
+body.theme-cashier .tile-stepper-btn:hover,
+.theme-cashier .tile-stepper-btn:hover {
+  background: var(--primary) !important;
+  color: #FFFFFF !important;
+  border-color: var(--primary-hover) !important;
+}
+
+body.theme-cashier .tile-stepper-btn.plus,
+.theme-cashier .tile-stepper-btn.plus {
+  background: var(--primary) !important;
+  color: #FFFFFF !important;
+  border-color: var(--primary-hover) !important;
+}
+
+body.theme-cashier .tile-stepper-qty,
+.theme-cashier .tile-stepper-qty {
+  color: var(--sidebar) !important;
+  font-weight: 800 !important;
+}
+
+body.theme-cashier .bento-drawer-footer,
+.theme-cashier .bento-drawer-footer {
+  background: var(--surface) !important;
+  background-color: var(--surface) !important;
+  border-top: 1.5px solid var(--border) !important;
+  color: var(--sidebar) !important;
+}
+
+body.theme-cashier .bento-drawer-footer span,
+.theme-cashier .bento-drawer-footer span {
+  color: var(--sidebar) !important;
+}
+
+/* ==========================================================================
+   4.15 MASTER ADD & EDIT PRODUCT MODAL (.product-edit-rectangle-modal)
+   ========================================================================== */
+
+body.theme-cashier .product-edit-rectangle-modal,
+.theme-cashier .product-edit-rectangle-modal {
+  background: var(--surface) !important;
+  background-color: var(--surface) !important;
+  border: 1.5px solid var(--border) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 25px 60px -15px rgba(15, 45, 46, 0.35) !important;
+}
+
+body.theme-cashier .product-edit-rectangle-modal .modal-header,
+.theme-cashier .product-edit-rectangle-modal .modal-header {
+  background: var(--surface) !important;
+  background-color: var(--surface) !important;
+  border-bottom: 1.5px solid var(--border) !important;
+}
+
+body.theme-cashier .product-edit-rectangle-modal .card-title,
+.theme-cashier .product-edit-rectangle-modal .card-title {
+  color: var(--sidebar) !important;
+  font-weight: 800 !important;
+}
+
+body.theme-cashier .product-edit-split-grid,
+.theme-cashier .product-edit-split-grid {
+  background: var(--bg) !important;
+  background-color: var(--bg) !important;
+}
+
+body.theme-cashier .product-edit-split-grid > div > div,
+.theme-cashier .product-edit-split-grid > div > div {
+  background: var(--surface) !important;
+  background-color: var(--surface) !important;
+  border: 1.5px solid var(--border) !important;
+  border-radius: 12px !important;
+}
+
+body.theme-cashier .product-edit-rectangle-modal .form-label,
+.theme-cashier .product-edit-rectangle-modal .form-label {
+  color: var(--sidebar) !important;
+  font-weight: 700 !important;
+}
+
+body.theme-cashier .product-edit-rectangle-modal .form-input,
+.theme-cashier .product-edit-rectangle-modal .form-input,
+body.theme-cashier .product-edit-rectangle-modal select.form-input,
+.theme-cashier .product-edit-rectangle-modal select.form-input {
+  background: #FAF7F2 !important;
+  background-color: #FAF7F2 !important;
+  border: 1.5px solid var(--border) !important;
+  color: var(--text) !important;
+}
+
+body.theme-cashier .product-edit-rectangle-modal .form-input:focus,
+.theme-cashier .product-edit-rectangle-modal .form-input:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.2) !important;
+}
+
+body.theme-cashier .product-edit-rectangle-modal div[style*="border-top: 1px solid #e2e8f0"],
+body.theme-cashier .product-edit-rectangle-modal div[style*="background: #f8fafc"],
+.theme-cashier .product-edit-rectangle-modal div[style*="border-top: 1px solid #e2e8f0"],
+.theme-cashier .product-edit-rectangle-modal div[style*="background: #f8fafc"] {
+  background: var(--surface) !important;
+  background-color: var(--surface) !important;
+  border-top: 1.5px solid var(--border) !important;
+}
+
+/* ==========================================================================
+   4.16 GENERAL MODALS & DIALOGS IN CASHIER MODE
+   ========================================================================== */
+
+body.theme-cashier .modal-overlay,
+.theme-cashier .modal-overlay {
+  background: rgba(15, 45, 46, 0.45) !important;
+  backdrop-filter: blur(4px) !important;
+}
+
+body.theme-cashier .modal-content,
+.theme-cashier .modal-content {
+  background: var(--surface) !important;
+  background-color: var(--surface) !important;
+  border: 1.5px solid var(--border) !important;
+  box-shadow: 0 20px 50px rgba(15, 45, 46, 0.25) !important;
+  color: var(--text) !important;
+}
+
+body.theme-cashier .modal-header,
+.theme-cashier .modal-header {
+  background: var(--surface) !important;
+  background-color: var(--surface) !important;
+  border-bottom: 1.5px solid var(--border) !important;
+}
+
+body.theme-cashier .modal-title,
+.theme-cashier .modal-title {
+  color: var(--sidebar) !important;
+  font-weight: 800 !important;
+}
+
+body.theme-cashier .modal-subtitle,
+.theme-cashier .modal-subtitle {
+  color: var(--text-muted) !important;
+}
+
+body.theme-cashier .modal-body,
+.theme-cashier .modal-body {
+  background: var(--surface) !important;
+  background-color: var(--surface) !important;
+}
+
+body.theme-cashier .modal-icon-badge,
+.theme-cashier .modal-icon-badge {
+  background: var(--primary-soft) !important;
+  color: var(--primary) !important;
+  border: 1px solid rgba(15, 118, 110, 0.25) !important;
+}
+
+body.theme-cashier .modal-icon-badge svg,
+.theme-cashier .modal-icon-badge svg {
+  stroke: var(--primary) !important;
+}
+
+body.theme-cashier .modal-close-btn,
+.theme-cashier .modal-close-btn {
+  background: #EFE9DE !important;
+  border: 1px solid var(--border) !important;
+  color: var(--sidebar) !important;
+}
+
+body.theme-cashier .btn-secondary,
+.theme-cashier .btn-secondary {
+  background: #EFE9DE !important;
+  background-color: #EFE9DE !important;
+  border: 1px solid var(--border) !important;
+  color: var(--sidebar) !important;
+  font-weight: 600 !important;
+}
+
+body.theme-cashier .btn-secondary:hover,
+.theme-cashier .btn-secondary:hover {
+  background: #E5DCCE !important;
+  border-color: #C2B8A8 !important;
+  color: var(--sidebar) !important;
+}
+
+/* ==========================================================================
    5. CASHIER SHIFT DASHBOARD & CLOSING (LIGHT CREAM CANVAS & TEAL THEME)
    ========================================================================== */
 

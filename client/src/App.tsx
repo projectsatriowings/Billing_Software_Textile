@@ -11051,8 +11051,8 @@ export function App() {
 
                 {/* ================= PRODUCT CATALOG FLYOUT DRAWER (NON-BARCODED & SEARCHABLE ITEMS) ================= */}
                 {showProductCatalogDrawer && createPortal(
-                  <div className="bento-catalog-drawer-overlay" onClick={() => setShowProductCatalogDrawer(false)}>
-                    <div className="bento-catalog-drawer" onClick={(e) => e.stopPropagation()}>
+                  <div className={`bento-catalog-drawer-overlay ${user?.role === 'cashier' ? 'theme-cashier' : ''}`} onClick={() => setShowProductCatalogDrawer(false)}>
+                    <div className={`bento-catalog-drawer ${user?.role === 'cashier' ? 'theme-cashier' : ''}`} onClick={(e) => e.stopPropagation()}>
                       {/* Drawer Header */}
                       <div className="bento-drawer-header">
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
@@ -11065,7 +11065,7 @@ export function App() {
                           </span>
                           <div>
                             <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800 }}>Quick Product Catalog</h3>
-                            <span style={{ fontSize: '0.74rem', color: '#64748b' }}>
+                            <span style={{ fontSize: '0.74rem', color: user?.role === 'cashier' ? 'var(--text-muted)' : '#64748b' }}>
                               {filteredItems.length} items • Click + Add to bill (No barcode needed)
                             </span>
                           </div>
@@ -11282,8 +11282,8 @@ export function App() {
                                       width: '54px',
                                       height: '54px',
                                       borderRadius: '10px',
-                                      border: '1px solid #e2e8f0',
-                                      background: '#f8fafc',
+                                      border: user?.role === 'cashier' ? '1.5px solid var(--border)' : '1px solid #e2e8f0',
+                                      background: user?.role === 'cashier' ? '#EFE9DE' : '#f8fafc',
                                       overflow: 'hidden',
                                       display: 'flex',
                                       alignItems: 'center',
@@ -11389,7 +11389,7 @@ export function App() {
                         <div>
                           {cart.length > 0 ? (
                             <div style={{ display: 'flex', flexDirection: 'column' }}>
-                              <span style={{ fontSize: '0.86rem', fontWeight: 700, color: '#1e293b' }}>
+                              <span style={{ fontSize: '0.86rem', fontWeight: 700, color: user?.role === 'cashier' ? 'var(--sidebar)' : '#1e293b' }}>
                                 Cart: {cart.length} {cart.length === 1 ? 'item' : 'items'} ({cart.reduce((s, c) => s + c.qty, 0)} units)
                               </span>
                               <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#16a34a' }}>
@@ -16690,9 +16690,9 @@ export function App() {
 
         {/* Master Data: Item Form Modal (Add & Edit) */}
         {showItemModal && (
-          <div className="modal-overlay" onClick={() => setShowItemModal(false)}>
+          <div className={`modal-overlay ${user?.role === 'cashier' ? 'theme-cashier' : ''}`} onClick={() => setShowItemModal(false)}>
             <div
-              className="modal-content product-edit-rectangle-modal"
+              className={`modal-content product-edit-rectangle-modal ${user?.role === 'cashier' ? 'theme-cashier' : ''}`}
               style={{
                 maxWidth: '960px',
                 width: '94vw',
@@ -16702,8 +16702,8 @@ export function App() {
                 borderRadius: '16px',
                 overflow: 'hidden',
                 boxShadow: '0 25px 60px -15px rgba(15, 23, 42, 0.4)',
-                background: '#ffffff',
-                border: '1px solid #e2e8f0',
+                background: user?.role === 'cashier' ? 'var(--surface)' : '#ffffff',
+                border: user?.role === 'cashier' ? '1.5px solid var(--border)' : '1px solid #e2e8f0',
               }}
               onClick={(e) => e.stopPropagation()}
             >
@@ -16712,8 +16712,8 @@ export function App() {
                 className="modal-header"
                 style={{
                   padding: '0.9rem 1.5rem',
-                  borderBottom: '1px solid #e2e8f0',
-                  background: '#ffffff',
+                  borderBottom: user?.role === 'cashier' ? '1.5px solid var(--border)' : '1px solid #e2e8f0',
+                  background: user?.role === 'cashier' ? 'var(--surface)' : '#ffffff',
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
@@ -16726,7 +16726,7 @@ export function App() {
                       width: '36px',
                       height: '36px',
                       borderRadius: '10px',
-                      background: 'rgba(99, 102, 241, 0.1)',
+                      background: user?.role === 'cashier' ? 'var(--primary-soft)' : 'rgba(99, 102, 241, 0.1)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -16734,12 +16734,12 @@ export function App() {
                     }}
                   >
                     {editingItem ? (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={user?.role === 'cashier' ? 'var(--primary)' : '#6366f1'} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M12 20h9" />
                         <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
                       </svg>
                     ) : (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={user?.role === 'cashier' ? 'var(--primary)' : '#6366f1'} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
                         <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
                         <line x1="12" y1="22.08" x2="12" y2="12" />
@@ -16747,10 +16747,10 @@ export function App() {
                     )}
                   </div>
                   <div>
-                    <h3 className="card-title" style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: '#0f172a' }}>
+                    <h3 className="card-title" style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: user?.role === 'cashier' ? 'var(--sidebar)' : '#0f172a' }}>
                       {editingItem ? `Edit Product: ${editingItem.name}` : `Add New Item to ${shop?.name}`}
                     </h3>
-                    <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '2px' }}>
+                    <div style={{ fontSize: '0.78rem', color: user?.role === 'cashier' ? 'var(--text-muted)' : '#64748b', marginTop: '2px' }}>
                       {editingItem ? 'Update product details, pricing, tax rates and units' : 'Register a new item with unit, tax rate, and opening stock'}
                     </div>
                   </div>
@@ -16758,9 +16758,9 @@ export function App() {
                 <button
                   type="button"
                   style={{
-                    background: '#f1f5f9',
-                    border: 'none',
-                    color: '#64748b',
+                    background: user?.role === 'cashier' ? '#EFE9DE' : '#f1f5f9',
+                    border: user?.role === 'cashier' ? '1px solid var(--border)' : 'none',
+                    color: user?.role === 'cashier' ? 'var(--sidebar)' : '#64748b',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
@@ -16800,8 +16800,8 @@ export function App() {
                     {/* Product Photo Studio Card */}
                     <div
                       style={{
-                        background: '#f8fafc',
-                        border: '1px solid #e2e8f0',
+                        background: user?.role === 'cashier' ? 'var(--surface)' : '#f8fafc',
+                        border: user?.role === 'cashier' ? '1.5px solid var(--border)' : '1px solid #e2e8f0',
                         borderRadius: '12px',
                         padding: '1rem',
                         display: 'flex',
@@ -16810,10 +16810,10 @@ export function App() {
                       }}
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#334155' }}>
+                        <span style={{ fontSize: '0.82rem', fontWeight: 700, color: user?.role === 'cashier' ? 'var(--sidebar)' : '#334155' }}>
                           Product Image
                         </span>
-                        <span style={{ fontSize: '0.68rem', padding: '1px 6px', borderRadius: '4px', background: itemFormImageUrl ? '#dcfce7' : '#e0e7ff', color: itemFormImageUrl ? '#15803d' : '#4338ca', fontWeight: 600 }}>
+                        <span style={{ fontSize: '0.68rem', padding: '1px 6px', borderRadius: '4px', background: itemFormImageUrl ? '#dcfce7' : user?.role === 'cashier' ? 'var(--primary-soft)' : '#e0e7ff', color: itemFormImageUrl ? '#15803d' : user?.role === 'cashier' ? 'var(--primary)' : '#4338ca', fontWeight: 600 }}>
                           {itemFormImageUrl ? 'Attached' : 'Optional'}
                         </span>
                       </div>
@@ -16824,8 +16824,8 @@ export function App() {
                           width: '100%',
                           height: '150px',
                           borderRadius: '10px',
-                          border: itemFormImageUrl ? '1.5px solid #818cf8' : '2px dashed #cbd5e1',
-                          background: '#ffffff',
+                          border: user?.role === 'cashier' ? '2px dashed var(--border)' : itemFormImageUrl ? '1.5px solid #818cf8' : '2px dashed #cbd5e1',
+                          background: user?.role === 'cashier' ? '#FAF7F2' : '#ffffff',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -16871,7 +16871,7 @@ export function App() {
                               justifyContent: 'center',
                               fontSize: '0.75rem',
                               fontWeight: 700,
-                              color: '#4f46e5',
+                              color: user?.role === 'cashier' ? 'var(--primary)' : '#4f46e5',
                             }}
                           >
                             Optimizing image...
@@ -16890,12 +16890,12 @@ export function App() {
                             gap: '0.4rem',
                             padding: '0.42rem 0.65rem',
                             borderRadius: '8px',
-                            background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                            background: user?.role === 'cashier' ? 'var(--primary)' : 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
                             color: '#ffffff',
                             fontSize: '0.78rem',
                             fontWeight: 600,
                             cursor: 'pointer',
-                            boxShadow: '0 1px 3px rgba(99, 102, 241, 0.25)',
+                            boxShadow: user?.role === 'cashier' ? '0 1px 3px rgba(15, 118, 110, 0.3)' : '0 1px 3px rgba(99, 102, 241, 0.25)',
                           }}
                         >
                           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -16948,7 +16948,7 @@ export function App() {
                       {/* Image Controls: Option 2 - Google Drive Link or Web Image URL */}
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <label style={{ fontSize: '0.74rem', fontWeight: 700, color: '#334155' }}>
+                          <label style={{ fontSize: '0.74rem', fontWeight: 700, color: user?.role === 'cashier' ? 'var(--sidebar)' : '#334155' }}>
                             Or Google Drive / Image Link:
                           </label>
                           {isGoogleDriveUrl(itemFormImageUrl) && (
@@ -16975,7 +16975,7 @@ export function App() {
                             boxSizing: 'border-box',
                           }}
                         />
-                        <div style={{ fontSize: '0.67rem', color: '#64748b' }}>
+                        <div style={{ fontSize: '0.67rem', color: user?.role === 'cashier' ? 'var(--text-muted)' : '#64748b' }}>
                           Paste any Google Drive share link (ensure link sharing is set to &quot;Anyone with the link can view&quot;).
                         </div>
                       </div>
@@ -16984,8 +16984,8 @@ export function App() {
                     {/* Stock & Reorder Alert Card */}
                     <div
                       style={{
-                        background: '#f8fafc',
-                        border: '1px solid #e2e8f0',
+                        background: user?.role === 'cashier' ? 'var(--surface)' : '#f8fafc',
+                        border: user?.role === 'cashier' ? '1.5px solid var(--border)' : '1px solid #e2e8f0',
                         borderRadius: '12px',
                         padding: '1rem',
                         display: 'flex',
@@ -16993,8 +16993,8 @@ export function App() {
                         gap: '0.75rem',
                       }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.82rem', fontWeight: 700, color: '#334155' }}>
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.82rem', fontWeight: 700, color: user?.role === 'cashier' ? 'var(--sidebar)' : '#334155' }}>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={user?.role === 'cashier' ? 'var(--primary)' : '#6366f1'} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
                           <path d="M13.73 21a2 2 0 0 1-3.46 0" />
                         </svg>
@@ -17060,8 +17060,8 @@ export function App() {
                     {/* General Information Card */}
                     <div
                       style={{
-                        background: '#ffffff',
-                        border: '1px solid #e2e8f0',
+                        background: user?.role === 'cashier' ? 'var(--surface)' : '#ffffff',
+                        border: user?.role === 'cashier' ? '1.5px solid var(--border)' : '1px solid #e2e8f0',
                         borderRadius: '12px',
                         padding: '1.1rem',
                         display: 'flex',
@@ -17070,7 +17070,7 @@ export function App() {
                         boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
                       }}
                     >
-                      <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1e293b', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.45rem' }}>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 700, color: user?.role === 'cashier' ? 'var(--sidebar)' : '#1e293b', borderBottom: user?.role === 'cashier' ? '1px solid var(--border)' : '1px solid #f1f5f9', paddingBottom: '0.45rem' }}>
                         Product Identification
                       </div>
 
@@ -17229,8 +17229,8 @@ export function App() {
                     {/* Pricing & Tax Card */}
                     <div
                       style={{
-                        background: '#ffffff',
-                        border: '1px solid #e2e8f0',
+                        background: user?.role === 'cashier' ? 'var(--surface)' : '#ffffff',
+                        border: user?.role === 'cashier' ? '1.5px solid var(--border)' : '1px solid #e2e8f0',
                         borderRadius: '12px',
                         padding: '1.1rem',
                         display: 'flex',
@@ -17239,7 +17239,7 @@ export function App() {
                         boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
                       }}
                     >
-                      <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1e293b', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.45rem' }}>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 700, color: user?.role === 'cashier' ? 'var(--sidebar)' : '#1e293b', borderBottom: user?.role === 'cashier' ? '1px solid var(--border)' : '1px solid #f1f5f9', paddingBottom: '0.45rem' }}>
                         Pricing &amp; Taxation
                       </div>
 
@@ -17465,12 +17465,12 @@ export function App() {
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     padding: '0.85rem 1.5rem',
-                    borderTop: '1px solid #e2e8f0',
-                    background: '#f8fafc',
+                    borderTop: user?.role === 'cashier' ? '1.5px solid var(--border)' : '1px solid #e2e8f0',
+                    background: user?.role === 'cashier' ? 'var(--surface)' : '#f8fafc',
                     flexShrink: 0,
                   }}
                 >
-                  <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                  <div style={{ fontSize: '0.8rem', color: user?.role === 'cashier' ? 'var(--text-muted)' : '#64748b' }}>
                     {editingItem ? 'Changes will be immediately synchronized across POS and branch catalogs.' : 'New product will be saved to your store master catalog.'}
                   </div>
                   <div style={{ display: 'flex', gap: '0.65rem' }}>
