@@ -1,4 +1,39 @@
 import crypto from 'node:crypto';
+import dns from 'node:dns';
+import { createRequire } from 'node:module';
+
+// Configure DNS fallback to handle networks/ISPs that refuse or block cloud endpoints like Neon
+const origLookup = dns.lookup;
+const resolver = new dns.promises.Resolver();
+resolver.setServers(['8.8.8.8', '1.1.1.1']);
+
+const fallbackLookup: typeof dns.lookup = function (hostname: string, options: any, callback?: any) {
+  if (typeof options === 'function') {
+    callback = options;
+    options = {};
+  }
+  origLookup(hostname, options, async (err, address, family) => {
+    if (err) {
+      try {
+        const ips = await resolver.resolve4(hostname);
+        if (options && options.all) {
+          return callback(null, ips.map(ip => ({ address: ip, family: 4 })));
+        }
+        return callback(null, ips[0], 4);
+      } catch {
+        return callback(err, address, family);
+      }
+    }
+    return callback(err, address, family);
+  });
+} as any;
+
+dns.lookup = fallbackLookup;
+try {
+  const req = createRequire(import.meta.url);
+  req('node:dns').lookup = fallbackLookup;
+  req('dns').lookup = fallbackLookup;
+} catch {}
 
 // Load .env (Node 22 built-in) when present; real environment variables win.
 try { process.loadEnvFile('.env'); } catch { /* no .env file: fine */ }

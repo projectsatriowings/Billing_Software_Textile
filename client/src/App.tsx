@@ -1108,18 +1108,34 @@ export function App() {
   const [scanMfrInitialItemId, setScanMfrInitialItemId] = useState<string | null>(null);
   const [togglingItemId, setTogglingItemId] = useState<string | null>(null);
 
-  // Wireless Mobile Barcode Scanner State
-  const [scannerSessionId] = useState<string>(() => {
+  // Billing Counter State
+  const [selectedCounter, setSelectedCounter] = useState<string>(() => {
     try {
-      const stored = localStorage.getItem('pos_scanner_session');
-      if (stored) return stored;
-      const defaultId = 'pos-counter-1';
-      localStorage.setItem('pos_scanner_session', defaultId);
-      return defaultId;
+      return sessionStorage.getItem('pos_selected_counter') || localStorage.getItem('pos_selected_counter') || '';
     } catch {
-      return 'pos-counter-1';
+      return '';
     }
   });
+  const [selectedCounterId, setSelectedCounterId] = useState<string>(() => {
+    try {
+      return sessionStorage.getItem('pos_selected_counter_id') || localStorage.getItem('pos_selected_counter_id') || '';
+    } catch {
+      return '';
+    }
+  });
+
+  // Wireless Mobile Barcode Scanner State: strictly scoped per branch & counter station
+  const scannerSessionId = useMemo(() => {
+    const rawBranch = (currentBranchCode && currentBranchCode !== 'ALL' ? currentBranchCode : activeBranch?.code || 'main')
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]/g, '-');
+    const rawCounter = (selectedCounter || 'c01')
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]/g, '-');
+    return `pos-${rawBranch}-${rawCounter}`;
+  }, [currentBranchCode, activeBranch?.code, selectedCounter]);
   const [showMobileScannerModal, setShowMobileScannerModal] = useState(false);
   const [isPhoneScannerConnected, setIsPhoneScannerConnected] = useState(false);
   const [externalBarcodeScan, setExternalBarcodeScan] = useState<{ barcode: string; timestamp: number } | null>(null);
@@ -1146,12 +1162,14 @@ export function App() {
       ? (scannerNetworkInfo?.httpsPort || 3444)
       : (scannerNetworkInfo?.httpPort || 3001);
     const effectiveProto = scannerProtocol === 'https' ? 'https' : 'http';
-    return customTunnelUrl.trim()
-      ? `${customTunnelUrl.trim().replace(/\/+$/, '')}/scanner?session=${encodeURIComponent(scannerSessionId)}`
+    const counterParam = encodeURIComponent(selectedCounter || 'Counter 1');
+    const base = customTunnelUrl.trim()
+      ? customTunnelUrl.trim().replace(/\/+$/, '')
       : scannerNetworkInfo?.tunnelUrl
-        ? `${scannerNetworkInfo.tunnelUrl.replace(/\/+$/, '')}/scanner?session=${encodeURIComponent(scannerSessionId)}`
-        : `${effectiveProto}://${localIp}:${port}/scanner?session=${encodeURIComponent(scannerSessionId)}`;
-  }, [scannerNetworkInfo, scannerProtocol, customTunnelUrl, scannerSessionId]);
+        ? scannerNetworkInfo.tunnelUrl.replace(/\/+$/, '')
+        : `${effectiveProto}://${localIp}:${port}`;
+    return `${base}/scanner?session=${encodeURIComponent(scannerSessionId)}&counter=${counterParam}`;
+  }, [scannerNetworkInfo, scannerProtocol, customTunnelUrl, scannerSessionId, selectedCounter]);
 
   // Modern Image 2 POS State
   const [customerSearch, setCustomerSearch] = useState('');
@@ -1163,20 +1181,6 @@ export function App() {
   const [appliedDiscountPercent, setAppliedDiscountPercent] = useState<number>(0);
   const [showDiscountPicker, setShowDiscountPicker] = useState(false);
   const [showPosOpenShiftModal, setShowPosOpenShiftModal] = useState(false);
-  const [selectedCounter, setSelectedCounter] = useState<string>(() => {
-    try {
-      return sessionStorage.getItem('pos_selected_counter') || localStorage.getItem('pos_selected_counter') || '';
-    } catch {
-      return '';
-    }
-  });
-  const [selectedCounterId, setSelectedCounterId] = useState<string>(() => {
-    try {
-      return sessionStorage.getItem('pos_selected_counter_id') || localStorage.getItem('pos_selected_counter_id') || '';
-    } catch {
-      return '';
-    }
-  });
   const [showCounterModal, setShowCounterModal] = useState<boolean>(false);
   const [showHeldOrdersModal, setShowHeldOrdersModal] = useState(false);
   const [showCustomItemModal, setShowCustomItemModal] = useState(false);
@@ -7991,7 +7995,7 @@ export function App() {
                     <div className="bento-notif-header">
                       <div className="bento-notif-title-row">
                         <span className="bento-notif-icon-bubble">
-                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
                             <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
                           </svg>
@@ -8055,7 +8059,7 @@ export function App() {
                           <div className="bento-notif-card">
                             <div className="bento-notif-card-head">
                               <div className="bento-notif-card-icon pos">
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                                   <circle cx="9" cy="21" r="1"></circle>
                                   <circle cx="20" cy="21" r="1"></circle>
                                   <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
@@ -8086,7 +8090,7 @@ export function App() {
                           <div className="bento-notif-card">
                             <div className="bento-notif-card-head">
                               <div className="bento-notif-card-icon invoices">
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0284c7" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                                   <polyline points="14 2 14 8 20 8" />
                                   <line x1="16" y1="13" x2="8" y2="13" />
@@ -17710,16 +17714,7 @@ export function App() {
                   <div className="scanner-qr-column">
                     <div className="scanner-qr-box">
                       {(() => {
-                        const localIp = scannerNetworkInfo?.localIp || window.location.hostname;
-                        const port = scannerProtocol === 'https'
-                          ? (scannerNetworkInfo?.httpsPort || 3444)
-                          : (scannerNetworkInfo?.httpPort || 3001);
-                        const effectiveProto = scannerProtocol === 'https' ? 'https' : 'http';
-                        const pairingUrl = customTunnelUrl.trim()
-                          ? `${customTunnelUrl.trim().replace(/\/+$/, '')}/scanner?session=${encodeURIComponent(scannerSessionId)}`
-                          : scannerNetworkInfo?.tunnelUrl
-                            ? `${scannerNetworkInfo.tunnelUrl.replace(/\/+$/, '')}/scanner?session=${encodeURIComponent(scannerSessionId)}`
-                            : `${effectiveProto}://${localIp}:${port}/scanner?session=${encodeURIComponent(scannerSessionId)}`;
+                        const pairingUrl = scannerPairingUrl;
                         const svgString = qrSvg(pairingUrl, { size: 155, margin: 2 });
                         return (
                           <>
@@ -17834,16 +17829,7 @@ export function App() {
 
                     {/* Direct Link Row with Copy */}
                     {(() => {
-                      const localIp = scannerNetworkInfo?.localIp || window.location.hostname;
-                      const port = scannerProtocol === 'https'
-                        ? (scannerNetworkInfo?.httpsPort || 3444)
-                        : (scannerNetworkInfo?.httpPort || 3001);
-                      const effectiveProto = scannerProtocol === 'https' ? 'https' : 'http';
-                      const pairingUrl = customTunnelUrl.trim()
-                        ? `${customTunnelUrl.trim().replace(/\/+$/, '')}/scanner?session=${encodeURIComponent(scannerSessionId)}`
-                        : scannerNetworkInfo?.tunnelUrl
-                          ? `${scannerNetworkInfo.tunnelUrl.replace(/\/+$/, '')}/scanner?session=${encodeURIComponent(scannerSessionId)}`
-                          : `${effectiveProto}://${localIp}:${port}/scanner?session=${encodeURIComponent(scannerSessionId)}`;
+                      const pairingUrl = scannerPairingUrl;
 
                       return (
                         <div className="scanner-link-box">
@@ -17920,7 +17906,7 @@ export function App() {
               </div>
 
               <div className="modal-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span className="scanner-session-pill">Session ID: {scannerSessionId}</span>
+                <span className="scanner-session-pill">Station: {selectedCounter || 'Default'} • Session ID: {scannerSessionId}</span>
                 <button
                   type="button"
                   className="btn btn-secondary"
@@ -17978,12 +17964,15 @@ export function App() {
                 counterId,
                 counter: counterCode,
                 branchId: activeBranch?.id || user?.branchId || undefined,
-              }).catch(() => { });
+              }).catch((err: any) => {
+                showToast(err?.message || 'Failed to link counter to active shift', 'error');
+              });
             }}
             currentCounter={selectedCounter || activeBranch?.counters?.[0] || 'MAIN-C01'}
             currentCounterId={selectedCounterId}
             branchName={currentBranchName}
             branchCode={currentBranchCode}
+            branchId={activeBranch?.id || user?.branchId || undefined}
             cashierName={user.name || 'Cashier'}
             availableCounters={activeBranch?.counters}
             counterDetails={activeBranch?.counterDetails}

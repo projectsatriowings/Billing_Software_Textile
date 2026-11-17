@@ -1,5 +1,5 @@
 import { createPortal } from 'react-dom';
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   StoreIcon,
   UserIcon,
@@ -10,8 +10,10 @@ import {
   ArrowRightIcon,
   SparklesIcon,
   LayersIcon,
+  LockIcon,
 } from '../inventory/InventoryIcons.tsx';
 import type { BranchCounterDetail } from '../../../../shared/types.ts';
+import { fetchOccupiedCounters, type OccupiedCounterInfo } from '../../api.ts';
 
 export interface SelectCounterModalProps {
   isOpen: boolean;
@@ -21,10 +23,12 @@ export interface SelectCounterModalProps {
   currentCounterId?: string;
   branchName: string;
   branchCode: string;
+  branchId?: string;
   cashierName: string;
   availableCounters?: string[];
   counterDetails?: BranchCounterDetail[];
   canClose?: boolean;
+  occupiedCounters?: OccupiedCounterInfo[];
 }
 
 interface ResolvedCounterOption {
@@ -44,11 +48,42 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
   currentCounterId = '',
   branchName,
   branchCode,
+  branchId,
   cashierName,
   availableCounters,
   counterDetails,
   canClose = true,
+  occupiedCounters,
 }) => {
+  const [occupiedList, setOccupiedList] = useState<OccupiedCounterInfo[]>(occupiedCounters || []);
+  const [loadingOccupied, setLoadingOccupied] = useState(false);
+
+  // Poll / refresh occupied counters when modal is visible
+  useEffect(() => {
+    if (!isOpen) return;
+    let active = true;
+
+    const loadOccupied = async () => {
+      try {
+        setLoadingOccupied(true);
+        const res = await fetchOccupiedCounters(branchId);
+        if (active && res?.ok && Array.isArray(res.occupiedCounters)) {
+          setOccupiedList(res.occupiedCounters);
+        }
+      } catch {
+        // Fallback gracefully
+      } finally {
+        if (active) setLoadingOccupied(false);
+      }
+    };
+
+    loadOccupied();
+    const interval = setInterval(loadOccupied, 8000);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, [isOpen, branchId]);
   // Helper to format clean display name from code or name
   const resolveCounterNameAndTag = (code: string, rawName?: string, index: number = 0): { name: string; tag: string; desc: string; isExpress: boolean } => {
     const isExpress = (code || '').toUpperCase().includes('EXP') || (rawName || '').toLowerCase().includes('express');
@@ -139,9 +174,61 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
   const [customCounterText, setCustomCounterText] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
 
+  // Check if a given counter option is currently occupied by another cashier
+  const getOccupantForCounter = (c: ResolvedCounterOption): OccupiedCounterInfo | null => {
+    return occupiedList.find((occ) => {
+      // Current cashier is not blocked by their own station
+      if (occ.isCurrentUser) return false;
+
+      // Match by counter ID
+      if (occ.counterId && c.id && occ.counterId === c.id) return true;
+
+      // Match by code (case-insensitive)
+      if (occ.counter && c.code && occ.counter.trim().toUpperCase() === c.code.trim().toUpperCase()) return true;
+
+      // Match by name
+      if (occ.counterName && c.name && occ.counterName.trim().toLowerCase() === c.name.trim().toLowerCase()) return true;
+
+      // Match normalized code or name
+      const norm = (s: string) => s.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+      if (occ.counter && c.code && norm(occ.counter) === norm(c.code)) return true;
+      if (occ.counter && c.name && norm(occ.counter) === norm(c.name)) return true;
+
+      return false;
+    }) || null;
+  };
+
+  const isCurrentUserStation = (c: ResolvedCounterOption): boolean => {
+    return occupiedList.some((occ) => {
+      if (!occ.isCurrentUser) return false;
+      if (occ.counterId && c.id && occ.counterId === c.id) return true;
+      if (occ.counter && c.code && occ.counter.trim().toUpperCase() === c.code.trim().toUpperCase()) return true;
+      const norm = (s: string) => s.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+      return Boolean(occ.counter && c.code && norm(occ.counter) === norm(c.code));
+    });
+  };
+
+  const availableCount = branchCountersList.filter(c => !getOccupantForCounter(c)).length;
+  const occupiedCount = branchCountersList.length - availableCount;
+
+  // Auto-switch away from an occupied counter if current selection is occupied by another cashier
+  useEffect(() => {
+    if (!branchCountersList.length) return;
+    const curObj = branchCountersList.find(c => c.code === selectedCode);
+    const occupant = curObj ? getOccupantForCounter(curObj) : null;
+    if (occupant) {
+      const firstAvailable = branchCountersList.find(c => !getOccupantForCounter(c));
+      if (firstAvailable) {
+        setSelectedCode(firstAvailable.code);
+      }
+    }
+  }, [branchCountersList, occupiedList]);
+
   if (!isOpen) return null;
 
   const currentSelectedObj = branchCountersList.find(c => c.code === selectedCode);
+  const selectedOccupant = !isCustomMode && currentSelectedObj ? getOccupantForCounter(currentSelectedObj) : null;
+
   const displaySelectedLabel = isCustomMode
     ? (customCounterText.trim() || 'Custom Counter')
     : currentSelectedObj
@@ -149,6 +236,12 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
       : selectedCode;
 
   const handleSelect = (counterCode: string) => {
+    const target = branchCountersList.find(c => c.code === counterCode);
+    const occ = target ? getOccupantForCounter(target) : null;
+    if (occ) {
+      setError(`Billing counter "${target?.name || counterCode}" is currently in use by ${occ.userName}. Please choose an available counter.`);
+      return;
+    }
     setSelectedCode(counterCode);
     setIsCustomMode(false);
     setError(null);
@@ -184,6 +277,11 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
         setError('Please select an active counter belonging to this branch.');
         return;
       }
+      const occ = getOccupantForCounter(match);
+      if (occ) {
+        setError(`Billing counter "${match.name}" (${match.code}) is currently in use by ${occ.userName}. Please choose another available counter.`);
+        return;
+      }
       finalCode = match.code;
       finalName = match.name;
       finalId = match.id;
@@ -195,7 +293,7 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
 
   return createPortal(
     <div
-      className="modal-overlay"
+      className="modal-overlay theme-cashier"
       onClick={() => {
         if (canClose) onClose();
       }}
@@ -218,32 +316,32 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
           maxHeight: '90vh',
           display: 'flex',
           flexDirection: 'column',
-          background: '#ffffff',
+          background: 'var(--surface, #FAF7F2)',
           borderRadius: '20px',
           overflow: 'hidden',
-          boxShadow: '0 25px 60px -15px rgba(15, 23, 42, 0.28), 0 10px 24px -5px rgba(15, 23, 42, 0.08)',
-          border: '1.5px solid rgba(226, 232, 240, 0.95)',
+          boxShadow: '0 25px 60px -15px rgba(15, 45, 46, 0.28), 0 10px 24px -5px rgba(15, 45, 46, 0.08)',
+          border: '1.5px solid var(--border, #D0C7B8)',
         }}
       >
         {/* Top Accent Gradient Bar */}
-        <div className="modal-top-accent purple-accent" style={{ height: '4px', background: 'linear-gradient(90deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%)' }}></div>
+        <div className="modal-top-accent green-accent" style={{ height: '4px', background: 'linear-gradient(90deg, var(--sidebar, #0F2D2E) 0%, var(--primary, #0F766E) 50%, var(--ring, #14B8A6) 100%)' }}></div>
 
         {/* 1. Bento Header */}
-        <div className="shift-bento-header" style={{ padding: '1.1rem 1.6rem', borderBottom: '1px solid #e2e8f0' }}>
+        <div className="shift-bento-header" style={{ padding: '1.1rem 1.6rem', borderBottom: '1px solid var(--border, #D0C7B8)', background: 'var(--surface, #FAF7F2)' }}>
           <div className="shift-bento-header-left" style={{ display: 'flex', alignItems: 'center', gap: '0.9rem' }}>
             <div
-              className="shift-bento-icon-badge purple"
+              className="shift-bento-icon-badge green"
               style={{
                 width: '46px',
                 height: '46px',
                 borderRadius: '13px',
-                background: 'linear-gradient(135deg, #ede9fe 0%, #e0e7ff 100%)',
-                color: '#6366f1',
-                border: '1.2px solid #c7d2fe',
+                background: 'var(--primary-soft, #E6F4F3)',
+                color: 'var(--primary, #0F766E)',
+                border: '1.2px solid rgba(20, 184, 166, 0.4)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 2px 8px rgba(99, 102, 241, 0.15)',
+                boxShadow: '0 2px 8px rgba(15, 118, 110, 0.15)',
               }}
             >
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -253,23 +351,24 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
               </svg>
             </div>
             <div className="shift-bento-title-wrap">
-              <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: 'var(--sidebar, #0F2D2E)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <span>Select Billing Counter</span>
                 <span
+                  className="shift-ref-pill"
                   style={{
                     fontSize: '0.72rem',
                     fontWeight: 700,
                     padding: '2px 8px',
                     borderRadius: '20px',
-                    background: '#ede9fe',
-                    color: '#6d28d9',
-                    border: '1px solid #ddd6fe',
+                    background: 'var(--primary-soft, #E6F4F3)',
+                    color: 'var(--primary, #0F766E)',
+                    border: '1px solid rgba(20, 184, 166, 0.35)',
                   }}
                 >
                   Branch Station
                 </span>
               </h3>
-              <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>
+              <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: 'var(--text-muted, #475569)' }}>
                 Choose the checkout station created in this branch for accurate counter sales tracking and shift data analysis.
               </p>
             </div>
@@ -283,15 +382,15 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
                 gap: '0.4rem',
                 padding: '0.25rem 0.65rem',
                 borderRadius: '20px',
-                background: '#f1f5f9',
-                border: '1px solid #cbd5e1',
+                background: 'var(--surface, #FAF7F2)',
+                border: '1px solid var(--border, #D0C7B8)',
                 fontSize: '0.74rem',
                 fontWeight: 700,
-                color: '#334155',
+                color: 'var(--text-muted, #475569)',
               }}
               title={`Branch: ${branchName} (${branchCode})`}
             >
-              <MapPinIcon size={12} style={{ color: '#6366f1' }} />
+              <MapPinIcon size={12} style={{ color: 'var(--primary, #0F766E)' }} />
               <span>{branchName || 'Main Store'}</span>
             </div>
 
@@ -303,8 +402,8 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
                 aria-label="Close"
                 title="Close"
                 style={{
-                  background: '#f8fafc',
-                  border: '1px solid #e2e8f0',
+                  background: 'var(--surface, #FAF7F2)',
+                  border: '1px solid var(--border, #D0C7B8)',
                   borderRadius: '10px',
                   width: '32px',
                   height: '32px',
@@ -312,7 +411,7 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
                   alignItems: 'center',
                   justifyContent: 'center',
                   cursor: 'pointer',
-                  color: '#64748b',
+                  color: 'var(--text-muted, #475569)',
                   transition: 'all 0.15s ease',
                 }}
               >
@@ -326,15 +425,15 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
         </div>
 
         {/* 2. Bento Body */}
-        <div className="shift-bento-body" style={{ padding: '1.3rem 1.6rem', background: '#f8fafc', flex: 1, overflowY: 'auto' }}>
+        <div className="shift-bento-body" style={{ padding: '1.3rem 1.6rem', background: 'var(--bg, #E8E1D5)', flex: 1, overflowY: 'auto' }}>
           {/* Top 3-Tile Context Ribbon */}
           <div className="shift-bento-ribbon cols-3" style={{ marginBottom: '1.2rem' }}>
             <div className="shift-bento-ribbon-tile">
               <div className="ribbon-tile-label">
                 <span>Active Branch</span>
-                <StoreIcon size={13} style={{ color: '#6366f1' }} />
+                <StoreIcon size={13} style={{ color: 'var(--primary, #0F766E)' }} />
               </div>
-              <div className="ribbon-tile-val" style={{ fontSize: '1.05rem', color: '#1e293b' }}>
+              <div className="ribbon-tile-val" style={{ fontSize: '1.05rem', color: 'var(--sidebar, #0F2D2E)' }}>
                 {branchName || 'Main Branch'}
               </div>
               <div className="ribbon-tile-sub">Location Code: {branchCode}</div>
@@ -342,21 +441,31 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
 
             <div className="shift-bento-ribbon-tile">
               <div className="ribbon-tile-label">
-                <span>Branch Counters Count</span>
-                <LayersIcon size={13} style={{ color: '#059669' }} />
+                <span>Station Availability</span>
+                <LayersIcon size={13} style={{ color: 'var(--primary, #0F766E)' }} />
               </div>
-              <div className="ribbon-tile-val" style={{ fontSize: '1.05rem', color: '#059669' }}>
-                {branchCountersList.length} Active {branchCountersList.length === 1 ? 'Station' : 'Stations'}
+              <div
+                className="ribbon-tile-val"
+                style={{
+                  fontSize: '1.05rem',
+                  color: availableCount > 0 ? 'var(--primary, #0F766E)' : '#b91c1c',
+                }}
+              >
+                {availableCount} Available / {branchCountersList.length} Total
               </div>
-              <div className="ribbon-tile-sub">Configured in {branchCode}</div>
+              <div className="ribbon-tile-sub">
+                {occupiedCount > 0
+                  ? `${occupiedCount} ${occupiedCount === 1 ? 'station' : 'stations'} occupied by cashiers`
+                  : `All stations free in ${branchCode}`}
+              </div>
             </div>
 
             <div className="shift-bento-ribbon-tile highlight">
               <div className="ribbon-tile-label">
                 <span>Selected Destination</span>
-                <SparklesIcon size={13} style={{ color: '#8b5cf6' }} />
+                <SparklesIcon size={13} style={{ color: 'var(--primary, #0F766E)' }} />
               </div>
-              <div className="ribbon-tile-val" style={{ fontSize: '1.05rem', color: '#6d28d9' }}>
+              <div className="ribbon-tile-val" style={{ fontSize: '1.05rem', color: 'var(--primary, #0F766E)' }}>
                 {displaySelectedLabel}
               </div>
               <div className="ribbon-tile-sub">Sales Analytics & Shift Target</div>
@@ -387,11 +496,11 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
 
           {/* Section Heading */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-            <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            <span style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--sidebar, #0F2D2E)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               Checkout Stations Created in {branchCode}
             </span>
-            <span style={{ fontSize: '0.74rem', color: '#64748b' }}>
-              Click any counter station to assign
+            <span style={{ fontSize: '0.74rem', color: 'var(--text-muted, #475569)' }}>
+              Click an available station to assign
             </span>
           </div>
 
@@ -405,44 +514,78 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
             }}
           >
             {branchCountersList.map((c) => {
+              const occupant = getOccupantForCounter(c);
+              const isOccupied = Boolean(occupant);
+              const isMyStation = isCurrentUserStation(c);
               const isCardActive = !isCustomMode && selectedCode === c.code;
+
               return (
                 <div
                   key={c.code}
-                  onClick={() => handleSelect(c.code)}
+                  className={`select-counter-card ${isCardActive && !isOccupied ? 'select-counter-card-active' : ''} ${isOccupied ? 'select-counter-card-occupied' : ''}`}
+                  onClick={() => {
+                    if (isOccupied) {
+                      setError(`Billing station "${c.name}" (${c.code}) is currently occupied by ${occupant!.userName}. Please choose an available counter.`);
+                    } else {
+                      handleSelect(c.code);
+                    }
+                  }}
+                  title={isOccupied ? `Occupied by ${occupant!.userName}` : `Select ${c.name}`}
                   style={{
-                    background: isCardActive ? 'linear-gradient(135deg, #f5f3ff 0%, #eef2ff 100%)' : '#ffffff',
-                    border: isCardActive ? '2px solid #6366f1' : '1.5px solid #e2e8f0',
+                    background: isOccupied
+                      ? 'var(--surface-muted, #F3EDE3)'
+                      : isCardActive
+                        ? 'linear-gradient(135deg, var(--primary-soft, #E6F4F3) 0%, var(--surface, #FAF7F2) 100%)'
+                        : 'var(--surface, #FAF7F2)',
+                    border: isOccupied
+                      ? '1.5px dashed #D0C7B8'
+                      : isCardActive
+                        ? '2px solid var(--primary, #0F766E)'
+                        : '1.5px solid var(--border, #D0C7B8)',
                     borderRadius: '14px',
                     padding: '1.05rem',
-                    cursor: 'pointer',
+                    cursor: isOccupied ? 'not-allowed' : 'pointer',
+                    opacity: isOccupied ? 0.65 : 1,
                     transition: 'all 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
                     gap: '0.65rem',
-                    boxShadow: isCardActive
-                      ? '0 8px 20px -3px rgba(99, 102, 241, 0.22), 0 2px 6px rgba(99, 102, 241, 0.08)'
-                      : '0 2px 5px rgba(15, 23, 42, 0.03)',
-                    transform: isCardActive ? 'translateY(-2px)' : 'none',
+                    boxShadow: isCardActive && !isOccupied
+                      ? '0 8px 20px -3px rgba(15, 118, 110, 0.25), 0 2px 6px rgba(15, 118, 110, 0.1)'
+                      : '0 2px 5px rgba(15, 45, 46, 0.04)',
+                    transform: isCardActive && !isOccupied ? 'translateY(-2px)' : 'none',
                     position: 'relative',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '6px' }}>
                     <div
+                      className="counter-card-icon"
                       style={{
                         width: '38px',
                         height: '38px',
                         borderRadius: '10px',
-                        background: isCardActive ? '#6366f1' : '#f1f5f9',
-                        color: isCardActive ? '#ffffff' : '#475569',
+                        background: isOccupied
+                          ? '#fee2e2'
+                          : isCardActive
+                            ? 'var(--primary, #0F766E)'
+                            : 'var(--primary-soft, #E6F4F3)',
+                        color: isOccupied
+                          ? '#b91c1c'
+                          : isCardActive
+                            ? '#ffffff'
+                            : 'var(--primary, #0F766E)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         transition: 'all 0.15s ease',
                       }}
                     >
-                      {c.isExpress ? <ZapIcon size={18} /> : (
+                      {isOccupied ? (
+                        <LockIcon size={18} />
+                      ) : c.isExpress ? (
+                        <ZapIcon size={18} />
+                      ) : (
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                           <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
                           <line x1="8" y1="21" x2="16" y2="21" />
@@ -451,26 +594,71 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
                       )}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <span
-                        style={{
-                          fontSize: '0.68rem',
-                          fontWeight: 800,
-                          textTransform: 'uppercase',
-                          padding: '2px 7px',
-                          borderRadius: '12px',
-                          background: isCardActive ? '#6366f1' : c.isExpress ? '#fef3c7' : '#f1f5f9',
-                          color: isCardActive ? '#ffffff' : c.isExpress ? '#92400e' : '#475569',
-                          letterSpacing: '0.03em',
-                        }}
-                      >
-                        {c.tag}
-                      </span>
+                      {isOccupied ? (
+                        <span
+                          className="counter-card-tag"
+                          style={{
+                            fontSize: '0.68rem',
+                            fontWeight: 800,
+                            textTransform: 'uppercase',
+                            padding: '3px 8px',
+                            borderRadius: '12px',
+                            background: '#fee2e2',
+                            color: '#b91c1c',
+                            border: '1px solid #fecaca',
+                            letterSpacing: '0.03em',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '5px',
+                          }}
+                        >
+                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#ef4444', display: 'inline-block' }} />
+                          Occupied • {occupant?.userName || 'In Use'}
+                        </span>
+                      ) : isMyStation ? (
+                        <span
+                          className="counter-card-tag"
+                          style={{
+                            fontSize: '0.68rem',
+                            fontWeight: 800,
+                            textTransform: 'uppercase',
+                            padding: '3px 8px',
+                            borderRadius: '12px',
+                            background: '#dcfce7',
+                            color: '#15803d',
+                            border: '1px solid #bbf7d0',
+                            letterSpacing: '0.03em',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                          }}
+                        >
+                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#22c55e', display: 'inline-block' }} />
+                          Your Station
+                        </span>
+                      ) : (
+                        <span
+                          className="counter-card-tag"
+                          style={{
+                            fontSize: '0.68rem',
+                            fontWeight: 800,
+                            textTransform: 'uppercase',
+                            padding: '2px 7px',
+                            borderRadius: '12px',
+                            background: isCardActive ? 'var(--primary, #0F766E)' : c.isExpress ? '#fef3c7' : 'rgba(15, 118, 110, 0.12)',
+                            color: isCardActive ? '#ffffff' : c.isExpress ? '#92400e' : 'var(--primary, #0F766E)',
+                            letterSpacing: '0.03em',
+                          }}
+                        >
+                          {c.tag} • Ready
+                        </span>
+                      )}
                     </div>
                   </div>
 
                   <div>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', marginBottom: '0.2rem' }}>
-                      <span style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0f172a' }}>
+                      <span style={{ fontSize: '1.05rem', fontWeight: 800, color: isOccupied ? 'var(--text-muted, #64748b)' : 'var(--sidebar, #0F2D2E)' }}>
                         {c.name}
                       </span>
                       <span
@@ -478,17 +666,26 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
                           fontSize: '0.72rem',
                           fontWeight: 700,
                           fontFamily: 'monospace',
-                          color: isCardActive ? '#4338ca' : '#64748b',
-                          background: isCardActive ? '#e0e7ff' : '#f1f5f9',
+                          color: isOccupied
+                            ? '#94a3b8'
+                            : isCardActive
+                              ? 'var(--primary, #0F766E)'
+                              : 'var(--text-muted, #475569)',
+                          background: isOccupied
+                            ? 'rgba(0, 0, 0, 0.05)'
+                            : isCardActive
+                              ? 'var(--primary-soft, #E6F4F3)'
+                              : 'rgba(0, 0, 0, 0.04)',
                           padding: '1px 5px',
                           borderRadius: '4px',
+                          border: isCardActive && !isOccupied ? '1px solid rgba(20, 184, 166, 0.35)' : '1px solid transparent',
                         }}
                       >
                         {c.code}
                       </span>
                     </div>
-                    <div style={{ fontSize: '0.74rem', color: '#64748b', lineHeight: 1.35 }}>
-                      {c.desc}
+                    <div style={{ fontSize: '0.74rem', color: isOccupied ? '#94a3b8' : 'var(--text-muted, #475569)', lineHeight: 1.35 }}>
+                      {isOccupied ? `Currently active under cashier ${occupant?.userName || ''}` : c.desc}
                     </div>
                   </div>
 
@@ -498,26 +695,55 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       paddingTop: '0.55rem',
-                      borderTop: isCardActive ? '1px solid rgba(99, 102, 241, 0.2)' : '1px solid #f1f5f9',
+                      borderTop: isCardActive && !isOccupied
+                        ? '1px solid rgba(15, 118, 110, 0.25)'
+                        : '1px solid var(--border, #D0C7B8)',
                     }}
                   >
-                    <span style={{ fontSize: '0.73rem', fontWeight: 600, color: isCardActive ? '#4f46e5' : '#94a3b8' }}>
-                      {isCardActive ? 'Selected Counter' : 'Click to select'}
+                    <span
+                      style={{
+                        fontSize: '0.73rem',
+                        fontWeight: 700,
+                        color: isOccupied
+                          ? '#b91c1c'
+                          : isCardActive
+                            ? 'var(--primary, #0F766E)'
+                            : 'var(--text-muted, #475569)',
+                      }}
+                    >
+                      {isOccupied
+                        ? `In use (${occupant?.userName || ''})`
+                        : isCardActive
+                          ? 'Selected Counter'
+                          : 'Click to select'}
                     </span>
                     <div
+                      className="counter-card-radio"
                       style={{
                         width: '20px',
                         height: '20px',
                         borderRadius: '50%',
-                        border: isCardActive ? '2px solid #6366f1' : '1.5px solid #cbd5e1',
-                        background: isCardActive ? '#6366f1' : '#ffffff',
+                        border: isOccupied
+                          ? '1.5px solid #fca5a5'
+                          : isCardActive
+                            ? '2px solid var(--primary, #0F766E)'
+                            : '1.5px solid var(--border, #D0C7B8)',
+                        background: isOccupied
+                          ? '#fee2e2'
+                          : isCardActive
+                            ? 'var(--primary, #0F766E)'
+                            : 'var(--surface, #FAF7F2)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        color: '#ffffff',
+                        color: isOccupied ? '#b91c1c' : '#ffffff',
                       }}
                     >
-                      {isCardActive && <CheckCircle2Icon size={14} />}
+                      {isOccupied ? (
+                        <LockIcon size={12} />
+                      ) : (
+                        isCardActive && <CheckCircle2Icon size={14} />
+                      )}
                     </div>
                   </div>
                 </div>
@@ -528,11 +754,11 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
           {/* Custom Counter Option Bento Box */}
           <div
             style={{
-              background: '#ffffff',
-              border: isCustomMode ? '2px solid #8b5cf6' : '1.5px solid #e2e8f0',
+              background: 'var(--surface, #FAF7F2)',
+              border: isCustomMode ? '2px solid var(--primary, #0F766E)' : '1.5px solid var(--border, #D0C7B8)',
               borderRadius: '14px',
               padding: '1rem 1.2rem',
-              boxShadow: '0 1px 3px rgba(15, 23, 42, 0.03)',
+              boxShadow: '0 1px 3px rgba(15, 45, 46, 0.04)',
               marginBottom: '1rem',
               transition: 'all 0.18s ease',
             }}
@@ -557,8 +783,8 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
                     width: '30px',
                     height: '30px',
                     borderRadius: '8px',
-                    background: isCustomMode ? '#ede9fe' : '#f8fafc',
-                    color: isCustomMode ? '#7c3aed' : '#64748b',
+                    background: isCustomMode ? 'var(--primary-soft, #E6F4F3)' : 'rgba(0, 0, 0, 0.04)',
+                    color: isCustomMode ? 'var(--primary, #0F766E)' : 'var(--text-muted, #475569)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -567,10 +793,10 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
                   <SparklesIcon size={16} />
                 </div>
                 <div>
-                  <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#1e293b' }}>
+                  <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--sidebar, #0F2D2E)' }}>
                     Other / Dedicated Terminal Code
                   </div>
-                  <div style={{ fontSize: '0.74rem', color: '#64748b' }}>
+                  <div style={{ fontSize: '0.74rem', color: 'var(--text-muted, #475569)' }}>
                     Manually specify a custom counter identifier or register lane
                   </div>
                 </div>
@@ -580,8 +806,8 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
                 style={{
                   fontSize: '0.75rem',
                   fontWeight: 700,
-                  color: isCustomMode ? '#7c3aed' : '#64748b',
-                  background: isCustomMode ? '#f5f3ff' : '#f1f5f9',
+                  color: isCustomMode ? 'var(--primary, #0F766E)' : 'var(--text-muted, #475569)',
+                  background: isCustomMode ? 'var(--primary-soft, #E6F4F3)' : 'rgba(0, 0, 0, 0.05)',
                   padding: '3px 8px',
                   borderRadius: '6px',
                 }}
@@ -591,7 +817,7 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
             </div>
 
             {isCustomMode && (
-              <div style={{ marginTop: '0.85rem', paddingTop: '0.85rem', borderTop: '1px solid #f1f5f9' }}>
+              <div style={{ marginTop: '0.85rem', paddingTop: '0.85rem', borderTop: '1px solid var(--border, #D0C7B8)' }}>
                 <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center' }}>
                   <input
                     type="text"
@@ -605,7 +831,9 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
                       flex: 1,
                       padding: '0.65rem 0.9rem',
                       borderRadius: '10px',
-                      border: '1.5px solid #c4b5fd',
+                      border: '1.5px solid var(--primary, #0F766E)',
+                      background: 'var(--surface, #FAF7F2)',
+                      color: 'var(--text, #0F172A)',
                       fontSize: '0.88rem',
                       fontWeight: 600,
                       outline: 'none',
@@ -622,12 +850,13 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
                     style={{
                       padding: '0.65rem 1rem',
                       borderRadius: '10px',
-                      background: '#7c3aed',
+                      background: 'var(--primary, #0F766E)',
                       color: '#ffffff',
                       border: 'none',
                       fontWeight: 700,
                       fontSize: '0.82rem',
                       cursor: 'pointer',
+                      transition: 'background 0.15s ease',
                     }}
                   >
                     Apply
@@ -640,19 +869,19 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
           {/* Audit & Data Collection Notice */}
           <div
             style={{
-              background: '#eff6ff',
-              border: '1px solid #bfdbfe',
+              background: 'var(--primary-soft, #E6F4F3)',
+              border: '1px solid rgba(20, 184, 166, 0.35)',
               borderRadius: '12px',
               padding: '0.75rem 1rem',
               display: 'flex',
               alignItems: 'center',
               gap: '0.65rem',
-              color: '#1e40af',
+              color: 'var(--sidebar, #0F2D2E)',
               fontSize: '0.78rem',
               lineHeight: 1.4,
             }}
           >
-            <InfoIcon size={16} style={{ flexShrink: 0, color: '#2563eb' }} />
+            <InfoIcon size={16} style={{ flexShrink: 0, color: 'var(--primary, #0F766E)' }} />
             <span>
               <strong>Counter Analytics Notice:</strong> All bills, sales performance graphs, and drawer collections will be aggregated under this selected branch counter (<code>{displaySelectedLabel}</code>).
             </span>
@@ -664,8 +893,8 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
           className="shift-bento-footer"
           style={{
             padding: '1rem 1.6rem',
-            borderTop: '1px solid #e2e8f0',
-            background: '#ffffff',
+            borderTop: '1px solid var(--border, #D0C7B8)',
+            background: 'var(--surface, #FAF7F2)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -673,16 +902,17 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
             flexWrap: 'wrap',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.84rem', color: '#475569' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.84rem', color: 'var(--text-muted, #475569)' }}>
             <span>Active Counter:</span>
             <span
+              className="shift-ref-pill"
               style={{
                 fontWeight: 800,
-                color: '#4338ca',
-                background: '#e0e7ff',
+                color: 'var(--primary, #0F766E)',
+                background: 'var(--primary-soft, #E6F4F3)',
                 padding: '3px 10px',
                 borderRadius: '8px',
-                border: '1px solid #c7d2fe',
+                border: '1px solid rgba(20, 184, 166, 0.35)',
                 fontSize: '0.88rem',
               }}
             >
@@ -701,9 +931,9 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
                   borderRadius: '10px',
                   fontWeight: 700,
                   fontSize: '0.86rem',
-                  background: '#f8fafc',
-                  border: '1px solid #cbd5e1',
-                  color: '#475569',
+                  background: 'var(--surface, #FAF7F2)',
+                  border: '1px solid var(--border, #D0C7B8)',
+                  color: 'var(--text-muted, #475569)',
                   cursor: 'pointer',
                 }}
               >
@@ -715,23 +945,25 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
               type="button"
               className="btn btn-primary"
               onClick={handleConfirm}
+              disabled={Boolean(selectedOccupant)}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.5rem',
                 padding: '0.65rem 1.4rem',
                 borderRadius: '10px',
-                background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+                background: selectedOccupant ? '#94a3b8' : 'var(--primary, #0F766E)',
                 color: '#ffffff',
                 border: 'none',
                 fontWeight: 800,
                 fontSize: '0.88rem',
-                cursor: 'pointer',
-                boxShadow: '0 4px 14px rgba(79, 70, 229, 0.35)',
+                cursor: selectedOccupant ? 'not-allowed' : 'pointer',
+                opacity: selectedOccupant ? 0.6 : 1,
+                boxShadow: selectedOccupant ? 'none' : '0 4px 14px rgba(15, 118, 110, 0.35)',
                 transition: 'all 0.15s ease',
               }}
             >
-              <span>Confirm & Start Billing</span>
+              <span>{selectedOccupant ? 'Station Occupied' : 'Confirm & Start Billing'}</span>
               <ArrowRightIcon size={15} />
             </button>
           </div>

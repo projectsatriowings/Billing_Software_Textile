@@ -1,6 +1,6 @@
 import { createPortal } from 'react-dom';
-import React, { useState } from 'react';
-import { openShift, type Shift } from '../../api.ts';
+import React, { useState, useEffect } from 'react';
+import { openShift, fetchOccupiedCounters, type Shift, type OccupiedCounterInfo } from '../../api.ts';
 import { formatMoney } from '../../../../shared/shifts.ts';
 import {
   StoreIcon,
@@ -60,15 +60,32 @@ export const OpenShiftModal: React.FC<OpenShiftModalProps> = ({
   const [notes, setNotes] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-
-  if (!isOpen) return null;
-
-  const quickAmounts = [500, 1000, 2000, 5000, 10000];
+  const [occupiedList, setOccupiedList] = useState<OccupiedCounterInfo[]>([]);
 
   // Resolve counters available for the current branch
   const activeBranchObj = branches?.find((b) => (b.code || '').toUpperCase() === location.toUpperCase());
   const detailsList = counterDetails || activeBranchObj?.counterDetails;
   const activeDetails = detailsList ? detailsList.filter((c: any) => c.status !== 'DISABLED') : null;
+
+  // Fetch occupied counters for current branch
+  useEffect(() => {
+    if (!isOpen) return;
+    let active = true;
+    fetchOccupiedCounters(activeBranchObj?.id)
+      .then((res) => {
+        if (active && res?.ok && Array.isArray(res.occupiedCounters)) {
+          setOccupiedList(res.occupiedCounters);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [isOpen, activeBranchObj?.id]);
+
+  if (!isOpen) return null;
+
+  const quickAmounts = [500, 1000, 2000, 5000, 10000];
 
   const branchCounters: Array<{ code: string; name: string; id?: string }> = React.useMemo(() => {
     if (activeDetails && activeDetails.length > 0) {
@@ -90,6 +107,29 @@ export const OpenShiftModal: React.FC<OpenShiftModalProps> = ({
     });
   }, [activeDetails, activeBranchObj]);
 
+  const getOccupantForCounter = (cCode: string, cId?: string): OccupiedCounterInfo | null => {
+    return occupiedList.find((occ) => {
+      if (occ.isCurrentUser) return false;
+      if (cId && occ.counterId && occ.counterId === cId) return true;
+      if (occ.counter && cCode && occ.counter.trim().toUpperCase() === cCode.trim().toUpperCase()) return true;
+      const norm = (s: string) => s.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+      return Boolean(occ.counter && cCode && norm(occ.counter) === norm(cCode));
+    }) || null;
+  };
+
+  // Auto-switch away from occupied counter
+  useEffect(() => {
+    if (!branchCounters.length) return;
+    const curObj = branchCounters.find(c => c.code === counter || c.name === counter);
+    const occ = curObj ? getOccupantForCounter(curObj.code, curObj.id) : null;
+    if (occ) {
+      const firstAvailable = branchCounters.find(c => !getOccupantForCounter(c.code, c.id));
+      if (firstAvailable) {
+        setCounter(firstAvailable.code);
+      }
+    }
+  }, [branchCounters, occupiedList, counter]);
+
   const parsedRupees = parseFloat(openingRupees) || 0;
   const openingCashMinor = Math.round(parsedRupees * 100);
 
@@ -108,6 +148,12 @@ export const OpenShiftModal: React.FC<OpenShiftModalProps> = ({
     );
     const counterCode = matchedCounter?.code || counter.trim() || 'COUNTER-1';
     const counterId = matchedCounter?.id;
+
+    const occ = matchedCounter ? getOccupantForCounter(matchedCounter.code, matchedCounter.id) : null;
+    if (occ) {
+      setError(`Billing counter "${matchedCounter?.name || counterCode}" is already in use by ${occ.userName}. Please choose an available counter.`);
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -328,11 +374,14 @@ export const OpenShiftModal: React.FC<OpenShiftModalProps> = ({
                       value={counter}
                       onChange={(e) => setCounter(e.target.value)}
                     >
-                      {branchCounters.map((c) => (
-                        <option key={c.code} value={c.code}>
-                          {c.name} ({c.code})
-                        </option>
-                      ))}
+                      {branchCounters.map((c) => {
+                        const occupant = getOccupantForCounter(c.code, c.id);
+                        return (
+                          <option key={c.code} value={c.code} disabled={Boolean(occupant)}>
+                            {c.name} ({c.code}) {occupant ? `— Occupied by ${occupant.userName}` : '— Ready'}
+                          </option>
+                        );
+                      })}
                     </select>
                   </div>
                 </div>

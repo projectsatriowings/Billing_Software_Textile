@@ -150,7 +150,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   };
 
   return (
-    <div className={`login-split-page ${selectedRole === 'cashier' ? 'theme-cashier' : ''}`}>
+    <div className={`login-split-page ${selectedRole === 'cashier' || selectedRole === 'cashier2' ? 'theme-cashier' : ''}`}>
       {/* Left Branding Pane - Matching Screen 7 */}
       <div className="login-left-pane">
         <div className="login-left-content">
