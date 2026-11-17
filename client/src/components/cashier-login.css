@@ -664,48 +664,863 @@ div.app-container.theme-cashier .bento-find-product-btn:hover,
 }
 
 /* --------------------------------------------------------------------------
-   4. REGISTER OPERATIONS HUB: 6 ACTION TILES & POS BENTO CARDS
+   4. REGISTER OPERATIONS HUB: POS COUNTER BENTO CARDS & BILLING TERMINAL
    -------------------------------------------------------------------------- */
+
+/* 4.0 Page & Root Background */
+div.app-container.theme-cashier .bento-pos-root,
+body.theme-cashier .bento-pos-root,
+.theme-cashier .bento-pos-root {
+  background-color: var(--bg) !important;
+}
+
+/* 4.1 Top Global Bar (Branch / Counter Badges & Top Nav) */
+div.app-container.theme-cashier .top-global-bar,
+body.theme-cashier .top-global-bar,
+.theme-cashier .top-global-bar {
+  background-color: var(--bg) !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+
+div.app-container.theme-cashier .top-pos-bento-badge,
+body.theme-cashier .top-pos-bento-badge,
+.theme-cashier .top-pos-bento-badge {
+  background: var(--surface) !important;
+  background-color: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 1px 3px rgba(15, 45, 46, 0.05) !important;
+}
+
+div.app-container.theme-cashier .top-pos-badge-icon.branch,
+div.app-container.theme-cashier .top-pos-badge-icon.counter,
+body.theme-cashier .top-pos-badge-icon.branch,
+body.theme-cashier .top-pos-badge-icon.counter,
+.theme-cashier .top-pos-badge-icon.branch,
+.theme-cashier .top-pos-badge-icon.counter {
+  background: var(--primary-soft) !important;
+  border: 1px solid rgba(20, 184, 166, 0.3) !important;
+  color: var(--primary) !important;
+}
+
+div.app-container.theme-cashier .top-pos-badge-icon svg,
+body.theme-cashier .top-pos-badge-icon svg,
+.theme-cashier .top-pos-badge-icon svg {
+  color: var(--primary) !important;
+  stroke: var(--primary) !important;
+}
+
+div.app-container.theme-cashier .top-pos-badge-label,
+body.theme-cashier .top-pos-badge-label,
+.theme-cashier .top-pos-badge-label {
+  color: var(--text-muted) !important;
+}
+
+div.app-container.theme-cashier .top-pos-badge-val,
+body.theme-cashier .top-pos-badge-val,
+.theme-cashier .top-pos-badge-val {
+  color: var(--sidebar) !important;
+  font-weight: 700 !important;
+}
+
+div.app-container.theme-cashier .top-pos-code-tag,
+body.theme-cashier .top-pos-code-tag,
+.theme-cashier .top-pos-code-tag {
+  background: var(--primary-soft) !important;
+  color: var(--primary) !important;
+  border: 1px solid rgba(20, 184, 166, 0.3) !important;
+}
+
+div.app-container.theme-cashier .top-pos-lock-tag,
+body.theme-cashier .top-pos-lock-tag,
+.theme-cashier .top-pos-lock-tag {
+  background: #DCFCE7 !important;
+  color: #15803D !important;
+  border: 1px solid #BBF7D0 !important;
+}
+
+div.app-container.theme-cashier .top-notification-btn,
+body.theme-cashier .top-notification-btn,
+.theme-cashier .top-notification-btn {
+  background: var(--surface) !important;
+  background-color: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--sidebar) !important;
+  box-shadow: 0 1px 3px rgba(15, 45, 46, 0.05) !important;
+}
+
+div.app-container.theme-cashier .top-notification-btn:hover,
+body.theme-cashier .top-notification-btn:hover,
+.theme-cashier .top-notification-btn:hover {
+  background: var(--primary-soft) !important;
+  border-color: var(--primary) !important;
+  color: var(--primary) !important;
+}
+
+div.app-container.theme-cashier .top-user-chip,
+body.theme-cashier .top-user-chip,
+.theme-cashier .top-user-chip {
+  background: var(--surface) !important;
+  background-color: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 1px 3px rgba(15, 45, 46, 0.05) !important;
+}
+
+div.app-container.theme-cashier .top-user-avatar,
+body.theme-cashier .top-user-avatar,
+.theme-cashier .top-user-avatar {
+  background: var(--primary) !important;
+  color: #FFFFFF !important;
+}
+
+div.app-container.theme-cashier .top-user-name,
+body.theme-cashier .top-user-name,
+.theme-cashier .top-user-name {
+  color: var(--sidebar) !important;
+  font-weight: 700 !important;
+}
+
+div.app-container.theme-cashier .top-user-role,
+body.theme-cashier .top-user-role,
+.theme-cashier .top-user-role {
+  color: var(--text-muted) !important;
+}
+
+/* 4.2 Top Bento Status Bar & Actions */
+div.app-container.theme-cashier .bento-top-bar,
+body.theme-cashier .bento-top-bar,
+.theme-cashier .bento-top-bar {
+  background: var(--surface) !important;
+  background-color: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 4px 18px rgba(15, 45, 46, 0.06), 0 1px 3px rgba(15, 45, 46, 0.04) !important;
+}
+
+div.app-container.theme-cashier .bento-pos-badge .bento-badge-icon,
+body.theme-cashier .bento-pos-badge .bento-badge-icon,
+.theme-cashier .bento-pos-badge .bento-badge-icon {
+  background: var(--primary) !important;
+  color: #FFFFFF !important;
+}
+
+div.app-container.theme-cashier .bento-badge-title,
+body.theme-cashier .bento-badge-title,
+.theme-cashier .bento-badge-title {
+  color: var(--sidebar) !important;
+  font-weight: 800 !important;
+}
+
+div.app-container.theme-cashier .bento-badge-sub,
+body.theme-cashier .bento-badge-sub,
+.theme-cashier .bento-badge-sub {
+  color: var(--text-muted) !important;
+}
+
+div.app-container.theme-cashier .bento-shift-pill.open,
+body.theme-cashier .bento-shift-pill.open,
+.theme-cashier .bento-shift-pill.open {
+  background: #DCFCE7 !important;
+  border: 1px solid #BBF7D0 !important;
+  color: #15803D !important;
+}
+
+div.app-container.theme-cashier .bento-cfd-pill,
+body.theme-cashier .bento-cfd-pill,
+.theme-cashier .bento-cfd-pill {
+  background: var(--surface) !important;
+  background-color: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text) !important;
+}
+
+div.app-container.theme-cashier .bento-cfd-pill:hover,
+body.theme-cashier .bento-cfd-pill:hover,
+.theme-cashier .bento-cfd-pill:hover {
+  background: var(--primary-soft) !important;
+  border-color: var(--primary) !important;
+  color: var(--primary) !important;
+}
+
+div.app-container.theme-cashier .bento-alert-pill,
+body.theme-cashier .bento-alert-pill,
+.theme-cashier .bento-alert-pill {
+  background: #FEE2E2 !important;
+  border: 1px solid #FECACA !important;
+  color: #B91C1C !important;
+}
+
+/* 4.3 POS Bento Cards Surface & Anti-Shimmer */
 div.app-container.theme-cashier .bento-card,
 div.app-container.theme-cashier .bento-card-3d,
 div.app-container.theme-cashier .bento-billing-terminal,
 div.app-container.theme-cashier .bento-scanner-card,
 div.app-container.theme-cashier .bento-register-card,
-div.app-container.theme-cashier .bento-summary-box,
 body.theme-cashier .bento-card,
 body.theme-cashier .bento-card-3d,
 body.theme-cashier .bento-billing-terminal,
 body.theme-cashier .bento-scanner-card,
 body.theme-cashier .bento-register-card,
-body.theme-cashier .bento-summary-box,
 .theme-cashier .bento-card,
 .theme-cashier .bento-card-3d,
 .theme-cashier .bento-billing-terminal,
 .theme-cashier .bento-scanner-card,
-.theme-cashier .bento-register-card,
-.theme-cashier .bento-summary-box {
+.theme-cashier .bento-register-card {
   background: var(--surface) !important;
+  background-color: var(--surface) !important;
+  background-image: none !important;
   border: 1px solid var(--border) !important;
   box-shadow: 0 4px 18px rgba(15, 45, 46, 0.06), 0 1px 3px rgba(15, 45, 46, 0.04) !important;
 }
 
+div.app-container.theme-cashier .bento-card::before,
+div.app-container.theme-cashier .bento-card-3d::before,
+div.app-container.theme-cashier .bento-billing-terminal::before,
+div.app-container.theme-cashier .bento-scanner-card::before,
+div.app-container.theme-cashier .bento-register-card::before,
+body.theme-cashier .bento-card::before,
+body.theme-cashier .bento-card-3d::before,
+body.theme-cashier .bento-billing-terminal::before,
+body.theme-cashier .bento-scanner-card::before,
+body.theme-cashier .bento-register-card::before,
+.theme-cashier .bento-card::before,
+.theme-cashier .bento-card-3d::before,
+.theme-cashier .bento-billing-terminal::before,
+.theme-cashier .bento-scanner-card::before,
+.theme-cashier .bento-register-card::before {
+  display: none !important;
+  opacity: 0 !important;
+  content: none !important;
+}
+
+/* 4.4 Master Billing Terminal Header & Controls */
+div.app-container.theme-cashier .bento-terminal-header,
+body.theme-cashier .bento-terminal-header,
+.theme-cashier .bento-terminal-header {
+  background: var(--surface) !important;
+  background-color: var(--surface) !important;
+  background-image: none !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+
+div.app-container.theme-cashier .terminal-icon-box,
+body.theme-cashier .terminal-icon-box,
+.theme-cashier .terminal-icon-box {
+  background: var(--primary-soft) !important;
+  border: 1.5px solid rgba(20, 184, 166, 0.35) !important;
+  color: var(--primary) !important;
+}
+
+div.app-container.theme-cashier .terminal-heading,
+body.theme-cashier .terminal-heading,
+.theme-cashier .terminal-heading {
+  color: var(--sidebar) !important;
+  font-weight: 800 !important;
+}
+
+div.app-container.theme-cashier .terminal-subheading,
+body.theme-cashier .terminal-subheading,
+.theme-cashier .terminal-subheading {
+  color: var(--text-muted) !important;
+}
+
+div.app-container.theme-cashier .bento-exchange-btn,
+body.theme-cashier .bento-exchange-btn,
+.theme-cashier .bento-exchange-btn {
+  background: var(--primary) !important;
+  border-color: var(--primary-hover) !important;
+  color: #FFFFFF !important;
+}
+
+div.app-container.theme-cashier .bento-hold-cart-btn,
+body.theme-cashier .bento-hold-cart-btn,
+.theme-cashier .bento-hold-cart-btn {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text) !important;
+}
+
+div.app-container.theme-cashier .bento-hold-cart-btn:hover,
+body.theme-cashier .bento-hold-cart-btn:hover,
+.theme-cashier .bento-hold-cart-btn:hover {
+  background: var(--primary-soft) !important;
+  border-color: var(--primary) !important;
+  color: var(--primary) !important;
+}
+
+div.app-container.theme-cashier .bento-clear-cart-btn,
+body.theme-cashier .bento-clear-cart-btn,
+.theme-cashier .bento-clear-cart-btn {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--danger) !important;
+}
+
+div.app-container.theme-cashier .bento-clear-cart-btn:hover:not(:disabled),
+body.theme-cashier .bento-clear-cart-btn:hover:not(:disabled),
+.theme-cashier .bento-clear-cart-btn:hover:not(:disabled) {
+  background: var(--danger-bg) !important;
+  border-color: var(--danger) !important;
+  color: var(--danger) !important;
+}
+
+div.app-container.theme-cashier .bento-clear-cart-btn:disabled,
+body.theme-cashier .bento-clear-cart-btn:disabled,
+.theme-cashier .bento-clear-cart-btn:disabled {
+  opacity: 0.45 !important;
+  border-color: var(--border) !important;
+  color: var(--text-muted) !important;
+}
+
+/* 4.5 Empty Cart & Cart Table */
+div.app-container.theme-cashier .bento-cart-body,
+div.app-container.theme-cashier .bento-empty-cart,
+body.theme-cashier .bento-cart-body,
+body.theme-cashier .bento-empty-cart,
+.theme-cashier .bento-cart-body,
+.theme-cashier .bento-empty-cart {
+  background: transparent !important;
+}
+
+div.app-container.theme-cashier .bento-start-add-btn,
+body.theme-cashier .bento-start-add-btn,
+.theme-cashier .bento-start-add-btn {
+  background: var(--primary) !important;
+  border-color: var(--primary-hover) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.25) !important;
+}
+
+div.app-container.theme-cashier .bento-start-add-btn:hover,
+body.theme-cashier .bento-start-add-btn:hover,
+.theme-cashier .bento-start-add-btn:hover {
+  background: var(--primary-hover) !important;
+}
+
+div.app-container.theme-cashier .bento-cart-table-wrapper,
+body.theme-cashier .bento-cart-table-wrapper,
+.theme-cashier .bento-cart-table-wrapper {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 10px !important;
+}
+
+div.app-container.theme-cashier .bento-cart-table-header,
+body.theme-cashier .bento-cart-table-header,
+.theme-cashier .bento-cart-table-header {
+  background: #EFE9DE !important;
+  border-bottom: 1px solid var(--border) !important;
+  color: var(--text-muted) !important;
+}
+
+div.app-container.theme-cashier .bento-cart-row,
+body.theme-cashier .bento-cart-row,
+.theme-cashier .bento-cart-row {
+  background: var(--surface) !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+
+div.app-container.theme-cashier .bento-cart-row:hover,
+body.theme-cashier .bento-cart-row:hover,
+.theme-cashier .bento-cart-row:hover {
+  background: #F4EFE6 !important;
+}
+
+div.app-container.theme-cashier .bento-cart-item-name,
+body.theme-cashier .bento-cart-item-name,
+.theme-cashier .bento-cart-item-name {
+  color: var(--sidebar) !important;
+  font-weight: 700 !important;
+}
+
+div.app-container.theme-cashier .bento-cart-cat-badge,
+body.theme-cashier .bento-cart-cat-badge,
+.theme-cashier .bento-cart-cat-badge {
+  background: var(--primary-soft) !important;
+  border: 1px solid rgba(20, 184, 166, 0.3) !important;
+  color: var(--primary) !important;
+}
+
+div.app-container.theme-cashier .bento-qty-stepper,
+body.theme-cashier .bento-qty-stepper,
+.theme-cashier .bento-qty-stepper {
+  background: #EFE9DE !important;
+  border: 1px solid var(--border) !important;
+}
+
+div.app-container.theme-cashier .bento-qty-btn,
+body.theme-cashier .bento-qty-btn,
+.theme-cashier .bento-qty-btn {
+  color: var(--sidebar) !important;
+}
+
+div.app-container.theme-cashier .bento-qty-btn:hover:not(:disabled),
+body.theme-cashier .bento-qty-btn:hover:not(:disabled),
+.theme-cashier .bento-qty-btn:hover:not(:disabled) {
+  background: var(--primary-soft) !important;
+  color: var(--primary) !important;
+}
+
+div.app-container.theme-cashier .bento-qty-value,
+body.theme-cashier .bento-qty-value,
+.theme-cashier .bento-qty-value {
+  color: var(--sidebar) !important;
+  font-weight: 700 !important;
+}
+
+/* 4.6 Bill Discount Bar & Pills */
+div.app-container.theme-cashier .bento-discount-bar,
+body.theme-cashier .bento-discount-bar,
+.theme-cashier .bento-discount-bar {
+  background: #FAF7F2 !important;
+  background-color: #FAF7F2 !important;
+  border: 1px solid var(--border) !important;
+}
+
+div.app-container.theme-cashier .discount-label,
+body.theme-cashier .discount-label,
+.theme-cashier .discount-label {
+  color: var(--text-muted) !important;
+}
+
+div.app-container.theme-cashier .bento-disc-pill,
+body.theme-cashier .bento-disc-pill,
+.theme-cashier .bento-disc-pill {
+  background: #EFE9DE !important;
+  background-color: #EFE9DE !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text) !important;
+}
+
+div.app-container.theme-cashier .bento-disc-pill:hover,
+body.theme-cashier .bento-disc-pill:hover,
+.theme-cashier .bento-disc-pill:hover {
+  background: var(--primary-soft) !important;
+  border-color: var(--primary) !important;
+  color: var(--primary) !important;
+}
+
+div.app-container.theme-cashier .bento-disc-pill.active,
+body.theme-cashier .bento-disc-pill.active,
+.theme-cashier .bento-disc-pill.active {
+  background: var(--primary) !important;
+  background-color: var(--primary) !important;
+  border-color: var(--primary-hover) !important;
+  color: #FFFFFF !important;
+}
+
+/* 4.7 Overall Summary Breakdown Box */
+div.app-container.theme-cashier .bento-summary-box,
+body.theme-cashier .bento-summary-box,
+.theme-cashier .bento-summary-box {
+  background: #EFE9DE !important;
+  background-color: #EFE9DE !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 10px !important;
+}
+
+div.app-container.theme-cashier .bento-summary-row .summary-label,
+body.theme-cashier .bento-summary-row .summary-label,
+.theme-cashier .bento-summary-row .summary-label {
+  color: var(--text-muted) !important;
+}
+
+div.app-container.theme-cashier .bento-summary-row .summary-val,
+body.theme-cashier .bento-summary-row .summary-val,
+.theme-cashier .bento-summary-row .summary-val {
+  color: var(--sidebar) !important;
+  font-weight: 700 !important;
+}
+
+div.app-container.theme-cashier .tax-sub-breakdown,
+body.theme-cashier .tax-sub-breakdown,
+.theme-cashier .tax-sub-breakdown {
+  color: var(--text-muted) !important;
+}
+
+div.app-container.theme-cashier .bento-savings-alert,
+body.theme-cashier .bento-savings-alert,
+.theme-cashier .bento-savings-alert {
+  background: #DCFCE7 !important;
+  border: 1px solid #BBF7D0 !important;
+  color: #166534 !important;
+}
+
+/* 4.8 Customer Details Bento Box & Inputs */
+div.app-container.theme-cashier .bento-billing-customer-box,
+body.theme-cashier .bento-billing-customer-box,
+.theme-cashier .bento-billing-customer-box {
+  background: #FAF7F2 !important;
+  background-color: #FAF7F2 !important;
+  border: 1.5px solid var(--border) !important;
+}
+
+div.app-container.theme-cashier .bento-cust-prefix,
+div.app-container.theme-cashier .bento-billing-customer-box div[style*="padding: 0 0.55rem"],
+body.theme-cashier .bento-cust-prefix,
+body.theme-cashier .bento-billing-customer-box div[style*="padding: 0 0.55rem"],
+.theme-cashier .bento-cust-prefix,
+.theme-cashier .bento-billing-customer-box div[style*="padding: 0 0.55rem"] {
+  background: var(--primary-soft) !important;
+  background-color: var(--primary-soft) !important;
+  color: var(--sidebar) !important;
+  border-color: var(--border) !important;
+}
+
+div.app-container.theme-cashier .bento-cust-input,
+div.app-container.theme-cashier .bento-billing-customer-box input[type="tel"],
+div.app-container.theme-cashier .bento-billing-customer-box input[type="text"],
+body.theme-cashier .bento-cust-input,
+body.theme-cashier .bento-billing-customer-box input[type="tel"],
+body.theme-cashier .bento-billing-customer-box input[type="text"],
+.theme-cashier .bento-cust-input,
+.theme-cashier .bento-billing-customer-box input[type="tel"],
+.theme-cashier .bento-billing-customer-box input[type="text"] {
+  background: #FAF7F2 !important;
+  background-color: #FAF7F2 !important;
+  border: 1.5px solid var(--border) !important;
+  color: var(--text) !important;
+}
+
+div.app-container.theme-cashier .bento-billing-customer-box input:focus,
+body.theme-cashier .bento-billing-customer-box input:focus,
+.theme-cashier .bento-billing-customer-box input:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.25) !important;
+}
+
+div.app-container.theme-cashier .bento-cust-browse-btn,
+body.theme-cashier .bento-cust-browse-btn,
+.theme-cashier .bento-cust-browse-btn {
+  background: var(--primary-soft) !important;
+  background-color: var(--primary-soft) !important;
+  border: 1px solid var(--ring) !important;
+  color: var(--primary) !important;
+}
+
+div.app-container.theme-cashier .bento-cust-browse-btn:hover,
+body.theme-cashier .bento-cust-browse-btn:hover,
+.theme-cashier .bento-cust-browse-btn:hover {
+  background: #CCFBF1 !important;
+  color: var(--primary-hover) !important;
+}
+
+/* 4.9 Payment Tender Mode Buttons & Panels */
+div.app-container.theme-cashier .bento-payment-modes,
+body.theme-cashier .bento-payment-modes,
+.theme-cashier .bento-payment-modes {
+  background: transparent !important;
+}
+
+div.app-container.theme-cashier .bento-pay-mode-btn,
+body.theme-cashier .bento-pay-mode-btn,
+.theme-cashier .bento-pay-mode-btn {
+  background: #FAF7F2 !important;
+  background-color: #FAF7F2 !important;
+  border: 1.5px solid var(--border) !important;
+  color: var(--text) !important;
+}
+
+div.app-container.theme-cashier .bento-pay-mode-btn:hover:not(:disabled),
+body.theme-cashier .bento-pay-mode-btn:hover:not(:disabled),
+.theme-cashier .bento-pay-mode-btn:hover:not(:disabled) {
+  background: var(--primary-soft) !important;
+  border-color: var(--primary) !important;
+  color: var(--primary) !important;
+}
+
+div.app-container.theme-cashier .bento-pay-mode-btn.active,
+body.theme-cashier .bento-pay-mode-btn.active,
+.theme-cashier .bento-pay-mode-btn.active {
+  background: var(--primary) !important;
+  background-color: var(--primary) !important;
+  border-color: var(--primary-hover) !important;
+  color: #FFFFFF !important;
+}
+
+div.app-container.theme-cashier .bento-pay-mode-btn svg,
+body.theme-cashier .bento-pay-mode-btn svg,
+.theme-cashier .bento-pay-mode-btn svg {
+  color: inherit !important;
+  stroke: currentColor !important;
+}
+
+/* Tender Detail Cards (Cash, UPI, Split, Card, Bank) */
+div.app-container.theme-cashier .bento-tender-cash-panel,
+div.app-container.theme-cashier .bento-upi-tender-card,
+div.app-container.theme-cashier .bento-bank-tender-card,
+div.app-container.theme-cashier .bento-split-tender-card,
+body.theme-cashier .bento-tender-cash-panel,
+body.theme-cashier .bento-upi-tender-card,
+body.theme-cashier .bento-bank-tender-card,
+body.theme-cashier .bento-split-tender-card,
+.theme-cashier .bento-tender-cash-panel,
+.theme-cashier .bento-upi-tender-card,
+.theme-cashier .bento-bank-tender-card,
+.theme-cashier .bento-split-tender-card {
+  background: var(--surface) !important;
+  background-color: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 12px !important;
+}
+
+div.app-container.theme-cashier .bento-tender-input,
+body.theme-cashier .bento-tender-input,
+.theme-cashier .bento-tender-input {
+  background: #FAF7F2 !important;
+  border: 1.5px solid var(--border) !important;
+  color: var(--sidebar) !important;
+}
+
+div.app-container.theme-cashier .bento-tender-input:focus,
+body.theme-cashier .bento-tender-input:focus,
+.theme-cashier .bento-tender-input:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.25) !important;
+}
+
+div.app-container.theme-cashier .bento-tender-change-box,
+body.theme-cashier .bento-tender-change-box,
+.theme-cashier .bento-tender-change-box {
+  background: #EFE9DE !important;
+  border: 1px solid var(--border) !important;
+}
+
+div.app-container.theme-cashier .tender-chip-btn,
+body.theme-cashier .tender-chip-btn,
+.theme-cashier .tender-chip-btn {
+  background: #EFE9DE !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text) !important;
+}
+
+div.app-container.theme-cashier .tender-chip-btn:hover,
+body.theme-cashier .tender-chip-btn:hover,
+.theme-cashier .tender-chip-btn:hover {
+  background: var(--primary-soft) !important;
+  border-color: var(--primary) !important;
+  color: var(--primary) !important;
+}
+
+div.app-container.theme-cashier .tender-chip-btn.active,
+body.theme-cashier .tender-chip-btn.active,
+.theme-cashier .tender-chip-btn.active {
+  background: var(--primary) !important;
+  border-color: var(--primary-hover) !important;
+  color: #FFFFFF !important;
+}
+
+div.app-container.theme-cashier .split-row-box,
+body.theme-cashier .split-row-box,
+.theme-cashier .split-row-box {
+  background: #EFE9DE !important;
+  border: 1px solid var(--border) !important;
+}
+
+div.app-container.theme-cashier .split-method-select,
+body.theme-cashier .split-method-select,
+.theme-cashier .split-method-select {
+  background: #FAF7F2 !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text) !important;
+}
+
+div.app-container.theme-cashier .split-fill-btn,
+div.app-container.theme-cashier .split-quick-half-btn,
+body.theme-cashier .split-fill-btn,
+body.theme-cashier .split-quick-half-btn,
+.theme-cashier .split-fill-btn,
+.theme-cashier .split-quick-half-btn {
+  background: var(--primary-soft) !important;
+  border: 1px solid var(--ring) !important;
+  color: var(--primary) !important;
+}
+
+/* 4.10 Sticky Bottom Checkout Row & Generate Bill Button */
+div.app-container.theme-cashier .bento-checkout-row,
+body.theme-cashier .bento-checkout-row,
+.theme-cashier .bento-checkout-row {
+  background: var(--surface) !important;
+  background-color: var(--surface) !important;
+  border-top: 1px solid var(--border) !important;
+}
+
+div.app-container.theme-cashier .grand-total-label,
+body.theme-cashier .grand-total-label,
+.theme-cashier .grand-total-label {
+  color: var(--text-muted) !important;
+}
+
+div.app-container.theme-cashier .grand-total-val,
+body.theme-cashier .grand-total-val,
+.theme-cashier .grand-total-val {
+  color: var(--sidebar) !important;
+  font-weight: 800 !important;
+}
+
+div.app-container.theme-cashier .bento-checkout-btn,
+body.theme-cashier .bento-checkout-btn,
+.theme-cashier .bento-checkout-btn {
+  background: var(--primary) !important;
+  background-color: var(--primary) !important;
+  background-image: none !important;
+  color: #FFFFFF !important;
+  border: 1px solid var(--primary-hover) !important;
+  box-shadow: 0 4px 14px rgba(15, 118, 110, 0.3) !important;
+}
+
+div.app-container.theme-cashier .bento-checkout-btn:hover:not(:disabled),
+body.theme-cashier .bento-checkout-btn:hover:not(:disabled),
+.theme-cashier .bento-checkout-btn:hover:not(:disabled) {
+  background: var(--primary-hover) !important;
+  box-shadow: 0 6px 18px rgba(15, 118, 110, 0.4) !important;
+}
+
+div.app-container.theme-cashier .bento-checkout-btn:disabled,
+body.theme-cashier .bento-checkout-btn:disabled,
+.theme-cashier .bento-checkout-btn:disabled {
+  background: #C8C0B2 !important;
+  background-color: #C8C0B2 !important;
+  background-image: none !important;
+  color: #645E54 !important;
+  border: 1px solid #B4AC9E !important;
+  opacity: 0.7 !important;
+  box-shadow: none !important;
+  cursor: not-allowed !important;
+}
+
+/* 4.11 Right Column: Barcode Scanner Card */
+div.app-container.theme-cashier .bento-input.scanner-input,
+div.app-container.theme-cashier #pos-product-search-input,
+body.theme-cashier .bento-input.scanner-input,
+body.theme-cashier #pos-product-search-input,
+.theme-cashier .bento-input.scanner-input,
+.theme-cashier #pos-product-search-input {
+  background: #FAF7F2 !important;
+  background-color: #FAF7F2 !important;
+  border: 1.5px solid var(--border) !important;
+  color: var(--text) !important;
+}
+
+div.app-container.theme-cashier .bento-input.scanner-input:focus,
+div.app-container.theme-cashier #pos-product-search-input:focus,
+body.theme-cashier .bento-input.scanner-input:focus,
+body.theme-cashier #pos-product-search-input:focus,
+.theme-cashier .bento-input.scanner-input:focus,
+.theme-cashier #pos-product-search-input:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.2) !important;
+  background: #FAF7F2 !important;
+}
+
+div.app-container.theme-cashier .scanner-laser-icon svg,
+body.theme-cashier .scanner-laser-icon svg,
+.theme-cashier .scanner-laser-icon svg {
+  color: var(--primary) !important;
+  stroke: var(--primary) !important;
+}
+
+div.app-container.theme-cashier .bento-trigger-scan-btn,
+body.theme-cashier .bento-trigger-scan-btn,
+.theme-cashier .bento-trigger-scan-btn {
+  background: var(--primary) !important;
+  color: #FFFFFF !important;
+  border: 1px solid var(--primary-hover) !important;
+}
+
+div.app-container.theme-cashier .bento-mobile-scanner-btn,
+body.theme-cashier .bento-mobile-scanner-btn,
+.theme-cashier .bento-mobile-scanner-btn {
+  background: #FAF7F2 !important;
+  background-color: #FAF7F2 !important;
+  border: 1.5px solid var(--border) !important;
+  color: var(--primary) !important;
+}
+
+div.app-container.theme-cashier .bento-mobile-scanner-btn:hover,
+body.theme-cashier .bento-mobile-scanner-btn:hover,
+.theme-cashier .bento-mobile-scanner-btn:hover {
+  background: var(--primary-soft) !important;
+  border-color: var(--primary) !important;
+  color: var(--primary-hover) !important;
+}
+
+div.app-container.theme-cashier .bento-find-product-btn,
+body.theme-cashier .bento-find-product-btn,
+.theme-cashier .bento-find-product-btn {
+  background: var(--primary-soft) !important;
+  background-color: var(--primary-soft) !important;
+  background-image: none !important;
+  border: 1.5px solid var(--ring) !important;
+  color: var(--primary) !important;
+}
+
+div.app-container.theme-cashier .bento-find-product-btn:hover,
+body.theme-cashier .bento-find-product-btn:hover,
+.theme-cashier .bento-find-product-btn:hover {
+  background: #CCFBF1 !important;
+  border-color: var(--primary) !important;
+  color: var(--primary-hover) !important;
+  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.2) !important;
+}
+
+/* 4.12 Right Column: Register #1 Live Synced Card */
+div.app-container.theme-cashier .bento-hero-metric,
+body.theme-cashier .bento-hero-metric,
+.theme-cashier .bento-hero-metric {
+  background: #EFE9DE !important;
+  background-color: #EFE9DE !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 12px !important;
+}
+
+div.app-container.theme-cashier .bento-hero-sep,
+body.theme-cashier .bento-hero-sep,
+.theme-cashier .bento-hero-sep {
+  background: var(--border) !important;
+}
+
+div.app-container.theme-cashier .bento-cell-label,
+body.theme-cashier .bento-cell-label,
+.theme-cashier .bento-cell-label {
+  color: var(--text-muted) !important;
+}
+
+div.app-container.theme-cashier .bento-cell-val,
+body.theme-cashier .bento-cell-val,
+.theme-cashier .bento-cell-val {
+  color: var(--sidebar) !important;
+  font-weight: 800 !important;
+}
+
+div.app-container.theme-cashier .bento-cell-unit,
+body.theme-cashier .bento-cell-unit,
+.theme-cashier .bento-cell-unit {
+  color: var(--text-muted) !important;
+}
+
+/* 6 Action Tiles inside Register Card */
 div.app-container.theme-cashier .bento-action-tile,
 body.theme-cashier .bento-action-tile,
 .theme-cashier .bento-action-tile {
-  background: var(--surface) !important;
-  border: 1px solid var(--border) !important;
+  background: #FAF7F2 !important;
+  background-color: #FAF7F2 !important;
+  border: 1.5px solid var(--border) !important;
+  border-radius: 11px !important;
   transition: all 0.15s ease !important;
+  box-shadow: 0 1px 3px rgba(15, 45, 46, 0.05) !important;
 }
 
 div.app-container.theme-cashier .bento-action-tile:hover:not(:disabled),
+body.theme-cashier .bento-action-tile:hover:not(:disabled),
 .theme-cashier .bento-action-tile:hover:not(:disabled) {
-  border-color: var(--ring) !important;
-  background: #F4F8F8 !important;
+  border-color: var(--primary) !important;
+  background: var(--primary-soft) !important;
   transform: translateY(-1px) !important;
-  box-shadow: 0 3px 10px rgba(15, 118, 110, 0.12) !important;
+  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.15) !important;
 }
 
 div.app-container.theme-cashier .bento-tile-icon,
+body.theme-cashier .bento-tile-icon,
 .theme-cashier .bento-tile-icon {
   background: var(--primary-soft) !important;
   border: 1px solid rgba(20, 184, 166, 0.3) !important;
@@ -713,12 +1528,14 @@ div.app-container.theme-cashier .bento-tile-icon,
 }
 
 div.app-container.theme-cashier .bento-tile-icon svg,
+body.theme-cashier .bento-tile-icon svg,
 .theme-cashier .bento-tile-icon svg {
   color: var(--primary) !important;
   stroke: var(--primary) !important;
 }
 
 div.app-container.theme-cashier .bento-action-tile:hover:not(:disabled) .bento-tile-icon,
+body.theme-cashier .bento-action-tile:hover:not(:disabled) .bento-tile-icon,
 .theme-cashier .bento-action-tile:hover:not(:disabled) .bento-tile-icon {
   background: var(--primary) !important;
   border-color: var(--primary-hover) !important;
@@ -726,35 +1543,49 @@ div.app-container.theme-cashier .bento-action-tile:hover:not(:disabled) .bento-t
 }
 
 div.app-container.theme-cashier .bento-action-tile:hover:not(:disabled) .bento-tile-icon svg,
+body.theme-cashier .bento-action-tile:hover:not(:disabled) .bento-tile-icon svg,
 .theme-cashier .bento-action-tile:hover:not(:disabled) .bento-tile-icon svg {
   color: #FFFFFF !important;
   stroke: #FFFFFF !important;
 }
 
 div.app-container.theme-cashier .bento-action-tile.active-scanner .bento-tile-icon,
+body.theme-cashier .bento-action-tile.active-scanner .bento-tile-icon,
 .theme-cashier .bento-action-tile.active-scanner .bento-tile-icon {
   background: #ECFDF5 !important;
   border-color: #D1FAE5 !important;
   color: var(--success) !important;
 }
 
+div.app-container.theme-cashier .bento-tile-heading,
+body.theme-cashier .bento-tile-heading,
+.theme-cashier .bento-tile-heading {
+  color: var(--sidebar) !important;
+  font-weight: 700 !important;
+}
+
+div.app-container.theme-cashier .bento-tile-caption,
+body.theme-cashier .bento-tile-caption,
+.theme-cashier .bento-tile-caption {
+  color: var(--text-muted) !important;
+}
+
 div.app-container.theme-cashier .bento-icon-circle.purple,
+body.theme-cashier .bento-icon-circle.purple,
 .theme-cashier .bento-icon-circle.purple {
   background: var(--primary-soft) !important;
   color: var(--primary) !important;
 }
 
-/* Modals & Popovers inside Cashier */
+/* 4.13 Modals & General Buttons inside Cashier */
 div.app-container.theme-cashier .btn-primary,
 div.app-container.theme-cashier .btn-cash-primary,
 div.app-container.theme-cashier .btn-tender-cash,
-div.app-container.theme-cashier .btn-checkout-bento,
 div.app-container.theme-cashier .find-products-btn,
 div.app-container.theme-cashier button.btn-tender-active,
 .theme-cashier .btn-primary,
 .theme-cashier .btn-cash-primary,
 .theme-cashier .btn-tender-cash,
-.theme-cashier .btn-checkout-bento,
 .theme-cashier .find-products-btn,
 .theme-cashier button.btn-tender-active {
   background: var(--primary) !important;
@@ -764,12 +1595,10 @@ div.app-container.theme-cashier button.btn-tender-active,
 div.app-container.theme-cashier .btn-primary:hover,
 div.app-container.theme-cashier .btn-cash-primary:hover,
 div.app-container.theme-cashier .btn-tender-cash:hover,
-div.app-container.theme-cashier .btn-checkout-bento:hover,
 div.app-container.theme-cashier .find-products-btn:hover,
 .theme-cashier .btn-primary:hover,
 .theme-cashier .btn-cash-primary:hover,
 .theme-cashier .btn-tender-cash:hover,
-.theme-cashier .btn-checkout-bento:hover,
 .theme-cashier .find-products-btn:hover {
   background: var(--primary-hover) !important;
 }

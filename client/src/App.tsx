@@ -9225,8 +9225,8 @@ export function App() {
                                 margin: '0.65rem 0 0.85rem 0',
                                 padding: '0.75rem 0.9rem',
                                 borderRadius: '12px',
-                                background: isPhoneValid ? '#f0fdf4' : '#fff7ed',
-                                border: isPhoneValid ? '1.5px solid #86efac' : '1.5px solid #fed7aa',
+                                background: user?.role === 'cashier' ? 'var(--surface)' : (isPhoneValid ? '#f0fdf4' : '#fff7ed'),
+                                border: user?.role === 'cashier' ? (isPhoneValid ? '1.5px solid var(--primary)' : '1.5px solid var(--border)') : (isPhoneValid ? '1.5px solid #86efac' : '1.5px solid #fed7aa'),
                                 transition: 'all 0.2s ease',
                               }}
                             >
@@ -9309,8 +9309,8 @@ export function App() {
                                     className="bento-cust-browse-btn"
                                     onClick={() => setShowCustomerPickerModal(true)}
                                     style={{
-                                      background: '#ffffff',
-                                      border: user?.role === 'cashier' ? '1px solid var(--border)' : '1px solid #cbd5e1',
+                                      background: user?.role === 'cashier' ? 'var(--primary-soft)' : '#ffffff',
+                                      border: user?.role === 'cashier' ? '1px solid var(--ring)' : '1px solid #cbd5e1',
                                       borderRadius: '6px',
                                       fontSize: '0.72rem',
                                       fontWeight: 700,
@@ -9338,19 +9338,20 @@ export function App() {
                                 <div style={{ position: 'relative' }}>
                                   <div style={{ display: 'flex', alignItems: 'stretch' }}>
                                     <div
+                                      className="bento-cust-prefix"
                                       style={{
                                         display: 'flex',
                                         alignItems: 'center',
                                         padding: '0 0.55rem',
-                                        background: '#f8fafc',
-                                        borderTop: isPhoneValid ? '1.5px solid #16a34a' : '1.5px solid #cbd5e1',
-                                        borderBottom: isPhoneValid ? '1.5px solid #16a34a' : '1.5px solid #cbd5e1',
-                                        borderLeft: isPhoneValid ? '1.5px solid #16a34a' : '1.5px solid #cbd5e1',
+                                        background: user?.role === 'cashier' ? 'var(--primary-soft)' : '#f8fafc',
+                                        borderTop: user?.role === 'cashier' ? (isPhoneValid ? '1.5px solid var(--primary)' : '1.5px solid var(--border)') : (isPhoneValid ? '1.5px solid #16a34a' : '1.5px solid #cbd5e1'),
+                                        borderBottom: user?.role === 'cashier' ? (isPhoneValid ? '1.5px solid var(--primary)' : '1.5px solid var(--border)') : (isPhoneValid ? '1.5px solid #16a34a' : '1.5px solid #cbd5e1'),
+                                        borderLeft: user?.role === 'cashier' ? (isPhoneValid ? '1.5px solid var(--primary)' : '1.5px solid var(--border)') : (isPhoneValid ? '1.5px solid #16a34a' : '1.5px solid #cbd5e1'),
                                         borderRight: 'none',
                                         borderRadius: '8px 0 0 8px',
                                         fontSize: '0.75rem',
                                         fontWeight: 800,
-                                        color: '#475569',
+                                        color: user?.role === 'cashier' ? 'var(--sidebar)' : '#475569',
                                         userSelect: 'none',
                                       }}
                                     >
@@ -9359,6 +9360,7 @@ export function App() {
                                     <input
                                       ref={customerMobileInputRef}
                                       type="tel"
+                                      className="bento-cust-input bento-cust-phone"
                                       placeholder="10-digit mobile number *"
                                       maxLength={10}
                                       value={customerSearch}
@@ -9436,11 +9438,11 @@ export function App() {
                                         padding: '0.45rem 0.65rem',
                                         fontSize: '0.84rem',
                                         borderRadius: '0 8px 8px 0',
-                                        border: isPhoneValid ? '1.5px solid #16a34a' : '1.5px solid #cbd5e1',
-                                        background: '#ffffff',
+                                        border: user?.role === 'cashier' ? (isPhoneValid ? '1.5px solid var(--primary)' : '1.5px solid var(--border)') : (isPhoneValid ? '1.5px solid #16a34a' : '1.5px solid #cbd5e1'),
+                                        background: user?.role === 'cashier' ? 'var(--surface)' : '#ffffff',
                                         fontWeight: 700,
                                         letterSpacing: '0.5px',
-                                        color: '#0f172a',
+                                        color: user?.role === 'cashier' ? 'var(--sidebar)' : '#0f172a',
                                         outline: 'none',
                                       }}
                                     />
@@ -9455,8 +9457,8 @@ export function App() {
                                         right: 0,
                                         top: '100%',
                                         zIndex: 60,
-                                        background: '#ffffff',
-                                        border: '1.5px solid #cbd5e1',
+                                        background: user?.role === 'cashier' ? 'var(--surface)' : '#ffffff',
+                                        border: user?.role === 'cashier' ? '1.5px solid var(--border)' : '1.5px solid #cbd5e1',
                                         borderRadius: '8px',
                                         boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
                                         marginTop: '4px',
@@ -9464,7 +9466,7 @@ export function App() {
                                         overflowY: 'auto',
                                       }}
                                     >
-                                      <div style={{ padding: '4px 8px', background: '#f8fafc', fontSize: '0.68rem', fontWeight: 750, color: '#64748b', borderBottom: '1px solid #f1f5f9' }}>
+                                      <div style={{ padding: '4px 8px', background: user?.role === 'cashier' ? '#EFE9DE' : '#f8fafc', fontSize: '0.68rem', fontWeight: 750, color: '#64748b', borderBottom: user?.role === 'cashier' ? '1px solid var(--border)' : '1px solid #f1f5f9' }}>
                                         Matching Customers (Click to select):
                                       </div>
                                       {phoneSuggestions.slice(0, 5).map((item, idx) => (
@@ -9480,17 +9482,17 @@ export function App() {
                                           style={{
                                             padding: '6px 10px',
                                             cursor: 'pointer',
-                                            borderBottom: idx < Math.min(phoneSuggestions.length, 5) - 1 ? '1px solid #f8fafc' : 'none',
+                                            borderBottom: idx < Math.min(phoneSuggestions.length, 5) - 1 ? (user?.role === 'cashier' ? '1px solid var(--border)' : '1px solid #f8fafc') : 'none',
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'space-between',
                                             fontSize: '0.78rem',
                                           }}
-                                          onMouseEnter={(e) => (e.currentTarget.style.background = '#eef2ff')}
-                                          onMouseLeave={(e) => (e.currentTarget.style.background = '#ffffff')}
+                                          onMouseEnter={(e) => (e.currentTarget.style.background = user?.role === 'cashier' ? 'var(--primary-soft)' : '#eef2ff')}
+                                          onMouseLeave={(e) => (e.currentTarget.style.background = user?.role === 'cashier' ? 'var(--surface)' : '#ffffff')}
                                         >
                                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                            <span style={{ fontWeight: 750, color: '#1e293b' }}>{item.name}</span>
+                                            <span style={{ fontWeight: 750, color: user?.role === 'cashier' ? 'var(--sidebar)' : '#1e293b' }}>{item.name}</span>
                                             <span style={{ color: '#64748b', fontSize: '0.74rem' }}>({item.phone})</span>
                                           </div>
                                           {item.points !== undefined && item.points > 0 && (
@@ -9509,6 +9511,7 @@ export function App() {
                                   <input
                                     ref={customerNameInputRef}
                                     type="text"
+                                    className="bento-cust-input bento-cust-name"
                                     placeholder="Customer Name (Optional)"
                                     value={displayedCustomerName}
                                     onChange={(e) => {
@@ -9525,10 +9528,10 @@ export function App() {
                                       padding: '0.45rem 0.65rem 0.45rem 1.75rem',
                                       fontSize: '0.84rem',
                                       borderRadius: '8px',
-                                      border: '1.5px solid #cbd5e1',
-                                      background: '#ffffff',
+                                      border: user?.role === 'cashier' ? '1.5px solid var(--border)' : '1.5px solid #cbd5e1',
+                                      background: user?.role === 'cashier' ? 'var(--surface)' : '#ffffff',
                                       fontWeight: 650,
-                                      color: '#0f172a',
+                                      color: user?.role === 'cashier' ? 'var(--sidebar)' : '#0f172a',
                                       outline: 'none',
                                     }}
                                   />
@@ -10824,19 +10827,19 @@ export function App() {
                   <div className="modal-overlay" style={{ zIndex: 100 }} onClick={() => setShowCustomerPickerModal(false)}>
                     <div
                       className="modal-content"
-                      style={{ maxWidth: '480px', borderRadius: '14px', padding: '1.25rem', background: '#ffffff', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)' }}
+                      style={{ maxWidth: '480px', borderRadius: '14px', padding: '1.25rem', background: user?.role === 'cashier' ? 'var(--surface)' : '#ffffff', border: user?.role === 'cashier' ? '1px solid var(--border)' : undefined, boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)' }}
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.75rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', borderBottom: user?.role === 'cashier' ? '1px solid var(--border)' : '1px solid #e2e8f0', paddingBottom: '0.75rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                          <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#ede9fe', color: '#6366f1', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: user?.role === 'cashier' ? 'var(--primary-soft)' : '#ede9fe', color: user?.role === 'cashier' ? 'var(--primary)' : '#6366f1', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                               <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
                             </svg>
                           </div>
                           <div>
-                            <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#0f172a' }}>Customer Mobile Number (Mandatory)</h3>
-                            <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Enter 10-digit mobile number to generate invoice (Press Esc to close)</span>
+                            <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: user?.role === 'cashier' ? 'var(--sidebar)' : '#0f172a' }}>Customer Mobile Number (Mandatory)</h3>
+                            <span style={{ fontSize: '0.75rem', color: user?.role === 'cashier' ? 'var(--text-muted)' : '#64748b' }}>Enter 10-digit mobile number to generate invoice (Press Esc to close)</span>
                           </div>
                         </div>
                         <button
@@ -10984,8 +10987,8 @@ export function App() {
                               justifyContent: 'space-between',
                               padding: '0.6rem 0.85rem',
                               borderRadius: '8px',
-                              border: selectedPartyId === p.id ? '1.5px solid #6366f1' : '1px solid #e2e8f0',
-                              background: selectedPartyId === p.id ? '#f5f3ff' : '#f8fafc',
+                              border: user?.role === 'cashier' ? (selectedPartyId === p.id ? '1.5px solid var(--primary)' : '1px solid var(--border)') : (selectedPartyId === p.id ? '1.5px solid #6366f1' : '1px solid #e2e8f0'),
+                              background: user?.role === 'cashier' ? (selectedPartyId === p.id ? 'var(--primary-soft)' : 'var(--surface)') : (selectedPartyId === p.id ? '#f5f3ff' : '#f8fafc'),
                               cursor: 'pointer',
                               transition: 'all 0.15s ease',
                             }}
