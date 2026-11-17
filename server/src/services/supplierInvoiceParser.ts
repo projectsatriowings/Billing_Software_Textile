@@ -1,8 +1,20 @@
 import { PDFParse } from 'pdf-parse';
-import { createWorker, PSM } from 'tesseract.js';
 import ExcelJS from 'exceljs';
 import UPNG from '@pdf-lib/upng';
 import jpeg from 'jpeg-js';
+
+// Lazy loader for optional heavy OCR engine
+async function getTesseract() {
+  try {
+    const mod = await import('tesseract.js');
+    return {
+      createWorker: mod.createWorker,
+      PSM: mod.PSM,
+    };
+  } catch (err: any) {
+    throw new Error(`Tesseract OCR module is not available: ${err.message || String(err)}`);
+  }
+}
 
 export interface ExtractedProductItem {
   id: string;
@@ -344,6 +356,7 @@ export async function extractTextFromInvoice(
       try {
         const imageResult = await pdfParser.getImage({ imageBuffer: true });
         if (imageResult?.pages?.length) {
+          const { createWorker, PSM } = await getTesseract();
           const worker = await createWorker('eng');
           await worker.setParameters({ tessedit_pageseg_mode: PSM.AUTO });
           for (const page of imageResult.pages) {
@@ -379,6 +392,7 @@ export async function extractTextFromInvoice(
   // Image files (JPG, JPEG, PNG)
   try {
     const preprocessed = preprocessInvoiceImage(buffer);
+    const { createWorker, PSM } = await getTesseract();
     const worker = await createWorker('eng');
     // Mode 3: Fully automatic page segmentation (preserves multi-column layout and horizontal rows)
     await worker.setParameters({ tessedit_pageseg_mode: PSM.AUTO });
