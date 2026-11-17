@@ -2934,6 +2934,11 @@ export const markDayClosingNotificationRead = (id: string) =>
     method: 'POST',
   });
 
+export const markAllDayClosingNotificationsRead = () =>
+  api<{ success: boolean }>('/api/day-closing/notifications/read-all', {
+    method: 'POST',
+  });
+
 export type SmartAuditSeverity = 'critical' | 'warning' | 'info';
 
 export type SmartAuditDetectorId =

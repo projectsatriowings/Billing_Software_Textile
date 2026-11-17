@@ -1968,4 +1968,12 @@ export const MIGRATIONS: Migration[] = [
       `ALTER TABLE day_closings ADD COLUMN IF NOT EXISTS audit_summary JSONB DEFAULT '{}'::jsonb`,
     ],
   },
+  {
+    version: 72,
+    statements: [
+      `ALTER TABLE day_closing_notifications ADD COLUMN IF NOT EXISTS metadata JSONB DEFAULT '{}'::jsonb`,
+      `CREATE INDEX IF NOT EXISTS idx_dc_notif_created ON day_closing_notifications (tenant_id, created_at DESC)`,
+      `CREATE INDEX IF NOT EXISTS idx_dc_notif_branch ON day_closing_notifications (tenant_id, branch_id, created_at DESC)`,
+    ],
+  },
 ];

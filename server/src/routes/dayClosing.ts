@@ -3159,23 +3159,40 @@ export function registerDayClosing(r: Router) {
   r.get('/api/day-closing/notifications', requireUser, async (ctx) => {
     const tenantId = ctx.user!.tenantId;
     const scope = await resolveBranchScope(ctx);
-    const branchId = (!scope.isSuperAdminAll && scope.branchId) ? scope.branchId : String(ctx.query.branchId || 'MAIN').trim();
     const userRole = String(ctx.user!.role || '').toUpperCase();
     const isCashier = userRole === 'CASHIER' || userRole === 'COUNTER';
 
+    const requestedBranch = String(ctx.query.branchId || ctx.query.branch || '').trim();
+
     let notifSql = `
-      SELECT n.*, u.name AS cashier_name
+      SELECT n.*, u.name AS cashier_name, b.name AS branch_name, b.code AS branch_code
       FROM day_closing_notifications n
       LEFT JOIN users u ON u.id = n.cashier_id
-      WHERE n.tenant_id = ? AND n.branch_id = ?
+      LEFT JOIN branches b ON (b.id = n.branch_id OR b.code = n.branch_id) AND b.tenant_id = n.tenant_id
+      WHERE n.tenant_id = ?
     `;
-    const notifParams: any[] = [tenantId, branchId];
+    const notifParams: any[] = [tenantId];
+
+    if (!scope.isSuperAdminAll) {
+      // Store Manager or Cashier: strictly scoped to user's branch
+      if (scope.branchId) {
+        notifSql += ' AND n.branch_id = ?';
+        notifParams.push(scope.branchId);
+      }
+    } else {
+      // Super Admin: if specific branch requested, filter; otherwise return across all branches
+      if (requestedBranch && requestedBranch.toUpperCase() !== 'ALL') {
+        notifSql += ' AND (n.branch_id = ? OR b.code = ?)';
+        notifParams.push(requestedBranch, requestedBranch);
+      }
+    }
 
     if (isCashier) {
       notifSql += ' AND (n.cashier_id = ? OR n.cashier_id IS NULL)';
       notifParams.push(ctx.user!.id);
     }
-    notifSql += ' ORDER BY n.created_at DESC LIMIT 20';
+
+    notifSql += ' ORDER BY n.created_at DESC LIMIT 50';
 
     const notifications = await ctx.db.query<any>(notifSql, notifParams);
     const unreadCount = notifications.filter((n: any) => !n.is_read && !n.isRead).length;
@@ -3198,6 +3215,28 @@ export function registerDayClosing(r: Router) {
       [id, tenantId],
     );
 
+    return { success: true };
+  });
+
+  r.post('/api/day-closing/notifications/read-all', requireUser, async (ctx) => {
+    const tenantId = ctx.user!.tenantId;
+    const scope = await resolveBranchScope(ctx);
+    const userRole = String(ctx.user!.role || '').toUpperCase();
+    const isCashier = userRole === 'CASHIER' || userRole === 'COUNTER';
+
+    let sql = `UPDATE day_closing_notifications SET is_read = TRUE, read_at = NOW() WHERE tenant_id = ? AND (is_read = FALSE OR is_read IS NULL)`;
+    const params: any[] = [tenantId];
+
+    if (!scope.isSuperAdminAll && scope.branchId) {
+      sql += ' AND branch_id = ?';
+      params.push(scope.branchId);
+    }
+    if (isCashier) {
+      sql += ' AND cashier_id = ?';
+      params.push(ctx.user!.id);
+    }
+
+    await ctx.db.exec(sql, params);
     return { success: true };
   });
 

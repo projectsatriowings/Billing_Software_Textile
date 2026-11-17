@@ -371,6 +371,60 @@ export function registerShifts(r: Router) {
         detail: { shiftNumber, openingCashMinor, location, counter: resolvedCounterCode, counterId: resolvedCounterId },
       });
 
+      // Insert notification for Super Admin (branch-wise) and Store Manager (their branch)
+      try {
+        const branchRow = await q.one<{ name: string; code: string }>(
+          'SELECT name, code FROM branches WHERE id = ? AND tenant_id = ?',
+          [branchId, tenantId],
+        );
+        const branchName = branchRow?.name || 'Branch';
+        const branchCode = branchRow?.code || 'MAIN';
+        const cashierName = ctx.user!.name || 'Cashier';
+        const counterDisplayName = resolvedCounterName || resolvedCounterCode || 'Counter 1';
+        const openingCashFormatted = (openingCashMinor / 100).toLocaleString('en-IN', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
+
+        const notifId = newId('notif');
+        const bdate = now.slice(0, 10);
+        await q.exec(
+          `INSERT INTO day_closing_notifications (
+            id, tenant_id, branch_id, counter_id, cashier_id, bdate,
+            type, title, message, severity, is_read, created_at, metadata
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, false, ?, ?::jsonb)`,
+          [
+            notifId,
+            tenantId,
+            branchId,
+            resolvedCounterId || null,
+            userId,
+            bdate,
+            'shift_open',
+            `Shift #${shiftNumber} Started · ${branchName}`,
+            `Cashier ${cashierName} checked and verified drawer cash float of ₹${openingCashFormatted} and started shift on ${counterDisplayName} (${branchName}).`,
+            'info',
+            now,
+            JSON.stringify({
+              shiftId,
+              shiftNumber,
+              cashierId: userId,
+              cashierName,
+              branchId,
+              branchName,
+              branchCode,
+              counter: counterDisplayName,
+              counterId: resolvedCounterId || null,
+              openingCashMinor,
+              openingCashFormatted: `₹${openingCashFormatted}`,
+              openedAt: now,
+            }),
+          ],
+        );
+      } catch (err: any) {
+        console.error('Failed to create shift_open notification:', err?.message || err);
+      }
+
       return {
         ok: true,
         shift: {
@@ -898,6 +952,100 @@ export function registerShifts(r: Router) {
           note: finalNote,
         },
       });
+
+      // Insert notification for Super Admin (branch-wise) and Store Manager (their branch)
+      try {
+        const branchRow = await q.one<{ name: string; code: string }>(
+          'SELECT name, code FROM branches WHERE id = ? AND tenant_id = ?',
+          [shift.branchId ?? shift.branch_id, tenantId],
+        );
+        const branchName = branchRow?.name || 'Branch';
+        const branchCode = branchRow?.code || 'MAIN';
+
+        const userRow = await q.one<{ name: string }>(
+          'SELECT name FROM users WHERE id = ? AND tenant_id = ?',
+          [shift.userId ?? shift.user_id, tenantId],
+        );
+        const cashierName = userRow?.name || ctx.user!.name || 'Cashier';
+
+        const counterDisplayName = shift.counterNameSnapshot ?? shift.counter_name_snapshot ?? shift.counter ?? 'Counter 1';
+        const shiftNum = shift.shiftNumber ?? shift.shift_number ?? shiftId;
+
+        const totalSalesMinor = Number(summary.totalSalesBilledMinor ?? 0);
+        const totalSalesFormatted = (totalSalesMinor / 100).toLocaleString('en-IN', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
+        const billsCount = Number(summary.invoicesCount ?? 0);
+        const returnsCount = Number(summary.returnsCount ?? 0);
+        const refundsMinor = Number(summary.cashRefundsMinor ?? 0);
+        const refundsFormatted = (refundsMinor / 100).toLocaleString('en-IN', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
+        const countedCashFormatted = (countedCashMinor / 100).toLocaleString('en-IN', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
+
+        let varianceText = 'Balanced';
+        if (varianceMinor < 0) {
+          varianceText = `Shortage: ₹${(Math.abs(varianceMinor) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        } else if (varianceMinor > 0) {
+          varianceText = `Excess: ₹${(varianceMinor / 100).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        }
+
+        const notifId = newId('notif');
+        const bdate = now.slice(0, 10);
+        const severity = varianceMinor !== 0 ? 'warning' : 'success';
+        const closeMsg = `Cashier ${cashierName} closed Shift #${shiftNum} at ${branchName}. Today's Sales: ₹${totalSalesFormatted} (${billsCount} bills) · Returns: ${returnsCount} (₹${refundsFormatted}) · Drawer Cash: ₹${countedCashFormatted} (${varianceText}).`;
+
+        await q.exec(
+          `INSERT INTO day_closing_notifications (
+            id, tenant_id, branch_id, counter_id, cashier_id, bdate,
+            type, title, message, severity, is_read, created_at, metadata
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, false, ?, ?::jsonb)`,
+          [
+            notifId,
+            tenantId,
+            shift.branchId ?? shift.branch_id,
+            shift.counterId ?? shift.counter_id ?? null,
+            shift.userId ?? shift.user_id,
+            bdate,
+            'shift_close',
+            `Shift #${shiftNum} Closed · ${branchName}`,
+            closeMsg,
+            severity,
+            now,
+            JSON.stringify({
+              shiftId,
+              shiftNumber: shiftNum,
+              cashierId: shift.userId ?? shift.user_id,
+              cashierName,
+              branchId: shift.branchId ?? shift.branch_id,
+              branchName,
+              branchCode,
+              counter: counterDisplayName,
+              counterId: shift.counterId ?? shift.counter_id ?? null,
+              totalSalesMinor,
+              totalSalesFormatted: `₹${totalSalesFormatted}`,
+              invoicesCount: billsCount,
+              returnsCount,
+              cashRefundsMinor: refundsMinor,
+              cashRefundsFormatted: `₹${refundsFormatted}`,
+              countedCashMinor,
+              countedCashFormatted: `₹${countedCashFormatted}`,
+              expectedCashMinor,
+              varianceMinor,
+              varianceText,
+              isBalanced: classification.isBalanced,
+              closedAt: now,
+            }),
+          ],
+        );
+      } catch (err: any) {
+        console.error('Failed to create shift_close notification:', err?.message || err);
+      }
 
       return {
         ok: true,

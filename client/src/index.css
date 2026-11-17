@@ -33156,6 +33156,157 @@ select.expense-input-control {
   text-align: center;
 }
 
+/* Shift Notification Bento Enhancements */
+.bento-notif-unread-count-pill {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 1px 7px;
+  background: #EEF2FF;
+  color: #4F46E5;
+  border-radius: 999px;
+  border: 1px solid #C7D2FE;
+}
+
+.bento-notif-mark-read-btn {
+  background: none;
+  border: none;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #6366F1;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.bento-notif-mark-read-btn:hover {
+  background: #EEF2FF;
+  color: #4338CA;
+  text-decoration: underline;
+}
+
+.bento-notif-card.shift-open {
+  border-left: 4px solid #10B981;
+  background: #F8FDFB;
+}
+
+.bento-notif-card.shift-close {
+  border-left: 4px solid #6366F1;
+  background: #FBFBFF;
+}
+
+.bento-notif-card.unread {
+  background: #F5F7FF;
+  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.2);
+}
+
+.bento-notif-unread-dot {
+  width: 7px;
+  height: 7px;
+  background-color: #4F46E5;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+  animation: pulseDot 2s infinite;
+}
+
+@keyframes pulseDot {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.7); }
+  70% { transform: scale(1.1); box-shadow: 0 0 0 5px rgba(79, 70, 229, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); }
+}
+
+.bento-notif-branch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 1px;
+  margin-bottom: 2px;
+}
+
+.bento-notif-branch-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  background: #F1F5F9;
+  color: #334155;
+  border: 1px solid #E2E8F0;
+  border-radius: 6px;
+  letter-spacing: 0.02em;
+}
+
+.bento-notif-time-ago {
+  font-size: 0.68rem;
+  color: #94A3B8;
+  font-weight: 500;
+}
+
+.bento-notif-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  padding: 6px 8px;
+  margin: 4px 0 2px 0;
+}
+
+.bento-notif-stat-box {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.bento-notif-stat-box.full-width {
+  grid-column: span 2;
+}
+
+.bento-notif-stat-box .stat-label {
+  font-size: 0.64rem;
+  text-transform: uppercase;
+  color: #64748B;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.bento-notif-stat-box .stat-val {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.bento-notif-stat-box .stat-val.sales {
+  color: #059669;
+}
+
+.bento-notif-stat-box .stat-val.drawer {
+  color: #4F46E5;
+}
+
+.bento-notif-stat-box .stat-val.returns {
+  color: #D97706;
+}
+
+.bento-notif-section-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748B;
+  margin: 6px 0 2px 4px;
+}
+
+.notif-badge.shift-unread-badge {
+  background: #EF4444;
+  color: #FFFFFF;
+  font-weight: 800;
+}
+
 .bento-alert-pill.bento-alert-pill-readonly {
   cursor: default !important;
   opacity: 0.95;

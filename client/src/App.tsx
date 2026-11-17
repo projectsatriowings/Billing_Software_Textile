@@ -50,6 +50,9 @@ import {
   setActiveBranchScope,
   selectActiveShiftCounter,
   fetchDayClosingCompliance,
+  fetchDayClosingNotifications,
+  markDayClosingNotificationRead,
+  markAllDayClosingNotificationsRead,
   downloadInvoicePdf,
   triggerBlobDownload,
 } from './api';
@@ -1018,6 +1021,81 @@ export function App() {
       window.removeEventListener('day_closing_submitted', onClosingUpdated);
     };
   }, [selectedBranchScope]);
+
+  // Real-time Cashier Shift & Day Closing notifications state
+  const [shiftNotifications, setShiftNotifications] = useState<any[]>([]);
+  const [unreadShiftNotifCount, setUnreadShiftNotifCount] = useState<number>(0);
+
+  const loadNotifications = useCallback(async () => {
+    if (!user) return;
+    try {
+      const activeBranch = selectedBranchScope && selectedBranchScope.toLowerCase() !== 'all' ? selectedBranchScope : undefined;
+      const res = await fetchDayClosingNotifications({ branchId: activeBranch });
+      if (res && res.success) {
+        setShiftNotifications(res.notifications || []);
+        setUnreadShiftNotifCount(res.unreadCount || 0);
+      }
+    } catch (err) {
+      console.error('Error fetching shift notifications:', err);
+    }
+  }, [user, selectedBranchScope]);
+
+  useEffect(() => {
+    if (!user) return;
+    loadNotifications();
+    const interval = setInterval(loadNotifications, 15000);
+    const onShiftEvent = () => loadNotifications();
+    window.addEventListener('shift_opened', onShiftEvent);
+    window.addEventListener('shift_closed', onShiftEvent);
+    window.addEventListener('day_closing_updated', onShiftEvent);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('shift_opened', onShiftEvent);
+      window.removeEventListener('shift_closed', onShiftEvent);
+      window.removeEventListener('day_closing_updated', onShiftEvent);
+    };
+  }, [user, loadNotifications]);
+
+  const handleMarkAllNotificationsRead = async () => {
+    try {
+      await markAllDayClosingNotificationsRead();
+      setShiftNotifications((prev) =>
+        prev.map((n) => ({ ...n, is_read: true, isRead: true }))
+      );
+      setUnreadShiftNotifCount(0);
+    } catch (err) {
+      console.error('Failed to mark all notifications read:', err);
+    }
+  };
+
+  const handleNotificationClick = async (notif: any) => {
+    try {
+      if (!notif.is_read && !notif.isRead) {
+        await markDayClosingNotificationRead(notif.id);
+        setShiftNotifications((prev) =>
+          prev.map((n) => (n.id === notif.id ? { ...n, is_read: true, isRead: true } : n))
+        );
+        setUnreadShiftNotifCount((prev) => Math.max(0, prev - 1));
+      }
+    } catch (err) {
+      console.error('Failed to mark notification read:', err);
+    }
+    setShowTopNotifPopover(false);
+    setActiveTab('shifts');
+  };
+
+  const formatNotifTimeAgo = (dateStr: string) => {
+    if (!dateStr) return '';
+    const diff = Math.max(0, Date.now() - new Date(dateStr).getTime());
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    return `${days}d ago`;
+  };
 
   const handleGlobalBranchChange = async (newBranchCode: string) => {
     const normalized = (newBranchCode || 'all').trim();
@@ -7956,13 +8034,20 @@ export function App() {
                   className={`top-notification-btn ${showTopNotifPopover ? 'active' : ''}`}
                   aria-label="Notifications"
                   title={
-                    user?.role === 'cashier'
-                      ? 'Terminal Notifications'
-                      : totalStockAlerts > 0
-                        ? `${totalStockAlerts} Inventory Alert${totalStockAlerts > 1 ? 's' : ''} (${outOfStockItems.length} out of stock, ${lowStockItems.length} low stock)`
-                        : 'Notifications'
+                    unreadShiftNotifCount > 0
+                      ? `${unreadShiftNotifCount} New Shift Notification${unreadShiftNotifCount > 1 ? 's' : ''}`
+                      : user?.role === 'cashier'
+                        ? 'Terminal Notifications'
+                        : totalStockAlerts > 0
+                          ? `${totalStockAlerts} Inventory Alert${totalStockAlerts > 1 ? 's' : ''} (${outOfStockItems.length} out of stock, ${lowStockItems.length} low stock)`
+                          : 'Notifications'
                   }
-                  onClick={() => setShowTopNotifPopover((prev) => !prev)}
+                  onClick={() => {
+                    setShowTopNotifPopover((prev) => !prev);
+                    if (!showTopNotifPopover) {
+                      loadNotifications();
+                    }
+                  }}
                 >
                   <span className="notif-icon">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -7970,7 +8055,11 @@ export function App() {
                       <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
                     </svg>
                   </span>
-                  {user?.role === 'cashier' ? (
+                  {unreadShiftNotifCount > 0 ? (
+                    <span className="notif-badge shift-unread-badge">
+                      {unreadShiftNotifCount}
+                    </span>
+                  ) : user?.role === 'cashier' ? (
                     (!activeShiftNumber || totalStockAlerts > 0) && (
                       <span className="notif-badge">
                         {!activeShiftNumber ? 1 : totalStockAlerts}
@@ -7997,10 +8086,25 @@ export function App() {
                           </svg>
                         </span>
                         <span className="bento-notif-title">Notifications</span>
+                        {unreadShiftNotifCount > 0 && (
+                          <span className="bento-notif-unread-count-pill">{unreadShiftNotifCount} new</span>
+                        )}
                       </div>
-                      <span className={`bento-notif-role-badge ${user?.role === 'cashier' ? 'cashier' : 'admin'}`}>
-                        {user?.role === 'cashier' ? 'Cashier Station' : 'Store Admin'}
-                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {unreadShiftNotifCount > 0 && (
+                          <button
+                            type="button"
+                            className="bento-notif-mark-read-btn"
+                            onClick={handleMarkAllNotificationsRead}
+                            title="Mark all notifications as read"
+                          >
+                            Mark all read
+                          </button>
+                        )}
+                        <span className={`bento-notif-role-badge ${user?.role === 'cashier' ? 'cashier' : 'admin'}`}>
+                          {user?.role === 'cashier' ? 'Cashier Station' : user?.role === 'manager' ? 'Store Manager' : 'Super Admin'}
+                        </span>
+                      </div>
                     </div>
 
                     {/* Bento Popover Cards */}
@@ -8158,7 +8262,151 @@ export function App() {
                         </>
                       ) : (
                         <>
-                          {/* Non-cashier notifications (Store Manager / Super Admin) */}
+                          {/* Live Cashier Shifts & Drawer Activity for Store Manager / Super Admin */}
+                          <div className="bento-notif-section-title">
+                            {isSuperAdminUser ? 'Cashier Shifts & Drawer (Branch-wise)' : 'Cashier Shifts & Drawer'}
+                          </div>
+
+                          {shiftNotifications.length > 0 ? (
+                            shiftNotifications.map((n) => {
+                              const isShiftOpen = n.type === 'shift_open';
+                              const isShiftClose = n.type === 'shift_close';
+                              const meta = n.metadata || {};
+                              const isUnread = !n.is_read && !n.isRead;
+
+                              return (
+                                <div
+                                  key={n.id}
+                                  className={`bento-notif-card ${isShiftOpen ? 'shift-open' : 'shift-close'} ${isUnread ? 'unread' : ''}`}
+                                  onClick={() => handleNotificationClick(n)}
+                                  style={{ cursor: 'pointer' }}
+                                >
+                                  <div className="bento-notif-card-head">
+                                    <div className={`bento-notif-card-icon ${isShiftOpen ? 'shift-open-icon' : 'shift-close-icon'}`}>
+                                      {isShiftOpen ? (
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                                          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                                          <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                                          <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                                        </svg>
+                                      ) : (
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                                          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                                          <line x1="8" y1="21" x2="16" y2="21"></line>
+                                          <line x1="12" y1="17" x2="12" y2="21"></line>
+                                        </svg>
+                                      )}
+                                    </div>
+                                    <div className="bento-notif-card-title-group">
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0, overflow: 'hidden' }}>
+                                        {isUnread && <span className="bento-notif-unread-dot" title="Unread" />}
+                                        <span className="bento-notif-card-title" title={n.title}>
+                                          {n.title}
+                                        </span>
+                                      </div>
+                                      <span className={`bento-notif-status-pill ${isShiftOpen ? 'live' : n.severity === 'warning' ? 'warn' : 'ok'}`}>
+                                        {isShiftOpen ? 'Drawer Open' : (meta.varianceText || 'Shift Closed')}
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  {/* Branch Badge for Super Admin & Time Ago */}
+                                  <div className="bento-notif-branch-row">
+                                    {isSuperAdminUser && (n.branch_name || meta.branchName) && (
+                                      <span className="bento-notif-branch-badge">
+                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                                        {n.branch_name || meta.branchName}
+                                      </span>
+                                    )}
+                                    <span className="bento-notif-time-ago" style={{ marginLeft: isSuperAdminUser ? 'auto' : '0' }}>
+                                      {formatNotifTimeAgo(n.created_at)}
+                                    </span>
+                                  </div>
+
+                                  {/* Message summary */}
+                                  <p className="bento-notif-card-desc">{n.message}</p>
+
+                                  {/* Stats Grid for Shift Close */}
+                                  {isShiftClose && (
+                                    <div className="bento-notif-stats-grid">
+                                      <div className="bento-notif-stat-box">
+                                        <span className="stat-label">Sales</span>
+                                        <span className="stat-val sales">{meta.totalSalesFormatted || '₹0.00'}</span>
+                                      </div>
+                                      <div className="bento-notif-stat-box">
+                                        <span className="stat-label">Bills</span>
+                                        <span className="stat-val">{meta.invoicesCount ?? 0}</span>
+                                      </div>
+                                      <div className="bento-notif-stat-box">
+                                        <span className="stat-label">Returns</span>
+                                        <span className="stat-val returns">{meta.returnsCount ?? 0}</span>
+                                      </div>
+                                      <div className="bento-notif-stat-box">
+                                        <span className="stat-label">Drawer</span>
+                                        <span className="stat-val drawer">{meta.countedCashFormatted || '₹0.00'}</span>
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {/* Stats Grid for Shift Open */}
+                                  {isShiftOpen && (
+                                    <div className="bento-notif-stats-grid">
+                                      <div className="bento-notif-stat-box">
+                                        <span className="stat-label">Cashier</span>
+                                        <span className="stat-val">{meta.cashierName || n.cashier_name || 'Cashier'}</span>
+                                      </div>
+                                      <div className="bento-notif-stat-box">
+                                        <span className="stat-label">Counter</span>
+                                        <span className="stat-val">{meta.counter || 'Counter 1'}</span>
+                                      </div>
+                                      <div className="bento-notif-stat-box full-width">
+                                        <span className="stat-label">Opening Float</span>
+                                        <span className="stat-val drawer">{meta.openingCashFormatted || '₹0.00'}</span>
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  <button
+                                    type="button"
+                                    className="bento-notif-action-btn"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleNotificationClick(n);
+                                    }}
+                                  >
+                                    <span>View Shift & Day Closing</span>
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                  </button>
+                                </div>
+                              );
+                            })
+                          ) : (
+                            <div className="bento-notif-card" style={{ borderLeft: '4px solid #CBD5E1', background: '#F8FAFC' }}>
+                              <div className="bento-notif-card-head">
+                                <div className="bento-notif-card-icon" style={{ background: '#F1F5F9' }}>
+                                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                  </svg>
+                                </div>
+                                <div className="bento-notif-card-title-group">
+                                  <span className="bento-notif-card-title">No Shift Activity Today</span>
+                                  <span className="bento-notif-status-pill" style={{ background: '#F1F5F9', color: '#64748B' }}>Idle</span>
+                                </div>
+                              </div>
+                              <p className="bento-notif-card-desc">
+                                Cashier opening drawer float checks and shift closing sales summaries will appear here in real time.
+                              </p>
+                            </div>
+                          )}
+
+                          {/* Section: Inventory & POS Quick Links */}
+                          <div className="bento-notif-section-title" style={{ marginTop: '10px' }}>
+                            Store Terminal & Inventory
+                          </div>
+
+                          {/* Inventory Alerts Card */}
                           {totalStockAlerts > 0 ? (
                             <div className="bento-notif-card warning-shift">
                               <div className="bento-notif-card-head">
@@ -8255,7 +8503,7 @@ export function App() {
                         </span>
                       ) : (
                         <span className="bento-notif-footer-text">
-                          Store Admin Workspace · Multi-branch Controls Active
+                          {isSuperAdminUser ? 'Super Admin Workspace · Multi-branch Controls Active' : 'Store Manager Workspace · Branch Activity Active'}
                         </span>
                       )}
                     </div>
