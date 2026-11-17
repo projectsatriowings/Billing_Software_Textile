@@ -118,8 +118,8 @@ export async function runSmartClosingAudit(
   const cashierParams = cashierId ? [cashierId] : [];
   const counterClause = counterId
     ? (counterId === 'unassigned'
-        ? " AND (i.counter_id IS NULL AND (i.counter IS NULL OR i.counter = ''))"
-        : " AND (i.counter_id = ? OR (i.counter_id IS NULL AND i.counter = ?))")
+      ? " AND (i.counter_id IS NULL AND (i.counter IS NULL OR i.counter = ''))"
+      : " AND (i.counter_id = ? OR (i.counter_id IS NULL AND i.counter = ?))")
     : '';
   const counterParams = (counterId && counterId !== 'unassigned') ? [counterId, counterId] : [];
 
@@ -779,8 +779,8 @@ export function registerDayClosing(r: Router) {
     const cashierParams = cashierId ? [cashierId] : [];
     const counterClause = counterId
       ? (counterId === 'unassigned'
-          ? " AND (i.counter_id IS NULL AND (i.counter IS NULL OR i.counter = ''))"
-          : " AND (i.counter_id = ? OR (i.counter_id IS NULL AND i.counter = ?))")
+        ? " AND (i.counter_id IS NULL AND (i.counter IS NULL OR i.counter = ''))"
+        : " AND (i.counter_id = ? OR (i.counter_id IS NULL AND i.counter = ?))")
       : '';
     const counterParams = (counterId && counterId !== 'unassigned') ? [counterId, counterId] : [];
 
@@ -1770,7 +1770,7 @@ export function registerDayClosing(r: Router) {
            id, tenant_id, branch_id, cashier_id, bdate, type, title, message, severity
          ) VALUES (?, ?, ?, ?, ?, 'approval', 'Day Closing Approved', ?, 'success')`,
         [newId('dcn'), tenantId, dcBranchId, dcCashierId || dc.submitted_by || null, dcBdate,
-         `Day Closing for date ${dcBdate} was verified and approved by ${ctx.user!.name || 'Management'}.`],
+        `Day Closing for date ${dcBdate} was verified and approved by ${ctx.user!.name || 'Management'}.`],
       );
     });
 
@@ -1840,7 +1840,7 @@ export function registerDayClosing(r: Router) {
            id, tenant_id, branch_id, cashier_id, bdate, type, title, message, severity
          ) VALUES (?, ?, ?, ?, ?, 'rejection', 'Day Closing Recount Requested', ?, 'warning')`,
         [newId('dcn'), tenantId, dcBranchId, dcCashierId || dc.submitted_by || null, dcBdate,
-         `Management requested a recount for date ${dcBdate}. Reason: ${reason}`],
+        `Management requested a recount for date ${dcBdate}. Reason: ${reason}`],
       );
     });
 
