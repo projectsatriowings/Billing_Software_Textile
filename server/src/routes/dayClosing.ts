@@ -167,15 +167,27 @@ export async function runSmartClosingAudit(
   const cashPayRow = await db.one<any>(cashPaySql, cashPayParams);
   const cashSalesMinor = Number(cashPayRow?.cashSalesMinor ?? cashPayRow?.cash_sales_minor ?? 0);
 
-  const retRow = await db.one<any>(
-    `SELECT COALESCE(SUM(i.total_minor), 0)::bigint AS cash_refunds_minor
-     FROM invoices i
-     WHERE i.tenant_id = ? AND i.branch_id = ? AND i.bdate = ? AND i.kind = 'credit_note' AND i.status = 'posted'
-       AND (i.refund_mode = 'cash' OR i.refund_mode IS NULL)
-       ${shiftClause} ${cashierClause} ${counterClause}`,
-    [tenantId, branchId, bdate, ...shiftParams, ...cashierParams, ...counterParams],
+  const refTxRow = await db.one<any>(
+    `SELECT COALESCE(SUM(amount_minor), 0)::bigint AS cash_refunds_minor
+     FROM refund_transactions
+     WHERE tenant_id = ? AND (bdate = ? OR (created_at)::date = ?::date) AND method = 'cash'
+       ${shiftId ? ' AND shift_id = ?' : ''}
+       ${cashierId ? ' AND processed_by = ?' : ''}`,
+    [tenantId, bdate, bdate, ...(shiftId ? [shiftId] : []), ...(cashierId ? [cashierId] : [])],
   );
-  const cashRefundsMinor = Number(retRow?.cashRefundsMinor ?? retRow?.cash_refunds_minor ?? 0);
+  let cashRefundsMinor = Number(refTxRow?.cashRefundsMinor ?? refTxRow?.cash_refunds_minor ?? 0);
+
+  if (cashRefundsMinor === 0) {
+    const retRow = await db.one<any>(
+      `SELECT COALESCE(SUM(COALESCE(NULLIF(i.refund_amount_minor, 0), i.total_minor)), 0)::bigint AS cash_refunds_minor
+       FROM invoices i
+       WHERE i.tenant_id = ? AND i.branch_id = ? AND i.bdate = ? AND i.kind = 'credit_note' AND i.status = 'posted'
+         AND i.refund_mode = 'cash'
+         ${shiftClause} ${cashierClause} ${counterClause}`,
+      [tenantId, branchId, bdate, ...shiftParams, ...cashierParams, ...counterParams],
+    );
+    cashRefundsMinor = Number(retRow?.cashRefundsMinor ?? retRow?.cash_refunds_minor ?? 0);
+  }
 
   const expRow = await db.one<any>(
     `SELECT COALESCE(SUM(CASE WHEN payment_method = 'cash' THEN total_minor ELSE 0 END), 0)::bigint AS cash_expenses_minor
