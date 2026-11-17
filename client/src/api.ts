@@ -2,9 +2,15 @@
 import type { StockTransfer, StockTransferLine, CreateStockTransferInput, StockMove } from '../../shared/types.ts';
 
 export const getToken = (): string =>
+  sessionStorage.getItem('billing_token') || sessionStorage.getItem('token') ||
   localStorage.getItem('billing_token') || localStorage.getItem('token') || '';
-export const setToken = (t: string) => localStorage.setItem('billing_token', t);
+export const setToken = (t: string) => {
+  sessionStorage.setItem('billing_token', t);
+  localStorage.setItem('billing_token', t);
+};
 export const clearToken = () => {
+  sessionStorage.removeItem('billing_token');
+  sessionStorage.removeItem('token');
   localStorage.removeItem('billing_token');
   localStorage.removeItem('token');
 };
@@ -2650,11 +2656,21 @@ export const submitExchange = (data: {
     body: JSON.stringify(data),
   });
 
-export const fetchDayClosingPreview = (params: { bdate?: string; date?: string; branchId?: string } = {}) => {
+export const fetchDayClosingPreview = (params: {
+  bdate?: string;
+  date?: string;
+  branchId?: string;
+  shiftId?: string;
+  cashierId?: string;
+  counterId?: string;
+} = {}) => {
   const q = new URLSearchParams();
   const bdate = params.bdate || params.date;
   if (bdate) q.set('bdate', bdate);
   if (params.branchId) q.set('branchId', params.branchId);
+  if (params.shiftId) q.set('shiftId', params.shiftId);
+  if (params.cashierId) q.set('cashierId', params.cashierId);
+  if (params.counterId) q.set('counterId', params.counterId);
   return api<any>(`/api/day-closing/preview?${q.toString()}`);
 };
 
@@ -2662,20 +2678,116 @@ export const submitDayClosing = (data: {
   bdate?: string;
   date?: string;
   branchId?: string;
+  shiftId?: string;
+  cashierId?: string;
+  counterId?: string;
+  status?: string;
   actualCashMinor?: number;
   actualClosingCashMinor?: number;
   remarks?: string;
   closingRemarks?: string;
+  tenderReconciliation?: Record<string, { expectedMinor: number; actualMinor: number; differenceMinor: number }>;
+  auditSummary?: any;
 }) =>
   api<{ success: boolean; dayClosing: any }>('/api/day-closing/submit', {
     method: 'POST',
     body: JSON.stringify({
       bdate: data.bdate || data.date,
       branchId: data.branchId,
+      shiftId: data.shiftId,
+      cashierId: data.cashierId,
+      counterId: data.counterId,
+      status: data.status,
       actualCashMinor: data.actualCashMinor ?? data.actualClosingCashMinor,
       remarks: data.remarks || data.closingRemarks,
+      tenderReconciliation: data.tenderReconciliation,
+      auditSummary: data.auditSummary,
     }),
   });
+
+export const approveDayClosing = (closingId: string) =>
+  api<{ success: boolean; dayClosing: any }>(`/api/day-closing/${closingId}/approve`, {
+    method: 'POST',
+  });
+
+export const rejectDayClosing = (closingId: string, reason: string) =>
+  api<{ success: boolean; message: string; dayClosing?: any }>(`/api/day-closing/${closingId}/reject`, {
+    method: 'POST',
+    body: JSON.stringify({ reason }),
+  });
+
+export const reopenDayClosing = (closingId: string, reason: string, pin?: string) =>
+  api<{ success: boolean; dayClosing: any }>(`/api/day-closing/${closingId}/reopen`, {
+    method: 'POST',
+    body: JSON.stringify({ reason, pin }),
+  });
+
+export const fetchDayClosingComparison = (params: { branchId?: string; date?: string } = {}) => {
+  const q = new URLSearchParams();
+  if (params.branchId) q.set('branchId', params.branchId);
+  if (params.date) q.set('date', params.date);
+  return api<{
+    bdate: string;
+    previousDate: string;
+    branchId: string;
+    metrics: Record<string, { current: number; previous: number; diff: number; growthPct: number }>;
+    last7DaysTrend: Array<{ date: string; grossSalesMinor: number; netSalesMinor: number; grossProfitMinor: number; invoicesCount: number }>;
+  }>(`/api/day-closing/comparison?${q.toString()}`);
+};
+
+export const fetchDayClosingAnalytics = (params: {
+  branchId?: string;
+  startDate?: string;
+  endDate?: string;
+  comparisonMode?: 'previous_period' | 'same_period_last_year' | 'none';
+} = {}) => {
+  const q = new URLSearchParams();
+  if (params.branchId) q.set('branchId', params.branchId);
+  if (params.startDate) q.set('startDate', params.startDate);
+  if (params.endDate) q.set('endDate', params.endDate);
+  if (params.comparisonMode) q.set('comparisonMode', params.comparisonMode);
+  return api<{
+    period: { startDate: string; endDate: string; comparisonMode: string; daysInPeriod: number };
+    current: any;
+    comparison: any;
+    dailySeries: Array<{ date: string; grossSalesMinor: number; netSalesMinor: number; grossProfitMinor: number; invoicesCount: number }>;
+  }>(`/api/day-closing/analytics?${q.toString()}`);
+};
+
+export const fetchProductProfitability = (params: {
+  branchId?: string;
+  startDate?: string;
+  endDate?: string;
+  filter?: 'top_selling' | 'highest_revenue' | 'highest_profit' | 'lowest_profit' | 'loss_making' | 'most_returned';
+  limit?: number;
+} = {}) => {
+  const q = new URLSearchParams();
+  if (params.branchId) q.set('branchId', params.branchId);
+  if (params.startDate) q.set('startDate', params.startDate);
+  if (params.endDate) q.set('endDate', params.endDate);
+  if (params.filter) q.set('filter', params.filter);
+  if (params.limit) q.set('limit', String(params.limit));
+  return api<{
+    period: { startDate: string; endDate: string; filter: string };
+    totalProductsCount: number;
+    products: Array<{
+      id: string;
+      barcode: string;
+      name: string;
+      category_name: string;
+      qty_sold: number;
+      qty_returned: number;
+      net_qty: number;
+      gross_sales_minor: number;
+      returns_minor: number;
+      net_sales_minor: number;
+      cogs_minor: number;
+      gross_profit_minor: number;
+      gross_margin_pct: number;
+      return_rate_pct: number;
+    }>;
+  }>(`/api/day-closing/product-profitability?${q.toString()}`);
+};
 
 export const fetchDayClosingHistory = (params: { branchId?: string; limit?: number } = {}) => {
   const q = new URLSearchParams();
@@ -2685,6 +2797,214 @@ export const fetchDayClosingHistory = (params: { branchId?: string; limit?: numb
     history: res.history || [],
     records: res.history || [],
   }));
+};
+
+export const fetchCounterSalesReport = (params: {
+  branchId?: string;
+  date?: string;
+  bdate?: string;
+  startDate?: string;
+  endDate?: string;
+} = {}) => {
+  const q = new URLSearchParams();
+  const date = params.date || params.bdate;
+  if (date) q.set('date', date);
+  if (params.branchId) q.set('branchId', params.branchId);
+  if (params.startDate) q.set('startDate', params.startDate);
+  if (params.endDate) q.set('endDate', params.endDate);
+  return api<{
+    success: boolean;
+    branchId: string;
+    date: string;
+    startDate: string;
+    endDate: string;
+    counters: any[];
+    consolidatedTotal: any;
+    exceptionCount: number;
+  }>(`/api/day-closing/counter-sales?${q.toString()}`);
+};
+
+export const fetchCashierSalesReport = (params: {
+  branchId?: string;
+  date?: string;
+  bdate?: string;
+  startDate?: string;
+  endDate?: string;
+} = {}) => {
+  const q = new URLSearchParams();
+  const date = params.date || params.bdate;
+  if (date) q.set('date', date);
+  if (params.branchId) q.set('branchId', params.branchId);
+  if (params.startDate) q.set('startDate', params.startDate);
+  if (params.endDate) q.set('endDate', params.endDate);
+  return api<{
+    success: boolean;
+    branchId: string;
+    date: string;
+    startDate: string;
+    endDate: string;
+    cashiers: any[];
+    consolidatedTotal: any;
+    exceptionCount: number;
+  }>(`/api/day-closing/cashier-sales?${q.toString()}`);
+};
+
+export const fetchDayClosingSchedules = (branchId?: string, counterId?: string) => {
+  const q = new URLSearchParams();
+  if (branchId) q.set('branchId', branchId);
+  if (counterId) q.set('counterId', counterId);
+  return api<{
+    success: boolean;
+    branchId: string;
+    counterId?: string | null;
+    schedule: any;
+    allSchedules: any[];
+  }>(`/api/day-closing/schedules?${q.toString()}`);
+};
+
+export const saveDayClosingSchedule = (data: {
+  branchId?: string;
+  counterId?: string | null;
+  expectedClosingTime: string;
+  firstReminderMinutesBefore?: number;
+  secondReminderMinutesBefore?: number;
+  finalReminderAtClosing?: boolean;
+  overdueReminderIntervalMinutes?: number;
+  autoAlertOverdue?: boolean;
+  enabled?: boolean;
+}) =>
+  api<{ success: boolean; id: string; schedule: any }>('/api/day-closing/schedules', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+export const fetchDayClosingCompliance = (params: { branchId?: string; date?: string } = {}) => {
+  const q = new URLSearchParams();
+  if (params.branchId) q.set('branchId', params.branchId);
+  if (params.date) q.set('date', params.date);
+  return api<{
+    success: boolean;
+    branchId: string;
+    date: string;
+    expectedClosingTime: string;
+    isBranchOverdue: boolean;
+    minutesOverdue: number;
+    lastReminderSentAt: string | null;
+    lastReminderType: string | null;
+    summary: {
+      totalRegisters: number;
+      closedCount: number;
+      submittedCount: number;
+      pendingCount: number;
+      overdueCount: number;
+      completionPct: number;
+      isStoreClosed: boolean;
+      storeStatus: string;
+    };
+    cashierMatrix: any[];
+    counters: any[];
+  }>(`/api/day-closing/compliance?${q.toString()}`);
+};
+
+export const sendDayClosingReminder = (data: {
+  branchId?: string;
+  cashierId?: string | null;
+  counterId?: string | null;
+  reminderType?: string;
+  message?: string;
+  date?: string;
+}) =>
+  api<{ success: boolean; message: string; notificationId: string }>('/api/day-closing/send-reminder', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+export const fetchDayClosingNotifications = (params: { branchId?: string } = {}) => {
+  const q = new URLSearchParams();
+  if (params.branchId) q.set('branchId', params.branchId);
+  return api<{
+    success: boolean;
+    notifications: any[];
+    unreadCount: number;
+  }>(`/api/day-closing/notifications?${q.toString()}`);
+};
+
+export const markDayClosingNotificationRead = (id: string) =>
+  api<{ success: boolean }>(`/api/day-closing/notifications/${id}/read`, {
+    method: 'POST',
+  });
+
+export type SmartAuditSeverity = 'critical' | 'warning' | 'info';
+
+export type SmartAuditDetectorId =
+  | 'cash_shortage'
+  | 'cash_excess'
+  | 'sales_mismatch'
+  | 'payment_mismatch'
+  | 'duplicate_transactions'
+  | 'missing_transactions'
+  | 'unusual_refund'
+  | 'pending_bills'
+  | 'unusual_discount'
+  | 'stock_sales_consistency'
+  | 'unassigned_transactions'
+  | 'closing_readiness';
+
+export interface SmartAuditIssue {
+  id: string;
+  detector: SmartAuditDetectorId;
+  severity: SmartAuditSeverity;
+  title: string;
+  description: string;
+  amountMinor?: number | null;
+  count?: number;
+  counterId?: string | null;
+  counterCode?: string | null;
+  cashierId?: string | null;
+  cashierName?: string | null;
+  bdate: string;
+  recommendedAction: string;
+  details?: Record<string, any>;
+}
+
+export interface SmartAuditResult {
+  evaluatedAt: string;
+  bdate: string;
+  branchId: string;
+  counterId?: string | null;
+  cashierId?: string | null;
+  readinessStatus: 'ready_to_submit' | 'ready_with_warnings' | 'action_required';
+  readinessScore: number;
+  summaryMessage: string;
+  criticalCount: number;
+  warningCount: number;
+  infoCount: number;
+  totalChecks: number;
+  issues: SmartAuditIssue[];
+  detectorSummary: Record<SmartAuditDetectorId, { status: 'passed' | 'warning' | 'failed'; issueCount: number }>;
+}
+
+export const fetchDayClosingAudit = (params: {
+  branchId?: string;
+  bdate?: string;
+  date?: string;
+  counterId?: string;
+  cashierId?: string;
+  shiftId?: string;
+  actualCashMinor?: number;
+} = {}) => {
+  const q = new URLSearchParams();
+  const bdate = params.bdate || params.date;
+  if (bdate) q.set('bdate', bdate);
+  if (params.branchId) q.set('branchId', params.branchId);
+  if (params.counterId) q.set('counterId', params.counterId);
+  if (params.cashierId) q.set('cashierId', params.cashierId);
+  if (params.shiftId) q.set('shiftId', params.shiftId);
+  if (params.actualCashMinor != null) q.set('actualCashMinor', String(params.actualCashMinor));
+  return api<{
+    success: boolean;
+    audit: SmartAuditResult;
+  }>(`/api/day-closing/audit?${q.toString()}`);
 };
 
 export const fetchReturnReports = (params: {

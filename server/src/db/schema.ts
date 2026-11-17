@@ -1876,4 +1876,96 @@ export const MIGRATIONS: Migration[] = [
       `CREATE INDEX IF NOT EXISTS idx_supplier_inv_map_gstin ON supplier_invoice_mappings (tenant_id, lower(supplier_gstin))`,
     ],
   },
+  {
+    version: 67,
+    statements: [
+      // 1. Extend day_closings status constraint for full lifecycle ('open', 'submitted', 'approved', 'reopened', 'closed')
+      `ALTER TABLE day_closings DROP CONSTRAINT IF EXISTS day_closings_status_check`,
+      `ALTER TABLE day_closings ADD CONSTRAINT day_closings_status_check CHECK (status IN ('open', 'submitted', 'approved', 'reopened', 'closed'))`,
+
+      // 2. Multi-shift, approval and audit tracking columns
+      `ALTER TABLE day_closings ADD COLUMN IF NOT EXISTS shift_id TEXT REFERENCES shifts(id)`,
+      `ALTER TABLE day_closings ADD COLUMN IF NOT EXISTS submitted_by TEXT REFERENCES users(id)`,
+      `ALTER TABLE day_closings ADD COLUMN IF NOT EXISTS submitted_at TIMESTAMPTZ`,
+      `ALTER TABLE day_closings ADD COLUMN IF NOT EXISTS approved_by TEXT REFERENCES users(id)`,
+      `ALTER TABLE day_closings ADD COLUMN IF NOT EXISTS approved_at TIMESTAMPTZ`,
+      `ALTER TABLE day_closings ADD COLUMN IF NOT EXISTS reopened_by TEXT REFERENCES users(id)`,
+      `ALTER TABLE day_closings ADD COLUMN IF NOT EXISTS reopened_at TIMESTAMPTZ`,
+      `ALTER TABLE day_closings ADD COLUMN IF NOT EXISTS reopen_reason TEXT`,
+
+      // 3. Post-closing adjustments and late transaction audit trail
+      `CREATE TABLE IF NOT EXISTS day_closing_adjustments (
+        id TEXT PRIMARY KEY,
+        tenant_id TEXT NOT NULL REFERENCES tenants(id),
+        day_closing_id TEXT NOT NULL REFERENCES day_closings(id),
+        invoice_id TEXT REFERENCES invoices(id),
+        adjustment_type TEXT NOT NULL,
+        amount_minor BIGINT NOT NULL,
+        reason TEXT NOT NULL,
+        created_by TEXT NOT NULL REFERENCES users(id),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_day_closing_adj_tenant ON day_closing_adjustments (tenant_id, day_closing_id)`,
+    ],
+  },
+  {
+    version: 68,
+    statements: [
+      `ALTER TABLE day_closings ADD COLUMN IF NOT EXISTS cashier_id TEXT REFERENCES users(id)`,
+      `CREATE INDEX IF NOT EXISTS idx_day_closings_cashier ON day_closings (tenant_id, branch_id, bdate, cashier_id)`,
+    ],
+  },
+  {
+    version: 69,
+    statements: [
+      `CREATE TABLE IF NOT EXISTS day_closing_schedules (
+        id TEXT PRIMARY KEY,
+        tenant_id TEXT NOT NULL REFERENCES tenants(id),
+        branch_id TEXT NOT NULL,
+        counter_id TEXT,
+        expected_closing_time TEXT NOT NULL DEFAULT '22:00',
+        first_reminder_minutes_before INT NOT NULL DEFAULT 30,
+        second_reminder_minutes_before INT NOT NULL DEFAULT 15,
+        final_reminder_at_closing BOOLEAN NOT NULL DEFAULT true,
+        overdue_reminder_interval_minutes INT NOT NULL DEFAULT 30,
+        auto_alert_overdue BOOLEAN NOT NULL DEFAULT true,
+        enabled BOOLEAN NOT NULL DEFAULT true,
+        last_reminder_sent_at TIMESTAMPTZ,
+        last_reminder_type TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_dc_schedules_lookup ON day_closing_schedules (tenant_id, branch_id, counter_id)`,
+      `CREATE TABLE IF NOT EXISTS day_closing_notifications (
+        id TEXT PRIMARY KEY,
+        tenant_id TEXT NOT NULL REFERENCES tenants(id),
+        branch_id TEXT NOT NULL,
+        counter_id TEXT,
+        cashier_id TEXT,
+        bdate DATE NOT NULL,
+        type TEXT NOT NULL,
+        title TEXT NOT NULL,
+        message TEXT NOT NULL,
+        severity TEXT NOT NULL DEFAULT 'info',
+        is_read BOOLEAN NOT NULL DEFAULT false,
+        read_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_dc_notif_tenant ON day_closing_notifications (tenant_id, branch_id, bdate)`,
+      `CREATE INDEX IF NOT EXISTS idx_dc_notif_cashier ON day_closing_notifications (tenant_id, cashier_id, is_read)`,
+    ],
+  },
+  {
+    version: 70,
+    statements: [
+      `ALTER TABLE day_closings DROP CONSTRAINT IF EXISTS day_closings_tenant_id_branch_id_bdate_key`,
+      `CREATE UNIQUE INDEX IF NOT EXISTS idx_day_closings_tenant_branch_bdate_cashier ON day_closings (tenant_id, branch_id, bdate, COALESCE(cashier_id, 'CONSOLIDATED'))`,
+    ],
+  },
+  {
+    version: 71,
+    statements: [
+      `ALTER TABLE day_closings ADD COLUMN IF NOT EXISTS audit_summary JSONB DEFAULT '{}'::jsonb`,
+    ],
+  },
 ];
