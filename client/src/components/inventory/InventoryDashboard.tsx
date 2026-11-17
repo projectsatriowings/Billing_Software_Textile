@@ -41,6 +41,7 @@ import {
   Edit3Icon,
   InfoIcon,
   PhoneIcon,
+  Building2Icon,
   DownloadIcon,
   ClockIcon,
   BarChart3Icon,
@@ -970,7 +971,7 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
                     <th style={{ minWidth: '95px', textAlign: 'right' }}>Reorder Level</th>
                     {isAuthorizedForCost && <th style={{ minWidth: '85px', textAlign: 'right' }}>Unit Cost</th>}
                     {isAuthorizedForCost && <th style={{ minWidth: '95px', textAlign: 'right' }}>Total Value</th>}
-                    <th style={{ minWidth: '110px' }}>Supplier</th>
+                    <th style={{ minWidth: '160px', width: '190px', textAlign: 'left' }}>Supplier</th>
                     <th style={{ minWidth: '120px', textAlign: 'right' }}>Actions</th>
                   </tr>
                 </thead>
@@ -1140,13 +1141,17 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
                             {formatIndianCurrency((item.stockValueMinor || 0) / 100)}
                           </td>
                         )}
-                        <td>
+                        <td style={{ minWidth: '160px', width: '190px' }}>
                           {item.preferredSupplierName ? (
-                            <span className="supplier-chip" title={item.preferredSupplierPhone || ''}>
-                              {item.preferredSupplierName}
+                            <span
+                              className="supplier-chip"
+                              title={item.preferredSupplierPhone ? `${item.preferredSupplierName} • Phone: ${item.preferredSupplierPhone}` : item.preferredSupplierName}
+                            >
+                              <Building2Icon size={12} style={{ flexShrink: 0, opacity: 0.75 }} />
+                              <span className="supplier-name-text">{item.preferredSupplierName}</span>
                             </span>
                           ) : (
-                            <span style={{ color: 'var(--text-dim)', fontSize: '0.8rem' }}>--</span>
+                            <span style={{ color: 'var(--text-dim)', fontSize: '0.8rem', paddingLeft: '0.25rem' }}>--</span>
                           )}
                         </td>
                         <td style={{ textAlign: 'right' }}>

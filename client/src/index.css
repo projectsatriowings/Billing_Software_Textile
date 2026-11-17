@@ -9487,13 +9487,34 @@ body {
 }
 
 .supplier-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   background: #eff6ff;
-  color: #1e40af;
+  color: #1d4ed8;
   border: 1px solid #bfdbfe;
-  padding: 0.2rem 0.55rem;
-  border-radius: 4px;
-  font-size: 0.78rem;
+  padding: 0.22rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.76rem;
   font-weight: 600;
+  max-width: 100%;
+  box-sizing: border-box;
+  vertical-align: middle;
+  line-height: 1.25;
+  transition: all 0.15s ease;
+}
+
+.supplier-chip:hover {
+  background: #dbeafe;
+  border-color: #93c5fd;
+}
+
+.supplier-chip .supplier-name-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: inline-block;
+  max-width: 155px;
 }
 
 .table-actions-cluster {
