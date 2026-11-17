@@ -752,7 +752,18 @@ export function registerDayClosing(r: Router) {
     const scope = await resolveBranchScope(ctx);
     const todayStr = new Date().toISOString().slice(0, 10);
     const bdate = String(ctx.query.bdate || todayStr).trim();
-    const branchId = (!scope.isSuperAdminAll && scope.branchId) ? scope.branchId : String(ctx.query.branchId || 'MAIN').trim();
+    const rawBranch = String(ctx.query.branchId || ctx.query.branch || (scope.branchId ?? 'MAIN')).trim();
+
+    // Resolve canonical branch ID and Code
+    const branchRecord = await ctx.db.one<any>(
+      `SELECT id, code, name FROM branches
+       WHERE tenant_id = ? AND (id = ? OR UPPER(code) = UPPER(?)) AND (deleted_at IS NULL OR active = true)
+       LIMIT 1`,
+      [tenantId, rawBranch, rawBranch],
+    );
+    const branchId = branchRecord?.id || scope.branchId || rawBranch;
+    const branchCode = branchRecord?.code || rawBranch;
+
     const shiftId = ctx.query.shiftId ? String(ctx.query.shiftId).trim() : null;
     const userRole = String(ctx.user!.role || '').toUpperCase();
     const isCashier = userRole === 'CASHIER' || userRole === 'COUNTER';
@@ -786,8 +797,8 @@ export function registerDayClosing(r: Router) {
       LEFT JOIN users ru ON ru.id = dc.reopened_by
       LEFT JOIN users su ON su.id = dc.submitted_by
       LEFT JOIN users cu ON cu.id = dc.cashier_id
-      WHERE dc.tenant_id = ? AND dc.branch_id = ? AND dc.bdate = ?`;
-    const closedRecordParams: any[] = [tenantId, branchId, bdate];
+      WHERE dc.tenant_id = ? AND (dc.branch_id = ? OR dc.branch_id = ? OR dc.branch_id = ?) AND dc.bdate = ?`;
+    const closedRecordParams: any[] = [tenantId, branchId, branchCode, rawBranch, bdate];
 
     if (cashierId) {
       closedRecordQuery += ` AND dc.cashier_id = ?`;
@@ -807,10 +818,10 @@ export function registerDayClosing(r: Router) {
               s.variance_minor AS difference_minor, s.opened_at, s.closed_at
        FROM shifts s
        LEFT JOIN users u ON u.id = s.user_id
-       WHERE s.tenant_id = ? AND (s.location = ? OR s.branch_id = ?)
+       WHERE s.tenant_id = ? AND (s.location = ? OR s.branch_id = ? OR s.location = ? OR s.branch_id = ?)
          AND DATE(s.opened_at) = ?::date
        ORDER BY s.opened_at ASC`,
-      [tenantId, branchId, branchId, bdate],
+      [tenantId, branchId, branchId, branchCode, branchCode, bdate],
     );
 
     // List cashiers who billed or opened shifts on this day
@@ -822,15 +833,15 @@ export function registerDayClosing(r: Router) {
            LOWER(u.role) IN ('cashier', 'counter')
            OR EXISTS (
              SELECT 1 FROM invoices i
-             WHERE i.tenant_id = u.tenant_id AND i.branch_id = ? AND i.bdate = ? AND i.created_by = u.id
+             WHERE i.tenant_id = u.tenant_id AND (i.branch_id = ? OR i.branch_id = ?) AND i.bdate = ? AND i.created_by = u.id
            )
            OR EXISTS (
              SELECT 1 FROM shifts s
-             WHERE s.tenant_id = u.tenant_id AND (s.location = ? OR s.branch_id = ?) AND DATE(s.opened_at) = ?::date AND s.user_id = u.id
+             WHERE s.tenant_id = u.tenant_id AND (s.location = ? OR s.branch_id = ? OR s.location = ? OR s.branch_id = ?) AND DATE(s.opened_at) = ?::date AND s.user_id = u.id
            )
          )
        ORDER BY u.name ASC`,
-      [tenantId, branchId, bdate, branchId, branchId, bdate],
+      [tenantId, branchId, branchCode, bdate, branchId, branchId, branchCode, branchCode, bdate],
     );
 
     // List counters configured or used for billing
@@ -842,17 +853,17 @@ export function registerDayClosing(r: Router) {
          SELECT DISTINCT i.counter_id AS id, COALESCE(NULLIF(i.counter_name_snapshot, ''), i.counter, 'Counter') AS name, COALESCE(NULLIF(i.counter, ''), i.counter_id) AS code, i.tenant_id, i.branch_id
          FROM invoices i WHERE i.counter_id IS NOT NULL OR (i.counter IS NOT NULL AND i.counter != '')
        ) c
-       WHERE c.tenant_id = ? AND (c.branch_id = ? OR c.branch_id IS NULL)
+       WHERE c.tenant_id = ? AND (c.branch_id = ? OR c.branch_id = ? OR c.branch_id IS NULL)
        ORDER BY c.code ASC`,
-      [tenantId, branchId],
+      [tenantId, branchId, branchCode],
     );
 
     // Day Closing Schedule & Overdue status calculation
     const schedule = await ctx.db.one<any>(
       `SELECT * FROM day_closing_schedules
-       WHERE tenant_id = ? AND branch_id = ? AND (counter_id = ? OR counter_id IS NULL)
+       WHERE tenant_id = ? AND (branch_id = ? OR branch_id = ? OR branch_id = ?) AND (counter_id = ? OR counter_id IS NULL)
        ORDER BY (counter_id IS NOT NULL) DESC LIMIT 1`,
-      [tenantId, branchId, counterId || null],
+      [tenantId, branchId, branchCode, rawBranch, counterId || null],
     );
 
     const expectedClosingTime = schedule?.expectedClosingTime || schedule?.expected_closing_time || '22:00';
@@ -863,9 +874,11 @@ export function registerDayClosing(r: Router) {
 
     let isOverdue = false;
     let minutesOverdue = 0;
-    const isClosedOrApproved = Boolean(closedRecord && (closedRecord.status === 'closed' || closedRecord.status === 'approved'));
+    const isClosedOrApproved = Boolean(closedRecord && (closedRecord.status === 'closed' || closedRecord.status === 'approved' || closedRecord.status === 'submitted'));
+    const isScheduleEnabled = schedule ? (schedule.enabled !== false) : true;
+    const isAutoAlertEnabled = schedule ? ((schedule.autoAlertOverdue ?? schedule.auto_alert_overdue) !== false) : true;
 
-    if (!isClosedOrApproved) {
+    if (!isClosedOrApproved && isScheduleEnabled && isAutoAlertEnabled) {
       if (bdate < todayIstStr) {
         isOverdue = true;
         minutesOverdue = 1440;
@@ -2829,14 +2842,24 @@ export function registerDayClosing(r: Router) {
   r.get('/api/day-closing/schedules', requireUser, async (ctx) => {
     const tenantId = ctx.user!.tenantId;
     const scope = await resolveBranchScope(ctx);
-    const branchId = (!scope.isSuperAdminAll && scope.branchId) ? scope.branchId : String(ctx.query.branchId || 'MAIN').trim();
+    const rawBranch = String(ctx.query.branchId || ctx.query.branch || (scope.branchId ?? 'MAIN')).trim();
+
+    // Resolve canonical branch ID and Code
+    const branchRecord = await ctx.db.one<any>(
+      `SELECT id, code, name FROM branches
+       WHERE tenant_id = ? AND (id = ? OR UPPER(code) = UPPER(?)) AND (deleted_at IS NULL OR active = true)
+       LIMIT 1`,
+      [tenantId, rawBranch, rawBranch],
+    );
+    const branchId = branchRecord?.id || scope.branchId || rawBranch;
+    const branchCode = branchRecord?.code || rawBranch;
     const counterId = ctx.query.counterId ? String(ctx.query.counterId).trim() : null;
 
     const schedules = await ctx.db.query<any>(
       `SELECT * FROM day_closing_schedules
-       WHERE tenant_id = ? AND branch_id = ?
+       WHERE tenant_id = ? AND (branch_id = ? OR branch_id = ? OR branch_id = ?)
        ORDER BY (counter_id IS NOT NULL) DESC, created_at ASC`,
-      [tenantId, branchId],
+      [tenantId, branchId, branchCode, rawBranch],
     );
 
     const defaultSchedule = {
@@ -2866,7 +2889,18 @@ export function registerDayClosing(r: Router) {
     const tenantId = ctx.user!.tenantId;
     const b = ctx.body ?? {};
     const scope = await resolveBranchScope(ctx);
-    const branchId = (!scope.isSuperAdminAll && scope.branchId) ? scope.branchId : String(b.branchId || 'MAIN').trim();
+    const rawBranch = String(b.branchId || ctx.query.branchId || ctx.query.branch || (scope.branchId ?? 'MAIN')).trim();
+
+    // Resolve canonical branch ID and Code
+    const branchRecord = await ctx.db.one<any>(
+      `SELECT id, code, name FROM branches
+       WHERE tenant_id = ? AND (id = ? OR UPPER(code) = UPPER(?)) AND (deleted_at IS NULL OR active = true)
+       LIMIT 1`,
+      [tenantId, rawBranch, rawBranch],
+    );
+    const branchId = branchRecord?.id || scope.branchId || rawBranch;
+    const branchCode = branchRecord?.code || rawBranch;
+
     const counterId = b.counterId ? String(b.counterId).trim() : null;
     const expectedClosingTime = String(b.expectedClosingTime || '22:00').trim();
     const firstReminderMinutesBefore = Number(b.firstReminderMinutesBefore ?? 30);
@@ -2878,15 +2912,17 @@ export function registerDayClosing(r: Router) {
 
     const existing = await ctx.db.one<any>(
       `SELECT id FROM day_closing_schedules
-       WHERE tenant_id = ? AND branch_id = ? AND counter_id IS NOT DISTINCT FROM ?`,
-      [tenantId, branchId, counterId],
+       WHERE tenant_id = ? AND (branch_id = ? OR branch_id = ? OR branch_id = ?) AND counter_id IS NOT DISTINCT FROM ?
+       ORDER BY updated_at DESC LIMIT 1`,
+      [tenantId, branchId, branchCode, rawBranch, counterId],
     );
 
     const id = existing?.id || newId('dcs');
     if (existing) {
       await ctx.db.exec(
         `UPDATE day_closing_schedules
-         SET expected_closing_time = ?,
+         SET branch_id = ?,
+             expected_closing_time = ?,
              first_reminder_minutes_before = ?,
              second_reminder_minutes_before = ?,
              final_reminder_at_closing = ?,
@@ -2895,7 +2931,7 @@ export function registerDayClosing(r: Router) {
              enabled = ?,
              updated_at = NOW()
          WHERE id = ?`,
-        [expectedClosingTime, firstReminderMinutesBefore, secondReminderMinutesBefore, finalReminderAtClosing, overdueReminderIntervalMinutes, autoAlertOverdue, enabled, id],
+        [branchId, expectedClosingTime, firstReminderMinutesBefore, secondReminderMinutesBefore, finalReminderAtClosing, overdueReminderIntervalMinutes, autoAlertOverdue, enabled, id],
       );
     } else {
       await ctx.db.exec(
@@ -2933,47 +2969,42 @@ export function registerDayClosing(r: Router) {
   r.get('/api/day-closing/compliance', requireUser, async (ctx) => {
     const tenantId = ctx.user!.tenantId;
     const scope = await resolveBranchScope(ctx);
-    const branchId = (!scope.isSuperAdminAll && scope.branchId) ? scope.branchId : String(ctx.query.branchId || 'MAIN').trim();
-    const todayStr = new Date().toISOString().slice(0, 10);
-    const date = String(ctx.query.date || ctx.query.bdate || todayStr).trim();
+    const rawBranch = String(ctx.query.branchId || ctx.query.branch || (scope.branchId ?? 'MAIN')).trim();
 
-    // 1. Fetch Schedule
-    const schedule = await ctx.db.one<any>(
-      `SELECT * FROM day_closing_schedules
-       WHERE tenant_id = ? AND branch_id = ? AND counter_id IS NULL
+    // Resolve canonical branch ID and Code
+    const branchRecord = await ctx.db.one<any>(
+      `SELECT id, code, name FROM branches
+       WHERE tenant_id = ? AND (id = ? OR UPPER(code) = UPPER(?)) AND (deleted_at IS NULL OR active = true)
        LIMIT 1`,
-      [tenantId, branchId],
+      [tenantId, rawBranch, rawBranch],
     );
-    const expectedClosingTime = schedule?.expectedClosingTime || schedule?.expected_closing_time || '22:00';
+    const branchId = branchRecord?.id || scope.branchId || rawBranch;
+    const branchCode = branchRecord?.code || rawBranch;
 
     const now = new Date();
     const istDate = new Date(now.getTime() + 5.5 * 3600000);
     const todayIstStr = istDate.toISOString().slice(0, 10);
     const currentIstTimeStr = istDate.toISOString().slice(11, 16);
+    const date = String(ctx.query.date || ctx.query.bdate || todayIstStr).trim();
 
-    let isBranchOverdue = false;
-    let minutesOverdue = 0;
-    if (date < todayIstStr) {
-      isBranchOverdue = true;
-      minutesOverdue = 1440;
-    } else if (date === todayIstStr) {
-      const [expH, expM] = expectedClosingTime.split(':').map(Number);
-      const [curH, curM] = currentIstTimeStr.split(':').map(Number);
-      const expTotalMin = (expH || 0) * 60 + (expM || 0);
-      const curTotalMin = (curH || 0) * 60 + (curM || 0);
-      if (curTotalMin > expTotalMin) {
-        isBranchOverdue = true;
-        minutesOverdue = curTotalMin - expTotalMin;
-      }
-    }
+    // 1. Fetch Schedule
+    const schedule = await ctx.db.one<any>(
+      `SELECT * FROM day_closing_schedules
+       WHERE tenant_id = ? AND (branch_id = ? OR branch_id = ? OR branch_id = ?) AND counter_id IS NULL
+       ORDER BY updated_at DESC LIMIT 1`,
+      [tenantId, branchId, branchCode, rawBranch],
+    );
+    const expectedClosingTime = schedule?.expectedClosingTime || schedule?.expected_closing_time || '22:00';
+    const isScheduleEnabled = schedule ? (schedule.enabled !== false) : true;
+    const isAutoAlertEnabled = schedule ? ((schedule.autoAlertOverdue ?? schedule.auto_alert_overdue) !== false) : true;
 
     // 2. Fetch all Active Counters for this branch
     const counters = await ctx.db.query<any>(
       `SELECT c.id, c.name, c.code, c.status
        FROM counters c
-       WHERE c.tenant_id = ? AND c.branch_id = ? AND c.status = 'ACTIVE'
+       WHERE c.tenant_id = ? AND (c.branch_id = ? OR c.branch_id = ?) AND c.status = 'ACTIVE'
        ORDER BY c.code ASC`,
-      [tenantId, branchId],
+      [tenantId, branchId, branchCode],
     );
 
     // 3. Fetch all Cashiers active or with sales on this date
@@ -2982,12 +3013,12 @@ export function registerDayClosing(r: Router) {
        FROM users u
        WHERE u.tenant_id = ?
          AND (
-           EXISTS (SELECT 1 FROM invoices i WHERE i.tenant_id = u.tenant_id AND i.branch_id = ? AND i.bdate = ? AND i.created_by = u.id)
-           OR EXISTS (SELECT 1 FROM shifts s WHERE s.tenant_id = u.tenant_id AND (s.location = ? OR s.branch_id = ?) AND DATE(s.opened_at) = ?::date AND s.user_id = u.id)
+           EXISTS (SELECT 1 FROM invoices i WHERE i.tenant_id = u.tenant_id AND (i.branch_id = ? OR i.branch_id = ?) AND i.bdate = ? AND i.created_by = u.id)
+           OR EXISTS (SELECT 1 FROM shifts s WHERE s.tenant_id = u.tenant_id AND (s.location = ? OR s.branch_id = ? OR s.location = ? OR s.branch_id = ?) AND DATE(s.opened_at) = ?::date AND s.user_id = u.id)
            OR LOWER(u.role) IN ('cashier', 'counter')
          )
        ORDER BY u.name ASC`,
-      [tenantId, branchId, date, branchId, branchId, date],
+      [tenantId, branchId, branchCode, date, branchId, branchId, branchCode, branchCode, date],
     );
 
     // 4. Fetch Day Closings for this date
@@ -2997,17 +3028,46 @@ export function registerDayClosing(r: Router) {
        LEFT JOIN users u ON u.id = dc.cashier_id
        LEFT JOIN users su ON su.id = dc.submitted_by
        LEFT JOIN users au ON au.id = dc.approved_by
-       WHERE dc.tenant_id = ? AND dc.branch_id = ? AND dc.bdate = ?`,
-      [tenantId, branchId, date],
+       WHERE dc.tenant_id = ? AND (dc.branch_id = ? OR dc.branch_id = ? OR dc.branch_id = ?) AND dc.bdate = ?`,
+      [tenantId, branchId, branchCode, rawBranch, date],
     );
 
     const consolidatedClosing = dayClosings.find((dc: any) => !dc.cashier_id && !dc.cashierId);
+    const storeStatus = consolidatedClosing?.status || (dayClosings.length > 0 && dayClosings.every((dc: any) => dc.status === 'approved' || dc.status === 'closed') ? 'approved' : 'open');
+    const isStoreClosed = storeStatus === 'approved' || storeStatus === 'closed';
+    const isStoreSubmitted = storeStatus === 'submitted';
+
+    let isBranchOverdue = false;
+    let minutesOverdue = 0;
+
+    // Overdue condition:
+    // Only if:
+    // 1. Day is NOT already closed or approved
+    // 2. Day is NOT already submitted
+    // 3. Schedule is enabled
+    // 4. Auto alert overdue is enabled
+    // 5. Target time has actually arrived or passed (for today, current IST time > expected closing time; for past dates, past day)
+    if (!isStoreClosed && !isStoreSubmitted && isScheduleEnabled && isAutoAlertEnabled) {
+      if (date < todayIstStr) {
+        isBranchOverdue = true;
+        minutesOverdue = 1440;
+      } else if (date === todayIstStr) {
+        const [expH, expM] = expectedClosingTime.split(':').map(Number);
+        const [curH, curM] = currentIstTimeStr.split(':').map(Number);
+        const expTotalMin = (expH || 0) * 60 + (expM || 0);
+        const curTotalMin = (curH || 0) * 60 + (curM || 0);
+        if (curTotalMin > expTotalMin) {
+          isBranchOverdue = true;
+          minutesOverdue = curTotalMin - expTotalMin;
+        }
+      }
+    }
 
     // Calculate status per cashier
     const cashierMatrix = cashiers.map((c: any) => {
       const closing = dayClosings.find((dc: any) => (dc.cashier_id || dc.cashierId) === c.id);
-      const st = closing ? closing.status : 'pending';
-      const isOverdue = (st === 'open' || st === 'pending') && isBranchOverdue;
+      const st = closing ? closing.status : (isStoreClosed ? 'closed' : 'pending');
+      const isOverdue = !isStoreClosed && !isStoreSubmitted && (st === 'open' || st === 'pending') && isBranchOverdue;
       return {
         cashierId: c.id,
         cashierName: c.name,
@@ -3024,9 +3084,9 @@ export function registerDayClosing(r: Router) {
     const totalRegisters = Math.max(counters.length, cashierMatrix.length, 1);
     const closedCount = cashierMatrix.filter((c: any) => c.status === 'approved' || c.status === 'closed').length;
     const submittedCount = cashierMatrix.filter((c: any) => c.status === 'submitted').length;
-    const pendingCount = cashierMatrix.filter((c: any) => c.status === 'pending' || c.status === 'open').length;
-    const overdueCount = cashierMatrix.filter((c: any) => c.isOverdue).length;
-    const completionPct = totalRegisters > 0 ? Math.round((closedCount / totalRegisters) * 100) : 0;
+    const pendingCount = isStoreClosed ? 0 : cashierMatrix.filter((c: any) => c.status === 'pending' || c.status === 'open').length;
+    const overdueCount = isBranchOverdue ? cashierMatrix.filter((c: any) => c.isOverdue).length : 0;
+    const completionPct = isStoreClosed ? 100 : (totalRegisters > 0 ? Math.round((closedCount / totalRegisters) * 100) : 0);
 
     return {
       success: true,
@@ -3039,13 +3099,14 @@ export function registerDayClosing(r: Router) {
       lastReminderType: schedule?.lastReminderType || schedule?.last_reminder_type || null,
       summary: {
         totalRegisters,
-        closedCount,
+        closedCount: isStoreClosed ? totalRegisters : closedCount,
         submittedCount,
         pendingCount,
         overdueCount,
         completionPct,
-        isStoreClosed: consolidatedClosing ? (consolidatedClosing.status === 'approved' || consolidatedClosing.status === 'closed') : false,
-        storeStatus: consolidatedClosing?.status || 'open',
+        isStoreClosed,
+        isStoreSubmitted,
+        storeStatus,
       },
       cashierMatrix,
       counters,

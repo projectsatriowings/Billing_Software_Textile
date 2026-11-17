@@ -493,6 +493,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
         enabled: true,
       });
       setSuccessMsg('Closing schedule and reminder settings saved successfully.');
+      window.dispatchEvent(new Event('day_closing_updated'));
       loadSchedule();
       loadCompliance();
     } catch (err: any) {
@@ -848,6 +849,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
       await reopenDayClosing(reopenTargetId, reopenReason.trim(), reopenPin.trim() || undefined);
       setSuccessMsg('Business day has been reopened. Invoices unlocked for correction.');
       setIsReopenModalOpen(false);
+      window.dispatchEvent(new Event('day_closing_updated'));
       await loadPreview();
       await loadHistory();
     } catch (err: any) {
@@ -877,6 +879,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
       await rejectDayClosing(rejectTargetId, rejectReason.trim());
       setSuccessMsg('Day closing returned to Cashier for recount and correction.');
       setIsRejectModalOpen(false);
+      window.dispatchEvent(new Event('day_closing_updated'));
       await loadPreview();
       await loadHistory();
     } catch (err: any) {

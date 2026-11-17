@@ -962,7 +962,13 @@ export function App() {
         const branch = selectedBranchScope || 'MAIN';
         const res = await fetchDayClosingCompliance({ branchId: branch });
         if (isMounted) {
-          if (res.success && res.isBranchOverdue) {
+          const isClosed = Boolean(
+            res.summary?.isStoreClosed ||
+            res.summary?.storeStatus === 'approved' ||
+            res.summary?.storeStatus === 'closed' ||
+            res.summary?.storeStatus === 'submitted'
+          );
+          if (res.success && res.isBranchOverdue && !isClosed) {
             setTopOverdueClosing({
               isOverdue: true,
               expectedClosingTime: res.expectedClosingTime || '22:00',
