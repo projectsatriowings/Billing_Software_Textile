@@ -438,42 +438,74 @@
 }
 
 /* Bill Discount Bar Pills */
+div.app-container.theme-cashier .discount-label svg,
 .theme-cashier .discount-label svg {
   color: var(--primary) !important;
 }
 
+div.app-container.theme-cashier .bento-disc-pill,
+.theme-cashier .bento-disc-pill {
+  border-color: var(--border) !important;
+  color: var(--text-muted) !important;
+}
+
+div.app-container.theme-cashier .bento-disc-pill:hover,
+.theme-cashier .bento-disc-pill:hover {
+  border-color: var(--primary) !important;
+  color: var(--primary) !important;
+  transform: translateY(-1.5px) !important;
+}
+
+div.app-container.theme-cashier .bento-disc-pill.active,
 .theme-cashier .bento-disc-pill.active {
   background: var(--primary) !important;
-  border-color: var(--primary) !important;
+  border-color: var(--primary-hover) !important;
   color: #FFFFFF !important;
   box-shadow: 0 2px 6px rgba(15, 118, 110, 0.3) !important;
 }
 
-.theme-cashier .bento-disc-pill:hover {
-  border-color: var(--primary) !important;
-  color: var(--primary) !important;
-}
-
 /* Category Strip Pills & Cart Table */
+div.app-container.theme-cashier .cat-pill-total,
 .theme-cashier .cat-pill-total {
   color: var(--primary) !important;
 }
 
+div.app-container.theme-cashier .bento-qty-btn:hover,
 .theme-cashier .bento-qty-btn:hover {
   background: var(--primary-soft) !important;
   color: var(--primary) !important;
 }
 
-/* Customer Search / Input Focus */
-.theme-cashier .bento-cust-browse-btn {
+div.app-container.theme-cashier .bento-store-val,
+.theme-cashier .bento-store-val {
   color: var(--primary) !important;
 }
 
+/* Customer Search / Input Focus & Browse Button */
+div.app-container.theme-cashier .bento-cust-browse-btn,
+.theme-cashier .bento-cust-browse-btn {
+  background: #FFFFFF !important;
+  border: 1px solid var(--border) !important;
+  color: var(--primary) !important;
+}
+
+div.app-container.theme-cashier .bento-cust-browse-btn:hover,
 .theme-cashier .bento-cust-browse-btn:hover {
+  background: var(--primary-soft) !important;
+  border-color: var(--ring) !important;
   color: var(--primary-hover) !important;
   text-decoration: underline !important;
 }
 
+div.app-container.theme-cashier .bento-cust-browse-btn svg,
+.theme-cashier .bento-cust-browse-btn svg {
+  color: var(--primary) !important;
+  stroke: var(--primary) !important;
+}
+
+div.app-container.theme-cashier .bento-cust-input:focus,
+div.app-container.theme-cashier .bento-barcode-input:focus,
+div.app-container.theme-cashier input.bento-cust-input:focus,
 .theme-cashier .bento-cust-input:focus,
 .theme-cashier .bento-barcode-input:focus,
 .theme-cashier input.bento-cust-input:focus {
@@ -482,29 +514,50 @@
 }
 
 /* Payment Tender Mode Buttons (Cash, UPI/QR, Card, Split) */
-.theme-cashier .bento-pay-mode-btn.active {
-  background: var(--primary) !important;
-  border-color: var(--primary-hover) !important;
-  color: #FFFFFF !important;
-  box-shadow: 0 4px 14px rgba(15, 118, 110, 0.35) !important;
+div.app-container.theme-cashier .bento-pay-mode-btn,
+.theme-cashier .bento-pay-mode-btn {
+  border-color: var(--border) !important;
+  color: var(--text) !important;
 }
 
-.theme-cashier .bento-pay-mode-btn.active .pay-mode-svg {
-  color: #FFFFFF !important;
-  stroke: #FFFFFF !important;
+div.app-container.theme-cashier .bento-pay-mode-btn .pay-mode-svg,
+.theme-cashier .bento-pay-mode-btn .pay-mode-svg {
+  color: var(--text-muted);
+  stroke: var(--text-muted);
 }
 
+div.app-container.theme-cashier .bento-pay-mode-btn:hover,
 .theme-cashier .bento-pay-mode-btn:hover {
   border-color: var(--primary) !important;
   color: var(--primary) !important;
+  background: var(--primary-soft) !important;
 }
 
+div.app-container.theme-cashier .bento-pay-mode-btn:hover .pay-mode-svg,
 .theme-cashier .bento-pay-mode-btn:hover .pay-mode-svg {
   color: var(--primary) !important;
   stroke: var(--primary) !important;
 }
 
+div.app-container.theme-cashier .bento-pay-mode-btn.active,
+.theme-cashier .bento-pay-mode-btn.active {
+  background: var(--primary) !important;
+  border-color: var(--primary-hover) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 14px rgba(15, 118, 110, 0.35) !important;
+  transform: translateY(-1px) !important;
+}
+
+div.app-container.theme-cashier .bento-pay-mode-btn.active .pay-mode-svg,
+.theme-cashier .bento-pay-mode-btn.active .pay-mode-svg {
+  color: #FFFFFF !important;
+  stroke: #FFFFFF !important;
+}
+
 /* Quick Tender Pills (Cash Assistance) */
+div.app-container.theme-cashier .quick-tender-btn.active,
+div.app-container.theme-cashier .bento-quick-tender-btn.active,
+div.app-container.theme-cashier .quick-tender-chip.active,
 .theme-cashier .quick-tender-btn.active,
 .theme-cashier .bento-quick-tender-btn.active,
 .theme-cashier .quick-tender-chip.active {
@@ -513,6 +566,9 @@
   color: #FFFFFF !important;
 }
 
+div.app-container.theme-cashier .quick-tender-btn:hover,
+div.app-container.theme-cashier .bento-quick-tender-btn:hover,
+div.app-container.theme-cashier .quick-tender-chip:hover,
 .theme-cashier .quick-tender-btn:hover,
 .theme-cashier .bento-quick-tender-btn:hover,
 .theme-cashier .quick-tender-chip:hover {
@@ -520,20 +576,43 @@
   color: var(--primary) !important;
 }
 
-/* Grand Total & Checkout / Complete Sale Button */
+/* Grand Total & Checkout / Complete Sale Button (Active and Disabled) */
+div.app-container.theme-cashier .bento-checkout-btn,
+div.app-container.theme-cashier .bento-checkout-btn:not(:disabled),
+.theme-cashier .bento-checkout-btn,
 .theme-cashier .bento-checkout-btn:not(:disabled) {
   background: var(--primary) !important;
   color: var(--text-on-primary) !important;
   box-shadow: 0 4px 18px rgba(15, 118, 110, 0.35) !important;
+  animation: none !important;
 }
 
+div.app-container.theme-cashier .bento-checkout-btn:not(:disabled):hover,
 .theme-cashier .bento-checkout-btn:not(:disabled):hover {
   background: var(--primary-hover) !important;
   box-shadow: 0 6px 22px rgba(17, 94, 89, 0.45) !important;
-  transform: translateY(-2px) !important;
+  transform: translateY(-2px) scale(1.015) !important;
+}
+
+div.app-container.theme-cashier .bento-checkout-btn:disabled,
+.theme-cashier .bento-checkout-btn:disabled {
+  background: #0F766E !important;
+  color: rgba(255, 255, 255, 0.75) !important;
+  opacity: 0.45 !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+  animation: none !important;
+}
+
+div.app-container.theme-cashier .bento-checkout-btn .checkout-arrow svg,
+.theme-cashier .bento-checkout-btn .checkout-arrow svg {
+  stroke: #FFFFFF !important;
 }
 
 /* Right Column: Barcode Scanner & Camera */
+div.app-container.theme-cashier .bento-barcode-icon-box svg,
+div.app-container.theme-cashier .bento-scanner-card svg.scanner-icon,
+div.app-container.theme-cashier .barcode-input-wrapper svg,
 .theme-cashier .bento-barcode-icon-box svg,
 .theme-cashier .bento-scanner-card svg.scanner-icon,
 .theme-cashier .barcode-input-wrapper svg {
@@ -541,34 +620,40 @@
   stroke: var(--primary) !important;
 }
 
+div.app-container.theme-cashier .bento-trigger-scan-btn:not(.camera-active),
 .theme-cashier .bento-trigger-scan-btn:not(.camera-active) {
   background: var(--primary) !important;
   color: #FFFFFF !important;
   box-shadow: 0 3px 10px rgba(15, 118, 110, 0.3) !important;
 }
 
+div.app-container.theme-cashier .bento-trigger-scan-btn:not(.camera-active):hover,
 .theme-cashier .bento-trigger-scan-btn:not(.camera-active):hover {
   background: var(--primary-hover) !important;
 }
 
+div.app-container.theme-cashier .bento-mobile-scanner-btn:not(.connected),
 .theme-cashier .bento-mobile-scanner-btn:not(.connected) {
   background: var(--primary-soft) !important;
   border: 1.5px solid var(--border) !important;
   color: var(--primary) !important;
 }
 
+div.app-container.theme-cashier .bento-mobile-scanner-btn:not(.connected):hover,
 .theme-cashier .bento-mobile-scanner-btn:not(.connected):hover {
   background: #D1FAE5 !important;
   border-color: var(--ring) !important;
   color: var(--primary-hover) !important;
 }
 
+div.app-container.theme-cashier .bento-find-product-btn,
 .theme-cashier .bento-find-product-btn {
   background: var(--primary-soft) !important;
   border: 1.5px solid var(--ring) !important;
   color: var(--primary) !important;
 }
 
+div.app-container.theme-cashier .bento-find-product-btn:hover,
 .theme-cashier .bento-find-product-btn:hover {
   background: #CCFBF1 !important;
   border-color: var(--primary) !important;
@@ -576,36 +661,70 @@
   box-shadow: 0 4px 12px rgba(15, 118, 110, 0.2) !important;
 }
 
-/* Register Operations Card & Quick Action Dock Buttons */
-.theme-cashier .bento-icon-circle.purple {
+/* --------------------------------------------------------------------------
+   4. REGISTER OPERATIONS HUB: 6 ACTION TILES (Hold, Park, Custom, Reprint, etc.)
+   -------------------------------------------------------------------------- */
+div.app-container.theme-cashier .bento-action-tile,
+.theme-cashier .bento-action-tile {
+  background: #FFFFFF !important;
+  border: 1px solid var(--border) !important;
+  transition: all 0.15s ease !important;
+}
+
+div.app-container.theme-cashier .bento-action-tile:hover:not(:disabled),
+.theme-cashier .bento-action-tile:hover:not(:disabled) {
+  border-color: var(--ring) !important;
+  background: #F4F8F8 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 3px 10px rgba(15, 118, 110, 0.12) !important;
+}
+
+div.app-container.theme-cashier .bento-tile-icon,
+.theme-cashier .bento-tile-icon {
   background: var(--primary-soft) !important;
+  border: 1px solid rgba(20, 184, 166, 0.3) !important;
   color: var(--primary) !important;
 }
 
-.theme-cashier .dock-action-btn:hover:not(:disabled) {
-  border-color: var(--primary) !important;
-  color: var(--primary) !important;
-  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.16) !important;
-}
-
-.theme-cashier .dock-action-btn:hover:not(:disabled) svg {
+div.app-container.theme-cashier .bento-tile-icon svg,
+.theme-cashier .bento-tile-icon svg {
   color: var(--primary) !important;
   stroke: var(--primary) !important;
 }
 
-.theme-cashier .dock-action-btn.park-btn {
-  background: var(--primary-soft) !important;
-  border-color: var(--border) !important;
-  color: var(--primary) !important;
-}
-
-.theme-cashier .dock-action-btn.park-btn:hover {
+div.app-container.theme-cashier .bento-action-tile:hover:not(:disabled) .bento-tile-icon,
+.theme-cashier .bento-action-tile:hover:not(:disabled) .bento-tile-icon {
   background: var(--primary) !important;
   border-color: var(--primary-hover) !important;
   color: #FFFFFF !important;
 }
 
+div.app-container.theme-cashier .bento-action-tile:hover:not(:disabled) .bento-tile-icon svg,
+.theme-cashier .bento-action-tile:hover:not(:disabled) .bento-tile-icon svg {
+  color: #FFFFFF !important;
+  stroke: #FFFFFF !important;
+}
+
+div.app-container.theme-cashier .bento-action-tile.active-scanner .bento-tile-icon,
+.theme-cashier .bento-action-tile.active-scanner .bento-tile-icon {
+  background: #ECFDF5 !important;
+  border-color: #D1FAE5 !important;
+  color: var(--success) !important;
+}
+
+div.app-container.theme-cashier .bento-icon-circle.purple,
+.theme-cashier .bento-icon-circle.purple {
+  background: var(--primary-soft) !important;
+  color: var(--primary) !important;
+}
+
 /* Modals & Popovers inside Cashier */
+div.app-container.theme-cashier .btn-primary,
+div.app-container.theme-cashier .btn-cash-primary,
+div.app-container.theme-cashier .btn-tender-cash,
+div.app-container.theme-cashier .btn-checkout-bento,
+div.app-container.theme-cashier .find-products-btn,
+div.app-container.theme-cashier button.btn-tender-active,
 .theme-cashier .btn-primary,
 .theme-cashier .btn-cash-primary,
 .theme-cashier .btn-tender-cash,
@@ -616,6 +735,11 @@
   color: var(--text-on-primary) !important;
 }
 
+div.app-container.theme-cashier .btn-primary:hover,
+div.app-container.theme-cashier .btn-cash-primary:hover,
+div.app-container.theme-cashier .btn-tender-cash:hover,
+div.app-container.theme-cashier .btn-checkout-bento:hover,
+div.app-container.theme-cashier .find-products-btn:hover,
 .theme-cashier .btn-primary:hover,
 .theme-cashier .btn-cash-primary:hover,
 .theme-cashier .btn-tender-cash:hover,
@@ -624,6 +748,10 @@
   background: var(--primary-hover) !important;
 }
 
+div.app-container.theme-cashier button[style*="background: linear-gradient(135deg, #6d4aff"],
+div.app-container.theme-cashier button[style*="background: #6d4aff"],
+div.app-container.theme-cashier button[style*="background: #4f46e5"],
+div.app-container.theme-cashier span[style*="background: #4f46e5"],
 .theme-cashier button[style*="background: linear-gradient(135deg, #6d4aff"],
 .theme-cashier button[style*="background: #6d4aff"],
 .theme-cashier button[style*="background: #4f46e5"],

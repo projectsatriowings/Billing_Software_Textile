@@ -9294,16 +9294,17 @@ export function App() {
                                   )}
                                   <button
                                     type="button"
+                                    className="bento-cust-browse-btn"
                                     onClick={() => setShowCustomerPickerModal(true)}
                                     style={{
                                       background: '#ffffff',
-                                      border: '1px solid #cbd5e1',
+                                      border: user?.role === 'cashier' ? '1px solid var(--border)' : '1px solid #cbd5e1',
                                       borderRadius: '6px',
                                       fontSize: '0.72rem',
                                       fontWeight: 700,
                                       padding: '2px 8px',
                                       cursor: 'pointer',
-                                      color: '#4338ca',
+                                      color: user?.role === 'cashier' ? 'var(--primary)' : '#4338ca',
                                       display: 'inline-flex',
                                       alignItems: 'center',
                                       gap: '4px',
