@@ -343,27 +343,12 @@ export function registerScannerBridge(r: Router) {
     session.scans.push(event);
     if (session.scans.length > 100) session.scans.shift();
 
-    // Wake up all waiting long-poll listeners immediately
+    // Wake up all waiting long-poll listeners immediately for THIS session only
     const listeners = session.waitingListeners.splice(0, session.waitingListeners.length);
     for (const listener of listeners) {
       try {
         listener([event]);
       } catch {}
-    }
-
-    // Fail-safe delivery: if this session had no listeners, forward to any active desktop terminal session
-    if (listeners.length === 0) {
-      for (const [otherId, otherSess] of sessions) {
-        if (otherId !== sessionId && otherSess.waitingListeners.length > 0) {
-          otherSess.scans.push(event);
-          const otherListeners = otherSess.waitingListeners.splice(0, otherSess.waitingListeners.length);
-          for (const l of otherListeners) {
-            try {
-              l([event]);
-            } catch {}
-          }
-        }
-      }
     }
 
     return {

@@ -172,6 +172,19 @@ export function registerAuth(r: Router, tokens: { secret: string; ttlSeconds: nu
 
   // Tokens are stateless: the browser simply forgets its token. Recorded so the audit trail shows sign-outs.
   r.post('/api/auth/logout', requireUser, async (ctx) => {
+    try {
+      // Clear counter assignment if no active open shift exists
+      const hasOpenShift = await ctx.db.one(
+        "SELECT id FROM shifts WHERE tenant_id = ? AND user_id = ? AND status = 'open' LIMIT 1",
+        [ctx.user!.tenantId, ctx.user!.id],
+      );
+      if (!hasOpenShift) {
+        await ctx.db.exec(
+          'UPDATE users SET counter_id = NULL, assigned_counter = NULL, updated_at = now() WHERE id = ? AND tenant_id = ?',
+          [ctx.user!.id, ctx.user!.tenantId],
+        );
+      }
+    } catch {}
     await audit(ctx.db, ctx, { action: 'auth.logout', entity: 'user', entityId: ctx.user!.id });
   });
 
