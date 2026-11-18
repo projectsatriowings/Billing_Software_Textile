@@ -3187,6 +3187,7 @@ export function registerDayClosing(r: Router) {
         const notifId = 'notif_active_' + ash.id;
         const bdate = (ash.opened_at ? new Date(ash.opened_at).toISOString() : new Date().toISOString()).slice(0, 10);
         const createdAt = ash.opened_at ? new Date(ash.opened_at).toISOString() : new Date().toISOString();
+        const shiftBranchId = ash.branch_id || ash.branch_code || 'MAIN';
 
         await ctx.db.exec(
           `INSERT INTO day_closing_notifications (
@@ -3197,7 +3198,7 @@ export function registerDayClosing(r: Router) {
           [
             notifId,
             tenantId,
-            ash.branch_id,
+            shiftBranchId,
             ash.counter_id || null,
             ash.user_id,
             bdate,
@@ -3211,7 +3212,7 @@ export function registerDayClosing(r: Router) {
               shiftNumber: shiftNum,
               cashierId: ash.user_id,
               cashierName: cName,
-              branchId: ash.branch_id,
+              branchId: shiftBranchId,
               branchName: bName,
               branchCode: ash.branch_code || 'MAIN',
               counter: counterDisp,
@@ -3274,6 +3275,7 @@ export function registerDayClosing(r: Router) {
         const createdAt = csh.closed_at ? new Date(csh.closed_at).toISOString() : new Date().toISOString();
         const severity = varianceMinor !== 0 ? 'warning' : 'success';
         const closeMsg = `Cashier ${cName} closed Shift #${shiftNum} at ${bName}. Today's Sales: ₹${totalSalesFormatted} (${billsCount} bills) · Returns: ${returnsCount} (₹${refundsFormatted}) · Drawer Cash: ₹${countedFormatted} (${varianceText}).`;
+        const shiftBranchId = csh.branch_id || csh.branch_code || 'MAIN';
 
         await ctx.db.exec(
           `INSERT INTO day_closing_notifications (
@@ -3284,7 +3286,7 @@ export function registerDayClosing(r: Router) {
           [
             notifId,
             tenantId,
-            csh.branch_id,
+            shiftBranchId,
             csh.counter_id || null,
             csh.user_id,
             bdate,
@@ -3298,7 +3300,7 @@ export function registerDayClosing(r: Router) {
               shiftNumber: shiftNum,
               cashierId: csh.user_id,
               cashierName: cName,
-              branchId: csh.branch_id,
+              branchId: shiftBranchId,
               branchName: bName,
               branchCode: csh.branch_code || 'MAIN',
               counter: counterDisp,
