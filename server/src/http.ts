@@ -2,6 +2,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import zlib from 'node:zlib';
 import type { DB } from './db/index.ts';
 import type { Role } from '../../shared/types.ts';
 
@@ -109,26 +110,92 @@ const MIME: Record<string, string> = {
   '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.ico': 'image/x-icon', '.webmanifest': 'application/manifest+json', '.map': 'application/json',
 };
 
-function serveStatic(root: string, pathname: string, res: http.ServerResponse): boolean {
+interface CachedFile {
+  raw: Buffer;
+  gzip: Buffer;
+  etag: string;
+  mtimeMs: number;
+  size: number;
+  contentType: string;
+}
+const staticFileCache = new Map<string, CachedFile>();
+
+function serveStatic(root: string, pathname: string, req: http.IncomingMessage, res: http.ServerResponse): boolean {
   let rel = decodeURIComponent(pathname);
   if (rel.endsWith('/')) rel += 'index.html';
   const full = path.join(root, path.normalize(rel));
   if (!full.startsWith(path.resolve(root))) return false;
   let file = full;
+  let isSpaFallback = false;
   if (!fs.existsSync(file) || !fs.statSync(file).isFile()) {
     if (path.extname(rel)) return false; // missing asset -> 404
     file = path.join(root, 'index.html'); // SPA route
+    isSpaFallback = true;
     if (!fs.existsSync(file)) return false;
   }
   const ext = path.extname(file);
   const stat = fs.statSync(file);
-  res.writeHead(200, {
-    'Content-Type': MIME[ext] ?? 'application/octet-stream',
-    'Content-Length': stat.size,
-    'Cache-Control': 'no-cache',
-    ETag: `"${stat.size}-${Math.floor(stat.mtimeMs)}"`,
-  });
-  fs.createReadStream(file).pipe(res);
+  const etag = `"${stat.size}-${Math.floor(stat.mtimeMs)}"`;
+
+  const isHtml = ext === '.html' || isSpaFallback;
+  const cacheControl = isHtml
+    ? 'no-cache, must-revalidate'
+    : 'public, max-age=86400, stale-while-revalidate=604800';
+
+  // 1. Check If-None-Match (HTTP 304 Not Modified)
+  const ifNoneMatch = req.headers['if-none-match'];
+  if (ifNoneMatch && ifNoneMatch === etag) {
+    res.writeHead(304, {
+      ETag: etag,
+      'Cache-Control': cacheControl,
+      Vary: 'Accept-Encoding',
+    });
+    res.end();
+    return true;
+  }
+
+  // 2. In-memory pre-compressed asset cache (avoids repeated disk I/O & CPU compression)
+  let cached = staticFileCache.get(file);
+  if (!cached || cached.mtimeMs !== stat.mtimeMs) {
+    const raw = fs.readFileSync(file);
+    const contentType = MIME[ext] ?? 'application/octet-stream';
+    const isCompressible = ['.html', '.js', '.css', '.json', '.svg', '.map', '.webmanifest'].includes(ext);
+    const gzip = isCompressible ? zlib.gzipSync(raw, { level: 6 }) : raw;
+    cached = {
+      raw,
+      gzip,
+      etag,
+      mtimeMs: stat.mtimeMs,
+      size: stat.size,
+      contentType,
+    };
+    staticFileCache.set(file, cached);
+  }
+
+  // 3. Deliver compressed or raw based on client Accept-Encoding
+  const acceptEncoding = (req.headers['accept-encoding'] as string) || '';
+  const canGzip = acceptEncoding.includes('gzip') && cached.gzip !== cached.raw;
+
+  if (canGzip) {
+    res.writeHead(200, {
+      'Content-Type': cached.contentType,
+      'Content-Encoding': 'gzip',
+      'Content-Length': cached.gzip.length,
+      'Cache-Control': cacheControl,
+      ETag: etag,
+      Vary: 'Accept-Encoding',
+    });
+    res.end(cached.gzip);
+  } else {
+    res.writeHead(200, {
+      'Content-Type': cached.contentType,
+      'Content-Length': cached.raw.length,
+      'Cache-Control': cacheControl,
+      ETag: etag,
+      Vary: 'Accept-Encoding',
+    });
+    res.end(cached.raw);
+  }
   return true;
 }
 
@@ -185,13 +252,25 @@ export function createHandler(opts: ServerOptions): http.RequestListener {
           send(result.status, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' }, result.html);
         } else {
           const out = JSON.stringify(result === undefined ? { ok: true } : result);
-          send(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }, out);
+          const acceptEncoding = (req.headers['accept-encoding'] as string) || '';
+          if (out.length > 1024 && acceptEncoding.includes('gzip')) {
+            const gzipped = zlib.gzipSync(Buffer.from(out, 'utf8'), { level: 6 });
+            send(200, {
+              'Content-Type': 'application/json; charset=utf-8',
+              'Content-Encoding': 'gzip',
+              'Content-Length': gzipped.length,
+              'Cache-Control': 'no-store',
+              Vary: 'Accept-Encoding',
+            }, gzipped);
+          } else {
+            send(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }, out);
+          }
         }
       } else if (url.pathname.startsWith('/api/')) {
         throw new HttpError(404, 'NOT_FOUND', 'Unknown API route');
       } else if (opts.staticDir && (req.method === 'GET' || req.method === 'HEAD')) {
         const root = path.resolve(opts.staticDir);
-        if (!serveStatic(root, url.pathname, res)) send(404, { 'Content-Type': 'text/plain' }, 'Not found');
+        if (!serveStatic(root, url.pathname, req, res)) send(404, { 'Content-Type': 'text/plain' }, 'Not found');
         else status = 200;
       } else {
         send(404, { 'Content-Type': 'text/plain' }, 'Not found');
