@@ -326,7 +326,7 @@ export function registerShifts(r: Router) {
         );
       }
 
-      // Check if counter is already occupied by another cashier with an open shift
+      // Check if counter is already occupied by another cashier with an active open shift (within 24h)
       const counterOccupant = await q.one<any>(
         `SELECT s.id, u.name AS user_name, s.counter, s.counter_name_snapshot
          FROM shifts s
@@ -334,6 +334,7 @@ export function registerShifts(r: Router) {
          WHERE s.tenant_id = ?
            AND s.branch_id = ?
            AND s.status = 'open'
+           AND s.opened_at >= now() - interval '24 hours'
            AND s.user_id != ?
            AND (
              (s.counter_id IS NOT NULL AND s.counter_id = ?)
@@ -344,8 +345,9 @@ export function registerShifts(r: Router) {
         [tenantId, branchId, userId, resolvedCounterId, resolvedCounterCode, resolvedCounterName],
       );
       if (counterOccupant) {
+        const occupantName = counterOccupant.userName ?? counterOccupant.user_name ?? 'another cashier';
         throw bad(
-          `Billing counter "${resolvedCounterName}" (${resolvedCounterCode}) is already in use by ${counterOccupant.user_name}. Please select an available counter.`,
+          `Billing counter "${resolvedCounterName}" (${resolvedCounterCode}) is already in use by ${occupantName}. Please select an available counter.`,
           'COUNTER_OCCUPIED',
         );
       }
@@ -484,6 +486,16 @@ export function registerShifts(r: Router) {
     const scope = await resolveBranchScope(ctx);
     const branchId = (ctx.query.branchId as string) || scope.branchId;
 
+    // Safety: auto-close abandoned shifts older than 24 hours so they never permanently lock counters
+    try {
+      await ctx.db.exec(
+        `UPDATE shifts
+         SET status = 'closed', closed_at = now()
+         WHERE tenant_id = ? AND status = 'open' AND opened_at < now() - interval '24 hours'`,
+        [tenantId],
+      );
+    } catch {}
+
     let sql = `
       SELECT 
         s.id AS shift_id,
@@ -500,6 +512,7 @@ export function registerShifts(r: Router) {
       JOIN users u ON u.id = s.user_id
       WHERE s.tenant_id = ?
         AND s.status = 'open'
+        AND s.opened_at >= now() - interval '24 hours'
     `;
     const params: any[] = [tenantId];
 
@@ -535,44 +548,57 @@ export function registerShifts(r: Router) {
     const occupiedMap = new Map<string, any>();
 
     for (const r of shiftRows) {
-      const key = (r.counter_id || r.counter || '').trim().toUpperCase();
-      if (!key) continue;
-      occupiedMap.set(key, {
-        shiftId: r.shift_id,
-        shiftNumber: r.shift_number,
-        counter: r.counter,
-        counterId: r.counter_id,
-        counterName: r.counter_name_snapshot,
-        branchId: r.branch_id,
-        userId: r.user_id,
-        userName: r.user_name,
-        isCurrentUser: r.user_id === currentUserId,
-        openedAt: r.opened_at,
-      });
+      const uId = r.userId ?? r.user_id;
+      const uName = r.userName ?? r.user_name ?? 'Cashier';
+      const cCode = r.counter;
+      const cId = r.counterId ?? r.counter_id;
+      const cName = r.counterNameSnapshot ?? r.counter_name_snapshot ?? cCode;
+      const isCur = Boolean(uId && currentUserId && String(uId) === String(currentUserId));
+      const info = {
+        shiftId: r.shiftId ?? r.shift_id,
+        shiftNumber: r.shiftNumber ?? r.shift_number,
+        counter: cCode,
+        counterId: cId,
+        counterName: cName,
+        branchId: r.branchId ?? r.branch_id,
+        userId: uId,
+        userName: uName,
+        isCurrentUser: isCur,
+        openedAt: r.openedAt ?? r.opened_at,
+      };
+
+      if (cId) occupiedMap.set(String(cId).trim().toUpperCase(), info);
+      if (cCode) occupiedMap.set(String(cCode).trim().toUpperCase(), info);
     }
 
     for (const u of userRows) {
-      const key = (u.counter_id || u.counter || '').trim().toUpperCase();
-      if (!key) continue;
-      if (!occupiedMap.has(key)) {
-        occupiedMap.set(key, {
-          shiftId: null,
-          shiftNumber: null,
-          counter: u.counter,
-          counterId: u.counter_id,
-          counterName: u.counter,
-          branchId: u.branch_id,
-          userId: u.user_id,
-          userName: u.user_name,
-          isCurrentUser: u.user_id === currentUserId,
-          openedAt: u.updated_at,
-        });
-      }
+      const uId = u.userId ?? u.user_id;
+      const uName = u.userName ?? u.user_name ?? 'Cashier';
+      const cCode = u.counter;
+      const cId = u.counterId ?? u.counter_id;
+      const isCur = Boolean(uId && currentUserId && String(uId) === String(currentUserId));
+      const info = {
+        shiftId: null,
+        shiftNumber: null,
+        counter: cCode,
+        counterId: cId,
+        counterName: cCode,
+        branchId: u.branchId ?? u.branch_id,
+        userId: uId,
+        userName: uName,
+        isCurrentUser: isCur,
+        openedAt: u.updatedAt ?? u.updated_at,
+      };
+
+      const keyId = cId ? String(cId).trim().toUpperCase() : null;
+      const keyCode = cCode ? String(cCode).trim().toUpperCase() : null;
+      if (keyId && !occupiedMap.has(keyId)) occupiedMap.set(keyId, info);
+      if (keyCode && !occupiedMap.has(keyCode)) occupiedMap.set(keyCode, info);
     }
 
     return {
       ok: true,
-      occupiedCounters: Array.from(occupiedMap.values()),
+      occupiedCounters: Array.from(new Set(occupiedMap.values())),
     };
   });
 
@@ -686,7 +712,7 @@ export function registerShifts(r: Router) {
       throw bad(`Billing counter "${counterRow.name}" is currently disabled. Please select an active counter.`, 'COUNTER_DISABLED');
     }
 
-    // Ensure no other active cashier is currently occupying this counter
+    // Ensure no other active cashier is currently occupying this counter (active shift within 24h)
     const existingOccupant: any = await ctx.db.one(
       `SELECT s.id, s.user_id, u.name AS user_name, s.counter, s.counter_name_snapshot
        FROM shifts s
@@ -694,6 +720,7 @@ export function registerShifts(r: Router) {
        WHERE s.tenant_id = ?
          AND s.branch_id = ?
          AND s.status = 'open'
+         AND s.opened_at >= now() - interval '24 hours'
          AND s.user_id != ?
          AND (
            (s.counter_id IS NOT NULL AND s.counter_id = ?)
@@ -704,8 +731,9 @@ export function registerShifts(r: Router) {
       [tenantId, branchId, userId, counterRow.id, counterRow.code, counterRow.name],
     );
     if (existingOccupant) {
+      const occupantName = existingOccupant.userName ?? existingOccupant.user_name ?? 'another cashier';
       throw bad(
-        `Billing counter "${counterRow.name}" (${counterRow.code}) is currently in use by ${existingOccupant.user_name}. Please choose another available counter.`,
+        `Billing counter "${counterRow.name}" (${counterRow.code}) is currently in use by ${occupantName}. Please choose another available counter.`,
         'COUNTER_OCCUPIED',
       );
     }

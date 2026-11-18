@@ -70,7 +70,7 @@ function loadPersistedTunnelUrl(): string {
     if (fs.existsSync(file)) {
       return fs.readFileSync(file, 'utf8').trim();
     }
-  } catch {}
+  } catch { }
   return '';
 }
 
@@ -82,7 +82,7 @@ function savePersistedTunnelUrl(url: string) {
     } else if (fs.existsSync(file)) {
       fs.unlinkSync(file);
     }
-  } catch {}
+  } catch { }
 }
 
 import { spawn, type ChildProcess } from 'node:child_process';
@@ -128,7 +128,7 @@ export function launchTunnel(port = 3001, force = false): Promise<string> {
             } else {
               activeTunnelProcess.kill();
             }
-          } catch {}
+          } catch { }
           activeTunnelProcess = null;
         }
 
@@ -191,11 +191,11 @@ setInterval(async () => {
       activeTunnelUrl = '';
       savePersistedTunnelUrl('');
       const port = Number(process.env.PORT ?? 3001);
-      launchTunnel(port, true).catch(() => {});
+      launchTunnel(port, true).catch(() => { });
     }
   } else if (!activeTunnelUrl) {
     const port = Number(process.env.PORT ?? 3001);
-    launchTunnel(port, false).catch(() => {});
+    launchTunnel(port, false).catch(() => { });
   }
 }, 25_000);
 
@@ -228,7 +228,7 @@ export function registerScannerBridge(r: Router) {
 
     // Auto-spawn tunnel in background if not alive so QR code is ready
     if (!validTunnelUrl) {
-      launchTunnel(httpPort, false).catch(() => {});
+      launchTunnel(httpPort, false).catch(() => { });
     }
 
     return {
@@ -348,7 +348,7 @@ export function registerScannerBridge(r: Router) {
     for (const listener of listeners) {
       try {
         listener([event]);
-      } catch {}
+      } catch { }
     }
 
     return {

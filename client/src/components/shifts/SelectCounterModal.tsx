@@ -712,7 +712,7 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
                       }}
                     >
                       {isOccupied
-                        ? `In use (${occupant?.userName || ''})`
+                        ? `In use (${occupant?.userName || 'Other Cashier'})`
                         : isCardActive
                           ? 'Selected Counter'
                           : 'Click to select'}
