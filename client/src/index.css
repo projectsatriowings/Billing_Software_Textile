@@ -21774,10 +21774,10 @@ select.expense-input-control {
 
 /* TOP HEADER */
 .cfd-header {
-  height: 72px;
-  background: #ffffff;
-  border-bottom: 1px solid #e2e8f0;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04);
+  height: 64px;
+  background: var(--bg, #E8E1D5);
+  border-bottom: 1.5px solid var(--border, #D0C7B8);
+  box-shadow: 0 1px 3px 0 rgba(15, 45, 46, 0.04);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -21798,12 +21798,12 @@ select.expense-input-control {
   width: 44px;
   height: 44px;
   border-radius: 12px;
-  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+  background: linear-gradient(135deg, var(--sidebar, #0F2D2E) 0%, var(--primary, #0F766E) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   color: #ffffff;
-  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.25);
 }
 
 .cfd-shop-name {
@@ -21811,7 +21811,7 @@ select.expense-input-control {
   font-size: 1.3rem;
   font-weight: 800;
   letter-spacing: -0.02em;
-  color: #0f172a;
+  color: var(--sidebar, #0F2D2E);
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -21819,7 +21819,7 @@ select.expense-input-control {
 
 .cfd-shop-tagline {
   font-size: 0.78rem;
-  color: #64748b;
+  color: var(--text-muted, #475569);
   font-weight: 500;
 }
 
@@ -21833,9 +21833,9 @@ select.expense-input-control {
   display: flex;
   align-items: center;
   gap: 0.45rem;
-  background: #ecfdf5;
-  border: 1px solid #a7f3d0;
-  color: #059669;
+  background: var(--primary-soft, #E6F4F3);
+  border: 1px solid rgba(20, 184, 166, 0.4);
+  color: var(--primary, #0F766E);
   font-size: 0.75rem;
   font-weight: 700;
   padding: 0.35rem 0.75rem;
@@ -21846,8 +21846,8 @@ select.expense-input-control {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #10b981;
-  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
+  background: var(--ring, #14B8A6);
+  box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.25);
   animation: cfdDotPing 2s infinite ease-in-out;
 }
 
@@ -21869,20 +21869,20 @@ select.expense-input-control {
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
+  background: var(--surface, #FAF7F2);
+  border: 1.5px solid var(--border, #D0C7B8);
   padding: 0.35rem 0.75rem;
   border-radius: 8px;
   font-size: 0.82rem;
   font-weight: 700;
-  color: #334155;
-  font-family: monospace;
+  color: var(--sidebar, #0F2D2E);
+  font-family: inherit;
 }
 
 .cfd-fullscreen-btn {
-  background: #f8fafc;
-  border: 1px solid #cbd5e1;
-  color: #475569;
+  background: var(--surface, #FAF7F2);
+  border: 1.5px solid var(--border, #D0C7B8);
+  color: var(--sidebar, #0F2D2E);
   width: 38px;
   height: 38px;
   border-radius: 8px;
@@ -21894,8 +21894,9 @@ select.expense-input-control {
 }
 
 .cfd-fullscreen-btn:hover {
-  background: #e2e8f0;
-  color: #0f172a;
+  background: var(--primary-soft, #E6F4F3);
+  color: var(--primary, #0F766E);
+  border-color: var(--primary, #0F766E);
 }
 
 /* MAIN LAYOUT */
