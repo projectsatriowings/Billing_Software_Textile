@@ -2874,45 +2874,6 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                                   <span>Cashier Summary ({cashiers.length})</span>
                                 </button>
                               </div>
-
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setSelectedCounterKeyFilter('ALL');
-                                  setSelectedDetailCashierFilter('ALL');
-                                }}
-                                style={{
-                                  background: '#f1f5f9',
-                                  border: '1px solid #cbd5e1',
-                                  borderRadius: '8px',
-                                  padding: '6px 12px',
-                                  fontSize: '0.8rem',
-                                  fontWeight: 700,
-                                  color: '#334155',
-                                  cursor: 'pointer',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: '6px',
-                                }}
-                              >
-                                <ArrowLeftIcon size={14} />
-                                <span>All Counters View</span>
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setSelectedCounterId(targetCounter.counterId || targetCounter.counterCode);
-                                  setSelectedCashierId('');
-                                  setActiveTab('closing');
-                                }}
-                                className="btn-reconcile-nav"
-                                style={{ padding: '6px 14px', fontSize: '0.8rem', fontWeight: 700 }}
-                                title={`Open Register Reconciliation for ${targetCounter.counterName}`}
-                              >
-                                <span>Counter Register</span>
-                                <ArrowRightIcon size={12} />
-                              </button>
                             </div>
                           </div>
 
