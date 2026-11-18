@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { api, setToken, type User, type Shop } from '../api';
-import './cashier-login.css';
-import './auth/bentoLogin.css';
+import './auth/modernLogin.css';
 
 interface LoginPageProps {
   initialRole?: 'super_admin' | 'store_manager' | 'cashier';
@@ -110,7 +109,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         onSuccess(data as { token: string; user: User; shop: Shop });
       }
     } catch (err: any) {
-      setError(err?.message || 'Invalid credentials. Please verify your login details.');
+      setError(err?.message || 'Invalid email or password. Please verify your credentials.');
     } finally {
       setIsLoading(false);
     }
@@ -119,7 +118,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   const handleSendForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!forgotIdentifier.trim()) {
-      setForgotStatus({ message: 'Please enter your username or email address.', isError: true });
+      setForgotStatus({ message: 'Please enter your username or registered email address.', isError: true });
       return;
     }
 
@@ -131,7 +130,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         body: JSON.stringify({ identifier: forgotIdentifier.trim() }),
       });
       setForgotStatus({
-        message: "If an account with this identifier exists, a password reset link has been dispatched to the registered address.",
+        message: "If an account with this identifier exists, a password reset link has been dispatched to your email.",
         isError: false,
       });
     } catch (err: any) {
@@ -144,303 +143,156 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     }
   };
 
-  // Role Metadata Config
   const isCashier = selectedRole === 'cashier' || selectedRole === 'cashier2';
-  const roleDisplay = {
-    title: selectedRole === 'super_admin'
-      ? 'Super Admin Portal'
-      : selectedRole === 'store_manager'
-      ? 'Store Manager Portal'
-      : 'Cashier Billing Counter',
-    clearance: selectedRole === 'super_admin'
-      ? 'HQ Executive Clearance'
-      : selectedRole === 'store_manager'
-      ? 'Branch Operations Clearance'
-      : 'POS Terminal Clearance',
-    subtitle: selectedRole === 'super_admin'
-      ? 'Consolidated sales network, multi-branch governance & system audit trail.'
-      : selectedRole === 'store_manager'
-      ? 'Branch oversight: register closing approvals, drawer cash audits & staff controls.'
-      : 'Rapid retail billing: live barcode scanning, cash float balancing & counter checkout.',
-    icon: selectedRole === 'super_admin' ? '👑' : selectedRole === 'store_manager' ? '🏪' : '💳',
-    inputLabel: selectedRole === 'super_admin'
-      ? 'Super Admin Email'
-      : selectedRole === 'store_manager'
-      ? 'Store Manager Username or Email'
-      : 'Cashier Employee ID or Email',
-    placeholder: selectedRole === 'super_admin'
-      ? 'e.g. demo@billing.local'
-      : selectedRole === 'store_manager'
-      ? 'e.g. manager@billing.local'
-      : 'e.g. cashier@billing.local or CSH-101',
-    btnText: selectedRole === 'super_admin'
-      ? 'Login as Super Admin'
-      : selectedRole === 'store_manager'
-      ? 'Login as Store Manager'
-      : selectedRole === 'cashier2'
-      ? 'Login as Cashier 2 (Lakshmi)'
-      : 'Login as Cashier Counter',
+
+  const roleMeta = {
+    super_admin: {
+      key: 'super-admin',
+      title: 'Super Admin Portal',
+      subtitle: 'Enterprise headquarters: consolidated sales, multi-branch network & governance.',
+      heroTitle: 'Consolidated Enterprise Control.',
+      heroSubtitle: 'Manage headquarters sales, branch inventory and company governance all in one real-time workspace.',
+      inputLabel: 'Super Admin Email',
+      placeholder: 'demo@billing.local',
+      btnText: 'Log In as Super Admin',
+      badge: '👑 HQ Super Admin',
+    },
+    store_manager: {
+      key: 'store-manager',
+      title: 'Store Manager Portal',
+      subtitle: 'Branch operations: register closing approvals, cash float audits & staff supervision.',
+      heroTitle: 'Keep In Touch With Your Store.',
+      heroSubtitle: 'Monitor live cashier counters, balance register floats, and approve daily shift audits seamlessly.',
+      inputLabel: 'Store Manager Username or Email',
+      placeholder: 'manager@billing.local',
+      btnText: 'Log In as Store Manager',
+      badge: '🏪 Store Manager',
+    },
+    cashier: {
+      key: 'cashier',
+      title: 'Cashier Billing Counter',
+      subtitle: 'High-speed retail checkout, cash drawer shift balancing & rapid barcode billing.',
+      heroTitle: 'High-Speed Cashier POS.',
+      heroSubtitle: 'Instant barcode scanning, customer-facing display sync & offline transaction buffering.',
+      inputLabel: 'Cashier Employee ID or Email',
+      placeholder: 'cashier@billing.local',
+      btnText: selectedRole === 'cashier2' ? 'Log In as Cashier 2 (Lakshmi)' : 'Log In as Cashier',
+      badge: '💳 Cashier Station',
+    },
   };
 
+  const currentMeta = isCashier
+    ? roleMeta.cashier
+    : selectedRole === 'store_manager'
+    ? roleMeta.store_manager
+    : roleMeta.super_admin;
+
   return (
-    <div className="bento-login-page">
-      {/* 1. Modern Bento Top Navigation Bar */}
-      <header className="bento-login-topbar">
-        <div className="bento-login-brand" onClick={onBackToHome}>
-          <div className="bento-login-brand-icon">⚡</div>
-          <div>
-            <h1 className="bento-login-brand-title">
-              Adaptive Billing
-              <span className="bento-login-brand-tag">v2.6 Enterprise</span>
-            </h1>
-          </div>
-        </div>
+    <div className="modern-login-page">
+      <div className={`modern-login-card role-${currentMeta.key}`}>
+        {/* ------------------------------------------------------------------
+            LEFT HALF: RESERVED FOR USER'S GENERATED IMAGE
+            ------------------------------------------------------------------ */}
+        <div className="modern-login-left">
+          {/* User provided custom image will be loaded here */}
+          <img
+            src="/login-illustration.png"
+            alt="Portal Visual"
+            className="user-login-image"
+            onError={(e) => {
+              // Hide image tag if file not yet uploaded by user, showing clean role placeholder
+              (e.currentTarget as HTMLElement).style.display = 'none';
+              const frame = document.getElementById('user-image-fallback-frame');
+              if (frame) frame.style.display = 'flex';
+            }}
+          />
 
-        <div className="bento-login-top-actions">
-          <div className="bento-login-live-pill">
-            <span className="bento-login-live-dot" />
-            <span>Multi-Branch Cloud Sync Active</span>
-          </div>
-
-          <button
-            type="button"
-            className="bento-btn-back-home"
-            onClick={onBackToHome}
-            title="Return to Landing Page"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="19" y1="12" x2="5" y2="12"></line>
-              <polyline points="12 19 5 12 12 5"></polyline>
-            </svg>
-            <span>Back to Home</span>
-          </button>
-        </div>
-      </header>
-
-      {/* 2. Bento Grid Layout (Left: Role Hub + Telemetry; Right: Master Auth Gateway) */}
-      <main className="bento-login-container">
-        {/* Left Bento Column */}
-        <section className="bento-left-column">
-          {/* 3A: Role Hub Selector Tile */}
-          <div className="bento-role-hub-card bento-login-card-3d">
-            <div className="bento-tile-header">
-              <div>
-                <div className="bento-tile-eyebrow">PORTAL ACCESS LEVEL</div>
-                <h2 className="bento-tile-heading">Choose Your Workspace</h2>
-              </div>
+          <div id="user-image-fallback-frame" className="image-placeholder-frame">
+            <div className="placeholder-badge">
+              <span>{currentMeta.badge}</span>
             </div>
 
-            <div className="bento-role-options-list">
-              {/* Role 1: Super Admin */}
-              <button
-                type="button"
-                className={`bento-role-card-btn ${selectedRole === 'super_admin' ? 'active' : ''}`}
-                onClick={() => handleRoleTabChange('super_admin')}
-              >
-                <div className="bento-role-card-left">
-                  <div className="bento-role-card-icon">👑</div>
-                  <div className="bento-role-card-meta">
-                    <span className="bento-role-card-title">Super Admin</span>
-                    <span className="bento-role-card-subtitle">Headquarters & Global Governance</span>
-                  </div>
-                </div>
-                <span className="bento-role-badge">HQ Clearance</span>
-              </button>
-
-              {/* Role 2: Store Manager */}
-              <button
-                type="button"
-                className={`bento-role-card-btn ${selectedRole === 'store_manager' ? 'active' : ''}`}
-                onClick={() => handleRoleTabChange('store_manager')}
-              >
-                <div className="bento-role-card-left">
-                  <div className="bento-role-card-icon">🏪</div>
-                  <div className="bento-role-card-meta">
-                    <span className="bento-role-card-title">Store Manager</span>
-                    <span className="bento-role-card-subtitle">Branch Operations & Register Audit</span>
-                  </div>
-                </div>
-                <span className="bento-role-badge">Branch Ops</span>
-              </button>
-
-              {/* Role 3: Cashier Counter */}
-              <button
-                type="button"
-                className={`bento-role-card-btn ${isCashier ? 'active' : ''}`}
-                onClick={() => handleRoleTabChange('cashier')}
-              >
-                <div className="bento-role-card-left">
-                  <div className="bento-role-card-icon">💳</div>
-                  <div className="bento-role-card-meta">
-                    <span className="bento-role-card-title">Cashier Counter</span>
-                    <span className="bento-role-card-subtitle">Fast-Lane POS & Drawer Float</span>
-                  </div>
-                </div>
-                <span className="bento-role-badge">POS Station</span>
-              </button>
-            </div>
-          </div>
-
-          {/* 3B: Role-Adaptive Telemetry Bento Card */}
-          <div className="bento-telemetry-card bento-login-card-3d">
-            <div className="bento-telemetry-header">
-              <h3 className="bento-telemetry-title">
-                <span>{selectedRole === 'super_admin' ? '📊' : selectedRole === 'store_manager' ? '🛡️' : '⚡'}</span>
-                <span>
-                  {selectedRole === 'super_admin'
-                    ? 'Consolidated Enterprise Telemetry'
-                    : selectedRole === 'store_manager'
-                    ? 'Store Branch & Register Telemetry'
-                    : 'Terminal Hardware & POS Engine'}
-                </span>
-              </h3>
+            <div className="placeholder-hero-text-block">
+              <h2 className="placeholder-hero-title">{currentMeta.heroTitle}</h2>
+              <p className="placeholder-hero-subtitle">{currentMeta.heroSubtitle}</p>
             </div>
 
-            <div className="bento-telemetry-grid">
-              {selectedRole === 'super_admin' && (
-                <>
-                  <div className="bento-telemetry-cell">
-                    <span className="bento-telemetry-label">Network Sales</span>
-                    <span className="bento-telemetry-val highlight">₹1,48,920</span>
-                  </div>
-                  <div className="bento-telemetry-cell">
-                    <span className="bento-telemetry-label">Active Branches</span>
-                    <span className="bento-telemetry-val">3 Live</span>
-                  </div>
-                  <div className="bento-telemetry-cell">
-                    <span className="bento-telemetry-label">Compliance</span>
-                    <span className="bento-telemetry-val">GST e-Invoice</span>
-                  </div>
-                  <div className="bento-telemetry-cell">
-                    <span className="bento-telemetry-label">Cloud Uptime</span>
-                    <span className="bento-telemetry-val">99.98%</span>
-                  </div>
-                </>
-              )}
-
-              {selectedRole === 'store_manager' && (
-                <>
-                  <div className="bento-telemetry-cell">
-                    <span className="bento-telemetry-label">Shift Status</span>
-                    <span className="bento-telemetry-val highlight">Balanced</span>
-                  </div>
-                  <div className="bento-telemetry-cell">
-                    <span className="bento-telemetry-label">Active Counters</span>
-                    <span className="bento-telemetry-val">2 Online</span>
-                  </div>
-                  <div className="bento-telemetry-cell">
-                    <span className="bento-telemetry-label">Drawer Floats</span>
-                    <span className="bento-telemetry-val">Verified</span>
-                  </div>
-                  <div className="bento-telemetry-cell">
-                    <span className="bento-telemetry-label">Shift Approvals</span>
-                    <span className="bento-telemetry-val">0 Pending</span>
-                  </div>
-                </>
-              )}
-
-              {isCashier && (
-                <>
-                  <div className="bento-telemetry-cell">
-                    <span className="bento-telemetry-label">Scanner Latency</span>
-                    <span className="bento-telemetry-val highlight">&lt; 15ms</span>
-                  </div>
-                  <div className="bento-telemetry-cell">
-                    <span className="bento-telemetry-label">CFD 2nd Screen</span>
-                    <span className="bento-telemetry-val">Active Sync</span>
-                  </div>
-                  <div className="bento-telemetry-cell">
-                    <span className="bento-telemetry-label">Receipt Printer</span>
-                    <span className="bento-telemetry-val">ESC/POS Ready</span>
-                  </div>
-                  <div className="bento-telemetry-cell">
-                    <span className="bento-telemetry-label">Offline Buffer</span>
-                    <span className="bento-telemetry-val">Secured</span>
-                  </div>
-                </>
-              )}
-            </div>
-
-            <div className="bento-telemetry-footer-pill">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            <div className="placeholder-upload-hint">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                <polyline points="21 15 16 10 5 21"></polyline>
               </svg>
-              <span>
-                {selectedRole === 'super_admin'
-                  ? 'Audit trails are cryptographically sealed with timestamping.'
-                  : selectedRole === 'store_manager'
-                  ? 'Dual-authorization enforced on high-value discounts & returns.'
-                  : 'Instant hotkey checkout and barcode buffer acceleration enabled.'}
-              </span>
+              <span>Image slot reserved • Ready for your custom illustration</span>
             </div>
           </div>
+        </div>
 
-          {/* 3C: 1-Click Role Demonstrations Bento Tile */}
-          <div className="bento-demo-creds-card bento-login-card-3d">
-            <div className="bento-demo-title-row">
-              <span className="bento-demo-title">1-Click Fast Demonstrations</span>
-              <span className="bento-demo-subtitle">Instant Credentials</span>
-            </div>
-
-            <div className="bento-demo-grid">
-              <button
-                type="button"
-                className={`bento-demo-btn ${selectedRole === 'super_admin' ? 'active' : ''}`}
-                onClick={() => handleRoleTabChange('super_admin')}
-                title="Login as Super Admin"
-              >
-                <span className="bento-demo-btn-label">👑 Admin</span>
-                <span className="bento-demo-btn-email">demo@billing.local</span>
-              </button>
-
-              <button
-                type="button"
-                className={`bento-demo-btn ${selectedRole === 'store_manager' ? 'active' : ''}`}
-                onClick={() => handleRoleTabChange('store_manager')}
-                title="Login as Store Manager"
-              >
-                <span className="bento-demo-btn-label">🏪 Manager</span>
-                <span className="bento-demo-btn-email">manager@billing.local</span>
-              </button>
-
-              <button
-                type="button"
-                className={`bento-demo-btn ${selectedRole === 'cashier' ? 'active' : ''}`}
-                onClick={() => handleRoleTabChange('cashier')}
-                title="Login as Cashier 1"
-              >
-                <span className="bento-demo-btn-label">💳 Cashier 1</span>
-                <span className="bento-demo-btn-email">cashier@billing.local</span>
-              </button>
-
-              <button
-                type="button"
-                className={`bento-demo-btn ${selectedRole === 'cashier2' ? 'active' : ''}`}
-                onClick={() => handleRoleTabChange('cashier2')}
-                title="Login as Cashier 2 (Lakshmi)"
-              >
-                <span className="bento-demo-btn-label">💳 Cashier 2</span>
-                <span className="bento-demo-btn-email">lakshmi@billing.local</span>
-              </button>
-            </div>
-          </div>
-        </section>
-
-        {/* Right Bento Column: Master Authentication Gateway Card */}
-        <section className="bento-auth-gateway-card bento-login-card-3d">
+        {/* ------------------------------------------------------------------
+            RIGHT HALF: CLEAN MODERN LOGIN FORM (Matching Image 2 Reference)
+            ------------------------------------------------------------------ */}
+        <div className="modern-login-right">
           <div>
-            <div className="bento-gateway-header">
-              <div className="bento-gateway-role-badge-row">
-                <div className="bento-gateway-icon-box">{roleDisplay.icon}</div>
-                <span className="bento-gateway-clearance-pill">{roleDisplay.clearance}</span>
+            {/* Top Navigation Row */}
+            <div className="modern-login-top-row">
+              <div className="modern-brand-logo" onClick={onBackToHome}>
+                <div className="modern-brand-icon">⚡</div>
+                <span>Adaptive Billing</span>
               </div>
-              <h2 className="bento-gateway-title">{roleDisplay.title}</h2>
-              <p className="bento-gateway-subtitle">{roleDisplay.subtitle}</p>
+
+              <button
+                type="button"
+                className="modern-btn-back"
+                onClick={onBackToHome}
+                title="Return to home page"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="19" y1="12" x2="5" y2="12"></line>
+                  <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+                <span>Back to Home</span>
+              </button>
+            </div>
+
+            {/* 3 Role Selection Segmented Tabs */}
+            <div className="modern-role-tabs-strip">
+              <button
+                type="button"
+                className={`modern-role-tab tab-super-admin ${selectedRole === 'super_admin' ? 'active' : ''}`}
+                onClick={() => handleRoleTabChange('super_admin')}
+              >
+                <span>👑</span>
+                <span>Super Admin</span>
+              </button>
+
+              <button
+                type="button"
+                className={`modern-role-tab tab-store-manager ${selectedRole === 'store_manager' ? 'active' : ''}`}
+                onClick={() => handleRoleTabChange('store_manager')}
+              >
+                <span>🏪</span>
+                <span>Store Manager</span>
+              </button>
+
+              <button
+                type="button"
+                className={`modern-role-tab tab-cashier ${isCashier ? 'active' : ''}`}
+                onClick={() => handleRoleTabChange('cashier')}
+              >
+                <span>💳</span>
+                <span>Cashier Counter</span>
+              </button>
+            </div>
+
+            {/* Form Title & Context */}
+            <div className="modern-form-heading-block">
+              <h2 className="modern-form-title">{currentMeta.title}</h2>
+              <p className="modern-form-subtitle">{currentMeta.subtitle}</p>
             </div>
 
             {error && (
-              <div className="bento-login-error-banner" role="alert">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+              <div className="modern-error-banner" role="alert">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
                   <circle cx="12" cy="12" r="10"></circle>
                   <line x1="12" y1="8" x2="12" y2="12"></line>
                   <line x1="12" y1="16" x2="12.01" y2="16"></line>
@@ -449,27 +301,21 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="bento-login-form">
-              {/* Email / Username Input */}
-              <div className="bento-form-group">
-                <label className="bento-form-label" htmlFor="bento-login-email">
-                  <span>{roleDisplay.inputLabel}</span>
-                  <span className="required-star">*</span>
+            {/* Main Login Form */}
+            <form onSubmit={handleSubmit} className="modern-auth-form">
+              <div className="modern-input-group">
+                <label className="modern-label" htmlFor="modern-login-email">
+                  <span>{currentMeta.inputLabel}</span>
+                  <span className="req-star">*</span>
                 </label>
-                <div className="bento-input-wrapper">
-                  <span className="bento-input-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                      <circle cx="12" cy="7" r="4"></circle>
-                    </svg>
-                  </span>
+                <div className="modern-input-wrapper">
                   <input
-                    id="bento-login-email"
+                    id="modern-login-email"
                     type={selectedRole === 'super_admin' ? 'email' : 'text'}
-                    className="bento-form-input"
+                    className="modern-input"
                     required
                     autoFocus
-                    placeholder={roleDisplay.placeholder}
+                    placeholder={currentMeta.placeholder}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     autoComplete={isCashier ? 'username' : 'email'}
@@ -477,23 +323,16 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 </div>
               </div>
 
-              {/* Password Input */}
-              <div className="bento-form-group">
-                <label className="bento-form-label" htmlFor="bento-login-password">
+              <div className="modern-input-group">
+                <label className="modern-label" htmlFor="modern-login-password">
                   <span>Password</span>
-                  <span className="required-star">*</span>
+                  <span className="req-star">*</span>
                 </label>
-                <div className="bento-input-wrapper">
-                  <span className="bento-input-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                      <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                    </svg>
-                  </span>
+                <div className="modern-input-wrapper">
                   <input
-                    id="bento-login-password"
+                    id="modern-login-password"
                     type={showPassword ? 'text' : 'password'}
-                    className="bento-form-input"
+                    className="modern-input"
                     required
                     placeholder="Enter your security password"
                     value={password}
@@ -502,17 +341,17 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   />
                   <button
                     type="button"
-                    className="bento-password-toggle"
+                    className="modern-pwd-toggle"
                     onClick={() => setShowPassword(!showPassword)}
                     title={showPassword ? 'Hide password' : 'Show password'}
                   >
                     {showPassword ? (
-                      <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2">
+                      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
                         <line x1="1" y1="1" x2="23" y2="23" />
                       </svg>
                     ) : (
-                      <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2">
+                      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
                         <circle cx="12" cy="12" r="3" />
                       </svg>
@@ -521,142 +360,212 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 </div>
               </div>
 
-              {/* Utility Row: Remember Me & Forgot Password */}
-              <div className="bento-login-options-row">
-                <label className="bento-checkbox-label">
+              <div className="modern-options-row">
+                <label className="modern-checkbox-label">
                   <input
                     type="checkbox"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
                   />
-                  <span>Remember my session</span>
+                  <span>Remember me</span>
                 </label>
 
                 <button
                   type="button"
-                  className="bento-forgot-btn"
+                  className="modern-forgot-link"
                   onClick={() => {
                     setForgotIdentifier(email);
                     setForgotStatus(null);
                     setShowForgotModal(true);
                   }}
                 >
-                  Forgot password?
+                  Forgot your password?
                 </button>
               </div>
 
-              {/* Submit CTA Button */}
               <button
                 type="submit"
-                className="bento-btn-submit"
+                className="modern-btn-submit"
                 disabled={isLoading}
               >
                 {isLoading ? (
-                  <span>Authenticating Clearance...</span>
+                  <span>Authenticating...</span>
                 ) : (
-                  <>
-                    <span>{roleDisplay.btnText}</span>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <line x1="5" y1="12" x2="19" y2="12"></line>
-                      <polyline points="12 5 19 12 12 19"></polyline>
-                    </svg>
-                  </>
+                  <span>{currentMeta.btnText}</span>
                 )}
               </button>
             </form>
           </div>
 
-          {/* Footer Credentials Info */}
-          <div className="bento-gateway-footer">
-            <div className="bento-register-row">
-              <span>Don't have an account registered yet?</span>
+          <div>
+            {/* 1-Click Role Demonstrations */}
+            <div className="modern-demos-box">
+              <div className="modern-demos-header">1-Click Role Demonstrations</div>
+              <div className="modern-demos-grid">
+                <button
+                  type="button"
+                  className={`modern-demo-chip ${selectedRole === 'super_admin' ? 'active' : ''}`}
+                  onClick={() => handleRoleTabChange('super_admin')}
+                  title="Super Admin (demo@billing.local)"
+                >
+                  <span className="modern-demo-chip-title">👑 Admin</span>
+                  <span className="modern-demo-chip-email">demo@billing.local</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`modern-demo-chip ${selectedRole === 'store_manager' ? 'active' : ''}`}
+                  onClick={() => handleRoleTabChange('store_manager')}
+                  title="Store Manager (manager@billing.local)"
+                >
+                  <span className="modern-demo-chip-title">🏪 Manager</span>
+                  <span className="modern-demo-chip-email">manager@billing.local</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`modern-demo-chip ${selectedRole === 'cashier' ? 'active' : ''}`}
+                  onClick={() => handleRoleTabChange('cashier')}
+                  title="Cashier 1 (cashier@billing.local)"
+                >
+                  <span className="modern-demo-chip-title">💳 Cashier 1</span>
+                  <span className="modern-demo-chip-email">cashier@billing.local</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`modern-demo-chip ${selectedRole === 'cashier2' ? 'active' : ''}`}
+                  onClick={() => handleRoleTabChange('cashier2')}
+                  title="Cashier 2 (lakshmi@billing.local)"
+                >
+                  <span className="modern-demo-chip-title">💳 Cashier 2</span>
+                  <span className="modern-demo-chip-email">lakshmi@billing.local</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Footer Register Link */}
+            <div className="modern-footer-row">
+              <span>Don't have an account? </span>
               <button
                 type="button"
-                className="bento-register-link"
+                className="modern-register-link"
                 onClick={onNavigateRegister}
               >
-                Register Your Business →
+                Register Your Business
               </button>
             </div>
-
-            <div className="bento-security-badge">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-              </svg>
-              <span>TLS 1.3 End-to-End Encrypted • Banking-Grade Multi-Branch Token Validation</span>
-            </div>
           </div>
-        </section>
-      </main>
+        </div>
+      </div>
 
-      {/* 5. 3D Bento Forgot Password Modal */}
+      {/* Modern Forgot Password Modal */}
       {showForgotModal && (
-        <div className="bento-modal-backdrop" onClick={() => setShowForgotModal(false)}>
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.65)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '1.5rem',
+          }}
+          onClick={() => setShowForgotModal(false)}
+        >
           <div
-            className="bento-modal-card bento-login-card-3d"
+            style={{
+              width: '100%',
+              maxWidth: '460px',
+              background: '#FFFFFF',
+              borderRadius: '20px',
+              padding: '2rem',
+              boxShadow: '0 20px 40px rgba(0, 0, 0, 0.2)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1.25rem',
+            }}
             onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
           >
-            <div className="bento-modal-header">
-              <h3 className="bento-modal-title">Reset Your Security Password</h3>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <h3 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800, color: '#0F172A' }}>
+                Reset Your Password
+              </h3>
               <button
                 type="button"
-                className="bento-modal-close"
+                style={{ background: 'none', border: 'none', fontSize: '1.25rem', cursor: 'pointer', color: '#94A3B8' }}
                 onClick={() => setShowForgotModal(false)}
-                title="Close"
               >
                 ✕
               </button>
             </div>
 
-            <p className="bento-modal-desc">
-              Enter your registered username or email address. A secure recovery credential link will be dispatched immediately.
+            <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748B', lineHeight: '1.5' }}>
+              Enter your username or registered email address. We'll send you a secure link to reset your credentials.
             </p>
 
             {forgotStatus && (
-              <div className={`bento-login-error-banner ${forgotStatus.isError ? '' : 'success'}`} style={forgotStatus.isError ? {} : { background: 'rgba(16, 185, 129, 0.1)', borderColor: 'rgba(16, 185, 129, 0.35)', color: '#047857' }}>
+              <div
+                style={{
+                  padding: '0.75rem 1rem',
+                  borderRadius: '10px',
+                  fontSize: '0.825rem',
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  background: forgotStatus.isError ? '#FEE2E2' : '#DCFCE7',
+                  color: forgotStatus.isError ? '#B91C1C' : '#15803D',
+                  border: `1px solid ${forgotStatus.isError ? '#FCA5A5' : '#86EFAC'}`,
+                }}
+              >
                 <span>{forgotStatus.isError ? '⚠️' : '✅'}</span>
                 <span>{forgotStatus.message}</span>
               </div>
             )}
 
-            <form onSubmit={handleSendForgotPassword} className="bento-login-form">
-              <div className="bento-form-group">
-                <label className="bento-form-label" htmlFor="bento-forgot-identifier">
+            <form onSubmit={handleSendForgotPassword} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div className="modern-input-group">
+                <label className="modern-label" htmlFor="forgot-identifier">
                   <span>Username or Registered Email</span>
                 </label>
                 <input
-                  id="bento-forgot-identifier"
+                  id="forgot-identifier"
                   type="text"
-                  className="bento-form-input"
-                  style={{ paddingLeft: '1rem' }}
+                  className="modern-input"
                   required
                   placeholder="e.g. manager@billing.local or demo@billing.local"
                   value={forgotIdentifier}
                   onChange={(e) => setForgotIdentifier(e.target.value)}
                 />
-                <div style={{ marginTop: '4px', fontSize: '0.74rem', color: 'var(--bento-login-text-muted)', lineHeight: '1.4' }}>
-                  <strong>Note:</strong> Cashier terminals without an external email should contact the Store Manager for instant pin resets.
-                </div>
               </div>
 
-              <div className="bento-modal-actions">
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
                 <button
                   type="button"
-                  className="bento-btn-back-home"
+                  style={{
+                    background: '#F1F5F9',
+                    border: 'none',
+                    padding: '0.65rem 1.15rem',
+                    borderRadius: '10px',
+                    fontWeight: 700,
+                    fontSize: '0.85rem',
+                    color: '#475569',
+                    cursor: 'pointer',
+                  }}
                   onClick={() => setShowForgotModal(false)}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="bento-btn-submit"
+                  className="modern-btn-submit"
                   style={{ width: 'auto', padding: '0.65rem 1.25rem', marginTop: 0 }}
                   disabled={isSendingReset}
                 >
-                  {isSendingReset ? 'Dispatching...' : 'Send Reset Link'}
+                  {isSendingReset ? 'Sending...' : 'Send Reset Link'}
                 </button>
               </div>
             </form>

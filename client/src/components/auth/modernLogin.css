@@ -1,0 +1,594 @@
+/* ==========================================================================
+   MODERN SPLIT-CARD LOGIN DESIGN (Matching Image 2 Reference)
+   Role-Adaptive Themes:
+   - Super Admin: Purple / Indigo (#5B4DF5, #4338CA, #EEF0FE)
+   - Store Manager: Ocean Blue (#0284C7, #0369A1, #F0F9FF)
+   - Cashier Counter: Deep Emerald Teal (#0F766E, #115E59, #E6F4F3)
+   ========================================================================== */
+
+.modern-login-page {
+  min-height: 100vh;
+  width: 100%;
+  background: #F1F4F9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.5rem;
+  box-sizing: border-box;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  color: #0F172A;
+}
+
+/* Master Floating Card */
+.modern-login-card {
+  width: 100%;
+  max-width: 1100px;
+  min-height: 640px;
+  background: #FFFFFF;
+  border-radius: 28px;
+  box-shadow: 
+    0 4px 6px -1px rgba(0, 0, 0, 0.02),
+    0 24px 50px -10px rgba(15, 23, 42, 0.09),
+    0 0 0 1px rgba(0, 0, 0, 0.04);
+  display: grid;
+  grid-template-columns: 1.05fr 1fr;
+  overflow: hidden;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+/* Role-Specific Tokens */
+.modern-login-card.role-super-admin {
+  --role-primary: #5B4DF5;
+  --role-primary-hover: #4838E6;
+  --role-primary-soft: #EEF0FE;
+  --role-ring: #818CF8;
+  --role-shadow: rgba(91, 77, 245, 0.35);
+  --role-border: #C7D2FE;
+  --role-banner-bg: linear-gradient(145deg, #4A3EE0 0%, #2A2175 100%);
+}
+
+.modern-login-card.role-store-manager {
+  --role-primary: #0284C7;
+  --role-primary-hover: #0369A1;
+  --role-primary-soft: #F0F9FF;
+  --role-ring: #38BDF8;
+  --role-shadow: rgba(2, 132, 199, 0.35);
+  --role-border: #BAE6FD;
+  --role-banner-bg: linear-gradient(145deg, #0284C7 0%, #075985 100%);
+}
+
+.modern-login-card.role-cashier {
+  --role-primary: #0F766E;
+  --role-primary-hover: #115E59;
+  --role-primary-soft: #E6F4F3;
+  --role-ring: #14B8A6;
+  --role-shadow: rgba(15, 118, 110, 0.35);
+  --role-border: #99F6E4;
+  --role-banner-bg: linear-gradient(145deg, #0F766E 0%, #0F2D2E 100%);
+}
+
+/* --------------------------------------------------------------------------
+   LEFT HALF: DEDICATED GRAPHIC / USER IMAGE SLOT
+   -------------------------------------------------------------------------- */
+.modern-login-left {
+  background: var(--role-banner-bg);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 3rem 2.75rem;
+  color: #FFFFFF;
+  overflow: hidden;
+  transition: background 0.4s ease;
+}
+
+/* Subtle decorative circles behind image slot */
+.modern-login-left::before {
+  content: '';
+  position: absolute;
+  top: -100px;
+  right: -100px;
+  width: 400px;
+  height: 400px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.modern-login-left::after {
+  content: '';
+  position: absolute;
+  bottom: -80px;
+  left: -80px;
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* User Custom Image Display (When provided) */
+.user-login-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.image-placeholder-frame {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.placeholder-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  padding: 0.4rem 0.9rem;
+  border-radius: 9999px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  width: fit-content;
+  text-transform: uppercase;
+}
+
+.placeholder-hero-text-block {
+  margin: auto 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.placeholder-hero-title {
+  margin: 0;
+  font-size: 2.25rem;
+  font-weight: 900;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+  color: #FFFFFF;
+}
+
+.placeholder-hero-subtitle {
+  margin: 0;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.82);
+  line-height: 1.6;
+  max-width: 420px;
+}
+
+.placeholder-upload-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px dashed rgba(255, 255, 255, 0.35);
+  padding: 0.65rem 1rem;
+  border-radius: 12px;
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 600;
+  backdrop-filter: blur(4px);
+}
+
+/* --------------------------------------------------------------------------
+   RIGHT HALF: CLEAN MODERN LOGIN FORM (Matching Image 2)
+   -------------------------------------------------------------------------- */
+.modern-login-right {
+  padding: 3rem 3.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: #FFFFFF;
+  box-sizing: border-box;
+}
+
+/* Top Nav Row */
+.modern-login-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.modern-brand-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #0F172A;
+  cursor: pointer;
+  user-select: none;
+}
+
+.modern-brand-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--role-primary);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  transition: background 0.3s ease;
+}
+
+.modern-btn-back {
+  background: none;
+  border: none;
+  color: #64748B;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.modern-btn-back:hover {
+  color: #0F172A;
+  background: #F1F5F9;
+}
+
+/* 3 Role Selection Segmented Tabs */
+.modern-role-tabs-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  background: #F1F5F9;
+  padding: 5px;
+  border-radius: 14px;
+  margin-bottom: 1.75rem;
+}
+
+.modern-role-tab {
+  padding: 0.65rem 0.5rem;
+  border-radius: 10px;
+  border: none;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  background: transparent;
+  color: #64748B;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+
+.modern-role-tab:hover:not(.active) {
+  color: #0F172A;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.modern-role-tab.active {
+  background: #FFFFFF;
+  color: var(--role-primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.modern-role-tab.active.tab-super-admin {
+  color: #5B4DF5;
+}
+
+.modern-role-tab.active.tab-store-manager {
+  color: #0284C7;
+}
+
+.modern-role-tab.active.tab-cashier {
+  color: #0F766E;
+}
+
+/* Form Title Header */
+.modern-form-heading-block {
+  margin-bottom: 1.5rem;
+}
+
+.modern-form-title {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #0F172A;
+  letter-spacing: -0.02em;
+}
+
+.modern-form-subtitle {
+  margin: 4px 0 0 0;
+  font-size: 0.85rem;
+  color: #64748B;
+  line-height: 1.45;
+}
+
+/* Alert Error */
+.modern-error-banner {
+  background: #FEE2E2;
+  border: 1px solid #FCA5A5;
+  color: #B91C1C;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  font-size: 0.825rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+/* Inputs & Form Groups */
+.modern-auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.modern-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.modern-label {
+  font-size: 0.825rem;
+  font-weight: 700;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.modern-label .req-star {
+  color: #EF4444;
+}
+
+.modern-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.modern-input {
+  width: 100%;
+  padding: 0.85rem 1.1rem;
+  border-radius: 12px;
+  border: 1.5px solid #E2E8F0;
+  background: #F8FAFC;
+  font-size: 0.925rem;
+  font-weight: 600;
+  color: #0F172A;
+  outline: none;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+}
+
+.modern-input:focus {
+  background: #FFFFFF;
+  border-color: var(--role-primary);
+  box-shadow: 0 0 0 3px var(--role-primary-soft);
+}
+
+.modern-input::placeholder {
+  color: #94A3B8;
+  font-weight: 400;
+}
+
+.modern-pwd-toggle {
+  position: absolute;
+  right: 0.85rem;
+  background: none;
+  border: none;
+  color: #94A3B8;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  transition: color 0.15s ease;
+}
+
+.modern-pwd-toggle:hover {
+  color: #475569;
+}
+
+/* Utility Row: Remember Me & Forgot Password */
+.modern-options-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.15rem;
+}
+
+.modern-checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.825rem;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  user-select: none;
+}
+
+.modern-checkbox-label input {
+  accent-color: var(--role-primary);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.modern-forgot-link {
+  background: none;
+  border: none;
+  font-size: 0.825rem;
+  font-weight: 700;
+  color: var(--role-primary);
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s ease;
+}
+
+.modern-forgot-link:hover {
+  text-decoration: underline;
+}
+
+/* Big Vibrant CTA Button */
+.modern-btn-submit {
+  width: 100%;
+  padding: 0.95rem;
+  border-radius: 12px;
+  background: var(--role-primary);
+  border: none;
+  color: #FFFFFF;
+  font-size: 0.975rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  box-shadow: 0 4px 14px var(--role-shadow);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  margin-top: 0.4rem;
+}
+
+.modern-btn-submit:hover:not(:disabled) {
+  background: var(--role-primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px var(--role-shadow);
+}
+
+.modern-btn-submit:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.modern-btn-submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* 1-Click Role Demonstrations */
+.modern-demos-box {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #E2E8F0;
+}
+
+.modern-demos-header {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #94A3B8;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.65rem;
+}
+
+.modern-demos-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.modern-demo-chip {
+  padding: 0.5rem 0.4rem;
+  border-radius: 8px;
+  border: 1px solid #E2E8F0;
+  background: #F8FAFC;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  transition: all 0.15s ease;
+  text-align: center;
+}
+
+.modern-demo-chip:hover {
+  background: #FFFFFF;
+  border-color: var(--role-primary);
+  transform: translateY(-1px);
+}
+
+.modern-demo-chip.active {
+  background: var(--role-primary-soft);
+  border-color: var(--role-primary);
+}
+
+.modern-demo-chip-title {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #1E293B;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.modern-demo-chip-email {
+  font-size: 0.6rem;
+  color: #64748B;
+  font-weight: 600;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Footer Register Row */
+.modern-footer-row {
+  margin-top: 1.25rem;
+  text-align: center;
+  font-size: 0.825rem;
+  color: #64748B;
+  font-weight: 500;
+}
+
+.modern-register-link {
+  background: none;
+  border: none;
+  font-size: 0.825rem;
+  font-weight: 800;
+  color: var(--role-primary);
+  cursor: pointer;
+  padding: 0;
+  margin-left: 4px;
+}
+
+.modern-register-link:hover {
+  text-decoration: underline;
+}
+
+/* Responsive */
+@media (max-width: 960px) {
+  .modern-login-card {
+    grid-template-columns: 1fr;
+    max-width: 520px;
+  }
+
+  .modern-login-left {
+    min-height: 240px;
+    padding: 2rem;
+  }
+
+  .modern-login-right {
+    padding: 2rem;
+  }
+
+  .placeholder-hero-title {
+    font-size: 1.6rem;
+  }
+}
