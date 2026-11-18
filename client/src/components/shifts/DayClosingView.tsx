@@ -1049,59 +1049,109 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
   const closedRecord = preview?.closedRecord || null;
 
   return (
-    <div className="day-closing-wrapper">
+    <div className="day-closing-wrapper bento-theme-wrapper">
       {/* --------------------------------------------------------------------
-          1. Header Card
+          1. 3D Bento Command Hero Card
           -------------------------------------------------------------------- */}
-      <div className="day-closing-header-card">
-        <div className="day-closing-header-left">
-          <div className="day-closing-header-icon">
-            <LockIcon size={24} />
+      <div className="cat-bento-header-card bento-card-3d day-closing-bento-hero">
+        <div className="bento-hero-gradient-bar" />
+        <div className="day-closing-header-content">
+          <div className="cat-bento-title-group">
+            <div className="cat-bento-icon-box">
+              <LockIcon size={22} />
+            </div>
+            <div>
+              <div className="cat-bento-title-row">
+                <h1 className="cat-bento-title">Day Closing & Register Reconciliation</h1>
+                <span className={`cat-badge-live-sync ${closingStatus}`}>
+                  <span className="live-indicator-dot" />
+                  {closingStatus === 'open' && 'REGISTER OPEN • ACTIVE TRADING'}
+                  {closingStatus === 'submitted' && 'DAY CLOSING SUBMITTED'}
+                  {closingStatus === 'approved' && 'DAY CLOSING SEALED'}
+                  {closingStatus === 'closed' && 'DAY CLOSING CLOSED'}
+                  {closingStatus === 'reopened' && 'REOPENED FOR AUDIT'}
+                </span>
+                <span className="bento-location-chip" title="Active Branch">
+                  <Building2Icon size={13} />
+                  <span>{branches?.find((b: any) => b.id === activeBranchId)?.name || activeBranchId || 'Main Branch'}</span>
+                </span>
+                <span className="bento-date-chip" title="Business Date">
+                  <ClockIcon size={13} />
+                  <span>{selectedDate}</span>
+                </span>
+                <span className="bento-cashier-chip" title="Cashier / Counter">
+                  <UserIcon size={13} />
+                  <span>{isCashierUser ? user.name : (selectedCashierId ? (preview?.availableCashiers?.find((c: any) => c.id === selectedCashierId)?.name || selectedCashierId) : 'All Cashiers')}</span>
+                </span>
+              </div>
+              <p className="cat-bento-subtitle">
+                Audit daily sales, returns, cash drawer floats, and seal register transactions
+                {shop?.name && <span> • Organization: <strong>{shop.name}</strong></span>}
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="day-closing-title">Day Closing & Register Reconciliation</h1>
-            <p className="day-closing-subtitle">
-              Audit daily sales, returns, cash drawer floats, and seal register transactions
-            </p>
+
+          <div className="cat-bento-header-actions">
+            <button
+              type="button"
+              onClick={() => {
+                if (onNavigateToNotifications) {
+                  onNavigateToNotifications();
+                } else {
+                  setShowNotifDrawer(true);
+                }
+              }}
+              className="cat-btn-outline day-closing-notif-hero-btn"
+              title="Open Shift Notifications"
+            >
+              <BellRingIcon size={14} />
+              <span>Shift Notifications</span>
+              {unreadNotifCount > 0 ? (
+                <span className="day-closing-notif-counter-pill red">{unreadNotifCount} new</span>
+              ) : notifications.length > 0 ? (
+                <span className="day-closing-notif-counter-pill teal">{notifications.length}</span>
+              ) : null}
+            </button>
+
+            {closedRecord?.id && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => handlePrint(closedRecord.id)}
+                  className="cat-btn-outline"
+                  title="Print Official Closing Statement"
+                >
+                  <PrinterIcon size={14} />
+                  <span>Print Statement</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleExportCsv(closedRecord.id)}
+                  className="cat-btn-outline"
+                  title="Download closing details in Excel CSV format"
+                >
+                  <FileSpreadsheetIcon size={14} />
+                  <span>Export CSV</span>
+                </button>
+              </>
+            )}
+
+            <button
+              type="button"
+              onClick={() => {
+                if (activeTab === 'closing') loadPreview();
+                else if (activeTab === 'comparison') loadComparison();
+                else if (activeTab === 'analytics') loadAnalytics();
+                else if (activeTab === 'history') loadHistory();
+              }}
+              disabled={loadingPreview || loadingComparison || loadingAnalytics || loadingHistory}
+              className="cat-btn-primary"
+            >
+              <RefreshCwIcon size={14} className={(loadingPreview || loadingComparison || loadingAnalytics || loadingHistory) ? 'animate-spin' : ''} />
+              <span>Refresh</span>
+            </button>
           </div>
-        </div>
-
-        <div className="day-closing-header-right">
-          {closedRecord?.id && (
-            <>
-              <button
-                onClick={() => handlePrint(closedRecord.id)}
-                className="btn-print"
-                title="Print Official Closing Statement"
-              >
-                <PrinterIcon size={15} />
-                Print Statement
-              </button>
-
-              <button
-                onClick={() => handleExportCsv(closedRecord.id)}
-                className="btn-export"
-                title="Download closing details in Excel CSV format"
-              >
-                <FileSpreadsheetIcon size={15} />
-                Export CSV
-              </button>
-            </>
-          )}
-
-          <button
-            onClick={() => {
-              if (activeTab === 'closing') loadPreview();
-              else if (activeTab === 'comparison') loadComparison();
-              else if (activeTab === 'analytics') loadAnalytics();
-              else if (activeTab === 'history') loadHistory();
-            }}
-            disabled={loadingPreview || loadingComparison || loadingAnalytics || loadingHistory}
-            className="day-closing-refresh-btn"
-          >
-            <RefreshCwIcon size={14} className={(loadingPreview || loadingComparison || loadingAnalytics || loadingHistory) ? 'animate-spin' : ''} />
-            Refresh
-          </button>
         </div>
       </div>
 
@@ -1165,11 +1215,11 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
       {/* --------------------------------------------------------------------
           3. Global Filter Controls Bar
           -------------------------------------------------------------------- */}
-      <div className="day-closing-filter-bar">
+      <div className="day-closing-filter-bar bento-card-3d">
         <div className="day-closing-filter-group">
           {branches && branches.length > 0 && !isCashierUser && (
             <div className="day-closing-filter-item">
-              <Building2Icon size={15} style={{ color: '#4f46e5' }} />
+              <Building2Icon size={14} style={{ color: 'var(--dc-primary)' }} />
               <select
                 value={activeBranchId}
                 onChange={(e) => setSelectedBranchId(e.target.value)}
@@ -1186,8 +1236,8 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
 
           {isCashierUser && (
             <div className="day-closing-filter-item" title="Assigned Branch">
-              <Building2Icon size={15} style={{ color: '#4f46e5' }} />
-              <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#0f172a' }}>
+              <Building2Icon size={14} style={{ color: 'var(--dc-primary)' }} />
+              <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--dc-sidebar)' }}>
                 {branches?.find((b: any) => b.id === activeBranchId)?.name || activeBranchId}
               </span>
             </div>
@@ -1195,9 +1245,9 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
 
           {activeTab === 'closing' || activeTab === 'comparison' ? (
             <div className="day-closing-filter-item">
-              <ClockIcon size={15} style={{ color: '#059669' }} />
+              <ClockIcon size={14} style={{ color: 'var(--dc-primary)' }} />
               {isCashierUser ? (
-                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#0f172a' }}>
+                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--dc-sidebar)' }}>
                   {selectedDate}
                 </span>
               ) : (
@@ -1216,14 +1266,14 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
             <>
               {isCashierUser ? (
                 <div className="day-closing-filter-item" title="Logged in as Cashier (Counter Register)">
-                  <UserIcon size={14} style={{ color: '#0284c7' }} />
-                  <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#0f172a' }}>
+                  <UserIcon size={14} style={{ color: 'var(--dc-primary)' }} />
+                  <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--dc-sidebar)' }}>
                     Cashier: {user.name}
                   </span>
                 </div>
               ) : (
                 <div className="day-closing-filter-item">
-                  <UserIcon size={14} style={{ color: '#0284c7' }} />
+                  <UserIcon size={14} style={{ color: 'var(--dc-primary)' }} />
                   <select
                     value={selectedCashierId}
                     onChange={(e) => {
@@ -1251,7 +1301,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
           {/* Counter Filter */}
           {activeTab === 'closing' && !isCashierUser && preview?.availableCounters && preview.availableCounters.length > 0 && (
             <div className="day-closing-filter-item">
-              <Building2Icon size={14} style={{ color: '#0d9488' }} />
+              <Building2Icon size={14} style={{ color: 'var(--dc-primary)' }} />
               <select
                 value={selectedCounterId}
                 onChange={(e) => setSelectedCounterId(e.target.value)}
@@ -1270,7 +1320,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
 
           {activeTab === 'closing' && preview?.availableShifts && preview.availableShifts.length > 0 && (
             <div className="day-closing-filter-item">
-              <FilterIcon size={14} style={{ color: '#6366f1' }} />
+              <FilterIcon size={14} style={{ color: 'var(--dc-primary)' }} />
               <select
                 value={selectedShiftId}
                 onChange={(e) => setSelectedShiftId(e.target.value)}
@@ -1287,81 +1337,22 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
           )}
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           {activeTab === 'closing' && !isCashierUser && (
             <button
               type="button"
               onClick={() => setActiveTab('breakdown')}
-              className="btn-link"
-              style={{
-                fontSize: '0.8rem',
-                color: '#4f46e5',
-                fontWeight: 700,
-                background: '#eef2ff',
-                border: '1px solid #c7d2fe',
-                padding: '6px 14px',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-              }}
+              className="cat-btn-outline sm"
               title="View Multi-Counter & Cashier Breakdown Reports"
             >
-              <LayersIcon size={14} />
-              <span>Counter & Cashier Breakdown</span>
+              <LayersIcon size={13} />
+              <span>Counter Breakdown</span>
               <ArrowRightIcon size={12} />
             </button>
           )}
 
-          <button
-            type="button"
-            onClick={() => {
-              if (onNavigateToNotifications) {
-                onNavigateToNotifications();
-              } else {
-                setShowNotifDrawer(true);
-              }
-            }}
-            className="btn-link"
-            style={{
-              fontSize: '0.8rem',
-              color: unreadNotifCount > 0 ? '#b91c1c' : '#4f46e5',
-              fontWeight: 700,
-              background: unreadNotifCount > 0 ? '#fef2f2' : '#eef2ff',
-              border: `1px solid ${unreadNotifCount > 0 ? '#fca5a5' : '#c7d2fe'}`,
-              padding: '6px 14px',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              transition: 'all 0.15s ease',
-            }}
-            title="Open Dedicated Notifications Page"
-          >
-            <BellRingIcon size={14} />
-            <span>Shift Notifications</span>
-            {notifications.length > 0 && (
-              <span
-                style={{
-                  background: unreadNotifCount > 0 ? '#ef4444' : '#6366f1',
-                  color: '#ffffff',
-                  fontSize: '0.7rem',
-                  fontWeight: 800,
-                  padding: '2px 7px',
-                  borderRadius: '10px',
-                  lineHeight: 1,
-                  marginLeft: '2px',
-                }}
-              >
-                {unreadNotifCount > 0 ? `${unreadNotifCount} new` : notifications.length}
-              </span>
-            )}
-          </button>
-
-          <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>
-            Tenant: <strong style={{ color: '#0f172a' }}>{shop?.name || 'Main Organization'}</strong>
+          <div style={{ fontSize: '0.8rem', color: 'var(--dc-text-muted)', fontWeight: 600 }}>
+            Tenant: <strong style={{ color: 'var(--dc-sidebar)' }}>{shop?.name || 'Main Organization'}</strong>
           </div>
         </div>
       </div>
@@ -1453,39 +1444,20 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
         <>
           {/* Active Specific Counter / Cashier Navigation Banner */}
           {selectedCounterId && (
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              background: '#f0fdfa',
-              border: '1px solid #99f6e4',
-              borderRadius: '10px',
-              padding: '10px 16px',
-              marginBottom: '14px',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <Building2Icon size={18} style={{ color: '#0d9488' }} />
-                <span style={{ fontSize: '0.875rem', color: '#134e4a', fontWeight: 600 }}>
+            <div className="day-closing-filter-banner bento-card-3d" style={{ marginBottom: '14px' }}>
+              <div className="day-closing-filter-banner-left">
+                <div className="day-closing-filter-banner-icon">
+                  <Building2Icon size={16} />
+                </div>
+                <span className="day-closing-filter-banner-text">
                   Filtering Register Closing for Counter: <strong>{preview?.availableCounters?.find((cnt: any) => cnt.id === selectedCounterId || cnt.code === selectedCounterId)?.name || selectedCounterId}</strong>
                 </span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div className="day-closing-filter-banner-actions">
                 <button
                   type="button"
                   onClick={() => setActiveTab('breakdown')}
-                  style={{
-                    fontSize: '0.78rem',
-                    padding: '5px 12px',
-                    borderRadius: '6px',
-                    border: '1px solid #99f6e4',
-                    background: '#ffffff',
-                    color: '#0d9488',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                  }}
+                  className="cat-btn-outline sm"
                 >
                   <LayersIcon size={13} />
                   <span>All Counters Breakdown</span>
@@ -1493,16 +1465,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setSelectedCounterId('')}
-                  style={{
-                    fontSize: '0.78rem',
-                    padding: '5px 12px',
-                    borderRadius: '6px',
-                    border: '1px solid #14b8a6',
-                    background: '#0d9488',
-                    color: '#ffffff',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                  }}
+                  className="cat-btn-primary sm"
                 >
                   Reset to Store-wide
                 </button>
@@ -1511,39 +1474,20 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
           )}
 
           {selectedCashierId && (
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              background: '#eff6ff',
-              border: '1px solid #bfdbfe',
-              borderRadius: '10px',
-              padding: '10px 16px',
-              marginBottom: '14px',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <UserIcon size={18} style={{ color: '#2563eb' }} />
-                <span style={{ fontSize: '0.875rem', color: '#1e3a8a', fontWeight: 600 }}>
+            <div className="day-closing-filter-banner bento-card-3d" style={{ marginBottom: '14px' }}>
+              <div className="day-closing-filter-banner-left">
+                <div className="day-closing-filter-banner-icon">
+                  <UserIcon size={16} />
+                </div>
+                <span className="day-closing-filter-banner-text">
                   Filtering Register Closing for Cashier: <strong>{preview?.availableCashiers?.find((c: any) => c.id === selectedCashierId)?.name || selectedCashierId}</strong>
                 </span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div className="day-closing-filter-banner-actions">
                 <button
                   type="button"
                   onClick={() => setActiveTab('breakdown')}
-                  style={{
-                    fontSize: '0.78rem',
-                    padding: '5px 12px',
-                    borderRadius: '6px',
-                    border: '1px solid #bfdbfe',
-                    background: '#ffffff',
-                    color: '#2563eb',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                  }}
+                  className="cat-btn-outline sm"
                 >
                   <LayersIcon size={13} />
                   <span>Counter & Shift Reports</span>
@@ -1551,16 +1495,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setSelectedCashierId('')}
-                  style={{
-                    fontSize: '0.78rem',
-                    padding: '5px 12px',
-                    borderRadius: '6px',
-                    border: '1px solid #3b82f6',
-                    background: '#2563eb',
-                    color: '#ffffff',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                  }}
+                  className="cat-btn-primary sm"
                 >
                   Reset to Store-wide
                 </button>
@@ -1936,7 +1871,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
           )}
 
           {/* Lifecycle Status Ribbon */}
-          <div className={`day-closing-status-banner ${closingStatus}`}>
+          <div className={`day-closing-status-banner bento-card-3d ${closingStatus}`}>
             <div className="status-banner-left">
               <div className={`status-banner-icon ${closingStatus}`}>
                 {closingStatus === 'open' ? (
@@ -2025,33 +1960,33 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
             </div>
           </div>
 
-          {/* Clean 6-Card Financial KPI Grid */}
+          {/* Clean 6-Card Financial KPI Grid (3D Bento Cards) */}
           <div className="financial-kpi-grid">
             {/* 1. Gross Sales */}
-            <div className="fin-kpi-card blue">
+            <div className="fin-kpi-card bento-card-3d blue">
               <div className="fin-kpi-top">
                 <span className="fin-kpi-label">Gross Sales</span>
-                <div className="fin-kpi-icon"><TrendingUpIcon size={14} /></div>
+                <div className="fin-kpi-icon"><TrendingUpIcon size={15} /></div>
               </div>
               <div className="fin-kpi-val">{fmt(sales.grossSalesMinor)}</div>
               <span className="fin-kpi-sub">Pre-discount, excl. GST</span>
             </div>
 
             {/* 2. Sales Returns */}
-            <div className="fin-kpi-card rose">
+            <div className="fin-kpi-card bento-card-3d rose">
               <div className="fin-kpi-top">
                 <span className="fin-kpi-label">Sales Returns</span>
-                <div className="fin-kpi-icon"><RotateCcwIcon size={14} /></div>
+                <div className="fin-kpi-icon"><RotateCcwIcon size={15} /></div>
               </div>
               <div className="fin-kpi-val" style={{ color: '#e11d48' }}>-{fmt(sales.returnsTotalMinor)}</div>
               <span className="fin-kpi-sub">{returns.totalReturnsCount || 0} credit notes issued</span>
             </div>
 
-            {/* 3. Net Sales (Highlight) */}
-            <div className="fin-kpi-card green highlight">
+            {/* 3. Net Sales (Standout 3D Bento Highlight) */}
+            <div className="fin-kpi-card bento-card-3d green highlight">
               <div className="fin-kpi-top">
                 <span className="fin-kpi-label">Net Sales</span>
-                <div className="fin-kpi-icon"><RupeeIcon size={14} /></div>
+                <div className="fin-kpi-icon"><RupeeIcon size={16} /></div>
               </div>
               <div className="fin-kpi-val">{fmt(sales.netSalesMinor)}</div>
               <span className="fin-kpi-sub">Gross - Discounts - Returns</span>
@@ -2060,62 +1995,62 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
             {/* For Cashiers: Show operational cards (Bills, Discounts, GST). For Management: Show Profitability & Margin cards */}
             {isCashierUser ? (
               <>
-                <div className="fin-kpi-card purple">
+                <div className="fin-kpi-card bento-card-3d slate">
                   <div className="fin-kpi-top">
                     <span className="fin-kpi-label">Total Invoices</span>
-                    <div className="fin-kpi-icon"><ReceiptIcon size={14} /></div>
+                    <div className="fin-kpi-icon"><ReceiptIcon size={15} /></div>
                   </div>
-                  <div className="fin-kpi-val" style={{ color: '#7e22ce' }}>{sales.invoicesCount || 0} bills</div>
+                  <div className="fin-kpi-val">{sales.invoicesCount || 0} bills</div>
                   <span className="fin-kpi-sub">Completed sales transactions</span>
                 </div>
 
-                <div className="fin-kpi-card amber">
+                <div className="fin-kpi-card bento-card-3d amber">
                   <div className="fin-kpi-top">
                     <span className="fin-kpi-label">Discounts Given</span>
-                    <div className="fin-kpi-icon"><TagIcon size={14} /></div>
+                    <div className="fin-kpi-icon"><TagIcon size={15} /></div>
                   </div>
                   <div className="fin-kpi-val">{fmt(sales.totalDiscountsMinor)}</div>
                   <span className="fin-kpi-sub">Bill & item discounts applied</span>
                 </div>
 
-                <div className="fin-kpi-card green">
+                <div className="fin-kpi-card bento-card-3d emerald">
                   <div className="fin-kpi-top">
                     <span className="fin-kpi-label">GST Collected</span>
-                    <div className="fin-kpi-icon"><RupeeIcon size={14} /></div>
+                    <div className="fin-kpi-icon"><RupeeIcon size={15} /></div>
                   </div>
-                  <div className="fin-kpi-val" style={{ color: '#15803d' }}>{fmt(sales.gstCollectedMinor)}</div>
+                  <div className="fin-kpi-val" style={{ color: '#047857' }}>{fmt(sales.gstCollectedMinor)}</div>
                   <span className="fin-kpi-sub">CGST + SGST + IGST</span>
                 </div>
               </>
             ) : (
               <>
                 {/* 4. Gross Profit */}
-                <div className="fin-kpi-card purple">
+                <div className="fin-kpi-card bento-card-3d purple">
                   <div className="fin-kpi-top">
                     <span className="fin-kpi-label">Gross Profit</span>
-                    <div className="fin-kpi-icon"><TrendingUpIcon size={14} /></div>
+                    <div className="fin-kpi-icon"><TrendingUpIcon size={15} /></div>
                   </div>
                   <div className="fin-kpi-val" style={{ color: '#7e22ce' }}>{fmt(profit.grossProfitMinor)}</div>
                   <span className="fin-kpi-sub">{marginPct.toFixed(1)}% Gross Margin</span>
                 </div>
 
                 {/* 5. Operating Expenses */}
-                <div className="fin-kpi-card amber">
+                <div className="fin-kpi-card bento-card-3d amber">
                   <div className="fin-kpi-top">
                     <span className="fin-kpi-label">Operating Expenses</span>
-                    <div className="fin-kpi-icon"><ArrowUpRightIcon size={14} /></div>
+                    <div className="fin-kpi-icon"><ArrowUpRightIcon size={15} /></div>
                   </div>
                   <div className="fin-kpi-val">{fmt(profit.operatingExpensesMinor)}</div>
                   <span className="fin-kpi-sub">Branch petty & overheads</span>
                 </div>
 
                 {/* 6. Operating Profit */}
-                <div className="fin-kpi-card green">
+                <div className="fin-kpi-card bento-card-3d emerald">
                   <div className="fin-kpi-top">
                     <span className="fin-kpi-label">Operating Profit</span>
-                    <div className="fin-kpi-icon"><RupeeIcon size={14} /></div>
+                    <div className="fin-kpi-icon"><RupeeIcon size={15} /></div>
                   </div>
-                  <div className="fin-kpi-val" style={{ color: profit.netProfitMinor >= 0 ? '#15803d' : '#b91c1c' }}>
+                  <div className="fin-kpi-val" style={{ color: profit.netProfitMinor >= 0 ? '#047857' : '#b91c1c' }}>
                     {fmt(profit.netProfitMinor)}
                   </div>
                   <span className="fin-kpi-sub">{operatingMarginPct.toFixed(1)}% Net Margin</span>
@@ -2124,14 +2059,14 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
             )}
           </div>
 
-          {/* Quick KPI Strip */}
-          <div className="quick-kpi-strip">
-            <div>Total Invoices: <strong>{sales.invoicesCount || 0} bills</strong></div>
-            <div>Avg Bill Value: <strong>{fmt(sales.averageBillValueMinor)}</strong></div>
-            <div>GST Collected: <strong>{fmt(sales.gstCollectedMinor)}</strong></div>
-            <div>Discounts Given: <strong>{fmt(sales.totalDiscountsMinor)}</strong></div>
-            <div>Cancelled Invoices: <strong>{sales.cancelledInvoicesCount || 0}</strong></div>
-            <div>Outstanding Credit: <strong style={{ color: '#7e22ce' }}>{fmt(sales.customerCreditBalanceMinor)}</strong></div>
+          {/* Quick KPI Strip (3D Bento Ticker) */}
+          <div className="quick-kpi-strip bento-card-3d">
+            <div className="quick-kpi-item">Total Invoices: <strong>{sales.invoicesCount || 0} bills</strong></div>
+            <div className="quick-kpi-item">Avg Bill Value: <strong>{fmt(sales.averageBillValueMinor)}</strong></div>
+            <div className="quick-kpi-item">GST Collected: <strong>{fmt(sales.gstCollectedMinor)}</strong></div>
+            <div className="quick-kpi-item">Discounts Given: <strong>{fmt(sales.totalDiscountsMinor)}</strong></div>
+            <div className="quick-kpi-item">Cancelled Invoices: <strong>{sales.cancelledInvoicesCount || 0}</strong></div>
+            <div className="quick-kpi-item">Outstanding Credit: <strong className="credit-val">{fmt(sales.customerCreditBalanceMinor)}</strong></div>
           </div>
 
           {/* Bento Grid: Tender Collections (60%) & Cash Drawer Reconciliation (40%) */}
@@ -2139,10 +2074,12 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
             {/* LEFT 7 COLUMNS: Tender Collections & Returns */}
             <div className="bento-col-7">
               {/* Tender Collections */}
-              <div className="day-closing-card">
+              <div className="day-closing-card bento-card-3d">
                 <div className="day-closing-card-header">
                   <div className="day-closing-card-title-group">
-                    <WalletIcon size={18} style={{ color: '#10b981' }} />
+                    <div className="day-closing-card-icon-bubble green">
+                      <WalletIcon size={18} />
+                    </div>
                     <span>Tender & Settlement Collections</span>
                   </div>
                   <span className="day-closing-card-badge emerald">
@@ -2151,7 +2088,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                 </div>
 
                 <div className="tender-kpi-grid">
-                  <div className="tender-kpi-card cash">
+                  <div className="tender-kpi-card bento-card-3d cash">
                     <div className="tender-header">
                       <BanknoteIcon size={15} />
                       <span>Physical Cash</span>
@@ -2159,7 +2096,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                     <div className="tender-amount">{fmt(payments.cashCollectionsMinor)}</div>
                   </div>
 
-                  <div className="tender-kpi-card upi">
+                  <div className="tender-kpi-card bento-card-3d upi">
                     <div className="tender-header">
                       <RefreshCwIcon size={14} />
                       <span>UPI / QR</span>
@@ -2167,7 +2104,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                     <div className="tender-amount">{fmt(payments.upiCollectionsMinor)}</div>
                   </div>
 
-                  <div className="tender-kpi-card card">
+                  <div className="tender-kpi-card bento-card-3d card">
                     <div className="tender-header">
                       <CreditCardIcon size={14} />
                       <span>Card / POS</span>
@@ -2175,7 +2112,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                     <div className="tender-amount">{fmt(payments.cardCollectionsMinor)}</div>
                   </div>
 
-                  <div className="tender-kpi-card credit">
+                  <div className="tender-kpi-card bento-card-3d credit">
                     <div className="tender-header">
                       <StoreIcon size={14} />
                       <span>Store Credit</span>
@@ -2186,10 +2123,12 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
               </div>
 
               {/* Returns, Refunds & Exchanges */}
-              <div className="day-closing-card">
+              <div className="day-closing-card bento-card-3d">
                 <div className="day-closing-card-header">
                   <div className="day-closing-card-title-group">
-                    <RotateCcwIcon size={18} style={{ color: '#f43f5e' }} />
+                    <div className="day-closing-card-icon-bubble rose">
+                      <RotateCcwIcon size={18} />
+                    </div>
                     <span>Returns, Refunds & Exchanges</span>
                   </div>
                   <span className="day-closing-card-badge rose">
@@ -2225,7 +2164,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                 </div>
 
                 <div className="detail-notice-box" style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                  <InfoIcon size={16} style={{ color: '#4f46e5', flexShrink: 0, marginTop: '2px' }} />
+                  <InfoIcon size={16} style={{ color: 'var(--dc-primary)', flexShrink: 0, marginTop: '2px' }} />
                   <div>
                     <strong>Accounting Integrity:</strong> Exchanges seamlessly offset customer return credit against new merchandise sold without inflating gross cash collections. Resellable returns restore inventory cost, while damaged goods are quarantined separately.
                   </div>
@@ -2235,10 +2174,12 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
 
             {/* RIGHT 5 COLUMNS: Dedicated Cash Drawer Reconciliation */}
             <div className="bento-col-5">
-              <div className="day-closing-card">
+              <div className="day-closing-card bento-card-3d">
                 <div className="day-closing-card-header">
                   <div className="day-closing-card-title-group">
-                    <BanknoteIcon size={18} style={{ color: '#10b981' }} />
+                    <div className="day-closing-card-icon-bubble green">
+                      <BanknoteIcon size={18} />
+                    </div>
                     <span>Cash Drawer Reconciliation</span>
                   </div>
                   <span className={`day-closing-card-badge ${selectedCashierId || isCashierUser ? 'emerald' : ''}`}>
@@ -2387,7 +2328,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                     </form>
                   ) : (
                     /* Closed or Submitted View */
-                    <div style={{ marginTop: '0.5rem', background: '#f8fafc', padding: '1rem', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <div style={{ marginTop: '0.5rem', background: 'var(--dc-surface-inner)', padding: '1.1rem', borderRadius: '14px', border: '1.5px solid var(--dc-border)', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.825rem' }}>
                         <span style={{ color: '#64748b' }}>Actual Closing Cash:</span>
                         <strong style={{ color: '#0f172a' }}>{fmt(closedRecord?.actual_cash_minor)}</strong>
