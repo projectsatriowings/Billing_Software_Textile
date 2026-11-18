@@ -144,10 +144,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   };
 
   const isCashier = selectedRole === 'cashier' || selectedRole === 'cashier2';
+  const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
 
   const roleMeta = {
     super_admin: {
       key: 'super-admin',
+      image: '/images/admin.png',
       title: 'Super Admin Portal',
       subtitle: 'Enterprise headquarters: consolidated sales, multi-branch network & governance.',
       heroTitle: 'Consolidated Enterprise Control.',
@@ -159,6 +161,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     },
     store_manager: {
       key: 'store-manager',
+      image: '/images/manager.png',
       title: 'Store Manager Portal',
       subtitle: 'Branch operations: register closing approvals, cash float audits & staff supervision.',
       heroTitle: 'Keep In Touch With Your Store.',
@@ -170,6 +173,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     },
     cashier: {
       key: 'cashier',
+      image: '/images/cashier.png',
       title: 'Cashier Billing Counter',
       subtitle: 'High-speed retail checkout, cash drawer shift balancing & rapid barcode billing.',
       heroTitle: 'High-Speed Cashier POS.',
@@ -191,41 +195,40 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     <div className="modern-login-page">
       <div className={`modern-login-card role-${currentMeta.key}`}>
         {/* ------------------------------------------------------------------
-            LEFT HALF: RESERVED FOR USER'S GENERATED IMAGE
+            LEFT HALF: USER'S GENERATED IMAGE DISPLAY
             ------------------------------------------------------------------ */}
         <div className="modern-login-left">
-          {/* User provided custom image will be loaded here */}
-          <img
-            src="/login-illustration.png"
-            alt="Portal Visual"
-            className="user-login-image"
-            onError={(e) => {
-              // Hide image tag if file not yet uploaded by user, showing clean role placeholder
-              (e.currentTarget as HTMLElement).style.display = 'none';
-              const frame = document.getElementById('user-image-fallback-frame');
-              if (frame) frame.style.display = 'flex';
-            }}
-          />
+          {currentMeta.image && !failedImages[currentMeta.image] ? (
+            <img
+              key={currentMeta.image}
+              src={currentMeta.image}
+              alt={`${currentMeta.title} Illustration`}
+              className="user-login-image"
+              onError={() => {
+                setFailedImages((prev) => ({ ...prev, [currentMeta.image!]: true }));
+              }}
+            />
+          ) : (
+            <div id="user-image-fallback-frame" className="image-placeholder-frame">
+              <div className="placeholder-badge">
+                <span>{currentMeta.badge}</span>
+              </div>
 
-          <div id="user-image-fallback-frame" className="image-placeholder-frame">
-            <div className="placeholder-badge">
-              <span>{currentMeta.badge}</span>
-            </div>
+              <div className="placeholder-hero-text-block">
+                <h2 className="placeholder-hero-title">{currentMeta.heroTitle}</h2>
+                <p className="placeholder-hero-subtitle">{currentMeta.heroSubtitle}</p>
+              </div>
 
-            <div className="placeholder-hero-text-block">
-              <h2 className="placeholder-hero-title">{currentMeta.heroTitle}</h2>
-              <p className="placeholder-hero-subtitle">{currentMeta.heroSubtitle}</p>
+              <div className="placeholder-upload-hint">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                  <polyline points="21 15 16 10 5 21"></polyline>
+                </svg>
+                <span>Image slot reserved • Ready for your custom illustration</span>
+              </div>
             </div>
-
-            <div className="placeholder-upload-hint">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                <polyline points="21 15 16 10 5 21"></polyline>
-              </svg>
-              <span>Image slot reserved • Ready for your custom illustration</span>
-            </div>
-          </div>
+          )}
         </div>
 
         {/* ------------------------------------------------------------------
