@@ -2430,6 +2430,32 @@ export function registerDayClosing(r: Router) {
       [tenantId, branchId, startDate, endDate],
     );
 
+    // 1b. Invoices breakdown by counter AND cashier
+    const counterCashierRows = await ctx.db.query<any>(
+      `SELECT
+        COALESCE(NULLIF(i.counter_id, ''), NULLIF(i.counter, ''), 'UNASSIGNED') AS counter_key,
+        COALESCE(NULLIF(i.created_by, ''), 'UNASSIGNED') AS cashier_id,
+        COALESCE(u.name, 'Unassigned Cashier') AS cashier_name,
+        COALESCE(u.role, 'CASHIER') AS cashier_role,
+        COUNT(CASE WHEN i.kind = 'sale' AND i.status = 'posted' THEN 1 END)::int AS invoices_count,
+        COUNT(CASE WHEN i.kind = 'credit_note' AND i.status = 'posted' THEN 1 END)::int AS returns_count,
+        COALESCE(SUM(CASE WHEN i.kind = 'sale' AND i.status = 'posted' THEN i.total_minor ELSE 0 END), 0)::bigint AS gross_sales_minor,
+        COALESCE(SUM(CASE WHEN i.kind = 'sale' AND i.status = 'posted' THEN i.discount_minor ELSE 0 END), 0)::bigint AS discounts_total_minor,
+        COALESCE(SUM(CASE WHEN i.kind = 'credit_note' AND i.status = 'posted' THEN i.total_minor ELSE 0 END), 0)::bigint AS returns_total_minor,
+        COALESCE(SUM(CASE WHEN i.status = 'posted' AND i.total_minor > i.paid_minor THEN (i.total_minor - i.paid_minor) ELSE 0 END), 0)::bigint AS credit_sales_minor
+       FROM invoices i
+       LEFT JOIN users u ON u.id = i.created_by AND u.tenant_id = i.tenant_id
+       WHERE i.tenant_id = ? AND i.branch_id = ? AND i.bdate >= ? AND i.bdate <= ?
+         AND i.status = 'posted'
+       GROUP BY
+        COALESCE(NULLIF(i.counter_id, ''), NULLIF(i.counter, ''), 'UNASSIGNED'),
+        COALESCE(NULLIF(i.created_by, ''), 'UNASSIGNED'),
+        COALESCE(u.name, 'Unassigned Cashier'),
+        COALESCE(u.role, 'CASHIER')
+       ORDER BY counter_key ASC, cashier_name ASC`,
+      [tenantId, branchId, startDate, endDate],
+    );
+
     // 2. COGS by counter
     const cogsRows = await ctx.db.query<any>(
       `SELECT
@@ -2489,6 +2515,76 @@ export function registerDayClosing(r: Router) {
       pObj.total += amt;
     }
 
+    // 3b. Payments by counter AND cashier
+    const counterCashierPaymentRows = await ctx.db.query<any>(
+      `SELECT
+        COALESCE(NULLIF(p.counter_id, ''), NULLIF(p.counter, ''), NULLIF(i.counter_id, ''), NULLIF(i.counter, ''), 'UNASSIGNED') AS counter_key,
+        COALESCE(NULLIF(p.created_by, ''), NULLIF(i.created_by, ''), 'UNASSIGNED') AS cashier_id,
+        COALESCE(p.method, 'cash') AS method,
+        COALESCE(SUM(p.amount_minor), 0)::bigint AS total_minor
+       FROM payments p
+       LEFT JOIN invoices i ON i.id = p.invoice_id
+       WHERE p.tenant_id = ? AND (p.status IS NULL OR p.status = 'posted')
+         AND (
+           (p.bdate >= ? AND p.bdate <= ?)
+           OR ((p.created_at)::date >= ?::date AND (p.created_at)::date <= ?::date)
+         )
+         AND (p.invoice_id IS NULL OR i.branch_id IS NULL OR i.branch_id = ?)
+       GROUP BY
+        COALESCE(NULLIF(p.counter_id, ''), NULLIF(p.counter, ''), NULLIF(i.counter_id, ''), NULLIF(i.counter, ''), 'UNASSIGNED'),
+        COALESCE(NULLIF(p.created_by, ''), NULLIF(i.created_by, ''), 'UNASSIGNED'),
+        COALESCE(p.method, 'cash')`,
+      [tenantId, startDate, endDate, startDate, endDate, branchId],
+    );
+
+    const counterCashierPaymentMap = new Map<string, { cash: number; upi: number; card: number; bank: number; total: number }>();
+    for (const pr of counterCashierPaymentRows) {
+      const cKey = pr.counter_key || pr.counterKey;
+      const uKey = pr.cashier_id || pr.cashierId;
+      const combinedKey = `${cKey}:::${uKey}`;
+      if (!counterCashierPaymentMap.has(combinedKey)) {
+        counterCashierPaymentMap.set(combinedKey, { cash: 0, upi: 0, card: 0, bank: 0, total: 0 });
+      }
+      const cpObj = counterCashierPaymentMap.get(combinedKey)!;
+      const m = String(pr.method).toLowerCase();
+      const amt = Number(pr.total_minor ?? pr.totalMinor ?? 0);
+      if (m === 'cash') cpObj.cash += amt;
+      else if (m === 'upi') cpObj.upi += amt;
+      else if (m === 'card') cpObj.card += amt;
+      else if (m === 'bank' || m === 'bank_transfer') cpObj.bank += amt;
+      cpObj.total += amt;
+    }
+
+    // 4. Shifts per counter on this date
+    const shiftRows = await ctx.db.query<any>(
+      `SELECT
+        s.id,
+        s.shift_number,
+        COALESCE(NULLIF(s.counter_id, ''), NULLIF(s.counter, ''), 'UNASSIGNED') AS counter_key,
+        s.counter_id,
+        s.counter,
+        COALESCE(NULLIF(s.counter_name_snapshot, ''), s.counter, 'Counter') AS counter_name,
+        s.user_id AS cashier_id,
+        COALESCE(u.name, 'Cashier') AS cashier_name,
+        COALESCE(u.role, 'CASHIER') AS cashier_role,
+        s.status,
+        s.opened_at,
+        s.closed_at,
+        COALESCE(s.opening_cash_minor, 0)::bigint AS opening_cash_minor,
+        COALESCE(s.counted_cash_minor, 0)::bigint AS counted_cash_minor,
+        COALESCE(s.expected_cash_minor, 0)::bigint AS expected_cash_minor,
+        COALESCE(s.variance_minor, 0)::bigint AS variance_minor
+       FROM shifts s
+       LEFT JOIN users u ON u.id = s.user_id AND u.tenant_id = s.tenant_id
+       WHERE s.tenant_id = ? AND s.branch_id = ?
+         AND (
+           (s.opened_at)::date >= ?::date AND (s.opened_at)::date <= ?::date
+           OR (s.closed_at IS NOT NULL AND (s.closed_at)::date >= ?::date AND (s.closed_at)::date <= ?::date)
+         )
+       ORDER BY s.opened_at ASC`,
+      [tenantId, branchId, startDate, endDate, startDate, endDate],
+    );
+
     const counters: any[] = [];
     let consolidatedGross = 0;
     let consolidatedReturns = 0;
@@ -2526,6 +2622,86 @@ export function registerDayClosing(r: Router) {
       const marginPct = net > 0 ? (grossProfit / net) * 100 : 0;
 
       const pObj = paymentMap.get(key) || { cash: 0, upi: 0, card: 0, bank: 0, store_credit: 0, total: 0 };
+
+      // Build cashiers array for this counter
+      const cashierMap = new Map<string, any>();
+
+      // A. Cashier sales from invoices
+      for (const ccr of counterCashierRows) {
+        const cKey = ccr.counter_key || ccr.counterKey;
+        if (cKey !== key) continue;
+        const uId = ccr.cashier_id || ccr.cashierId;
+        const cGross = Number(ccr.gross_sales_minor ?? ccr.grossSalesMinor ?? 0);
+        const cRet = Number(ccr.returns_total_minor ?? ccr.returnsTotalMinor ?? 0);
+        const cNet = Math.max(0, cGross - cRet);
+        const cPay = counterCashierPaymentMap.get(`${cKey}:::${uId}`) || { cash: 0, upi: 0, card: 0, bank: 0, total: 0 };
+
+        cashierMap.set(uId, {
+          cashierId: uId,
+          cashierName: ccr.cashier_name || ccr.cashierName || 'Cashier',
+          cashierRole: ccr.cashier_role || ccr.cashierRole || 'CASHIER',
+          invoicesCount: Number(ccr.invoices_count ?? ccr.invoicesCount ?? 0),
+          returnsCount: Number(ccr.returns_count ?? ccr.returnsCount ?? 0),
+          grossSalesMinor: cGross,
+          discountsTotalMinor: Number(ccr.discounts_total_minor ?? ccr.discountsTotalMinor ?? 0),
+          returnsTotalMinor: cRet,
+          netSalesMinor: cNet,
+          creditSalesMinor: Number(ccr.credit_sales_minor ?? ccr.creditSalesMinor ?? 0),
+          collections: cPay,
+          shifts: [],
+        });
+      }
+
+      // B. Link shifts operating on this counter
+      const counterShifts: any[] = [];
+      for (const sh of shiftRows) {
+        const isCounterMatch =
+          sh.counter_key === key ||
+          (ir.counter_identifier && (sh.counter_id === ir.counter_identifier || sh.counter === ir.counter_identifier)) ||
+          (ir.counter_code && (sh.counter === ir.counter_code || sh.counter_id === ir.counter_code));
+
+        if (!isCounterMatch) continue;
+
+        const shiftItem = {
+          shiftId: sh.id,
+          shiftNumber: sh.shift_number || sh.shiftNumber || sh.id,
+          status: sh.status,
+          cashierId: sh.cashier_id,
+          cashierName: sh.cashier_name,
+          cashierRole: sh.cashier_role,
+          openedAt: sh.opened_at,
+          closedAt: sh.closed_at,
+          openingCashMinor: Number(sh.opening_cash_minor || 0),
+          countedCashMinor: Number(sh.counted_cash_minor || 0),
+          expectedCashMinor: Number(sh.expected_cash_minor || 0),
+          varianceMinor: Number(sh.variance_minor || 0),
+        };
+        counterShifts.push(shiftItem);
+
+        if (sh.cashier_id) {
+          if (!cashierMap.has(sh.cashier_id)) {
+            cashierMap.set(sh.cashier_id, {
+              cashierId: sh.cashier_id,
+              cashierName: sh.cashier_name || 'Cashier',
+              cashierRole: sh.cashier_role || 'CASHIER',
+              invoicesCount: 0,
+              returnsCount: 0,
+              grossSalesMinor: 0,
+              discountsTotalMinor: 0,
+              returnsTotalMinor: 0,
+              netSalesMinor: 0,
+              creditSalesMinor: 0,
+              collections: { cash: 0, upi: 0, card: 0, bank: 0, total: 0 },
+              shifts: [shiftItem],
+            });
+          } else {
+            cashierMap.get(sh.cashier_id)!.shifts.push(shiftItem);
+          }
+        }
+      }
+
+      const activeShift = counterShifts.find((s) => s.status === 'open') || null;
+      const counterCashiers = Array.from(cashierMap.values()).sort((a, b) => b.netSalesMinor - a.netSalesMinor);
 
       consolidatedGross += gross;
       consolidatedReturns += ret;
@@ -2574,8 +2750,95 @@ export function registerDayClosing(r: Router) {
           storeCredit: pObj.store_credit,
           total: pObj.total,
         },
+        cashiers: counterCashiers,
+        shifts: counterShifts,
+        activeShift,
+        shiftsCount: counterShifts.length,
       });
     }
+
+    // 5. Ensure all active branch counters are present even if 0 transactions
+    const registeredCounters = await ctx.db.query<any>(
+      `SELECT id, name, code, status
+       FROM counters
+       WHERE tenant_id = ? AND branch_id = ? AND status = 'ACTIVE'
+       ORDER BY code ASC`,
+      [tenantId, branchId],
+    );
+
+    const existingCounterCodes = new Set(counters.map((c) => c.counterCode));
+    const existingCounterIds = new Set(counters.map((c) => c.counterId));
+
+    for (const rc of registeredCounters) {
+      if (existingCounterCodes.has(rc.code) || existingCounterIds.has(rc.id)) {
+        continue;
+      }
+      const rcShifts = shiftRows
+        .filter((sh: any) => sh.counter_id === rc.id || sh.counter === rc.code)
+        .map((sh: any) => ({
+          shiftId: sh.id,
+          shiftNumber: sh.shift_number || sh.id,
+          status: sh.status,
+          cashierId: sh.cashier_id,
+          cashierName: sh.cashier_name,
+          cashierRole: sh.cashier_role,
+          openedAt: sh.opened_at,
+          closedAt: sh.closed_at,
+          openingCashMinor: Number(sh.opening_cash_minor || 0),
+          countedCashMinor: Number(sh.counted_cash_minor || 0),
+          expectedCashMinor: Number(sh.expected_cash_minor || 0),
+          varianceMinor: Number(sh.variance_minor || 0),
+        }));
+
+      const rcCashiers = rcShifts.map((sh: any) => ({
+        cashierId: sh.cashierId,
+        cashierName: sh.cashierName,
+        cashierRole: sh.cashierRole,
+        invoicesCount: 0,
+        returnsCount: 0,
+        grossSalesMinor: 0,
+        discountsTotalMinor: 0,
+        returnsTotalMinor: 0,
+        netSalesMinor: 0,
+        creditSalesMinor: 0,
+        collections: { cash: 0, upi: 0, card: 0, bank: 0, total: 0 },
+        shifts: [sh],
+      }));
+
+      counters.push({
+        counterKey: rc.id,
+        counterId: rc.id,
+        counterCode: rc.code,
+        counterName: rc.name,
+        isException: false,
+        invoicesCount: 0,
+        returnsCount: 0,
+        grossSalesMinor: 0,
+        discountsTotalMinor: 0,
+        returnsTotalMinor: 0,
+        netSalesMinor: 0,
+        taxableSalesMinor: 0,
+        gstCollectedMinor: 0,
+        cogsMinor: 0,
+        returnedCogsMinor: 0,
+        netCogsMinor: 0,
+        grossProfitMinor: 0,
+        marginPct: 0,
+        creditSalesMinor: 0,
+        collections: { cash: 0, upi: 0, card: 0, bank: 0, storeCredit: 0, total: 0 },
+        cashiers: rcCashiers,
+        shifts: rcShifts,
+        activeShift: rcShifts.find((s: any) => s.status === 'open') || null,
+        shiftsCount: rcShifts.length,
+      });
+    }
+
+    // Sort: Regular counters by code, exceptions at end
+    counters.sort((a, b) => {
+      if (a.isException && !b.isException) return 1;
+      if (!a.isException && b.isException) return -1;
+      return String(a.counterCode || '').localeCompare(String(b.counterCode || ''));
+    });
 
     const consolidatedTotal = {
       invoicesCount: consolidatedInvoices,
