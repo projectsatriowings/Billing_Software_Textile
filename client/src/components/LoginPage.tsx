@@ -149,7 +149,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   const roleMeta = {
     super_admin: {
       key: 'super-admin',
-      image: '/images/admin.png',
+      image: '/images/super-admin.png',
       title: 'Super Admin Portal',
       subtitle: 'Enterprise headquarters: consolidated sales, multi-branch network & governance.',
       heroTitle: 'Consolidated Enterprise Control.',

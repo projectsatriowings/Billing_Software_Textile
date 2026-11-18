@@ -73,9 +73,9 @@
   background: var(--role-banner-bg);
   position: relative;
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 4rem 4rem;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
   color: #FFFFFF;
   overflow: hidden;
   transition: background 0.4s ease;
@@ -108,14 +108,19 @@
   pointer-events: none;
 }
 
-/* User Custom Image Display (When provided) */
+/* User Custom Image Display (Full visibility top-to-bottom, uncropped) */
 .user-login-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  position: absolute;
-  inset: 0;
+  max-width: 100%;
+  max-height: 94vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  object-position: center;
+  margin: auto;
   z-index: 1;
+  border-radius: 18px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
+  display: block;
 }
 
 .image-placeholder-frame {
