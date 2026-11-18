@@ -61,7 +61,7 @@
 }
 
 .notif-unread-badge-pill {
-  background: #ef4444;
+  background: var(--primary, #0F766E);
   color: #ffffff;
   font-size: 0.72rem;
   font-weight: 800;
@@ -378,9 +378,9 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #ef4444;
+  background: var(--primary, #0F766E);
   flex-shrink: 0;
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.25);
 }
 
 .notif-card-status-pill {

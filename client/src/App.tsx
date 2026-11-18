@@ -7282,7 +7282,7 @@ export function App() {
                 <span className="nav-text">Notifications</span>
                 <span className="nav-right-slot">
                   {unreadShiftNotifCount > 0 ? (
-                    <span className="nav-count-badge notif-alert-badge" style={{ background: '#ef4444', color: '#ffffff', fontWeight: 800 }}>
+                    <span className="nav-count-badge notif-alert-badge" style={{ background: 'var(--primary, #0F766E)', color: '#ffffff', fontWeight: 800 }}>
                       {unreadShiftNotifCount}
                     </span>
                   ) : shiftNotifications.length > 0 ? (
@@ -8349,7 +8349,7 @@ export function App() {
                                           <line x1="12" y1="22.08" x2="12" y2="12"></line>
                                         </svg>
                                       ) : (
-                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
                                           <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
                                           <line x1="8" y1="21" x2="16" y2="21"></line>
                                           <line x1="12" y1="17" x2="12" y2="21"></line>
@@ -8587,7 +8587,7 @@ export function App() {
                                           <line x1="12" y1="22.08" x2="12" y2="12"></line>
                                         </svg>
                                       ) : (
-                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
                                           <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
                                           <line x1="8" y1="21" x2="16" y2="21"></line>
                                           <line x1="12" y1="17" x2="12" y2="21"></line>

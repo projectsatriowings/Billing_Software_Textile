@@ -351,12 +351,12 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
 
   return (
     <div
-      className="modal-backdrop"
+      className="modal-backdrop modal-overlay theme-cashier"
       style={{
         position: 'fixed',
         inset: 0,
         background: 'rgba(15, 23, 42, 0.65)',
-        backdropFilter: 'blur(5px)',
+        backdropFilter: 'blur(8px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -369,27 +369,37 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
       }}
     >
       <div
-        className="modal-content bento-modal"
+        className="modal-content bento-modal shift-bento-dialog"
         style={{
           width: '95%',
           maxWidth: selectedInvoice ? '960px' : '680px',
           maxHeight: '90vh',
           display: 'flex',
           flexDirection: 'column',
-          background: '#ffffff',
+          background: 'var(--surface, #FAF7F2)',
           borderRadius: '20px',
-          boxShadow: '0 25px 50px -12px rgba(15, 23, 42, 0.25), 0 0 0 1px rgba(226, 232, 240, 0.8)',
+          boxShadow: '0 25px 60px -15px rgba(15, 45, 46, 0.28), 0 10px 24px -5px rgba(15, 45, 46, 0.08)',
+          border: '1.5px solid var(--border, #D0C7B8)',
           overflow: 'hidden',
           transition: 'max-width 0.25s ease',
         }}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Top Accent Gradient Bar */}
+        <div
+          className="modal-top-accent green-accent"
+          style={{
+            height: '4px',
+            background: 'linear-gradient(90deg, var(--sidebar, #0F2D2E) 0%, var(--primary, #0F766E) 50%, var(--ring, #14B8A6) 100%)',
+          }}
+        />
+
         {/* ================= BENTO MODAL HEADER ================= */}
         <div
           style={{
-            padding: '1.2rem 1.5rem',
-            background: 'linear-gradient(180deg, #f8fafc 0%, #ffffff 100%)',
-            borderBottom: '1px solid #e2e8f0',
+            padding: '1.2rem 1.6rem',
+            background: 'var(--surface, #FAF7F2)',
+            borderBottom: '1px solid var(--border, #D0C7B8)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -398,15 +408,16 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
             <div
               style={{
-                width: '42px',
-                height: '42px',
-                borderRadius: '12px',
-                background: 'linear-gradient(135deg, #e0e7ff 0%, #ede9fe 100%)',
-                color: '#4f46e5',
+                width: '44px',
+                height: '44px',
+                borderRadius: '13px',
+                background: 'var(--primary-soft, #E6F4F3)',
+                color: 'var(--primary, #0F766E)',
+                border: '1.2px solid rgba(20, 184, 166, 0.4)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 2px 6px rgba(99, 102, 241, 0.15)',
+                boxShadow: '0 2px 8px rgba(15, 118, 110, 0.15)',
               }}
             >
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
@@ -417,15 +428,15 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
             </div>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: '#0f172a' }}>
+                <h3 style={{ margin: 0, fontSize: '1.18rem', fontWeight: 800, color: 'var(--sidebar, #0F2D2E)' }}>
                   POS Return & Exchange Terminal
                 </h3>
                 {isPhoneScannerConnected ? (
                   <span
                     style={{
-                      background: '#dcfce7',
-                      color: '#15803d',
-                      border: '1px solid #bbf7d0',
+                      background: 'var(--primary-soft, #E6F4F3)',
+                      color: 'var(--primary, #0F766E)',
+                      border: '1px solid rgba(20, 184, 166, 0.35)',
                       padding: '2px 8px',
                       borderRadius: '12px',
                       fontSize: '0.7rem',
@@ -436,15 +447,15 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                       gap: '4px',
                     }}
                   >
-                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#16a34a' }}></span>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--primary, #0F766E)' }}></span>
                     Mobile Scanner Connected
                   </span>
                 ) : (
                   <span
                     style={{
-                      background: '#dcfce7',
-                      color: '#15803d',
-                      border: '1px solid #bbf7d0',
+                      background: 'var(--primary-soft, #E6F4F3)',
+                      color: 'var(--primary, #0F766E)',
+                      border: '1px solid rgba(20, 184, 166, 0.35)',
                       padding: '2px 8px',
                       borderRadius: '12px',
                       fontSize: '0.7rem',
@@ -455,29 +466,30 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                       gap: '4px',
                     }}
                   >
-                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#16a34a' }}></span>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--primary, #0F766E)' }}></span>
                     Scanner Ready
                   </span>
                 )}
               </div>
-              <p style={{ margin: '2px 0 0 0', fontSize: '0.78rem', color: '#64748b' }}>
+              <p style={{ margin: '2px 0 0 0', fontSize: '0.78rem', color: 'var(--text-muted, #475569)' }}>
                 Scan original bill barcode via mobile phone or scanner gun, or lookup by customer mobile
               </p>
             </div>
           </div>
           <button
             type="button"
+            className="modal-close-btn"
             onClick={() => {
               stopCameraScanner();
               onClose();
             }}
             style={{
-              background: '#f1f5f9',
-              border: 'none',
-              color: '#64748b',
+              background: 'var(--surface, #FAF7F2)',
+              border: '1px solid var(--border, #D0C7B8)',
+              color: 'var(--text-muted, #475569)',
               width: '32px',
               height: '32px',
-              borderRadius: '8px',
+              borderRadius: '10px',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -486,7 +498,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
             }}
             title="Close (Esc)"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
@@ -494,7 +506,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
         </div>
 
         {/* ================= BENTO MODAL BODY ================= */}
-        <div style={{ padding: '1.25rem 1.5rem', overflowY: 'auto', flex: 1 }}>
+        <div style={{ padding: '1.25rem 1.6rem', overflowY: 'auto', flex: 1, background: 'var(--surface, #FAF7F2)' }}>
           {errorMsg && (
             <div
               style={{
@@ -527,7 +539,8 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
               <div
                 style={{
                   display: 'flex',
-                  background: '#f1f5f9',
+                  background: 'var(--bg, #E8E1D5)',
+                  border: '1px solid var(--border, #D0C7B8)',
                   padding: '4px',
                   borderRadius: '12px',
                   marginBottom: '1.25rem',
@@ -545,13 +558,13 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                     flex: 1,
                     padding: '0.6rem 0.8rem',
                     borderRadius: '9px',
-                    border: 'none',
-                    background: lookupMode === 'barcode' ? '#ffffff' : 'transparent',
-                    color: lookupMode === 'barcode' ? '#4f46e5' : '#64748b',
+                    border: lookupMode === 'barcode' ? '1px solid rgba(20, 184, 166, 0.3)' : '1px solid transparent',
+                    background: lookupMode === 'barcode' ? 'var(--surface, #FAF7F2)' : 'transparent',
+                    color: lookupMode === 'barcode' ? 'var(--primary, #0F766E)' : 'var(--text-muted, #475569)',
                     fontWeight: lookupMode === 'barcode' ? 800 : 650,
                     fontSize: '0.84rem',
                     cursor: 'pointer',
-                    boxShadow: lookupMode === 'barcode' ? '0 2px 5px rgba(0,0,0,0.06)' : 'none',
+                    boxShadow: lookupMode === 'barcode' ? '0 2px 6px rgba(15, 45, 46, 0.08)' : 'none',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -576,13 +589,13 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                     flex: 1,
                     padding: '0.6rem 0.8rem',
                     borderRadius: '9px',
-                    border: 'none',
-                    background: lookupMode === 'phone' ? '#ffffff' : 'transparent',
-                    color: lookupMode === 'phone' ? '#4f46e5' : '#64748b',
+                    border: lookupMode === 'phone' ? '1px solid rgba(20, 184, 166, 0.3)' : '1px solid transparent',
+                    background: lookupMode === 'phone' ? 'var(--surface, #FAF7F2)' : 'transparent',
+                    color: lookupMode === 'phone' ? 'var(--primary, #0F766E)' : 'var(--text-muted, #475569)',
                     fontWeight: lookupMode === 'phone' ? 800 : 650,
                     fontSize: '0.84rem',
                     cursor: 'pointer',
-                    boxShadow: lookupMode === 'phone' ? '0 2px 5px rgba(0,0,0,0.06)' : 'none',
+                    boxShadow: lookupMode === 'phone' ? '0 2px 6px rgba(15, 45, 46, 0.08)' : 'none',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -608,13 +621,13 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                     flex: 1,
                     padding: '0.6rem 0.8rem',
                     borderRadius: '9px',
-                    border: 'none',
-                    background: lookupMode === 'invoice' ? '#ffffff' : 'transparent',
-                    color: lookupMode === 'invoice' ? '#4f46e5' : '#64748b',
+                    border: lookupMode === 'invoice' ? '1px solid rgba(20, 184, 166, 0.3)' : '1px solid transparent',
+                    background: lookupMode === 'invoice' ? 'var(--surface, #FAF7F2)' : 'transparent',
+                    color: lookupMode === 'invoice' ? 'var(--primary, #0F766E)' : 'var(--text-muted, #475569)',
                     fontWeight: lookupMode === 'invoice' ? 800 : 650,
                     fontSize: '0.84rem',
                     cursor: 'pointer',
-                    boxShadow: lookupMode === 'invoice' ? '0 2px 5px rgba(0,0,0,0.06)' : 'none',
+                    boxShadow: lookupMode === 'invoice' ? '0 2px 6px rgba(15, 45, 46, 0.08)' : 'none',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -636,9 +649,9 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
               {lookupMode === 'barcode' && (
                 <div
                   style={{
-                    border: '2px dashed #c7d2fe',
+                    border: '2px dashed var(--border, #D0C7B8)',
                     borderRadius: '16px',
-                    background: 'linear-gradient(180deg, #f8faff 0%, #ffffff 100%)',
+                    background: 'rgba(255, 255, 255, 0.75)',
                     padding: '1.5rem',
                     marginBottom: '1.25rem',
                     textAlign: 'center',
@@ -652,7 +665,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                         width: '120px',
                         height: '70px',
                         margin: '0 auto',
-                        border: '1.5px solid #cbd5e1',
+                        border: '1.5px solid var(--border, #D0C7B8)',
                         borderRadius: '8px',
                         background: '#ffffff',
                         display: 'flex',
@@ -660,11 +673,11 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                         justifyContent: 'center',
                         position: 'relative',
                         overflow: 'hidden',
-                        boxShadow: '0 4px 10px rgba(99, 102, 241, 0.08)',
+                        boxShadow: '0 4px 12px rgba(15, 45, 46, 0.06)',
                       }}
                     >
                       {/* Barcode Lines Graphic */}
-                      <svg width="84" height="42" viewBox="0 0 100 50" fill="#0f172a">
+                      <svg width="84" height="42" viewBox="0 0 100 50" fill="var(--sidebar, #0F2D2E)">
                         <rect x="5" y="0" width="3" height="50" />
                         <rect x="12" y="0" width="6" height="50" />
                         <rect x="22" y="0" width="2" height="50" />
@@ -692,10 +705,10 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                     </div>
                   </div>
 
-                  <div style={{ fontWeight: 800, fontSize: '0.98rem', color: '#1e293b', marginBottom: '4px' }}>
+                  <div style={{ fontWeight: 800, fontSize: '0.98rem', color: 'var(--sidebar, #0F2D2E)', marginBottom: '4px' }}>
                     Scan Bill Receipt Barcode
                   </div>
-                  <div style={{ fontSize: '0.78rem', color: '#64748b', maxWidth: '440px', margin: '0 auto 1.25rem auto' }}>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-muted, #475569)', maxWidth: '440px', margin: '0 auto 1.25rem auto' }}>
                     Point your barcode scanner gun or your wireless smartphone scanner at the bill barcode.
                   </div>
 
@@ -716,11 +729,11 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                           padding: '0.75rem 1rem 0.75rem 2.6rem',
                           fontSize: '0.94rem',
                           borderRadius: '10px',
-                          border: '2px solid #6366f1',
+                          border: '2px solid var(--primary, #0F766E)',
                           fontWeight: 700,
                           letterSpacing: '0.5px',
                           background: '#ffffff',
-                          boxShadow: '0 0 0 3px rgba(99, 102, 241, 0.12)',
+                          boxShadow: '0 0 0 3px rgba(20, 184, 166, 0.2)',
                         }}
                       />
                       <svg
@@ -728,7 +741,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                         height="18"
                         viewBox="0 0 24 24"
                         fill="none"
-                        stroke="#6366f1"
+                        stroke="var(--primary, #0F766E)"
                         strokeWidth="2.3"
                         style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)' }}
                       >
@@ -742,7 +755,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                         padding: '0.75rem 1.2rem',
                         fontWeight: 750,
                         borderRadius: '10px',
-                        background: '#4f46e5',
+                        background: 'var(--primary, #0F766E)',
                         color: '#ffffff',
                         border: 'none',
                         cursor: searching || !searchQuery.trim() ? 'not-allowed' : 'pointer',
@@ -751,6 +764,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                         alignItems: 'center',
                         gap: '6px',
                         whiteSpace: 'nowrap',
+                        boxShadow: '0 2px 6px rgba(15, 118, 110, 0.25)',
                       }}
                     >
                       {searching ? 'Finding...' : 'Identify Bill'}
@@ -767,9 +781,9 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                         setShowPhonePairing((prev) => !prev);
                       }}
                       style={{
-                        background: isPhoneScannerConnected ? '#f0fdf4' : '#eef2ff',
-                        border: isPhoneScannerConnected ? '1.5px solid #86efac' : '1.5px solid #c7d2fe',
-                        color: isPhoneScannerConnected ? '#15803d' : '#4338ca',
+                        background: isPhoneScannerConnected ? '#f0fdf4' : 'var(--primary-soft, #E6F4F3)',
+                        border: isPhoneScannerConnected ? '1.5px solid #86efac' : '1.5px solid rgba(20, 184, 166, 0.4)',
+                        color: isPhoneScannerConnected ? '#15803d' : 'var(--primary, #0F766E)',
                         borderRadius: '9px',
                         padding: '0.45rem 0.9rem',
                         fontSize: '0.8rem',
@@ -806,8 +820,8 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                         }}
                         style={{
                           background: '#ffffff',
-                          border: '1px solid #cbd5e1',
-                          color: '#475569',
+                          border: '1px solid var(--border, #D0C7B8)',
+                          color: 'var(--text-muted, #475569)',
                           borderRadius: '9px',
                           padding: '0.45rem 0.85rem',
                           fontSize: '0.8rem',
@@ -849,12 +863,12 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                     <div
                       style={{
                         background: '#ffffff',
-                        border: '1.5px solid #cbd5e1',
+                        border: '1.5px solid var(--border, #D0C7B8)',
                         borderRadius: '14px',
                         padding: '1.25rem',
                         marginTop: '1rem',
                         textAlign: 'center',
-                        boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
+                        boxShadow: '0 4px 15px rgba(15, 45, 46, 0.05)',
                       }}
                     >
                       {isPhoneScannerConnected ? (
@@ -872,22 +886,22 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                         </div>
                       ) : (
                         <div>
-                          <div style={{ fontWeight: 800, fontSize: '0.94rem', color: '#0f172a', marginBottom: '4px' }}>
+                          <div style={{ fontWeight: 800, fontSize: '0.94rem', color: 'var(--sidebar, #0F2D2E)', marginBottom: '4px' }}>
                             Connect Your Smartphone as a Wireless Barcode Scanner
                           </div>
-                          <div style={{ fontSize: '0.78rem', color: '#64748b', marginBottom: '0.85rem', maxWidth: '420px', margin: '0 auto 0.85rem auto' }}>
+                          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted, #475569)', marginBottom: '0.85rem', maxWidth: '420px', margin: '0 auto 0.85rem auto' }}>
                             Zero installation required! Open your phone's camera, scan the QR code below, and your smartphone will instantly function as a high-speed wireless barcode scanner gun for this terminal.
                           </div>
 
                           {scannerPairingUrl ? (
-                            <div style={{ display: 'inline-block', background: '#ffffff', padding: '10px', borderRadius: '12px', border: '1.5px solid #cbd5e1', boxShadow: '0 4px 12px rgba(99, 102, 241, 0.08)' }}>
+                            <div style={{ display: 'inline-block', background: '#ffffff', padding: '10px', borderRadius: '12px', border: '1.5px solid var(--border, #D0C7B8)', boxShadow: '0 4px 12px rgba(15, 45, 46, 0.08)' }}>
                               <div dangerouslySetInnerHTML={{ __html: qrSvg(scannerPairingUrl, { size: 145, margin: 1 }) }} />
-                              <div style={{ fontSize: '0.72rem', color: '#4f46e5', fontWeight: 750, marginTop: '4px' }}>
+                              <div style={{ fontSize: '0.72rem', color: 'var(--primary, #0F766E)', fontWeight: 750, marginTop: '4px' }}>
                                 Point Phone Camera Here
                               </div>
                             </div>
                           ) : (
-                            <div style={{ padding: '1rem', color: '#64748b', fontSize: '0.8rem' }}>
+                            <div style={{ padding: '1rem', color: 'var(--text-muted, #475569)', fontSize: '0.8rem' }}>
                               Generating wireless pairing link...
                             </div>
                           )}
@@ -902,14 +916,14 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                               <button
                                 type="button"
                                 style={{
-                                  background: '#f8fafc',
-                                  border: '1px solid #cbd5e1',
+                                  background: 'var(--surface, #FAF7F2)',
+                                  border: '1px solid var(--border, #D0C7B8)',
                                   borderRadius: '6px',
                                   fontSize: '0.74rem',
                                   fontWeight: 700,
                                   padding: '0.35rem 0.75rem',
                                   cursor: 'pointer',
-                                  color: '#334155',
+                                  color: 'var(--sidebar, #0F2D2E)',
                                   display: 'inline-flex',
                                   alignItems: 'center',
                                   gap: '6px',
@@ -942,7 +956,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                           margin: '0 auto',
                           borderRadius: '12px',
                           overflow: 'hidden',
-                          border: '2px solid #4f46e5',
+                          border: '2px solid var(--primary, #0F766E)',
                         }}
                       />
                     </div>
@@ -1010,14 +1024,14 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
               {lookupMode === 'phone' && (
                 <div
                   style={{
-                    border: '1px solid #e2e8f0',
+                    border: '1.5px solid var(--border, #D0C7B8)',
                     borderRadius: '16px',
-                    background: '#f8fafc',
+                    background: 'rgba(255, 255, 255, 0.75)',
                     padding: '1.5rem',
                     marginBottom: '1.25rem',
                   }}
                 >
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '0.5rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: 'var(--sidebar, #0F2D2E)', marginBottom: '0.5rem' }}>
                     Customer 10-Digit Mobile Number
                   </label>
                   <form onSubmit={handleSearchSubmit} style={{ display: 'flex', gap: '0.6rem' }}>
@@ -1036,7 +1050,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                           padding: '0.75rem 1rem 0.75rem 3.4rem',
                           fontSize: '0.94rem',
                           borderRadius: '10px',
-                          border: '1.5px solid #cbd5e1',
+                          border: '1.5px solid var(--border, #D0C7B8)',
                           fontWeight: 700,
                           letterSpacing: '0.5px',
                         }}
@@ -1049,7 +1063,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                           transform: 'translateY(-50%)',
                           fontSize: '0.82rem',
                           fontWeight: 800,
-                          color: '#64748b',
+                          color: 'var(--text-muted, #475569)',
                         }}
                       >
                         +91
@@ -1062,7 +1076,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                         padding: '0.75rem 1.25rem',
                         fontWeight: 750,
                         borderRadius: '10px',
-                        background: '#4f46e5',
+                        background: 'var(--primary, #0F766E)',
                         color: '#ffffff',
                         border: 'none',
                         cursor: searching || !searchQuery.trim() ? 'not-allowed' : 'pointer',
@@ -1070,12 +1084,13 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: '6px',
+                        boxShadow: '0 2px 6px rgba(15, 118, 110, 0.25)',
                       }}
                     >
                       {searching ? 'Finding...' : 'Find Customer Bills'}
                     </button>
                   </form>
-                  <div style={{ fontSize: '0.74rem', color: '#64748b', marginTop: '6px' }}>
+                  <div style={{ fontSize: '0.74rem', color: 'var(--text-muted, #475569)', marginTop: '6px' }}>
                     Retrieves all past invoices billed to this customer phone number.
                   </div>
                 </div>
@@ -1085,14 +1100,14 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
               {lookupMode === 'invoice' && (
                 <div
                   style={{
-                    border: '1px solid #e2e8f0',
+                    border: '1.5px solid var(--border, #D0C7B8)',
                     borderRadius: '16px',
-                    background: '#f8fafc',
+                    background: 'rgba(255, 255, 255, 0.75)',
                     padding: '1.5rem',
                     marginBottom: '1.25rem',
                   }}
                 >
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '0.5rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: 'var(--sidebar, #0F2D2E)', marginBottom: '0.5rem' }}>
                     Invoice / Bill Number
                   </label>
                   <form onSubmit={handleSearchSubmit} style={{ display: 'flex', gap: '0.6rem' }}>
@@ -1111,7 +1126,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                           padding: '0.75rem 1rem 0.75rem 2.4rem',
                           fontSize: '0.94rem',
                           borderRadius: '10px',
-                          border: '1.5px solid #cbd5e1',
+                          border: '1.5px solid var(--border, #D0C7B8)',
                           fontWeight: 700,
                         }}
                       />
@@ -1123,7 +1138,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                           transform: 'translateY(-50%)',
                           fontSize: '0.9rem',
                           fontWeight: 800,
-                          color: '#64748b',
+                          color: 'var(--text-muted, #475569)',
                         }}
                       >
                         #
@@ -1136,11 +1151,12 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                         padding: '0.75rem 1.25rem',
                         fontWeight: 750,
                         borderRadius: '10px',
-                        background: '#4f46e5',
+                        background: 'var(--primary, #0F766E)',
                         color: '#ffffff',
                         border: 'none',
                         cursor: searching || !searchQuery.trim() ? 'not-allowed' : 'pointer',
                         fontSize: '0.88rem',
+                        boxShadow: '0 2px 6px rgba(15, 118, 110, 0.25)',
                       }}
                     >
                       {searching ? 'Finding...' : 'Search Bill'}
@@ -1152,7 +1168,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
               {/* Multiple Matching Invoices Selection List */}
               {searchResults.length > 1 && !selectedInvoice && (
                 <div>
-                  <div style={{ fontSize: '0.78rem', fontWeight: 750, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.6rem' }}>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 750, color: 'var(--sidebar, #0F2D2E)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.6rem' }}>
                     Matching Invoices in Database ({searchResults.length})
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', maxHeight: '240px', overflowY: 'auto' }}>
@@ -1163,33 +1179,33 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                         style={{
                           padding: '0.85rem 1.1rem',
                           borderRadius: '12px',
-                          border: '1px solid #e2e8f0',
+                          border: '1px solid var(--border, #D0C7B8)',
                           background: '#ffffff',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'space-between',
                           cursor: 'pointer',
                           transition: 'all 0.15s ease',
-                          boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
+                          boxShadow: '0 2px 4px rgba(15, 45, 46, 0.04)',
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.borderColor = '#6366f1';
-                          e.currentTarget.style.background = '#f5f3ff';
+                          e.currentTarget.style.borderColor = 'var(--primary, #0F766E)';
+                          e.currentTarget.style.background = 'var(--primary-soft, #E6F4F3)';
                         }}
                         onMouseLeave={(e) => {
-                          e.currentTarget.style.borderColor = '#e2e8f0';
+                          e.currentTarget.style.borderColor = 'var(--border, #D0C7B8)';
                           e.currentTarget.style.background = '#ffffff';
                         }}
                       >
                         <div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span style={{ fontWeight: 800, color: '#0f172a', fontSize: '0.94rem' }}>#{inv.number}</span>
-                            <span style={{ fontSize: '0.74rem', color: '#64748b' }}>
+                            <span style={{ fontWeight: 800, color: 'var(--sidebar, #0F2D2E)', fontSize: '0.94rem' }}>#{inv.number}</span>
+                            <span style={{ fontSize: '0.74rem', color: 'var(--text-muted, #475569)' }}>
                               {inv.bdate || (inv.created_at ? new Date(inv.created_at).toLocaleDateString('en-IN') : 'Recent')}
                             </span>
                           </div>
-                          <div style={{ fontSize: '0.78rem', color: '#475569', marginTop: '2px' }}>
-                            Customer: <strong>{inv.customer_name || 'Walk-in'}</strong>
+                          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted, #475569)', marginTop: '2px' }}>
+                            Customer: <strong style={{ color: 'var(--sidebar, #0F2D2E)' }}>{inv.customer_name || 'Walk-in'}</strong>
                             {inv.customer_phone && (
                               <span style={{ marginLeft: '6px', color: '#16a34a', fontWeight: 600 }}>
                                 (+91 {inv.customer_phone})
@@ -1199,7 +1215,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                           <div style={{ textAlign: 'right' }}>
-                            <div style={{ fontWeight: 800, color: '#0f172a', fontSize: '0.96rem' }} className="mono">
+                            <div style={{ fontWeight: 800, color: 'var(--sidebar, #0F2D2E)', fontSize: '0.96rem' }} className="mono">
                               {formatRupees(inv.total_minor || inv.totalMinor || 0)}
                             </div>
                             <span style={{ fontSize: '0.7rem', color: '#16a34a', background: '#dcfce7', padding: '1px 6px', borderRadius: '4px', fontWeight: 700 }}>
@@ -1209,7 +1225,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                           <button
                             type="button"
                             className="btn btn-primary"
-                            style={{ padding: '0.35rem 0.8rem', fontSize: '0.78rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                            style={{ padding: '0.35rem 0.8rem', fontSize: '0.78rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'var(--primary, #0F766E)' }}
                           >
                             <span>Select</span>
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
@@ -1228,13 +1244,13 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
 
           {/* Loading invoice items spinner */}
           {loadingInvoice && (
-            <div style={{ textAlign: 'center', padding: '2.5rem', color: '#64748b' }}>
+            <div style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-muted, #475569)' }}>
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'spin 1s linear infinite' }}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--primary, #0F766E)" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'spin 1s linear infinite' }}>
                   <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
                 </svg>
               </div>
-              <div style={{ fontWeight: 700, color: '#1e293b' }}>Loading bill items from database...</div>
+              <div style={{ fontWeight: 700, color: 'var(--sidebar, #0F2D2E)' }}>Loading bill items from database...</div>
               <div style={{ fontSize: '0.78rem' }}>Verifying previously returned units & remaining quantities</div>
             </div>
           )}
@@ -1245,8 +1261,8 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
               {/* Bento Identified Bill Summary Card */}
               <div
                 style={{
-                  background: 'linear-gradient(180deg, #f8faff 0%, #f1f5f9 100%)',
-                  border: '1.5px solid #cbd5e1',
+                  background: 'var(--primary-soft, #E6F4F3)',
+                  border: '1.5px solid rgba(20, 184, 166, 0.4)',
                   borderRadius: '14px',
                   padding: '1rem 1.25rem',
                   display: 'flex',
@@ -1255,20 +1271,20 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                   flexWrap: 'wrap',
                   gap: '0.75rem',
                   marginBottom: '1.25rem',
-                  boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
+                  boxShadow: '0 2px 8px rgba(15, 118, 110, 0.08)',
                 }}
               >
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0f172a' }}>
+                    <span style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--sidebar, #0F2D2E)' }}>
                       Bill #{selectedInvoice.number}
                     </span>
                     <span style={{ background: '#dcfce7', color: '#15803d', border: '1px solid #bbf7d0', padding: '1px 7px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 750 }}>
                       Verified in Database
                     </span>
                   </div>
-                  <div style={{ fontSize: '0.8rem', color: '#475569', marginTop: '4px' }}>
-                    Customer: <strong>{selectedInvoice.customer_name || 'Walk-in Customer'}</strong>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted, #475569)', marginTop: '4px' }}>
+                    Customer: <strong style={{ color: 'var(--sidebar, #0F2D2E)' }}>{selectedInvoice.customer_name || 'Walk-in Customer'}</strong>
                     {selectedInvoice.customer_phone && (
                       <span style={{ marginLeft: '6px', color: '#15803d', fontWeight: 700 }}>
                         (Mobile: +91 {selectedInvoice.customer_phone})
@@ -1283,8 +1299,8 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: '0.72rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700 }}>Original Bill Total</div>
-                    <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0f172a' }} className="mono">
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted, #475569)', textTransform: 'uppercase', fontWeight: 700 }}>Original Bill Total</div>
+                    <div style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--sidebar, #0F2D2E)' }} className="mono">
                       {formatRupees(selectedInvoice.total_minor || selectedInvoice.totalMinor || 0)}
                     </div>
                   </div>
@@ -1297,13 +1313,13 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                       setSearchQuery('');
                     }}
                     style={{
-                      background: '#ffffff',
-                      border: '1px solid #cbd5e1',
+                      background: 'var(--surface, #FAF7F2)',
+                      border: '1px solid var(--border, #D0C7B8)',
                       padding: '0.45rem 0.85rem',
                       borderRadius: '8px',
                       fontSize: '0.78rem',
                       fontWeight: 700,
-                      color: '#475569',
+                      color: 'var(--sidebar, #0F2D2E)',
                       cursor: 'pointer',
                       display: 'inline-flex',
                       alignItems: 'center',
@@ -1320,17 +1336,17 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
               </div>
 
               {/* Items Return Table */}
-              <div style={{ fontSize: '0.84rem', fontWeight: 750, color: '#334155', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ fontSize: '0.84rem', fontWeight: 750, color: 'var(--sidebar, #0F2D2E)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span>Select Products to Return / Exchange:</span>
-                <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted, #475569)', fontWeight: 600 }}>
                   Check item to return and choose restock condition
                 </span>
               </div>
 
-              <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden', marginBottom: '1.25rem', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
+              <div style={{ border: '1.5px solid var(--border, #D0C7B8)', borderRadius: '12px', overflow: 'hidden', marginBottom: '1.25rem', boxShadow: '0 1px 3px rgba(15, 45, 46, 0.04)', background: '#ffffff' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
                   <thead>
-                    <tr style={{ background: '#f8fafc', color: '#475569', textAlign: 'left', borderBottom: '1px solid #e2e8f0' }}>
+                    <tr style={{ background: 'var(--bg, #E8E1D5)', color: 'var(--sidebar, #0F2D2E)', textAlign: 'left', borderBottom: '1px solid var(--border, #D0C7B8)' }}>
                       <th style={{ padding: '0.65rem 0.75rem', width: '38px', textAlign: 'center' }}>Select</th>
                       <th style={{ padding: '0.65rem 0.75rem' }}>Product</th>
                       <th style={{ padding: '0.65rem 0.75rem', textAlign: 'center' }}>Sold / Ret.</th>
@@ -1350,7 +1366,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                         <tr
                           key={l.id}
                           style={{
-                            borderBottom: '1px solid #f1f5f9',
+                            borderBottom: '1px solid var(--border, #D0C7B8)',
                             background: st.selected ? '#fef2f2' : '#ffffff',
                             opacity: isReturnable ? 1 : 0.6,
                             transition: 'background 0.15s ease',
@@ -1362,12 +1378,12 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                               checked={st.selected}
                               disabled={!isReturnable}
                               onChange={() => toggleLineSelect(l.id, maxUnits)}
-                              style={{ width: '16px', height: '16px', cursor: isReturnable ? 'pointer' : 'not-allowed' }}
+                              style={{ width: '16px', height: '16px', cursor: isReturnable ? 'pointer' : 'not-allowed', accentColor: 'var(--primary, #0F766E)' }}
                             />
                           </td>
                           <td style={{ padding: '0.65rem 0.75rem' }}>
-                            <div style={{ fontWeight: 750, color: st.selected ? '#991b1b' : '#1e293b' }}>{l.name}</div>
-                            <div style={{ fontSize: '0.74rem', color: '#64748b' }} className="mono">
+                            <div style={{ fontWeight: 750, color: st.selected ? '#991b1b' : 'var(--sidebar, #0F2D2E)' }}>{l.name}</div>
+                            <div style={{ fontSize: '0.74rem', color: 'var(--text-muted, #475569)' }} className="mono">
                               Rate: {formatRupees(l.priceMinor)} {l.inclusive ? '(Tax Incl.)' : ''}
                             </div>
                           </td>
@@ -1392,7 +1408,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                                     width: '60px',
                                     padding: '3px 6px',
                                     borderRadius: '6px',
-                                    border: '1px solid #cbd5e1',
+                                    border: '1px solid var(--border, #D0C7B8)',
                                     fontWeight: 750,
                                     fontSize: '0.84rem',
                                     textAlign: 'center',
@@ -1404,13 +1420,14 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                                   disabled={!st.selected}
                                   onClick={() => updateLine(l.id, { returnQtyUnits: maxUnits })}
                                   style={{
-                                    background: '#f1f5f9',
-                                    border: '1px solid #cbd5e1',
+                                    background: 'var(--bg, #E8E1D5)',
+                                    border: '1px solid var(--border, #D0C7B8)',
                                     borderRadius: '4px',
                                     padding: '2px 5px',
                                     fontSize: '0.68rem',
                                     fontWeight: 700,
                                     cursor: 'pointer',
+                                    color: 'var(--sidebar, #0F2D2E)',
                                   }}
                                 >
                                   Max
@@ -1428,7 +1445,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                               style={{
                                 padding: '4px 7px',
                                 borderRadius: '6px',
-                                border: '1px solid #cbd5e1',
+                                border: '1px solid var(--border, #D0C7B8)',
                                 fontSize: '0.78rem',
                                 fontWeight: 700,
                                 color: st.condition === 'resellable' ? '#15803d' : st.condition === 'damaged' ? '#b45309' : '#b91c1c',
@@ -1449,7 +1466,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                                 style={{
                                   padding: '3px 6px',
                                   borderRadius: '6px',
-                                  border: '1px solid #cbd5e1',
+                                  border: '1px solid var(--border, #D0C7B8)',
                                   fontSize: '0.75rem',
                                   background: '#ffffff',
                                 }}
@@ -1467,7 +1484,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                                 style={{
                                   padding: '2px 5px',
                                   borderRadius: '6px',
-                                  border: '1px solid #e2e8f0',
+                                  border: '1px solid var(--border, #D0C7B8)',
                                   fontSize: '0.72rem',
                                 }}
                               />
@@ -1486,8 +1503,8 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
               {/* ================= ACTION TABS & SETTLEMENT SECTION ================= */}
               <div
                 style={{
-                  background: '#f8fafc',
-                  border: '1.5px solid #cbd5e1',
+                  background: 'rgba(255, 255, 255, 0.8)',
+                  border: '1.5px solid var(--border, #D0C7B8)',
                   borderRadius: '14px',
                   padding: '1.25rem',
                 }}
@@ -1495,11 +1512,11 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                 {/* Live Return Credit Summary Bar */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '0.84rem', color: '#64748b' }}>Selected Return Items:</span>
-                    <strong style={{ fontSize: '0.98rem', color: '#0f172a' }}>{selectedLinesList.length} product(s)</strong>
+                    <span style={{ fontSize: '0.84rem', color: 'var(--text-muted, #475569)' }}>Selected Return Items:</span>
+                    <strong style={{ fontSize: '0.98rem', color: 'var(--sidebar, #0F2D2E)' }}>{selectedLinesList.length} product(s)</strong>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                    <span style={{ fontSize: '0.84rem', color: '#64748b', fontWeight: 600 }}>Total Exchange Credit:</span>
+                    <span style={{ fontSize: '0.84rem', color: 'var(--text-muted, #475569)', fontWeight: 600 }}>Total Exchange Credit:</span>
                     <strong style={{ fontSize: '1.3rem', color: '#dc2626' }} className="mono">
                       {formatRupees(totalEstimatedCreditMinor)}
                     </strong>
@@ -1515,9 +1532,9 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                       flex: 1,
                       padding: '0.75rem',
                       borderRadius: '10px',
-                      border: actionTab === 'exchange' ? '2px solid #6366f1' : '1px solid #cbd5e1',
-                      background: actionTab === 'exchange' ? '#eef2ff' : '#ffffff',
-                      color: actionTab === 'exchange' ? '#4338ca' : '#475569',
+                      border: actionTab === 'exchange' ? '2px solid var(--primary, #0F766E)' : '1px solid var(--border, #D0C7B8)',
+                      background: actionTab === 'exchange' ? 'var(--primary-soft, #E6F4F3)' : '#ffffff',
+                      color: actionTab === 'exchange' ? 'var(--primary, #0F766E)' : 'var(--text-muted, #475569)',
                       fontWeight: 750,
                       fontSize: '0.86rem',
                       cursor: 'pointer',
@@ -1543,9 +1560,9 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                       flex: 1,
                       padding: '0.75rem',
                       borderRadius: '10px',
-                      border: actionTab === 'refund' ? '2px solid #059669' : '1px solid #cbd5e1',
+                      border: actionTab === 'refund' ? '2px solid #059669' : '1px solid var(--border, #D0C7B8)',
                       background: actionTab === 'refund' ? '#dcfce7' : '#ffffff',
-                      color: actionTab === 'refund' ? '#14532d' : '#475569',
+                      color: actionTab === 'refund' ? '#14532d' : 'var(--text-muted, #475569)',
                       fontWeight: 750,
                       fontSize: '0.86rem',
                       cursor: 'pointer',
@@ -1567,7 +1584,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                 {/* Tab 1: Exchange Action */}
                 {actionTab === 'exchange' && (
                   <div>
-                    <p style={{ margin: '0 0 1rem 0', fontSize: '0.82rem', color: '#475569', lineHeight: 1.5 }}>
+                    <p style={{ margin: '0 0 1rem 0', fontSize: '0.82rem', color: 'var(--text-muted, #475569)', lineHeight: 1.5 }}>
                       The return credit of <strong>{formatRupees(totalEstimatedCreditMinor)}</strong> will be loaded directly into your active POS billing cart as negative line items. You can scan replacement items, and the system automatically calculates the net payable difference.
                     </p>
                     <button
@@ -1578,13 +1595,13 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                         width: '100%',
                         padding: '0.85rem',
                         borderRadius: '10px',
-                        background: selectedLinesList.length === 0 ? '#94a3b8' : 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
+                        background: selectedLinesList.length === 0 ? '#94a3b8' : 'linear-gradient(135deg, var(--sidebar, #0F2D2E) 0%, var(--primary, #0F766E) 50%, var(--ring, #14B8A6) 100%)',
                         color: '#fff',
                         fontWeight: 800,
                         fontSize: '0.94rem',
                         border: 'none',
                         cursor: selectedLinesList.length === 0 ? 'not-allowed' : 'pointer',
-                        boxShadow: '0 4px 12px rgba(99, 102, 241, 0.25)',
+                        boxShadow: '0 4px 14px rgba(15, 118, 110, 0.25)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -1605,7 +1622,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                   <div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
                       <div>
-                        <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                        <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: 'var(--sidebar, #0F2D2E)', marginBottom: '4px' }}>
                           Refund / Disbursement Method
                         </label>
                         <select
@@ -1615,7 +1632,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                             width: '100%',
                             padding: '0.6rem 0.8rem',
                             borderRadius: '8px',
-                            border: '1px solid #cbd5e1',
+                            border: '1px solid var(--border, #D0C7B8)',
                             fontSize: '0.84rem',
                             fontWeight: 700,
                             background: '#ffffff',
@@ -1629,7 +1646,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                       </div>
 
                       <div>
-                        <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                        <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: 'var(--sidebar, #0F2D2E)', marginBottom: '4px' }}>
                           Refund Reference / UTR (Optional)
                         </label>
                         <input
@@ -1641,7 +1658,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                             width: '100%',
                             padding: '0.6rem 0.8rem',
                             borderRadius: '8px',
-                            border: '1px solid #cbd5e1',
+                            border: '1px solid var(--border, #D0C7B8)',
                             fontSize: '0.84rem',
                             boxSizing: 'border-box',
                           }}
@@ -1657,13 +1674,13 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                         width: '100%',
                         padding: '0.85rem',
                         borderRadius: '10px',
-                        background: selectedLinesList.length === 0 || submitting ? '#94a3b8' : '#059669',
+                        background: selectedLinesList.length === 0 || submitting ? '#94a3b8' : 'var(--primary, #0F766E)',
                         color: '#fff',
                         fontWeight: 800,
                         fontSize: '0.94rem',
                         border: 'none',
                         cursor: selectedLinesList.length === 0 || submitting ? 'not-allowed' : 'pointer',
-                        boxShadow: '0 4px 12px rgba(5, 150, 105, 0.25)',
+                        boxShadow: '0 4px 12px rgba(15, 118, 110, 0.25)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
