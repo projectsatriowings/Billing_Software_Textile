@@ -165,6 +165,8 @@ export const OpenShiftModal: React.FC<OpenShiftModalProps> = ({
         notes: notes.trim() || undefined,
       });
       onSuccess(res.shift);
+      window.dispatchEvent(new CustomEvent('shift_status_changed', { detail: res.shift }));
+      window.dispatchEvent(new CustomEvent('shift_opened', { detail: res.shift }));
       onClose();
     } catch (err: any) {
       setError(err.message || 'Failed to open shift. Please try again.');

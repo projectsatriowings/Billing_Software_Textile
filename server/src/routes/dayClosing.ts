@@ -3164,6 +3164,165 @@ export function registerDayClosing(r: Router) {
 
     const requestedBranch = String(ctx.query.branchId || ctx.query.branch || '').trim();
 
+    // Auto-sync any active open shifts that may be missing an open notification
+    try {
+      const activeShiftsWithoutNotif = await ctx.db.query<any>(
+        `SELECT s.*, u.name AS cashier_name, b.name AS branch_name, b.code AS branch_code
+         FROM shifts s
+         LEFT JOIN users u ON u.id = s.user_id
+         LEFT JOIN branches b ON (b.id = s.branch_id OR b.code = s.branch_id) AND b.tenant_id = s.tenant_id
+         LEFT JOIN day_closing_notifications n ON n.tenant_id = s.tenant_id AND n.type = 'shift_open' AND (n.metadata->>'shiftId' = s.id OR n.metadata->>'shiftNumber' = s.shift_number)
+         WHERE s.tenant_id = ? AND s.status = 'open' AND n.id IS NULL
+         LIMIT 10`,
+        [tenantId],
+      );
+
+      for (const ash of activeShiftsWithoutNotif) {
+        const shiftNum = ash.shift_number || ash.shiftNumber || ash.id;
+        const bName = ash.branch_name || 'Branch';
+        const cName = ash.cashier_name || 'Cashier';
+        const counterDisp = ash.counter_name_snapshot || ash.counter || 'Counter 1';
+        const openMinor = Number(ash.opening_cash_minor || 0);
+        const openFormatted = (openMinor / 100).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const notifId = 'notif_active_' + ash.id;
+        const bdate = (ash.opened_at ? new Date(ash.opened_at).toISOString() : new Date().toISOString()).slice(0, 10);
+        const createdAt = ash.opened_at ? new Date(ash.opened_at).toISOString() : new Date().toISOString();
+
+        await ctx.db.exec(
+          `INSERT INTO day_closing_notifications (
+            id, tenant_id, branch_id, counter_id, cashier_id, bdate,
+            type, title, message, severity, is_read, created_at, metadata
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, false, ?, ?::jsonb)
+          ON CONFLICT (id) DO NOTHING`,
+          [
+            notifId,
+            tenantId,
+            ash.branch_id,
+            ash.counter_id || null,
+            ash.user_id,
+            bdate,
+            'shift_open',
+            `Shift #${shiftNum} Started · ${bName}`,
+            `Cashier ${cName} checked and verified drawer cash float of ₹${openFormatted} and started shift on ${counterDisp} (${bName}).`,
+            'info',
+            createdAt,
+            JSON.stringify({
+              shiftId: ash.id,
+              shiftNumber: shiftNum,
+              cashierId: ash.user_id,
+              cashierName: cName,
+              branchId: ash.branch_id,
+              branchName: bName,
+              branchCode: ash.branch_code || 'MAIN',
+              counter: counterDisp,
+              counterId: ash.counter_id || null,
+              openingCashMinor: openMinor,
+              openingCashFormatted: `₹${openFormatted}`,
+              openedAt: createdAt,
+            }),
+          ],
+        );
+      }
+    } catch (err: any) {
+      console.error('Failed to sync active shifts in notifications:', err?.message || err);
+    }
+
+    // Auto-sync any closed shifts that may be missing a shift_close notification
+    try {
+      const closedShiftsWithoutNotif = await ctx.db.query<any>(
+        `SELECT s.*, u.name AS cashier_name, b.name AS branch_name, b.code AS branch_code
+         FROM shifts s
+         LEFT JOIN users u ON u.id = s.user_id
+         LEFT JOIN branches b ON (b.id = s.branch_id OR b.code = s.branch_id) AND b.tenant_id = s.tenant_id
+         LEFT JOIN day_closing_notifications n ON n.tenant_id = s.tenant_id AND n.type = 'shift_close' AND (n.metadata->>'shiftId' = s.id OR n.metadata->>'shiftNumber' = s.shift_number)
+         WHERE s.tenant_id = ? AND s.status = 'closed' AND n.id IS NULL
+         ORDER BY s.closed_at DESC
+         LIMIT 10`,
+        [tenantId],
+      );
+
+      for (const csh of closedShiftsWithoutNotif) {
+        const shiftNum = csh.shift_number || csh.shiftNumber || csh.id;
+        const bName = csh.branch_name || 'Branch';
+        const cName = csh.cashier_name || 'Cashier';
+        const counterDisp = csh.counter_name_snapshot || csh.counter || 'Counter 1';
+        let sum = csh.summary;
+        if (typeof sum === 'string') {
+          try { sum = JSON.parse(sum); } catch {}
+        }
+        sum = sum || {};
+
+        const totalSalesMinor = Number(sum.totalSalesBilledMinor || sum.totalSalesMinor || 0);
+        const totalSalesFormatted = (totalSalesMinor / 100).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const billsCount = Number(sum.invoicesCount || 0);
+        const returnsCount = Number(sum.returnsCount || 0);
+        const refundsMinor = Number(sum.cashRefundsMinor || 0);
+        const refundsFormatted = (refundsMinor / 100).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const countedMinor = Number(csh.counted_cash_minor || sum.countedCashMinor || 0);
+        const countedFormatted = (countedMinor / 100).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const varianceMinor = Number(csh.variance_minor ?? sum.varianceMinor ?? 0);
+
+        let varianceText = 'Balanced';
+        if (varianceMinor < 0) {
+          varianceText = `Shortage: ₹${(Math.abs(varianceMinor) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        } else if (varianceMinor > 0) {
+          varianceText = `Excess: ₹${(varianceMinor / 100).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        }
+
+        const notifId = 'notif_close_' + csh.id;
+        const bdate = (csh.closed_at ? new Date(csh.closed_at).toISOString() : new Date().toISOString()).slice(0, 10);
+        const createdAt = csh.closed_at ? new Date(csh.closed_at).toISOString() : new Date().toISOString();
+        const severity = varianceMinor !== 0 ? 'warning' : 'success';
+        const closeMsg = `Cashier ${cName} closed Shift #${shiftNum} at ${bName}. Today's Sales: ₹${totalSalesFormatted} (${billsCount} bills) · Returns: ${returnsCount} (₹${refundsFormatted}) · Drawer Cash: ₹${countedFormatted} (${varianceText}).`;
+
+        await ctx.db.exec(
+          `INSERT INTO day_closing_notifications (
+            id, tenant_id, branch_id, counter_id, cashier_id, bdate,
+            type, title, message, severity, is_read, created_at, metadata
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, false, ?, ?::jsonb)
+          ON CONFLICT (id) DO NOTHING`,
+          [
+            notifId,
+            tenantId,
+            csh.branch_id,
+            csh.counter_id || null,
+            csh.user_id,
+            bdate,
+            'shift_close',
+            `Shift #${shiftNum} Closed · ${bName}`,
+            closeMsg,
+            severity,
+            createdAt,
+            JSON.stringify({
+              shiftId: csh.id,
+              shiftNumber: shiftNum,
+              cashierId: csh.user_id,
+              cashierName: cName,
+              branchId: csh.branch_id,
+              branchName: bName,
+              branchCode: csh.branch_code || 'MAIN',
+              counter: counterDisp,
+              counterId: csh.counter_id || null,
+              totalSalesMinor,
+              totalSalesFormatted: `₹${totalSalesFormatted}`,
+              invoicesCount: billsCount,
+              returnsCount,
+              cashRefundsMinor: refundsMinor,
+              cashRefundsFormatted: `₹${refundsFormatted}`,
+              countedCashMinor: countedMinor,
+              countedCashFormatted: `₹${countedFormatted}`,
+              expectedCashMinor: Number(csh.expected_cash_minor || 0),
+              varianceMinor,
+              varianceText,
+              closedAt: createdAt,
+            }),
+          ],
+        );
+      }
+    } catch (err: any) {
+      console.error('Failed to sync closed shifts in notifications:', err?.message || err);
+    }
+
     let notifSql = `
       SELECT n.*, u.name AS cashier_name, b.name AS branch_name, b.code AS branch_code
       FROM day_closing_notifications n
@@ -3176,14 +3335,14 @@ export function registerDayClosing(r: Router) {
     if (!scope.isSuperAdminAll) {
       // Store Manager or Cashier: strictly scoped to user's branch
       if (scope.branchId) {
-        notifSql += ' AND n.branch_id = ?';
-        notifParams.push(scope.branchId);
+        notifSql += ' AND (n.branch_id = ? OR b.id = ? OR UPPER(b.code) = UPPER(?))';
+        notifParams.push(scope.branchId, scope.branchId, scope.branchId);
       }
     } else {
       // Super Admin: if specific branch requested, filter; otherwise return across all branches
       if (requestedBranch && requestedBranch.toUpperCase() !== 'ALL') {
-        notifSql += ' AND (n.branch_id = ? OR b.code = ?)';
-        notifParams.push(requestedBranch, requestedBranch);
+        notifSql += ' AND (n.branch_id = ? OR b.id = ? OR UPPER(b.code) = UPPER(?))';
+        notifParams.push(requestedBranch, requestedBranch, requestedBranch);
       }
     }
 
@@ -3195,11 +3354,42 @@ export function registerDayClosing(r: Router) {
     notifSql += ' ORDER BY n.created_at DESC LIMIT 50';
 
     const notifications = await ctx.db.query<any>(notifSql, notifParams);
-    const unreadCount = notifications.filter((n: any) => !n.is_read && !n.isRead).length;
+
+    // Normalize both camelCase and snake_case properties so the client can never fail
+    const normalizedNotifications = (notifications || []).map((n: any) => {
+      let meta = n.metadata;
+      if (typeof meta === 'string') {
+        try { meta = JSON.parse(meta); } catch {}
+      }
+      meta = meta || {};
+
+      const createdAt = n.createdAt || n.created_at || new Date().toISOString();
+      const branchName = n.branchName || n.branch_name || meta.branchName || 'Main Branch';
+      const branchCode = n.branchCode || n.branch_code || meta.branchCode || 'MAIN';
+      const cashierName = n.cashierName || n.cashier_name || meta.cashierName || 'Cashier';
+      const isRead = Boolean(n.isRead ?? n.is_read);
+
+      return {
+        ...n,
+        createdAt,
+        created_at: createdAt,
+        branchName,
+        branch_name: branchName,
+        branchCode,
+        branch_code: branchCode,
+        cashierName,
+        cashier_name: cashierName,
+        isRead,
+        is_read: isRead,
+        metadata: meta,
+      };
+    });
+
+    const unreadCount = normalizedNotifications.filter((n: any) => !n.isRead && !n.is_read).length;
 
     return {
       success: true,
-      notifications,
+      notifications: normalizedNotifications,
       unreadCount,
     };
   });
@@ -3228,8 +3418,8 @@ export function registerDayClosing(r: Router) {
     const params: any[] = [tenantId];
 
     if (!scope.isSuperAdminAll && scope.branchId) {
-      sql += ' AND branch_id = ?';
-      params.push(scope.branchId);
+      sql += ' AND (branch_id = ? OR branch_id IN (SELECT id FROM branches WHERE id = ? OR code = ?))';
+      params.push(scope.branchId, scope.branchId, scope.branchId);
     }
     if (isCashier) {
       sql += ' AND cashier_id = ?';
