@@ -271,32 +271,81 @@ export const CustomerDisplay: React.FC<CustomerDisplayProps> = ({ counterId = 'c
   const potentialLoyaltyPoints = Math.floor((state.totalMinor || 0) / 1000);
 
   return (
-    <div className="cfd-root">
+    <div className="cfd-root theme-cashier">
+      {/* Top Cashier Bento Teal Accent Gradient Bar */}
+      <div
+        className="cfd-top-accent-bar"
+        style={{
+          height: '4px',
+          background: 'linear-gradient(90deg, #0F2D2E 0%, #0F766E 50%, #14B8A6 100%)',
+          width: '100%',
+          flexShrink: 0,
+        }}
+      />
       {/* 1. TOP HEADER */}
-      <header className="cfd-header">
+      <header
+        className="cfd-header"
+        style={{
+          background: 'var(--bg, #E8E1D5)',
+          backgroundColor: 'var(--bg, #E8E1D5)',
+          borderBottom: '1.5px solid var(--border, #D0C7B8)',
+        }}
+      >
         <div className="cfd-header-left">
-          <div className="cfd-store-icon">
+          <div
+            className="cfd-store-icon"
+            style={{
+              background: 'linear-gradient(135deg, var(--sidebar, #0F2D2E) 0%, var(--primary, #0F766E) 100%)',
+              color: '#ffffff',
+              boxShadow: '0 4px 12px rgba(15, 118, 110, 0.25)',
+            }}
+          >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
               <polyline points="9 22 9 12 15 12 15 22"></polyline>
             </svg>
           </div>
           <div className="cfd-store-info">
-            <h1 className="cfd-store-title">{state.shopName || 'Retail Store'}</h1>
-            <div className="cfd-store-sub">
+            <h1 className="cfd-store-title" style={{ color: 'var(--sidebar, #0F2D2E)' }}>
+              {state.shopName || 'Retail Store'}
+            </h1>
+            <div className="cfd-store-sub" style={{ color: 'var(--text-muted, #475569)' }}>
               <span>{state.tagline || 'GST Compliant Retail POS • Instant Digital Receipts'}</span>
-              <span className="cfd-gst-pill">GST Verified</span>
+              <span
+                className="cfd-gst-pill"
+                style={{
+                  background: 'var(--primary-soft, #E6F4F3)',
+                  color: 'var(--primary, #0F766E)',
+                  border: '1px solid rgba(20, 184, 166, 0.4)',
+                }}
+              >
+                GST Verified
+              </span>
             </div>
           </div>
         </div>
 
         <div className="cfd-header-right">
-          <div className="cfd-sync-badge">
+          <div
+            className="cfd-sync-badge"
+            style={{
+              background: 'var(--primary-soft, #E6F4F3)',
+              border: '1px solid rgba(20, 184, 166, 0.4)',
+              color: 'var(--primary, #0F766E)',
+            }}
+          >
             <span className="cfd-sync-dot" />
             <span>{connectionType === 'broadcast' ? 'Dual-Screen 0ms' : connectionType === 'network' ? 'Wi-Fi Tablet' : 'Connecting...'}</span>
           </div>
 
-          <div className="cfd-time-pill cfd-num">
+          <div
+            className="cfd-time-pill cfd-num"
+            style={{
+              background: 'var(--surface, #FAF7F2)',
+              border: '1.5px solid var(--border, #D0C7B8)',
+              color: 'var(--sidebar, #0F2D2E)',
+            }}
+          >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10"></circle>
               <polyline points="12 6 12 12 16 14"></polyline>
@@ -309,6 +358,11 @@ export const CustomerDisplay: React.FC<CustomerDisplayProps> = ({ counterId = 'c
             className="cfd-fullscreen-btn"
             onClick={toggleFullscreen}
             title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+            style={{
+              background: 'var(--surface, #FAF7F2)',
+              border: '1.5px solid var(--border, #D0C7B8)',
+              color: 'var(--sidebar, #0F2D2E)',
+            }}
           >
             {isFullscreen ? (
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -551,7 +605,7 @@ export const CustomerDisplay: React.FC<CustomerDisplayProps> = ({ counterId = 'c
               <div className="cfd-gst-pill-box">
                 <div className="cfd-gst-top">
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--primary, #0F766E)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
                     </svg>
                     <span>Consolidated GST Tax</span>

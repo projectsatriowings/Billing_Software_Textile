@@ -109,6 +109,7 @@ export const CloseShiftModal: React.FC<CloseShiftModalProps> = ({
       });
 
       window.dispatchEvent(new CustomEvent('shift_status_changed', { detail: res }));
+      window.dispatchEvent(new CustomEvent('shift_closed', { detail: res }));
       onSuccess(res.shift);
       onClose();
     } catch (err: any) {

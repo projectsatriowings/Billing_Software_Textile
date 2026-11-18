@@ -58,12 +58,26 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
   const [occupiedList, setOccupiedList] = useState<OccupiedCounterInfo[]>(occupiedCounters || []);
   const [loadingOccupied, setLoadingOccupied] = useState(false);
 
-  // Poll / refresh occupied counters when modal is visible
+  // Poll / refresh occupied counters when modal is visible (fast 2.5s polling + window focus)
+  const loadOccupied = async () => {
+    try {
+      setLoadingOccupied(true);
+      const res = await fetchOccupiedCounters(branchId);
+      if (res?.ok && Array.isArray(res.occupiedCounters)) {
+        setOccupiedList(res.occupiedCounters);
+      }
+    } catch {
+      // Fallback gracefully
+    } finally {
+      setLoadingOccupied(false);
+    }
+  };
+
   useEffect(() => {
     if (!isOpen) return;
     let active = true;
 
-    const loadOccupied = async () => {
+    const runLoad = async () => {
       try {
         setLoadingOccupied(true);
         const res = await fetchOccupiedCounters(branchId);
@@ -77,11 +91,18 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
       }
     };
 
-    loadOccupied();
-    const interval = setInterval(loadOccupied, 8000);
+    runLoad();
+    const interval = setInterval(runLoad, 2500);
+
+    const onFocus = () => {
+      if (active) runLoad();
+    };
+    window.addEventListener('focus', onFocus);
+
     return () => {
       active = false;
       clearInterval(interval);
+      window.removeEventListener('focus', onFocus);
     };
   }, [isOpen, branchId]);
   // Helper to format clean display name from code or name
@@ -193,6 +214,8 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
       const norm = (s: string) => s.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
       if (occ.counter && c.code && norm(occ.counter) === norm(c.code)) return true;
       if (occ.counter && c.name && norm(occ.counter) === norm(c.name)) return true;
+      if (occ.counterName && c.code && norm(occ.counterName) === norm(c.code)) return true;
+      if (occ.counterName && c.name && norm(occ.counterName) === norm(c.name)) return true;
 
       return false;
     }) || null;
@@ -239,7 +262,9 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
     const target = branchCountersList.find(c => c.code === counterCode);
     const occ = target ? getOccupantForCounter(target) : null;
     if (occ) {
-      setError(`Billing counter "${target?.name || counterCode}" is currently in use by ${occ.userName}. Please choose an available counter.`);
+      const occName = (occ.userName || '').trim() || 'another cashier';
+      setError(`Billing counter "${target?.name || counterCode}" is currently in use by ${occName}. Please choose an available counter.`);
+      loadOccupied();
       return;
     }
     setSelectedCode(counterCode);
@@ -279,7 +304,9 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
       }
       const occ = getOccupantForCounter(match);
       if (occ) {
-        setError(`Billing counter "${match.name}" (${match.code}) is currently in use by ${occ.userName}. Please choose another available counter.`);
+        const occName = (occ.userName || '').trim() || 'another cashier';
+        setError(`Billing counter "${match.name}" (${match.code}) is currently in use by ${occName}. Please choose another available counter.`);
+        loadOccupied();
         return;
       }
       finalCode = match.code;
@@ -440,9 +467,51 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
             </div>
 
             <div className="shift-bento-ribbon-tile">
-              <div className="ribbon-tile-label">
-                <span>Station Availability</span>
-                <LayersIcon size={13} style={{ color: 'var(--primary, #0F766E)' }} />
+              <div className="ribbon-tile-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                  <span>Station Availability</span>
+                  <LayersIcon size={13} style={{ color: 'var(--primary, #0F766E)' }} />
+                </span>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    loadOccupied();
+                  }}
+                  title="Refresh station occupancy live"
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: loadingOccupied ? 'var(--primary, #0F766E)' : 'var(--text-muted, #475569)',
+                    padding: '2px 4px',
+                    borderRadius: '4px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    fontSize: '0.68rem',
+                    fontWeight: 700,
+                  }}
+                >
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: loadingOccupied ? '#f59e0b' : '#10b981', display: 'inline-block' }} />
+                  <span>{loadingOccupied ? 'Syncing...' : 'Live Sync'}</span>
+                  <svg
+                    width="10"
+                    height="10"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    style={{ animation: loadingOccupied ? 'spin 1s linear infinite' : 'none' }}
+                  >
+                    <path d="M21 2v6h-6"></path>
+                    <path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path>
+                    <path d="M3 22v-6h6"></path>
+                    <path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path>
+                  </svg>
+                </button>
               </div>
               <div
                 className="ribbon-tile-val"
@@ -613,7 +682,7 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
                           }}
                         >
                           <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#ef4444', display: 'inline-block' }} />
-                          Occupied • {occupant?.userName || 'In Use'}
+                          Occupied • {(occupant?.userName || '').trim() || 'In Use'}
                         </span>
                       ) : isMyStation ? (
                         <span
@@ -685,7 +754,7 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
                       </span>
                     </div>
                     <div style={{ fontSize: '0.74rem', color: isOccupied ? '#94a3b8' : 'var(--text-muted, #475569)', lineHeight: 1.35 }}>
-                      {isOccupied ? `Currently active under cashier ${occupant?.userName || ''}` : c.desc}
+                      {isOccupied ? `Currently active under ${(occupant?.userName || '').trim() || 'another cashier'}` : c.desc}
                     </div>
                   </div>
 
@@ -712,7 +781,7 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
                       }}
                     >
                       {isOccupied
-                        ? `In use (${occupant?.userName || 'Other Cashier'})`
+                        ? `In use (${(occupant?.userName || '').trim() || 'Active Cashier'})`
                         : isCardActive
                           ? 'Selected Counter'
                           : 'Click to select'}

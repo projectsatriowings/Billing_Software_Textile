@@ -310,10 +310,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   flexDirection: 'column',
                   alignItems: 'center',
                   gap: '4px',
-                  background: selectedRole === 'cashier' ? '#0F766E' : 'transparent',
-                  color: selectedRole === 'cashier' ? '#ffffff' : '#64748b',
-                  boxShadow: selectedRole === 'cashier' ? '0 2px 8px rgba(15, 118, 110, 0.25)' : 'none',
-                  borderBottom: selectedRole === 'cashier' ? '2px solid #115E59' : 'none',
+                  background: (selectedRole === 'cashier' || selectedRole === 'cashier2') ? '#0F766E' : 'transparent',
+                  color: (selectedRole === 'cashier' || selectedRole === 'cashier2') ? '#ffffff' : '#64748b',
+                  boxShadow: (selectedRole === 'cashier' || selectedRole === 'cashier2') ? '0 2px 8px rgba(15, 118, 110, 0.25)' : 'none',
+                  borderBottom: (selectedRole === 'cashier' || selectedRole === 'cashier2') ? '2px solid #115E59' : 'none',
                   transition: 'all 0.15s ease',
                 }}
               >
@@ -327,12 +327,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               <h2 className="login-card-title" style={{ margin: 0, fontSize: '1.4rem', fontWeight: 800, color: '#0f172a' }}>
                 {selectedRole === 'super_admin' && '👑 Super Admin Portal'}
                 {selectedRole === 'store_manager' && '🏪 Store Manager Portal'}
-                {selectedRole === 'cashier' && '💳 Cashier Billing Portal'}
+                {(selectedRole === 'cashier' || selectedRole === 'cashier2') && '💳 Cashier Billing Portal'}
               </h2>
               <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>
                 {selectedRole === 'super_admin' && 'Enterprise headquarters: consolidated sales, multi-branch network & governance.'}
                 {selectedRole === 'store_manager' && 'Branch-level management: shift approvals, counter controls & staff supervision.'}
-                {selectedRole === 'cashier' && 'Register checkout counter: POS billing, cash float & drawer shift operations.'}
+                {(selectedRole === 'cashier' || selectedRole === 'cashier2') && 'Register checkout counter: POS billing, cash float & drawer shift operations.'}
               </p>
             </div>
 
@@ -348,7 +348,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 <label className="form-label" htmlFor="login-email">
                   {selectedRole === 'super_admin' && 'Super Admin Email'}
                   {selectedRole === 'store_manager' && 'Store Manager Username or Email'}
-                  {selectedRole === 'cashier' && 'Cashier Employee ID or Email'}{' '}
+                  {(selectedRole === 'cashier' || selectedRole === 'cashier2') && 'Cashier Employee ID or Email'}{' '}
                   <span className="required-star">*</span>
                 </label>
                 <div className="input-with-icon">
@@ -358,10 +358,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                     className="form-input"
                     required
                     autoFocus
-                    placeholder={selectedRole === 'cashier' ? 'e.g. CSH-101 or cashier@billing.local' : selectedRole === 'store_manager' ? 'e.g. @karthik.r or manager@store.com' : 'you@business.com'}
+                    placeholder={(selectedRole === 'cashier' || selectedRole === 'cashier2') ? 'e.g. CSH-101 or cashier@billing.local' : selectedRole === 'store_manager' ? 'e.g. @karthik.r or manager@store.com' : 'you@business.com'}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    autoComplete={selectedRole === 'cashier' ? 'username' : 'email'}
+                    autoComplete={(selectedRole === 'cashier' || selectedRole === 'cashier2') ? 'username' : 'email'}
                   />
                 </div>
               </div>
@@ -459,97 +459,133 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             {/* Quick 1-Click Role Logins */}
             <div className="demo-accounts-box" style={{ marginTop: '1.25rem' }}>
               <div className="demo-accounts-title">1-Click Role Demonstrations</div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px', marginTop: '6px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '8px', marginTop: '8px' }}>
                 <button
                   type="button"
                   onClick={() => handleRoleTabChange('super_admin')}
                   style={{
-                    padding: '8px 4px',
-                    borderRadius: '8px',
-                    border: '1px solid #c7d2fe',
+                    padding: '8px 10px',
+                    borderRadius: '10px',
+                    border: selectedRole === 'super_admin' ? '1.5px solid #6366f1' : '1px solid #c7d2fe',
                     background: selectedRole === 'super_admin' ? '#eef2ff' : '#ffffff',
                     color: '#3730a3',
-                    fontSize: '0.72rem',
+                    fontSize: '0.78rem',
                     fontWeight: 700,
                     cursor: 'pointer',
                     display: 'flex',
                     flexDirection: 'column',
-                    alignItems: 'center',
+                    alignItems: 'flex-start',
                     gap: '2px',
+                    minWidth: 0,
+                    textAlign: 'left',
+                    boxShadow: selectedRole === 'super_admin' ? '0 2px 6px rgba(99, 102, 241, 0.15)' : 'none',
+                    transition: 'all 0.15s ease',
                   }}
                   title="Super Admin (demo@billing.local)"
                 >
-                  <span>👑 Admin</span>
-                  <span style={{ fontSize: '0.62rem', color: '#6366f1', fontWeight: 600 }}>demo@billing.local</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    <span>👑</span>
+                    <span>Admin</span>
+                  </span>
+                  <span style={{ fontSize: '0.66rem', color: '#6366f1', fontWeight: 600, width: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    demo@billing.local
+                  </span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => handleRoleTabChange('store_manager')}
                   style={{
-                    padding: '8px 4px',
-                    borderRadius: '8px',
-                    border: '1px solid #bae6fd',
+                    padding: '8px 10px',
+                    borderRadius: '10px',
+                    border: selectedRole === 'store_manager' ? '1.5px solid #0284c7' : '1px solid #bae6fd',
                     background: selectedRole === 'store_manager' ? '#f0f9ff' : '#ffffff',
                     color: '#0369a1',
-                    fontSize: '0.72rem',
+                    fontSize: '0.78rem',
                     fontWeight: 700,
                     cursor: 'pointer',
                     display: 'flex',
                     flexDirection: 'column',
-                    alignItems: 'center',
+                    alignItems: 'flex-start',
                     gap: '2px',
+                    minWidth: 0,
+                    textAlign: 'left',
+                    boxShadow: selectedRole === 'store_manager' ? '0 2px 6px rgba(2, 132, 199, 0.15)' : 'none',
+                    transition: 'all 0.15s ease',
                   }}
                   title="Store Manager (manager@billing.local)"
                 >
-                  <span>🏪 Manager</span>
-                  <span style={{ fontSize: '0.62rem', color: '#0284c7', fontWeight: 600 }}>manager@billing.local</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    <span>🏪</span>
+                    <span>Manager</span>
+                  </span>
+                  <span style={{ fontSize: '0.66rem', color: '#0284c7', fontWeight: 600, width: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    manager@billing.local
+                  </span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => handleRoleTabChange('cashier')}
                   style={{
-                    padding: '8px 4px',
-                    borderRadius: '8px',
-                    border: selectedRole === 'cashier' ? '1px solid #14B8A6' : '1px solid #D9E5E5',
+                    padding: '8px 10px',
+                    borderRadius: '10px',
+                    border: selectedRole === 'cashier' ? '1.5px solid #0F766E' : '1px solid #D9E5E5',
                     background: selectedRole === 'cashier' ? '#E6F4F3' : '#ffffff',
-                    color: selectedRole === 'cashier' ? '#0F766E' : '#475569',
-                    fontSize: '0.72rem',
+                    color: selectedRole === 'cashier' ? '#0F766E' : '#334155',
+                    fontSize: '0.78rem',
                     fontWeight: 700,
                     cursor: 'pointer',
                     display: 'flex',
                     flexDirection: 'column',
-                    alignItems: 'center',
+                    alignItems: 'flex-start',
                     gap: '2px',
+                    minWidth: 0,
+                    textAlign: 'left',
+                    boxShadow: selectedRole === 'cashier' ? '0 2px 6px rgba(15, 118, 110, 0.15)' : 'none',
+                    transition: 'all 0.15s ease',
                   }}
                   title="Cashier 1 (cashier@billing.local)"
                 >
-                  <span>💳 Cashier 1</span>
-                  <span style={{ fontSize: '0.62rem', color: selectedRole === 'cashier' ? '#0F766E' : '#059669', fontWeight: 600 }}>cashier@billing.local</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    <span>💳</span>
+                    <span>Cashier 1</span>
+                  </span>
+                  <span style={{ fontSize: '0.66rem', color: selectedRole === 'cashier' ? '#0F766E' : '#059669', fontWeight: 600, width: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    cashier@billing.local
+                  </span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => handleRoleTabChange('cashier2')}
                   style={{
-                    padding: '8px 4px',
-                    borderRadius: '8px',
-                    border: '1px solid #fed7aa',
+                    padding: '8px 10px',
+                    borderRadius: '10px',
+                    border: selectedRole === 'cashier2' ? '1.5px solid #ea580c' : '1px solid #fed7aa',
                     background: selectedRole === 'cashier2' ? '#fff7ed' : '#ffffff',
-                    color: '#c2410c',
-                    fontSize: '0.72rem',
+                    color: selectedRole === 'cashier2' ? '#c2410c' : '#334155',
+                    fontSize: '0.78rem',
                     fontWeight: 700,
                     cursor: 'pointer',
                     display: 'flex',
                     flexDirection: 'column',
-                    alignItems: 'center',
+                    alignItems: 'flex-start',
                     gap: '2px',
+                    minWidth: 0,
+                    textAlign: 'left',
+                    boxShadow: selectedRole === 'cashier2' ? '0 2px 6px rgba(234, 88, 12, 0.15)' : 'none',
+                    transition: 'all 0.15s ease',
                   }}
                   title="Cashier 2 - Lakshmi (lakshmi@billing.local)"
                 >
-                  <span>💳 Cashier 2</span>
-                  <span style={{ fontSize: '0.62rem', color: '#ea580c', fontWeight: 600 }}>lakshmi@billing.local</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    <span>💳</span>
+                    <span>Cashier 2</span>
+                  </span>
+                  <span style={{ fontSize: '0.66rem', color: selectedRole === 'cashier2' ? '#c2410c' : '#ea580c', fontWeight: 600, width: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    lakshmi@billing.local
+                  </span>
                 </button>
               </div>
             </div>

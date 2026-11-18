@@ -756,6 +756,45 @@ body.theme-cashier .top-notification-btn:hover,
   color: var(--primary) !important;
 }
 
+/* --------------------------------------------------------------------------
+   Top Bar Notification Badge & Sidebar Notification Dot (Teal Theme)
+   -------------------------------------------------------------------------- */
+div.app-container.theme-cashier .notif-badge,
+body.theme-cashier .notif-badge,
+.theme-cashier .notif-badge {
+  background: var(--primary, #0F766E) !important;
+  color: #FFFFFF !important;
+  border: 2px solid var(--surface, #FAF7F2) !important;
+  box-shadow: 0 2px 8px rgba(15, 118, 110, 0.45) !important;
+  font-weight: 800 !important;
+}
+
+div.app-container.theme-cashier .notif-badge.shift-unread-badge,
+body.theme-cashier .notif-badge.shift-unread-badge,
+.theme-cashier .notif-badge.shift-unread-badge {
+  background: var(--primary, #0F766E) !important;
+  color: #FFFFFF !important;
+  border: 2px solid var(--surface, #FAF7F2) !important;
+}
+
+div.app-container.theme-cashier .app-sidebar.icon-only .sidebar-nav-item.has-badge .nav-icon::after,
+body.theme-cashier .app-sidebar.icon-only .sidebar-nav-item.has-badge .nav-icon::after,
+.theme-cashier .app-sidebar.icon-only .sidebar-nav-item.has-badge .nav-icon::after,
+div.app-container.theme-cashier .sidebar-nav-item.has-badge .nav-icon::after,
+body.theme-cashier .sidebar-nav-item.has-badge .nav-icon::after,
+.theme-cashier .sidebar-nav-item.has-badge .nav-icon::after {
+  background: var(--ring, #14B8A6) !important;
+  border: 1.5px solid var(--sidebar, #0F2D2E) !important;
+  box-shadow: 0 0 6px rgba(20, 184, 166, 0.8) !important;
+}
+
+div.app-container.theme-cashier .nav-count-badge.notif-alert-badge,
+body.theme-cashier .nav-count-badge.notif-alert-badge,
+.theme-cashier .nav-count-badge.notif-alert-badge {
+  background: var(--primary, #0F766E) !important;
+  color: #FFFFFF !important;
+}
+
 div.app-container.theme-cashier .top-user-chip,
 body.theme-cashier .top-user-chip,
 .theme-cashier .top-user-chip {
@@ -3520,6 +3559,106 @@ body.theme-cashier .bento-notif-footer,
   color: var(--text-muted) !important;
 }
 
+/* Bento Notification unread dot, count pill, mark all read button */
+body.theme-cashier .bento-notif-unread-count-pill,
+.theme-cashier .bento-notif-unread-count-pill {
+  background: var(--primary-soft) !important;
+  color: var(--primary) !important;
+  border: 1px solid rgba(20, 184, 166, 0.35) !important;
+  font-weight: 800 !important;
+}
+
+body.theme-cashier .bento-notif-unread-dot,
+.theme-cashier .bento-notif-unread-dot {
+  background-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.25) !important;
+}
+
+body.theme-cashier .bento-notif-mark-read-btn,
+.theme-cashier .bento-notif-mark-read-btn {
+  color: var(--primary) !important;
+}
+
+body.theme-cashier .bento-notif-mark-read-btn:hover,
+.theme-cashier .bento-notif-mark-read-btn:hover {
+  color: var(--primary-hover) !important;
+}
+
+body.theme-cashier .bento-notif-card.unread,
+.theme-cashier .bento-notif-card.unread {
+  border-left: 4px solid var(--primary) !important;
+  background: #F4FAF9 !important;
+}
+
+/* Shift close icon in notification cards */
+body.theme-cashier .bento-notif-card-icon.shift-close-icon,
+.theme-cashier .bento-notif-card-icon.shift-close-icon {
+  background: var(--primary-soft) !important;
+  color: var(--primary) !important;
+}
+
+body.theme-cashier .bento-notif-card-icon.shift-close-icon svg,
+.theme-cashier .bento-notif-card-icon.shift-close-icon svg {
+  stroke: var(--primary) !important;
+}
+
+/* Full Notifications Page View (notificationsPage.css) Teal Cashier Overrides */
+body.theme-cashier .notif-page-header-card,
+.theme-cashier .notif-page-header-card {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+}
+
+body.theme-cashier .notif-header-icon-box,
+.theme-cashier .notif-header-icon-box {
+  background: linear-gradient(135deg, var(--sidebar) 0%, var(--primary) 100%) !important;
+  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.25) !important;
+}
+
+body.theme-cashier .notif-header-title,
+.theme-cashier .notif-header-title {
+  color: var(--sidebar) !important;
+}
+
+body.theme-cashier .notif-unread-badge-pill,
+.theme-cashier .notif-unread-badge-pill {
+  background: var(--primary) !important;
+  color: #FFFFFF !important;
+}
+
+body.theme-cashier .notif-unread-dot,
+.theme-cashier .notif-unread-dot {
+  background: var(--primary) !important;
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.25) !important;
+}
+
+body.theme-cashier .notif-card-item.unread,
+.theme-cashier .notif-card-item.unread {
+  border-left-color: var(--primary) !important;
+  background: #F4FAF9 !important;
+}
+
+body.theme-cashier .notif-btn-refresh:hover,
+.theme-cashier .notif-btn-refresh:hover,
+body.theme-cashier .notif-btn-mark-all:hover,
+.theme-cashier .notif-btn-mark-all:hover {
+  border-color: var(--primary) !important;
+  color: var(--primary) !important;
+}
+
+body.theme-cashier .notif-filter-tab.active,
+.theme-cashier .notif-filter-tab.active {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+  color: #FFFFFF !important;
+}
+
+body.theme-cashier .notif-kpi-icon.all,
+.theme-cashier .notif-kpi-icon.all {
+  background: var(--primary-soft) !important;
+  color: var(--primary) !important;
+}
+
 /* --------------------------------------------------------------------------
    5.10 RECENT BILLS / INVOICES BENTO VIEW (Teal & Slate Theme)
    -------------------------------------------------------------------------- */
@@ -3860,4 +3999,14 @@ body.theme-cashier .bento-act-btn.return:disabled,
   border-color: var(--border) !important;
   color: var(--border) !important;
   opacity: 0.6 !important;
+}
+
+/* 5.12 Customer-Facing Display (CFD) Theme Overrides */
+div.app-container.theme-cashier .cfd-header,
+body.theme-cashier .cfd-header,
+.theme-cashier .cfd-header {
+  background: var(--bg) !important;
+  background-color: var(--bg) !important;
+  border-bottom: 1.5px solid var(--border) !important;
+  color: var(--sidebar) !important;
 }

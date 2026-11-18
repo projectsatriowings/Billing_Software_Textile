@@ -14,13 +14,17 @@ async function build() {
     fs.cpSync(publicDir, distDir, { recursive: true });
   }
 
-  console.log('Bundling client with esbuild...');
+  const isDev = process.env.NODE_ENV === 'development';
+  console.log(`Bundling client with esbuild (mode: ${isDev ? 'development' : 'production - minified'})...`);
+
   await esbuild.build({
     entryPoints: ['client/src/index.tsx'],
     bundle: true,
     outfile: 'client/dist/bundle.js',
-    minify: process.env.NODE_ENV === 'production',
-    sourcemap: true,
+    minify: !isDev,
+    treeShaking: true,
+    legalComments: 'none',
+    sourcemap: isDev,
     loader: {
       '.tsx': 'tsx',
       '.ts': 'ts',
@@ -29,7 +33,7 @@ async function build() {
       '.css': 'css',
     },
     define: {
-      'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
+      'process.env.NODE_ENV': JSON.stringify(isDev ? 'development' : 'production'),
     },
   });
 

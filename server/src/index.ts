@@ -32,6 +32,10 @@ async function main() {
   server.listen(env.port, () => {
     console.log(JSON.stringify({ level: 'info', msg: 'billing server started', port: env.port, driver: db.driver, serving: staticDir ? 'api + web app' : 'api only' }));
     verifyMailer().catch((err) => console.error('[Mailer] Startup check error:', err));
+    // Signal PM2 that the server is ready to accept incoming requests (zero-downtime)
+    if (typeof process.send === 'function') {
+      process.send('ready');
+    }
   });
 
   let httpsServer: https.Server | undefined;
