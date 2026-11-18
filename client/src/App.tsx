@@ -49,6 +49,7 @@ import {
   getActiveBranchScope,
   setActiveBranchScope,
   selectActiveShiftCounter,
+  heartbeatActiveShiftCounter,
   fetchDayClosingCompliance,
   fetchDayClosingNotifications,
   markDayClosingNotificationRead,
@@ -161,6 +162,7 @@ import { ToggleSwitch } from './components/ToggleSwitch';
 import { renderBarcodeSvg } from '../../shared/bulkImport.ts';
 import { OpenShiftModal } from './components/shifts/OpenShiftModal.tsx';
 import { SelectCounterModal } from './components/shifts/SelectCounterModal.tsx';
+import { LogoutShiftModal } from './components/shifts/LogoutShiftModal.tsx';
 import { RecentBillsBentoView } from './components/invoices/RecentBillsBentoView.tsx';
 import { TodayDashboardView, AnimatedCounter } from './components/dashboard/TodayDashboardView.tsx';
 import { PaymentsView } from './components/finance/PaymentsView.tsx';
@@ -1274,6 +1276,7 @@ export function App() {
   const [showDiscountPicker, setShowDiscountPicker] = useState(false);
   const [showPosOpenShiftModal, setShowPosOpenShiftModal] = useState(false);
   const [showCounterModal, setShowCounterModal] = useState<boolean>(false);
+  const [showLogoutShiftModal, setShowLogoutShiftModal] = useState<boolean>(false);
   const [showHeldOrdersModal, setShowHeldOrdersModal] = useState(false);
   const [showCustomItemModal, setShowCustomItemModal] = useState(false);
   const [showShortcutsModal, setShowShortcutsModal] = useState(false);
@@ -1354,12 +1357,22 @@ export function App() {
         if (user?.role === 'cashier') {
           setShowCounterModal(true);
         }
-      } else if (match.code !== selectedCounter) {
-        setSelectedCounter(match.code);
-        try {
-          sessionStorage.setItem('pos_selected_counter', match.code);
-          localStorage.setItem('pos_selected_counter', match.code);
-        } catch { }
+      } else {
+        if (match.code !== selectedCounter) {
+          setSelectedCounter(match.code);
+          try {
+            sessionStorage.setItem('pos_selected_counter', match.code);
+            localStorage.setItem('pos_selected_counter', match.code);
+          } catch { }
+        }
+        // Ensure backend registers this station as occupied by the current cashier
+        if (user?.role === 'cashier') {
+          selectActiveShiftCounter({
+            counterId: match.id,
+            counter: match.code,
+            branchId: activeBranch.id,
+          }).catch(() => {});
+        }
       }
     } else if (selectedCounter) {
       const match = activeList.find((c: any) => c.code.toUpperCase() === selectedCounter.toUpperCase() || c.name.toLowerCase() === selectedCounter.toLowerCase());
@@ -1372,9 +1385,25 @@ export function App() {
           localStorage.setItem('pos_selected_counter_id', match.id);
           localStorage.setItem('pos_selected_counter', match.code);
         } catch { }
+        if (user?.role === 'cashier') {
+          selectActiveShiftCounter({
+            counterId: match.id,
+            counter: match.code,
+            branchId: activeBranch.id,
+          }).catch(() => {});
+        }
       }
     }
   }, [activeBranch, selectedCounterId, selectedCounter, user?.role]);
+
+  // Periodic counter heartbeat for cashier on POS tab to keep station occupied in real-time
+  useEffect(() => {
+    if (!user || user.role !== 'cashier' || !selectedCounter) return;
+    const interval = setInterval(() => {
+      heartbeatActiveShiftCounter().catch(() => {});
+    }, 45000);
+    return () => clearInterval(interval);
+  }, [user?.id, user?.role, selectedCounter]);
 
   // Specialized Business Fields
   // Restaurant:
@@ -2941,22 +2970,8 @@ export function App() {
   };
 
 
-  const handleLogout = async () => {
-    let shouldCloseShift = false;
-    if (activeShiftNumber && user?.role === 'cashier') {
-      const confirmClose = window.confirm(
-        `You have an active cashier shift open (#${activeShiftNumber}) on ${selectedCounter || 'your counter'}.\n\n` +
-        `Would you like to close your shift and release this counter so another cashier can use it?\n\n` +
-        `• Click "OK" to close shift, release counter, and logout.\n` +
-        `• Click "Cancel" to stay logged in and reconcile your drawer first.`
-      );
-      if (!confirmClose) {
-        setActiveTab('shifts');
-        return;
-      }
-      shouldCloseShift = true;
-    }
-
+  const performLogout = async (shouldCloseShift = false) => {
+    setShowLogoutShiftModal(false);
     try {
       await api('/api/auth/logout', {
         method: 'POST',
@@ -2982,6 +2997,14 @@ export function App() {
     setUser(null);
     setShop(null);
     navigateTo('landing');
+  };
+
+  const handleLogout = async () => {
+    if (activeShiftNumber && user?.role === 'cashier') {
+      setShowLogoutShiftModal(true);
+      return;
+    }
+    await performLogout(false);
   };
 
   const handleLogoFileUpload = (file: File) => {
@@ -7864,7 +7887,12 @@ export function App() {
                   </div>
                 </div>
 
-                <div className="top-pos-bento-badge top-pos-counter-badge locked" title="Billing counter is locked for this session">
+                <div
+                  className="top-pos-bento-badge top-pos-counter-badge locked"
+                  title="Billing counter station (Click to change or view stations)"
+                  onClick={() => setShowCounterModal(true)}
+                  style={{ cursor: 'pointer' }}
+                >
                   <div className="top-pos-badge-icon counter">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                       <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
@@ -7918,7 +7946,12 @@ export function App() {
                     </div>
                   </div>
                 </div>
-                <div className="top-pos-bento-badge top-pos-counter-badge locked" title="Billing counter is locked for this session">
+                <div
+                  className="top-pos-bento-badge top-pos-counter-badge locked"
+                  title="Billing counter station (Click to change or view stations)"
+                  onClick={() => setShowCounterModal(true)}
+                  style={{ cursor: 'pointer' }}
+                >
                   <div className="top-pos-badge-icon counter">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                       <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
@@ -7972,7 +8005,12 @@ export function App() {
                     </div>
                   </div>
                 </div>
-                <div className="top-pos-bento-badge top-pos-counter-badge locked" title="Billing counter is locked for this session">
+                <div
+                  className="top-pos-bento-badge top-pos-counter-badge locked"
+                  title="Billing counter station (Click to change or view stations)"
+                  onClick={() => setShowCounterModal(true)}
+                  style={{ cursor: 'pointer' }}
+                >
                   <div className="top-pos-badge-icon counter">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                       <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
@@ -18494,6 +18532,22 @@ export function App() {
           />
         )}
 
+        {/* CASHIER LOGOUT ACTIVE SHIFT CONFIRMATION MODAL */}
+        {showLogoutShiftModal && (
+          <LogoutShiftModal
+            isOpen={showLogoutShiftModal}
+            onClose={() => setShowLogoutShiftModal(false)}
+            onConfirmCloseAndLogout={() => performLogout(true)}
+            onReconcileFirst={() => {
+              setShowLogoutShiftModal(false);
+              setActiveTab('shifts');
+            }}
+            shiftNumber={activeShiftNumber}
+            counterName={selectedCounter || 'Counter 1'}
+            branchName={currentBranchName}
+          />
+        )}
+
         {/* MASTER DATA: ADD / EDIT PARTY MODAL (CUSTOMERS & SUPPLIERS) */}
         {/* POS & GLOBAL LOYALTY SCHEME CONFIGURATION MODAL */}
         <LoyaltySchemeModal
@@ -22485,11 +22539,13 @@ export function App() {
         {/* ========================================================= */}
         {selectedInvoiceDetailId && (
           <div
-            className="modal-backdrop"
+            className="modal-overlay theme-cashier"
             style={{
               position: 'fixed',
               inset: 0,
               background: 'rgba(15, 23, 42, 0.65)',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -22501,188 +22557,256 @@ export function App() {
             }}
           >
             <div
-              className="card"
+              className="shift-bento-dialog"
+              onClick={(e) => e.stopPropagation()}
               style={{
                 width: '100%',
-                maxWidth: '820px',
-                maxHeight: '90vh',
+                maxWidth: '880px',
+                maxHeight: '92vh',
                 display: 'flex',
                 flexDirection: 'column',
-                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)',
-                borderRadius: '12px',
+                background: 'var(--surface, #FAF7F2)',
+                borderRadius: '20px',
+                border: '1.5px solid var(--border, #D0C7B8)',
+                boxShadow: '0 25px 60px -15px rgba(15, 45, 46, 0.28), 0 10px 24px -5px rgba(15, 45, 46, 0.08)',
                 overflow: 'hidden',
-                background: '#ffffff',
               }}
             >
-              {/* Header */}
+              {/* Top Accent Gradient Bar */}
               <div
+                className="modal-top-accent green-accent"
                 style={{
+                  height: '4px',
+                  background: 'linear-gradient(90deg, var(--sidebar, #0F2D2E) 0%, var(--primary, #0F766E) 50%, var(--ring, #14B8A6) 100%)',
+                }}
+              />
+
+              {/* Bento Header */}
+              <div
+                className="shift-bento-header"
+                style={{
+                  padding: '1.1rem 1.6rem',
+                  borderBottom: '1px solid var(--border, #D0C7B8)',
+                  background: 'var(--surface, #FAF7F2)',
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
-                  padding: '1rem 1.25rem',
-                  borderBottom: '1px solid #e2e8f0',
-                  background: '#f8fafc',
                 }}
               >
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700, color: '#0f172a' }}>
-                      Bill #{invoiceDetailData?.invoice?.number || selectedInvoiceDetailId}
-                    </h3>
-                    {invoiceDetailData?.invoice?.status && (
-                      <span
-                        className="badge"
-                        style={{
-                          background: invoiceDetailData.invoice.status === 'posted' ? '#dcfce7' : '#fee2e2',
-                          color: invoiceDetailData.invoice.status === 'posted' ? '#15803d' : '#b91c1c',
-                          textTransform: 'uppercase',
-                          fontSize: '0.7rem',
-                          fontWeight: 700,
-                        }}
-                      >
-                        {invoiceDetailData.invoice.status}
-                      </span>
-                    )}
-                    {invoiceDetailData?.invoice?.kind === 'credit_note' && (
-                      <span className="badge" style={{ background: '#e0e7ff', color: '#4338ca', fontSize: '0.7rem' }}>
-                        CREDIT NOTE
-                      </span>
-                    )}
+                <div className="shift-bento-header-left" style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                  <div
+                    className="shift-bento-icon-badge green"
+                    style={{
+                      width: '46px',
+                      height: '46px',
+                      borderRadius: '13px',
+                      background: 'var(--primary-soft, #E6F4F3)',
+                      color: 'var(--primary, #0F766E)',
+                      border: '1.2px solid rgba(20, 184, 166, 0.4)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxShadow: '0 2px 8px rgba(15, 118, 110, 0.15)',
+                    }}
+                  >
+                    <ReceiptIcon size={22} />
                   </div>
-                  <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '2px' }}>
-                    Issued on {invoiceDetailData?.invoice?.bdate ? new Date(invoiceDetailData.invoice.bdate).toLocaleDateString('en-IN') : '—'}
-                    {invoiceDetailData?.invoice?.customerName && ` • Customer: ${invoiceDetailData.invoice.customerName}`}
-                    {invoiceDetailData?.invoice?.customerPhone && (
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', marginLeft: '6px', fontSize: '0.82rem', color: '#64748b' }}>
-                        <PhoneIcon size={12} /> {invoiceDetailData.invoice.customerPhone}
-                      </span>
-                    )}
+                  <div className="shift-bento-title-wrap">
+                    <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: 'var(--sidebar, #0F2D2E)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span>Bill #{invoiceDetailData?.invoice?.number || selectedInvoiceDetailId}</span>
+                      {invoiceDetailData?.invoice?.status && (
+                        <span
+                          className="shift-ref-pill"
+                          style={{
+                            fontSize: '0.72rem',
+                            fontWeight: 700,
+                            padding: '2px 9px',
+                            borderRadius: '20px',
+                            background: invoiceDetailData.invoice.status === 'posted' ? 'var(--primary-soft, #E6F4F3)' : '#FEE2E2',
+                            color: invoiceDetailData.invoice.status === 'posted' ? 'var(--primary, #0F766E)' : '#B91C1C',
+                            border: invoiceDetailData.invoice.status === 'posted' ? '1px solid rgba(20, 184, 166, 0.35)' : '1px solid #FECACA',
+                            textTransform: 'uppercase',
+                          }}
+                        >
+                          {invoiceDetailData.invoice.status}
+                        </span>
+                      )}
+                      {invoiceDetailData?.invoice?.kind === 'credit_note' && (
+                        <span
+                          style={{
+                            fontSize: '0.72rem',
+                            fontWeight: 700,
+                            padding: '2px 9px',
+                            borderRadius: '20px',
+                            background: '#FEF3C7',
+                            color: '#92400E',
+                            border: '1px solid #FDE68A',
+                            textTransform: 'uppercase',
+                          }}
+                        >
+                          Credit Note
+                        </span>
+                      )}
+                    </h3>
+                    <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: 'var(--text-muted, #475569)', display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
+                      <span>Issued on {invoiceDetailData?.invoice?.bdate ? new Date(invoiceDetailData.invoice.bdate).toLocaleDateString('en-IN') : '—'}</span>
+                      {invoiceDetailData?.invoice?.customerName && (
+                        <span>• Customer: <strong style={{ color: 'var(--sidebar, #0F2D2E)' }}>{invoiceDetailData.invoice.customerName}</strong></span>
+                      )}
+                      {invoiceDetailData?.invoice?.customerPhone && (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--text-muted, #475569)' }}>
+                          <PhoneIcon size={12} style={{ color: 'var(--primary, #0F766E)' }} /> {invoiceDetailData.invoice.customerPhone}
+                        </span>
+                      )}
+                    </p>
                   </div>
                 </div>
+
                 <button
                   type="button"
+                  className="modal-close-btn"
                   onClick={() => setSelectedInvoiceDetailId(null)}
-                  style={{ background: 'none', border: 'none', fontSize: '1.25rem', cursor: 'pointer', color: '#64748b' }}
+                  aria-label="Close"
+                  style={{
+                    background: 'var(--surface, #FAF7F2)',
+                    border: '1px solid var(--border, #D0C7B8)',
+                    borderRadius: '10px',
+                    width: '32px',
+                    height: '32px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    color: 'var(--text-muted, #475569)',
+                    transition: 'all 0.15s ease',
+                  }}
                 >
-                  ✕
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
                 </button>
               </div>
 
-              {/* Body */}
-              <div style={{ padding: '1.25rem', overflowY: 'auto', flex: 1 }}>
+              {/* Bento Body */}
+              <div className="shift-bento-body" style={{ padding: '1.25rem 1.6rem', background: 'var(--bg, #E8E1D5)', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
                 {invoiceDetailLoading || !invoiceDetailData ? (
-                  <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>
-                    Loading bill details...
+                  <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted, #475569)', background: 'var(--surface, #FAF7F2)', borderRadius: '16px', border: '1px solid var(--border, #D0C7B8)' }}>
+                    <div style={{ display: 'inline-block', width: '28px', height: '28px', border: '3px solid var(--border, #D0C7B8)', borderTopColor: 'var(--primary, #0F766E)', borderRadius: '50%', animation: 'spin 0.8s linear infinite', marginBottom: '0.75rem' }} />
+                    <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>Loading bill details...</div>
                   </div>
                 ) : (
                   <>
-                    {/* Billed Items Table */}
-                    <div style={{ marginBottom: '1.25rem' }}>
-                      <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#334155', marginBottom: '0.5rem' }}>
-                        Billed Items ({invoiceDetailData.lines?.length || 0} items)
-                      </h4>
-                      <table className="data-table" style={{ fontSize: '0.8rem' }}>
-                        <thead>
-                          <tr>
-                            <th>#</th>
-                            <th>Item</th>
-                            <th>HSN</th>
-                            <th>Qty</th>
-                            <th>Price</th>
-                            <th>Taxable</th>
-                            <th>Tax</th>
-                            <th>Total</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {invoiceDetailData.lines?.map((l: any, idx: number) => (
-                            <tr key={l.id || idx}>
-                              <td>{idx + 1}</td>
-                              <td>
-                                <b>{l.name}</b>
-                              </td>
-                              <td>{l.hsn || '—'}</td>
-                              <td>{(l.qtyMilli / 1000).toLocaleString()} {l.unit || ''}</td>
-                              <td>{formatRupees(l.priceMinor)}</td>
-                              <td>{formatRupees(l.taxableMinor)}</td>
-                              <td>{formatRupees(l.cgstMinor + l.sgstMinor)}</td>
-                              <td style={{ fontWeight: 700 }}>{formatRupees(l.totalMinor)}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-
-                    {/* Totals Summary */}
-                    <div
-                      style={{
-                        background: '#f8fafc',
-                        border: '1px solid #e2e8f0',
-                        borderRadius: '8px',
-                        padding: '0.85rem 1rem',
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
-                        gap: '0.75rem',
-                        marginBottom: '1.5rem',
-                        fontSize: '0.8rem',
-                      }}
-                    >
-                      <div>
-                        <div style={{ color: '#64748b' }}>Taxable Value</div>
-                        <div style={{ fontWeight: 700 }}>{formatRupees(invoiceDetailData.invoice.taxableMinor)}</div>
-                      </div>
-                      <div>
-                        <div style={{ color: '#64748b' }}>CGST + SGST</div>
-                        <div style={{ fontWeight: 700 }}>{formatRupees(invoiceDetailData.invoice.cgstMinor + invoiceDetailData.invoice.sgstMinor)}</div>
-                      </div>
-                      {invoiceDetailData.invoice.roundOffMinor !== 0 && (
-                        <div>
-                          <div style={{ color: '#64748b' }}>Round Off</div>
-                          <div style={{ fontWeight: 700 }}>{invoiceDetailData.invoice.roundOffMinor > 0 ? '+' : ''}{formatRupees(invoiceDetailData.invoice.roundOffMinor)}</div>
+                    {/* Bento Ribbon (Summary Tiles) */}
+                    <div className="shift-bento-ribbon" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem' }}>
+                      <div className="shift-bento-ribbon-tile highlight" style={{ background: 'linear-gradient(135deg, var(--primary-soft, #E6F4F3) 0%, #FAF7F2 100%)', border: '1.5px solid var(--primary, #0F766E)', borderRadius: '14px', padding: '0.85rem 1rem' }}>
+                        <div className="ribbon-tile-label" style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--primary, #0F766E)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                          Total Bill
                         </div>
-                      )}
-                      <div>
-                        <div style={{ color: '#64748b' }}>Total Bill</div>
-                        <div style={{ fontWeight: 800, color: '#1e1b4b' }}>{formatRupees(invoiceDetailData.invoice.totalMinor)}</div>
+                        <div className="ribbon-tile-val" style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--sidebar, #0F2D2E)', fontFamily: "'JetBrains Mono', monospace", marginTop: '2px' }}>
+                          {formatRupees(invoiceDetailData.invoice.totalMinor)}
+                        </div>
+                        <div className="ribbon-tile-sub" style={{ fontSize: '0.72rem', color: 'var(--text-muted, #475569)', marginTop: '2px' }}>
+                          Taxable {formatRupees(invoiceDetailData.invoice.taxableMinor)}
+                        </div>
                       </div>
-                      <div>
-                        <div style={{ color: '#64748b' }}>Paid Amount</div>
-                        <div style={{ fontWeight: 700, color: '#16a34a' }}>{formatRupees(invoiceDetailData.invoice.paidMinor)}</div>
+
+                      <div className="shift-bento-ribbon-tile" style={{ background: 'var(--surface, #FAF7F2)', border: '1px solid var(--border, #D0C7B8)', borderRadius: '14px', padding: '0.85rem 1rem' }}>
+                        <div className="ribbon-tile-label" style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted, #475569)', textTransform: 'uppercase' }}>
+                          Paid Amount
+                        </div>
+                        <div className="ribbon-tile-val" style={{ fontSize: '1.4rem', fontWeight: 800, color: '#15803D', fontFamily: "'JetBrains Mono', monospace", marginTop: '2px' }}>
+                          {formatRupees(invoiceDetailData.invoice.paidMinor)}
+                        </div>
+                        <div className="ribbon-tile-sub" style={{ fontSize: '0.72rem', color: 'var(--text-muted, #475569)', marginTop: '2px' }}>
+                          GST: {formatRupees(invoiceDetailData.invoice.cgstMinor + invoiceDetailData.invoice.sgstMinor)}
+                        </div>
                       </div>
-                      <div>
-                        <div style={{ color: '#64748b' }}>Balance Due</div>
-                        <div style={{ fontWeight: 700, color: invoiceDetailData.invoice.balanceMinor > 0 ? '#ea580c' : '#16a34a' }}>
+
+                      <div className="shift-bento-ribbon-tile" style={{ background: 'var(--surface, #FAF7F2)', border: '1px solid var(--border, #D0C7B8)', borderRadius: '14px', padding: '0.85rem 1rem' }}>
+                        <div className="ribbon-tile-label" style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted, #475569)', textTransform: 'uppercase' }}>
+                          Balance Due
+                        </div>
+                        <div className="ribbon-tile-val" style={{ fontSize: '1.4rem', fontWeight: 800, color: invoiceDetailData.invoice.balanceMinor > 0 ? '#EA580C' : '#15803D', fontFamily: "'JetBrains Mono', monospace", marginTop: '2px' }}>
                           {formatRupees(invoiceDetailData.invoice.balanceMinor)}
                         </div>
+                        <div className="ribbon-tile-sub" style={{ fontSize: '0.72rem', color: 'var(--text-muted, #475569)', marginTop: '2px' }}>
+                          {invoiceDetailData.invoice.balanceMinor > 0 ? 'Pending collection' : 'Fully Settled'}
+                        </div>
                       </div>
-                      {invoiceDetailData.invoice.tender && invoiceDetailData.invoice.tender.cashReceivedMinor > 0 && (
-                        <>
-                          <div>
-                            <div style={{ color: '#64748b' }}>Cash Tendered</div>
-                            <div style={{ fontWeight: 700, color: '#334155' }}>
-                              {formatRupees(invoiceDetailData.invoice.tender.cashReceivedMinor)}
-                            </div>
-                          </div>
-                          <div>
-                            <div style={{ color: '#047857' }}>Change Returned</div>
-                            <div style={{ fontWeight: 800, color: '#047857' }}>
-                              {formatRupees(invoiceDetailData.invoice.tender.changeReturnedMinor)}
-                            </div>
-                          </div>
-                        </>
-                      )}
+
+                      <div className="shift-bento-ribbon-tile" style={{ background: 'var(--surface, #FAF7F2)', border: '1px solid var(--border, #D0C7B8)', borderRadius: '14px', padding: '0.85rem 1rem' }}>
+                        <div className="ribbon-tile-label" style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted, #475569)', textTransform: 'uppercase' }}>
+                          {invoiceDetailData.invoice.tender?.cashReceivedMinor > 0 ? 'Tender / Change' : 'Round Off & Tax'}
+                        </div>
+                        <div className="ribbon-tile-val" style={{ fontSize: '1.3rem', fontWeight: 800, color: 'var(--sidebar, #0F2D2E)', fontFamily: "'JetBrains Mono', monospace", marginTop: '2px' }}>
+                          {invoiceDetailData.invoice.tender?.cashReceivedMinor > 0 ? formatRupees(invoiceDetailData.invoice.tender.changeReturnedMinor) : (invoiceDetailData.invoice.roundOffMinor !== 0 ? `${invoiceDetailData.invoice.roundOffMinor > 0 ? '+' : ''}${formatRupees(invoiceDetailData.invoice.roundOffMinor)}` : '₹0.00')}
+                        </div>
+                        <div className="ribbon-tile-sub" style={{ fontSize: '0.72rem', color: invoiceDetailData.invoice.tender?.cashReceivedMinor > 0 ? '#047857' : 'var(--text-muted, #475569)', marginTop: '2px' }}>
+                          {invoiceDetailData.invoice.tender?.cashReceivedMinor > 0 ? `Cash Recv: ${formatRupees(invoiceDetailData.invoice.tender.cashReceivedMinor)}` : `CGST+SGST: ${formatRupees(invoiceDetailData.invoice.cgstMinor + invoiceDetailData.invoice.sgstMinor)}`}
+                        </div>
+                      </div>
                     </div>
 
-                    {/* Returns & Credit Notes Zone (Section 4.2) */}
-                    <div style={{ borderTop: '2px solid #e2e8f0', paddingTop: '1.25rem', marginTop: '1rem' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                    {/* Billed Items Panel */}
+                    <div className="shift-bento-panel" style={{ background: 'var(--surface, #FAF7F2)', border: '1px solid var(--border, #D0C7B8)', borderRadius: '16px', padding: '1.15rem 1.35rem', boxShadow: '0 1px 3px rgba(15, 45, 46, 0.04)' }}>
+                      <div className="shift-bento-panel-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border, #D0C7B8)', marginBottom: '0.85rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--sidebar, #0F2D2E)' }}>
+                            Billed Items
+                          </span>
+                          <span style={{ fontSize: '0.72rem', fontWeight: 700, padding: '2px 8px', borderRadius: '12px', background: 'var(--primary-soft, #E6F4F3)', color: 'var(--primary, #0F766E)', border: '1px solid rgba(20, 184, 166, 0.35)' }}>
+                            {invoiceDetailData.lines?.length || 0} items
+                          </span>
+                        </div>
+                      </div>
+
+                      <div style={{ overflowX: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0', fontSize: '0.82rem' }}>
+                          <thead>
+                            <tr style={{ background: 'var(--primary-soft, #E6F4F3)', color: 'var(--sidebar, #0F2D2E)' }}>
+                              <th style={{ padding: '8px 10px', textAlign: 'left', borderRadius: '8px 0 0 8px', fontWeight: 700 }}>#</th>
+                              <th style={{ padding: '8px 10px', textAlign: 'left', fontWeight: 700 }}>Item</th>
+                              <th style={{ padding: '8px 10px', textAlign: 'left', fontWeight: 700 }}>HSN</th>
+                              <th style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 700 }}>Qty</th>
+                              <th style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 700 }}>Price</th>
+                              <th style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 700 }}>Taxable</th>
+                              <th style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 700 }}>Tax</th>
+                              <th style={{ padding: '8px 10px', textAlign: 'right', borderRadius: '0 8px 8px 0', fontWeight: 800 }}>Total</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {invoiceDetailData.lines?.map((l: any, idx: number) => (
+                              <tr key={l.id || idx} style={{ borderBottom: '1px solid var(--border, #E8E1D5)' }}>
+                                <td style={{ padding: '9px 10px', color: 'var(--text-muted, #475569)' }}>{idx + 1}</td>
+                                <td style={{ padding: '9px 10px' }}>
+                                  <div style={{ fontWeight: 700, color: 'var(--sidebar, #0F2D2E)' }}>{l.name}</div>
+                                </td>
+                                <td style={{ padding: '9px 10px', color: 'var(--text-muted, #475569)', fontFamily: "'JetBrains Mono', monospace", fontSize: '0.78rem' }}>{l.hsn || '—'}</td>
+                                <td style={{ padding: '9px 10px', textAlign: 'right', fontWeight: 600, color: 'var(--sidebar, #0F2D2E)' }}>{(l.qtyMilli / 1000).toLocaleString()} {l.unit || ''}</td>
+                                <td style={{ padding: '9px 10px', textAlign: 'right', color: 'var(--text-muted, #475569)' }}>{formatRupees(l.priceMinor)}</td>
+                                <td style={{ padding: '9px 10px', textAlign: 'right', color: 'var(--text-muted, #475569)' }}>{formatRupees(l.taxableMinor)}</td>
+                                <td style={{ padding: '9px 10px', textAlign: 'right', color: 'var(--text-muted, #475569)' }}>{formatRupees(l.cgstMinor + l.sgstMinor)}</td>
+                                <td style={{ padding: '9px 10px', textAlign: 'right', fontWeight: 800, color: 'var(--sidebar, #0F2D2E)', fontFamily: "'JetBrains Mono', monospace" }}>{formatRupees(l.totalMinor)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    {/* Returns & Credit Notes Zone */}
+                    <div className="shift-bento-panel" style={{ background: 'var(--surface, #FAF7F2)', border: '1px solid var(--border, #D0C7B8)', borderRadius: '16px', padding: '1.15rem 1.35rem', boxShadow: '0 1px 3px rgba(15, 45, 46, 0.04)' }}>
+                      <div className="shift-bento-panel-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border, #D0C7B8)', marginBottom: '0.85rem' }}>
                         <div>
-                          <h4 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 700, color: '#1e293b' }}>
-                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}><RotateCcwIcon size={14} /> Returns & Credit Notes</span>
-                          </h4>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <RotateCcwIcon size={16} style={{ color: 'var(--primary, #0F766E)' }} />
+                            <span style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--sidebar, #0F2D2E)' }}>
+                              Returns & Credit Notes
+                            </span>
+                          </div>
                           {invoiceDetailData.creditNotes && invoiceDetailData.creditNotes.length > 0 && (
-                            <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '2px' }}>
+                            <div style={{ fontSize: '0.76rem', color: 'var(--text-muted, #475569)', marginTop: '2px' }}>
                               Returned {formatRupees(invoiceDetailData.invoice.returnedMinor || 0)} of {formatRupees(invoiceDetailData.invoice.totalMinor)} • {invoiceDetailData.creditNotes.length} credit note(s) issued
                             </div>
                           )}
@@ -22692,16 +22816,21 @@ export function App() {
                         {invoiceDetailData.invoice.kind !== 'credit_note' && invoiceDetailData.invoice.status !== 'cancelled' && (
                           <button
                             type="button"
-                            className="btn"
                             disabled={Boolean(invoiceDetailData.invoice.fullyReturned)}
                             style={{
-                              padding: '0.35rem 0.75rem',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              padding: '0.45rem 1rem',
                               fontSize: '0.8rem',
                               fontWeight: 700,
-                              background: invoiceDetailData.invoice.fullyReturned ? '#f1f5f9' : '#e0e7ff',
-                              color: invoiceDetailData.invoice.fullyReturned ? '#94a3b8' : '#4338ca',
-                              borderColor: invoiceDetailData.invoice.fullyReturned ? '#cbd5e1' : '#c7d2fe',
+                              borderRadius: '10px',
                               cursor: invoiceDetailData.invoice.fullyReturned ? 'not-allowed' : 'pointer',
+                              background: invoiceDetailData.invoice.fullyReturned ? '#F1F5F9' : 'var(--primary, #0F766E)',
+                              color: invoiceDetailData.invoice.fullyReturned ? '#94A3B8' : '#FFFFFF',
+                              border: invoiceDetailData.invoice.fullyReturned ? '1px solid #CBD5E1' : 'none',
+                              boxShadow: invoiceDetailData.invoice.fullyReturned ? 'none' : '0 2px 8px rgba(15, 118, 110, 0.25)',
+                              transition: 'all 0.15s ease',
                             }}
                             onClick={() => {
                               setSelectedInvoiceDetailId(null);
@@ -22709,7 +22838,8 @@ export function App() {
                             }}
                             title={invoiceDetailData.invoice.fullyReturned ? 'Fully returned' : 'Issue a return against this bill'}
                           >
-                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}><RotateCcwIcon size={13} /> Issue Return / Credit Note</span>
+                            <RotateCcwIcon size={13} />
+                            <span>Issue Return / Credit Note</span>
                           </button>
                         )}
                       </div>
@@ -22721,35 +22851,37 @@ export function App() {
                             <div
                               key={cn.id}
                               style={{
-                                border: cn.status === 'voided' ? '1px dashed #ef4444' : '1px solid #cbd5e1',
-                                borderRadius: '8px',
-                                padding: '0.85rem 1rem',
-                                background: cn.status === 'voided' ? '#fff5f5' : '#ffffff',
+                                border: cn.status === 'voided' ? '1.5px dashed #EF4444' : '1.5px solid var(--border, #D0C7B8)',
+                                borderRadius: '12px',
+                                padding: '0.9rem 1.1rem',
+                                background: cn.status === 'voided' ? '#FFF5F5' : 'var(--surface, #FAF7F2)',
                               }}
                             >
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                  <span style={{ fontWeight: 800, color: '#4f46e5', fontSize: '0.9rem' }}>
+                                  <span style={{ fontWeight: 800, color: 'var(--primary, #0F766E)', fontSize: '0.95rem', fontFamily: "'JetBrains Mono', monospace" }}>
                                     {cn.number}
                                   </span>
                                   <span
-                                    className="badge"
                                     style={{
-                                      background: cn.status === 'voided' ? '#fee2e2' : '#dcfce7',
-                                      color: cn.status === 'voided' ? '#b91c1c' : '#15803d',
                                       fontSize: '0.68rem',
-                                      fontWeight: 700,
+                                      fontWeight: 800,
+                                      padding: '2px 7px',
+                                      borderRadius: '12px',
+                                      background: cn.status === 'voided' ? '#FEE2E2' : 'var(--primary-soft, #E6F4F3)',
+                                      color: cn.status === 'voided' ? '#B91C1C' : 'var(--primary, #0F766E)',
+                                      border: cn.status === 'voided' ? '1px solid #FECACA' : '1px solid rgba(20, 184, 166, 0.35)',
                                       textTransform: 'uppercase',
                                     }}
                                   >
                                     {cn.status}
                                   </span>
-                                  <span style={{ fontSize: '0.78rem', color: '#64748b' }}>
+                                  <span style={{ fontSize: '0.78rem', color: 'var(--text-muted, #475569)' }}>
                                     {new Date(cn.createdAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
                                   </span>
                                   {cn.createdByName && (
-                                    <span style={{ fontSize: '0.75rem', color: '#475569' }}>
-                                      by {cn.createdByName}
+                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted, #475569)' }}>
+                                      by <strong>{cn.createdByName}</strong>
                                     </span>
                                   )}
                                 </div>
@@ -22759,8 +22891,19 @@ export function App() {
                                     href={`/api/credit-notes/${cn.id}/print?paper=thermal80&autoprint=true`}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="btn btn-secondary"
-                                    style={{ padding: '0.25rem 0.5rem', fontSize: '0.72rem', textDecoration: 'none' }}
+                                    style={{
+                                      padding: '0.25rem 0.6rem',
+                                      fontSize: '0.74rem',
+                                      fontWeight: 700,
+                                      textDecoration: 'none',
+                                      borderRadius: '8px',
+                                      background: 'var(--surface, #FAF7F2)',
+                                      border: '1px solid var(--border, #D0C7B8)',
+                                      color: 'var(--sidebar, #0F2D2E)',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '4px',
+                                    }}
                                   >
                                     🖨️ Thermal
                                   </a>
@@ -22768,16 +22911,38 @@ export function App() {
                                     href={`/api/credit-notes/${cn.id}/print?paper=a4`}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="btn btn-secondary"
-                                    style={{ padding: '0.25rem 0.5rem', fontSize: '0.72rem', textDecoration: 'none' }}
+                                    style={{
+                                      padding: '0.25rem 0.6rem',
+                                      fontSize: '0.74rem',
+                                      fontWeight: 700,
+                                      textDecoration: 'none',
+                                      borderRadius: '8px',
+                                      background: 'var(--surface, #FAF7F2)',
+                                      border: '1px solid var(--border, #D0C7B8)',
+                                      color: 'var(--sidebar, #0F2D2E)',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '4px',
+                                    }}
                                   >
                                     📄 A4
                                   </a>
                                   {shop?.whatsappEnabled !== false && cn.status !== 'voided' && (
                                     <button
                                       type="button"
-                                      className="btn btn-secondary"
-                                      style={{ padding: '0.25rem 0.5rem', fontSize: '0.72rem', color: '#15803d', borderColor: '#86efac', background: '#f0fdf4' }}
+                                      style={{
+                                        padding: '0.25rem 0.6rem',
+                                        fontSize: '0.74rem',
+                                        fontWeight: 700,
+                                        borderRadius: '8px',
+                                        border: '1px solid #86EFAC',
+                                        background: '#F0FDF4',
+                                        color: '#15803D',
+                                        cursor: 'pointer',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '4px',
+                                      }}
                                       onClick={() => handleOpenCreditNoteWhatsApp({
                                         id: cn.id,
                                         number: cn.number,
@@ -22789,20 +22954,25 @@ export function App() {
                                         shareToken: cn.shareToken,
                                       })}
                                     >
-                                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><WhatsAppIcon size={13} /> WhatsApp</span>
+                                      <WhatsAppIcon size={13} />
+                                      <span>WhatsApp</span>
                                     </button>
                                   )}
                                   {cn.status !== 'voided' && (user?.role === 'owner' || user?.role === 'manager') && (
                                     <button
                                       type="button"
-                                      className="btn"
                                       style={{
-                                        padding: '0.25rem 0.5rem',
-                                        fontSize: '0.72rem',
+                                        padding: '0.25rem 0.6rem',
+                                        fontSize: '0.74rem',
                                         fontWeight: 700,
-                                        background: '#fee2e2',
-                                        color: '#b91c1c',
-                                        borderColor: '#fca5a5',
+                                        borderRadius: '8px',
+                                        background: '#FEE2E2',
+                                        color: '#B91C1C',
+                                        border: '1px solid #FCA5A5',
+                                        cursor: 'pointer',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '4px',
                                       }}
                                       onClick={() => handleOpenVoidModal({
                                         id: cn.id,
@@ -22812,7 +22982,8 @@ export function App() {
                                       })}
                                       title="Void this credit note (Owner/Manager only)"
                                     >
-                                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><XCircleIcon size={12} /> Void</span>
+                                      <XCircleIcon size={12} />
+                                      <span>Void</span>
                                     </button>
                                   )}
                                 </div>
@@ -22820,38 +22991,38 @@ export function App() {
 
                               {/* Voided Details Banner */}
                               {cn.status === 'voided' && (
-                                <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px', padding: '0.4rem 0.6rem', fontSize: '0.76rem', color: '#b91c1c', marginBottom: '0.5rem' }}>
+                                <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '8px', padding: '0.5rem 0.75rem', fontSize: '0.78rem', color: '#B91C1C', marginBottom: '0.5rem' }}>
                                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><AlertTriangleIcon size={13} /> <b>Voided</b></span> on {new Date(cn.voidedAt).toLocaleString('en-IN')}{cn.voidedByName ? ` by ${cn.voidedByName}` : ''}: "{cn.voidReason || 'No reason provided'}"
                                 </div>
                               )}
 
                               {/* Returned Lines */}
-                              <div style={{ fontSize: '0.78rem', marginBottom: '0.4rem' }}>
+                              <div style={{ fontSize: '0.8rem', marginBottom: '0.4rem' }}>
                                 {cn.lines?.map((cl: any, cidx: number) => (
-                                  <div key={cidx} style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}>
+                                  <div key={cidx} style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', borderBottom: '1px dashed var(--border, #E8E1D5)' }}>
                                     <div>
-                                      <b>{cl.name}</b> × {(cl.qtyMilli / 1000).toLocaleString()} · Reason: <em>{cl.reason}</em> · Restock: <span style={{ fontWeight: 700, color: cl.restock ? '#16a34a' : '#dc2626' }}>{cl.restock ? 'YES' : 'NO'}</span>
+                                      <strong style={{ color: 'var(--sidebar, #0F2D2E)' }}>{cl.name}</strong> × {(cl.qtyMilli / 1000).toLocaleString()} · Reason: <em>{cl.reason}</em> · Restock: <span style={{ fontWeight: 800, color: cl.restock ? '#16A34A' : '#DC2626' }}>{cl.restock ? 'YES' : 'NO'}</span>
                                     </div>
-                                    <div style={{ fontWeight: 600 }}>{formatRupees(cl.totalMinor)}</div>
+                                    <div style={{ fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", color: 'var(--sidebar, #0F2D2E)' }}>{formatRupees(cl.totalMinor)}</div>
                                   </div>
                                 ))}
                               </div>
 
                               {/* Settlement Summary */}
-                              <div style={{ borderTop: '1px dashed #cbd5e1', paddingTop: '0.4rem', fontSize: '0.76rem', color: '#475569' }}>
-                                <b>Settlement:</b> Total Credit <b>{formatRupees(cn.totalCreditMinor)}</b>
+                              <div style={{ paddingTop: '0.4rem', fontSize: '0.78rem', color: 'var(--text-muted, #475569)' }}>
+                                <strong style={{ color: 'var(--sidebar, #0F2D2E)' }}>Settlement:</strong> Total Credit <strong style={{ color: 'var(--primary, #0F766E)' }}>{formatRupees(cn.totalCreditMinor)}</strong>
                                 {cn.allocations?.map((a: any, aidx: number) => (
                                   <span key={aidx} style={{ marginLeft: '6px' }}>
                                     • {formatRupees(a.amountMinor)} adjusted on Bill #{a.invoiceNumber}
                                   </span>
                                 ))}
                                 {cn.advanceAmountMinor > 0 && (
-                                  <span style={{ marginLeft: '6px', color: '#0369a1', fontWeight: 600 }}>
+                                  <span style={{ marginLeft: '6px', color: '#0369A1', fontWeight: 700 }}>
                                     • {formatRupees(cn.advanceAmountMinor)} kept as Customer Advance
                                   </span>
                                 )}
                                 {cn.refundAmountMinor > 0 && (
-                                  <span style={{ marginLeft: '6px', color: '#0f172a', fontWeight: 600 }}>
+                                  <span style={{ marginLeft: '6px', color: 'var(--sidebar, #0F2D2E)', fontWeight: 700 }}>
                                     • {formatRupees(cn.refundAmountMinor)} refunded via {(cn.refundMode || 'cash').toUpperCase()}{cn.refundReference ? ` (Ref: ${cn.refundReference})` : ''}
                                   </span>
                                 )}
@@ -22860,7 +23031,7 @@ export function App() {
                           ))}
                         </div>
                       ) : (
-                        <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '8px', textAlign: 'center', color: '#64748b', fontSize: '0.82rem' }}>
+                        <div style={{ background: 'var(--bg, #E8E1D5)', padding: '1rem', borderRadius: '10px', textAlign: 'center', color: 'var(--text-muted, #475569)', fontSize: '0.82rem', border: '1px dashed var(--border, #D0C7B8)' }}>
                           No returns or credit notes have been issued against this bill.
                         </div>
                       )}
@@ -22869,20 +23040,31 @@ export function App() {
                 )}
               </div>
 
-              {/* Footer */}
+              {/* Bento Footer */}
               <div
+                className="shift-bento-footer"
                 style={{
                   display: 'flex',
                   justifyContent: 'flex-end',
-                  padding: '0.75rem 1.25rem',
-                  borderTop: '1px solid #e2e8f0',
-                  background: '#f8fafc',
+                  padding: '0.85rem 1.6rem',
+                  borderTop: '1px solid var(--border, #D0C7B8)',
+                  background: 'var(--surface, #FAF7F2)',
                 }}
               >
                 <button
                   type="button"
-                  className="btn btn-secondary"
                   onClick={() => setSelectedInvoiceDetailId(null)}
+                  style={{
+                    padding: '0.5rem 1.4rem',
+                    fontSize: '0.84rem',
+                    fontWeight: 700,
+                    borderRadius: '10px',
+                    background: 'var(--surface, #FAF7F2)',
+                    border: '1.5px solid var(--border, #D0C7B8)',
+                    color: 'var(--sidebar, #0F2D2E)',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
                 >
                   Close
                 </button>
@@ -22896,11 +23078,13 @@ export function App() {
         {/* ========================================================= */}
         {returnModalInvoiceId && (
           <div
-            className="modal-backdrop"
+            className="modal-overlay theme-cashier"
             style={{
               position: 'fixed',
               inset: 0,
               background: 'rgba(15, 23, 42, 0.65)',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -22912,74 +23096,139 @@ export function App() {
             }}
           >
             <div
-              className="card"
+              className="shift-bento-dialog"
+              onClick={(e) => e.stopPropagation()}
               style={{
                 width: '100%',
-                maxWidth: '860px',
+                maxWidth: '900px',
                 maxHeight: '92vh',
                 display: 'flex',
                 flexDirection: 'column',
-                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.25)',
-                borderRadius: '12px',
+                background: 'var(--surface, #FAF7F2)',
+                borderRadius: '20px',
+                border: '1.5px solid var(--border, #D0C7B8)',
+                boxShadow: '0 25px 60px -15px rgba(15, 45, 46, 0.28), 0 10px 24px -5px rgba(15, 45, 46, 0.08)',
                 overflow: 'hidden',
-                background: '#ffffff',
               }}
             >
-              {/* Header */}
+              {/* Top Accent Gradient Bar */}
               <div
+                className="modal-top-accent green-accent"
                 style={{
+                  height: '4px',
+                  background: 'linear-gradient(90deg, var(--sidebar, #0F2D2E) 0%, var(--primary, #0F766E) 50%, var(--ring, #14B8A6) 100%)',
+                }}
+              />
+
+              {/* Bento Header */}
+              <div
+                className="shift-bento-header"
+                style={{
+                  padding: '1.1rem 1.6rem',
+                  borderBottom: '1px solid var(--border, #D0C7B8)',
+                  background: 'var(--surface, #FAF7F2)',
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
-                  padding: '1rem 1.25rem',
-                  borderBottom: '1px solid #e2e8f0',
-                  background: '#f8fafc',
                 }}
               >
-                <div>
-                  <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700, color: '#0f172a' }}>
-                    Create Return / Credit Note — Against Bill #{returnInfo?.invoice?.number || ''}
-                  </h3>
-                  <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '2px' }}>
-                    Customer: <b>{returnInfo?.customer?.name || returnInfo?.invoice?.customerName || 'Walk-in Customer'}</b>
-                    {returnInfo?.invoice?.bdate && ` · Bill Date: ${new Date(returnInfo.invoice.bdate).toLocaleDateString('en-IN')}`}
-                    {returnInfo && ` · Bill Total: ${formatRupees(returnInfo.invoice.totalMinor)}`}
-                    {returnInfo && ` · Dues: ${formatRupees(returnInfo.invoice.balanceMinor)}`}
+                <div className="shift-bento-header-left" style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                  <div
+                    className="shift-bento-icon-badge green"
+                    style={{
+                      width: '46px',
+                      height: '46px',
+                      borderRadius: '13px',
+                      background: 'var(--primary-soft, #E6F4F3)',
+                      color: 'var(--primary, #0F766E)',
+                      border: '1.2px solid rgba(20, 184, 166, 0.4)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxShadow: '0 2px 8px rgba(15, 118, 110, 0.15)',
+                    }}
+                  >
+                    <RotateCcwIcon size={22} />
+                  </div>
+                  <div className="shift-bento-title-wrap">
+                    <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: 'var(--sidebar, #0F2D2E)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span>Create Return / Credit Note</span>
+                      <span
+                        className="shift-ref-pill"
+                        style={{
+                          fontSize: '0.72rem',
+                          fontWeight: 700,
+                          padding: '2px 9px',
+                          borderRadius: '20px',
+                          background: 'var(--primary-soft, #E6F4F3)',
+                          color: 'var(--primary, #0F766E)',
+                          border: '1px solid rgba(20, 184, 166, 0.35)',
+                        }}
+                      >
+                        Bill #{returnInfo?.invoice?.number || ''}
+                      </span>
+                    </h3>
+                    <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: 'var(--text-muted, #475569)', display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
+                      <span>Customer: <strong style={{ color: 'var(--sidebar, #0F2D2E)' }}>{returnInfo?.customer?.name || returnInfo?.invoice?.customerName || 'Walk-in Customer'}</strong></span>
+                      {returnInfo?.invoice?.bdate && <span>· Bill Date: {new Date(returnInfo.invoice.bdate).toLocaleDateString('en-IN')}</span>}
+                      {returnInfo && <span>· Bill Total: <strong style={{ color: 'var(--sidebar, #0F2D2E)' }}>{formatRupees(returnInfo.invoice.totalMinor)}</strong></span>}
+                      {returnInfo && <span>· Dues: <strong style={{ color: returnInfo.invoice.balanceMinor > 0 ? '#EA580C' : '#15803D' }}>{formatRupees(returnInfo.invoice.balanceMinor)}</strong></span>}
+                    </p>
                   </div>
                 </div>
+
                 <button
                   type="button"
+                  className="modal-close-btn"
                   onClick={handleCloseReturnModal}
-                  style={{ background: 'none', border: 'none', fontSize: '1.25rem', cursor: 'pointer', color: '#64748b' }}
+                  aria-label="Close"
+                  style={{
+                    background: 'var(--surface, #FAF7F2)',
+                    border: '1px solid var(--border, #D0C7B8)',
+                    borderRadius: '10px',
+                    width: '32px',
+                    height: '32px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    color: 'var(--text-muted, #475569)',
+                    transition: 'all 0.15s ease',
+                  }}
                 >
-                  ✕
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
                 </button>
               </div>
 
-              {/* Body */}
-              <div style={{ padding: '1.25rem', overflowY: 'auto', flex: 1 }}>
+              {/* Bento Body */}
+              <div className="shift-bento-body" style={{ padding: '1.25rem 1.6rem', background: 'var(--bg, #E8E1D5)', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
                 {returnInfoLoading || !returnInfo ? (
-                  <div style={{ textAlign: 'center', padding: '3rem', color: '#64748b' }}>
-                    Loading returnable items...
+                  <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted, #475569)', background: 'var(--surface, #FAF7F2)', borderRadius: '16px', border: '1px solid var(--border, #D0C7B8)' }}>
+                    <div style={{ display: 'inline-block', width: '28px', height: '28px', border: '3px solid var(--border, #D0C7B8)', borderTopColor: 'var(--primary, #0F766E)', borderRadius: '50%', animation: 'spin 0.8s linear infinite', marginBottom: '0.75rem' }} />
+                    <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>Loading returnable items...</div>
                   </div>
                 ) : (
                   <>
-                    {/* Warning if bill is older than 30 days (Section 12) */}
+                    {/* Warning if bill is older than 30 days */}
                     {returnInfo.billAgeDays > 30 && (
-                      <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '6px', padding: '0.65rem 0.85rem', fontSize: '0.8rem', color: '#b45309', marginBottom: '1rem' }}>
-                        ⚠️ <b>Notice:</b> This bill is <b>{returnInfo.billAgeDays} days old</b>. As per GST policy, the credit note date is recorded as today so GST reversals land in the current period.
+                      <div style={{ background: '#FFFBEB', border: '1.5px solid #FDE68A', borderRadius: '12px', padding: '0.75rem 1rem', fontSize: '0.82rem', color: '#B45309', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span style={{ fontSize: '1.1rem' }}>⚠️</span>
+                        <span><strong>Notice:</strong> This bill is <strong>{returnInfo.billAgeDays} days old</strong>. As per GST policy, the credit note date is recorded as today so GST reversals land in the current period.</span>
                       </div>
                     )}
 
                     {/* Discard confirmation warning */}
                     {returnDiscardConfirm && (
-                      <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px', padding: '0.75rem', fontSize: '0.82rem', color: '#b91c1c', marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ background: '#FEF2F2', border: '1.5px solid #FECACA', borderRadius: '12px', padding: '0.85rem 1rem', fontSize: '0.82rem', color: '#B91C1C', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span>⚠️ You have entered return quantities. Discard and lose these changes?</span>
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
                           <button
                             type="button"
                             onClick={() => setReturnDiscardConfirm(false)}
-                            style={{ padding: '3px 8px', borderRadius: '4px', border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer', fontSize: '0.75rem' }}
+                            style={{ padding: '4px 10px', borderRadius: '8px', border: '1.5px solid var(--border, #D0C7B8)', background: 'var(--surface, #FAF7F2)', color: 'var(--sidebar, #0F2D2E)', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600 }}
                           >
                             Continue Editing
                           </button>
@@ -22990,7 +23239,7 @@ export function App() {
                               setReturnModalInvoiceId(null);
                               setReturnInfo(null);
                             }}
-                            style={{ padding: '3px 8px', borderRadius: '4px', border: 'none', background: '#ef4444', color: '#fff', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700 }}
+                            style={{ padding: '4px 10px', borderRadius: '8px', border: 'none', background: '#EF4444', color: '#fff', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 800 }}
                           >
                             Discard
                           </button>
@@ -22998,208 +23247,235 @@ export function App() {
                       </div>
                     )}
 
-                    {/* Quick helper buttons (Section 14.1) */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
-                      <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#334155' }}>
-                        Return Items & Restock Options
+                    {/* Return Items Panel */}
+                    <div className="shift-bento-panel" style={{ background: 'var(--surface, #FAF7F2)', border: '1px solid var(--border, #D0C7B8)', borderRadius: '16px', padding: '1.15rem 1.35rem', boxShadow: '0 1px 3px rgba(15, 45, 46, 0.04)' }}>
+                      <div className="shift-bento-panel-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border, #D0C7B8)', marginBottom: '0.85rem' }}>
+                        <div style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--sidebar, #0F2D2E)' }}>
+                          Return Items & Restock Options
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <button
+                            type="button"
+                            onClick={handleReturnAll}
+                            style={{
+                              padding: '0.35rem 0.8rem',
+                              fontSize: '0.76rem',
+                              fontWeight: 700,
+                              borderRadius: '8px',
+                              background: 'var(--primary-soft, #E6F4F3)',
+                              color: 'var(--primary, #0F766E)',
+                              border: '1px solid rgba(20, 184, 166, 0.4)',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            ⚡ Return All
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleClearReturn}
+                            style={{
+                              padding: '0.35rem 0.8rem',
+                              fontSize: '0.76rem',
+                              fontWeight: 600,
+                              borderRadius: '8px',
+                              background: 'var(--surface, #FAF7F2)',
+                              color: 'var(--text-muted, #475569)',
+                              border: '1px solid var(--border, #D0C7B8)',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            Clear All
+                          </button>
+                        </div>
                       </div>
-                      <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <button
-                          type="button"
-                          onClick={handleReturnAll}
-                          className="btn btn-secondary"
-                          style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem', fontWeight: 600 }}
-                        >
-                          ⚡ Return All
-                        </button>
-                        <button
-                          type="button"
-                          onClick={handleClearReturn}
-                          className="btn btn-secondary"
-                          style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem' }}
-                        >
-                          Clear All
-                        </button>
+
+                      {/* Lines Table */}
+                      <div style={{ overflowX: 'auto', marginBottom: '0.5rem' }}>
+                        <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0', fontSize: '0.82rem' }}>
+                          <thead>
+                            <tr style={{ background: 'var(--primary-soft, #E6F4F3)', color: 'var(--sidebar, #0F2D2E)' }}>
+                              <th style={{ padding: '8px 10px', textAlign: 'left', borderRadius: '8px 0 0 8px', fontWeight: 700 }}>Item</th>
+                              <th style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 700 }}>Billed</th>
+                              <th style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 700 }}>Already Ret.</th>
+                              <th style={{ padding: '8px 10px', textAlign: 'center', width: '110px', fontWeight: 700 }}>Return Qty</th>
+                              <th style={{ padding: '8px 10px', textAlign: 'center', width: '90px', fontWeight: 700 }}>Restock?</th>
+                              <th style={{ padding: '8px 10px', textAlign: 'left', width: '200px', borderRadius: '0 8px 8px 0', fontWeight: 700 }}>Reason (Mandatory)</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {returnInfo.lines.map((l) => {
+                              const inp = returnLinesInput[l.id] || { returnQty: '', restock: true, reason: '', customReason: '' };
+                              const returnableUnits = l.returnableQtyMilli / 1000;
+                              const isFullyReturned = l.returnableQtyMilli === 0;
+
+                              return (
+                                <tr key={l.id} style={{ opacity: isFullyReturned ? 0.55 : 1, borderBottom: '1px solid var(--border, #E8E1D5)' }}>
+                                  <td style={{ padding: '9px 10px' }}>
+                                    <div style={{ fontWeight: 700, color: 'var(--sidebar, #0F2D2E)' }}>{l.name}</div>
+                                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted, #475569)' }}>
+                                      @ {formatRupees(l.priceMinor)} {l.unit ? `· ${l.unit}` : ''}
+                                    </div>
+                                  </td>
+                                  <td style={{ padding: '9px 10px', textAlign: 'right', color: 'var(--text-muted, #475569)', fontFamily: "'JetBrains Mono', monospace" }}>{(l.billedQtyMilli / 1000).toLocaleString()}</td>
+                                  <td style={{ padding: '9px 10px', textAlign: 'right', color: 'var(--text-muted, #475569)', fontFamily: "'JetBrains Mono', monospace" }}>{(l.alreadyReturnedQtyMilli / 1000).toLocaleString()}</td>
+                                  <td style={{ padding: '9px 10px', textAlign: 'center' }}>
+                                    {isFullyReturned ? (
+                                      <span style={{ fontSize: '0.7rem', fontWeight: 700, padding: '2px 6px', borderRadius: '6px', background: '#F1F5F9', color: '#64748B' }}>
+                                        Fully Ret.
+                                      </span>
+                                    ) : (
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        max={returnableUnits}
+                                        step="any"
+                                        placeholder={`Max ${returnableUnits}`}
+                                        value={inp.returnQty}
+                                        onChange={(e) => {
+                                          const val = e.target.value;
+                                          setReturnLinesInput((prev) => ({
+                                            ...prev,
+                                            [l.id]: {
+                                              ...(prev[l.id] || { restock: true, reason: '', customReason: '' }),
+                                              returnQty: val,
+                                            },
+                                          }));
+                                        }}
+                                        style={{
+                                          width: '100%',
+                                          padding: '5px 8px',
+                                          border: parseFloat(inp.returnQty) > returnableUnits ? '1.5px solid #EF4444' : '1.5px solid var(--border, #D0C7B8)',
+                                          borderRadius: '8px',
+                                          fontSize: '0.82rem',
+                                          fontWeight: parseFloat(inp.returnQty) > 0 ? 700 : 400,
+                                          background: 'var(--surface, #FAF7F2)',
+                                          color: 'var(--sidebar, #0F2D2E)',
+                                          outline: 'none',
+                                        }}
+                                      />
+                                    )}
+                                  </td>
+                                  <td style={{ padding: '9px 10px', textAlign: 'center' }}>
+                                    <button
+                                      type="button"
+                                      disabled={isFullyReturned}
+                                      onClick={() => {
+                                        setReturnLinesInput((prev) => {
+                                          const cur = prev[l.id] || { returnQty: '', reason: '', customReason: '', restock: true };
+                                          const newQty = (!parseFloat(cur.returnQty) && returnableUnits > 0)
+                                            ? (returnableUnits >= 1 ? '1' : String(returnableUnits))
+                                            : cur.returnQty;
+                                          return {
+                                            ...prev,
+                                            [l.id]: {
+                                              ...cur,
+                                              returnQty: newQty,
+                                              restock: !cur.restock,
+                                            },
+                                          };
+                                        });
+                                      }}
+                                      style={{
+                                        padding: '4px 10px',
+                                        borderRadius: '8px',
+                                        border: inp.restock ? '1px solid #86EFAC' : '1px solid #FCA5A5',
+                                        cursor: isFullyReturned ? 'not-allowed' : 'pointer',
+                                        background: inp.restock ? '#DCFCE7' : '#FEE2E2',
+                                        color: inp.restock ? '#15803D' : '#B91C1C',
+                                        fontWeight: 800,
+                                        fontSize: '0.74rem',
+                                        transition: 'all 0.15s ease',
+                                      }}
+                                      title={inp.restock ? 'Item will return to sellable inventory' : 'Damaged / expired item will NOT enter stock'}
+                                    >
+                                      {inp.restock ? 'YES' : 'NO'}
+                                    </button>
+                                  </td>
+                                  <td style={{ padding: '9px 10px' }}>
+                                    <select
+                                      disabled={isFullyReturned}
+                                      value={inp.reason}
+                                      onChange={(e) => {
+                                        const reasonVal = e.target.value;
+                                        const autoRestock = (reasonVal === 'Damaged' || reasonVal === 'Expired') ? false : inp.restock;
+                                        const autoQty = (!parseFloat(inp.returnQty) && reasonVal && returnableUnits > 0)
+                                          ? (returnableUnits >= 1 ? '1' : String(returnableUnits))
+                                          : inp.returnQty;
+                                        setReturnLinesInput((prev) => ({
+                                          ...prev,
+                                          [l.id]: {
+                                            ...(prev[l.id] || { customReason: '' }),
+                                            returnQty: autoQty,
+                                            reason: reasonVal,
+                                            restock: autoRestock,
+                                          },
+                                        }));
+                                      }}
+                                      style={{
+                                        width: '100%',
+                                        padding: '5px 8px',
+                                        border: parseFloat(inp.returnQty) > 0 && !inp.reason ? '1.5px solid #EF4444' : '1.5px solid var(--border, #D0C7B8)',
+                                        borderRadius: '8px',
+                                        fontSize: '0.8rem',
+                                        background: isFullyReturned ? '#F1F5F9' : 'var(--surface, #FAF7F2)',
+                                        color: 'var(--sidebar, #0F2D2E)',
+                                        cursor: isFullyReturned ? 'not-allowed' : 'pointer',
+                                        outline: 'none',
+                                      }}
+                                    >
+                                      <option value="">Select reason...</option>
+                                      <option value="Defective">Defective</option>
+                                      <option value="Wrong Item">Wrong Item</option>
+                                      <option value="Customer Changed Mind">Customer Changed Mind</option>
+                                      <option value="Damaged">Damaged</option>
+                                      <option value="Expired">Expired</option>
+                                      <option value="Other">Other</option>
+                                    </select>
+
+                                    {inp.reason === 'Other' && (
+                                      <input
+                                        type="text"
+                                        placeholder="Specify reason..."
+                                        value={inp.customReason}
+                                        onChange={(e) => {
+                                          const val = e.target.value;
+                                          setReturnLinesInput((prev) => ({
+                                            ...prev,
+                                            [l.id]: {
+                                              ...(prev[l.id] || { returnQty: '', restock: true, reason: 'Other' }),
+                                              customReason: val,
+                                            },
+                                          }));
+                                        }}
+                                        style={{
+                                          width: '100%',
+                                          marginTop: '4px',
+                                          padding: '4px 8px',
+                                          border: !inp.customReason ? '1.5px solid #EF4444' : '1.5px solid var(--border, #D0C7B8)',
+                                          borderRadius: '8px',
+                                          fontSize: '0.78rem',
+                                          background: 'var(--surface, #FAF7F2)',
+                                          color: 'var(--sidebar, #0F2D2E)',
+                                          outline: 'none',
+                                        }}
+                                      />
+                                    )}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
                       </div>
                     </div>
 
-                    {/* Lines Table */}
-                    <table className="data-table" style={{ fontSize: '0.8rem', marginBottom: '1.25rem' }}>
-                      <thead>
-                        <tr>
-                          <th>Item</th>
-                          <th>Billed</th>
-                          <th>Already Ret.</th>
-                          <th style={{ width: '110px' }}>Return Qty</th>
-                          <th style={{ width: '90px' }}>Restock?</th>
-                          <th style={{ width: '180px' }}>Reason (Mandatory)</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {returnInfo.lines.map((l) => {
-                          const inp = returnLinesInput[l.id] || { returnQty: '', restock: true, reason: '', customReason: '' };
-                          const returnableUnits = l.returnableQtyMilli / 1000;
-                          const isFullyReturned = l.returnableQtyMilli === 0;
-
-                          return (
-                            <tr key={l.id} style={{ opacity: isFullyReturned ? 0.6 : 1 }}>
-                              <td>
-                                <b>{l.name}</b>
-                                <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
-                                  @ {formatRupees(l.priceMinor)} {l.unit ? `· ${l.unit}` : ''}
-                                </div>
-                              </td>
-                              <td>{(l.billedQtyMilli / 1000).toLocaleString()}</td>
-                              <td>{(l.alreadyReturnedQtyMilli / 1000).toLocaleString()}</td>
-                              <td>
-                                {isFullyReturned ? (
-                                  <span className="badge" style={{ background: '#f1f5f9', color: '#64748b', fontSize: '0.7rem' }}>
-                                    Fully Ret.
-                                  </span>
-                                ) : (
-                                  <input
-                                    type="number"
-                                    min="0"
-                                    max={returnableUnits}
-                                    step="any"
-                                    placeholder={`Max ${returnableUnits}`}
-                                    value={inp.returnQty}
-                                    onChange={(e) => {
-                                      const val = e.target.value;
-                                      setReturnLinesInput((prev) => ({
-                                        ...prev,
-                                        [l.id]: {
-                                          ...(prev[l.id] || { restock: true, reason: '', customReason: '' }),
-                                          returnQty: val,
-                                        },
-                                      }));
-                                    }}
-                                    style={{
-                                      width: '100%',
-                                      padding: '4px 6px',
-                                      border: parseFloat(inp.returnQty) > returnableUnits ? '1px solid #ef4444' : '1px solid #cbd5e1',
-                                      borderRadius: '4px',
-                                      fontSize: '0.8rem',
-                                      fontWeight: parseFloat(inp.returnQty) > 0 ? 700 : 400,
-                                    }}
-                                  />
-                                )}
-                              </td>
-                              <td>
-                                <button
-                                  type="button"
-                                  disabled={isFullyReturned}
-                                  onClick={() => {
-                                    setReturnLinesInput((prev) => {
-                                      const cur = prev[l.id] || { returnQty: '', reason: '', customReason: '', restock: true };
-                                      const newQty = (!parseFloat(cur.returnQty) && returnableUnits > 0)
-                                        ? (returnableUnits >= 1 ? '1' : String(returnableUnits))
-                                        : cur.returnQty;
-                                      return {
-                                        ...prev,
-                                        [l.id]: {
-                                          ...cur,
-                                          returnQty: newQty,
-                                          restock: !cur.restock,
-                                        },
-                                      };
-                                    });
-                                  }}
-                                  style={{
-                                    padding: '3px 8px',
-                                    borderRadius: '4px',
-                                    border: 'none',
-                                    cursor: isFullyReturned ? 'not-allowed' : 'pointer',
-                                    background: inp.restock ? '#dcfce7' : '#fee2e2',
-                                    color: inp.restock ? '#15803d' : '#b91c1c',
-                                    fontWeight: 700,
-                                    fontSize: '0.72rem',
-                                  }}
-                                  title={inp.restock ? 'Item will return to sellable inventory' : 'Damaged / expired item will NOT enter stock'}
-                                >
-                                  {inp.restock ? 'YES' : 'NO'}
-                                </button>
-                              </td>
-                              <td>
-                                <select
-                                  disabled={isFullyReturned}
-                                  value={inp.reason}
-                                  onChange={(e) => {
-                                    const reasonVal = e.target.value;
-                                    // Auto-toggle restock to false if Damaged or Expired
-                                    const autoRestock = (reasonVal === 'Damaged' || reasonVal === 'Expired') ? false : inp.restock;
-                                    // Auto-fill returnQty to 1 (or max returnable) if not yet entered
-                                    const autoQty = (!parseFloat(inp.returnQty) && reasonVal && returnableUnits > 0)
-                                      ? (returnableUnits >= 1 ? '1' : String(returnableUnits))
-                                      : inp.returnQty;
-                                    setReturnLinesInput((prev) => ({
-                                      ...prev,
-                                      [l.id]: {
-                                        ...(prev[l.id] || { customReason: '' }),
-                                        returnQty: autoQty,
-                                        reason: reasonVal,
-                                        restock: autoRestock,
-                                      },
-                                    }));
-                                  }}
-                                  style={{
-                                    width: '100%',
-                                    padding: '4px 6px',
-                                    border: parseFloat(inp.returnQty) > 0 && !inp.reason ? '1px solid #ef4444' : '1px solid #cbd5e1',
-                                    borderRadius: '4px',
-                                    fontSize: '0.78rem',
-                                    background: isFullyReturned ? '#f1f5f9' : '#ffffff',
-                                    cursor: isFullyReturned ? 'not-allowed' : 'pointer',
-                                  }}
-                                >
-                                  <option value="">Select reason...</option>
-                                  <option value="Defective">Defective</option>
-                                  <option value="Wrong Item">Wrong Item</option>
-                                  <option value="Customer Changed Mind">Customer Changed Mind</option>
-                                  <option value="Damaged">Damaged</option>
-                                  <option value="Expired">Expired</option>
-                                  <option value="Other">Other</option>
-                                </select>
-
-                                {inp.reason === 'Other' && (
-                                  <input
-                                    type="text"
-                                    placeholder="Specify reason..."
-                                    value={inp.customReason}
-                                    onChange={(e) => {
-                                      const val = e.target.value;
-                                      setReturnLinesInput((prev) => ({
-                                        ...prev,
-                                        [l.id]: {
-                                          ...(prev[l.id] || { returnQty: '', restock: true, reason: 'Other' }),
-                                          customReason: val,
-                                        },
-                                      }));
-                                    }}
-                                    style={{
-                                      width: '100%',
-                                      marginTop: '4px',
-                                      padding: '3px 6px',
-                                      border: !inp.customReason ? '1px solid #ef4444' : '1px solid #cbd5e1',
-                                      borderRadius: '4px',
-                                      fontSize: '0.75rem',
-                                    }}
-                                  />
-                                )}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-
-                    {/* Live Calculations & Settlement Preview (Section 6 & 7) */}
+                    {/* Live Calculations & Settlement Preview */}
                     {(() => {
                       const preview = calculateReturnPreview();
                       if (!preview) {
                         return (
-                          <div style={{ background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: '8px', padding: '1rem', textAlign: 'center', color: '#64748b', fontSize: '0.82rem' }}>
-                            Enter return quantity above to see tax reversal and settlement calculation.
+                          <div style={{ background: 'var(--surface, #FAF7F2)', border: '1.5px dashed var(--border, #D0C7B8)', borderRadius: '14px', padding: '1.25rem', textAlign: 'center', color: 'var(--text-muted, #475569)', fontSize: '0.84rem' }}>
+                            Enter return quantity above to see live tax reversal and settlement calculation.
                           </div>
                         );
                       }
@@ -23208,59 +23484,65 @@ export function App() {
                       const isWalkIn = !returnInfo.customer;
 
                       return (
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1rem', marginBottom: '0.5rem' }}>
                           {/* Tax Reversal Card */}
-                          <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', padding: '0.85rem 1rem' }}>
-                            <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.85rem', fontWeight: 700, color: '#166534' }}>
-                              GST Reversal Breakdown
-                            </h4>
-                            <div style={{ fontSize: '0.8rem', display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <div style={{ background: 'var(--surface, #FAF7F2)', border: '1.5px solid var(--border, #D0C7B8)', borderRadius: '16px', padding: '1.1rem 1.25rem', boxShadow: '0 1px 3px rgba(15, 45, 46, 0.04)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', margin: '0 0 0.65rem 0', color: 'var(--primary, #0F766E)' }}>
+                              <ReceiptIcon size={16} />
+                              <h4 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 800, color: 'var(--sidebar, #0F2D2E)' }}>
+                                GST Reversal Breakdown
+                              </h4>
+                            </div>
+                            <div style={{ fontSize: '0.82rem', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted, #475569)' }}>
                                 <span>Taxable Reversal:</span>
-                                <b>{formatRupees(calculated.taxableTotalMinor)}</b>
+                                <strong style={{ color: 'var(--sidebar, #0F2D2E)', fontFamily: "'JetBrains Mono', monospace" }}>{formatRupees(calculated.taxableTotalMinor)}</strong>
                               </div>
                               {calculated.isIntraState ? (
                                 <>
-                                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted, #475569)' }}>
                                     <span>CGST Reversal:</span>
-                                    <span>{formatRupees(calculated.cgstMinor)}</span>
+                                    <span style={{ fontFamily: "'JetBrains Mono', monospace" }}>{formatRupees(calculated.cgstMinor)}</span>
                                   </div>
-                                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted, #475569)' }}>
                                     <span>SGST Reversal:</span>
-                                    <span>{formatRupees(calculated.sgstMinor)}</span>
+                                    <span style={{ fontFamily: "'JetBrains Mono', monospace" }}>{formatRupees(calculated.sgstMinor)}</span>
                                   </div>
                                 </>
                               ) : (
-                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted, #475569)' }}>
                                   <span>IGST Reversal:</span>
-                                  <span>{formatRupees(calculated.igstMinor)}</span>
+                                  <span style={{ fontFamily: "'JetBrains Mono', monospace" }}>{formatRupees(calculated.igstMinor)}</span>
                                 </div>
                               )}
                               {calculated.roundOffMinor !== 0 && (
-                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted, #475569)' }}>
                                   <span>Round Off:</span>
-                                  <span>{calculated.roundOffMinor > 0 ? '+' : ''}{formatRupees(calculated.roundOffMinor)}</span>
+                                  <span style={{ fontFamily: "'JetBrains Mono', monospace" }}>{calculated.roundOffMinor > 0 ? '+' : ''}{formatRupees(calculated.roundOffMinor)}</span>
                                 </div>
                               )}
-                              <div style={{ borderTop: '1px solid #86efac', marginTop: '4px', paddingTop: '4px', display: 'flex', justifyContent: 'space-between', fontSize: '0.95rem', fontWeight: 800, color: '#14532d' }}>
-                                <span>TOTAL CREDIT:</span>
-                                <span>{formatRupees(calculated.totalCreditMinor)}</span>
+                              <div style={{ borderTop: '1.5px solid var(--border, #D0C7B8)', marginTop: '6px', paddingTop: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--sidebar, #0F2D2E)' }}>TOTAL CREDIT:</span>
+                                <span style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--primary, #0F766E)', fontFamily: "'JetBrains Mono', monospace" }}>{formatRupees(calculated.totalCreditMinor)}</span>
                               </div>
                             </div>
                           </div>
 
                           {/* Settlement Plan Card */}
-                          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0.85rem 1rem' }}>
-                            <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.85rem', fontWeight: 700, color: '#0f172a' }}>
-                              Credit Settlement
-                            </h4>
-                            <div style={{ fontSize: '0.8rem', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          <div style={{ background: 'var(--surface, #FAF7F2)', border: '1.5px solid var(--border, #D0C7B8)', borderRadius: '16px', padding: '1.1rem 1.25rem', boxShadow: '0 1px 3px rgba(15, 45, 46, 0.04)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', margin: '0 0 0.65rem 0', color: 'var(--primary, #0F766E)' }}>
+                              <WalletIcon size={16} />
+                              <h4 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 800, color: 'var(--sidebar, #0F2D2E)' }}>
+                                Credit Settlement
+                              </h4>
+                            </div>
+                            <div style={{ fontSize: '0.82rem', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                               {settlement.duesClearedMinor > 0 && (
-                                <div style={{ color: '#0f172a' }}>
+                                <div style={{ color: 'var(--sidebar, #0F2D2E)' }}>
                                   <span>• Clears dues on bills: </span>
-                                  <b>{formatRupees(settlement.duesClearedMinor)}</b>
+                                  <strong style={{ color: '#15803D', fontFamily: "'JetBrains Mono', monospace" }}>{formatRupees(settlement.duesClearedMinor)}</strong>
                                   {settlement.allocations.map((a, aidx) => (
-                                    <div key={aidx} style={{ fontSize: '0.72rem', color: '#64748b', marginLeft: '12px' }}>
+                                    <div key={aidx} style={{ fontSize: '0.75rem', color: 'var(--text-muted, #475569)', marginLeft: '14px', marginTop: '2px' }}>
                                       Bill #{a.invoiceNumber}: {formatRupees(a.amountMinor)}
                                     </div>
                                   ))}
@@ -23268,20 +23550,19 @@ export function App() {
                               )}
 
                               {settlement.remainderMinor > 0 && (
-                                <div style={{ marginTop: '4px', borderTop: '1px dashed #cbd5e1', paddingTop: '6px' }}>
-                                  <div style={{ fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
-                                    Remainder Credit: {formatRupees(settlement.remainderMinor)}
+                                <div style={{ marginTop: '4px', borderTop: '1px dashed var(--border, #D0C7B8)', paddingTop: '8px' }}>
+                                  <div style={{ fontWeight: 800, color: 'var(--sidebar, #0F2D2E)', marginBottom: '6px' }}>
+                                    Remainder Credit: <span style={{ color: 'var(--primary, #0F766E)', fontFamily: "'JetBrains Mono', monospace" }}>{formatRupees(settlement.remainderMinor)}</span>
                                   </div>
 
                                   {isWalkIn ? (
                                     <div>
-                                      <div style={{ fontSize: '0.75rem', color: '#b45309', marginBottom: '4px' }}>
+                                      <div style={{ fontSize: '0.76rem', color: '#B45309', marginBottom: '6px' }}>
                                         Walk-in bill: Remainder must be refunded to customer.
                                       </div>
                                       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                                         <select
-                                          className="input"
-                                          style={{ padding: '3px 6px', fontSize: '0.75rem', width: '100px' }}
+                                          style={{ padding: '6px 8px', fontSize: '0.78rem', width: '110px', borderRadius: '8px', border: '1.5px solid var(--border, #D0C7B8)', background: 'var(--surface, #FAF7F2)', color: 'var(--sidebar, #0F2D2E)' }}
                                           value={returnRefundMode}
                                           onChange={(e) => setReturnRefundMode(e.target.value as any)}
                                         >
@@ -23295,42 +23576,43 @@ export function App() {
                                           placeholder="UTR / Ref (optional)"
                                           value={returnRefundReference}
                                           onChange={(e) => setReturnRefundReference(e.target.value)}
-                                          style={{ padding: '3px 6px', fontSize: '0.75rem', flex: 1, border: '1px solid #cbd5e1', borderRadius: '4px' }}
+                                          style={{ padding: '6px 8px', fontSize: '0.78rem', flex: 1, border: '1.5px solid var(--border, #D0C7B8)', borderRadius: '8px', background: 'var(--surface, #FAF7F2)', color: 'var(--sidebar, #0F2D2E)' }}
                                         />
                                       </div>
                                     </div>
                                   ) : (
                                     <div>
-                                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                        <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.8rem', color: 'var(--sidebar, #0F2D2E)' }}>
                                           <input
                                             type="radio"
                                             name="returnSettlementChoice"
                                             checked={returnSettlementType === 'advance'}
                                             onChange={() => setReturnSettlementType('advance')}
+                                            style={{ accentColor: 'var(--primary, #0F766E)' }}
                                           />
                                           <span>
-                                            <b>Customer Advance</b> (Store Credit) [Recommended]
+                                            <strong>Customer Advance</strong> (Store Credit) [Recommended]
                                           </span>
                                         </label>
-                                        <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.8rem', color: 'var(--sidebar, #0F2D2E)' }}>
                                           <input
                                             type="radio"
                                             name="returnSettlementChoice"
                                             checked={returnSettlementType === 'refund'}
                                             onChange={() => setReturnSettlementType('refund')}
+                                            style={{ accentColor: 'var(--primary, #0F766E)' }}
                                           />
                                           <span>
-                                            <b>Refund Now</b> to Customer
+                                            <strong>Refund Now</strong> to Customer
                                           </span>
                                         </label>
                                       </div>
 
                                       {returnSettlementType === 'refund' && (
-                                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '6px', marginLeft: '18px' }}>
+                                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '8px', marginLeft: '22px' }}>
                                           <select
-                                            className="input"
-                                            style={{ padding: '3px 6px', fontSize: '0.75rem', width: '100px' }}
+                                            style={{ padding: '5px 8px', fontSize: '0.78rem', width: '100px', borderRadius: '8px', border: '1.5px solid var(--border, #D0C7B8)', background: 'var(--surface, #FAF7F2)', color: 'var(--sidebar, #0F2D2E)' }}
                                             value={returnRefundMode}
                                             onChange={(e) => setReturnRefundMode(e.target.value as any)}
                                           >
@@ -23344,7 +23626,7 @@ export function App() {
                                             placeholder="Payment Ref (optional)"
                                             value={returnRefundReference}
                                             onChange={(e) => setReturnRefundReference(e.target.value)}
-                                            style={{ padding: '3px 6px', fontSize: '0.75rem', flex: 1, border: '1px solid #cbd5e1', borderRadius: '4px' }}
+                                            style={{ padding: '5px 8px', fontSize: '0.78rem', flex: 1, border: '1.5px solid var(--border, #D0C7B8)', borderRadius: '8px', background: 'var(--surface, #FAF7F2)', color: 'var(--sidebar, #0F2D2E)' }}
                                           />
                                         </div>
                                       )}
@@ -23359,23 +23641,22 @@ export function App() {
                     })()}
 
                     {/* Note input */}
-                    <div style={{ marginBottom: '0.5rem' }}>
-                      <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#475569', display: 'block', marginBottom: '2px' }}>
+                    <div style={{ background: 'var(--surface, #FAF7F2)', border: '1px solid var(--border, #D0C7B8)', borderRadius: '14px', padding: '0.85rem 1rem' }}>
+                      <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--sidebar, #0F2D2E)', display: 'block', marginBottom: '4px' }}>
                         Overall Note (Optional)
                       </label>
                       <input
                         type="text"
-                        className="input"
                         placeholder="e.g. Customer returned items within 7 days with receipt"
                         value={returnNote}
                         onChange={(e) => setReturnNote(e.target.value)}
-                        style={{ padding: '0.45rem', fontSize: '0.8rem' }}
+                        style={{ width: '100%', padding: '0.55rem 0.75rem', fontSize: '0.82rem', borderRadius: '8px', border: '1.5px solid var(--border, #D0C7B8)', background: 'var(--surface, #FAF7F2)', color: 'var(--sidebar, #0F2D2E)', outline: 'none' }}
                       />
                     </div>
 
                     {/* Error display */}
                     {returnError && (
-                      <div style={{ marginTop: '0.75rem', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px', padding: '0.65rem', fontSize: '0.8rem', color: '#dc2626' }}>
+                      <div style={{ background: '#FEF2F2', border: '1.5px solid #FECACA', borderRadius: '10px', padding: '0.75rem 1rem', fontSize: '0.82rem', color: '#DC2626' }}>
                         ⚠️ {returnError}
                       </div>
                     )}
@@ -23383,36 +23664,51 @@ export function App() {
                 )}
               </div>
 
-              {/* Footer */}
+              {/* Bento Footer */}
               <div
+                className="shift-bento-footer"
                 style={{
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
-                  padding: '0.85rem 1.25rem',
-                  borderTop: '1px solid #e2e8f0',
-                  background: '#f8fafc',
+                  padding: '0.85rem 1.6rem',
+                  borderTop: '1px solid var(--border, #D0C7B8)',
+                  background: 'var(--surface, #FAF7F2)',
                 }}
               >
                 <button
                   type="button"
-                  className="btn btn-secondary"
                   onClick={handleCloseReturnModal}
                   disabled={returnSaving}
+                  style={{
+                    padding: '0.55rem 1.3rem',
+                    fontSize: '0.84rem',
+                    fontWeight: 700,
+                    borderRadius: '10px',
+                    background: 'var(--surface, #FAF7F2)',
+                    border: '1.5px solid var(--border, #D0C7B8)',
+                    color: 'var(--sidebar, #0F2D2E)',
+                    cursor: returnSaving ? 'not-allowed' : 'pointer',
+                  }}
                 >
                   Cancel
                 </button>
 
                 <button
                   type="button"
-                  className="btn btn-primary"
                   onClick={handleSaveReturn}
                   disabled={returnSaving || !calculateReturnPreview()}
                   style={{
-                    background: '#4f46e5',
-                    borderColor: '#4338ca',
-                    fontWeight: 700,
-                    fontSize: '0.85rem',
+                    padding: '0.55rem 1.5rem',
+                    fontSize: '0.86rem',
+                    fontWeight: 800,
+                    borderRadius: '10px',
+                    border: 'none',
+                    background: (returnSaving || !calculateReturnPreview()) ? '#CBD5E1' : 'var(--primary, #0F766E)',
+                    color: '#FFFFFF',
+                    cursor: (returnSaving || !calculateReturnPreview()) ? 'not-allowed' : 'pointer',
+                    boxShadow: (returnSaving || !calculateReturnPreview()) ? 'none' : '0 4px 14px rgba(15, 118, 110, 0.3)',
+                    transition: 'all 0.15s ease',
                   }}
                 >
                   {returnSaving
@@ -23429,11 +23725,13 @@ export function App() {
         {/* ========================================================= */}
         {creditNoteSuccess && (
           <div
-            className="modal-backdrop"
+            className="modal-overlay theme-cashier"
             style={{
               position: 'fixed',
               inset: 0,
               background: 'rgba(15, 23, 42, 0.65)',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -23445,36 +23743,72 @@ export function App() {
             }}
           >
             <div
-              className="card"
+              className="shift-bento-dialog"
+              onClick={(e) => e.stopPropagation()}
               style={{
                 width: '100%',
                 maxWidth: '520px',
-                borderRadius: '12px',
+                borderRadius: '20px',
                 overflow: 'hidden',
-                background: '#ffffff',
-                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)',
+                background: 'var(--surface, #FAF7F2)',
+                border: '1.5px solid var(--border, #D0C7B8)',
+                boxShadow: '0 25px 60px -15px rgba(15, 45, 46, 0.28)',
               }}
             >
+              {/* Top Accent Gradient Bar */}
+              <div
+                className="modal-top-accent green-accent"
+                style={{
+                  height: '4px',
+                  background: 'linear-gradient(90deg, var(--sidebar, #0F2D2E) 0%, var(--primary, #0F766E) 50%, var(--ring, #14B8A6) 100%)',
+                }}
+              />
+
               {/* Success Header */}
-              <div style={{ background: '#f0fdf4', borderBottom: '1px solid #bbf7d0', padding: '1.25rem', textAlign: 'center' }}>
-                <div style={{ fontSize: '2.5rem', marginBottom: '0.25rem' }}>✅</div>
-                <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#166534' }}>
+              <div
+                style={{
+                  background: 'linear-gradient(135deg, var(--primary-soft, #E6F4F3) 0%, #FAF7F2 100%)',
+                  borderBottom: '1px solid var(--border, #D0C7B8)',
+                  padding: '1.5rem',
+                  textAlign: 'center',
+                }}
+              >
+                <div
+                  style={{
+                    width: '56px',
+                    height: '56px',
+                    borderRadius: '16px',
+                    background: 'var(--primary-soft, #E6F4F3)',
+                    color: 'var(--primary, #0F766E)',
+                    border: '1.5px solid rgba(20, 184, 166, 0.4)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 0.75rem auto',
+                    boxShadow: '0 4px 12px rgba(15, 118, 110, 0.2)',
+                  }}
+                >
+                  <CheckIcon size={28} />
+                </div>
+                <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800, color: 'var(--sidebar, #0F2D2E)' }}>
                   Credit Note Issued
                 </h3>
-                <div style={{ fontSize: '0.82rem', color: '#15803d', marginTop: '4px' }}>
-                  Credit Note <b>{creditNoteSuccess.creditNoteNumber}</b> generated against Bill #{creditNoteSuccess.originalInvoiceNumber}
+                <div style={{ fontSize: '0.84rem', color: 'var(--text-muted, #475569)', marginTop: '4px' }}>
+                  Credit Note <strong style={{ color: 'var(--primary, #0F766E)', fontFamily: "'JetBrains Mono', monospace" }}>{creditNoteSuccess.creditNoteNumber}</strong> generated against Bill #{creditNoteSuccess.originalInvoiceNumber}
                 </div>
               </div>
 
               {/* Content */}
-              <div style={{ padding: '1.25rem' }}>
-                <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
-                  <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Total Credit Amount</div>
-                  <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#1e1b4b' }}>
+              <div style={{ padding: '1.4rem', background: 'var(--surface, #FAF7F2)' }}>
+                <div style={{ textAlign: 'center', marginBottom: '1.25rem', background: 'var(--primary-soft, #E6F4F3)', border: '1.2px solid rgba(20, 184, 166, 0.35)', borderRadius: '14px', padding: '1rem' }}>
+                  <div style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--primary, #0F766E)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    Total Credit Amount
+                  </div>
+                  <div style={{ fontSize: '1.85rem', fontWeight: 800, color: 'var(--sidebar, #0F2D2E)', fontFamily: "'JetBrains Mono', monospace", marginTop: '2px' }}>
                     {formatRupees(creditNoteSuccess.totalCreditMinor)}
                   </div>
                   {creditNoteSuccess.settlement && (
-                    <div style={{ fontSize: '0.78rem', color: '#475569', marginTop: '4px' }}>
+                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted, #475569)', marginTop: '4px' }}>
                       {creditNoteSuccess.settlement.duesClearedMinor > 0 && `₹${(creditNoteSuccess.settlement.duesClearedMinor / 100).toFixed(2)} dues cleared`}
                       {creditNoteSuccess.settlement.advanceAmountMinor > 0 && ` · ₹${(creditNoteSuccess.settlement.advanceAmountMinor / 100).toFixed(2)} customer advance`}
                       {creditNoteSuccess.settlement.refundAmountMinor > 0 && ` · ₹${(creditNoteSuccess.settlement.refundAmountMinor / 100).toFixed(2)} refunded (${(creditNoteSuccess.settlement.refundMode || 'cash').toUpperCase()})`}
@@ -23483,13 +23817,22 @@ export function App() {
                 </div>
 
                 {/* Action Buttons */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem', marginBottom: '0.75rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem', marginBottom: '0.75rem' }}>
                   <a
                     href={`/api/credit-notes/${creditNoteSuccess.creditNoteId}/print?paper=thermal80&autoprint=true`}
                     target="_blank"
                     rel="noreferrer"
-                    className="btn btn-secondary"
-                    style={{ textAlign: 'center', padding: '0.55rem', fontSize: '0.82rem', textDecoration: 'none', fontWeight: 600 }}
+                    style={{
+                      textAlign: 'center',
+                      padding: '0.6rem',
+                      fontSize: '0.82rem',
+                      textDecoration: 'none',
+                      fontWeight: 700,
+                      borderRadius: '10px',
+                      background: 'var(--surface, #FAF7F2)',
+                      border: '1.5px solid var(--border, #D0C7B8)',
+                      color: 'var(--sidebar, #0F2D2E)',
+                    }}
                   >
                     🖨️ Thermal 80mm
                   </a>
@@ -23497,8 +23840,17 @@ export function App() {
                     href={`/api/credit-notes/${creditNoteSuccess.creditNoteId}/print?paper=thermal58&autoprint=true`}
                     target="_blank"
                     rel="noreferrer"
-                    className="btn btn-secondary"
-                    style={{ textAlign: 'center', padding: '0.55rem', fontSize: '0.82rem', textDecoration: 'none', fontWeight: 600 }}
+                    style={{
+                      textAlign: 'center',
+                      padding: '0.6rem',
+                      fontSize: '0.82rem',
+                      textDecoration: 'none',
+                      fontWeight: 700,
+                      borderRadius: '10px',
+                      background: 'var(--surface, #FAF7F2)',
+                      border: '1.5px solid var(--border, #D0C7B8)',
+                      color: 'var(--sidebar, #0F2D2E)',
+                    }}
                   >
                     🖨️ Thermal 58mm
                   </a>
@@ -23508,8 +23860,19 @@ export function App() {
                   href={`/api/credit-notes/${creditNoteSuccess.creditNoteId}/print?paper=a4`}
                   target="_blank"
                   rel="noreferrer"
-                  className="btn btn-secondary"
-                  style={{ display: 'block', textAlign: 'center', padding: '0.55rem', fontSize: '0.82rem', textDecoration: 'none', fontWeight: 600, marginBottom: '0.75rem' }}
+                  style={{
+                    display: 'block',
+                    textAlign: 'center',
+                    padding: '0.6rem',
+                    fontSize: '0.82rem',
+                    textDecoration: 'none',
+                    fontWeight: 700,
+                    borderRadius: '10px',
+                    background: 'var(--surface, #FAF7F2)',
+                    border: '1.5px solid var(--border, #D0C7B8)',
+                    color: 'var(--sidebar, #0F2D2E)',
+                    marginBottom: '0.75rem',
+                  }}
                 >
                   📄 View A4 GST Credit Note
                 </a>
@@ -23537,31 +23900,41 @@ export function App() {
                     }}
                     style={{
                       width: '100%',
-                      padding: '0.65rem',
-                      borderRadius: '6px',
+                      padding: '0.7rem',
+                      borderRadius: '10px',
                       border: 'none',
                       background: '#25D366',
                       color: '#ffffff',
-                      fontWeight: 700,
-                      fontSize: '0.85rem',
+                      fontWeight: 800,
+                      fontSize: '0.86rem',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       gap: '0.5rem',
                       marginBottom: '0.75rem',
+                      boxShadow: '0 2px 8px rgba(37, 211, 102, 0.3)',
                     }}
                   >
-                    <span>💬</span>
+                    <WhatsAppIcon size={18} />
                     <span>Share on WhatsApp</span>
                   </button>
                 )}
 
                 <button
                   type="button"
-                  className="btn btn-secondary"
                   onClick={() => setCreditNoteSuccess(null)}
-                  style={{ width: '100%', padding: '0.55rem', fontSize: '0.82rem' }}
+                  style={{
+                    width: '100%',
+                    padding: '0.65rem',
+                    fontSize: '0.84rem',
+                    fontWeight: 700,
+                    borderRadius: '10px',
+                    background: 'var(--surface, #FAF7F2)',
+                    border: '1.5px solid var(--border, #D0C7B8)',
+                    color: 'var(--sidebar, #0F2D2E)',
+                    cursor: 'pointer',
+                  }}
                 >
                   Done
                 </button>
@@ -23575,11 +23948,13 @@ export function App() {
         {/* ========================================================= */}
         {voidCreditNoteTarget && (
           <div
-            className="modal-backdrop"
+            className="modal-overlay theme-cashier"
             style={{
               position: 'fixed',
               inset: 0,
               background: 'rgba(15, 23, 42, 0.7)',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -23591,74 +23966,120 @@ export function App() {
             }}
           >
             <div
-              className="card"
+              className="shift-bento-dialog"
+              onClick={(e) => e.stopPropagation()}
               style={{
                 width: '100%',
                 maxWidth: '480px',
-                borderRadius: '12px',
-                padding: '1.25rem',
-                background: '#ffffff',
-                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.25)',
+                borderRadius: '20px',
+                overflow: 'hidden',
+                background: 'var(--surface, #FAF7F2)',
+                border: '1.5px solid var(--border, #D0C7B8)',
+                boxShadow: '0 25px 60px -15px rgba(15, 45, 46, 0.28)',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#b91c1c', marginBottom: '0.75rem' }}>
-                <span style={{ fontSize: '1.5rem' }}>⚠️</span>
-                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700 }}>
-                  Void Credit Note #{voidCreditNoteTarget.number}?
-                </h3>
-              </div>
+              {/* Top Accent Gradient Bar */}
+              <div
+                className="modal-top-accent amber-accent"
+                style={{
+                  height: '4px',
+                  background: 'linear-gradient(90deg, #991B1B 0%, #DC2626 50%, #EF4444 100%)',
+                }}
+              />
 
-              <p style={{ fontSize: '0.82rem', color: '#475569', marginBottom: '0.85rem', lineHeight: 1.45 }}>
-                This will remove <b>{formatRupees(voidCreditNoteTarget.totalCreditMinor)}</b> of credit, re-open bill dues (or reduce customer advance / record refund as reversed), take restocked items back out of stock, and reverse this credit note's GST adjustment.
-              </p>
-
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ fontSize: '0.8rem', fontWeight: 600, color: '#334155', display: 'block', marginBottom: '0.3rem' }}>
-                  Void Reason (Required) *
-                </label>
-                <textarea
-                  className="input"
-                  rows={3}
-                  placeholder="e.g. Wrong quantity — 2 returned instead of 1"
-                  value={voidReasonInput}
-                  onChange={(e) => setVoidReasonInput(e.target.value)}
-                  style={{ width: '100%', padding: '0.5rem', fontSize: '0.82rem' }}
-                />
-              </div>
-
-              {voidError && (
-                <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px', padding: '0.65rem', fontSize: '0.8rem', color: '#dc2626', marginBottom: '1rem' }}>
-                  ⚠️ {voidError}
+              <div style={{ padding: '1.35rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', color: '#B91C1C', marginBottom: '0.75rem' }}>
+                  <div
+                    style={{
+                      width: '42px',
+                      height: '42px',
+                      borderRadius: '12px',
+                      background: '#FEE2E2',
+                      color: '#DC2626',
+                      border: '1px solid #FCA5A5',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <AlertTriangleIcon size={20} />
+                  </div>
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: 'var(--sidebar, #0F2D2E)' }}>
+                      Void Credit Note #{voidCreditNoteTarget.number}?
+                    </h3>
+                  </div>
                 </div>
-              )}
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setVoidCreditNoteTarget(null)}
-                  disabled={voidSaving}
-                  style={{ padding: '0.45rem 0.85rem' }}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleConfirmVoid}
-                  disabled={voidSaving || !voidReasonInput.trim()}
-                  style={{
-                    padding: '0.45rem 0.95rem',
-                    fontSize: '0.82rem',
-                    fontWeight: 700,
-                    background: '#dc2626',
-                    color: '#ffffff',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: voidSaving || !voidReasonInput.trim() ? 'not-allowed' : 'pointer',
-                  }}
-                >
-                  {voidSaving ? 'Voiding...' : 'Confirm Void'}
-                </button>
+                <p style={{ fontSize: '0.82rem', color: 'var(--text-muted, #475569)', marginBottom: '1rem', lineHeight: 1.5 }}>
+                  This will remove <strong style={{ color: 'var(--sidebar, #0F2D2E)' }}>{formatRupees(voidCreditNoteTarget.totalCreditMinor)}</strong> of credit, re-open bill dues (or reduce customer advance / record refund as reversed), take restocked items back out of stock, and reverse this credit note's GST adjustment.
+                </p>
+
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--sidebar, #0F2D2E)', display: 'block', marginBottom: '0.35rem' }}>
+                    Void Reason (Required) *
+                  </label>
+                  <textarea
+                    rows={3}
+                    placeholder="e.g. Wrong quantity — 2 returned instead of 1"
+                    value={voidReasonInput}
+                    onChange={(e) => setVoidReasonInput(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '0.6rem',
+                      fontSize: '0.82rem',
+                      borderRadius: '10px',
+                      border: '1.5px solid var(--border, #D0C7B8)',
+                      background: 'var(--surface, #FAF7F2)',
+                      color: 'var(--sidebar, #0F2D2E)',
+                      outline: 'none',
+                    }}
+                  />
+                </div>
+
+                {voidError && (
+                  <div style={{ background: '#FEF2F2', border: '1.5px solid #FECACA', borderRadius: '10px', padding: '0.65rem 0.85rem', fontSize: '0.8rem', color: '#DC2626', marginBottom: '1rem' }}>
+                    ⚠️ {voidError}
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.65rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => setVoidCreditNoteTarget(null)}
+                    disabled={voidSaving}
+                    style={{
+                      padding: '0.5rem 1rem',
+                      fontSize: '0.82rem',
+                      fontWeight: 700,
+                      borderRadius: '10px',
+                      background: 'var(--surface, #FAF7F2)',
+                      border: '1.5px solid var(--border, #D0C7B8)',
+                      color: 'var(--sidebar, #0F2D2E)',
+                      cursor: voidSaving ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleConfirmVoid}
+                    disabled={voidSaving || !voidReasonInput.trim()}
+                    style={{
+                      padding: '0.5rem 1.2rem',
+                      fontSize: '0.82rem',
+                      fontWeight: 800,
+                      background: '#DC2626',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '10px',
+                      cursor: voidSaving || !voidReasonInput.trim() ? 'not-allowed' : 'pointer',
+                      boxShadow: '0 2px 8px rgba(220, 38, 38, 0.3)',
+                    }}
+                  >
+                    {voidSaving ? 'Voiding...' : 'Confirm Void'}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -23669,11 +24090,13 @@ export function App() {
         {/* ========================================================= */}
         {creditNoteWhatsAppTarget && (
           <div
-            className="modal-backdrop"
+            className="modal-overlay theme-cashier"
             style={{
               position: 'fixed',
               inset: 0,
               background: 'rgba(15, 23, 42, 0.65)',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -23685,60 +24108,100 @@ export function App() {
             }}
           >
             <div
-              className="card"
+              className="shift-bento-dialog"
+              onClick={(e) => e.stopPropagation()}
               style={{
                 width: '100%',
                 maxWidth: '460px',
-                borderRadius: '12px',
+                borderRadius: '20px',
                 overflow: 'hidden',
-                background: '#ffffff',
-                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)',
+                background: 'var(--surface, #FAF7F2)',
+                border: '1.5px solid var(--border, #D0C7B8)',
+                boxShadow: '0 25px 60px -15px rgba(15, 45, 46, 0.28)',
               }}
             >
+              {/* Top Accent Gradient Bar */}
+              <div
+                className="modal-top-accent green-accent"
+                style={{
+                  height: '4px',
+                  background: 'linear-gradient(90deg, #15803D 0%, #22C55E 100%)',
+                }}
+              />
+
               {/* Header */}
-              <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid #e2e8f0', background: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <span style={{ fontSize: '1.25rem' }}>💬</span>
-                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: '#0f172a' }}>
-                    Send Credit Note on WhatsApp
-                  </h3>
+              <div style={{ padding: '1.1rem 1.4rem', borderBottom: '1px solid var(--border, #D0C7B8)', background: 'var(--surface, #FAF7F2)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                  <div
+                    style={{
+                      width: '38px',
+                      height: '38px',
+                      borderRadius: '11px',
+                      background: '#F0FDF4',
+                      color: '#15803D',
+                      border: '1.2px solid #86EFAC',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <WhatsAppIcon size={20} />
+                  </div>
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--sidebar, #0F2D2E)' }}>
+                      Share Credit Note
+                    </h3>
+                  </div>
                 </div>
                 <button
                   type="button"
+                  className="modal-close-btn"
                   onClick={() => setCreditNoteWhatsAppTarget(null)}
-                  style={{ background: 'none', border: 'none', fontSize: '1.25rem', cursor: 'pointer', color: '#64748b' }}
+                  style={{
+                    background: 'var(--surface, #FAF7F2)',
+                    border: '1px solid var(--border, #D0C7B8)',
+                    borderRadius: '10px',
+                    width: '32px',
+                    height: '32px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    color: 'var(--text-muted, #475569)',
+                  }}
                 >
                   ✕
                 </button>
               </div>
 
               {/* Body */}
-              <div style={{ padding: '1.25rem' }}>
-                <div style={{ background: '#f8fafc', borderRadius: '6px', padding: '0.65rem 0.85rem', marginBottom: '1rem', fontSize: '0.82rem' }}>
-                  <div>Credit Note: <b>{creditNoteWhatsAppTarget.number}</b></div>
-                  <div>Amount: <b>{formatRupees(creditNoteWhatsAppTarget.totalCreditMinor)}</b></div>
+              <div style={{ padding: '1.3rem' }}>
+                <div style={{ background: 'var(--primary-soft, #E6F4F3)', border: '1.2px solid rgba(20, 184, 166, 0.35)', borderRadius: '12px', padding: '0.75rem 1rem', marginBottom: '1rem', fontSize: '0.82rem', display: 'flex', justifyContent: 'space-between' }}>
+                  <div>Credit Note: <strong style={{ color: 'var(--sidebar, #0F2D2E)' }}>{creditNoteWhatsAppTarget.number}</strong></div>
+                  <div>Amount: <strong style={{ color: 'var(--primary, #0F766E)', fontFamily: "'JetBrains Mono', monospace" }}>{formatRupees(creditNoteWhatsAppTarget.totalCreditMinor)}</strong></div>
                 </div>
 
                 {/* Language Selector */}
-                <div style={{ marginBottom: '0.85rem' }}>
-                  <label style={{ fontSize: '0.8rem', fontWeight: 600, color: '#475569', display: 'block', marginBottom: '0.3rem' }}>
+                <div style={{ marginBottom: '0.9rem' }}>
+                  <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--sidebar, #0F2D2E)', display: 'block', marginBottom: '0.35rem' }}>
                     Message Language
                   </label>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.4rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.45rem' }}>
                     {(['en', 'hi', 'ta'] as const).map((l) => (
                       <button
                         key={l}
                         type="button"
                         onClick={() => setCnWhatsAppLang(l)}
                         style={{
-                          border: cnWhatsAppLang === l ? '2px solid #16a34a' : '1px solid #cbd5e1',
-                          background: cnWhatsAppLang === l ? '#f0fdf4' : '#fff',
-                          color: cnWhatsAppLang === l ? '#166534' : '#334155',
-                          fontWeight: cnWhatsAppLang === l ? 700 : 500,
-                          padding: '0.45rem',
-                          borderRadius: '6px',
+                          border: cnWhatsAppLang === l ? '2px solid var(--primary, #0F766E)' : '1.5px solid var(--border, #D0C7B8)',
+                          background: cnWhatsAppLang === l ? 'var(--primary-soft, #E6F4F3)' : 'var(--surface, #FAF7F2)',
+                          color: cnWhatsAppLang === l ? 'var(--primary, #0F766E)' : 'var(--text-muted, #475569)',
+                          fontWeight: cnWhatsAppLang === l ? 800 : 600,
+                          padding: '0.5rem',
+                          borderRadius: '8px',
                           cursor: 'pointer',
                           fontSize: '0.82rem',
+                          transition: 'all 0.15s ease',
                         }}
                       >
                         {l === 'en' ? 'English' : l === 'hi' ? 'हिन्दी' : 'தமிழ்'}
@@ -23748,23 +24211,31 @@ export function App() {
                 </div>
 
                 {/* Phone input */}
-                <div style={{ marginBottom: '1rem' }}>
-                  <label style={{ fontSize: '0.8rem', fontWeight: 600, color: '#475569', display: 'block', marginBottom: '0.3rem' }}>
+                <div style={{ marginBottom: '1.1rem' }}>
+                  <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--sidebar, #0F2D2E)', display: 'block', marginBottom: '0.35rem' }}>
                     Customer Phone Number (10 digits)
                   </label>
                   <input
                     type="tel"
-                    className="input"
                     placeholder="e.g. 9876543210"
                     value={cnWhatsAppPhone}
                     onChange={(e) => {
                       setCnWhatsAppPhone(e.target.value);
                       setCnWhatsAppPhoneError('');
                     }}
-                    style={{ padding: '0.55rem' }}
+                    style={{
+                      width: '100%',
+                      padding: '0.6rem 0.75rem',
+                      fontSize: '0.84rem',
+                      borderRadius: '10px',
+                      border: cnWhatsAppPhoneError ? '1.5px solid #EF4444' : '1.5px solid var(--border, #D0C7B8)',
+                      background: 'var(--surface, #FAF7F2)',
+                      color: 'var(--sidebar, #0F2D2E)',
+                      outline: 'none',
+                    }}
                   />
                   {cnWhatsAppPhoneError && (
-                    <div style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                    <div style={{ color: '#EF4444', fontSize: '0.75rem', marginTop: '0.3rem' }}>
                       {cnWhatsAppPhoneError}
                     </div>
                   )}
@@ -23777,21 +24248,22 @@ export function App() {
                   disabled={cnWhatsAppSendState === 'sending'}
                   style={{
                     width: '100%',
-                    padding: '0.65rem',
-                    borderRadius: '6px',
+                    padding: '0.7rem',
+                    borderRadius: '10px',
                     border: 'none',
                     background: '#25D366',
                     color: '#ffffff',
-                    fontWeight: 700,
-                    fontSize: '0.85rem',
+                    fontWeight: 800,
+                    fontSize: '0.86rem',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: '0.5rem',
+                    boxShadow: '0 2px 8px rgba(37, 211, 102, 0.3)',
                   }}
                 >
-                  <span>💬</span>
+                  <WhatsAppIcon size={18} />
                   <span>{cnWhatsAppSendState === 'sending' ? 'Opening...' : cnWhatsAppSendState === 'sent' ? 'Sent — Send Again' : 'Open WhatsApp'}</span>
                 </button>
               </div>
