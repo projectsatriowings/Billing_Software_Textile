@@ -15,6 +15,7 @@ let db: DB;
 let server: http.Server;
 let base = '';
 let ownerToken = '';
+let supplierId = '';
 
 async function api(method: string, path: string, headers: Record<string, string> = {}, body?: any, token?: string) {
   const res = await fetch(base + path, {
@@ -54,6 +55,13 @@ before(async () => {
       [ownerId, TEST_TENANT, ownerEmail, pwd]
     );
     ownerToken = signToken({ sub: ownerId, tid: TEST_TENANT, ph: passwordStamp(pwd), role: 'owner' }, JWT_SECRET, 3600);
+
+    supplierId = newId('party');
+    await db.exec(
+      `INSERT INTO parties (id, tenant_id, branch_id, type, name, phone, gstin, active)
+       VALUES (?, ?, ?, 'supplier', 'Global Wholesaler', '9876543210', '33AABBC1122D1Z0', true)`,
+      [supplierId, TEST_TENANT, BRANCH_ANNA_NAGAR]
+    );
   } catch (err) {
     console.error('BEFORE HOOK ERROR:', err);
     throw err;
@@ -64,9 +72,12 @@ after(async () => {
   try {
     if (server) await new Promise<void>((r) => server.close(() => r()));
     if (db) {
+      await db.exec('DELETE FROM purchase_lines WHERE tenant_id = ?', [TEST_TENANT]);
+      await db.exec('DELETE FROM purchases WHERE tenant_id = ?', [TEST_TENANT]);
       await db.exec('DELETE FROM stock_moves WHERE tenant_id = ?', [TEST_TENANT]);
       await db.exec('DELETE FROM product_barcodes WHERE tenant_id = ?', [TEST_TENANT]);
       await db.exec('DELETE FROM items WHERE tenant_id = ?', [TEST_TENANT]);
+      await db.exec('DELETE FROM parties WHERE tenant_id = ?', [TEST_TENANT]);
       await db.exec('DELETE FROM users WHERE tenant_id = ?', [TEST_TENANT]);
       await db.exec('DELETE FROM branches WHERE tenant_id = ?', [TEST_TENANT]);
       await db.exec('DELETE FROM tenants WHERE id = ?', [TEST_TENANT]);
@@ -86,6 +97,7 @@ test('1. Import a new product and generate IBC — display IBC', async () => {
     '/api/items/bulk-import',
     { 'x-branch-id': BRANCH_ANNA_NAGAR },
     {
+      supplierId,
       branchId: BRANCH_ANNA_NAGAR,
       rows: [
         {
@@ -174,6 +186,7 @@ test('3. Import a product with a manufacturer barcode — display MBC', async ()
     '/api/items/bulk-import',
     { 'x-branch-id': BRANCH_ANNA_NAGAR },
     {
+      supplierId,
       branchId: BRANCH_ANNA_NAGAR,
       rows: [
         {
@@ -274,6 +287,7 @@ test('5. Restock the same product in another branch — retrieve that branch\'s 
     '/api/items/bulk-import',
     { 'x-branch-id': BRANCH_T_NAGAR },
     {
+      supplierId,
       branchId: BRANCH_T_NAGAR,
       rows: [
         {
@@ -320,6 +334,7 @@ test('6. Verify that restocking does not change existing barcode types in the da
     '/api/items/bulk-import',
     { 'x-branch-id': BRANCH_ANNA_NAGAR },
     {
+      supplierId,
       branchId: BRANCH_ANNA_NAGAR,
       rows: [
         {

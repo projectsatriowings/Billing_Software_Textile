@@ -394,6 +394,7 @@ export {
   type Role,
   type Perm,
 } from '../../shared/types.ts';
+export type { WholesaleCustomer } from '../../shared/types.ts';
 export { calcPurchase, planSupplierPayment, type PurchaseLineInput, type CalculatedPurchase, type CalculatedPurchaseLine, type SupplierPaymentAllocationPlan, type OpenPurchaseForAllocation } from '../../shared/purchases.ts';
 
 export interface Party {
@@ -1979,6 +1980,21 @@ export const receiveStockTransfer = (
 ) =>
   api<{ success: boolean; status: string; message: string }>(
     `/api/stock-transfers/${encodeURIComponent(id)}/receive`,
+    {
+      method: 'POST',
+      body: JSON.stringify(data || {}),
+    }
+  );
+
+export const acceptStockTransfer = (
+  id: string,
+  data?: {
+    lines?: { lineId: string; receivedQty?: number; receivedQtyMilli?: number; discrepancyReason?: string }[];
+    notes?: string;
+  }
+) =>
+  api<{ success: boolean; status: string; message: string }>(
+    `/api/stock-transfers/${encodeURIComponent(id)}/accept`,
     {
       method: 'POST',
       body: JSON.stringify(data || {}),

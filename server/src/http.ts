@@ -107,6 +107,7 @@ function readBody(req: http.IncomingMessage, limit: number): Promise<Buffer> {
 const MIME: Record<string, string> = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
   '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.ico': 'image/x-icon', '.webmanifest': 'application/manifest+json', '.map': 'application/json',
+  '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp',
 };
 
 function serveStatic(root: string, pathname: string, res: http.ServerResponse): boolean {

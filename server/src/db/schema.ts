@@ -1976,4 +1976,75 @@ export const MIGRATIONS: Migration[] = [
       `CREATE INDEX IF NOT EXISTS idx_dc_notif_branch ON day_closing_notifications (tenant_id, branch_id, created_at DESC)`,
     ],
   },
+  {
+    version: 73,
+    statements: [
+      `CREATE TABLE IF NOT EXISTS wholesale_customers (
+        id TEXT PRIMARY KEY,
+        tenant_id TEXT NOT NULL REFERENCES tenants(id),
+        branch_id TEXT REFERENCES branches(id),
+        name TEXT NOT NULL,
+        company_name TEXT,
+        contact_person TEXT,
+        phone TEXT,
+        email TEXT,
+        gstin TEXT,
+        state_code TEXT,
+        billing_address TEXT,
+        shipping_address TEXT,
+        registration_type TEXT NOT NULL DEFAULT 'unregistered' CHECK (registration_type IN ('registered', 'unregistered')),
+        credit_limit_minor BIGINT NOT NULL DEFAULT 0,
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        custom JSONB NOT NULL DEFAULT '{}'::jsonb,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`,
+      `CREATE UNIQUE INDEX IF NOT EXISTS wholesale_customers_phone_uq ON wholesale_customers (tenant_id, phone) WHERE phone IS NOT NULL AND phone <> ''`,
+      `CREATE UNIQUE INDEX IF NOT EXISTS wholesale_customers_gstin_uq ON wholesale_customers (tenant_id, gstin) WHERE gstin IS NOT NULL AND gstin <> ''`,
+      `CREATE INDEX IF NOT EXISTS idx_wholesale_customers_name ON wholesale_customers (tenant_id, lower(name))`,
+      `CREATE INDEX IF NOT EXISTS idx_wholesale_customers_created ON wholesale_customers (tenant_id, created_at DESC)`,
+      `ALTER TABLE invoices ADD COLUMN IF NOT EXISTS wholesale_customer_id TEXT REFERENCES wholesale_customers(id)`,
+      `ALTER TABLE payments ADD COLUMN IF NOT EXISTS wholesale_customer_id TEXT REFERENCES wholesale_customers(id)`,
+      `CREATE INDEX IF NOT EXISTS idx_invoices_wholesale_cust ON invoices (tenant_id, wholesale_customer_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_payments_wholesale_cust ON payments (tenant_id, wholesale_customer_id)`,
+      `INSERT INTO wholesale_customers (
+        id, tenant_id, branch_id, name, company_name, contact_person, phone, email, gstin, state_code,
+        billing_address, shipping_address, registration_type, credit_limit_minor, active, custom, created_at, updated_at
+      )
+      SELECT DISTINCT ON (p.tenant_id, COALESCE(NULLIF(p.phone, ''), p.id))
+        p.id,
+        p.tenant_id,
+        p.branch_id,
+        p.name,
+        COALESCE(p.custom->>'companyName', p.name),
+        p.custom->>'contactPerson',
+        p.phone,
+        p.email,
+        p.gstin,
+        p.state_code,
+        p.address,
+        COALESCE(p.custom->>'shippingAddress', p.address),
+        CASE WHEN p.gstin IS NOT NULL AND p.gstin <> '' THEN 'registered' ELSE 'unregistered' END,
+        p.credit_limit_minor,
+        p.active,
+        p.custom,
+        p.created_at,
+        now()
+      FROM parties p
+      WHERE p.type = 'customer'
+        AND p.custom->>'customerType' = 'wholesale'
+      ORDER BY p.tenant_id, COALESCE(NULLIF(p.phone, ''), p.id), p.created_at DESC
+      ON CONFLICT (id) DO NOTHING`,
+      `UPDATE invoices inv
+       SET wholesale_customer_id = wc.id
+       FROM wholesale_customers wc
+       WHERE inv.invoice_type = 'wholesale'
+         AND inv.wholesale_customer_id IS NULL
+         AND (
+           inv.party_id = wc.id
+           OR (inv.customer_phone IS NOT NULL AND inv.customer_phone = wc.phone)
+           OR (inv.customer_gstin IS NOT NULL AND inv.customer_gstin = wc.gstin)
+         )`,
+    ],
+  },
 ];

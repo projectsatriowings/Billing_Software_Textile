@@ -27,6 +27,42 @@ async function resolveBranch(
   };
 }
 
+async function getActiveOperatingBranch(
+  db: { one: <T>(sql: string, params?: unknown[]) => Promise<T | null | undefined> },
+  ctx: { user?: any; req?: any; query?: any; body?: any },
+): Promise<{ id: string; code: string; name: string } | null> {
+  const user = ctx.user;
+  if (!user) return null;
+  const tenantId = user.tenantId;
+  const isSuper = user.role === 'owner' || user.role === 'admin' || String(user.role).toUpperCase() === 'SUPER_ADMIN';
+
+  let rawBranch: string | undefined;
+  if (!isSuper) {
+    // For non-Super Admin (managers / cashiers): strictly locked to their assigned branch
+    rawBranch = user.branchId || user.assignedLocation || 'MAIN';
+  } else {
+    // For Super Admin: use the branch explicitly selected via query, header, or body
+    const queryBranch = ctx.query?.branch as string | undefined;
+    const headerBranch = ctx.req?.headers?.['x-branch-id'] as string | undefined;
+    const bodyBranch = ctx.body?.branch as string | undefined;
+    rawBranch = (queryBranch || headerBranch || bodyBranch || '').trim();
+    if (!rawBranch || rawBranch.toLowerCase() === 'all') {
+      if (user.branchId || user.assignedLocation) {
+        rawBranch = user.branchId || user.assignedLocation;
+      } else {
+        const first = await db.one<any>(
+          `SELECT id, code, name FROM branches WHERE tenant_id = ? AND active = true ORDER BY code ASC LIMIT 1`,
+          [tenantId],
+        );
+        if (first) return { id: first.id, code: first.code, name: first.name };
+        rawBranch = 'MAIN';
+      }
+    }
+  }
+
+  return await resolveBranch(db, tenantId, rawBranch);
+}
+
 export function registerStockTransfers(r: Router) {
   // 1. Get filtered list of stock transfers
   r.get('/api/stock-transfers', requireUser, async (ctx) => {
@@ -51,27 +87,11 @@ export function registerStockTransfers(r: Router) {
     let whereSql = `WHERE st.tenant_id = ?`;
     const params: unknown[] = [tenantId];
 
-    // Branch scoping for managers & cashiers
-    if (role === 'manager') {
-      const allowed = ctx.user!.allowedLocations || [ctx.user!.assignedLocation || 'MAIN'];
-      const placeholders = allowed.map(() => '?').join(', ');
-      whereSql += ` AND (st.from_branch IN (${placeholders}) OR st.to_branch IN (${placeholders}))`;
-      params.push(...allowed, ...allowed);
-    } else if (role === 'cashier') {
-      const assigned = ctx.user!.assignedLocation || 'MAIN';
-      whereSql += ` AND (st.from_branch = ? OR st.to_branch = ?)`;
-      params.push(assigned, assigned);
-    }
-
-    if (branch && branch !== 'ALL') {
-      const bFilter = await resolveBranch(ctx.db, tenantId, branch);
-      if (bFilter) {
-        whereSql += ` AND (st.from_branch = ? OR st.from_branch = ? OR st.to_branch = ? OR st.to_branch = ?)`;
-        params.push(bFilter.code, bFilter.id, bFilter.code, bFilter.id);
-      } else {
-        whereSql += ` AND (st.from_branch = ? OR st.to_branch = ?)`;
-        params.push(branch, branch);
-      }
+    // Branch scoping: operates strictly based on currently selected/logged-in branch
+    const activeBranch = await getActiveOperatingBranch(ctx.db, ctx);
+    if (activeBranch) {
+      whereSql += ` AND (st.from_branch = ? OR st.from_branch = ? OR st.to_branch = ? OR st.to_branch = ?)`;
+      params.push(activeBranch.code, activeBranch.id, activeBranch.code, activeBranch.id);
     }
     if (fromBranch && fromBranch !== 'ALL') {
       const fbFilter = await resolveBranch(ctx.db, tenantId, fromBranch);
@@ -196,17 +216,18 @@ export function registerStockTransfers(r: Router) {
   // 2. Next Transfer Number Preview
   r.get('/api/stock-transfers/next-number', requireUser, async (ctx) => {
     const tenantId = ctx.user!.tenantId;
-    const branchParam = ctx.query.branch as string | undefined;
+    const primaryBranch = await ctx.db.one<{ id: string }>(
+      `SELECT id FROM branches WHERE tenant_id = ? ORDER BY code = 'MAIN' DESC, created_at ASC LIMIT 1`,
+      [tenantId],
+    );
+    const trfBranchId = primaryBranch?.id;
     let nextNo = 1;
-    if (branchParam) {
-      const fb = await resolveBranch(ctx.db, tenantId, branchParam);
-      if (fb) {
-        const series = await ctx.db.one<{ next_no: number }>(
-          `SELECT next_no FROM number_series WHERE tenant_id = ? AND branch_id = ? AND series = 'TRF'`,
-          [tenantId, fb.id],
-        );
-        nextNo = Number(series?.next_no ?? 1);
-      }
+    if (trfBranchId) {
+      const series = await ctx.db.one<{ next_no: number }>(
+        `SELECT next_no FROM number_series WHERE tenant_id = ? AND branch_id = ? AND series = 'TRF'`,
+        [tenantId, trfBranchId],
+      );
+      nextNo = Number(series?.next_no ?? 1);
     } else {
       const series = await ctx.db.one<{ next_no: number }>(
         `SELECT next_no FROM number_series WHERE tenant_id = ? AND series = 'TRF' ORDER BY next_no DESC LIMIT 1`,
@@ -214,6 +235,18 @@ export function registerStockTransfers(r: Router) {
       );
       nextNo = Number(series?.next_no ?? 1);
     }
+
+    const maxRow = await ctx.db.one<any>(
+      `SELECT transfer_number FROM stock_transfers WHERE tenant_id = ? ORDER BY created_at DESC LIMIT 1`,
+      [tenantId],
+    );
+    if (maxRow) {
+      const match = (maxRow?.transferNumber ?? maxRow?.transfer_number ?? '').match(/TRF-(\d+)/);
+      if (match) {
+        nextNo = Math.max(nextNo, parseInt(match[1], 10) + 1);
+      }
+    }
+
     return {
       nextTransferNumber: `TRF-${String(nextNo).padStart(4, '0')}`,
     };
@@ -569,11 +602,18 @@ export function registerStockTransfers(r: Router) {
       throw bad('Please add at least one product to the stock transfer.');
     }
 
-    // Role verification for branch
-    if (ctx.user!.role === 'manager') {
-      const allowed = ctx.user!.allowedLocations || [ctx.user!.assignedLocation || 'MAIN'];
-      if (!allowed.includes(fb.code) && !allowed.includes(fb.id)) {
-        throw forbidden(`You do not have permission to transfer stock out of branch ${fb.name} (${fb.code}).`);
+    // Role & branch verification: Source branch must match active operating branch
+    const isSuper = ctx.user?.role === 'owner' || ctx.user?.role === 'admin' || String(ctx.user?.role).toUpperCase() === 'SUPER_ADMIN';
+    const activeBranch = await getActiveOperatingBranch(ctx.db, ctx);
+    if (!isSuper) {
+      if (activeBranch && fb.id !== activeBranch.id && fb.code !== activeBranch.code) {
+        throw forbidden(`You do not have permission to transfer stock out of branch ${fb.name} (${fb.code}). You are assigned to ${activeBranch.name}.`);
+      }
+    } else {
+      if (ctx.req?.headers?.['x-branch-id'] || ctx.query?.branch) {
+        if (activeBranch && fb.id !== activeBranch.id && fb.code !== activeBranch.code) {
+          throw forbidden(`Transfer must be created from your active branch (${activeBranch.name}).`);
+        }
       }
     }
 
@@ -585,15 +625,42 @@ export function registerStockTransfers(r: Router) {
       const toBranchId = tb.id;
       const toBranchCode = tb.code;
 
+      const primaryBranch = await q.one<{ id: string }>(
+        `SELECT id FROM branches WHERE tenant_id = ? ORDER BY code = 'MAIN' DESC, created_at ASC LIMIT 1`,
+        [tenantId],
+      );
+      const trfBranchId = primaryBranch?.id || fromBranchId;
+
       const seriesRow = await q.one<{ assignedNo?: number; assigned_no?: number }>(
         `INSERT INTO number_series (tenant_id, branch_id, series, next_no)
          VALUES (?, ?, 'TRF', 2)
          ON CONFLICT (tenant_id, branch_id, series) DO UPDATE SET next_no = number_series.next_no + 1
          RETURNING (next_no - 1) AS assigned_no`,
-        [tenantId, fromBranchId],
+        [tenantId, trfBranchId],
       );
-      const seqNo = Number(seriesRow?.assignedNo ?? seriesRow?.assigned_no ?? 1);
-      const transferNumber = `TRF-${String(seqNo).padStart(4, '0')}`;
+      let seqNo = Number(seriesRow?.assignedNo ?? seriesRow?.assigned_no ?? 1);
+      let transferNumber = `TRF-${String(seqNo).padStart(4, '0')}`;
+
+      // Prevent duplicate transfer_number collision across the tenant
+      const existingTrf = await q.one(
+        `SELECT id FROM stock_transfers WHERE tenant_id = ? AND transfer_number = ?`,
+        [tenantId, transferNumber],
+      );
+      if (existingTrf) {
+        const maxRow = await q.one<any>(
+          `SELECT transfer_number FROM stock_transfers WHERE tenant_id = ? ORDER BY created_at DESC LIMIT 1`,
+          [tenantId],
+        );
+        const match = (maxRow?.transferNumber ?? maxRow?.transfer_number ?? '').match(/TRF-(\d+)/);
+        const nextNum = match ? parseInt(match[1], 10) + 1 : seqNo + 1;
+        transferNumber = `TRF-${String(nextNum).padStart(4, '0')}`;
+        await q.exec(
+          `INSERT INTO number_series (tenant_id, branch_id, series, next_no)
+           VALUES (?, ?, 'TRF', ?)
+           ON CONFLICT (tenant_id, branch_id, series) DO UPDATE SET next_no = GREATEST(number_series.next_no, ?)`,
+          [tenantId, trfBranchId, nextNum + 1, nextNum + 1],
+        );
+      }
 
       // 2. Insert stock_transfers header
       const transferId = newId('trf');
@@ -822,8 +889,8 @@ export function registerStockTransfers(r: Router) {
     });
   });
 
-  // 7. Receive stock transfer at destination branch (supports full and partial receipt with discrepancy tracking)
-  r.post('/api/stock-transfers/:id/receive', requirePerm('stock.transfer'), async (ctx) => {
+  // 7. Accept / Receive stock transfer at destination branch
+  const handleAcceptTransfer = async (ctx: any) => {
     const tenantId = ctx.user!.tenantId;
     const transferId = ctx.params.id;
     const body = ctx.body ?? {};
@@ -837,8 +904,12 @@ export function registerStockTransfers(r: Router) {
       );
       if (!st) throw notFound('Stock transfer not found.');
 
-      if (st.status !== 'in_transit' && st.status !== 'partially_received') {
-        throw bad(`Cannot receive transfer in "${st.status}" status. Only in-transit or partially received transfers can be received.`);
+      // 2. Prevent duplicate acceptance or invalid status
+      if (st.status === 'completed' || st.status === 'received') {
+        throw conflict('This stock transfer has already been accepted and completed.', 'ALREADY_ACCEPTED');
+      }
+      if (st.status === 'cancelled' || st.status === 'rejected') {
+        throw bad(`Cannot accept a transfer that is in "${st.status}" status.`);
       }
 
       const fromBranch = st.fromBranch ?? st.from_branch;
@@ -846,21 +917,35 @@ export function registerStockTransfers(r: Router) {
       const transferNumber = st.transferNumber ?? st.transfer_number;
 
       const fb = await resolveBranch(q, tenantId, fromBranch);
+      const fromBranchId = fb?.id || fromBranch;
       const fromBranchCode = fb?.code || fromBranch;
 
       const tb = await resolveBranch(q, tenantId, toBranch);
       const toBranchId = tb?.id || toBranch;
       const toBranchCode = tb?.code || toBranch;
 
-      // Check destination branch permission
-      if (ctx.user!.role === 'manager') {
-        const allowed = ctx.user!.allowedLocations || [ctx.user!.assignedLocation || 'MAIN'];
-        if (!allowed.includes(toBranchCode) && !allowed.includes(toBranchId)) {
-          throw forbidden(`You do not have receiving authority for destination branch ${toBranchCode}.`);
+      // 3. Destination branch authorization: ONLY destination branch can accept
+      const isSuper = ctx.user!.role === 'owner' || ctx.user!.role === 'admin' || String(ctx.user!.role).toUpperCase() === 'SUPER_ADMIN';
+      const headerBranch = (ctx.req?.headers?.['x-branch-id'] as string || ctx.query?.branch as string || ctx.body?.branch as string || '').trim();
+
+      if (isSuper) {
+        // For Super Admin: if operating with an explicit branch scope (from header/query/body), that scope MUST match destination branch
+        if (headerBranch && headerBranch.toLowerCase() !== 'all') {
+          const cb = await resolveBranch(q, tenantId, headerBranch);
+          if (cb && cb.id !== toBranchId && cb.code !== toBranchCode) {
+            throw forbidden(`Only destination branch (${tb?.name || toBranchCode}) can accept this transfer.`);
+          }
+        }
+      } else {
+        // For non-Super Admin (managers / staff): strictly check their assigned branch
+        const mgrBranch = ctx.user!.branchId || ctx.user!.assignedLocation;
+        const cb = await resolveBranch(q, tenantId, mgrBranch);
+        if (!cb || (cb.id !== toBranchId && cb.code !== toBranchCode)) {
+          throw forbidden(`Only destination branch (${tb?.name || toBranchCode}) can accept this transfer.`);
         }
       }
 
-      // 2. Fetch existing lines
+      // 4. Fetch existing lines
       const lines = await q.query<any>(
         `SELECT stl.*, i.name AS item_name
          FROM stock_transfer_lines stl
@@ -868,6 +953,70 @@ export function registerStockTransfers(r: Router) {
          WHERE stl.tenant_id = ? AND stl.transfer_id = ?`,
         [tenantId, transferId],
       );
+      if (lines.length === 0) throw bad('Transfer has no line items.');
+
+      // 5. Check if stock was already deducted from source branch
+      const existingSourceMoves = await q.query<any>(
+        `SELECT id FROM stock_moves WHERE tenant_id = ? AND ref_type = 'stock_transfer' AND ref_id = ? AND qty_milli < 0`,
+        [tenantId, transferId],
+      );
+      const sourceAlreadyDeducted = existingSourceMoves.length > 0;
+
+      // If source branch was not yet deducted (e.g. direct accept of created transfer), deduct now
+      if (!sourceAlreadyDeducted) {
+        for (const line of lines) {
+          const lineItemId = line.itemId ?? line.item_id;
+          const lineItemName = line.itemName ?? line.item_name;
+          const lineBatchNo = line.batchNo ?? line.batch_no ?? null;
+          const lineExpiry = line.expiry ?? null;
+          const lineQtyMilli = Number(line.qtyMilli ?? line.qty_milli);
+
+          const stockRow = await q.one<{ stockMilli?: number; stock_milli?: number }>(
+            `SELECT COALESCE(SUM(qty_milli), 0)::bigint AS stock_milli
+             FROM stock_moves
+             WHERE tenant_id = ? AND item_id = ? AND (
+               branch_id = ? OR (branch_id IS NULL AND (UPPER(location) = UPPER(?) OR UPPER(location) = UPPER(?)))
+             )`,
+            [tenantId, lineItemId, fromBranchId, fromBranchCode, fromBranchId],
+          );
+          const available = Number(stockRow?.stockMilli ?? stockRow?.stock_milli ?? 0);
+          if (available < lineQtyMilli) {
+            throw bad(
+              `Cannot accept transfer: insufficient stock for "${lineItemName}" at source branch ${fromBranchCode}. Available: ${available / 1000}, Required: ${lineQtyMilli / 1000}`,
+            );
+          }
+
+          const moveId = newId('sm');
+          await q.exec(
+            `INSERT INTO stock_moves (
+              id, tenant_id, branch_id, item_id, location, qty_milli, kind, ref_type, ref_id, ref_line_id, batch_no, expiry, reason, notes, user_id, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, 'transfer', 'stock_transfer', ?, ?, ?, ?, 'Stock transfer accepted - deducted from source', ?, ?, now())`,
+            [
+              moveId,
+              tenantId,
+              fromBranchId,
+              lineItemId,
+              fromBranchCode,
+              -lineQtyMilli,
+              transferId,
+              line.id,
+              lineBatchNo,
+              lineExpiry,
+              `Transferred to ${toBranchCode} (${transferNumber})`,
+              ctx.user!.id,
+            ],
+          );
+        }
+      }
+
+      // 6. Check destination stock moves to prevent duplicate addition
+      const existingDestMoves = await q.query<any>(
+        `SELECT id FROM stock_moves WHERE tenant_id = ? AND ref_type = 'stock_transfer' AND ref_id = ? AND qty_milli > 0`,
+        [tenantId, transferId],
+      );
+      if (existingDestMoves.length > 0) {
+        throw conflict('Destination stock has already been credited for this transfer.', 'ALREADY_ACCEPTED');
+      }
 
       let hasDiscrepancy = false;
       const receiptMap = new Map<string, { receivedQtyMilli: number; discrepancyReason?: string }>();
@@ -934,7 +1083,7 @@ export function registerStockTransfers(r: Router) {
           await q.exec(
             `INSERT INTO stock_moves (
               id, tenant_id, branch_id, item_id, location, qty_milli, kind, ref_type, ref_id, ref_line_id, batch_no, expiry, reason, notes, user_id, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, 'transfer', 'stock_transfer', ?, ?, ?, ?, 'Stock transfer received in', ?, ?, now())`,
+            ) VALUES (?, ?, ?, ?, ?, ?, 'transfer', 'stock_transfer', ?, ?, ?, ?, 'Stock transfer accepted - received at destination', ?, ?, now())`,
             [
               moveId,
               tenantId,
@@ -1026,7 +1175,7 @@ export function registerStockTransfers(r: Router) {
       );
 
       await audit(q, ctx, {
-        action: 'stock_transfer.receive',
+        action: 'stock_transfer.accept',
         entity: 'stock_transfer',
         entityId: transferId,
         detail: {
@@ -1042,11 +1191,14 @@ export function registerStockTransfers(r: Router) {
         success: true,
         status: finalStatus,
         message: hasDiscrepancy
-          ? `Transfer ${transferNumber} received with shortages recorded. Status updated to Partially Received.`
-          : `Transfer ${transferNumber} received in full. Stock added to ${toBranchCode} and status marked Completed.`,
+          ? `Transfer ${transferNumber} accepted with shortages recorded.`
+          : `Transfer ${transferNumber} accepted in full. Stock updated for both branches.`,
       };
     });
-  });
+  };
+
+  r.post('/api/stock-transfers/:id/accept', requirePerm('stock.transfer'), handleAcceptTransfer);
+  r.post('/api/stock-transfers/:id/receive', requirePerm('stock.transfer'), handleAcceptTransfer);
 
   // 8. Cancel a stock transfer (if in-transit, reverses deducted stock back to source)
   r.post('/api/stock-transfers/:id/cancel', requirePerm('stock.transfer'), async (ctx) => {

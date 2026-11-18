@@ -89,14 +89,14 @@ export function registerSupplierInvoices(r: Router): void {
 
     const { headers, columnMap, dataLines } = detectTableColumns(lines, initialMapping);
 
-    // Parse product items
-    let rawProducts = parseLineItems(dataLines, columnMap, headers, sparseText);
+    // Parse product items (supports both tableData from PDF and text lines)
+    let rawProducts = parseLineItems(dataLines, columnMap, headers, sparseText, tableData);
 
     // If line parsing yielded 0 items but we have tableData from PDF, attempt tableData mapping
     if (rawProducts.length === 0 && tableData && tableData.length > 1) {
       const tableLines = tableData.map((row) => row.join('\t'));
       const colDet = detectTableColumns(tableLines, initialMapping);
-      rawProducts = parseLineItems(colDet.dataLines, colDet.columnMap, colDet.headers, sparseText);
+      rawProducts = parseLineItems(colDet.dataLines, colDet.columnMap, colDet.headers, sparseText, tableData);
     }
 
     rawProducts = rawProducts.filter(isValidProductRow);
@@ -116,7 +116,7 @@ export function registerSupplierInvoices(r: Router): void {
 
     const enrichedProducts = enrichWithCatalog(rawProducts, catalogRows);
 
-    // Calculate sum of extracted item costs & line item tax
+    // Calculate sum of extracted item costs & line item tax (Cost Price is inclusive of GST)
     let calculatedTotalCost = 0;
     let calculatedItemTax = 0;
     for (const p of enrichedProducts) {
@@ -127,13 +127,16 @@ export function registerSupplierInvoices(r: Router): void {
       if (cp > 0 && qty > 0) {
         const lineCost = cp * qty;
         calculatedTotalCost += lineCost;
-        calculatedItemTax += (lineCost * rateBp) / 10000;
+        const lineTaxable = rateBp > 0 ? lineCost / (1 + rateBp / 10000) : lineCost;
+        calculatedItemTax += lineCost - lineTaxable;
       }
     }
 
     const invoiceTaxSummary = (metadata.cgstAmount ?? 0) + (metadata.sgstAmount ?? 0) + (metadata.igstAmount ?? 0);
-    if (invoiceTaxSummary > 0 && Math.abs(invoiceTaxSummary - calculatedItemTax) > 1.0) {
+    if (invoiceTaxSummary > 0 && Math.abs(invoiceTaxSummary - calculatedItemTax) > 1.5) {
       metadata.discrepancyWarning = `Tax discrepancy: Calculated item tax (₹${calculatedItemTax.toFixed(2)}) differs from invoice tax summary (₹${invoiceTaxSummary.toFixed(2)}) by ₹${Math.abs(invoiceTaxSummary - calculatedItemTax).toFixed(2)}. Please verify.`;
+    } else if (metadata.totalAmount && Math.abs(metadata.totalAmount - calculatedTotalCost) > 1.5) {
+      metadata.discrepancyWarning = `Total discrepancy: Calculated items total (₹${calculatedTotalCost.toFixed(2)}) differs from invoice grand total (₹${metadata.totalAmount.toFixed(2)}) by ₹${Math.abs(metadata.totalAmount - calculatedTotalCost).toFixed(2)}. Please verify.`;
     }
 
     await audit(ctx.db, ctx, {
