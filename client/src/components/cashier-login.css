@@ -3488,6 +3488,59 @@ body.theme-cashier .fin-kpi-card.highlight .fin-kpi-val,
   font-weight: 900 !important;
 }
 
+/* Day Closing Button & Deck Overrides in Cashier Theme */
+div.app-container.theme-cashier .cash-rec-submit-btn,
+body.theme-cashier .cash-rec-submit-btn,
+.theme-cashier .cash-rec-submit-btn {
+  background: var(--primary, #0F766E) !important;
+  color: #FFFFFF !important;
+  border: 1.5px solid var(--primary-hover, #115E59) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 4px 14px rgba(15, 118, 110, 0.35) !important;
+}
+
+div.app-container.theme-cashier .cash-rec-submit-btn:hover:not(:disabled),
+body.theme-cashier .cash-rec-submit-btn:hover:not(:disabled),
+.theme-cashier .cash-rec-submit-btn:hover:not(:disabled) {
+  background: var(--primary-hover, #115E59) !important;
+  box-shadow: 0 8px 22px rgba(15, 118, 110, 0.45) !important;
+}
+
+div.app-container.theme-cashier .smart-audit-toggle-btn,
+body.theme-cashier .smart-audit-toggle-btn,
+.theme-cashier .smart-audit-toggle-btn {
+  background: var(--primary, #0F766E) !important;
+  color: #FFFFFF !important;
+  border: 1.5px solid var(--primary-hover, #115E59) !important;
+  box-shadow: 0 2px 8px rgba(15, 118, 110, 0.3) !important;
+}
+
+div.app-container.theme-cashier .smart-audit-toggle-btn:hover,
+body.theme-cashier .smart-audit-toggle-btn:hover,
+.theme-cashier .smart-audit-toggle-btn:hover {
+  background: var(--primary-hover, #115E59) !important;
+}
+
+div.app-container.theme-cashier .bento-kpi-hero-card,
+body.theme-cashier .bento-kpi-hero-card,
+.theme-cashier .bento-kpi-hero-card {
+  background: linear-gradient(135deg, rgba(15, 118, 110, 0.08) 0%, var(--surface) 100%) !important;
+  border: 2px solid var(--primary) !important;
+  border-radius: 20px !important;
+  box-shadow:
+    0 1px 2px rgba(15, 45, 46, 0.04),
+    0 8px 24px -2px rgba(15, 118, 110, 0.12),
+    0 20px 40px -4px rgba(15, 118, 110, 0.14),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.95) !important;
+}
+
+div.app-container.theme-cashier .bento-kpi-hero-icon,
+body.theme-cashier .bento-kpi-hero-icon,
+.theme-cashier .bento-kpi-hero-icon {
+  background: var(--primary) !important;
+  color: #FFFFFF !important;
+}
+
 /* --------------------------------------------------------------------------
    5.9 NOTIFICATIONS POPOVER (Teal & Slate Theme)
    -------------------------------------------------------------------------- */
