@@ -820,7 +820,7 @@ export function registerDayClosing(r: Router) {
        LEFT JOIN users u ON u.id = s.user_id
        WHERE s.tenant_id = ? AND (s.location = ? OR s.branch_id = ? OR s.location = ? OR s.branch_id = ?)
          AND DATE(s.opened_at) = ?::date
-       ORDER BY s.opened_at ASC`,
+       ORDER BY s.opened_at DESC`,
       [tenantId, branchId, branchId, branchCode, branchCode, bdate],
     );
 
@@ -2587,8 +2587,50 @@ export function registerDayClosing(r: Router) {
            (s.opened_at)::date >= ?::date AND (s.opened_at)::date <= ?::date
            OR (s.closed_at IS NOT NULL AND (s.closed_at)::date >= ?::date AND (s.closed_at)::date <= ?::date)
          )
-       ORDER BY s.opened_at ASC`,
+       ORDER BY s.opened_at DESC`,
       [tenantId, branchId, branchId, branchId, branchId, tenantId, branchId, branchId, tenantId, startDate, endDate, startDate, endDate],
+    );
+
+    // 4b. Shift-level posted transactions for granular shift session attribution
+    const shiftInvoices = await ctx.db.query<any>(
+      `SELECT
+        i.id,
+        i.shift_id,
+        i.created_by,
+        i.counter_id,
+        i.counter,
+        i.created_at,
+        i.kind,
+        COALESCE(i.total_minor, 0)::bigint AS total_minor,
+        COALESCE(i.discount_minor, 0)::bigint AS discount_minor
+       FROM invoices i
+       WHERE i.tenant_id = ? AND i.branch_id = ? AND i.status = 'posted'
+         AND (
+           (i.bdate >= ? AND i.bdate <= ?)
+           OR ((i.created_at)::date >= ?::date AND (i.created_at)::date <= ?::date)
+         )`,
+      [tenantId, branchId, startDate, endDate, startDate, endDate],
+    );
+
+    const shiftPayments = await ctx.db.query<any>(
+      `SELECT
+        p.id,
+        p.shift_id,
+        p.created_by,
+        p.counter_id,
+        p.counter,
+        p.created_at,
+        COALESCE(p.method, 'cash') AS method,
+        COALESCE(p.amount_minor, 0)::bigint AS amount_minor
+       FROM payments p
+       LEFT JOIN invoices i ON i.id = p.invoice_id
+       WHERE p.tenant_id = ? AND (p.status IS NULL OR p.status = 'posted')
+         AND (
+           (p.bdate >= ? AND p.bdate <= ?)
+           OR ((p.created_at)::date >= ?::date AND (p.created_at)::date <= ?::date)
+         )
+         AND (p.invoice_id IS NULL OR i.branch_id IS NULL OR i.branch_id = ?)`,
+      [tenantId, startDate, endDate, startDate, endDate, branchId],
     );
 
     const counters: any[] = [];
@@ -2676,19 +2718,77 @@ export function registerDayClosing(r: Router) {
 
         if (!isCounterMatch) continue;
 
+        const sId = sh.id;
+        const sUser = shCashierId;
+        const sOpen = new Date(sh.opened_at || sh.openedAt).getTime();
+        const sClose = (sh.closed_at || sh.closedAt) ? new Date(sh.closed_at || sh.closedAt).getTime() : Infinity;
+
+        const shInvs = shiftInvoices.filter((i: any) =>
+          (i.shiftId === sId || i.shift_id === sId) ||
+          ((!i.shiftId && !i.shift_id) && (i.createdBy === sUser || i.created_by === sUser) &&
+           new Date(i.createdAt || i.created_at).getTime() >= sOpen &&
+           new Date(i.createdAt || i.created_at).getTime() <= sClose)
+        );
+
+        const shPays = shiftPayments.filter((p: any) =>
+          (p.shiftId === sId || p.shift_id === sId) ||
+          ((!p.shiftId && !p.shift_id) && (p.createdBy === sUser || p.created_by === sUser) &&
+           new Date(p.createdAt || p.created_at).getTime() >= sOpen &&
+           new Date(p.createdAt || p.created_at).getTime() <= sClose)
+        );
+
+        let shGross = 0;
+        let shReturns = 0;
+        let shInvoicesCount = 0;
+        let shReturnsCount = 0;
+        let shDiscounts = 0;
+
+        for (const si of shInvs) {
+          const kind = si.kind || 'sale';
+          const amt = Number(si.totalMinor ?? si.total_minor ?? 0);
+          const disc = Number(si.discountMinor ?? si.discount_minor ?? 0);
+          if (kind === 'sale') {
+            shGross += amt;
+            shInvoicesCount++;
+            shDiscounts += disc;
+          } else if (kind === 'credit_note') {
+            shReturns += amt;
+            shReturnsCount++;
+          }
+        }
+        const shNet = Math.max(0, shGross - shReturns);
+
+        const shColls = { cash: 0, upi: 0, card: 0, bank: 0, total: 0 };
+        for (const sp of shPays) {
+          const m = String(sp.method || 'cash').toLowerCase();
+          const amt = Number(sp.amountMinor ?? sp.amount_minor ?? 0);
+          if (m === 'cash') shColls.cash += amt;
+          else if (m === 'upi') shColls.upi += amt;
+          else if (m === 'card') shColls.card += amt;
+          else if (m === 'bank' || m === 'bank_transfer') shColls.bank += amt;
+          shColls.total += amt;
+        }
+
         const shiftItem = {
           shiftId: sh.id,
           shiftNumber: sh.shift_number || sh.shiftNumber || sh.id,
           status: sh.status,
           cashierId: shCashierId,
-          cashierName: sh.cashier_name || sh.cashierName,
-          cashierRole: sh.cashier_role || sh.cashierRole,
+          cashierName: sh.cashier_name || sh.cashierName || 'Cashier',
+          cashierRole: sh.cashier_role || sh.cashierRole || 'CASHIER',
           openedAt: sh.opened_at || sh.openedAt,
           closedAt: sh.closed_at || sh.closedAt,
           openingCashMinor: Number(sh.opening_cash_minor ?? sh.openingCashMinor ?? 0),
           countedCashMinor: Number(sh.counted_cash_minor ?? sh.countedCashMinor ?? 0),
           expectedCashMinor: Number(sh.expected_cash_minor ?? sh.expectedCashMinor ?? 0),
           varianceMinor: Number(sh.variance_minor ?? sh.varianceMinor ?? 0),
+          invoicesCount: shInvoicesCount,
+          returnsCount: shReturnsCount,
+          grossSalesMinor: shGross,
+          discountsTotalMinor: shDiscounts,
+          returnsTotalMinor: shReturns,
+          netSalesMinor: shNet,
+          collections: shColls,
         };
         counterShifts.push(shiftItem);
 
@@ -2795,20 +2895,80 @@ export function registerDayClosing(r: Router) {
           const sCode = sh.counter;
           return sId === rc.id || sCode === rc.code;
         })
-        .map((sh: any) => ({
-          shiftId: sh.id,
-          shiftNumber: sh.shiftNumber || sh.shift_number || sh.id,
-          status: sh.status,
-          cashierId: sh.cashierId || sh.cashier_id || sh.userId || sh.user_id,
-          cashierName: sh.cashierName || sh.cashier_name,
-          cashierRole: sh.cashierRole || sh.cashier_role,
-          openedAt: sh.openedAt || sh.opened_at,
-          closedAt: sh.closedAt || sh.closed_at,
-          openingCashMinor: Number(sh.openingCashMinor ?? sh.opening_cash_minor ?? 0),
-          countedCashMinor: Number(sh.countedCashMinor ?? sh.counted_cash_minor ?? 0),
-          expectedCashMinor: Number(sh.expectedCashMinor ?? sh.expected_cash_minor ?? 0),
-          varianceMinor: Number(sh.varianceMinor ?? sh.variance_minor ?? 0),
-        }));
+        .map((sh: any) => {
+          const sId = sh.id;
+          const sUser = sh.cashierId || sh.cashier_id || sh.userId || sh.user_id;
+          const sOpen = new Date(sh.openedAt || sh.opened_at).getTime();
+          const sClose = (sh.closedAt || sh.closed_at) ? new Date(sh.closedAt || sh.closed_at).getTime() : Infinity;
+
+          const shInvs = shiftInvoices.filter((i: any) =>
+            (i.shiftId === sId || i.shift_id === sId) ||
+            ((!i.shiftId && !i.shift_id) && (i.createdBy === sUser || i.created_by === sUser) &&
+             new Date(i.createdAt || i.created_at).getTime() >= sOpen &&
+             new Date(i.createdAt || i.created_at).getTime() <= sClose)
+          );
+
+          const shPays = shiftPayments.filter((p: any) =>
+            (p.shiftId === sId || p.shift_id === sId) ||
+            ((!p.shiftId && !p.shift_id) && (p.createdBy === sUser || p.created_by === sUser) &&
+             new Date(p.createdAt || p.created_at).getTime() >= sOpen &&
+             new Date(p.createdAt || p.created_at).getTime() <= sClose)
+          );
+
+          let shGross = 0;
+          let shReturns = 0;
+          let shInvoicesCount = 0;
+          let shReturnsCount = 0;
+          let shDiscounts = 0;
+
+          for (const si of shInvs) {
+            const kind = si.kind || 'sale';
+            const amt = Number(si.totalMinor ?? si.total_minor ?? 0);
+            const disc = Number(si.discountMinor ?? si.discount_minor ?? 0);
+            if (kind === 'sale') {
+              shGross += amt;
+              shInvoicesCount++;
+              shDiscounts += disc;
+            } else if (kind === 'credit_note') {
+              shReturns += amt;
+              shReturnsCount++;
+            }
+          }
+          const shNet = Math.max(0, shGross - shReturns);
+
+          const shColls = { cash: 0, upi: 0, card: 0, bank: 0, total: 0 };
+          for (const sp of shPays) {
+            const m = String(sp.method || 'cash').toLowerCase();
+            const amt = Number(sp.amountMinor ?? sp.amount_minor ?? 0);
+            if (m === 'cash') shColls.cash += amt;
+            else if (m === 'upi') shColls.upi += amt;
+            else if (m === 'card') shColls.card += amt;
+            else if (m === 'bank' || m === 'bank_transfer') shColls.bank += amt;
+            shColls.total += amt;
+          }
+
+          return {
+            shiftId: sh.id,
+            shiftNumber: sh.shiftNumber || sh.shift_number || sh.id,
+            status: sh.status,
+            cashierId: sUser,
+            cashierName: sh.cashierName || sh.cashier_name || 'Cashier',
+            cashierRole: sh.cashierRole || sh.cashier_role || 'CASHIER',
+            openedAt: sh.openedAt || sh.opened_at,
+            closedAt: sh.closedAt || sh.closed_at,
+            openingCashMinor: Number(sh.openingCashMinor ?? sh.opening_cash_minor ?? 0),
+            countedCashMinor: Number(sh.countedCashMinor ?? sh.counted_cash_minor ?? 0),
+            expectedCashMinor: Number(sh.expectedCashMinor ?? sh.expected_cash_minor ?? 0),
+            varianceMinor: Number(sh.varianceMinor ?? sh.variance_minor ?? 0),
+            invoicesCount: shInvoicesCount,
+            returnsCount: shReturnsCount,
+            grossSalesMinor: shGross,
+            discountsTotalMinor: shDiscounts,
+            returnsTotalMinor: shReturns,
+            netSalesMinor: shNet,
+            collections: shColls,
+          };
+        });
 
       const rcCashiers = rcShifts.map((sh: any) => ({
         cashierId: sh.cashierId,
