@@ -634,6 +634,7 @@ export function registerItemsBulk(r: Router) {
       // 2. Process Restocks
       for (const row of validRestocks) {
         const itemId = row.matchedItemId!;
+        await q.exec('SAVEPOINT sp_bulk_restock');
         try {
           // If incoming stock > 0, record inventory stock-in movement and purchase line
           if ((row.openingQtyMilli ?? 0) > 0) {
@@ -771,12 +772,13 @@ export function registerItemsBulk(r: Router) {
 
           // Register new barcode in product_barcodes table
           if (newBarcodeTrim) {
-            const existingBc = await q.one<{ id: string; product_id: string; barcode_type: string }>(
+            const existingBc = await q.one<{ id: string; productId?: string; product_id?: string; barcodeType?: string; barcode_type?: string }>(
               'SELECT id, product_id, barcode_type FROM product_barcodes WHERE tenant_id = ? AND (branch_id = ? OR branch_id IS NULL) AND barcode = ?',
               [tenantId, branchId, newBarcodeTrim],
             );
+            const defaultType = newBarcodeTrim.startsWith('20') && newBarcodeTrim.length === 13 ? 'INTERNAL' : 'MANUFACTURER';
             if (!existingBc) {
-              const bType = row.barcodeType || (newBarcodeTrim.startsWith('20') && newBarcodeTrim.length === 13 ? 'INTERNAL' : 'MANUFACTURER');
+              const bType = row.barcodeType || defaultType;
               await q.exec(
                 `INSERT INTO product_barcodes (id, tenant_id, branch_id, product_id, barcode, barcode_type)
                  VALUES (?, ?, ?, ?, ?, ?)`,
@@ -787,30 +789,34 @@ export function registerItemsBulk(r: Router) {
                 [bType, itemId, tenantId],
               );
               barcodesSaved++;
-            } else if (existingBc.product_id !== itemId) {
-              const bType = row.barcodeType || existingBc.barcode_type;
-              await q.exec(
-                'UPDATE product_barcodes SET product_id = ?, barcode_type = ? WHERE id = ?',
-                [itemId, bType, existingBc.id],
-              );
-              await q.exec(
-                'UPDATE items SET barcode_type = ? WHERE id = ? AND tenant_id = ?',
-                [bType, itemId, tenantId],
-              );
             } else {
-              // Existing barcode already belongs to this product.
-              // PRESERVE the existing barcode_type! Do NOT convert existing IBC into MBC during restocking!
-              const preservedType = (newBarcodeTrim === oldPrimaryBarcode)
-                ? existingBc.barcode_type
-                : (row.barcodeType || existingBc.barcode_type);
-              await q.exec(
-                'UPDATE product_barcodes SET barcode_type = ? WHERE id = ?',
-                [preservedType, existingBc.id],
-              );
-              await q.exec(
-                'UPDATE items SET barcode_type = ? WHERE id = ? AND tenant_id = ?',
-                [preservedType, itemId, tenantId],
-              );
+              const exProductId = existingBc.productId || existingBc.product_id;
+              const exBarcodeType = existingBc.barcodeType || existingBc.barcode_type || defaultType;
+              if (exProductId !== itemId) {
+                const bType = row.barcodeType || exBarcodeType;
+                await q.exec(
+                  'UPDATE product_barcodes SET product_id = ?, barcode_type = ? WHERE id = ?',
+                  [itemId, bType, existingBc.id],
+                );
+                await q.exec(
+                  'UPDATE items SET barcode_type = ? WHERE id = ? AND tenant_id = ?',
+                  [bType, itemId, tenantId],
+                );
+              } else {
+                // Existing barcode already belongs to this product.
+                // PRESERVE the existing barcode_type! Do NOT convert existing IBC into MBC during restocking!
+                const preservedType = (newBarcodeTrim === oldPrimaryBarcode)
+                  ? exBarcodeType
+                  : (row.barcodeType || exBarcodeType);
+                await q.exec(
+                  'UPDATE product_barcodes SET barcode_type = ? WHERE id = ?',
+                  [preservedType, existingBc.id],
+                );
+                await q.exec(
+                  'UPDATE items SET barcode_type = ? WHERE id = ? AND tenant_id = ?',
+                  [preservedType, itemId, tenantId],
+                );
+              }
             }
           }
 
@@ -838,6 +844,8 @@ export function registerItemsBulk(r: Router) {
           results.push({ rowIndex: row._rowIndex, status: 'restocked', name: row.name, itemId });
           restocked++;
         } catch (err: any) {
+          await q.exec('ROLLBACK TO SAVEPOINT sp_bulk_restock');
+          console.error('RESTOCK TX ERROR:', err);
           results.push({
             rowIndex: row._rowIndex,
             status: 'skipped',

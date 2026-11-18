@@ -1201,6 +1201,44 @@ body {
   }
 }
 
+/* Wholesale Billing Container & Grid Spacing */
+.wholesale-billing-container {
+  padding: 1.25rem 1.75rem 3rem;
+  max-width: 1680px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.wholesale-billing-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(360px, 1fr);
+  column-gap: 2.25rem;
+  row-gap: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .wholesale-billing-container {
+    padding: 1rem 1rem 2.5rem;
+  }
+  .wholesale-billing-grid {
+    grid-template-columns: 1fr;
+    column-gap: 0;
+    row-gap: 1.25rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .wholesale-billing-container {
+    padding: 0.75rem 0.65rem 2rem;
+  }
+  .wholesale-billing-grid {
+    grid-template-columns: 1fr;
+    row-gap: 1rem;
+  }
+}
+
 @media (max-width: 640px) {
   .business-profile-grid {
     grid-template-columns: 1fr !important;
@@ -3921,191 +3959,8 @@ body {
 }
 
 /* ==========================================================================
-   1. LANDING PAGE (PURPLE & WHITE - OPTION 3)
+   HERO / DISPLAY BADGES & SHARED UTILITIES
    ========================================================================== */
-.landing-wrapper {
-  background-color: var(--bg-main);
-  background-image:
-    radial-gradient(ellipse 80% 45% at 50% -10%, rgba(109, 74, 255, 0.12), transparent 70%),
-    radial-gradient(circle at 12% 25%, rgba(167, 139, 250, 0.08), transparent 45%),
-    radial-gradient(circle at 88% 30%, rgba(109, 74, 255, 0.08), transparent 45%);
-  color: var(--text-main);
-  min-height: 100vh;
-  overflow-x: hidden;
-  position: relative;
-}
-
-.ambient-glow {
-  position: absolute;
-  border-radius: 50%;
-  pointer-events: none;
-  filter: blur(120px);
-  z-index: 0;
-  opacity: 0.6;
-}
-
-.glow-top {
-  width: 700px;
-  height: 350px;
-  background: radial-gradient(circle, rgba(109, 74, 255, 0.15) 0%, rgba(167, 139, 250, 0.08) 60%, transparent 100%);
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.glow-middle {
-  width: 500px;
-  height: 400px;
-  background: radial-gradient(circle, rgba(167, 139, 250, 0.1) 0%, transparent 70%);
-  top: 850px;
-  right: -50px;
-}
-
-.glow-bottom {
-  width: 600px;
-  height: 400px;
-  background: radial-gradient(circle, rgba(109, 74, 255, 0.08) 0%, transparent 70%);
-  bottom: 250px;
-  left: -50px;
-}
-
-/* Landing Navbar */
-.landing-navbar {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  background: #312e81;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 1rem 2.5rem;
-  box-shadow: 0 4px 20px rgba(49, 46, 129, 0.25);
-}
-
-.landing-nav-container {
-  max-width: 1320px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 2rem;
-}
-
-.landing-brand {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  text-decoration: none;
-  user-select: none;
-}
-
-.landing-brand-icon {
-  font-size: 1.5rem;
-  filter: drop-shadow(0 0 10px rgba(167, 139, 250, 0.6));
-}
-
-.landing-brand-name {
-  font-size: 1.35rem;
-  font-weight: 800;
-  letter-spacing: -0.025em;
-  color: #ffffff;
-}
-
-.landing-brand-badge {
-  background: rgba(167, 139, 250, 0.2);
-  color: #e0e7ff;
-  font-size: 0.68rem;
-  font-weight: 700;
-  padding: 0.2rem 0.55rem;
-  border-radius: 9999px;
-  border: 1px solid rgba(167, 139, 250, 0.35);
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-.landing-nav-links {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.nav-link-btn {
-  background: transparent;
-  border: none;
-  color: #e0e7ff;
-  font-size: 0.92rem;
-  font-weight: 600;
-  padding: 0.5rem 0.9rem;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.nav-link-btn:hover {
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.12);
-}
-
-.landing-auth-buttons {
-  display: flex;
-  align-items: center;
-  gap: 0.85rem;
-}
-
-.landing-btn-login {
-  background: transparent;
-  color: #ffffff;
-  border: 1.5px solid rgba(255, 255, 255, 0.4);
-  font-size: 0.9rem;
-  font-weight: 700;
-  padding: 0.55rem 1.35rem;
-  border-radius: 9999px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.landing-btn-login:hover {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: #ffffff;
-  transform: translateY(-1px);
-}
-
-.landing-btn-register {
-  background: #6d4aff;
-  color: #ffffff;
-  border: none;
-  font-size: 0.9rem;
-  font-weight: 700;
-  padding: 0.6rem 1.5rem;
-  border-radius: 9999px;
-  cursor: pointer;
-  box-shadow: 0 4px 14px rgba(109, 74, 255, 0.45);
-  transition: all 0.2s ease;
-}
-
-.landing-btn-register:hover {
-  background: #5b3ee0;
-  box-shadow: 0 6px 20px rgba(109, 74, 255, 0.6);
-  transform: translateY(-1px);
-}
-
-/* Landing Hero */
-.landing-hero-section {
-  position: relative;
-  z-index: 1;
-  padding: 4.5rem 2.5rem 4rem;
-  max-width: 1320px;
-  margin: 0 auto;
-}
-
-.landing-hero-container {
-  display: grid;
-  grid-template-columns: 1.15fr 0.95fr;
-  align-items: center;
-  gap: 3.5rem;
-}
-
-.hero-text-content {
-  max-width: 640px;
-}
 
 .hero-badge {
   display: inline-flex;
@@ -4588,14 +4443,7 @@ body {
   flex-shrink: 0;
 }
 
-/* Business Types Section */
-.landing-business-types-section {
-  padding: 5rem 2.5rem;
-  max-width: 1320px;
-  margin: 0 auto;
-  position: relative;
-  z-index: 1;
-}
+
 
 .section-header-top-row {
   display: flex;
@@ -4798,12 +4646,7 @@ body {
   transform: translateX(4px);
 }
 
-/* Pillars, Features, Pricing, FAQs, Footer */
-.landing-pillars-section {
-  padding: 5rem 2.5rem;
-  max-width: 1320px;
-  margin: 0 auto;
-}
+
 
 .pillars-container {
   display: grid;
@@ -4862,11 +4705,7 @@ body {
   line-height: 1.65;
 }
 
-.landing-features-showcase-section {
-  padding: 5rem 2.5rem;
-  max-width: 1320px;
-  margin: 0 auto;
-}
+
 
 .features-showcase-grid {
   display: grid;
@@ -4915,11 +4754,7 @@ body {
   line-height: 1.6;
 }
 
-.landing-pricing-section {
-  padding: 5rem 2.5rem;
-  max-width: 1320px;
-  margin: 0 auto;
-}
+
 
 .pricing-grid {
   display: grid;
@@ -5110,14 +4945,7 @@ body {
   margin: 0;
 }
 
-/* CTA Bottom Banner from Screenshot */
-.landing-cta-banner {
-  padding: 4rem 2rem;
-  max-width: 1360px;
-  margin: 0 auto;
-  box-sizing: border-box;
-  width: 100%;
-}
+
 
 .cta-banner-content-split {
   background: linear-gradient(135deg, #312e81 0%, #4338ca 50%, #6d4aff 100%);
@@ -5250,15 +5078,7 @@ body {
   white-space: nowrap;
 }
 
-/* Footer */
-.landing-footer {
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  background: #1e1b4b;
-  padding: 4.5rem 2.5rem 2.5rem;
-  position: relative;
-  z-index: 1;
-  color: #c7d2fe;
-}
+
 
 .footer-container {
   max-width: 1320px;
@@ -6812,13 +6632,7 @@ body {
   line-height: 1;
 }
 
-.landing-faq-section {
-  padding: 5rem 2.5rem;
-  max-width: 1320px;
-  margin: 0 auto;
-  position: relative;
-  z-index: 1;
-}
+
 
 .footer-brand-col {
   display: flex;
@@ -7458,10 +7272,7 @@ body {
 }
 
 @media (max-width: 1024px) {
-  .landing-hero-container {
-    grid-template-columns: 1fr;
-    text-align: center;
-  }
+
 
   .hero-subtext {
     margin-left: auto;
@@ -7534,9 +7345,7 @@ body {
 }
 
 @media (max-width: 640px) {
-  .landing-nav-links {
-    display: none;
-  }
+
 
   .hero-headline {
     font-size: 2.5rem;

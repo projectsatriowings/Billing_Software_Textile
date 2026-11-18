@@ -933,10 +933,127 @@ export type ProductClassification =
   | 'DUPLICATE_IN_FILE'
   | 'VALIDATION_ERROR';
 
+export interface PriceComparison {
+  hasPriceDiff: boolean;
+  sellingDiffers: boolean;
+  costDiffers: boolean;
+  missingPrice: boolean;
+  missingSelling: boolean;
+  missingCost: boolean;
+  existingSellingPrice: number;
+  existingCostPrice: number;
+  existingSellingPriceMinor: number;
+  existingCostPriceMinor: number;
+  incomingSellingPrice: number | null;
+  incomingCostPrice: number | null;
+  incomingSellingPriceMinor: number | null;
+  incomingCostPriceMinor: number | null;
+  recommendedAction: 'RESTOCK' | 'NEW_PRODUCT';
+  reason: string;
+}
+
+export interface ProductMatchOptions {
+  barcode?: string | null;
+  sku?: string | null;
+  sellingPrice?: unknown;
+  costPrice?: unknown;
+}
+
 export interface ProductMatchResult {
   classification: ProductClassification;
   matchedItem: MatchCandidate | null;
   candidates: MatchCandidate[];
+  priceComparison?: PriceComparison | null;
+  recommendedResolution?: 'LINK' | 'NEW';
+}
+
+/**
+ * Compares incoming product prices (selling price and cost price) against a matched existing catalog item.
+ * - Handles missing prices safely (does not treat missing as 0; flags missingPrice and recommends NEW_PRODUCT / manual review).
+ * - Compares both selling price and cost price.
+ * - If either price differs or is missing: recommends 'NEW_PRODUCT' with detailed reason.
+ * - If both prices match: recommends 'RESTOCK'.
+ */
+export function compareProductPrices(
+  incomingSelling: unknown,
+  incomingCost: unknown,
+  matchedItem: MatchCandidate | null
+): PriceComparison | null {
+  if (!matchedItem) return null;
+
+  const parsedSp = parseImportNumeric(incomingSelling);
+  const parsedCp = parseImportNumeric(incomingCost);
+
+  const missingSelling = parsedSp === null;
+  const missingCost = parsedCp === null;
+  const missingPrice = missingSelling || missingCost;
+
+  const existingSpMinor = typeof matchedItem.priceMinor === 'number' ? matchedItem.priceMinor : 0;
+  const existingCpMinor = typeof matchedItem.costMinor === 'number' ? matchedItem.costMinor : 0;
+  const existingSp = existingSpMinor / 100;
+  const existingCp = existingCpMinor / 100;
+
+  const incomingSpMinor = parsedSp !== null ? Math.round(parsedSp * 100) : null;
+  const incomingCpMinor = parsedCp !== null ? Math.round(parsedCp * 100) : null;
+
+  if (missingPrice) {
+    const missingParts: string[] = [];
+    if (missingSelling) missingParts.push('Selling Price');
+    if (missingCost) missingParts.push('Cost Price');
+    const reason = `Missing ${missingParts.join(' and ')} in imported row (Existing: SP ₹${existingSp.toFixed(2)}, CP ₹${existingCp.toFixed(2)}). Recommend creating as new product.`;
+    return {
+      hasPriceDiff: true,
+      sellingDiffers: missingSelling,
+      costDiffers: missingCost,
+      missingPrice: true,
+      missingSelling,
+      missingCost,
+      existingSellingPrice: existingSp,
+      existingCostPrice: existingCp,
+      existingSellingPriceMinor: existingSpMinor,
+      existingCostPriceMinor: existingCpMinor,
+      incomingSellingPrice: parsedSp,
+      incomingCostPrice: parsedCp,
+      incomingSellingPriceMinor: incomingSpMinor,
+      incomingCostPriceMinor: incomingCpMinor,
+      recommendedAction: 'NEW_PRODUCT',
+      reason,
+    };
+  }
+
+  const sellingDiffers = incomingSpMinor !== existingSpMinor;
+  const costDiffers = incomingCpMinor !== existingCpMinor;
+  const hasPriceDiff = sellingDiffers || costDiffers;
+
+  let reason = '';
+  if (sellingDiffers && costDiffers) {
+    reason = `Both selling and cost prices differ (Existing: SP ₹${existingSp.toFixed(2)} / CP ₹${existingCp.toFixed(2)}, Imported: SP ₹${parsedSp!.toFixed(2)} / CP ₹${parsedCp!.toFixed(2)})`;
+  } else if (sellingDiffers) {
+    reason = `Selling price differs (Existing: ₹${existingSp.toFixed(2)}, Imported: ₹${parsedSp!.toFixed(2)})`;
+  } else if (costDiffers) {
+    reason = `Cost price differs (Existing: ₹${existingCp.toFixed(2)}, Imported: ₹${parsedCp!.toFixed(2)})`;
+  } else {
+    reason = `Prices match existing product (SP: ₹${existingSp.toFixed(2)}, CP: ₹${existingCp.toFixed(2)})`;
+  }
+
+  return {
+    hasPriceDiff,
+    sellingDiffers,
+    costDiffers,
+    missingPrice: false,
+    missingSelling: false,
+    missingCost: false,
+    existingSellingPrice: existingSp,
+    existingCostPrice: existingCp,
+    existingSellingPriceMinor: existingSpMinor,
+    existingCostPriceMinor: existingCpMinor,
+    incomingSellingPrice: parsedSp,
+    incomingCostPrice: parsedCp,
+    incomingSellingPriceMinor: incomingSpMinor,
+    incomingCostPriceMinor: incomingCpMinor,
+    recommendedAction: hasPriceDiff ? 'NEW_PRODUCT' : 'RESTOCK',
+    reason,
+  };
 }
 
 /**
@@ -955,11 +1072,25 @@ export function matchProductToCatalog(
   incomingName: string,
   incomingUnit: string,
   catalog: MatchCandidate[],
-  options?: { barcode?: string | null; sku?: string | null }
+  options?: ProductMatchOptions
 ): ProductMatchResult {
   if (!incomingName || !incomingName.trim()) {
     return { classification: 'NEW_PRODUCT', matchedItem: null, candidates: [] };
   }
+
+  const makeSingleMatchResult = (cand: MatchCandidate): ProductMatchResult => {
+    const priceComparison =
+      options?.sellingPrice !== undefined || options?.costPrice !== undefined
+        ? compareProductPrices(options?.sellingPrice, options?.costPrice, cand)
+        : null;
+    return {
+      classification: 'RESTOCK',
+      matchedItem: cand,
+      candidates: [cand],
+      priceComparison,
+      recommendedResolution: priceComparison?.recommendedAction === 'NEW_PRODUCT' ? 'NEW' : 'LINK',
+    };
+  };
 
   const inBarcode = options?.barcode?.trim();
   const inSku = options?.sku?.trim();
@@ -977,7 +1108,7 @@ export function matchProductToCatalog(
         packSize: extractPackSize(bcMatches[0].name)?.raw || bcMatches[0].unit,
         matchReason: `Exact barcode match (${inBarcode}) with catalog item "${bcMatches[0].name}"`,
       };
-      return { classification: 'RESTOCK', matchedItem: cand, candidates: [cand] };
+      return makeSingleMatchResult(cand);
     }
     if (bcMatches.length > 1) {
       const cands = bcMatches.map((item) => ({
@@ -998,7 +1129,7 @@ export function matchProductToCatalog(
         packSize: extractPackSize(skuMatches[0].name)?.raw || skuMatches[0].unit,
         matchReason: `Exact SKU match (${inSku}) with catalog item "${skuMatches[0].name}"`,
       };
-      return { classification: 'RESTOCK', matchedItem: cand, candidates: [cand] };
+      return makeSingleMatchResult(cand);
     }
     if (skuMatches.length > 1) {
       const cands = skuMatches.map((item) => ({
@@ -1025,7 +1156,7 @@ export function matchProductToCatalog(
       packSize: extractPackSize(exactUnitMatches[0].name)?.raw || exactUnitMatches[0].unit,
       matchReason: 'Exact product name and UOM match',
     };
-    return { classification: 'RESTOCK', matchedItem: cand, candidates: [cand] };
+    return makeSingleMatchResult(cand);
   }
   if (exactUnitMatches.length > 1) {
     const cands = exactUnitMatches.map((item) => ({
@@ -1046,7 +1177,7 @@ export function matchProductToCatalog(
       packSize: extractPackSize(exactNameMatches[0].name)?.raw || exactNameMatches[0].unit,
       matchReason: `Exact product name match with catalog item (UOM: ${exactNameMatches[0].unit} vs ${incomingUnit})`,
     };
-    return { classification: 'RESTOCK', matchedItem: cand, candidates: [cand] };
+    return makeSingleMatchResult(cand);
   }
   if (exactNameMatches.length > 1) {
     const cands = exactNameMatches.map((item) => ({

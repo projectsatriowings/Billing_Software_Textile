@@ -1427,3 +1427,27 @@ export interface RefundTransaction {
   createdAt: string;
 }
 
+export interface WholesaleCustomer {
+  id: string;
+  tenantId: string;
+  branchId?: string | null;
+  name: string;
+  companyName?: string | null;
+  contactPerson?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  gstin?: string | null;
+  stateCode?: string | null;
+  billingAddress?: string | null;
+  shippingAddress?: string | null;
+  address?: string | null;
+  registrationType: 'registered' | 'unregistered';
+  creditLimitMinor: number;
+  active: boolean;
+  unpaidInvoicesMinor?: number;
+  duesMinor?: number;
+  custom?: Record<string, any>;
+  createdAt?: string;
+  updatedAt?: string;
+}
+

@@ -6,7 +6,7 @@ interface LoginPageProps {
   initialRole?: 'super_admin' | 'store_manager' | 'cashier';
   onSuccess: (data: { token: string; user: User; shop: Shop }) => void;
   onNavigateRegister: () => void;
-  onBackToHome: () => void;
+  onBackToHome?: () => void;
   onRequirePasswordChange?: (params: {
     changeToken: string;
     tempPassword?: string;
@@ -154,7 +154,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       {/* Left Branding Pane - Matching Screen 7 */}
       <div className="login-left-pane">
         <div className="login-left-content">
-          <div className="login-brand" onClick={onBackToHome} style={{ cursor: 'pointer' }}>
+          <div className="login-brand" onClick={onBackToHome} style={{ cursor: onBackToHome ? 'pointer' : 'default' }}>
             <span className="brand-icon">⚡</span>
             <span className="brand-name">Adaptive Billing</span>
           </div>
@@ -234,11 +234,13 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
       {/* Right Form Pane */}
       <div className="login-right-pane">
-        <div className="login-top-nav">
-          <button type="button" onClick={onBackToHome} className="nav-back-home-btn">
-            ← Back to Home
-          </button>
-        </div>
+        {onBackToHome && (
+          <div className="login-top-nav">
+            <button type="button" onClick={onBackToHome} className="nav-back-home-btn">
+              ← Back to Home
+            </button>
+          </div>
+        )}
 
         <div className="login-form-container">
           <div className="login-card">

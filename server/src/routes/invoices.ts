@@ -301,7 +301,28 @@ export function registerInvoices(r: Router) {
     const promotionDiscountMinor = V.int(b.promotionDiscountMinor ?? 0, 'Promotion discount', { min: 0 });
 
     let partyRow: any = null;
-    if (partyId) {
+    let wholesaleCustomerId = V.optStr(
+      b.wholesaleCustomerId ?? b.wholesale_customer_id ?? (isWholesale ? (b.partyId ?? b.party_id ?? b.customerId ?? b.customer_id) : null),
+      'Wholesale customer',
+      50
+    );
+    let wholesaleCustomerRow: any = null;
+
+    if (isWholesale && wholesaleCustomerId) {
+      wholesaleCustomerRow = await ctx.db.one<any>(
+        'SELECT id, name, company_name, contact_person, phone, email, gstin, state_code, billing_address, shipping_address, credit_limit_minor, custom FROM wholesale_customers WHERE id = ? AND tenant_id = ?',
+        [wholesaleCustomerId, tenantId]
+      );
+      if (wholesaleCustomerRow) {
+        if (!customerName) customerName = wholesaleCustomerRow.name || wholesaleCustomerRow.companyName || wholesaleCustomerRow.company_name;
+        if (!customerPhone) customerPhone = wholesaleCustomerRow.phone;
+        if (!customerGstin) customerGstin = wholesaleCustomerRow.gstin;
+        if (!customerAddress) customerAddress = wholesaleCustomerRow.billingAddress || wholesaleCustomerRow.billing_address || wholesaleCustomerRow.address;
+        if (!customerShippingAddress) customerShippingAddress = wholesaleCustomerRow.shippingAddress || wholesaleCustomerRow.shipping_address || customerAddress;
+        if (!customerContactPerson) customerContactPerson = wholesaleCustomerRow.contactPerson || wholesaleCustomerRow.contact_person;
+        if (!customerStateCode) customerStateCode = wholesaleCustomerRow.stateCode || wholesaleCustomerRow.state_code || (wholesaleCustomerRow.gstin ? wholesaleCustomerRow.gstin.slice(0, 2) : null);
+      }
+    } else if (partyId) {
       partyRow = await ctx.db.one<any>(
         'SELECT id, name, phone, email, gstin, state_code, address, custom FROM parties WHERE id = ? AND tenant_id = ?',
         [partyId, tenantId]
@@ -589,7 +610,32 @@ export function registerInvoices(r: Router) {
       const balanceMinor = Math.max(0, calculated.totalMinor - totalPaidMinor);
 
       // Validate customer credit limit if there is an unpaid balance
-      if (partyId && balanceMinor > 0) {
+      if (isWholesale && (wholesaleCustomerId || wholesaleCustomerRow?.id) && balanceMinor > 0) {
+        const targetWcId = wholesaleCustomerRow?.id || wholesaleCustomerId;
+        const wcRow = await q.one<any>(
+          `SELECT w.id, w.name, w.credit_limit_minor,
+                  COALESCE((SELECT SUM(i.balance_minor) FROM invoices i WHERE (i.wholesale_customer_id = w.id OR i.party_id = w.id) AND i.tenant_id = w.tenant_id AND i.status = 'posted'), 0)::bigint AS unpaid_minor
+           FROM wholesale_customers w
+           WHERE w.id = ? AND w.tenant_id = ? FOR UPDATE`,
+          [targetWcId, tenantId],
+        );
+        if (wcRow) {
+          const credLimit = Number(wcRow.creditLimitMinor ?? wcRow.credit_limit_minor ?? 0);
+          if (credLimit > 0) {
+            const unpaid = Number(wcRow.unpaidMinor ?? wcRow.unpaid_minor ?? 0);
+            const currentDues = unpaid;
+            const futureDues = currentDues + balanceMinor;
+            if (futureDues > credLimit) {
+              const availCredit = Math.max(0, credLimit - currentDues);
+              throw bad(
+                `Wholesale customer credit limit of ₹${(credLimit / 100).toFixed(2)} exceeded for "${wcRow.name}". Outstanding dues: ₹${(currentDues / 100).toFixed(2)}, available credit: ₹${(availCredit / 100).toFixed(2)}.`,
+                'CREDIT_LIMIT_EXCEEDED',
+                { creditLimitMinor: credLimit, currentDuesMinor: currentDues, availableCreditMinor: availCredit }
+              );
+            }
+          }
+        }
+      } else if (!isWholesale && partyId && balanceMinor > 0) {
         const partyRow = await q.one<any>(
           `SELECT p.id, p.name, p.credit_limit_minor,
                   COALESCE((SELECT SUM(i.balance_minor) FROM invoices i WHERE i.party_id = p.id AND i.tenant_id = p.tenant_id AND i.status = 'posted'), 0)::bigint AS unpaid_minor,
@@ -645,7 +691,7 @@ export function registerInvoices(r: Router) {
 
       await q.exec(
         `INSERT INTO invoices (
-          id, tenant_id, branch_id, client_id, number, kind, status, bdate, party_id,
+          id, tenant_id, branch_id, client_id, number, kind, status, bdate, party_id, wholesale_customer_id,
           customer_name, customer_phone, customer_gstin, party_name, party_phone, place_state, intra,
           subtotal_minor, discount_minor, taxable_minor, cgst_minor, sgst_minor, igst_minor,
           round_off_minor, rounding_minor, total_minor,
@@ -653,7 +699,7 @@ export function registerInvoices(r: Router) {
           applied_promotions, promotion_discount_minor,
           invoice_type, profile_snapshot
         ) VALUES (
-          ?, ?, ?, ?, ?, 'sale', 'posted', ?, ?,
+          ?, ?, ?, ?, ?, 'sale', 'posted', ?, ?, ?,
           ?, ?, ?, ?, ?, ?, ?,
           ?, ?, ?, ?, ?, ?,
           ?, ?, ?,
@@ -668,7 +714,8 @@ export function registerInvoices(r: Router) {
           newId('cid'),
           assignedNumber,
           todayStr,
-          partyId || null,
+          isWholesale ? null : (partyId || null),
+          isWholesale ? (wholesaleCustomerRow?.id || wholesaleCustomerId || null) : null,
           customerName || null,
           customerPhone || null,
           customerGstin || null,
@@ -814,9 +861,9 @@ export function registerInvoices(r: Router) {
         }
 
         await q.exec(
-          `INSERT INTO payments (id, tenant_id, branch_id, kind, method, mode, amount_minor, invoice_id, party_id, reference, shift_id, bdate, created_by, location, counter, counter_id, counter_name_snapshot)
-           VALUES (?, ?, ?, 'receipt', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [newId('pay'), tenantId, invoiceBranchId, method, method, amt, invoiceId, partyId || null, p.reference || null, activeShift?.id || null, todayStr, ctx.user!.id, location, resolvedCounterCode, resolvedCounterId, resolvedCounterName],
+          `INSERT INTO payments (id, tenant_id, branch_id, kind, method, mode, amount_minor, invoice_id, party_id, wholesale_customer_id, reference, shift_id, bdate, created_by, location, counter, counter_id, counter_name_snapshot)
+           VALUES (?, ?, ?, 'receipt', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [newId('pay'), tenantId, invoiceBranchId, method, method, amt, invoiceId, isWholesale ? null : (partyId || null), isWholesale ? (wholesaleCustomerRow?.id || wholesaleCustomerId || null) : null, p.reference || null, activeShift?.id || null, todayStr, ctx.user!.id, location, resolvedCounterCode, resolvedCounterId, resolvedCounterName],
         );
 
         if (activeShift?.id && resolvedCounterId && (activeShift.counterId !== resolvedCounterId || activeShift.counter_id !== resolvedCounterId)) {
@@ -1019,18 +1066,26 @@ export function registerInvoices(r: Router) {
         customFields.push({ label: '⭐ Loyalty Balance', value: `${pts} pts` });
       }
     }
+    const wcId = inv.wholesaleCustomerId ?? inv.wholesale_customer_id;
+    let wholesaleCustomerRow: any = null;
+    if (wcId) {
+      wholesaleCustomerRow = await db.one(
+        'SELECT name, company_name, phone, email, gstin, state_code, billing_address, shipping_address, contact_person, custom FROM wholesale_customers WHERE id = ?',
+        [wcId]
+      );
+    }
     const invCounter = inv.counter || customObj?.counter;
     if (invCounter) {
       customFields.push({ label: 'Counter', value: String(invCounter) });
     }
 
     const partyCustom = (partyRow?.custom && typeof partyRow.custom === 'object') ? partyRow.custom : {};
-    const finalCustName = (custName || partyRow?.name || customObj?.customerName || '').trim();
-    const finalCustPhone = (custPhone || partyRow?.phone || customObj?.customerPhone || '').trim();
-    const finalCustGstin = (inv.customerGstin || inv.customer_gstin || partyRow?.gstin || customObj?.customerGstin || '').trim().toUpperCase();
-    const finalCustAddress = (customObj?.billingAddress || partyRow?.address || '').trim();
-    const finalCustShipping = (customObj?.shippingAddress || customObj?.billingAddress || partyRow?.address || '').trim();
-    const finalContactPerson = (customObj?.contactPerson || partyCustom?.contactPerson || '').trim();
+    const finalCustName = (wholesaleCustomerRow?.name || wholesaleCustomerRow?.company_name || custName || partyRow?.name || customObj?.customerName || '').trim();
+    const finalCustPhone = (wholesaleCustomerRow?.phone || custPhone || partyRow?.phone || customObj?.customerPhone || '').trim();
+    const finalCustGstin = (wholesaleCustomerRow?.gstin || inv.customerGstin || inv.customer_gstin || partyRow?.gstin || customObj?.customerGstin || '').trim().toUpperCase();
+    const finalCustAddress = (wholesaleCustomerRow?.billing_address || customObj?.billingAddress || partyRow?.address || '').trim();
+    const finalCustShipping = (wholesaleCustomerRow?.shipping_address || customObj?.shippingAddress || finalCustAddress).trim();
+    const finalContactPerson = (wholesaleCustomerRow?.contact_person || customObj?.contactPerson || partyCustom?.contactPerson || '').trim();
     const finalStateCode = (customObj?.customerStateCode || partyRow?.state_code || partyRow?.stateCode || (finalCustGstin ? finalCustGstin.slice(0, 2) : '') || inv.place_state || inv.placeState || '').trim();
     const finalStateName = (customObj?.customerState || (finalStateCode ? stateName(finalStateCode) : '') || '').trim();
 
@@ -1275,13 +1330,21 @@ export function registerInvoices(r: Router) {
         [pId]
       );
     }
+    const wcId = inv.wholesaleCustomerId ?? inv.wholesale_customer_id;
+    let wholesaleCustomerRow: any = null;
+    if (wcId) {
+      wholesaleCustomerRow = await ctx.db.one(
+        'SELECT name, company_name, phone, email, gstin, state_code, billing_address, shipping_address, contact_person, custom FROM wholesale_customers WHERE id = ?',
+        [wcId]
+      );
+    }
     const partyCustom = (partyRow?.custom && typeof partyRow.custom === 'object') ? partyRow.custom : {};
-    const finalCustName = (custName || partyRow?.name || customObj?.customerName || '').trim();
-    const finalCustPhone = (custPhone || partyRow?.phone || customObj?.customerPhone || '').trim();
-    const finalCustGstin = (inv.customerGstin || inv.customer_gstin || partyRow?.gstin || customObj?.customerGstin || '').trim().toUpperCase();
-    const finalCustAddress = (customObj?.billingAddress || partyRow?.address || '').trim();
-    const finalCustShipping = (customObj?.shippingAddress || customObj?.billingAddress || partyRow?.address || '').trim();
-    const finalContactPerson = (customObj?.contactPerson || partyCustom?.contactPerson || '').trim();
+    const finalCustName = (wholesaleCustomerRow?.name || wholesaleCustomerRow?.company_name || custName || partyRow?.name || customObj?.customerName || '').trim();
+    const finalCustPhone = (wholesaleCustomerRow?.phone || custPhone || partyRow?.phone || customObj?.customerPhone || '').trim();
+    const finalCustGstin = (wholesaleCustomerRow?.gstin || inv.customerGstin || inv.customer_gstin || partyRow?.gstin || customObj?.customerGstin || '').trim().toUpperCase();
+    const finalCustAddress = (wholesaleCustomerRow?.billing_address || customObj?.billingAddress || partyRow?.address || '').trim();
+    const finalCustShipping = (wholesaleCustomerRow?.shipping_address || customObj?.shippingAddress || finalCustAddress).trim();
+    const finalContactPerson = (wholesaleCustomerRow?.contact_person || customObj?.contactPerson || partyCustom?.contactPerson || '').trim();
     const finalStateCode = (customObj?.customerStateCode || partyRow?.state_code || partyRow?.stateCode || (finalCustGstin ? finalCustGstin.slice(0, 2) : '') || inv.place_state || inv.placeState || '').trim();
     const finalStateName = (customObj?.customerState || (finalStateCode ? stateName(finalStateCode) : '') || '').trim();
 
