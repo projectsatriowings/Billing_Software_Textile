@@ -133,20 +133,54 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </nav>
 
           <div className="landing-auth-buttons">
-            <button
-              type="button"
-              onClick={onNavigateLogin}
-              className="landing-btn-login"
-            >
-              Login
-            </button>
-            <button
-              type="button"
-              onClick={() => onNavigateRegister('grocery')}
-              className="landing-btn-register"
-            >
-              Register Your Store
-            </button>
+            {user ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <button
+                  type="button"
+                  onClick={onNavigateDashboard}
+                  className="landing-btn-register"
+                  style={{
+                    background: 'linear-gradient(135deg, #0F766E 0%, #14B8A6 100%)',
+                    boxShadow: '0 4px 14px rgba(15, 118, 110, 0.25)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontWeight: 700,
+                  }}
+                >
+                  <span>{user.role === 'cashier' ? 'Launch POS Terminal' : 'Go to Dashboard'}</span>
+                  <span>→</span>
+                </button>
+                {onLogout && (
+                  <button
+                    type="button"
+                    onClick={onLogout}
+                    className="landing-btn-login"
+                    style={{ fontSize: '0.85rem' }}
+                    title="Sign out of current account"
+                  >
+                    Logout
+                  </button>
+                )}
+              </div>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={onNavigateLogin}
+                  className="landing-btn-login"
+                >
+                  Login
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onNavigateRegister('grocery')}
+                  className="landing-btn-register"
+                >
+                  Register Your Store
+                </button>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -170,25 +204,53 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </p>
 
             <div className="hero-cta-group">
-              <button
-                type="button"
-                onClick={() => onNavigateRegister('grocery')}
-                className="hero-btn-primary"
-              >
-                <span>Register Your Store</span>
-                <span className="btn-arrow">→</span>
-              </button>
-              <button
-                type="button"
-                onClick={onNavigateLogin}
-                className="hero-btn-secondary"
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}>
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                </svg>
-                <span>Login to Account</span>
-              </button>
+              {user ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={onNavigateDashboard}
+                    className="hero-btn-primary"
+                    style={{
+                      background: 'linear-gradient(135deg, #0F766E 0%, #14B8A6 100%)',
+                      boxShadow: '0 4px 14px rgba(15, 118, 110, 0.35)',
+                    }}
+                  >
+                    <span>{user.role === 'cashier' ? 'Launch POS Terminal' : 'Go to Dashboard'} ({user.name ? user.name.split(' ')[0] : 'Active Session'})</span>
+                    <span className="btn-arrow">→</span>
+                  </button>
+                  {onLogout && (
+                    <button
+                      type="button"
+                      onClick={onLogout}
+                      className="hero-btn-secondary"
+                    >
+                      <span>Sign Out</span>
+                    </button>
+                  )}
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => onNavigateRegister('grocery')}
+                    className="hero-btn-primary"
+                  >
+                    <span>Register Your Store</span>
+                    <span className="btn-arrow">→</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onNavigateLogin}
+                    className="hero-btn-secondary"
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}>
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                    </svg>
+                    <span>Login to Account</span>
+                  </button>
+                </>
+              )}
             </div>
 
             <div className="hero-trust-row">
@@ -788,7 +850,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <li><button type="button" onClick={() => scrollToSection('features')}>Core POS Features</button></li>
               <li><button type="button" onClick={() => scrollToSection('pricing')}>Pricing Plans</button></li>
               <li><button type="button" onClick={() => scrollToSection('faq')}>Help & FAQ</button></li>
-              <li><button type="button" onClick={onNavigateLogin}>Merchant Sign In</button></li>
+              {user ? (
+                <li><button type="button" onClick={onNavigateDashboard}>{user.role === 'cashier' ? 'Launch POS Terminal' : 'Go to Dashboard'}</button></li>
+              ) : (
+                <li><button type="button" onClick={onNavigateLogin}>Merchant Sign In</button></li>
+              )}
               <li><button type="button" onClick={() => onNavigateRegister('grocery')}>Start Free Trial</button></li>
             </ul>
           </div>

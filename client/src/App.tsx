@@ -755,9 +755,19 @@ export function App() {
   const navigateTo = (newView: 'landing' | 'login' | 'register' | 'selector' | 'dashboard' | 'change-password' | 'reset-password') => {
     setView(newView);
     if (newView === 'dashboard') {
+      try { sessionStorage.setItem('app_entered', 'true'); } catch { }
       setActiveTab('dashboard');
+      window.location.hash = 'dashboard';
+    } else if (newView === 'landing') {
+      try { sessionStorage.removeItem('app_entered'); } catch { }
+      try {
+        if (window.location.hash) {
+          window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        }
+      } catch { }
+    } else {
+      window.location.hash = newView;
     }
-    window.location.hash = newView;
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -1950,20 +1960,29 @@ export function App() {
     const handleLocationChange = () => {
       const hash = window.location.hash.replace('#', '');
       const path = window.location.pathname;
-      if (path === '/user-management') {
+      if (!hash || hash === 'landing') {
+        try { sessionStorage.removeItem('app_entered'); } catch { }
+        setView('landing');
+      } else if (path === '/user-management') {
+        try { sessionStorage.setItem('app_entered', 'true'); } catch { }
         setView('dashboard');
         setActiveTab('user-management');
       } else if (['landing', 'login', 'register', 'selector', 'dashboard'].includes(hash) || hash === 'cashier-login' || hash.startsWith('login')) {
         if (hash === 'cashier-login') {
           setView('login');
+        } else if (hash === 'dashboard') {
+          try { sessionStorage.setItem('app_entered', 'true'); } catch { }
+          setView('dashboard');
         } else {
           setView(hash.split('?')[0] as any);
         }
       } else if (hash === 'stock-transfer' || path === '/stock-transfer') {
+        try { sessionStorage.setItem('app_entered', 'true'); } catch { }
         setView('dashboard');
         setActiveTab('stock-transfer');
         setShowInventoryDropdown(true);
       } else if (hash === 'product-analysis' || hash === 'product-movement' || path === '/product-analysis' || path === '/product-movement') {
+        try { sessionStorage.setItem('app_entered', 'true'); } catch { }
         setView('dashboard');
         setActiveTab('product-movement');
         setShowInventoryDropdown(true);
@@ -2022,7 +2041,16 @@ export function App() {
           window.location.pathname === '/product-analysis' ||
           window.location.pathname === '/product-movement';
 
-        if (isUserManagementRoute) {
+        // Check if user has explicitly entered the dashboard in this browser session
+        const hasEnteredAppSession = (() => {
+          try {
+            return sessionStorage.getItem('app_entered') === 'true';
+          } catch {
+            return false;
+          }
+        })();
+
+        if (isUserManagementRoute && hasEnteredAppSession) {
           const rUpper = String(res.user?.role || '').toUpperCase();
           if (rUpper === 'OWNER' || rUpper === 'SUPER_ADMIN' || rUpper === 'MANAGER' || rUpper === 'STORE_MANAGER') {
             setView('dashboard');
@@ -2033,24 +2061,31 @@ export function App() {
             try { window.history.replaceState({}, '', '/'); } catch { }
             showToast("You don't have access to User Management");
           }
-        } else if (isStockTransferRoute) {
+        } else if (isStockTransferRoute && hasEnteredAppSession) {
           setView('dashboard');
           setActiveTab('stock-transfer');
           setShowInventoryDropdown(true);
-        } else if (isProductAnalysisRoute) {
+        } else if (isProductAnalysisRoute && hasEnteredAppSession) {
           setView('dashboard');
           setActiveTab('product-movement');
           setShowInventoryDropdown(true);
-        } else if (currentHash === 'dashboard' || window.location.pathname === '/' || !currentHash) {
-          setView('dashboard');
-        } else if (currentHash === 'selector') {
+        } else if (currentHash === 'selector' && hasEnteredAppSession) {
           setView('selector');
         } else if (currentHash === 'register') {
           setView('register');
         } else if (currentHash === 'login' || currentHash === 'cashier-login' || currentHash.startsWith('login')) {
           setView('login');
-        } else {
+        } else if (currentHash === 'dashboard' && hasEnteredAppSession) {
           setView('dashboard');
+        } else {
+          // Default: ALWAYS open from the Landing Page when opening the website!
+          setView('landing');
+          // If hash had #dashboard from an old browser history/autocomplete, clean it from the URL
+          if (currentHash === 'dashboard' || currentHash.startsWith('dashboard')) {
+            try {
+              window.history.replaceState(null, '', window.location.pathname + window.location.search);
+            } catch { }
+          }
         }
       } catch {
         clearToken();

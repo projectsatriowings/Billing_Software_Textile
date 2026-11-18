@@ -36,6 +36,7 @@ class RootErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState
   };
 
   handleGoDashboard = () => {
+    try { sessionStorage.setItem('app_entered', 'true'); } catch { }
     window.location.hash = '#dashboard';
     window.location.reload();
   };
