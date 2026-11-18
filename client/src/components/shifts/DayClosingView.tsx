@@ -17,6 +17,7 @@ import {
   sendDayClosingReminder,
   fetchDayClosingNotifications,
   markDayClosingNotificationRead,
+  markAllDayClosingNotificationsRead,
   withAuthToken,
   type User,
   type Shop,
@@ -63,6 +64,7 @@ import {
   ArrowLeftIcon,
   ArrowRightIcon,
   LayersIcon,
+  BellRingIcon,
 } from '../inventory/InventoryIcons.tsx';
 import './dayClosing.css';
 
@@ -227,6 +229,8 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
   // In-app Notifications & Alerts
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadNotifCount, setUnreadNotifCount] = useState<number>(0);
+  const [showNotifDrawer, setShowNotifDrawer] = useState<boolean>(false);
+  const [notifFilterTab, setNotifFilterTab] = useState<'all' | 'open' | 'close'>('all');
 
   // Tab 2: Comparison state
   const [comparisonData, setComparisonData] = useState<any | null>(null);
@@ -407,6 +411,30 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
     } catch {
       // ignore
     }
+  };
+
+  const handleMarkAllNotificationsRead = async () => {
+    try {
+      await markAllDayClosingNotificationsRead();
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: true, is_read: true })));
+      setUnreadNotifCount(0);
+    } catch {
+      // ignore
+    }
+  };
+
+  const formatTimeAgo = (dateStr?: string) => {
+    if (!dateStr) return 'Just now';
+    const time = new Date(dateStr).getTime();
+    if (isNaN(time)) return 'Just now';
+    const diff = Math.max(0, Date.now() - time);
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    return `${days}d ago`;
   };
 
   const loadCounterSales = async () => {
@@ -1243,6 +1271,46 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
             </button>
           )}
 
+          <button
+            type="button"
+            onClick={() => setShowNotifDrawer(true)}
+            className="btn-link"
+            style={{
+              fontSize: '0.8rem',
+              color: unreadNotifCount > 0 ? '#b91c1c' : '#4f46e5',
+              fontWeight: 700,
+              background: unreadNotifCount > 0 ? '#fef2f2' : '#eef2ff',
+              border: `1px solid ${unreadNotifCount > 0 ? '#fca5a5' : '#c7d2fe'}`,
+              padding: '6px 14px',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.15s ease',
+            }}
+            title="View Cashier Shift & Register Notifications Separately"
+          >
+            <BellRingIcon size={14} />
+            <span>Shift Notifications</span>
+            {notifications.length > 0 && (
+              <span
+                style={{
+                  background: unreadNotifCount > 0 ? '#ef4444' : '#6366f1',
+                  color: '#ffffff',
+                  fontSize: '0.7rem',
+                  fontWeight: 800,
+                  padding: '2px 7px',
+                  borderRadius: '10px',
+                  lineHeight: 1,
+                  marginLeft: '2px',
+                }}
+              >
+                {unreadNotifCount > 0 ? `${unreadNotifCount} new` : notifications.length}
+              </span>
+            )}
+          </button>
+
           <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>
             Tenant: <strong style={{ color: '#0f172a' }}>{shop?.name || 'Main Organization'}</strong>
           </div>
@@ -1277,34 +1345,36 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
         </div>
       )}
 
-      {/* In-app Notifications Banner */}
-      {notifications && notifications.length > 0 && notifications.map((n: any) => (
-        <div key={n.id} style={{
-          background: n.type === 'rejection' ? '#fffbeb' : (n.type === 'approval' ? '#f0fdf4' : '#eff6ff'),
-          border: `1px solid ${n.type === 'rejection' ? '#fde68a' : (n.type === 'approval' ? '#bbf7d0' : '#bfdbfe')}`,
-          borderRadius: '8px',
-          padding: '10px 14px',
-          marginBottom: '12px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          color: n.type === 'rejection' ? '#92400e' : (n.type === 'approval' ? '#166534' : '#1e40af'),
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {n.type === 'rejection' ? <AlertTriangleIcon size={16} /> : (n.type === 'approval' ? <CheckCircleIcon size={16} /> : <InfoIcon size={16} />)}
-            <div>
-              <strong>{n.title}:</strong> {n.message}
+      {/* High-priority Recount Requested Alert only (Actionable Day Closing) */}
+      {notifications
+        .filter((n: any) => n.type === 'rejection' && (!n.isRead && !n.is_read))
+        .map((n: any) => (
+          <div key={n.id} style={{
+            background: '#fffbeb',
+            border: '1px solid #fde68a',
+            borderRadius: '8px',
+            padding: '10px 14px',
+            marginBottom: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            color: '#92400e',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <AlertTriangleIcon size={16} />
+              <div>
+                <strong>{n.title}:</strong> {n.message}
+              </div>
             </div>
+            <button
+              onClick={() => handleDismissNotification(n.id)}
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '0.8rem', color: 'inherit' }}
+              title="Dismiss alert"
+            >
+              ✕
+            </button>
           </div>
-          <button
-            onClick={() => handleDismissNotification(n.id)}
-            style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '0.8rem', color: 'inherit' }}
-            title="Dismiss notification"
-          >
-            ✕
-          </button>
-        </div>
-      ))}
+        ))}
 
       {/* Alerts */}
       {error && (
@@ -3607,6 +3677,291 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Slide-over Separate Shift Notifications Drawer */}
+      {showNotifDrawer && (
+        <div className="day-closing-drawer-backdrop" onClick={() => setShowNotifDrawer(false)}>
+          <div className="day-closing-drawer-panel" onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div className="day-closing-drawer-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '10px',
+                  background: '#EEF2FF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#4F46E5',
+                }}>
+                  <BellRingIcon size={18} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 700, color: '#0F172A' }}>
+                    Shift & Register Notifications
+                  </h3>
+                  <span style={{ fontSize: '0.72rem', color: '#64748B' }}>
+                    Live drawer float checks and shift closing summaries
+                  </span>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {unreadNotifCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleMarkAllNotificationsRead}
+                    style={{
+                      background: '#F1F5F9',
+                      border: '1px solid #CBD5E1',
+                      color: '#334155',
+                      fontSize: '0.72rem',
+                      fontWeight: 600,
+                      padding: '4px 8px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Mark all read
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setShowNotifDrawer(false)}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    fontSize: '1.2rem',
+                    color: '#64748B',
+                    cursor: 'pointer',
+                    padding: '4px 8px',
+                    borderRadius: '6px',
+                  }}
+                  title="Close panel"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* Filter Tabs */}
+            <div className="day-closing-drawer-tabs">
+              <button
+                type="button"
+                className={`day-closing-drawer-tab ${notifFilterTab === 'all' ? 'active' : ''}`}
+                onClick={() => setNotifFilterTab('all')}
+              >
+                All ({notifications.length})
+              </button>
+              <button
+                type="button"
+                className={`day-closing-drawer-tab ${notifFilterTab === 'open' ? 'active' : ''}`}
+                onClick={() => setNotifFilterTab('open')}
+              >
+                Shift Open ({notifications.filter((n: any) => n.type === 'shift_open').length})
+              </button>
+              <button
+                type="button"
+                className={`day-closing-drawer-tab ${notifFilterTab === 'close' ? 'active' : ''}`}
+                onClick={() => setNotifFilterTab('close')}
+              >
+                Shift Close ({notifications.filter((n: any) => n.type === 'shift_close').length})
+              </button>
+            </div>
+
+            {/* Notifications Body */}
+            <div className="day-closing-drawer-body">
+              {(() => {
+                const filtered = notifications.filter((n: any) => {
+                  if (notifFilterTab === 'open') return n.type === 'shift_open';
+                  if (notifFilterTab === 'close') return n.type === 'shift_close';
+                  return true;
+                });
+
+                if (filtered.length === 0) {
+                  return (
+                    <div style={{
+                      padding: '40px 20px',
+                      textAlign: 'center',
+                      color: '#64748B',
+                      background: '#F8FAFC',
+                      borderRadius: '12px',
+                      border: '1px dashed #CBD5E1',
+                    }}>
+                      <div style={{ marginBottom: '8px', color: '#94A3B8', display: 'flex', justifyContent: 'center' }}>
+                        <BellRingIcon size={32} />
+                      </div>
+                      <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#1E293B', marginBottom: '4px' }}>
+                        No Notifications
+                      </div>
+                      <div style={{ fontSize: '0.78rem' }}>
+                        No shift activity matches this filter.
+                      </div>
+                    </div>
+                  );
+                }
+
+                return filtered.map((n: any) => {
+                  const isShiftOpen = n.type === 'shift_open';
+                  const isShiftClose = n.type === 'shift_close';
+                  let meta = n.metadata;
+                  if (typeof meta === 'string') {
+                    try { meta = JSON.parse(meta); } catch {}
+                  }
+                  meta = meta || {};
+
+                  const isUnread = !n.isRead && !n.is_read;
+                  const createdAt = n.createdAt || n.created_at;
+                  const branchName = n.branchName || n.branch_name || meta.branchName || '';
+
+                  return (
+                    <div
+                      key={n.id}
+                      style={{
+                        background: '#FFFFFF',
+                        border: '1px solid #E2E8F0',
+                        borderLeft: `4px solid ${isShiftOpen ? '#16A34A' : isShiftClose ? '#6366F1' : '#F59E0B'}`,
+                        borderRadius: '10px',
+                        padding: '12px 14px',
+                        boxShadow: '0 2px 4px rgba(15, 23, 42, 0.04)',
+                        position: 'relative',
+                      }}
+                    >
+                      {/* Card Head */}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '6px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+                          {isUnread && (
+                            <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#EF4444', flexShrink: 0 }} title="Unread" />
+                          )}
+                          <strong style={{ fontSize: '0.85rem', color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {n.title}
+                          </strong>
+                        </div>
+                        <span style={{
+                          fontSize: '0.68rem',
+                          fontWeight: 700,
+                          padding: '2px 8px',
+                          borderRadius: '10px',
+                          background: isShiftOpen ? '#DCFCE7' : '#EEF2FF',
+                          color: isShiftOpen ? '#15803D' : '#4338CA',
+                          whiteSpace: 'nowrap',
+                        }}>
+                          {isShiftOpen ? 'Drawer Open' : (meta.varianceText || 'Shift Closed')}
+                        </span>
+                      </div>
+
+                      {/* Branch & Time ago */}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.72rem', color: '#64748B' }}>
+                        {branchName && (
+                          <span style={{ background: '#F1F5F9', padding: '1px 6px', borderRadius: '4px', fontWeight: 600, color: '#334155' }}>
+                            {branchName}
+                          </span>
+                        )}
+                        <span style={{ marginLeft: 'auto' }}>
+                          {formatTimeAgo(createdAt)}
+                        </span>
+                      </div>
+
+                      {/* Description Message */}
+                      <p style={{ margin: '0 0 10px 0', fontSize: '0.78rem', color: '#334155', lineHeight: 1.45 }}>
+                        {n.message}
+                      </p>
+
+                      {/* Stats Grid for Shift Open */}
+                      {isShiftOpen && (
+                        <div style={{
+                          display: 'grid',
+                          gridTemplateColumns: '1fr 1fr',
+                          gap: '6px',
+                          background: '#F8FAFC',
+                          padding: '8px',
+                          borderRadius: '8px',
+                          border: '1px solid #E2E8F0',
+                        }}>
+                          <div>
+                            <div style={{ fontSize: '0.64rem', textTransform: 'uppercase', color: '#64748B', fontWeight: 600 }}>Counter</div>
+                            <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#0F172A' }}>{meta.counter || 'Counter 1'}</div>
+                          </div>
+                          <div>
+                            <div style={{ fontSize: '0.64rem', textTransform: 'uppercase', color: '#64748B', fontWeight: 600 }}>Opening Float</div>
+                            <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#16A34A' }}>{meta.openingCashFormatted || '₹0.00'}</div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Stats Grid for Shift Close */}
+                      {isShiftClose && (
+                        <div style={{
+                          display: 'grid',
+                          gridTemplateColumns: '1fr 1fr 1fr 1fr',
+                          gap: '6px',
+                          background: '#F8FAFC',
+                          padding: '8px',
+                          borderRadius: '8px',
+                          border: '1px solid #E2E8F0',
+                        }}>
+                          <div>
+                            <div style={{ fontSize: '0.62rem', textTransform: 'uppercase', color: '#64748B', fontWeight: 600 }}>Sales</div>
+                            <div style={{ fontSize: '0.76rem', fontWeight: 700, color: '#059669' }}>{meta.totalSalesFormatted || '₹0.00'}</div>
+                          </div>
+                          <div>
+                            <div style={{ fontSize: '0.62rem', textTransform: 'uppercase', color: '#64748B', fontWeight: 600 }}>Bills</div>
+                            <div style={{ fontSize: '0.76rem', fontWeight: 700, color: '#0F172A' }}>{meta.invoicesCount ?? 0}</div>
+                          </div>
+                          <div>
+                            <div style={{ fontSize: '0.62rem', textTransform: 'uppercase', color: '#64748B', fontWeight: 600 }}>Returns</div>
+                            <div style={{ fontSize: '0.76rem', fontWeight: 700, color: '#D97706' }}>{meta.returnsCount ?? 0}</div>
+                          </div>
+                          <div>
+                            <div style={{ fontSize: '0.62rem', textTransform: 'uppercase', color: '#64748B', fontWeight: 600 }}>Drawer</div>
+                            <div style={{ fontSize: '0.76rem', fontWeight: 700, color: '#4F46E5' }}>{meta.countedCashFormatted || '₹0.00'}</div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Action / Dismiss */}
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }}>
+                        <button
+                          type="button"
+                          onClick={() => handleDismissNotification(n.id)}
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: '#64748B',
+                            fontSize: '0.72rem',
+                            cursor: 'pointer',
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                          }}
+                          title="Dismiss notification"
+                        >
+                          Dismiss
+                        </button>
+                      </div>
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+
+            {/* Footer */}
+            <div className="day-closing-drawer-footer">
+              <span style={{ fontSize: '0.72rem', color: '#64748B' }}>
+                Showing shift activity for {branches?.find((b: any) => b.id === activeBranchId)?.name || 'Branch'}
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowNotifDrawer(false)}
+                className="day-closing-refresh-btn"
+                style={{ padding: '5px 12px', fontSize: '0.76rem' }}
+              >
+                Close Drawer
+              </button>
+            </div>
           </div>
         </div>
       )}
