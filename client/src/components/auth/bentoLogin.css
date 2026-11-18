@@ -1,0 +1,871 @@
+/* ==========================================================================
+   SUPER MODERN BENTO STYLE LOGIN ARCHITECTURE
+   Themes: Super Admin, Store Manager, Cashier Counter
+   Design Language: 3D Bento Grid, Warm Canvas (#E8E1D5), Slate Teal (#0F2D2E, #0F766E, #14B8A6)
+   ========================================================================== */
+
+:root {
+  --bento-login-bg: #E8E1D5;
+  --bento-login-surface: #FAF7F2;
+  --bento-login-surface-inner: #F3ECE1;
+  --bento-login-border: #D0C7B8;
+  --bento-login-sidebar: #0F2D2E;
+  --bento-login-primary: #0F766E;
+  --bento-login-primary-hover: #115E59;
+  --bento-login-primary-soft: #E6F4F3;
+  --bento-login-ring: #14B8A6;
+  --bento-login-text: #0F172A;
+  --bento-login-text-muted: #5C584E;
+}
+
+/* Master Page Canvas */
+.bento-login-page {
+  min-height: 100vh;
+  width: 100%;
+  background-color: var(--bento-login-bg);
+  background-image: 
+    radial-gradient(ellipse at 50% 0%, rgba(15, 118, 110, 0.08) 0%, transparent 65%),
+    linear-gradient(rgba(208, 199, 184, 0.15) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(208, 199, 184, 0.15) 1px, transparent 1px);
+  background-size: 100% 100%, 32px 32px, 32px 32px;
+  background-position: 0 0, -1px -1px, -1px -1px;
+  color: var(--bento-login-text);
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem 2rem 2.5rem 2rem;
+  box-sizing: border-box;
+}
+
+/* --------------------------------------------------------------------------
+   Master 3D Bento Surface & Specular Rim Formula
+   -------------------------------------------------------------------------- */
+.bento-login-card-3d {
+  background: var(--bento-login-surface);
+  border: 1.5px solid var(--bento-login-border);
+  border-radius: 20px;
+  box-shadow:
+    0 1px 2px rgba(15, 45, 46, 0.04),
+    0 6px 18px -2px rgba(15, 45, 46, 0.06),
+    0 16px 32px -4px rgba(15, 45, 46, 0.08),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 0 0 rgba(208, 199, 184, 0.35);
+  position: relative;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease;
+}
+
+/* --------------------------------------------------------------------------
+   1. Top Navigation Bar
+   -------------------------------------------------------------------------- */
+.bento-login-topbar {
+  max-width: 1240px;
+  width: 100%;
+  margin: 0 auto 1.5rem auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.bento-login-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.85rem;
+  text-decoration: none;
+  cursor: pointer;
+  user-select: none;
+}
+
+.bento-login-brand-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--bento-login-sidebar) 0%, var(--bento-login-primary) 100%);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  box-shadow: 0 4px 12px rgba(15, 45, 46, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.bento-login-brand-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--bento-login-sidebar);
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.bento-login-brand-tag {
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: var(--bento-login-surface-inner);
+  border: 1px solid var(--bento-login-border);
+  color: var(--bento-login-primary);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.bento-login-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.bento-login-live-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 9999px;
+  background: var(--bento-login-surface);
+  border: 1px solid var(--bento-login-border);
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--bento-login-sidebar);
+  box-shadow: 0 1px 3px rgba(15, 45, 46, 0.04);
+}
+
+.bento-login-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10B981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
+  animation: bentoPulse 2s infinite;
+}
+
+@keyframes bentoPulse {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.8; }
+}
+
+.bento-btn-back-home {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 1rem;
+  border-radius: 12px;
+  background: var(--bento-login-surface);
+  border: 1.5px solid var(--bento-login-border);
+  color: var(--bento-login-sidebar);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 3px rgba(15, 45, 46, 0.04);
+}
+
+.bento-btn-back-home:hover {
+  background: var(--bento-login-primary-soft);
+  border-color: var(--bento-login-ring);
+  color: var(--bento-login-primary);
+  transform: translateY(-1px);
+}
+
+/* --------------------------------------------------------------------------
+   2. Master Bento Container (Asymmetrical 2-Column Grid)
+   -------------------------------------------------------------------------- */
+.bento-login-container {
+  max-width: 1240px;
+  width: 100%;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 5fr 7fr;
+  gap: 1.5rem;
+  align-items: stretch;
+  flex: 1;
+}
+
+@media (max-width: 1024px) {
+  .bento-login-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   3. Left Bento Column: Role Hub, Telemetry, and 1-Click Demos
+   -------------------------------------------------------------------------- */
+.bento-left-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.35rem;
+}
+
+/* 3A: Role Hub Selector Tile */
+.bento-role-hub-card {
+  padding: 1.35rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.bento-tile-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.bento-tile-eyebrow {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: var(--bento-login-primary);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.bento-tile-heading {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--bento-login-sidebar);
+  letter-spacing: -0.01em;
+}
+
+.bento-role-options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.bento-role-card-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.9rem 1.1rem;
+  border-radius: 14px;
+  background: var(--bento-login-surface-inner);
+  border: 1.5px solid var(--bento-login-border);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.bento-role-card-btn:hover {
+  background: var(--bento-login-surface);
+  border-color: var(--bento-login-ring);
+  transform: translateY(-1px);
+}
+
+.bento-role-card-btn.active {
+  background: var(--bento-login-surface);
+  border-color: var(--bento-login-primary);
+  box-shadow: 
+    0 4px 14px rgba(15, 118, 110, 0.15),
+    inset 0 1px 0 #ffffff;
+}
+
+.bento-role-card-btn.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, var(--bento-login-primary) 0%, var(--bento-login-ring) 100%);
+}
+
+.bento-role-card-left {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.bento-role-card-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  background: #ffffff;
+  border: 1px solid var(--bento-login-border);
+  box-shadow: 0 1px 3px rgba(15, 45, 46, 0.05);
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.bento-role-card-btn.active .bento-role-card-icon {
+  background: var(--bento-login-primary-soft);
+  border-color: rgba(20, 184, 166, 0.35);
+  transform: scale(1.05);
+}
+
+.bento-role-card-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bento-role-card-title {
+  font-size: 0.925rem;
+  font-weight: 800;
+  color: var(--bento-login-sidebar);
+}
+
+.bento-role-card-subtitle {
+  font-size: 0.72rem;
+  color: var(--bento-login-text-muted);
+  font-weight: 500;
+}
+
+.bento-role-badge {
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  letter-spacing: 0.02em;
+  background: var(--bento-login-surface-inner);
+  border: 1px solid var(--bento-login-border);
+  color: var(--bento-login-text-muted);
+  white-space: nowrap;
+}
+
+.bento-role-card-btn.active .bento-role-badge {
+  background: var(--bento-login-primary);
+  border-color: var(--bento-login-primary-hover);
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(15, 118, 110, 0.3);
+}
+
+/* 3B: Dynamic Telemetry & Feature Showcase Bento Card */
+.bento-telemetry-card {
+  padding: 1.35rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  background: linear-gradient(135deg, rgba(15, 118, 110, 0.05) 0%, var(--bento-login-surface) 100%);
+  border: 1.5px solid var(--bento-login-border);
+}
+
+.bento-telemetry-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.bento-telemetry-title {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--bento-login-sidebar);
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.bento-telemetry-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.65rem;
+}
+
+.bento-telemetry-cell {
+  background: var(--bento-login-surface-inner);
+  border: 1px solid var(--bento-login-border);
+  border-radius: 12px;
+  padding: 0.65rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bento-telemetry-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--bento-login-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.bento-telemetry-val {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--bento-login-sidebar);
+  font-feature-settings: "tnum";
+  font-variant-numeric: tabular-nums;
+}
+
+.bento-telemetry-val.highlight {
+  color: var(--bento-login-primary);
+}
+
+.bento-telemetry-footer-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--bento-login-text-muted);
+  padding-top: 0.35rem;
+  border-top: 1px solid var(--bento-login-border);
+}
+
+/* 3C: 1-Click Role Demonstrations Bento Tile */
+.bento-demo-creds-card {
+  padding: 1.15rem 1.35rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.bento-demo-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.bento-demo-title {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--bento-login-text-muted);
+}
+
+.bento-demo-subtitle {
+  font-size: 0.68rem;
+  color: var(--bento-login-primary);
+  font-weight: 700;
+}
+
+.bento-demo-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.55rem;
+}
+
+.bento-demo-btn {
+  padding: 0.55rem 0.65rem;
+  border-radius: 10px;
+  background: var(--bento-login-surface-inner);
+  border: 1.5px solid var(--bento-login-border);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: left;
+}
+
+.bento-demo-btn:hover {
+  background: var(--bento-login-surface);
+  border-color: var(--bento-login-ring);
+  transform: translateY(-1px);
+}
+
+.bento-demo-btn.active {
+  background: var(--bento-login-primary-soft);
+  border-color: var(--bento-login-primary);
+}
+
+.bento-demo-btn-label {
+  font-size: 0.74rem;
+  font-weight: 800;
+  color: var(--bento-login-sidebar);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.bento-demo-btn-email {
+  font-size: 0.64rem;
+  font-weight: 600;
+  color: var(--bento-login-primary);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --------------------------------------------------------------------------
+   4. Right Bento Column: Master Authentication Gateway Card
+   -------------------------------------------------------------------------- */
+.bento-auth-gateway-card {
+  padding: 2.25rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+}
+
+@media (max-width: 640px) {
+  .bento-auth-gateway-card {
+    padding: 1.5rem;
+  }
+}
+
+/* 4px Signature Top Bar */
+.bento-auth-gateway-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #0F2D2E 0%, #0F766E 50%, #14B8A6 100%);
+  z-index: 5;
+}
+
+.bento-gateway-header {
+  margin-bottom: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.bento-gateway-role-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.bento-gateway-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--bento-login-primary-soft);
+  border: 1.5px solid rgba(20, 184, 166, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.bento-gateway-clearance-pill {
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  background: var(--bento-login-surface-inner);
+  border: 1px solid var(--bento-login-border);
+  color: var(--bento-login-sidebar);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.bento-gateway-title {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 900;
+  color: var(--bento-login-sidebar);
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+}
+
+.bento-gateway-subtitle {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--bento-login-text-muted);
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+/* Error Banner */
+.bento-login-error-banner {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1.5px solid rgba(239, 68, 68, 0.3);
+  color: #b91c1c;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  font-size: 0.825rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 1.25rem;
+}
+
+/* Form Groups & Inputs */
+.bento-login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.bento-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.bento-form-label {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--bento-login-sidebar);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.bento-form-label .required-star {
+  color: #e11d48;
+}
+
+.bento-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.bento-input-icon {
+  position: absolute;
+  left: 1rem;
+  color: var(--bento-login-text-muted);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bento-form-input {
+  width: 100%;
+  padding: 0.85rem 1rem 0.85rem 2.85rem;
+  border-radius: 13px;
+  background: var(--bento-login-surface-inner);
+  border: 1.5px solid var(--bento-login-border);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--bento-login-sidebar);
+  outline: none;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+}
+
+.bento-form-input:focus {
+  background: #ffffff;
+  border-color: var(--bento-login-ring);
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.22);
+}
+
+.bento-form-input::placeholder {
+  color: #94A3B8;
+  font-weight: 500;
+}
+
+.bento-password-toggle {
+  position: absolute;
+  right: 0.85rem;
+  background: none;
+  border: none;
+  color: var(--bento-login-text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem;
+  border-radius: 6px;
+  transition: color 0.15s ease;
+}
+
+.bento-password-toggle:hover {
+  color: var(--bento-login-primary);
+}
+
+/* Row Options: Remember Me & Forgot Password */
+.bento-login-options-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.15rem;
+}
+
+.bento-checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.825rem;
+  font-weight: 700;
+  color: var(--bento-login-sidebar);
+  cursor: pointer;
+  user-select: none;
+}
+
+.bento-checkbox-label input {
+  accent-color: var(--bento-login-primary);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.bento-forgot-btn {
+  background: none;
+  border: none;
+  font-size: 0.825rem;
+  font-weight: 700;
+  color: var(--bento-login-primary);
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s ease;
+}
+
+.bento-forgot-btn:hover {
+  color: var(--bento-login-primary-hover);
+  text-decoration: underline;
+}
+
+/* Primary Action CTA Button */
+.bento-btn-submit {
+  width: 100%;
+  padding: 0.95rem 1.5rem;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--bento-login-sidebar) 0%, var(--bento-login-primary) 100%);
+  border: 1.5px solid var(--bento-login-sidebar);
+  color: #ffffff;
+  font-size: 0.975rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  box-shadow: 
+    0 4px 14px rgba(15, 45, 46, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  margin-top: 0.5rem;
+}
+
+.bento-btn-submit:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0A1F20 0%, var(--bento-login-primary-hover) 100%);
+  transform: translateY(-2px);
+  box-shadow: 
+    0 8px 22px rgba(15, 45, 46, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.bento-btn-submit:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.bento-btn-submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Footer Section of Gateway Card */
+.bento-gateway-footer {
+  margin-top: 2rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--bento-login-border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  text-align: center;
+}
+
+.bento-register-row {
+  font-size: 0.825rem;
+  color: var(--bento-login-text-muted);
+  font-weight: 600;
+}
+
+.bento-register-link {
+  background: none;
+  border: none;
+  font-size: 0.825rem;
+  font-weight: 800;
+  color: var(--bento-login-primary);
+  cursor: pointer;
+  padding: 0;
+  margin-left: 4px;
+}
+
+.bento-register-link:hover {
+  text-decoration: underline;
+}
+
+.bento-security-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  font-size: 0.72rem;
+  color: var(--bento-login-text-muted);
+  font-weight: 600;
+}
+
+.bento-security-badge svg {
+  color: var(--bento-login-primary);
+}
+
+/* --------------------------------------------------------------------------
+   5. Bento Forgot Password Modal
+   -------------------------------------------------------------------------- */
+.bento-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 45, 46, 0.6);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1.5rem;
+}
+
+.bento-modal-card {
+  width: 100%;
+  max-width: 480px;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  overflow: hidden;
+}
+
+.bento-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.bento-modal-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--bento-login-sidebar);
+}
+
+.bento-modal-close {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  color: var(--bento-login-text-muted);
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 6px;
+}
+
+.bento-modal-close:hover {
+  color: var(--bento-login-sidebar);
+}
+
+.bento-modal-desc {
+  margin: 0;
+  font-size: 0.825rem;
+  color: var(--bento-login-text-muted);
+  line-height: 1.5;
+}
+
+.bento-modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
