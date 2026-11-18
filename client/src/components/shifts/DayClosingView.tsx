@@ -2439,84 +2439,39 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
 
               <div style={{ width: '1px', height: '24px', background: '#e2e8f0' }} />
 
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button
-                  type="button"
-                  onClick={() => setBreakdownSubTab('counter')}
-                  style={{
-                    padding: '8px 16px',
-                    borderRadius: '8px',
-                    border: breakdownSubTab === 'counter' ? '2px solid #4f46e5' : '1px solid #cbd5e1',
-                    background: breakdownSubTab === 'counter' ? '#eef2ff' : '#ffffff',
-                    color: breakdownSubTab === 'counter' ? '#4338ca' : '#475569',
-                    fontWeight: 700,
-                    fontSize: '0.85rem',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                  }}
-                >
-                  <Building2Icon size={16} />
-                  Counter-wise Sales Report
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setBreakdownSubTab('cashier')}
-                  style={{
-                    padding: '8px 16px',
-                    borderRadius: '8px',
-                    border: breakdownSubTab === 'cashier' ? '2px solid #4f46e5' : '1px solid #cbd5e1',
-                    background: breakdownSubTab === 'cashier' ? '#eef2ff' : '#ffffff',
-                    color: breakdownSubTab === 'cashier' ? '#4338ca' : '#475569',
-                    fontWeight: 700,
-                    fontSize: '0.85rem',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                  }}
-                >
-                  <UserIcon size={16} />
-                  Cashier-wise Sales Report
-                </button>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '6px 14px',
+                borderRadius: '8px',
+                background: '#f8fafc',
+                border: '1px solid #e2e8f0',
+                color: '#1e293b',
+                fontWeight: 700,
+                fontSize: '0.85rem',
+              }}>
+                <Building2Icon size={16} style={{ color: '#4f46e5' }} />
+                <span>Counter & Cashier Sales Report</span>
               </div>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              {breakdownSubTab === 'counter' && counterSalesData?.consolidatedTotal && (
+              {counterSalesData?.consolidatedTotal && (
                 <div style={{ fontSize: '0.82rem', color: '#64748b', background: '#f8fafc', padding: '6px 12px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
                   Consolidated Net Sales: <strong style={{ color: '#16a34a' }}>{fmt(counterSalesData.consolidatedTotal.netSalesMinor)}</strong>
                 </div>
               )}
-              {breakdownSubTab === 'cashier' && cashierSalesData?.consolidatedTotal && (
-                <div style={{ fontSize: '0.82rem', color: '#64748b', background: '#f8fafc', padding: '6px 12px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                  Consolidated Net Sales: <strong style={{ color: '#16a34a' }}>{fmt(cashierSalesData.consolidatedTotal.netSalesMinor)}</strong>
-                </div>
-              )}
 
-              {breakdownSubTab === 'counter' ? (
-                <button
-                  onClick={handleExportCounterCsv}
-                  disabled={!counterSalesData?.counters?.length}
-                  className="btn-export"
-                  style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
-                >
-                  <FileSpreadsheetIcon size={15} />
-                  Export Counter CSV
-                </button>
-              ) : (
-                <button
-                  onClick={handleExportCashierCsv}
-                  disabled={!cashierSalesData?.cashiers?.length}
-                  className="btn-export"
-                  style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
-                >
-                  <FileSpreadsheetIcon size={15} />
-                  Export Cashier CSV
-                </button>
-              )}
+              <button
+                onClick={handleExportCounterCsv}
+                disabled={!counterSalesData?.counters?.length}
+                className="btn-export"
+                style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                <FileSpreadsheetIcon size={15} />
+                Export Counter CSV
+              </button>
             </div>
           </div>
 
@@ -2790,307 +2745,437 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                     );
                   })()}
 
-                  {/* 3. Simple & Clean Counter Sales Table */}
-                  <div className="day-closing-card" style={{ boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)' }}>
-                    <div className="day-closing-card-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div className="day-closing-card-title-group">
-                        <Building2Icon size={18} style={{ color: '#4f46e5' }} />
-                        <span>
-                          {selectedCounterKeyFilter === 'ALL'
-                            ? `Store Counters & Cashier Performance Breakdown (${selectedDate})`
-                            : `${counterSalesData.counters.find((c: any) => c.counterKey === selectedCounterKeyFilter)?.counterName || 'Counter'} Sales & Cashier Report (${selectedDate})`}
+                  {/* 3. DEDICATED TABLE VIEW */}
+                  {selectedCounterKeyFilter !== 'ALL' ? (
+                    /* -----------------------------------------------------------
+                       VIEW A: SINGLE COUNTER SELECTED -> DEDICATED CASHIERS TABLE
+                       ----------------------------------------------------------- */
+                    (() => {
+                      const targetCounter = counterSalesData.counters.find((c: any) => c.counterKey === selectedCounterKeyFilter);
+                      if (!targetCounter) return null;
+                      const cashiers = targetCounter.cashiers || [];
+
+                      return (
+                        <div className="day-closing-card" style={{ boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)' }}>
+                          <div className="day-closing-card-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                            <div className="day-closing-card-title-group" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#eef2ff', color: '#4f46e5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <Building2Icon size={20} />
+                              </div>
+                              <div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: '#0f172a' }}>
+                                    {targetCounter.counterName} ({targetCounter.counterCode}) — Cashier Sales Breakdown
+                                  </h3>
+                                  <span style={{ fontSize: '0.72rem', background: '#dcfce7', color: '#15803d', border: '1px solid #bbf7d0', padding: '2px 8px', borderRadius: '6px', fontWeight: 700 }}>
+                                    {cashiers.length} Cashier{cashiers.length !== 1 ? 's' : ''} on Duty
+                                  </span>
+                                </div>
+                                <span style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '2px', display: 'block' }}>
+                                  Business Date: {selectedDate} · Detailed individual sales and shift attribution for {targetCounter.counterName}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <button
+                                type="button"
+                                onClick={() => setSelectedCounterKeyFilter('ALL')}
+                                style={{
+                                  background: '#f1f5f9',
+                                  border: '1px solid #cbd5e1',
+                                  borderRadius: '8px',
+                                  padding: '6px 12px',
+                                  fontSize: '0.8rem',
+                                  fontWeight: 700,
+                                  color: '#334155',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '6px',
+                                }}
+                              >
+                                <ArrowLeftIcon size={14} />
+                                <span>All Counters View</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedCounterId(targetCounter.counterId || targetCounter.counterCode);
+                                  setSelectedCashierId('');
+                                  setActiveTab('closing');
+                                }}
+                                className="btn-reconcile-nav"
+                                style={{ padding: '6px 14px', fontSize: '0.8rem', fontWeight: 700 }}
+                                title={`Open Register Reconciliation for ${targetCounter.counterName}`}
+                              >
+                                <span>Counter Register</span>
+                                <ArrowRightIcon size={12} />
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="data-table-container">
+                            <table className="analytics-table">
+                              <thead>
+                                <tr style={{ background: '#f8fafc' }}>
+                                  <th>Cashier on Duty</th>
+                                  <th>Shift Reference & Status</th>
+                                  <th style={{ textAlign: 'center' }}>Bills</th>
+                                  <th>Net Sales</th>
+                                  <th>Cash Collected</th>
+                                  <th>UPI / Digital</th>
+                                  <th>Returns</th>
+                                  <th>Contribution</th>
+                                  <th style={{ textAlign: 'center' }}>Action</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {cashiers.length > 0 ? (
+                                  cashiers.map((cashier: any) => {
+                                    const contributionPct = targetCounter.netSalesMinor > 0
+                                      ? Math.round((cashier.netSalesMinor / targetCounter.netSalesMinor) * 1000) / 10
+                                      : 0;
+
+                                    return (
+                                      <tr key={cashier.cashierId}>
+                                        <td>
+                                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <div style={{
+                                              width: '28px',
+                                              height: '28px',
+                                              borderRadius: '50%',
+                                              background: '#e0e7ff',
+                                              color: '#4338ca',
+                                              display: 'flex',
+                                              alignItems: 'center',
+                                              justifyContent: 'center',
+                                              fontSize: '0.75rem',
+                                              fontWeight: 800,
+                                            }}>
+                                              {cashier.cashierName.slice(0, 1).toUpperCase()}
+                                            </div>
+                                            <div>
+                                              <div style={{ fontWeight: 700, fontSize: '0.88rem', color: '#0f172a' }}>
+                                                {cashier.cashierName}
+                                              </div>
+                                              <span style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'capitalize' }}>
+                                                {String(cashier.cashierRole || 'Cashier').toLowerCase()}
+                                              </span>
+                                            </div>
+                                          </div>
+                                        </td>
+                                        <td>
+                                          {cashier.shifts && cashier.shifts.length > 0 ? (
+                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                              {cashier.shifts.map((sh: any) => {
+                                                const isOpen = sh.status === 'open';
+                                                return (
+                                                  <span
+                                                    key={sh.shiftId}
+                                                    style={{
+                                                      fontSize: '0.72rem',
+                                                      padding: '3px 8px',
+                                                      borderRadius: '6px',
+                                                      fontWeight: 700,
+                                                      background: isOpen ? '#dcfce7' : '#f1f5f9',
+                                                      color: isOpen ? '#15803d' : '#475569',
+                                                      border: `1px solid ${isOpen ? '#86efac' : '#cbd5e1'}`,
+                                                      display: 'inline-flex',
+                                                      alignItems: 'center',
+                                                      gap: '5px',
+                                                    }}
+                                                  >
+                                                    {isOpen && (
+                                                      <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#16a34a' }} />
+                                                    )}
+                                                    <span>#{sh.shiftNumber}</span>
+                                                    <span style={{ fontSize: '0.66rem', opacity: 0.85 }}>({isOpen ? 'Live Shift' : 'Closed'})</span>
+                                                  </span>
+                                                );
+                                              })}
+                                            </div>
+                                          ) : (
+                                            <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontStyle: 'italic' }}>
+                                              No Shift Registered
+                                            </span>
+                                          )}
+                                        </td>
+                                        <td style={{ textAlign: 'center' }}>
+                                          <strong style={{ fontSize: '0.9rem' }}>{cashier.invoicesCount}</strong>
+                                        </td>
+                                        <td>
+                                          <strong style={{ fontSize: '1rem', color: '#16a34a' }}>{fmt(cashier.netSalesMinor)}</strong>
+                                        </td>
+                                        <td>
+                                          <span style={{ fontWeight: 600, color: '#0f172a' }}>{fmt(cashier.collections.cash)}</span>
+                                        </td>
+                                        <td>
+                                          <span style={{ fontWeight: 600, color: '#0284c7' }}>{fmt(cashier.collections.upi)}</span>
+                                        </td>
+                                        <td style={{ color: cashier.returnsTotalMinor > 0 ? '#dc2626' : '#64748b', fontWeight: cashier.returnsTotalMinor > 0 ? 700 : 400 }}>
+                                          {cashier.returnsTotalMinor > 0 ? `-${fmt(cashier.returnsTotalMinor)}` : '₹0.00'}
+                                        </td>
+                                        <td>
+                                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            <div style={{ width: '48px', height: '6px', borderRadius: '3px', background: '#e2e8f0', overflow: 'hidden' }}>
+                                              <div style={{ width: `${Math.min(100, contributionPct)}%`, height: '100%', background: '#4f46e5' }} />
+                                            </div>
+                                            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#4338ca' }}>
+                                              {contributionPct}%
+                                            </span>
+                                          </div>
+                                        </td>
+                                        <td style={{ textAlign: 'center' }}>
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setSelectedCounterId(targetCounter.counterId || targetCounter.counterCode);
+                                              setSelectedCashierId(cashier.cashierId);
+                                              setActiveTab('closing');
+                                            }}
+                                            className="btn-reconcile-nav"
+                                            style={{ padding: '4px 10px', fontSize: '0.74rem' }}
+                                            title={`Audit & Reconcile ${cashier.cashierName}`}
+                                          >
+                                            <span>Reconcile</span>
+                                            <ArrowRightIcon size={11} />
+                                          </button>
+                                        </td>
+                                      </tr>
+                                    );
+                                  })
+                                ) : (
+                                  <tr>
+                                    <td colSpan={9} style={{ textAlign: 'center', padding: '24px', color: '#94a3b8' }}>
+                                      No cashier transactions recorded for this counter on {selectedDate}.
+                                    </td>
+                                  </tr>
+                                )}
+                              </tbody>
+                              <tfoot>
+                                <tr style={{ background: '#f8fafc', fontWeight: 800, borderTop: '2px solid #cbd5e1' }}>
+                                  <td>{targetCounter.counterName.toUpperCase()} TOTAL</td>
+                                  <td>{targetCounter.shiftsCount || cashiers.length} Shift(s) Registered</td>
+                                  <td style={{ textAlign: 'center' }}>{targetCounter.invoicesCount}</td>
+                                  <td style={{ color: '#16a34a', fontSize: '1.05rem' }}>{fmt(targetCounter.netSalesMinor)}</td>
+                                  <td>{fmt(targetCounter.collections.cash)}</td>
+                                  <td>{fmt(targetCounter.collections.upi)}</td>
+                                  <td style={{ color: targetCounter.returnsTotalMinor > 0 ? '#dc2626' : '#64748b' }}>
+                                    {targetCounter.returnsTotalMinor > 0 ? `-${fmt(targetCounter.returnsTotalMinor)}` : '₹0.00'}
+                                  </td>
+                                  <td style={{ color: '#4f46e5' }}>100%</td>
+                                  <td style={{ textAlign: 'center' }}>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setSelectedCounterId(targetCounter.counterId || targetCounter.counterCode);
+                                        setSelectedCashierId('');
+                                        setActiveTab('closing');
+                                      }}
+                                      className="btn-reconcile-nav-all"
+                                      style={{ padding: '4px 10px', fontSize: '0.74rem' }}
+                                    >
+                                      <span>Full Register</span>
+                                      <ArrowRightIcon size={11} />
+                                    </button>
+                                  </td>
+                                </tr>
+                              </tfoot>
+                            </table>
+                          </div>
+                        </div>
+                      );
+                    })()
+                  ) : (
+                    /* -----------------------------------------------------------
+                       VIEW B: "ALL COUNTERS" -> CONSOLIDATED STORE COUNTERS TABLE
+                       ----------------------------------------------------------- */
+                    <div className="day-closing-card" style={{ boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)' }}>
+                      <div className="day-closing-card-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div className="day-closing-card-title-group">
+                          <Building2Icon size={18} style={{ color: '#4f46e5' }} />
+                          <span>Store Counters & Cashier Performance Breakdown ({selectedDate})</span>
+                        </div>
+                        <span className="day-closing-card-badge">
+                          {counterSalesData.counters.length} Counter Registers
                         </span>
                       </div>
-                      <span className="day-closing-card-badge">
-                        {selectedCounterKeyFilter === 'ALL'
-                          ? `${counterSalesData.counters.length} Counter Registers`
-                          : '1 Filtered Counter'}
-                      </span>
-                    </div>
 
-                    <div className="data-table-container">
-                      <table className="analytics-table">
-                        <thead>
-                          <tr style={{ background: '#f8fafc' }}>
-                            <th>Counter Register</th>
-                            <th>Cashiers on Duty</th>
-                            <th>Bills</th>
-                            <th>Net Sales</th>
-                            <th>Cash Collected</th>
-                            <th>UPI / Digital</th>
-                            <th>Returns</th>
-                            {showCounterAuditColumns && (
-                              <>
-                                <th>Taxable</th>
-                                <th>GST</th>
-                                <th>Gross Profit</th>
-                                <th>Margin</th>
-                              </>
-                            )}
-                            <th style={{ textAlign: 'center' }}>Action</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {counterSalesData.counters
-                            .filter((c: any) => selectedCounterKeyFilter === 'ALL' || c.counterKey === selectedCounterKeyFilter)
-                            .map((c: any) => {
-                              const isExpanded = selectedCounterKeyFilter !== 'ALL' || Boolean(expandedCounterKeys[c.counterKey]);
+                      <div className="data-table-container">
+                        <table className="analytics-table">
+                          <thead>
+                            <tr style={{ background: '#f8fafc' }}>
+                              <th>Counter Register</th>
+                              <th>Cashiers on Duty</th>
+                              <th style={{ textAlign: 'center' }}>Bills</th>
+                              <th>Net Sales</th>
+                              <th>Cash Collected</th>
+                              <th>UPI / Digital</th>
+                              <th>Returns</th>
+                              {showCounterAuditColumns && (
+                                <>
+                                  <th>Taxable</th>
+                                  <th>GST</th>
+                                  <th>Gross Profit</th>
+                                  <th>Margin</th>
+                                </>
+                              )}
+                              <th style={{ textAlign: 'center' }}>Action</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {counterSalesData.counters.map((c: any) => {
                               const cashiers = c.cashiers || [];
                               const activeShift = c.activeShift;
 
                               return (
-                                <React.Fragment key={c.counterKey}>
-                                  <tr style={c.isException ? { background: '#fffbeb' } : {}}>
-                                    <td>
-                                      <div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                          <strong style={{ fontSize: '0.9rem', color: '#0f172a' }}>{c.counterName}</strong>
-                                          {c.isException ? (
-                                            <span style={{ fontSize: '0.68rem', background: '#fef3c7', color: '#92400e', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>
-                                              EXCEPTION
-                                            </span>
-                                          ) : (
-                                            <span style={{ fontSize: '0.72rem', color: '#4f46e5', background: '#eef2ff', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>
-                                              {c.counterCode}
-                                            </span>
-                                          )}
-                                        </div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '3px' }}>
-                                          {activeShift ? (
-                                            <span style={{ fontSize: '0.7rem', color: '#15803d', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
-                                              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#16a34a' }} />
-                                              Shift #{activeShift.shiftNumber} (Live Shift)
-                                            </span>
-                                          ) : c.shiftsCount > 0 ? (
-                                            <span style={{ fontSize: '0.7rem', color: '#64748b' }}>
-                                              {c.shiftsCount} shift(s) closed
-                                            </span>
-                                          ) : (
-                                            <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>
-                                              No shifts today
-                                            </span>
-                                          )}
-                                        </div>
-                                      </div>
-                                    </td>
-                                    <td>
-                                      {cashiers.length > 0 ? (
-                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                                          {cashiers.map((cashier: any) => (
-                                            <span
-                                              key={cashier.cashierId}
-                                              style={{
-                                                fontSize: '0.75rem',
-                                                background: '#f1f5f9',
-                                                border: '1px solid #e2e8f0',
-                                                color: '#334155',
-                                                padding: '2px 8px',
-                                                borderRadius: '6px',
-                                                fontWeight: 600,
-                                                display: 'inline-flex',
-                                                alignItems: 'center',
-                                                gap: '4px',
-                                              }}
-                                            >
-                                              <UserIcon size={11} style={{ color: '#64748b' }} />
-                                              <span>{cashier.cashierName}</span>
-                                              <span style={{ color: '#16a34a', fontWeight: 700 }}>
-                                                ({cashier.invoicesCount} bills)
-                                              </span>
-                                            </span>
-                                          ))}
-                                        </div>
-                                      ) : (
-                                        <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontStyle: 'italic' }}>
-                                          None
-                                        </span>
-                                      )}
-                                    </td>
-                                    <td>
-                                      <strong style={{ fontSize: '0.88rem' }}>{c.invoicesCount}</strong>
-                                    </td>
-                                    <td>
-                                      <strong style={{ fontSize: '0.95rem', color: '#16a34a' }}>{fmt(c.netSalesMinor)}</strong>
-                                    </td>
-                                    <td>
-                                      <span style={{ fontWeight: 600, color: '#0f172a' }}>{fmt(c.collections.cash)}</span>
-                                    </td>
-                                    <td>
-                                      <span style={{ fontWeight: 600, color: '#0284c7' }}>{fmt(c.collections.upi)}</span>
-                                    </td>
-                                    <td style={{ color: c.returnsTotalMinor > 0 ? '#dc2626' : '#64748b', fontWeight: c.returnsTotalMinor > 0 ? 700 : 400 }}>
-                                      {c.returnsTotalMinor > 0 ? `-${fmt(c.returnsTotalMinor)}` : '₹0.00'}
-                                    </td>
-
-                                    {showCounterAuditColumns && (
-                                      <>
-                                        <td>{fmt(c.taxableSalesMinor)}</td>
-                                        <td>{fmt(c.gstCollectedMinor)}</td>
-                                        <td style={{ fontWeight: 700, color: '#4f46e5' }}>{fmt(c.grossProfitMinor)}</td>
-                                        <td>{c.marginPct}%</td>
-                                      </>
-                                    )}
-
-                                    <td style={{ textAlign: 'center' }}>
-                                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-                                        {cashiers.length > 0 && selectedCounterKeyFilter === 'ALL' && (
-                                          <button
-                                            type="button"
-                                            onClick={() => {
-                                              setExpandedCounterKeys((prev) => ({
-                                                ...prev,
-                                                [c.counterKey]: !prev[c.counterKey],
-                                              }));
-                                            }}
-                                            style={{
-                                              background: isExpanded ? '#eef2ff' : '#f8fafc',
-                                              border: `1px solid ${isExpanded ? '#c7d2fe' : '#cbd5e1'}`,
-                                              color: isExpanded ? '#4338ca' : '#475569',
-                                              borderRadius: '6px',
-                                              padding: '4px 8px',
-                                              fontSize: '0.72rem',
-                                              fontWeight: 700,
-                                              cursor: 'pointer',
-                                              display: 'flex',
-                                              alignItems: 'center',
-                                              gap: '3px',
-                                            }}
-                                            title="View Cashiers who worked on this counter"
-                                          >
-                                            <UserIcon size={12} />
-                                            <span>Cashiers ({cashiers.length})</span>
-                                            {isExpanded ? <ChevronUpIcon size={12} /> : <ChevronDownIcon size={12} />}
-                                          </button>
-                                        )}
-
-                                        {!c.isException ? (
-                                          <button
-                                            type="button"
-                                            onClick={() => {
-                                              setSelectedCounterId(c.counterId || c.counterCode);
-                                              setSelectedCashierId('');
-                                              setActiveTab('closing');
-                                            }}
-                                            className="btn-reconcile-nav"
-                                            title={`Open Register Closing for ${c.counterName}`}
-                                          >
-                                            <span>Register</span>
-                                            <ArrowRightIcon size={12} />
-                                          </button>
+                                <tr key={c.counterKey} style={c.isException ? { background: '#fffbeb' } : {}}>
+                                  <td>
+                                    <div>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <strong style={{ fontSize: '0.9rem', color: '#0f172a' }}>{c.counterName}</strong>
+                                        {c.isException ? (
+                                          <span style={{ fontSize: '0.68rem', background: '#fef3c7', color: '#92400e', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>
+                                            EXCEPTION
+                                          </span>
                                         ) : (
-                                          <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Unassigned</span>
+                                          <span style={{ fontSize: '0.72rem', color: '#4f46e5', background: '#eef2ff', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>
+                                            {c.counterCode}
+                                          </span>
                                         )}
                                       </div>
-                                    </td>
-                                  </tr>
-
-                                  {/* Cashiers Breakdown Nested Row */}
-                                  {isExpanded && cashiers.length > 0 && (
-                                    <tr style={{ background: '#f8fafc' }}>
-                                      <td colSpan={showCounterAuditColumns ? 12 : 8} style={{ padding: '10px 16px' }}>
-                                        <div style={{
-                                          background: '#ffffff',
-                                          border: '1px solid #e2e8f0',
-                                          borderRadius: '8px',
-                                          padding: '12px 14px',
-                                          boxShadow: '0 1px 2px rgba(15, 23, 42, 0.03)',
-                                        }}>
-                                          <div style={{
-                                            fontSize: '0.8rem',
-                                            fontWeight: 700,
-                                            color: '#334155',
-                                            marginBottom: '8px',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'space-between',
-                                          }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                              <UserIcon size={14} style={{ color: '#4f46e5' }} />
-                                              <span>Cashiers who worked on {c.counterName} ({c.counterCode}) on {selectedDate}:</span>
-                                            </div>
-                                            <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600 }}>
-                                              {cashiers.length} cashier(s) registered
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '3px' }}>
+                                        {activeShift ? (
+                                          <span style={{ fontSize: '0.7rem', color: '#15803d', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
+                                            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#16a34a' }} />
+                                            Shift #{activeShift.shiftNumber} (Live Shift)
+                                          </span>
+                                        ) : c.shiftsCount > 0 ? (
+                                          <span style={{ fontSize: '0.7rem', color: '#64748b' }}>
+                                            {c.shiftsCount} shift(s) closed
+                                          </span>
+                                        ) : (
+                                          <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>
+                                            No shifts today
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </td>
+                                  <td>
+                                    {cashiers.length > 0 ? (
+                                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                        {cashiers.map((cashier: any) => (
+                                          <span
+                                            key={cashier.cashierId}
+                                            style={{
+                                              fontSize: '0.75rem',
+                                              background: '#f1f5f9',
+                                              border: '1px solid #e2e8f0',
+                                              color: '#334155',
+                                              padding: '2px 8px',
+                                              borderRadius: '6px',
+                                              fontWeight: 600,
+                                              display: 'inline-flex',
+                                              alignItems: 'center',
+                                              gap: '4px',
+                                            }}
+                                          >
+                                            <UserIcon size={11} style={{ color: '#64748b' }} />
+                                            <span>{cashier.cashierName}</span>
+                                            <span style={{ color: '#16a34a', fontWeight: 700 }}>
+                                              ({cashier.invoicesCount} bills)
                                             </span>
-                                          </div>
+                                          </span>
+                                        ))}
+                                      </div>
+                                    ) : (
+                                      <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontStyle: 'italic' }}>
+                                        None
+                                      </span>
+                                    )}
+                                  </td>
+                                  <td style={{ textAlign: 'center' }}>
+                                    <strong style={{ fontSize: '0.88rem' }}>{c.invoicesCount}</strong>
+                                  </td>
+                                  <td>
+                                    <strong style={{ fontSize: '0.95rem', color: '#16a34a' }}>{fmt(c.netSalesMinor)}</strong>
+                                  </td>
+                                  <td>
+                                    <span style={{ fontWeight: 600, color: '#0f172a' }}>{fmt(c.collections.cash)}</span>
+                                  </td>
+                                  <td>
+                                    <span style={{ fontWeight: 600, color: '#0284c7' }}>{fmt(c.collections.upi)}</span>
+                                  </td>
+                                  <td style={{ color: c.returnsTotalMinor > 0 ? '#dc2626' : '#64748b', fontWeight: c.returnsTotalMinor > 0 ? 700 : 400 }}>
+                                    {c.returnsTotalMinor > 0 ? `-${fmt(c.returnsTotalMinor)}` : '₹0.00'}
+                                  </td>
 
-                                          <table style={{ width: '100%', fontSize: '0.78rem', borderCollapse: 'collapse', border: '1px solid #e2e8f0', borderRadius: '6px', overflow: 'hidden' }}>
-                                            <thead>
-                                              <tr style={{ background: '#f1f5f9', color: '#475569', textAlign: 'left', fontWeight: 700 }}>
-                                                <th style={{ padding: '7px 10px' }}>Cashier Name</th>
-                                                <th style={{ padding: '7px 10px' }}>Shift Status</th>
-                                                <th style={{ padding: '7px 10px' }}>Bills</th>
-                                                <th style={{ padding: '7px 10px' }}>Net Sales</th>
-                                                <th style={{ padding: '7px 10px' }}>Cash Collected</th>
-                                                <th style={{ padding: '7px 10px' }}>UPI / Digital</th>
-                                                <th style={{ padding: '7px 10px' }}>Returns</th>
-                                              </tr>
-                                            </thead>
-                                            <tbody>
-                                              {cashiers.map((cashier: any) => (
-                                                <tr key={cashier.cashierId} style={{ borderTop: '1px solid #e2e8f0' }}>
-                                                  <td style={{ padding: '7px 10px', fontWeight: 700, color: '#0f172a' }}>
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                      <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: '#e0e7ff', color: '#4338ca', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 800 }}>
-                                                        {cashier.cashierName.slice(0, 1).toUpperCase()}
-                                                      </div>
-                                                      <span>{cashier.cashierName}</span>
-                                                    </div>
-                                                  </td>
-                                                  <td style={{ padding: '7px 10px' }}>
-                                                    {cashier.shifts && cashier.shifts.length > 0 ? (
-                                                      cashier.shifts.map((sh: any) => (
-                                                        <span key={sh.shiftId} style={{
-                                                          fontSize: '0.7rem',
-                                                          padding: '2px 7px',
-                                                          borderRadius: '4px',
-                                                          fontWeight: 700,
-                                                          background: sh.status === 'open' ? '#dcfce7' : '#f1f5f9',
-                                                          color: sh.status === 'open' ? '#15803d' : '#475569',
-                                                          border: `1px solid ${sh.status === 'open' ? '#bbf7d0' : '#e2e8f0'}`,
-                                                          marginRight: '4px',
-                                                          display: 'inline-block',
-                                                        }}>
-                                                          #{sh.shiftNumber} ({sh.status === 'open' ? 'Live Shift' : 'Closed'})
-                                                        </span>
-                                                      ))
-                                                    ) : (
-                                                      <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Unrecorded Shift</span>
-                                                    )}
-                                                  </td>
-                                                  <td style={{ padding: '7px 10px', fontWeight: 700 }}>
-                                                    {cashier.invoicesCount}
-                                                  </td>
-                                                  <td style={{ padding: '7px 10px', fontWeight: 800, color: '#16a34a' }}>
-                                                    {fmt(cashier.netSalesMinor)}
-                                                  </td>
-                                                  <td style={{ padding: '7px 10px', fontWeight: 600 }}>
-                                                    {fmt(cashier.collections.cash)}
-                                                  </td>
-                                                  <td style={{ padding: '7px 10px', fontWeight: 600, color: '#0284c7' }}>
-                                                    {fmt(cashier.collections.upi)}
-                                                  </td>
-                                                  <td style={{ padding: '7px 10px', color: cashier.returnsTotalMinor > 0 ? '#dc2626' : '#64748b', fontWeight: cashier.returnsTotalMinor > 0 ? 700 : 400 }}>
-                                                    {cashier.returnsTotalMinor > 0 ? `-${fmt(cashier.returnsTotalMinor)}` : '₹0.00'}
-                                                  </td>
-                                                </tr>
-                                              ))}
-                                            </tbody>
-                                          </table>
-                                        </div>
-                                      </td>
-                                    </tr>
+                                  {showCounterAuditColumns && (
+                                    <>
+                                      <td>{fmt(c.taxableSalesMinor)}</td>
+                                      <td>{fmt(c.gstCollectedMinor)}</td>
+                                      <td style={{ fontWeight: 700, color: '#4f46e5' }}>{fmt(c.grossProfitMinor)}</td>
+                                      <td>{c.marginPct}%</td>
+                                    </>
                                   )}
-                                </React.Fragment>
+
+                                  <td style={{ textAlign: 'center' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                                      <button
+                                        type="button"
+                                        onClick={() => setSelectedCounterKeyFilter(c.counterKey)}
+                                        style={{
+                                          background: '#eef2ff',
+                                          border: '1px solid #c7d2fe',
+                                          color: '#4338ca',
+                                          borderRadius: '6px',
+                                          padding: '4px 10px',
+                                          fontSize: '0.75rem',
+                                          fontWeight: 700,
+                                          cursor: 'pointer',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          gap: '4px',
+                                        }}
+                                        title={`View Cashier Breakdown for ${c.counterName}`}
+                                      >
+                                        <UserIcon size={12} />
+                                        <span>Cashiers ({cashiers.length})</span>
+                                        <ArrowRightIcon size={11} />
+                                      </button>
+
+                                      {!c.isException ? (
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setSelectedCounterId(c.counterId || c.counterCode);
+                                            setSelectedCashierId('');
+                                            setActiveTab('closing');
+                                          }}
+                                          className="btn-reconcile-nav"
+                                          title={`Open Register Closing for ${c.counterName}`}
+                                        >
+                                          <span>Register</span>
+                                          <ArrowRightIcon size={12} />
+                                        </button>
+                                      ) : (
+                                        <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Unassigned</span>
+                                      )}
+                                    </div>
+                                  </td>
+                                </tr>
                               );
                             })}
-                        </tbody>
+                          </tbody>
 
-                        {selectedCounterKeyFilter === 'ALL' && (
                           <tfoot>
                             <tr style={{ background: '#f8fafc', fontWeight: 800, borderTop: '2px solid #cbd5e1' }}>
                               <td>CONSOLIDATED TOTAL</td>
                               <td>{counterSalesData.counters.length} Active Registers</td>
-                              <td>{counterSalesData.consolidatedTotal?.invoicesCount}</td>
+                              <td style={{ textAlign: 'center' }}>{counterSalesData.consolidatedTotal?.invoicesCount}</td>
                               <td style={{ color: '#16a34a', fontSize: '0.95rem' }}>{fmt(counterSalesData.consolidatedTotal?.netSalesMinor)}</td>
                               <td>{fmt(counterSalesData.consolidatedTotal?.collections?.cash)}</td>
                               <td style={{ color: '#0284c7' }}>{fmt(counterSalesData.consolidatedTotal?.collections?.upi)}</td>
@@ -3122,206 +3207,10 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                               </td>
                             </tr>
                           </tfoot>
-                        )}
-                      </table>
-                    </div>
-                  </div>
-                </>
-              ) : null}
-            </>
-          )}
-
-          {/* CASHIER REPORT CONTENT */}
-          {breakdownSubTab === 'cashier' && (
-            <>
-              {loadingCashierSales ? (
-                <div style={{ padding: '3rem', textAlign: 'center', background: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
-                  <RefreshCwIcon size={32} className="animate-spin" style={{ margin: '0 auto 12px auto', color: '#4f46e5' }} />
-                  <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#64748b' }}>Aggregating cashier-wise sales and registers...</p>
-                </div>
-              ) : cashierSalesData ? (
-                <>
-
-                  {cashierSalesData.exceptionCount > 0 && (
-                    <div style={{ background: '#fef3c7', border: '1px solid #fde68a', borderRadius: '8px', padding: '10px 14px', color: '#92400e', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <AlertTriangleIcon size={16} />
-                      <span><strong>Notice:</strong> {cashierSalesData.exceptionCount} unassigned cashier transaction group(s) detected. Shown separately below for audit compliance.</span>
+                        </table>
+                      </div>
                     </div>
                   )}
-
-                  {/* Cashier Table */}
-                  <div className="day-closing-card">
-                    <div className="day-closing-card-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div className="day-closing-card-title-group">
-                        <UserIcon size={18} style={{ color: '#4f46e5' }} />
-                        <span>Cashier Sales & Closing Status Breakdown ({selectedDate})</span>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <button
-                          type="button"
-                          onClick={() => setShowCounterAuditColumns((prev) => !prev)}
-                          style={{
-                            background: showCounterAuditColumns ? '#eef2ff' : '#ffffff',
-                            border: `1px solid ${showCounterAuditColumns ? '#c7d2fe' : '#cbd5e1'}`,
-                            borderRadius: '8px',
-                            padding: '5px 12px',
-                            fontSize: '0.78rem',
-                            fontWeight: 600,
-                            color: showCounterAuditColumns ? '#4338ca' : '#475569',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '5px',
-                          }}
-                          title="Toggle Taxable, GST & Gross Profit Audit Columns"
-                        >
-                          <EyeIcon size={14} style={{ color: showCounterAuditColumns ? '#4f46e5' : '#64748b' }} />
-                          <span>{showCounterAuditColumns ? 'Hide Audit (GST/Profit)' : 'Audit (GST/Profit)'}</span>
-                        </button>
-                        <span className="day-closing-card-badge">
-                          {cashierSalesData.cashiers.length} Active Cashiers
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="data-table-container">
-                      <table className="analytics-table">
-                        <thead>
-                          <tr>
-                            <th>Cashier Name</th>
-                            <th>Role</th>
-                            <th>Closing Status</th>
-                            <th>Invoices</th>
-                            <th>Gross Sales</th>
-                            <th>Returns</th>
-                            <th>Net Sales</th>
-                            {showCounterAuditColumns && (
-                              <>
-                                <th>Taxable</th>
-                                <th>GST</th>
-                                <th>Gross Profit</th>
-                              </>
-                            )}
-                            <th>Cash Collections</th>
-                            <th>UPI</th>
-                            <th>Card</th>
-                            <th>Actual Counted</th>
-                            <th>Expected Cash</th>
-                            <th>Difference</th>
-                            <th style={{ textAlign: 'center' }}>Action</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {cashierSalesData.cashiers.map((c: any) => (
-                            <tr key={c.cashierKey} style={c.isException ? { background: '#fffbeb' } : {}}>
-                              <td>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                  <strong>{c.cashierName}</strong>
-                                  {c.isException && (
-                                    <span style={{ fontSize: '0.68rem', background: '#fef3c7', color: '#92400e', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>
-                                      EXCEPTION
-                                    </span>
-                                  )}
-                                </div>
-                              </td>
-                              <td style={{ fontSize: '0.75rem', color: '#64748b' }}>{c.cashierRole}</td>
-                              <td>
-                                <span style={{
-                                  fontSize: '0.72rem',
-                                  padding: '2px 8px',
-                                  borderRadius: '9999px',
-                                  fontWeight: 700,
-                                  textTransform: 'uppercase',
-                                  background: c.closingStatus === 'approved' || c.closingStatus === 'closed' ? '#dcfce7' : (c.closingStatus === 'submitted' ? '#dbeafe' : (c.closingStatus === 'reopened' ? '#fee2e2' : '#f1f5f9')),
-                                  color: c.closingStatus === 'approved' || c.closingStatus === 'closed' ? '#15803d' : (c.closingStatus === 'submitted' ? '#1d4ed8' : (c.closingStatus === 'reopened' ? '#b91c1c' : '#64748b')),
-                                }}>
-                                  {c.closingStatus}
-                                </span>
-                              </td>
-                              <td>{c.invoicesCount}</td>
-                              <td>{fmt(c.grossSalesMinor)}</td>
-                              <td style={{ color: c.returnsTotalMinor > 0 ? '#dc2626' : 'inherit' }}>
-                                {c.returnsTotalMinor > 0 ? `-${fmt(c.returnsTotalMinor)}` : '₹0.00'}
-                              </td>
-                              <td style={{ fontWeight: 700, color: '#16a34a' }}>{fmt(c.netSalesMinor)}</td>
-                              {showCounterAuditColumns && (
-                                <>
-                                  <td>{fmt(c.taxableSalesMinor)}</td>
-                                  <td>{fmt(c.gstCollectedMinor)}</td>
-                                  <td style={{ fontWeight: 700, color: '#4f46e5' }}>{fmt(c.grossProfitMinor)}</td>
-                                </>
-                              )}
-                              <td>{fmt(c.collections.cash)}</td>
-                              <td>{fmt(c.collections.upi)}</td>
-                              <td>{fmt(c.collections.card)}</td>
-                              <td>{c.actualCashMinor != null ? fmt(c.actualCashMinor) : '—'}</td>
-                              <td>{c.expectedCashMinor != null ? fmt(c.expectedCashMinor) : '—'}</td>
-                              <td style={{
-                                fontWeight: 700,
-                                color: (c.varianceMinor || 0) === 0 ? '#15803d' : ((c.varianceMinor || 0) > 0 ? '#2563eb' : '#dc2626')
-                              }}>
-                                {c.varianceMinor != null ? ((c.varianceMinor > 0 ? '+' : '') + fmt(c.varianceMinor)) : '—'}
-                              </td>
-                              <td style={{ textAlign: 'center' }}>
-                                {!c.isException && c.cashierId ? (
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setSelectedCashierId(c.cashierId);
-                                      setSelectedCounterId('');
-                                      setActiveTab('closing');
-                                    }}
-                                    className="btn-reconcile-nav"
-                                    title={`Open Register Closing for ${c.cashierName}`}
-                                  >
-                                    <span>Open Register</span>
-                                    <ArrowRightIcon size={12} />
-                                  </button>
-                                ) : (
-                                  <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Unassigned</span>
-                                )}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                        <tfoot>
-                          <tr style={{ background: '#f8fafc', fontWeight: 800, borderTop: '2px solid #cbd5e1' }}>
-                            <td colSpan={3}>CONSOLIDATED TOTAL</td>
-                            <td>{cashierSalesData.consolidatedTotal?.invoicesCount}</td>
-                            <td>{fmt(cashierSalesData.consolidatedTotal?.grossSalesMinor)}</td>
-                            <td style={{ color: '#dc2626' }}>-{fmt(cashierSalesData.consolidatedTotal?.returnsTotalMinor)}</td>
-                            <td style={{ color: '#16a34a' }}>{fmt(cashierSalesData.consolidatedTotal?.netSalesMinor)}</td>
-                            {showCounterAuditColumns && (
-                              <>
-                                <td>{fmt(cashierSalesData.consolidatedTotal?.taxableSalesMinor)}</td>
-                                <td>{fmt(cashierSalesData.consolidatedTotal?.gstCollectedMinor)}</td>
-                                <td style={{ color: '#4f46e5' }}>{fmt(cashierSalesData.consolidatedTotal?.grossProfitMinor)}</td>
-                              </>
-                            )}
-                            <td>{fmt(cashierSalesData.consolidatedTotal?.collections?.cash)}</td>
-                            <td>{fmt(cashierSalesData.consolidatedTotal?.collections?.upi)}</td>
-                            <td>{fmt(cashierSalesData.consolidatedTotal?.collections?.card)}</td>
-                            <td colSpan={2}>—</td>
-                            <td style={{ textAlign: 'center' }}>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setSelectedCounterId('');
-                                  setSelectedCashierId('');
-                                  setActiveTab('closing');
-                                }}
-                                className="btn-reconcile-nav-all"
-                                title="Open Store-wide Consolidated Register Closing"
-                              >
-                                <span>Full Register</span>
-                                <ArrowRightIcon size={12} />
-                              </button>
-                            </td>
-                          </tr>
-                        </tfoot>
-                      </table>
-                    </div>
-                  </div>
                 </>
               ) : null}
             </>
