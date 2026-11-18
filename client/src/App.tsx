@@ -16675,7 +16675,13 @@ export function App() {
           const targetInv = invoices.find(i => i.id === printModalInvoiceId);
           const isTargetWholesale = (targetInv?.invoiceType || (targetInv as any)?.invoice_type) === 'wholesale';
           return (
-            <div className="modal-overlay">
+            <div
+              className="modal-overlay"
+              style={{ zIndex: 1000005 }}
+              onClick={(e) => {
+                if (e.target === e.currentTarget) setPrintModalInvoiceId(null);
+              }}
+            >
               <div
                 className="modal-content"
                 style={{
@@ -16683,6 +16689,9 @@ export function App() {
                   width: '95%',
                   background: '#ffffff',
                   color: '#111827',
+                  zIndex: 1000006,
+                  boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+                  position: 'relative',
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem', borderBottom: '1px solid #e5e7eb', alignItems: 'center' }}>
@@ -21067,30 +21076,6 @@ export function App() {
                           </svg>
                           Share on WhatsApp
                         </span>
-
-                        {/* Language Selector */}
-                        <div style={{ display: 'flex', gap: '3px', background: '#dcfce7', padding: '2px', borderRadius: '6px' }}>
-                          {(['en', 'hi', 'ta'] as const).map((l) => (
-                            <button
-                              key={l}
-                              type="button"
-                              onClick={() => setSuccessLang(l)}
-                              style={{
-                                border: 'none',
-                                background: successLang === l ? '#16a34a' : 'transparent',
-                                color: successLang === l ? '#ffffff' : '#15803d',
-                                fontSize: '0.72rem',
-                                fontWeight: 600,
-                                padding: '2px 7px',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                                transition: 'all 0.15s ease',
-                              }}
-                            >
-                              {l === 'en' ? 'English' : l === 'hi' ? 'हिन्दी' : 'தமிழ்'}
-                            </button>
-                          ))}
-                        </div>
                       </div>
 
                       {/* Phone Input */}
