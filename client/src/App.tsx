@@ -1047,13 +1047,21 @@ export function App() {
     const onShiftEvent = () => loadNotifications();
     window.addEventListener('shift_opened', onShiftEvent);
     window.addEventListener('shift_closed', onShiftEvent);
+    window.addEventListener('shift_status_changed', onShiftEvent);
+    window.addEventListener('shift_updated', onShiftEvent);
     window.addEventListener('day_closing_updated', onShiftEvent);
+    window.addEventListener('day_closing_submitted', onShiftEvent);
+    window.addEventListener('focus', onShiftEvent);
 
     return () => {
       clearInterval(interval);
       window.removeEventListener('shift_opened', onShiftEvent);
       window.removeEventListener('shift_closed', onShiftEvent);
+      window.removeEventListener('shift_status_changed', onShiftEvent);
+      window.removeEventListener('shift_updated', onShiftEvent);
       window.removeEventListener('day_closing_updated', onShiftEvent);
+      window.removeEventListener('day_closing_submitted', onShiftEvent);
+      window.removeEventListener('focus', onShiftEvent);
     };
   }, [user, loadNotifications]);
 
@@ -1085,9 +1093,11 @@ export function App() {
     setActiveTab('shifts');
   };
 
-  const formatNotifTimeAgo = (dateStr: string) => {
-    if (!dateStr) return '';
-    const diff = Math.max(0, Date.now() - new Date(dateStr).getTime());
+  const formatNotifTimeAgo = (dateStr?: string) => {
+    if (!dateStr) return 'Just now';
+    const time = new Date(dateStr).getTime();
+    if (isNaN(time)) return 'Just now';
+    const diff = Math.max(0, Date.now() - time);
     const mins = Math.floor(diff / 60000);
     if (mins < 1) return 'Just now';
     if (mins < 60) return `${mins}m ago`;
@@ -8159,6 +8169,137 @@ export function App() {
                             </button>
                           </div>
 
+                          {/* Section: Shift Activity Notifications for Cashier */}
+                          <div className="bento-notif-section-title">
+                            Shift & Register Notifications
+                          </div>
+
+                          {shiftNotifications.length > 0 ? (
+                            shiftNotifications.map((n) => {
+                              const isShiftOpen = n.type === 'shift_open';
+                              const isShiftClose = n.type === 'shift_close';
+                              let meta = n.metadata;
+                              if (typeof meta === 'string') {
+                                try { meta = JSON.parse(meta); } catch {}
+                              }
+                              meta = meta || {};
+
+                              const isUnread = !n.isRead && !n.is_read;
+                              const createdAt = n.createdAt || n.created_at;
+                              const branchName = n.branchName || n.branch_name || meta.branchName || '';
+
+                              return (
+                                <div
+                                  key={n.id}
+                                  className={`bento-notif-card ${isShiftOpen ? 'shift-open' : 'shift-close'} ${isUnread ? 'unread' : ''}`}
+                                  onClick={() => handleNotificationClick(n)}
+                                  style={{ cursor: 'pointer' }}
+                                >
+                                  <div className="bento-notif-card-head">
+                                    <div className={`bento-notif-card-icon ${isShiftOpen ? 'shift-open-icon' : 'shift-close-icon'}`}>
+                                      {isShiftOpen ? (
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                                          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                                          <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                                          <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                                        </svg>
+                                      ) : (
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                                          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                                          <line x1="8" y1="21" x2="16" y2="21"></line>
+                                          <line x1="12" y1="17" x2="12" y2="21"></line>
+                                        </svg>
+                                      )}
+                                    </div>
+                                    <div className="bento-notif-card-title-group">
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0, overflow: 'hidden' }}>
+                                        {isUnread && <span className="bento-notif-unread-dot" title="Unread" />}
+                                        <span className="bento-notif-card-title" title={n.title}>
+                                          {n.title}
+                                        </span>
+                                      </div>
+                                      <span className={`bento-notif-status-pill ${isShiftOpen ? 'live' : n.severity === 'warning' ? 'warn' : 'ok'}`}>
+                                        {isShiftOpen ? 'Drawer Open' : (meta.varianceText || 'Shift Closed')}
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  <div className="bento-notif-branch-row">
+                                    {Boolean(branchName) && (
+                                      <span className="bento-notif-branch-badge">
+                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                                        {branchName}
+                                      </span>
+                                    )}
+                                    <span className="bento-notif-time-ago" style={{ marginLeft: branchName ? 'auto' : '0' }}>
+                                      {formatNotifTimeAgo(createdAt)}
+                                    </span>
+                                  </div>
+
+                                  <p className="bento-notif-card-desc">{n.message}</p>
+
+                                  {isShiftOpen && (
+                                    <div className="bento-notif-stats-grid">
+                                      <div className="bento-notif-stat-box">
+                                        <span className="stat-label">Counter</span>
+                                        <span className="stat-val">{meta.counter || 'Counter 1'}</span>
+                                      </div>
+                                      <div className="bento-notif-stat-box full-width">
+                                        <span className="stat-label">Opening Float</span>
+                                        <span className="stat-val drawer">{meta.openingCashFormatted || '₹0.00'}</span>
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {isShiftClose && (
+                                    <div className="bento-notif-stats-grid">
+                                      <div className="bento-notif-stat-box">
+                                        <span className="stat-label">Sales</span>
+                                        <span className="stat-val sales">{meta.totalSalesFormatted || '₹0.00'}</span>
+                                      </div>
+                                      <div className="bento-notif-stat-box">
+                                        <span className="stat-label">Bills</span>
+                                        <span className="stat-val">{meta.invoicesCount ?? 0}</span>
+                                      </div>
+                                      <div className="bento-notif-stat-box">
+                                        <span className="stat-label">Returns</span>
+                                        <span className="stat-val returns">{meta.returnsCount ?? 0}</span>
+                                      </div>
+                                      <div className="bento-notif-stat-box">
+                                        <span className="stat-label">Drawer</span>
+                                        <span className="stat-val drawer">{meta.countedCashFormatted || '₹0.00'}</span>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })
+                          ) : (
+                            <div className="bento-notif-card" style={{ borderLeft: '4px solid #CBD5E1', background: '#F8FAFC' }}>
+                              <div className="bento-notif-card-head">
+                                <div className="bento-notif-card-icon" style={{ background: '#F1F5F9' }}>
+                                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                  </svg>
+                                </div>
+                                <div className="bento-notif-card-title-group">
+                                  <span className="bento-notif-card-title">No Shift Activity Yet</span>
+                                  <span className="bento-notif-status-pill" style={{ background: '#F1F5F9', color: '#64748B' }}>Ready</span>
+                                </div>
+                              </div>
+                              <p className="bento-notif-card-desc">
+                                Verified drawer opening cash float and shift closing sales summaries will be recorded and shown here.
+                              </p>
+                            </div>
+                          )}
+
+                          {/* Section: Counter Shortcuts */}
+                          <div className="bento-notif-section-title" style={{ marginTop: '4px' }}>
+                            Counter Shortcuts
+                          </div>
+
                           {/* Card 2: Billing Counter Station */}
                           <div className="bento-notif-card">
                             <div className="bento-notif-card-head">
@@ -8222,7 +8363,7 @@ export function App() {
                             </button>
                           </div>
 
-                          {/* Card 4: Shelf Stock Advisory (Strictly Informational, NO navigation to Inventory) */}
+                          {/* Card 4: Shelf Stock Advisory */}
                           {totalStockAlerts > 0 ? (
                             <div className="bento-notif-card stock-advisory">
                               <div className="bento-notif-card-head">
@@ -8275,8 +8416,15 @@ export function App() {
                             shiftNotifications.map((n) => {
                               const isShiftOpen = n.type === 'shift_open';
                               const isShiftClose = n.type === 'shift_close';
-                              const meta = n.metadata || {};
-                              const isUnread = !n.is_read && !n.isRead;
+                              let meta = n.metadata;
+                              if (typeof meta === 'string') {
+                                try { meta = JSON.parse(meta); } catch {}
+                              }
+                              meta = meta || {};
+
+                              const isUnread = !n.isRead && !n.is_read;
+                              const createdAt = n.createdAt || n.created_at;
+                              const branchName = n.branchName || n.branch_name || meta.branchName || '';
 
                               return (
                                 <div
@@ -8314,16 +8462,16 @@ export function App() {
                                     </div>
                                   </div>
 
-                                  {/* Branch Badge for Super Admin & Time Ago */}
+                                  {/* Branch Badge (always visible if branchName exists) & Time Ago */}
                                   <div className="bento-notif-branch-row">
-                                    {isSuperAdminUser && (n.branch_name || meta.branchName) && (
+                                    {Boolean(branchName) && (
                                       <span className="bento-notif-branch-badge">
                                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-                                        {n.branch_name || meta.branchName}
+                                        {branchName}
                                       </span>
                                     )}
-                                    <span className="bento-notif-time-ago" style={{ marginLeft: isSuperAdminUser ? 'auto' : '0' }}>
-                                      {formatNotifTimeAgo(n.created_at)}
+                                    <span className="bento-notif-time-ago" style={{ marginLeft: branchName ? 'auto' : '0' }}>
+                                      {formatNotifTimeAgo(createdAt)}
                                     </span>
                                   </div>
 
@@ -8357,7 +8505,7 @@ export function App() {
                                     <div className="bento-notif-stats-grid">
                                       <div className="bento-notif-stat-box">
                                         <span className="stat-label">Cashier</span>
-                                        <span className="stat-val">{meta.cashierName || n.cashier_name || 'Cashier'}</span>
+                                        <span className="stat-val">{meta.cashierName || n.cashierName || n.cashier_name || 'Cashier'}</span>
                                       </div>
                                       <div className="bento-notif-stat-box">
                                         <span className="stat-label">Counter</span>
