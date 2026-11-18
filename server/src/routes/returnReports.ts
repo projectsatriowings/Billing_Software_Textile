@@ -32,6 +32,202 @@ function getDateRange(filter: string, from?: string, to?: string): { startDate: 
   return { startDate: todayStr, endDate: todayStr };
 }
 
+function normalizeReportRows(rows: any[], reportType: string): any[] {
+  if (!Array.isArray(rows)) return [];
+  return rows.map((r) => {
+    const out: any = { ...r };
+    for (const [k, v] of Object.entries(r)) {
+      const snake = k.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
+      if (!(snake in out)) out[snake] = v;
+      const camel = k.replace(/_([a-z0-9])/g, (_m, c) => c.toUpperCase());
+      if (!(camel in out)) out[camel] = v;
+    }
+
+    if (reportType === 'daily_sales') {
+      const gross = Number(out.gross_sales_minor ?? out.grossSalesMinor ?? 0);
+      const ret = Number(out.returns_minor ?? out.returnsMinor ?? out.sales_returns_minor ?? out.salesReturnsMinor ?? 0);
+      const net = Number(out.net_sales_minor ?? out.netSalesMinor ?? (gross - ret));
+      const salesCount = Number(out.sales_count ?? out.salesCount ?? out.invoices_count ?? out.invoicesCount ?? out.invoice_count ?? 0);
+      const returnsCount = Number(out.returns_count ?? out.returnsCount ?? out.return_count ?? 0);
+
+      out.gross_sales_minor = gross;
+      out.grossSalesMinor = gross;
+      out.returns_minor = ret;
+      out.returnsMinor = ret;
+      out.sales_returns_minor = ret;
+      out.salesReturnsMinor = ret;
+      out.net_sales_minor = net;
+      out.netSalesMinor = net;
+      out.sales_count = salesCount;
+      out.salesCount = salesCount;
+      out.invoices_count = salesCount;
+      out.invoice_count = salesCount;
+      out.invoicesCount = salesCount;
+      out.returns_count = returnsCount;
+      out.returnsCount = returnsCount;
+      out.return_count = returnsCount;
+    }
+
+    if (reportType === 'sales_returns') {
+      const num = out.return_number ?? out.returnNumber ?? out.credit_note_number ?? out.creditNoteNumber ?? '';
+      out.return_number = num;
+      out.returnNumber = num;
+      out.credit_note_number = num;
+      out.creditNoteNumber = num;
+
+      const origNum = out.orig_invoice_number ?? out.origInvoiceNumber ?? out.original_invoice_number ?? out.originalInvoiceNumber ?? '—';
+      out.orig_invoice_number = origNum;
+      out.origInvoiceNumber = origNum;
+      out.original_invoice_number = origNum;
+
+      const origDate = out.orig_sale_date ?? out.origSaleDate ?? out.original_sale_date ?? '—';
+      out.orig_sale_date = origDate;
+      out.origSaleDate = origDate;
+
+      const retDate = out.return_date ?? out.returnDate ?? out.bdate ?? '';
+      out.return_date = retDate;
+      out.returnDate = retDate;
+
+      const cust = out.customer_name ?? out.customerName ?? 'Walk-in';
+      out.customer_name = cust;
+      out.customerName = cust;
+
+      const prod = out.product_name ?? out.productName ?? out.item_name ?? out.itemName ?? '—';
+      out.product_name = prod;
+      out.productName = prod;
+      out.item_name = prod;
+
+      const qty = Number(out.return_qty ?? out.returnQty ?? (Number(out.return_qty_milli ?? out.returnQtyMilli ?? 0) / 1000));
+      out.return_qty = qty;
+      out.returnQty = qty;
+
+      const amt = Number(out.return_amount_minor ?? out.returnAmountMinor ?? out.total_minor ?? out.totalMinor ?? 0);
+      out.return_amount_minor = amt;
+      out.returnAmountMinor = amt;
+      out.total_minor = amt;
+      out.totalMinor = amt;
+
+      const reason = out.return_reason ?? out.returnReason ?? out.reason ?? '—';
+      out.return_reason = reason;
+      out.returnReason = reason;
+      out.reason = reason;
+
+      const condition = out.item_condition ?? out.itemCondition ?? 'resellable';
+      out.item_condition = condition;
+      out.itemCondition = condition;
+
+      const cashier = out.processed_by ?? out.processedBy ?? out.cashier_name ?? out.cashierName ?? 'Cashier';
+      out.processed_by = cashier;
+      out.processedBy = cashier;
+      out.cashier_name = cashier;
+      out.cashierName = cashier;
+    }
+
+    if (reportType === 'exchanges') {
+      out.exchange_id = out.exchange_id ?? out.exchangeId ?? '';
+      out.exchangeId = out.exchange_id;
+      out.new_invoice_number = out.new_invoice_number ?? out.newInvoiceNumber ?? '';
+      out.newInvoiceNumber = out.new_invoice_number;
+      out.new_purchase_minor = Number(out.new_purchase_minor ?? out.newPurchaseMinor ?? out.new_sold_minor ?? out.newSoldMinor ?? out.total_minor ?? out.totalMinor ?? 0);
+      out.newPurchaseMinor = out.new_purchase_minor;
+      out.exchange_adjusted_minor = Number(out.exchange_adjusted_minor ?? out.exchangeAdjustedMinor ?? 0);
+      out.exchangeAdjustedMinor = out.exchange_adjusted_minor;
+      out.customer_paid_minor = Number(out.customer_paid_minor ?? out.customerPaidMinor ?? out.customer_difference_paid_minor ?? out.customerDifferencePaidMinor ?? out.paid_minor ?? out.paidMinor ?? 0);
+      out.customerPaidMinor = out.customer_paid_minor;
+      out.excess_refund_minor = Number(out.excess_refund_minor ?? out.excessRefundMinor ?? out.remaining_credit_minor ?? out.remainingCreditMinor ?? 0);
+      out.excessRefundMinor = out.excess_refund_minor;
+    }
+
+    if (reportType === 'refunds') {
+      out.id = out.id ?? out.refund_id ?? out.refundId ?? '';
+      out.refund_id = out.id;
+      out.refundId = out.id;
+      out.bdate = out.bdate ?? out.refund_date ?? out.refundDate ?? '';
+      out.refund_date = out.bdate;
+      out.refundDate = out.bdate;
+      out.method = out.method ?? out.refund_method ?? out.refundMethod ?? 'cash';
+      out.refund_method = out.method;
+      out.refundMethod = out.method;
+      out.amount_minor = Number(out.amount_minor ?? out.amountMinor ?? out.refund_amount_minor ?? out.refundAmountMinor ?? 0);
+      out.amountMinor = out.amount_minor;
+      out.refund_amount_minor = out.amount_minor;
+      out.refundAmountMinor = out.amount_minor;
+      out.reference = out.reference ?? out.reference_no ?? out.referenceNo ?? out.refund_ref ?? '—';
+      out.customer_name = out.customer_name ?? out.customerName ?? 'Walk-in';
+      out.customerName = out.customer_name;
+      out.cashier_name = out.cashier_name ?? out.cashierName ?? out.processed_by ?? out.processedBy ?? 'Cashier';
+      out.cashierName = out.cashier_name;
+    }
+
+    if (reportType === 'gross_profit') {
+      const netSales = Number(out.net_sales_minor ?? out.netSalesMinor ?? 0);
+      const netCogs = Number(out.net_cogs_minor ?? out.netCogsMinor ?? 0);
+      const grossProfit = Number(out.gross_profit_minor ?? out.grossProfitMinor ?? (netSales - netCogs));
+      out.net_sales_minor = netSales;
+      out.netSalesMinor = netSales;
+      out.net_cogs_minor = netCogs;
+      out.netCogsMinor = netCogs;
+      out.gross_profit_minor = grossProfit;
+      out.grossProfitMinor = grossProfit;
+      out.operating_expenses_minor = Number(out.operating_expenses_minor ?? out.operatingExpensesMinor ?? 0);
+      out.operatingExpensesMinor = out.operating_expenses_minor;
+      out.net_profit_minor = Number(out.net_profit_minor ?? out.netProfitMinor ?? (grossProfit - out.operating_expenses_minor));
+      out.netProfitMinor = out.net_profit_minor;
+    }
+
+    if (reportType === 'stock_returns') {
+      const cond = out.item_condition ?? out.itemCondition ?? 'resellable';
+      out.item_condition = cond;
+      out.itemCondition = cond;
+      out.condition = cond;
+      out.location = out.location ?? (cond === 'resellable' ? 'MAIN STORE' : cond === 'damaged' ? 'DAMAGED WAREHOUSE' : 'DEFECTIVE BIN');
+      out.total_qty = Number(out.total_qty ?? out.totalQty ?? (Number(out.return_qty_milli ?? out.returnQtyMilli ?? 0) / 1000));
+      out.totalQty = out.total_qty;
+      out.total_cost_minor = Number(out.total_cost_minor ?? out.totalCostMinor ?? out.total_cost_value_minor ?? out.totalCostValueMinor ?? 0);
+      out.totalCostMinor = out.total_cost_minor;
+    }
+
+    if (reportType === 'store_credits') {
+      out.customer_name = out.customer_name ?? out.customerName ?? 'Walk-in';
+      out.customerName = out.customer_name;
+      out.customer_phone = out.customer_phone ?? out.customerPhone ?? out.phone ?? '—';
+      out.customerPhone = out.customer_phone;
+      out.amount_minor = Number(out.amount_minor ?? out.amountMinor ?? out.issued_amount_minor ?? out.issuedAmountMinor ?? 0);
+      out.amountMinor = out.amount_minor;
+      out.balance_minor = Number(out.balance_minor ?? out.balanceMinor ?? out.remaining_balance_minor ?? out.remainingBalanceMinor ?? 0);
+      out.balanceMinor = out.balance_minor;
+      out.used_minor = Number(out.used_minor ?? out.usedMinor ?? (out.amount_minor - out.balance_minor));
+      out.usedMinor = out.used_minor;
+      out.status = out.status ?? 'active';
+    }
+
+    if (reportType === 'cashier_performance') {
+      out.cashier_name = out.cashier_name ?? out.cashierName ?? 'Cashier';
+      out.cashierName = out.cashier_name;
+      const salesCount = Number(out.sales_count ?? out.salesCount ?? out.invoices_count ?? out.invoicesCount ?? out.invoice_count ?? 0);
+      out.sales_count = salesCount;
+      out.salesCount = salesCount;
+      out.invoices_count = salesCount;
+      out.invoice_count = salesCount;
+      out.invoicesCount = salesCount;
+      const gross = Number(out.gross_sales_minor ?? out.grossSalesMinor ?? 0);
+      out.gross_sales_minor = gross;
+      out.grossSalesMinor = gross;
+      const retCount = Number(out.returns_count ?? out.returnsCount ?? out.return_count ?? 0);
+      out.returns_count = retCount;
+      out.returnsCount = retCount;
+      out.return_count = retCount;
+      const retAmt = Number(out.returns_minor ?? out.returnsMinor ?? 0);
+      out.returns_minor = retAmt;
+      out.returnsMinor = retAmt;
+      out.net_sales_minor = Number(out.net_sales_minor ?? out.netSalesMinor ?? (gross - retAmt));
+      out.netSalesMinor = out.net_sales_minor;
+    }
+
+    return out;
+  });
+}
+
 export function registerReturnReports(r: Router) {
   r.get('/api/reports/returns-module', requirePerm('reports'), async (ctx) => {
     const tenantId = ctx.user!.tenantId;
@@ -96,7 +292,15 @@ export function registerReturnReports(r: Router) {
           tenantId, startDate, endDate, ...branchParams,
         ],
       );
-      return { reportType, filter, startDate, endDate, rows };
+      const normalizedRows = normalizeReportRows(rows, reportType);
+      const summary = {
+        totalGrossSalesMinor: normalizedRows.reduce((acc, r) => acc + (r.grossSalesMinor || 0), 0),
+        totalReturnsMinor: normalizedRows.reduce((acc, r) => acc + (r.returnsMinor || 0), 0),
+        totalNetSalesMinor: normalizedRows.reduce((acc, r) => acc + (r.netSalesMinor || 0), 0),
+        totalSalesCount: normalizedRows.reduce((acc, r) => acc + (r.salesCount || 0), 0),
+        totalReturnsCount: normalizedRows.reduce((acc, r) => acc + (r.returnsCount || 0), 0),
+      };
+      return { reportType, filter, startDate, endDate, summary, rows: normalizedRows };
     }
 
     // 2. SALES RETURN REPORT
@@ -131,7 +335,7 @@ export function registerReturnReports(r: Router) {
          ORDER BY cn.created_at DESC`,
         [tenantId, startDate, endDate, ...branchParams],
       );
-      return { reportType, filter, startDate, endDate, rows };
+      return { reportType, filter, startDate, endDate, rows: normalizeReportRows(rows, reportType) };
     }
 
     // 3. EXCHANGE REPORT
@@ -163,7 +367,7 @@ export function registerReturnReports(r: Router) {
          ORDER BY sale.created_at DESC`,
         [tenantId, startDate, endDate, ...branchParams],
       );
-      return { reportType, filter, startDate, endDate, rows };
+      return { reportType, filter, startDate, endDate, rows: normalizeReportRows(rows, reportType) };
     }
 
     // 4. REFUND REPORT
@@ -191,7 +395,7 @@ export function registerReturnReports(r: Router) {
          ORDER BY rfd.created_at DESC`,
         [tenantId, startDate, endDate],
       );
-      return { reportType, filter, startDate, endDate, rows };
+      return { reportType, filter, startDate, endDate, rows: normalizeReportRows(rows, reportType) };
     }
 
     // 5. DAILY GROSS PROFIT REPORT
@@ -270,7 +474,15 @@ export function registerReturnReports(r: Router) {
           tenantId, startDate, endDate,
         ],
       );
-      return { reportType, filter, startDate, endDate, rows };
+      const normalizedRows = normalizeReportRows(rows, reportType);
+      const summary = {
+        totalNetSalesMinor: normalizedRows.reduce((acc, r) => acc + (r.netSalesMinor || 0), 0),
+        totalNetCogsMinor: normalizedRows.reduce((acc, r) => acc + (r.netCogsMinor || 0), 0),
+        totalGrossProfitMinor: normalizedRows.reduce((acc, r) => acc + (r.grossProfitMinor || 0), 0),
+        totalOperatingExpensesMinor: normalizedRows.reduce((acc, r) => acc + (r.operatingExpensesMinor || 0), 0),
+        totalNetProfitMinor: normalizedRows.reduce((acc, r) => acc + (r.netProfitMinor || 0), 0),
+      };
+      return { reportType, filter, startDate, endDate, summary, rows: normalizedRows };
     }
 
     // 6. STOCK RETURN REPORT (Resellable vs Damaged vs Defective)
@@ -307,6 +519,8 @@ export function registerReturnReports(r: Router) {
         [tenantId, startDate, endDate, ...branchParams],
       );
 
+      const normalizedRows = normalizeReportRows(rows, reportType);
+
       // Summary counts by condition
       let resellableCount = 0;
       let damagedCount = 0;
@@ -315,9 +529,9 @@ export function registerReturnReports(r: Router) {
       let damagedValueMinor = 0;
       let defectiveValueMinor = 0;
 
-      for (const r of rows) {
-        const c = String(r.item_condition).toLowerCase();
-        const amt = Number(r.total_return_amount_minor || 0);
+      for (const r of normalizedRows) {
+        const c = String(r.item_condition || r.itemCondition).toLowerCase();
+        const amt = Number(r.total_return_amount_minor || r.totalReturnAmountMinor || 0);
         if (c === 'damaged') {
           damagedCount++;
           damagedValueMinor += amt;
@@ -343,7 +557,7 @@ export function registerReturnReports(r: Router) {
           damagedValueMinor,
           defectiveValueMinor,
         },
-        rows,
+        rows: normalizedRows,
       };
     }
 
@@ -371,7 +585,7 @@ export function registerReturnReports(r: Router) {
          ORDER BY sc.created_at DESC`,
         [tenantId],
       );
-      return { reportType, filter, rows };
+      return { reportType, filter, rows: normalizeReportRows(rows, reportType) };
     }
 
     // 8. CASHIER-WISE SALES AND RETURN REPORT
@@ -396,7 +610,7 @@ export function registerReturnReports(r: Router) {
          ORDER BY gross_sales_minor DESC`,
         [startDate, endDate, tenantId],
       );
-      return { reportType, filter, startDate, endDate, rows };
+      return { reportType, filter, startDate, endDate, rows: normalizeReportRows(rows, reportType) };
     }
 
     throw bad(`Unknown reportType: ${reportType}`);
