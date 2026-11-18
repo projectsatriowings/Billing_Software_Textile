@@ -2576,13 +2576,19 @@ export function registerDayClosing(r: Router) {
         COALESCE(s.variance_minor, 0)::bigint AS variance_minor
        FROM shifts s
        LEFT JOIN users u ON u.id = s.user_id AND u.tenant_id = s.tenant_id
-       WHERE s.tenant_id = ? AND s.branch_id = ?
+       WHERE s.tenant_id = ?
+         AND (
+           s.branch_id = ?
+           OR s.location = ?
+           OR s.branch_id IN (SELECT id FROM branches WHERE (id = ? OR code = ?) AND tenant_id = ?)
+           OR s.location IN (SELECT code FROM branches WHERE (id = ? OR code = ?) AND tenant_id = ?)
+         )
          AND (
            (s.opened_at)::date >= ?::date AND (s.opened_at)::date <= ?::date
            OR (s.closed_at IS NOT NULL AND (s.closed_at)::date >= ?::date AND (s.closed_at)::date <= ?::date)
          )
        ORDER BY s.opened_at ASC`,
-      [tenantId, branchId, startDate, endDate, startDate, endDate],
+      [tenantId, branchId, branchId, branchId, branchId, tenantId, branchId, branchId, tenantId, startDate, endDate, startDate, endDate],
     );
 
     const counters: any[] = [];
@@ -2603,6 +2609,9 @@ export function registerDayClosing(r: Router) {
 
     for (const ir of invoiceRows) {
       const key = ir.counter_key || ir.counterKey;
+      const counterId = ir.counterIdentifier || ir.counter_identifier || ir.counterId;
+      const counterCode = ir.counterCode || ir.counter_code;
+      const counterName = ir.counterName || ir.counter_name;
       const isException = key === 'UNASSIGNED';
       if (isException) exceptionCount++;
 
@@ -2655,10 +2664,15 @@ export function registerDayClosing(r: Router) {
       // B. Link shifts operating on this counter
       const counterShifts: any[] = [];
       for (const sh of shiftRows) {
+        const shKey = sh.counter_key || sh.counterKey;
+        const shCounterId = sh.counter_id || sh.counterId;
+        const shCounter = sh.counter;
+        const shCashierId = sh.cashier_id || sh.cashierId || sh.user_id || sh.userId;
+
         const isCounterMatch =
-          sh.counter_key === key ||
-          (ir.counter_identifier && (sh.counter_id === ir.counter_identifier || sh.counter === ir.counter_identifier)) ||
-          (ir.counter_code && (sh.counter === ir.counter_code || sh.counter_id === ir.counter_code));
+          shKey === key ||
+          (counterId && (shCounterId === counterId || shCounter === counterId)) ||
+          (counterCode && (shCounter === counterCode || shCounterId === counterCode));
 
         if (!isCounterMatch) continue;
 
@@ -2666,24 +2680,24 @@ export function registerDayClosing(r: Router) {
           shiftId: sh.id,
           shiftNumber: sh.shift_number || sh.shiftNumber || sh.id,
           status: sh.status,
-          cashierId: sh.cashier_id,
-          cashierName: sh.cashier_name,
-          cashierRole: sh.cashier_role,
-          openedAt: sh.opened_at,
-          closedAt: sh.closed_at,
-          openingCashMinor: Number(sh.opening_cash_minor || 0),
-          countedCashMinor: Number(sh.counted_cash_minor || 0),
-          expectedCashMinor: Number(sh.expected_cash_minor || 0),
-          varianceMinor: Number(sh.variance_minor || 0),
+          cashierId: shCashierId,
+          cashierName: sh.cashier_name || sh.cashierName,
+          cashierRole: sh.cashier_role || sh.cashierRole,
+          openedAt: sh.opened_at || sh.openedAt,
+          closedAt: sh.closed_at || sh.closedAt,
+          openingCashMinor: Number(sh.opening_cash_minor ?? sh.openingCashMinor ?? 0),
+          countedCashMinor: Number(sh.counted_cash_minor ?? sh.countedCashMinor ?? 0),
+          expectedCashMinor: Number(sh.expected_cash_minor ?? sh.expectedCashMinor ?? 0),
+          varianceMinor: Number(sh.variance_minor ?? sh.varianceMinor ?? 0),
         };
         counterShifts.push(shiftItem);
 
-        if (sh.cashier_id) {
-          if (!cashierMap.has(sh.cashier_id)) {
-            cashierMap.set(sh.cashier_id, {
-              cashierId: sh.cashier_id,
-              cashierName: sh.cashier_name || 'Cashier',
-              cashierRole: sh.cashier_role || 'CASHIER',
+        if (shCashierId) {
+          if (!cashierMap.has(shCashierId)) {
+            cashierMap.set(shCashierId, {
+              cashierId: shCashierId,
+              cashierName: sh.cashier_name || sh.cashierName || 'Cashier',
+              cashierRole: sh.cashier_role || sh.cashierRole || 'CASHIER',
               invoicesCount: 0,
               returnsCount: 0,
               grossSalesMinor: 0,
@@ -2695,7 +2709,7 @@ export function registerDayClosing(r: Router) {
               shifts: [shiftItem],
             });
           } else {
-            cashierMap.get(sh.cashier_id)!.shifts.push(shiftItem);
+            cashierMap.get(shCashierId)!.shifts.push(shiftItem);
           }
         }
       }
@@ -2761,9 +2775,11 @@ export function registerDayClosing(r: Router) {
     const registeredCounters = await ctx.db.query<any>(
       `SELECT id, name, code, status
        FROM counters
-       WHERE tenant_id = ? AND branch_id = ? AND status = 'ACTIVE'
+       WHERE tenant_id = ?
+         AND (branch_id = ? OR branch_id IN (SELECT id FROM branches WHERE (id = ? OR code = ?) AND tenant_id = ?))
+         AND status = 'ACTIVE'
        ORDER BY code ASC`,
-      [tenantId, branchId],
+      [tenantId, branchId, branchId, branchId, tenantId],
     );
 
     const existingCounterCodes = new Set(counters.map((c) => c.counterCode));
@@ -2774,20 +2790,24 @@ export function registerDayClosing(r: Router) {
         continue;
       }
       const rcShifts = shiftRows
-        .filter((sh: any) => sh.counter_id === rc.id || sh.counter === rc.code)
+        .filter((sh: any) => {
+          const sId = sh.counterId || sh.counter_id;
+          const sCode = sh.counter;
+          return sId === rc.id || sCode === rc.code;
+        })
         .map((sh: any) => ({
           shiftId: sh.id,
-          shiftNumber: sh.shift_number || sh.id,
+          shiftNumber: sh.shiftNumber || sh.shift_number || sh.id,
           status: sh.status,
-          cashierId: sh.cashier_id,
-          cashierName: sh.cashier_name,
-          cashierRole: sh.cashier_role,
-          openedAt: sh.opened_at,
-          closedAt: sh.closed_at,
-          openingCashMinor: Number(sh.opening_cash_minor || 0),
-          countedCashMinor: Number(sh.counted_cash_minor || 0),
-          expectedCashMinor: Number(sh.expected_cash_minor || 0),
-          varianceMinor: Number(sh.variance_minor || 0),
+          cashierId: sh.cashierId || sh.cashier_id || sh.userId || sh.user_id,
+          cashierName: sh.cashierName || sh.cashier_name,
+          cashierRole: sh.cashierRole || sh.cashier_role,
+          openedAt: sh.openedAt || sh.opened_at,
+          closedAt: sh.closedAt || sh.closed_at,
+          openingCashMinor: Number(sh.openingCashMinor ?? sh.opening_cash_minor ?? 0),
+          countedCashMinor: Number(sh.countedCashMinor ?? sh.counted_cash_minor ?? 0),
+          expectedCashMinor: Number(sh.expectedCashMinor ?? sh.expected_cash_minor ?? 0),
+          varianceMinor: Number(sh.varianceMinor ?? sh.variance_minor ?? 0),
         }));
 
       const rcCashiers = rcShifts.map((sh: any) => ({
