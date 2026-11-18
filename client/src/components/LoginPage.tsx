@@ -232,9 +232,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             RIGHT HALF: CLEAN MODERN LOGIN FORM (Matching Image 2 Reference)
             ------------------------------------------------------------------ */}
         <div className="modern-login-right">
-          <div>
-            {/* Top Navigation Row */}
-            <div className="modern-login-top-row">
+          <div className="modern-login-form-inner">
+            <div>
+              {/* Top Navigation Row */}
+              <div className="modern-login-top-row">
               <div className="modern-brand-logo" onClick={onBackToHome}>
                 <div className="modern-brand-icon">⚡</div>
                 <span>Adaptive Billing</span>
@@ -457,6 +458,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             </div>
           </div>
         </div>
+      </div>
       </div>
 
       {/* Modern Forgot Password Modal */}
