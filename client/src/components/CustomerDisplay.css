@@ -51,9 +51,10 @@
 /* ================= HEADER ================= */
 .cfd-header {
   height: 64px;
-  background: var(--surface, #FAF7F2);
+  background: var(--bg, #E8E1D5) !important;
+  background-color: var(--bg, #E8E1D5) !important;
   backdrop-filter: blur(12px);
-  border-bottom: 1.5px solid var(--border, #D0C7B8);
+  border-bottom: 1.5px solid var(--border, #D0C7B8) !important;
   display: flex;
   align-items: center;
   justify-content: space-between;

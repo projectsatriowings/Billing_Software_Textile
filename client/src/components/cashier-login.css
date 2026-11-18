@@ -4000,3 +4000,13 @@ body.theme-cashier .bento-act-btn.return:disabled,
   color: var(--border) !important;
   opacity: 0.6 !important;
 }
+
+/* 5.12 Customer-Facing Display (CFD) Theme Overrides */
+div.app-container.theme-cashier .cfd-header,
+body.theme-cashier .cfd-header,
+.theme-cashier .cfd-header {
+  background: var(--bg) !important;
+  background-color: var(--bg) !important;
+  border-bottom: 1.5px solid var(--border) !important;
+  color: var(--sidebar) !important;
+}
