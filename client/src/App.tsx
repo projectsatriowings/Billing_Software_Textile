@@ -161,6 +161,7 @@ import { ToggleSwitch } from './components/ToggleSwitch';
 import { renderBarcodeSvg } from '../../shared/bulkImport.ts';
 import { OpenShiftModal } from './components/shifts/OpenShiftModal.tsx';
 import { SelectCounterModal } from './components/shifts/SelectCounterModal.tsx';
+import { LogoutShiftModal } from './components/shifts/LogoutShiftModal.tsx';
 import { RecentBillsBentoView } from './components/invoices/RecentBillsBentoView.tsx';
 import { TodayDashboardView, AnimatedCounter } from './components/dashboard/TodayDashboardView.tsx';
 import { PaymentsView } from './components/finance/PaymentsView.tsx';
@@ -1260,6 +1261,7 @@ export function App() {
   const [showDiscountPicker, setShowDiscountPicker] = useState(false);
   const [showPosOpenShiftModal, setShowPosOpenShiftModal] = useState(false);
   const [showCounterModal, setShowCounterModal] = useState<boolean>(false);
+  const [showLogoutShiftModal, setShowLogoutShiftModal] = useState<boolean>(false);
   const [showHeldOrdersModal, setShowHeldOrdersModal] = useState(false);
   const [showCustomItemModal, setShowCustomItemModal] = useState(false);
   const [showShortcutsModal, setShowShortcutsModal] = useState(false);
@@ -2927,22 +2929,8 @@ export function App() {
   };
 
 
-  const handleLogout = async () => {
-    let shouldCloseShift = false;
-    if (activeShiftNumber && user?.role === 'cashier') {
-      const confirmClose = window.confirm(
-        `You have an active cashier shift open (#${activeShiftNumber}) on ${selectedCounter || 'your counter'}.\n\n` +
-        `Would you like to close your shift and release this counter so another cashier can use it?\n\n` +
-        `• Click "OK" to close shift, release counter, and logout.\n` +
-        `• Click "Cancel" to stay logged in and reconcile your drawer first.`
-      );
-      if (!confirmClose) {
-        setActiveTab('shifts');
-        return;
-      }
-      shouldCloseShift = true;
-    }
-
+  const performLogout = async (shouldCloseShift = false) => {
+    setShowLogoutShiftModal(false);
     try {
       await api('/api/auth/logout', {
         method: 'POST',
@@ -2968,6 +2956,14 @@ export function App() {
     setUser(null);
     setShop(null);
     navigateTo('landing');
+  };
+
+  const handleLogout = async () => {
+    if (activeShiftNumber && user?.role === 'cashier') {
+      setShowLogoutShiftModal(true);
+      return;
+    }
+    await performLogout(false);
   };
 
   const handleLogoFileUpload = (file: File) => {
@@ -18244,6 +18240,22 @@ export function App() {
             availableCounters={activeBranch?.counters}
             counterDetails={activeBranch?.counterDetails}
             canClose={Boolean(selectedCounter)}
+          />
+        )}
+
+        {/* CASHIER LOGOUT ACTIVE SHIFT CONFIRMATION MODAL */}
+        {showLogoutShiftModal && (
+          <LogoutShiftModal
+            isOpen={showLogoutShiftModal}
+            onClose={() => setShowLogoutShiftModal(false)}
+            onConfirmCloseAndLogout={() => performLogout(true)}
+            onReconcileFirst={() => {
+              setShowLogoutShiftModal(false);
+              setActiveTab('shifts');
+            }}
+            shiftNumber={activeShiftNumber}
+            counterName={selectedCounter || 'Counter 1'}
+            branchName={currentBranchName}
           />
         )}
 
