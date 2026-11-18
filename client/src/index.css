@@ -451,8 +451,8 @@ body {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #a78bfa;
-  border: 1.5px solid #1e1b4b;
+  background: var(--ring, #14b8a6);
+  border: 1.5px solid var(--sidebar, #0f2d2e);
 }
 
 /* Tooltip on right when hovering collapsed icon */
@@ -33161,10 +33161,10 @@ select.expense-input-control {
   font-size: 0.68rem;
   font-weight: 700;
   padding: 1px 7px;
-  background: #EEF2FF;
-  color: #4F46E5;
+  background: var(--primary-soft, #E6F4F3);
+  color: var(--primary, #0F766E);
   border-radius: 999px;
-  border: 1px solid #C7D2FE;
+  border: 1px solid rgba(20, 184, 166, 0.35);
 }
 
 .bento-notif-mark-read-btn {
@@ -33172,7 +33172,7 @@ select.expense-input-control {
   border: none;
   font-size: 0.72rem;
   font-weight: 600;
-  color: #6366F1;
+  color: var(--primary, #0F766E);
   cursor: pointer;
   padding: 2px 6px;
   border-radius: 4px;
@@ -33180,8 +33180,8 @@ select.expense-input-control {
 }
 
 .bento-notif-mark-read-btn:hover {
-  background: #EEF2FF;
-  color: #4338CA;
+  background: var(--primary-soft, #E6F4F3);
+  color: var(--primary-hover, #115E59);
   text-decoration: underline;
 }
 
@@ -33191,19 +33191,19 @@ select.expense-input-control {
 }
 
 .bento-notif-card.shift-close {
-  border-left: 4px solid #6366F1;
-  background: #FBFBFF;
+  border-left: 4px solid var(--primary, #0F766E);
+  background: var(--surface, #FAF7F2);
 }
 
 .bento-notif-card.unread {
-  background: #F5F7FF;
-  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.2);
+  background: #F4FAF9;
+  box-shadow: 0 0 0 1px rgba(20, 184, 166, 0.25);
 }
 
 .bento-notif-unread-dot {
   width: 7px;
   height: 7px;
-  background-color: #4F46E5;
+  background-color: var(--primary, #0F766E);
   border-radius: 50%;
   display: inline-block;
   flex-shrink: 0;
@@ -33211,9 +33211,9 @@ select.expense-input-control {
 }
 
 @keyframes pulseDot {
-  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.7); }
-  70% { transform: scale(1.1); box-shadow: 0 0 0 5px rgba(79, 70, 229, 0); }
-  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); }
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(15, 118, 110, 0.7); }
+  70% { transform: scale(1.1); box-shadow: 0 0 0 5px rgba(15, 118, 110, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(15, 118, 110, 0); }
 }
 
 .bento-notif-branch-row {
