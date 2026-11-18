@@ -18145,20 +18145,82 @@ export function App() {
 
         {/* CUSTOMER-FACING DISPLAY (CFD) CONTROLLER MODAL */}
         {showCfdModal && (
-          <div className="modal-overlay" onClick={() => setShowCfdModal(false)}>
-            <div className="modal-content cfd-control-modal-content" onClick={(e) => e.stopPropagation()}>
-              <div className="modal-header">
-                <div className="modal-header-left">
-                  <span className="bento-icon-circle blue">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+          <div
+            className="modal-overlay theme-cashier"
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(15, 23, 42, 0.65)',
+              backdropFilter: 'blur(8px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 99999,
+              padding: '1rem',
+            }}
+            onClick={() => setShowCfdModal(false)}
+          >
+            <div
+              className="modal-content cfd-control-modal-content shift-bento-dialog"
+              style={{
+                maxWidth: '540px',
+                width: '95vw',
+                background: 'var(--surface, #FAF7F2)',
+                borderRadius: '20px',
+                overflow: 'hidden',
+                boxShadow: '0 25px 60px -15px rgba(15, 45, 46, 0.28), 0 10px 24px -5px rgba(15, 45, 46, 0.08)',
+                border: '1.5px solid var(--border, #D0C7B8)',
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Top Accent Gradient Bar */}
+              <div
+                className="modal-top-accent green-accent"
+                style={{
+                  height: '4px',
+                  background: 'linear-gradient(90deg, var(--sidebar, #0F2D2E) 0%, var(--primary, #0F766E) 50%, var(--ring, #14B8A6) 100%)',
+                }}
+              />
+
+              <div
+                className="modal-header"
+                style={{
+                  padding: '1.2rem 1.6rem',
+                  borderBottom: '1px solid var(--border, #D0C7B8)',
+                  background: 'var(--surface, #FAF7F2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <div className="modal-header-left" style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                  <div
+                    style={{
+                      width: '44px',
+                      height: '44px',
+                      borderRadius: '13px',
+                      background: 'var(--primary-soft, #E6F4F3)',
+                      color: 'var(--primary, #0F766E)',
+                      border: '1.2px solid rgba(20, 184, 166, 0.4)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxShadow: '0 2px 8px rgba(15, 118, 110, 0.15)',
+                    }}
+                  >
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
                       <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
                       <line x1="8" y1="21" x2="16" y2="21"></line>
                       <line x1="12" y1="17" x2="12" y2="21"></line>
                     </svg>
-                  </span>
+                  </div>
                   <div>
-                    <h3 className="card-title" style={{ margin: 0 }}>Customer-Facing Display (CFD)</h3>
-                    <div className="modal-subtitle">
+                    <h3 style={{ margin: 0, fontSize: '1.18rem', fontWeight: 800, color: 'var(--sidebar, #0F2D2E)' }}>
+                      Customer-Facing Display (CFD)
+                    </h3>
+                    <div style={{ margin: '0.2rem 0 0 0', fontSize: '0.78rem', color: 'var(--text-muted, #475569)' }}>
                       Live mirror items, discounts, and payment QR on a 2nd screen or iPad
                     </div>
                   </div>
@@ -18167,27 +18229,74 @@ export function App() {
                   type="button"
                   className="modal-close-icon-btn"
                   onClick={() => setShowCfdModal(false)}
+                  style={{
+                    background: 'var(--surface, #FAF7F2)',
+                    border: '1px solid var(--border, #D0C7B8)',
+                    borderRadius: '10px',
+                    width: '32px',
+                    height: '32px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    color: 'var(--text-muted, #475569)',
+                    transition: 'all 0.15s ease',
+                  }}
+                  title="Close"
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
                     <line x1="18" y1="6" x2="6" y2="18" />
                     <line x1="6" y1="6" x2="18" y2="18" />
                   </svg>
                 </button>
               </div>
 
-              <div className="scanner-modal-body" style={{ padding: '1.25rem' }}>
-                <div className="cfd-control-status-row">
+              <div className="scanner-modal-body" style={{ padding: '1.4rem 1.6rem', background: 'var(--surface, #FAF7F2)' }}>
+                <div
+                  className="cfd-control-status-row"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.8)',
+                    border: '1.5px solid var(--border, #D0C7B8)',
+                    padding: '0.85rem 1.1rem',
+                    borderRadius: '12px',
+                    marginBottom: '1.15rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}
+                >
                   <div>
-                    <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#0f172a' }}>Connection Status</div>
-                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Dual-screen / Wireless tablet sync</div>
+                    <div style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--sidebar, #0F2D2E)' }}>Connection Status</div>
+                    <div style={{ fontSize: '0.76rem', color: 'var(--text-muted, #475569)' }}>Dual-screen / Wireless tablet sync</div>
                   </div>
-                  <div className={`cfd-status-indicator ${isCfdConnected ? 'connected' : 'waiting'}`}>
-                    <span className={`walkin-dot ${isCfdConnected ? '' : 'gray'}`} style={{ background: isCfdConnected ? '#10b981' : '#94a3b8' }}></span>
-                    <span>{isCfdConnected ? '🟢 Display Connected & Live' : '⚪ Waiting for Display'}</span>
+                  <div
+                    className={`cfd-status-indicator ${isCfdConnected ? 'connected' : 'waiting'}`}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.45rem',
+                      fontWeight: 750,
+                      fontSize: '0.8rem',
+                      padding: '0.35rem 0.75rem',
+                      borderRadius: '20px',
+                      background: isCfdConnected ? '#dcfce7' : 'var(--bg, #E8E1D5)',
+                      color: isCfdConnected ? '#15803d' : 'var(--text-muted, #475569)',
+                      border: isCfdConnected ? '1px solid #bbf7d0' : '1px solid var(--border, #D0C7B8)',
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: '7px',
+                        height: '7px',
+                        borderRadius: '50%',
+                        background: isCfdConnected ? '#16a34a' : 'var(--text-muted, #475569)',
+                      }}
+                    />
+                    <span>{isCfdConnected ? 'Display Connected & Live' : 'Waiting for Display'}</span>
                   </div>
                 </div>
 
-                <div className="cfd-actions-grid">
+                <div className="cfd-actions-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem', marginBottom: '1.15rem' }}>
                   <button
                     type="button"
                     className="cfd-action-btn-large primary"
@@ -18195,6 +18304,23 @@ export function App() {
                       const cfdUrl = `${window.location.origin}/customer-display`;
                       window.open(cfdUrl, 'CustomerFacingDisplay', 'width=1280,height=800,menubar=no,toolbar=no,location=no');
                       showToast('Customer display opened! Drag it to your second monitor.');
+                    }}
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.5rem',
+                      padding: '1.15rem 0.9rem',
+                      background: 'var(--primary, #0F766E)',
+                      border: 'none',
+                      borderRadius: '14px',
+                      fontWeight: 800,
+                      fontSize: '0.88rem',
+                      color: '#ffffff',
+                      cursor: 'pointer',
+                      boxShadow: '0 4px 14px rgba(15, 118, 110, 0.28)',
+                      transition: 'all 0.15s ease',
                     }}
                   >
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
@@ -18213,6 +18339,23 @@ export function App() {
                       navigator.clipboard.writeText(cfdUrl);
                       showToast('Link copied! Open on your tablet or customer-facing device.');
                     }}
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.5rem',
+                      padding: '1.15rem 0.9rem',
+                      background: '#ffffff',
+                      border: '1.5px solid var(--border, #D0C7B8)',
+                      borderRadius: '14px',
+                      fontWeight: 800,
+                      fontSize: '0.88rem',
+                      color: 'var(--sidebar, #0F2D2E)',
+                      cursor: 'pointer',
+                      boxShadow: '0 2px 6px rgba(15, 45, 46, 0.04)',
+                      transition: 'all 0.15s ease',
+                    }}
                   >
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
                       <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
@@ -18223,23 +18366,55 @@ export function App() {
                 </div>
 
                 {/* Direct Link box */}
-                <div className="cfd-url-share-box">
-                  <label>Direct Link for Tablets & iPads:</label>
-                  <div className="cfd-url-input-wrap">
+                <div
+                  className="cfd-url-share-box"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.8)',
+                    border: '1.5px solid var(--border, #D0C7B8)',
+                    padding: '1rem',
+                    borderRadius: '12px',
+                    fontSize: '0.78rem',
+                  }}
+                >
+                  <label style={{ display: 'block', fontWeight: 800, color: 'var(--sidebar, #0F2D2E)', marginBottom: '0.5rem' }}>
+                    Direct Link for Tablets & iPads:
+                  </label>
+                  <div className="cfd-url-input-wrap" style={{ display: 'flex', gap: '0.5rem' }}>
                     <input
                       type="text"
                       readOnly
                       value={`${window.location.origin}/customer-display`}
+                      style={{
+                        flex: 1,
+                        background: '#ffffff',
+                        border: '1.5px solid var(--border, #D0C7B8)',
+                        padding: '0.55rem 0.75rem',
+                        borderRadius: '8px',
+                        fontSize: '0.84rem',
+                        fontWeight: 650,
+                        color: 'var(--sidebar, #0F2D2E)',
+                      }}
                     />
                     <button
                       type="button"
                       className="scanner-open-btn"
                       onClick={() => window.open('/customer-display', '_blank')}
+                      style={{
+                        background: 'var(--primary, #0F766E)',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '8px',
+                        padding: '0.55rem 1.1rem',
+                        fontWeight: 800,
+                        fontSize: '0.84rem',
+                        cursor: 'pointer',
+                        boxShadow: '0 2px 6px rgba(15, 118, 110, 0.25)',
+                      }}
                     >
                       Open
                     </button>
                   </div>
-                  <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '0.5rem' }}>
+                  <div style={{ fontSize: '0.74rem', color: 'var(--text-muted, #475569)', marginTop: '0.6rem', lineHeight: 1.4 }}>
                     💡 Tip: Place any tablet or secondary screen facing the customer and open this URL in full-screen. Items will mirror automatically as you scan them!
                   </div>
                 </div>

@@ -271,7 +271,17 @@ export const CustomerDisplay: React.FC<CustomerDisplayProps> = ({ counterId = 'c
   const potentialLoyaltyPoints = Math.floor((state.totalMinor || 0) / 1000);
 
   return (
-    <div className="cfd-root">
+    <div className="cfd-root theme-cashier">
+      {/* Top Cashier Bento Teal Accent Gradient Bar */}
+      <div
+        className="cfd-top-accent-bar"
+        style={{
+          height: '4px',
+          background: 'linear-gradient(90deg, #0F2D2E 0%, #0F766E 50%, #14B8A6 100%)',
+          width: '100%',
+          flexShrink: 0,
+        }}
+      />
       {/* 1. TOP HEADER */}
       <header className="cfd-header">
         <div className="cfd-header-left">
@@ -551,7 +561,7 @@ export const CustomerDisplay: React.FC<CustomerDisplayProps> = ({ counterId = 'c
               <div className="cfd-gst-pill-box">
                 <div className="cfd-gst-top">
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--primary, #0F766E)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
                     </svg>
                     <span>Consolidated GST Tax</span>
