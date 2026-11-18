@@ -16,6 +16,7 @@
     "test": "node --import tsx --test --test-concurrency=1 \"shared/test/*.test.ts\" \"server/test/*.test.ts\"",
     "backup": "node scripts/backup-db.mjs",
     "typecheck": "tsc -p server/tsconfig.json && tsc -p client/tsconfig.json",
+    "deploy:vps": "bash scripts/deploy.sh",
     "tunnel": "npx -y cloudflared tunnel --url http://localhost:3001"
   },
   "dependencies": {
