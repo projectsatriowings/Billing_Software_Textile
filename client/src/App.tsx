@@ -2928,8 +2928,26 @@ export function App() {
 
 
   const handleLogout = async () => {
+    let shouldCloseShift = false;
+    if (activeShiftNumber && user?.role === 'cashier') {
+      const confirmClose = window.confirm(
+        `You have an active cashier shift open (#${activeShiftNumber}) on ${selectedCounter || 'your counter'}.\n\n` +
+        `Would you like to close your shift and release this counter so another cashier can use it?\n\n` +
+        `• Click "OK" to close shift, release counter, and logout.\n` +
+        `• Click "Cancel" to stay logged in and reconcile your drawer first.`
+      );
+      if (!confirmClose) {
+        setActiveTab('shifts');
+        return;
+      }
+      shouldCloseShift = true;
+    }
+
     try {
-      await api('/api/auth/logout', { method: 'POST' });
+      await api('/api/auth/logout', {
+        method: 'POST',
+        body: JSON.stringify({ closeActiveShift: shouldCloseShift }),
+      });
     } catch { /* ignore */ }
     clearToken();
     try {
@@ -2946,6 +2964,7 @@ export function App() {
     } catch { }
     setSelectedCounter('');
     setSelectedCounterId('');
+    setActiveShiftNumber(null);
     setUser(null);
     setShop(null);
     navigateTo('landing');

@@ -173,7 +173,20 @@ export function registerAuth(r: Router, tokens: { secret: string; ttlSeconds: nu
   // Tokens are stateless: the browser simply forgets its token. Recorded so the audit trail shows sign-outs.
   r.post('/api/auth/logout', requireUser, async (ctx) => {
     try {
-      // Clear counter assignment if no active open shift exists
+      const closeActiveShift = ctx.body?.closeActiveShift === true || ctx.query?.closeActiveShift === 'true';
+      if (closeActiveShift) {
+        await ctx.db.exec(
+          `UPDATE shifts 
+           SET status = 'closed', closed_at = now(), note = CASE 
+             WHEN note IS NULL OR note = '' THEN 'Closed on cashier logout'
+             ELSE note || ' (Closed on cashier logout)'
+           END
+           WHERE tenant_id = ? AND user_id = ? AND status = 'open'`,
+          [ctx.user!.tenantId, ctx.user!.id],
+        );
+      }
+
+      // Clear counter assignment if no active open shift exists (or if shift was closed on logout)
       const hasOpenShift = await ctx.db.one(
         "SELECT id FROM shifts WHERE tenant_id = ? AND user_id = ? AND status = 'open' LIMIT 1",
         [ctx.user!.tenantId, ctx.user!.id],
@@ -186,6 +199,7 @@ export function registerAuth(r: Router, tokens: { secret: string; ttlSeconds: nu
       }
     } catch {}
     await audit(ctx.db, ctx, { action: 'auth.logout', entity: 'user', entityId: ctx.user!.id });
+    return { ok: true };
   });
 
   // Changing your own password signs out every other device (their tokens carry the old password fingerprint).
