@@ -1958,34 +1958,54 @@ export function App() {
   // Listen for hash & pathname / popstate changes
   useEffect(() => {
     const handleLocationChange = () => {
-      const hash = window.location.hash.replace('#', '');
+      const rawHash = (window.location.hash || '').replace('#', '').replace(/^\//, '');
       const path = window.location.pathname;
-      if (!hash || hash === 'landing') {
+
+      if (!rawHash || rawHash === 'landing') {
         try { sessionStorage.removeItem('app_entered'); } catch { }
         setView('landing');
-      } else if (path === '/user-management') {
-        try { sessionStorage.setItem('app_entered', 'true'); } catch { }
-        setView('dashboard');
-        setActiveTab('user-management');
-      } else if (['landing', 'login', 'register', 'selector', 'dashboard'].includes(hash) || hash === 'cashier-login' || hash.startsWith('login')) {
-        if (hash === 'cashier-login') {
-          setView('login');
-        } else if (hash === 'dashboard') {
-          try { sessionStorage.setItem('app_entered', 'true'); } catch { }
+        return;
+      }
+
+      // Password reset flows
+      if (rawHash.startsWith('reset-password') || path === '/reset-password') {
+        setView('reset-password');
+        return;
+      }
+      if (rawHash.startsWith('change-password') || path === '/change-password') {
+        setView('change-password');
+        return;
+      }
+
+      // Explicit navigation from Landing Page or internal buttons
+      if (rawHash === 'login' || rawHash === 'cashier-login' || rawHash.startsWith('login')) {
+        setView('login');
+      } else if (rawHash === 'register') {
+        setView('register');
+      } else if (rawHash === 'selector') {
+        setView('selector');
+      } else if (rawHash === 'dashboard' || path === '/user-management' || rawHash === 'stock-transfer' || rawHash === 'product-movement') {
+        const hasEntered = (() => {
+          try { return sessionStorage.getItem('app_entered') === 'true'; } catch { return false; }
+        })();
+        if (hasEntered) {
           setView('dashboard');
+          if (rawHash === 'stock-transfer') {
+            setActiveTab('stock-transfer');
+            setShowInventoryDropdown(true);
+          } else if (rawHash === 'product-movement') {
+            setActiveTab('product-movement');
+            setShowInventoryDropdown(true);
+          } else if (path === '/user-management') {
+            setActiveTab('user-management');
+          }
         } else {
-          setView(hash.split('?')[0] as any);
+          // If app was not explicitly entered, always redirect to landing page
+          try {
+            window.history.replaceState(null, '', window.location.pathname + window.location.search);
+          } catch { }
+          setView('landing');
         }
-      } else if (hash === 'stock-transfer' || path === '/stock-transfer') {
-        try { sessionStorage.setItem('app_entered', 'true'); } catch { }
-        setView('dashboard');
-        setActiveTab('stock-transfer');
-        setShowInventoryDropdown(true);
-      } else if (hash === 'product-analysis' || hash === 'product-movement' || path === '/product-analysis' || path === '/product-movement') {
-        try { sessionStorage.setItem('app_entered', 'true'); } catch { }
-        setView('dashboard');
-        setActiveTab('product-movement');
-        setShowInventoryDropdown(true);
       }
     };
     window.addEventListener('hashchange', handleLocationChange);
@@ -1996,21 +2016,50 @@ export function App() {
     };
   }, []);
 
-  // Check auth
+  // Check auth & enforce initial entry always starts on Landing Page
   useEffect(() => {
     loadDemoBusinesses();
+
+    // Reset hash & session on tab/browser close so reopening never restores deep subpages
+    const handleBeforeUnload = () => {
+      try {
+        sessionStorage.removeItem('app_entered');
+        window.history.replaceState(null, '', window.location.pathname);
+      } catch { }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('pagehide', handleBeforeUnload);
+
     const initAuth = async () => {
-      const token = getToken();
-      const currentHash = window.location.hash.replace('#', '');
-      if (!token) {
+      const rawHash = (window.location.hash || '').replace('#', '').replace(/^\//, '');
+      const pathname = window.location.pathname;
+
+      // Allow direct password reset links
+      if (pathname === '/reset-password' || rawHash.startsWith('reset-password')) {
         setLoading(false);
-        if (currentHash === 'login' || currentHash === 'register' || currentHash === 'cashier-login' || currentHash.startsWith('login')) {
-          setView(currentHash === 'cashier-login' ? 'login' : currentHash.split('?')[0] as any);
-        } else {
-          setView('landing');
-        }
         return;
       }
+      if (pathname === '/change-password' || rawHash.startsWith('change-password')) {
+        setLoading(false);
+        return;
+      }
+
+      // Requirement: Regardless of which page was open when closed, ALWAYS start on Landing Page!
+      // Clean any lingering hash (#dashboard, #/login, #login, #pos, etc.) from address bar
+      try {
+        sessionStorage.removeItem('app_entered');
+        if (window.location.hash) {
+          window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        }
+      } catch { }
+
+      const token = getToken();
+      if (!token) {
+        setLoading(false);
+        setView('landing');
+        return;
+      }
+
       try {
         const res = await api<{ user: User; shop: Shop }>('/api/auth/me');
         setUser(res.user);
@@ -2025,68 +2074,8 @@ export function App() {
             }
           } catch { }
         }
-        const urlParams = new URLSearchParams(window.location.search);
-        const tabParam = urlParams.get('tab');
-        const isStockTransferRoute =
-          currentHash === 'stock-transfer' ||
-          tabParam === 'stock-transfer' ||
-          window.location.pathname === '/stock-transfer';
-        const isUserManagementRoute =
-          window.location.pathname === '/user-management' ||
-          currentHash === 'user-management' ||
-          tabParam === 'user-management';
-        const isProductAnalysisRoute =
-          ['product-analysis', 'product-movement'].includes(currentHash) ||
-          ['product-analysis', 'product-movement'].includes(tabParam || '') ||
-          window.location.pathname === '/product-analysis' ||
-          window.location.pathname === '/product-movement';
-
-        // Check if user has explicitly entered the dashboard in this browser session
-        const hasEnteredAppSession = (() => {
-          try {
-            return sessionStorage.getItem('app_entered') === 'true';
-          } catch {
-            return false;
-          }
-        })();
-
-        if (isUserManagementRoute && hasEnteredAppSession) {
-          const rUpper = String(res.user?.role || '').toUpperCase();
-          if (rUpper === 'OWNER' || rUpper === 'SUPER_ADMIN' || rUpper === 'MANAGER' || rUpper === 'STORE_MANAGER') {
-            setView('dashboard');
-            setActiveTab('user-management');
-          } else {
-            setView('dashboard');
-            setActiveTab('pos');
-            try { window.history.replaceState({}, '', '/'); } catch { }
-            showToast("You don't have access to User Management");
-          }
-        } else if (isStockTransferRoute && hasEnteredAppSession) {
-          setView('dashboard');
-          setActiveTab('stock-transfer');
-          setShowInventoryDropdown(true);
-        } else if (isProductAnalysisRoute && hasEnteredAppSession) {
-          setView('dashboard');
-          setActiveTab('product-movement');
-          setShowInventoryDropdown(true);
-        } else if (currentHash === 'selector' && hasEnteredAppSession) {
-          setView('selector');
-        } else if (currentHash === 'register') {
-          setView('register');
-        } else if (currentHash === 'login' || currentHash === 'cashier-login' || currentHash.startsWith('login')) {
-          setView('login');
-        } else if (currentHash === 'dashboard' && hasEnteredAppSession) {
-          setView('dashboard');
-        } else {
-          // Default: ALWAYS open from the Landing Page when opening the website!
-          setView('landing');
-          // If hash had #dashboard from an old browser history/autocomplete, clean it from the URL
-          if (currentHash === 'dashboard' || currentHash.startsWith('dashboard')) {
-            try {
-              window.history.replaceState(null, '', window.location.pathname + window.location.search);
-            } catch { }
-          }
-        }
+        // Always open on the Landing Page!
+        setView('landing');
       } catch {
         clearToken();
         setView('landing');
@@ -2095,6 +2084,11 @@ export function App() {
       }
     };
     initAuth();
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('pagehide', handleBeforeUnload);
+    };
   }, []);
 
   const initSettingsForm = (s: Shop) => {
