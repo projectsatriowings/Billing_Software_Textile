@@ -216,6 +216,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
   const [loadingCashierSales, setLoadingCashierSales] = useState(false);
   const [selectedCounterKeyFilter, setSelectedCounterKeyFilter] = useState<string>('ALL');
   const [counterDetailViewMode, setCounterDetailViewMode] = useState<'shifts' | 'cashiers'>('shifts');
+  const [selectedDetailCashierFilter, setSelectedDetailCashierFilter] = useState<string>('ALL');
   const [expandedCounterKeys, setExpandedCounterKeys] = useState<Record<string, boolean>>({});
   const [showCounterAuditColumns, setShowCounterAuditColumns] = useState<boolean>(false);
 
@@ -2784,13 +2785,17 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                   {/* 3. DEDICATED TABLE VIEW */}
                   {selectedCounterKeyFilter !== 'ALL' ? (
                     /* -----------------------------------------------------------
-                       VIEW A: SINGLE COUNTER SELECTED -> SHIFT SESSIONS & CASHIERS
+                       VIEW A: SINGLE COUNTER SELECTED -> CASHIER-WISE SHIFT SESSIONS
                        ----------------------------------------------------------- */
                     (() => {
                       const targetCounter = counterSalesData.counters.find((c: any) => c.counterKey === selectedCounterKeyFilter);
                       if (!targetCounter) return null;
                       const cashiers = targetCounter.cashiers || [];
                       const shifts = targetCounter.shifts || [];
+
+                      const visibleCashiers = selectedDetailCashierFilter === 'ALL'
+                        ? cashiers
+                        : cashiers.filter((c: any) => c.cashierId === selectedDetailCashierFilter);
 
                       return (
                         <div className="day-closing-card" style={{ boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)' }}>
@@ -2802,20 +2807,23 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                               <div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                                   <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: '#0f172a' }}>
-                                    {targetCounter.counterName} ({targetCounter.counterCode}) — Shift Sessions Breakdown
+                                    {targetCounter.counterName} ({targetCounter.counterCode}) — Cashier-wise Shift Sessions
                                   </h3>
                                   <span style={{ fontSize: '0.72rem', background: '#e0e7ff', color: '#3730a3', border: '1px solid #c7d2fe', padding: '2px 8px', borderRadius: '6px', fontWeight: 700 }}>
-                                    {shifts.length} Shift{shifts.length !== 1 ? 's' : ''} Today
+                                    {cashiers.length} Cashier{cashiers.length !== 1 ? 's' : ''} on Duty
+                                  </span>
+                                  <span style={{ fontSize: '0.72rem', background: '#f1f5f9', color: '#334155', border: '1px solid #cbd5e1', padding: '2px 8px', borderRadius: '6px', fontWeight: 700 }}>
+                                    {shifts.length} Total Shift{shifts.length !== 1 ? 's' : ''}
                                   </span>
                                   {targetCounter.activeShift && (
-                                    <span style={{ fontSize: '0.72rem', background: '#dcfce7', color: '#15803d', border: '1px solid #86efac', padding: '2px 8px', borderRadius: '6px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                    <span style={{ fontSize: '0.72rem', background: '#dcfce7', color: '#15803d', border: '1px solid #86efac', padding: '2px 8px', borderRadius: '6px', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                                       <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#16a34a' }} />
-                                      Live: #{targetCounter.activeShift.shiftNumber}
+                                      LIVE: #{targetCounter.activeShift.shiftNumber}
                                     </span>
                                   )}
                                 </div>
                                 <span style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '2px', display: 'block' }}>
-                                  Business Date: {selectedDate} · Chronological shift audit, start & close timestamps, and register reconciliation for {targetCounter.counterName}
+                                  Business Date: {selectedDate} · Cashier-wise chronological shift logs, live active shift tracking, and register reconciliation for {targetCounter.counterName}
                                 </span>
                               </div>
                             </div>
@@ -2869,7 +2877,10 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
 
                               <button
                                 type="button"
-                                onClick={() => setSelectedCounterKeyFilter('ALL')}
+                                onClick={() => {
+                                  setSelectedCounterKeyFilter('ALL');
+                                  setSelectedDetailCashierFilter('ALL');
+                                }}
                                 style={{
                                   background: '#f1f5f9',
                                   border: '1px solid #cbd5e1',
@@ -2905,9 +2916,70 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                             </div>
                           </div>
 
+                          {/* Cashier Filter Selector Bar when multiple cashiers exist */}
+                          {cashiers.length > 1 && counterDetailViewMode === 'shifts' && (
+                            <div style={{
+                              padding: '10px 16px',
+                              background: '#f8fafc',
+                              borderBottom: '1px solid #e2e8f0',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              flexWrap: 'wrap',
+                            }}>
+                              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b' }}>Filter Cashier:</span>
+                              <button
+                                type="button"
+                                onClick={() => setSelectedDetailCashierFilter('ALL')}
+                                style={{
+                                  padding: '3px 10px',
+                                  fontSize: '0.75rem',
+                                  fontWeight: 700,
+                                  borderRadius: '6px',
+                                  border: selectedDetailCashierFilter === 'ALL' ? '1px solid #4f46e5' : '1px solid #cbd5e1',
+                                  background: selectedDetailCashierFilter === 'ALL' ? '#eef2ff' : '#ffffff',
+                                  color: selectedDetailCashierFilter === 'ALL' ? '#4338ca' : '#475569',
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                All Cashiers ({cashiers.length})
+                              </button>
+                              {cashiers.map((c: any) => {
+                                const isSelected = selectedDetailCashierFilter === c.cashierId;
+                                const hasLive = c.shifts?.some((s: any) => s.status === 'open');
+                                return (
+                                  <button
+                                    key={c.cashierId}
+                                    type="button"
+                                    onClick={() => setSelectedDetailCashierFilter(c.cashierId)}
+                                    style={{
+                                      padding: '3px 10px',
+                                      fontSize: '0.75rem',
+                                      fontWeight: 700,
+                                      borderRadius: '6px',
+                                      border: isSelected ? '1px solid #4f46e5' : '1px solid #cbd5e1',
+                                      background: isSelected ? '#eef2ff' : '#ffffff',
+                                      color: isSelected ? '#4338ca' : '#475569',
+                                      cursor: 'pointer',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '5px',
+                                    }}
+                                  >
+                                    <span>{c.cashierName}</span>
+                                    <span style={{ fontSize: '0.68rem', opacity: 0.8 }}>({c.shifts?.length || 0})</span>
+                                    {hasLive && (
+                                      <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#16a34a' }} />
+                                    )}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+
                           <div className="data-table-container">
                             {counterDetailViewMode === 'shifts' ? (
-                              /* ---------------- SHIFT SESSIONS TABLE ---------------- */
+                              /* ---------------- CASHIER-WISE SHIFT SESSIONS TABLE ---------------- */
                               <table className="analytics-table">
                                 <thead>
                                   <tr style={{ background: '#f8fafc' }}>
@@ -2925,150 +2997,227 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                                   </tr>
                                 </thead>
                                 <tbody>
-                                  {shifts.length > 0 ? (
-                                    shifts.map((sh: any) => {
-                                      const isOpen = sh.status === 'open';
+                                  {visibleCashiers.length > 0 ? (
+                                    visibleCashiers.map((cashier: any) => {
+                                      const cashierShifts = (cashier.shifts || []).slice().sort((a: any, b: any) =>
+                                        new Date(b.openedAt).getTime() - new Date(a.openedAt).getTime()
+                                      );
+                                      const hasLive = cashierShifts.some((s: any) => s.status === 'open');
+
                                       return (
-                                        <tr key={sh.shiftId} style={{ background: isOpen ? '#f0fdf4' : undefined }}>
-                                          <td>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                              <span
-                                                style={{
-                                                  fontWeight: 800,
-                                                  fontSize: '0.84rem',
-                                                  color: isOpen ? '#15803d' : '#0f172a',
-                                                  fontFamily: 'monospace',
-                                                }}
-                                              >
-                                                #{sh.shiftNumber}
-                                              </span>
-                                              <span
-                                                style={{
-                                                  fontSize: '0.68rem',
-                                                  padding: '2px 7px',
-                                                  borderRadius: '5px',
-                                                  fontWeight: 700,
-                                                  background: isOpen ? '#dcfce7' : '#f1f5f9',
-                                                  color: isOpen ? '#15803d' : '#475569',
-                                                  border: `1px solid ${isOpen ? '#86efac' : '#cbd5e1'}`,
-                                                  display: 'inline-flex',
-                                                  alignItems: 'center',
-                                                  gap: '4px',
-                                                }}
-                                              >
-                                                {isOpen && (
-                                                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#16a34a' }} />
-                                                )}
-                                                <span>{isOpen ? 'Live Shift' : 'Closed'}</span>
-                                              </span>
-                                            </div>
-                                          </td>
-                                          <td>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                              <div style={{
-                                                width: '26px',
-                                                height: '26px',
-                                                borderRadius: '50%',
-                                                background: '#e0e7ff',
-                                                color: '#4338ca',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                fontSize: '0.72rem',
-                                                fontWeight: 800,
-                                              }}>
-                                                {(sh.cashierName || 'C').slice(0, 1).toUpperCase()}
-                                              </div>
-                                              <div>
-                                                <div style={{ fontWeight: 700, fontSize: '0.84rem', color: '#0f172a' }}>
-                                                  {sh.cashierName || 'Cashier'}
+                                        <React.Fragment key={cashier.cashierId}>
+                                          {/* Group Header for Cashier (ensures zero shuffle) */}
+                                          <tr style={{ background: '#f1f5f9', borderTop: '2px solid #cbd5e1' }}>
+                                            <td colSpan={11} style={{ padding: '8px 14px' }}>
+                                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                  <div style={{
+                                                    width: '26px',
+                                                    height: '26px',
+                                                    borderRadius: '50%',
+                                                    background: '#e0e7ff',
+                                                    color: '#4338ca',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    fontSize: '0.74rem',
+                                                    fontWeight: 800,
+                                                  }}>
+                                                    {(cashier.cashierName || 'C').slice(0, 1).toUpperCase()}
+                                                  </div>
+                                                  <div>
+                                                    <span style={{ fontWeight: 800, fontSize: '0.88rem', color: '#0f172a' }}>
+                                                      {cashier.cashierName}
+                                                    </span>
+                                                    <span style={{ marginLeft: '6px', fontSize: '0.72rem', color: '#64748b', textTransform: 'capitalize' }}>
+                                                      ({String(cashier.cashierRole || 'Cashier').toLowerCase()})
+                                                    </span>
+                                                  </div>
+                                                  <span style={{
+                                                    fontSize: '0.72rem',
+                                                    fontWeight: 700,
+                                                    padding: '2px 8px',
+                                                    borderRadius: '6px',
+                                                    background: '#ffffff',
+                                                    border: '1px solid #cbd5e1',
+                                                    color: '#334155',
+                                                  }}>
+                                                    {cashierShifts.length} Shift Session{cashierShifts.length !== 1 ? 's' : ''}
+                                                  </span>
+                                                  {hasLive && (
+                                                    <span style={{
+                                                      fontSize: '0.7rem',
+                                                      fontWeight: 800,
+                                                      padding: '2px 7px',
+                                                      borderRadius: '5px',
+                                                      background: '#dcfce7',
+                                                      border: '1px solid #86efac',
+                                                      color: '#15803d',
+                                                      display: 'inline-flex',
+                                                      alignItems: 'center',
+                                                      gap: '4px',
+                                                    }}>
+                                                      <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#16a34a' }} />
+                                                      LIVE SHIFT ACTIVE
+                                                    </span>
+                                                  )}
                                                 </div>
-                                                <span style={{ fontSize: '0.68rem', color: '#64748b', textTransform: 'capitalize' }}>
-                                                  {String(sh.cashierRole || 'Cashier').toLowerCase()}
-                                                </span>
+
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.78rem' }}>
+                                                  <span>Bills: <strong>{cashier.invoicesCount || 0}</strong></span>
+                                                  <span style={{ color: '#cbd5e1' }}>·</span>
+                                                  <span>Net Sales: <strong style={{ color: '#16a34a' }}>{fmt(cashier.netSalesMinor || 0)}</strong></span>
+                                                  <span style={{ color: '#cbd5e1' }}>·</span>
+                                                  <span>Cash: <strong style={{ color: '#0f172a' }}>{fmt(cashier.collections?.cash || 0)}</strong></span>
+                                                  <span style={{ color: '#cbd5e1' }}>·</span>
+                                                  <span>UPI: <strong style={{ color: '#0284c7' }}>{fmt(cashier.collections?.upi || 0)}</strong></span>
+                                                </div>
                                               </div>
-                                            </div>
-                                          </td>
-                                          <td>
-                                            <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#0f172a' }}>
-                                              {fmtDateTime(sh.openedAt)}
-                                            </div>
-                                          </td>
-                                          <td>
-                                            {isOpen ? (
-                                              <span style={{
-                                                fontSize: '0.74rem',
-                                                fontWeight: 700,
-                                                color: '#15803d',
-                                                background: '#dcfce7',
-                                                border: '1px solid #86efac',
-                                                padding: '3px 8px',
-                                                borderRadius: '6px',
-                                                display: 'inline-flex',
-                                                alignItems: 'center',
-                                                gap: '4px',
-                                              }}>
-                                                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#16a34a' }} />
-                                                <span>In Progress (Live)</span>
-                                              </span>
-                                            ) : (
-                                              <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#334155' }}>
-                                                {fmtDateTime(sh.closedAt)}
-                                              </div>
-                                            )}
-                                          </td>
-                                          <td style={{ textAlign: 'center' }}>
-                                            <span style={{
-                                              fontSize: '0.76rem',
-                                              fontWeight: 700,
-                                              padding: '2px 8px',
-                                              borderRadius: '6px',
-                                              background: '#f8fafc',
-                                              border: '1px solid #e2e8f0',
-                                              color: '#475569',
-                                            }}>
-                                              {fmtDuration(sh.openedAt, sh.closedAt)}
-                                            </span>
-                                          </td>
-                                          <td style={{ textAlign: 'center' }}>
-                                            <strong style={{ fontSize: '0.88rem' }}>{sh.invoicesCount || 0}</strong>
-                                          </td>
-                                          <td>
-                                            <strong style={{ fontSize: '0.92rem', color: (sh.netSalesMinor || 0) > 0 ? '#16a34a' : '#64748b' }}>
-                                              {fmt(sh.netSalesMinor || 0)}
-                                            </strong>
-                                          </td>
-                                          <td>
-                                            <span style={{ fontWeight: 600, color: '#0f172a', fontSize: '0.84rem' }}>
-                                              {fmt(sh.collections?.cash || 0)}
-                                            </span>
-                                          </td>
-                                          <td>
-                                            <span style={{ fontWeight: 600, color: '#0284c7', fontSize: '0.84rem' }}>
-                                              {fmt(sh.collections?.upi || 0)}
-                                            </span>
-                                          </td>
-                                          <td style={{ color: (sh.returnsTotalMinor || 0) > 0 ? '#dc2626' : '#64748b', fontWeight: (sh.returnsTotalMinor || 0) > 0 ? 700 : 400, fontSize: '0.84rem' }}>
-                                            {(sh.returnsTotalMinor || 0) > 0 ? `-${fmt(sh.returnsTotalMinor)}` : '₹0.00'}
-                                          </td>
-                                          <td style={{ textAlign: 'center' }}>
-                                            <button
-                                              type="button"
-                                              onClick={() => {
-                                                setSelectedCounterId(targetCounter.counterId || targetCounter.counterCode);
-                                                setSelectedCashierId(sh.cashierId || '');
-                                                setSelectedShiftId(sh.shiftId || '');
-                                                setActiveTab('closing');
-                                              }}
-                                              className="btn-reconcile-nav"
-                                              style={{ padding: '4px 10px', fontSize: '0.74rem' }}
-                                              title={`Reconcile Shift #${sh.shiftNumber}`}
-                                            >
-                                              <span>Reconcile</span>
-                                              <ArrowRightIcon size={11} />
-                                            </button>
-                                          </td>
-                                        </tr>
+                                            </td>
+                                          </tr>
+
+                                          {/* Cashier Shift Rows */}
+                                          {cashierShifts.length > 0 ? (
+                                            cashierShifts.map((sh: any) => {
+                                              const isOpen = sh.status === 'open';
+                                              return (
+                                                <tr key={sh.shiftId} style={{ background: isOpen ? '#f0fdf4' : undefined }}>
+                                                  <td>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                      <span
+                                                        style={{
+                                                          fontWeight: 800,
+                                                          fontSize: '0.84rem',
+                                                          color: isOpen ? '#15803d' : '#0f172a',
+                                                          fontFamily: 'monospace',
+                                                        }}
+                                                      >
+                                                        #{sh.shiftNumber}
+                                                      </span>
+                                                      <span
+                                                        style={{
+                                                          fontSize: '0.68rem',
+                                                          padding: '2px 7px',
+                                                          borderRadius: '5px',
+                                                          fontWeight: 800,
+                                                          background: isOpen ? '#dcfce7' : '#f1f5f9',
+                                                          color: isOpen ? '#15803d' : '#475569',
+                                                          border: `1px solid ${isOpen ? '#86efac' : '#cbd5e1'}`,
+                                                          display: 'inline-flex',
+                                                          alignItems: 'center',
+                                                          gap: '4px',
+                                                          letterSpacing: '0.5px',
+                                                        }}
+                                                      >
+                                                        {isOpen && (
+                                                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#16a34a' }} />
+                                                        )}
+                                                        <span>{isOpen ? 'LIVE' : 'Closed'}</span>
+                                                      </span>
+                                                    </div>
+                                                  </td>
+                                                  <td>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                      <div style={{
+                                                        width: '24px',
+                                                        height: '24px',
+                                                        borderRadius: '50%',
+                                                        background: '#e0e7ff',
+                                                        color: '#4338ca',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        fontSize: '0.7rem',
+                                                        fontWeight: 800,
+                                                      }}>
+                                                        {(sh.cashierName || cashier.cashierName || 'C').slice(0, 1).toUpperCase()}
+                                                      </div>
+                                                      <div>
+                                                        <div style={{ fontWeight: 700, fontSize: '0.82rem', color: '#0f172a' }}>
+                                                          {sh.cashierName || cashier.cashierName}
+                                                        </div>
+                                                        <span style={{ fontSize: '0.66rem', color: '#64748b', textTransform: 'capitalize' }}>
+                                                          {String(sh.cashierRole || cashier.cashierRole || 'Cashier').toLowerCase()}
+                                                        </span>
+                                                      </div>
+                                                    </div>
+                                                  </td>
+                                                  <td>
+                                                    <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#0f172a' }}>
+                                                      {fmtDateTime(sh.openedAt)}
+                                                    </div>
+                                                  </td>
+                                                  <td>
+                                                    {isOpen ? (
+                                                      <span style={{ color: '#cbd5e1', fontWeight: 600 }}>—</span>
+                                                    ) : (
+                                                      <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#334155' }}>
+                                                        {fmtDateTime(sh.closedAt)}
+                                                      </div>
+                                                    )}
+                                                  </td>
+                                                  <td style={{ textAlign: 'center' }}>
+                                                    <span style={{
+                                                      fontSize: '0.74rem',
+                                                      fontWeight: 700,
+                                                      padding: '2px 8px',
+                                                      borderRadius: '6px',
+                                                      background: isOpen ? '#dcfce7' : '#f8fafc',
+                                                      border: `1px solid ${isOpen ? '#bbf7d0' : '#e2e8f0'}`,
+                                                      color: isOpen ? '#15803d' : '#475569',
+                                                    }}>
+                                                      {isOpen ? `Active (${fmtDuration(sh.openedAt, null)})` : fmtDuration(sh.openedAt, sh.closedAt)}
+                                                    </span>
+                                                  </td>
+                                                  <td style={{ textAlign: 'center' }}>
+                                                    <strong style={{ fontSize: '0.88rem' }}>{sh.invoicesCount || 0}</strong>
+                                                  </td>
+                                                  <td>
+                                                    <strong style={{ fontSize: '0.92rem', color: (sh.netSalesMinor || 0) > 0 ? '#16a34a' : '#64748b' }}>
+                                                      {fmt(sh.netSalesMinor || 0)}
+                                                    </strong>
+                                                  </td>
+                                                  <td>
+                                                    <span style={{ fontWeight: 600, color: '#0f172a', fontSize: '0.84rem' }}>
+                                                      {fmt(sh.collections?.cash || 0)}
+                                                    </span>
+                                                  </td>
+                                                  <td>
+                                                    <span style={{ fontWeight: 600, color: '#0284c7', fontSize: '0.84rem' }}>
+                                                      {fmt(sh.collections?.upi || 0)}
+                                                    </span>
+                                                  </td>
+                                                  <td style={{ color: (sh.returnsTotalMinor || 0) > 0 ? '#dc2626' : '#64748b', fontWeight: (sh.returnsTotalMinor || 0) > 0 ? 700 : 400, fontSize: '0.84rem' }}>
+                                                    {(sh.returnsTotalMinor || 0) > 0 ? `-${fmt(sh.returnsTotalMinor)}` : '₹0.00'}
+                                                  </td>
+                                                  <td style={{ textAlign: 'center' }}>
+                                                    <button
+                                                      type="button"
+                                                      onClick={() => {
+                                                        setSelectedCounterId(targetCounter.counterId || targetCounter.counterCode);
+                                                        setSelectedCashierId(sh.cashierId || cashier.cashierId || '');
+                                                        setSelectedShiftId(sh.shiftId || '');
+                                                        setActiveTab('closing');
+                                                      }}
+                                                      className="btn-reconcile-nav"
+                                                      style={{ padding: '4px 10px', fontSize: '0.74rem' }}
+                                                      title={`Reconcile Shift #${sh.shiftNumber}`}
+                                                    >
+                                                      <span>Reconcile</span>
+                                                      <ArrowRightIcon size={11} />
+                                                    </button>
+                                                  </td>
+                                                </tr>
+                                              );
+                                            })
+                                          ) : (
+                                            <tr>
+                                              <td colSpan={11} style={{ textAlign: 'center', padding: '16px', color: '#94a3b8', fontSize: '0.8rem' }}>
+                                                No shifts recorded for {cashier.cashierName} today.
+                                              </td>
+                                            </tr>
+                                          )}
+                                        </React.Fragment>
                                       );
                                     })
                                   ) : (
@@ -3083,7 +3232,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                                   <tr style={{ background: '#f8fafc', fontWeight: 800, borderTop: '2px solid #cbd5e1' }}>
                                     <td colSpan={2}>{targetCounter.counterName.toUpperCase()} TOTAL</td>
                                     <td colSpan={3} style={{ color: '#475569', fontSize: '0.78rem' }}>
-                                      {shifts.length} Shift Session{shifts.length !== 1 ? 's' : ''} Today
+                                      {shifts.length} Total Shift Session{shifts.length !== 1 ? 's' : ''} Today
                                     </td>
                                     <td style={{ textAlign: 'center' }}>{targetCounter.invoicesCount}</td>
                                     <td style={{ color: '#16a34a', fontSize: '1rem' }}>{fmt(targetCounter.netSalesMinor)}</td>
