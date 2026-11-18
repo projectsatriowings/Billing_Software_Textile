@@ -185,6 +185,7 @@ import { PosReturnExchangeModal, type ReturnSelectedLine } from './components/po
 import { ConfirmModal } from './components/common/ConfirmModal.tsx';
 import { DayClosingView } from './components/shifts/DayClosingView.tsx';
 import { ReturnReportsView } from './components/reports/ReturnReportsView.tsx';
+import { NotificationsPageView } from './components/notifications/NotificationsPageView.tsx';
 import { submitExchange } from './api';
 
 // Routes and tabs where the business info bar (green-dot pill) and its dividers are hidden
@@ -237,6 +238,9 @@ export const HIDE_BUSINESS_BAR_TABS = new Set([
   'gst-gstr1',
   'gst-import-export',
   'gst-filing-history',
+  'day-closing',
+  'return-reports',
+  'notifications',
 ]);
 
 // Explicit header titles shown at the left end of the top header bar for the 6 core modules
@@ -287,6 +291,7 @@ export const TAB_PAGE_TITLES: Record<string, string> = {
   'gst-filing-history': 'GST Filing History',
   'day-closing': 'Day Closing & Register Reconciliation',
   'return-reports': 'Returns, Exchanges & Profit Reports',
+  'notifications': 'Notifications & Shift Activity',
 };
 
 export interface ToastItem {
@@ -560,7 +565,7 @@ export const getBusinessLabel = (type?: string) => {
   }
 };
 
-export const CASHIER_ALLOWED_TABS = new Set<string>(['pos', 'shifts', 'invoices', 'day-closing']);
+export const CASHIER_ALLOWED_TABS = new Set<string>(['pos', 'shifts', 'invoices', 'day-closing', 'notifications']);
 
 export interface PosCartItem {
   item: Item;
@@ -609,6 +614,7 @@ export function App() {
     | 'user-management'
     | 'day-closing'
     | 'return-reports'
+    | 'notifications'
   >(() => {
     try {
       const stored = localStorage.getItem('user') || sessionStorage.getItem('user');
@@ -1089,8 +1095,6 @@ export function App() {
     } catch (err) {
       console.error('Failed to mark notification read:', err);
     }
-    setShowTopNotifPopover(false);
-    setActiveTab('shifts');
   };
 
   const formatNotifTimeAgo = (dateStr?: string) => {
@@ -7203,6 +7207,31 @@ export function App() {
                   )}
                 </button>
               )}
+
+              {/* 3b. Notifications & Shift Alerts: Available to All Roles */}
+              <button
+                type="button"
+                className={`sidebar-nav-item ${activeTab === 'notifications' ? 'active' : ''} ${unreadShiftNotifCount > 0 ? 'has-badge' : ''}`}
+                onClick={() => setActiveTab('notifications')}
+                title={`Notifications & Shift Alerts (${unreadShiftNotifCount > 0 ? `${unreadShiftNotifCount} unread` : `${shiftNotifications.length} alerts`})`}
+              >
+                <span className="nav-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                  </svg>
+                </span>
+                <span className="nav-text">Notifications</span>
+                <span className="nav-right-slot">
+                  {unreadShiftNotifCount > 0 ? (
+                    <span className="nav-count-badge notif-alert-badge" style={{ background: '#ef4444', color: '#ffffff', fontWeight: 800 }}>
+                      {unreadShiftNotifCount}
+                    </span>
+                  ) : shiftNotifications.length > 0 ? (
+                    <span className="nav-count-badge">{shiftNotifications.length}</span>
+                  ) : null}
+                </span>
+              </button>
               {user.role !== 'cashier' && (
                 <button
                   type="button"
@@ -8124,6 +8153,30 @@ export function App() {
                         )}
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <button
+                          type="button"
+                          className="bento-notif-open-full-btn"
+                          onClick={() => {
+                            setShowTopNotifPopover(false);
+                            setActiveTab('notifications');
+                          }}
+                          title="Open dedicated full Notifications page"
+                          style={{
+                            background: '#eef2ff',
+                            border: '1px solid #c7d2fe',
+                            color: '#4f46e5',
+                            borderRadius: '6px',
+                            padding: '3px 8px',
+                            fontSize: '0.72rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                          }}
+                        >
+                          <span>Full Page →</span>
+                        </button>
                         {unreadShiftNotifCount > 0 && (
                           <button
                             type="button"
@@ -8663,7 +8716,34 @@ export function App() {
                     </div>
 
                     {/* Bento Popover Footer */}
-                    <div className="bento-notif-footer">
+                    <div className="bento-notif-footer" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowTopNotifPopover(false);
+                          setActiveTab('notifications');
+                        }}
+                        style={{
+                          width: '100%',
+                          background: '#4f46e5',
+                          color: '#ffffff',
+                          border: 'none',
+                          borderRadius: '8px',
+                          padding: '7px 12px',
+                          fontSize: '0.8rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px',
+                          boxShadow: '0 2px 4px rgba(79, 70, 229, 0.25)',
+                        }}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                        <span>Open Notifications Center (Full View)</span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                      </button>
                       {user?.role === 'cashier' ? (
                         <span className="bento-notif-footer-text">
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" style={{ verticalAlign: '-1px', marginRight: '5px' }}>
@@ -13425,6 +13505,25 @@ export function App() {
                   shop={shop}
                   selectedBranch={selectedBranchScope}
                   branches={branches}
+                  onNavigateToNotifications={() => setActiveTab('notifications')}
+                />
+              </div>
+            )}
+
+            {/* TAB: NOTIFICATIONS & SHIFT ALERTS (DEDICATED FULL PAGE) */}
+            {(activeTab === 'notifications' || displayTab === 'notifications') && (
+              <div className="tab-content-wrapper" key={`notifications-${selectedBranchScope}`}>
+                <NotificationsPageView
+                  user={user}
+                  shop={shop}
+                  selectedBranch={selectedBranchScope}
+                  branches={branches}
+                  shiftNotifications={shiftNotifications}
+                  unreadShiftNotifCount={unreadShiftNotifCount}
+                  onRefresh={loadNotifications}
+                  onMarkAllRead={handleMarkAllNotificationsRead}
+                  onNotificationClick={handleNotificationClick}
+                  setActiveTab={setActiveTab}
                 />
               </div>
             )}

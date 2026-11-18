@@ -73,6 +73,7 @@ interface DayClosingViewProps {
   shop: Shop | null;
   selectedBranch?: string;
   branches?: any[];
+  onNavigateToNotifications?: () => void;
 }
 
 type TabType = 'closing' | 'breakdown' | 'comparison' | 'analytics' | 'compliance' | 'history';
@@ -175,6 +176,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
   shop,
   selectedBranch,
   branches,
+  onNavigateToNotifications,
 }) => {
   // Navigation: Clean, dedicated tabs
   const [activeTab, setActiveTab] = useState<TabType>('closing');
@@ -1273,7 +1275,13 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
 
           <button
             type="button"
-            onClick={() => setShowNotifDrawer(true)}
+            onClick={() => {
+              if (onNavigateToNotifications) {
+                onNavigateToNotifications();
+              } else {
+                setShowNotifDrawer(true);
+              }
+            }}
             className="btn-link"
             style={{
               fontSize: '0.8rem',
@@ -1289,7 +1297,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
               gap: '6px',
               transition: 'all 0.15s ease',
             }}
-            title="View Cashier Shift & Register Notifications Separately"
+            title="Open Dedicated Notifications Page"
           >
             <BellRingIcon size={14} />
             <span>Shift Notifications</span>
@@ -3711,6 +3719,27 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {onNavigateToNotifications && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowNotifDrawer(false);
+                      onNavigateToNotifications();
+                    }}
+                    style={{
+                      background: '#EEF2FF',
+                      border: '1px solid #C7D2FE',
+                      color: '#4F46E5',
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      padding: '4px 8px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Full Page →
+                  </button>
+                )}
                 {unreadNotifCount > 0 && (
                   <button
                     type="button"
