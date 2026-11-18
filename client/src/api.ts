@@ -1101,6 +1101,11 @@ export const selectActiveShiftCounter = (data: { counterId?: string; counter?: s
     body: JSON.stringify(data),
   });
 
+export const heartbeatActiveShiftCounter = () =>
+  api<{ ok: boolean }>('/api/shifts/counter/heartbeat', {
+    method: 'POST',
+  });
+
 export const fetchShifts = (params: { status?: string; limit?: number; offset?: number } = {}) => {
   const sp = new URLSearchParams();
   if (params.status && params.status !== 'ALL') sp.set('status', params.status);

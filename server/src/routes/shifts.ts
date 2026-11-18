@@ -344,8 +344,27 @@ export function registerShifts(r: Router) {
          LIMIT 1`,
         [tenantId, branchId, userId, resolvedCounterId, resolvedCounterCode, resolvedCounterName],
       );
-      if (counterOccupant) {
-        const occupantName = counterOccupant.userName ?? counterOccupant.user_name ?? 'another cashier';
+
+      let occupantName = counterOccupant?.userName ?? counterOccupant?.user_name;
+
+      if (!occupantName) {
+        const userOccupant = await q.one<any>(
+          `SELECT u.id, u.name AS user_name, u.assigned_counter AS counter
+           FROM users u
+           WHERE u.tenant_id = ?
+             AND u.id != ?
+             AND (u.counter_id = ? OR UPPER(COALESCE(u.assigned_counter, '')) = UPPER(?))
+             AND (u.branch_id = ? OR u.branch_id IS NULL)
+             AND u.updated_at > now() - interval '3 hours'
+           LIMIT 1`,
+          [tenantId, userId, resolvedCounterId, resolvedCounterCode, branchId],
+        );
+        if (userOccupant) {
+          occupantName = userOccupant.userName ?? userOccupant.user_name ?? 'another cashier';
+        }
+      }
+
+      if (occupantName) {
         throw bad(
           `Billing counter "${resolvedCounterName}" (${resolvedCounterCode}) is already in use by ${occupantName}. Please select an available counter.`,
           'COUNTER_OCCUPIED',
@@ -484,7 +503,21 @@ export function registerShifts(r: Router) {
     const tenantId = ctx.user!.tenantId;
     const currentUserId = ctx.user!.id;
     const scope = await resolveBranchScope(ctx);
-    const branchId = (ctx.query.branchId as string) || scope.branchId;
+    let rawBranchId = ((ctx.query.branchId as string) || scope.branchId || ctx.user?.branchId || '').trim();
+    if (rawBranchId === 'undefined' || rawBranchId === 'null' || rawBranchId.toLowerCase() === 'all') {
+      rawBranchId = scope.branchId || ctx.user?.branchId || '';
+    }
+
+    let branchId = rawBranchId || null;
+    if (branchId) {
+      const canonicalBranch: any = await ctx.db.one(
+        'SELECT id FROM branches WHERE tenant_id = ? AND (id = ? OR UPPER(code) = UPPER(?)) LIMIT 1',
+        [tenantId, branchId, branchId],
+      );
+      if (canonicalBranch) {
+        branchId = canonicalBranch.id;
+      }
+    }
 
     // Safety: auto-close abandoned shifts older than 24 hours so they never permanently lock counters
     try {
@@ -493,6 +526,19 @@ export function registerShifts(r: Router) {
          SET status = 'closed', closed_at = now()
          WHERE tenant_id = ? AND status = 'open' AND opened_at < now() - interval '24 hours'`,
         [tenantId],
+      );
+    } catch {}
+
+    // Safety: clear stale user counter assignments older than 3 hours if user has no open shift
+    try {
+      await ctx.db.exec(
+        `UPDATE users
+         SET counter_id = NULL, assigned_counter = NULL
+         WHERE tenant_id = ?
+           AND (counter_id IS NOT NULL OR assigned_counter IS NOT NULL)
+           AND updated_at < now() - interval '3 hours'
+           AND id NOT IN (SELECT user_id FROM shifts WHERE tenant_id = ? AND status = 'open')`,
+        [tenantId, tenantId],
       );
     } catch {}
 
@@ -507,9 +553,13 @@ export function registerShifts(r: Router) {
         s.user_id,
         u.name AS user_name,
         u.email AS user_email,
-        s.opened_at
+        s.opened_at,
+        c.id AS resolved_counter_id,
+        c.code AS resolved_counter_code,
+        c.name AS resolved_counter_name
       FROM shifts s
       JOIN users u ON u.id = s.user_id
+      LEFT JOIN counters c ON c.id = s.counter_id OR (c.branch_id = s.branch_id AND (UPPER(c.code) = UPPER(s.counter) OR LOWER(c.name) = LOWER(s.counter_name_snapshot)))
       WHERE s.tenant_id = ?
         AND s.status = 'open'
         AND s.opened_at >= now() - interval '24 hours'
@@ -523,7 +573,7 @@ export function registerShifts(r: Router) {
 
     const shiftRows = await ctx.db.query<any>(sql, params);
 
-    // Also check active users who assigned this counter recently
+    // Also check active users who assigned this counter recently (within 3 hours)
     let userSql = `
       SELECT
         u.id AS user_id,
@@ -532,8 +582,12 @@ export function registerShifts(r: Router) {
         u.assigned_counter AS counter,
         u.counter_id,
         u.branch_id,
-        u.updated_at
+        u.updated_at,
+        c.id AS resolved_counter_id,
+        c.code AS resolved_counter_code,
+        c.name AS resolved_counter_name
       FROM users u
+      LEFT JOIN counters c ON c.id = u.counter_id OR (c.branch_id = u.branch_id AND (UPPER(c.code) = UPPER(u.assigned_counter) OR LOWER(c.name) = LOWER(u.assigned_counter)))
       WHERE u.tenant_id = ?
         AND (u.counter_id IS NOT NULL OR u.assigned_counter IS NOT NULL)
         AND u.updated_at > now() - interval '3 hours'
@@ -550,9 +604,9 @@ export function registerShifts(r: Router) {
     for (const r of shiftRows) {
       const uId = r.userId ?? r.user_id;
       const uName = r.userName ?? r.user_name ?? 'Cashier';
-      const cCode = r.counter;
-      const cId = r.counterId ?? r.counter_id;
-      const cName = r.counterNameSnapshot ?? r.counter_name_snapshot ?? cCode;
+      const cCode = r.resolvedCounterCode ?? r.counter;
+      const cId = r.resolvedCounterId ?? r.counterId ?? r.counter_id;
+      const cName = r.resolvedCounterName ?? r.counterNameSnapshot ?? r.counter_name_snapshot ?? cCode;
       const isCur = Boolean(uId && currentUserId && String(uId) === String(currentUserId));
       const info = {
         shiftId: r.shiftId ?? r.shift_id,
@@ -569,20 +623,22 @@ export function registerShifts(r: Router) {
 
       if (cId) occupiedMap.set(String(cId).trim().toUpperCase(), info);
       if (cCode) occupiedMap.set(String(cCode).trim().toUpperCase(), info);
+      if (cName) occupiedMap.set(String(cName).trim().toUpperCase(), info);
     }
 
     for (const u of userRows) {
       const uId = u.userId ?? u.user_id;
       const uName = u.userName ?? u.user_name ?? 'Cashier';
-      const cCode = u.counter;
-      const cId = u.counterId ?? u.counter_id;
+      const cCode = u.resolvedCounterCode ?? u.counter;
+      const cId = u.resolvedCounterId ?? u.counterId ?? u.counter_id;
+      const cName = u.resolvedCounterName ?? cCode;
       const isCur = Boolean(uId && currentUserId && String(uId) === String(currentUserId));
       const info = {
         shiftId: null,
         shiftNumber: null,
         counter: cCode,
         counterId: cId,
-        counterName: cCode,
+        counterName: cName,
         branchId: u.branchId ?? u.branch_id,
         userId: uId,
         userName: uName,
@@ -592,8 +648,11 @@ export function registerShifts(r: Router) {
 
       const keyId = cId ? String(cId).trim().toUpperCase() : null;
       const keyCode = cCode ? String(cCode).trim().toUpperCase() : null;
+      const keyName = cName ? String(cName).trim().toUpperCase() : null;
+
       if (keyId && !occupiedMap.has(keyId)) occupiedMap.set(keyId, info);
       if (keyCode && !occupiedMap.has(keyCode)) occupiedMap.set(keyCode, info);
+      if (keyName && !occupiedMap.has(keyName)) occupiedMap.set(keyName, info);
     }
 
     return {
@@ -686,9 +745,25 @@ export function registerShifts(r: Router) {
       [tenantId, userId],
     );
 
-    const branchId = V.optStr(b.branchId ?? b.branch_id, 'branchId') || (activeShift?.branchId ?? activeShift?.branch_id ?? scope.branchId);
+    let branchId = V.optStr(b.branchId ?? b.branch_id, 'branchId') || (activeShift?.branchId ?? activeShift?.branch_id ?? scope.branchId ?? ctx.user?.branchId);
+    if (!branchId || branchId === 'undefined' || branchId === 'null') {
+      const canonical: any = await ctx.db.one(
+        "SELECT id FROM branches WHERE tenant_id = ? AND (code = 'MAIN' OR active = true) ORDER BY code = 'MAIN' DESC LIMIT 1",
+        [tenantId],
+      );
+      branchId = canonical?.id;
+    }
     if (!branchId) {
       throw bad('Branch is required to select counter', 'BRANCH_REQUIRED');
+    }
+
+    // Resolve branchId if passed as code (e.g. 'MAIN')
+    const canonicalBranch: any = await ctx.db.one(
+      'SELECT id FROM branches WHERE tenant_id = ? AND (id = ? OR UPPER(code) = UPPER(?)) LIMIT 1',
+      [tenantId, branchId, branchId],
+    );
+    if (canonicalBranch) {
+      branchId = canonicalBranch.id;
     }
 
     let counterRow: any = null;
@@ -698,11 +773,23 @@ export function registerShifts(r: Router) {
         [tenantId, branchId, inputCounterId],
       );
     }
-    if (!counterRow && inputCounter) {
+    if (!counterRow && (inputCounter || inputCounterId)) {
+      const searchVal = inputCounter || inputCounterId;
       counterRow = await ctx.db.one(
         'SELECT id, name, code, status FROM counters WHERE tenant_id = ? AND branch_id = ? AND (upper(code) = upper(?) OR lower(name) = lower(?))',
-        [tenantId, branchId, inputCounter, inputCounter],
+        [tenantId, branchId, searchVal, searchVal],
       );
+    }
+
+    if (!counterRow) {
+      // Fallback: search across all branches of this tenant if branchId was slightly mismatched
+      counterRow = await ctx.db.one(
+        'SELECT id, name, code, status, branch_id FROM counters WHERE tenant_id = ? AND (id = ? OR upper(code) = upper(?) OR lower(name) = lower(?)) LIMIT 1',
+        [tenantId, inputCounterId || inputCounter, inputCounter || inputCounterId, inputCounter || inputCounterId],
+      );
+      if (counterRow) {
+        branchId = counterRow.branchId ?? counterRow.branch_id;
+      }
     }
 
     if (!counterRow) {
@@ -713,7 +800,7 @@ export function registerShifts(r: Router) {
     }
 
     // Ensure no other active cashier is currently occupying this counter (active shift within 24h)
-    const existingOccupant: any = await ctx.db.one(
+    const existingShiftOccupant: any = await ctx.db.one(
       `SELECT s.id, s.user_id, u.name AS user_name, s.counter, s.counter_name_snapshot
        FROM shifts s
        JOIN users u ON u.id = s.user_id
@@ -730,8 +817,28 @@ export function registerShifts(r: Router) {
        LIMIT 1`,
       [tenantId, branchId, userId, counterRow.id, counterRow.code, counterRow.name],
     );
-    if (existingOccupant) {
-      const occupantName = existingOccupant.userName ?? existingOccupant.user_name ?? 'another cashier';
+
+    let occupantName = existingShiftOccupant?.userName ?? existingShiftOccupant?.user_name;
+
+    // Check active user assignment within 3 hours
+    if (!occupantName) {
+      const existingUserOccupant: any = await ctx.db.one(
+        `SELECT u.id, u.name AS user_name, u.assigned_counter AS counter
+         FROM users u
+         WHERE u.tenant_id = ?
+           AND u.id != ?
+           AND (u.counter_id = ? OR UPPER(COALESCE(u.assigned_counter, '')) = UPPER(?))
+           AND (u.branch_id = ? OR u.branch_id IS NULL)
+           AND u.updated_at > now() - interval '3 hours'
+         LIMIT 1`,
+        [tenantId, userId, counterRow.id, counterRow.code, branchId],
+      );
+      if (existingUserOccupant) {
+        occupantName = existingUserOccupant.userName ?? existingUserOccupant.user_name ?? 'another cashier';
+      }
+    }
+
+    if (occupantName) {
       throw bad(
         `Billing counter "${counterRow.name}" (${counterRow.code}) is currently in use by ${occupantName}. Please choose another available counter.`,
         'COUNTER_OCCUPIED',
@@ -746,12 +853,15 @@ export function registerShifts(r: Router) {
     }
 
     // Record active counter on user record
-    try {
-      await ctx.db.exec(
-        'UPDATE users SET counter_id = ?, assigned_counter = ?, updated_at = now() WHERE id = ? AND tenant_id = ?',
-        [counterRow.id, counterRow.code, userId, tenantId],
-      );
-    } catch {}
+    await ctx.db.exec(
+      'UPDATE users SET counter_id = ?, assigned_counter = ?, branch_id = COALESCE(branch_id, ?), updated_at = now() WHERE id = ? AND tenant_id = ?',
+      [counterRow.id, counterRow.code, branchId, userId, tenantId],
+    );
+
+    if (ctx.user) {
+      ctx.user.counterId = counterRow.id;
+      ctx.user.assignedCounter = counterRow.code;
+    }
 
     return {
       ok: true,
@@ -763,6 +873,17 @@ export function registerShifts(r: Router) {
 
   r.post('/api/shifts/counter', requirePerm('shift'), handleSelectCounter);
   r.post('/api/shifts/active/counter', requirePerm('shift'), handleSelectCounter);
+
+  // Heartbeat endpoint: keep cashier counter reservation fresh while on POS screen
+  r.post('/api/shifts/counter/heartbeat', requirePerm('shift'), async (ctx) => {
+    const tenantId = ctx.user!.tenantId;
+    const userId = ctx.user!.id;
+    await ctx.db.exec(
+      'UPDATE users SET updated_at = now() WHERE id = ? AND tenant_id = ? AND (counter_id IS NOT NULL OR assigned_counter IS NOT NULL)',
+      [userId, tenantId],
+    );
+    return { ok: true };
+  });
 
   // 3. List shifts history
   r.get('/api/shifts', requirePerm('shift'), async (ctx) => {

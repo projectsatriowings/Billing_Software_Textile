@@ -49,6 +49,7 @@ import {
   getActiveBranchScope,
   setActiveBranchScope,
   selectActiveShiftCounter,
+  heartbeatActiveShiftCounter,
   fetchDayClosingCompliance,
   fetchDayClosingNotifications,
   markDayClosingNotificationRead,
@@ -1342,12 +1343,22 @@ export function App() {
         if (user?.role === 'cashier') {
           setShowCounterModal(true);
         }
-      } else if (match.code !== selectedCounter) {
-        setSelectedCounter(match.code);
-        try {
-          sessionStorage.setItem('pos_selected_counter', match.code);
-          localStorage.setItem('pos_selected_counter', match.code);
-        } catch { }
+      } else {
+        if (match.code !== selectedCounter) {
+          setSelectedCounter(match.code);
+          try {
+            sessionStorage.setItem('pos_selected_counter', match.code);
+            localStorage.setItem('pos_selected_counter', match.code);
+          } catch { }
+        }
+        // Ensure backend registers this station as occupied by the current cashier
+        if (user?.role === 'cashier') {
+          selectActiveShiftCounter({
+            counterId: match.id,
+            counter: match.code,
+            branchId: activeBranch.id,
+          }).catch(() => {});
+        }
       }
     } else if (selectedCounter) {
       const match = activeList.find((c: any) => c.code.toUpperCase() === selectedCounter.toUpperCase() || c.name.toLowerCase() === selectedCounter.toLowerCase());
@@ -1360,9 +1371,25 @@ export function App() {
           localStorage.setItem('pos_selected_counter_id', match.id);
           localStorage.setItem('pos_selected_counter', match.code);
         } catch { }
+        if (user?.role === 'cashier') {
+          selectActiveShiftCounter({
+            counterId: match.id,
+            counter: match.code,
+            branchId: activeBranch.id,
+          }).catch(() => {});
+        }
       }
     }
   }, [activeBranch, selectedCounterId, selectedCounter, user?.role]);
+
+  // Periodic counter heartbeat for cashier on POS tab to keep station occupied in real-time
+  useEffect(() => {
+    if (!user || user.role !== 'cashier' || !selectedCounter) return;
+    const interval = setInterval(() => {
+      heartbeatActiveShiftCounter().catch(() => {});
+    }, 45000);
+    return () => clearInterval(interval);
+  }, [user?.id, user?.role, selectedCounter]);
 
   // Specialized Business Fields
   // Restaurant:
@@ -7821,7 +7848,12 @@ export function App() {
                   </div>
                 </div>
 
-                <div className="top-pos-bento-badge top-pos-counter-badge locked" title="Billing counter is locked for this session">
+                <div
+                  className="top-pos-bento-badge top-pos-counter-badge locked"
+                  title="Billing counter station (Click to change or view stations)"
+                  onClick={() => setShowCounterModal(true)}
+                  style={{ cursor: 'pointer' }}
+                >
                   <div className="top-pos-badge-icon counter">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                       <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
@@ -7875,7 +7907,12 @@ export function App() {
                     </div>
                   </div>
                 </div>
-                <div className="top-pos-bento-badge top-pos-counter-badge locked" title="Billing counter is locked for this session">
+                <div
+                  className="top-pos-bento-badge top-pos-counter-badge locked"
+                  title="Billing counter station (Click to change or view stations)"
+                  onClick={() => setShowCounterModal(true)}
+                  style={{ cursor: 'pointer' }}
+                >
                   <div className="top-pos-badge-icon counter">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                       <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
@@ -7929,7 +7966,12 @@ export function App() {
                     </div>
                   </div>
                 </div>
-                <div className="top-pos-bento-badge top-pos-counter-badge locked" title="Billing counter is locked for this session">
+                <div
+                  className="top-pos-bento-badge top-pos-counter-badge locked"
+                  title="Billing counter station (Click to change or view stations)"
+                  onClick={() => setShowCounterModal(true)}
+                  style={{ cursor: 'pointer' }}
+                >
                   <div className="top-pos-badge-icon counter">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                       <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
