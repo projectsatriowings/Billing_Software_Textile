@@ -3793,19 +3793,75 @@ body.theme-cashier .notif-card-item.unread,
   background: #F4FAF9 !important;
 }
 
+body.theme-cashier .notif-btn-refresh,
+.theme-cashier .notif-btn-refresh {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+  color: var(--sidebar) !important;
+}
+
 body.theme-cashier .notif-btn-refresh:hover,
-.theme-cashier .notif-btn-refresh:hover,
-body.theme-cashier .notif-btn-mark-all:hover,
-.theme-cashier .notif-btn-mark-all:hover {
-  border-color: var(--primary) !important;
+.theme-cashier .notif-btn-refresh:hover {
+  background: var(--primary-soft) !important;
+  border-color: var(--ring) !important;
   color: var(--primary) !important;
 }
 
+body.theme-cashier .notif-btn-mark-all,
+.theme-cashier .notif-btn-mark-all {
+  background: var(--primary) !important;
+  border-color: var(--primary-hover) !important;
+  color: #FFFFFF !important;
+}
+
+body.theme-cashier .notif-btn-mark-all:hover,
+.theme-cashier .notif-btn-mark-all:hover {
+  background: var(--primary-hover) !important;
+  color: #FFFFFF !important;
+}
+
+body.theme-cashier .notif-tab-btn,
+.theme-cashier .notif-tab-btn {
+  background: var(--surface-inner) !important;
+  border-color: var(--border) !important;
+  color: var(--text-muted) !important;
+}
+
+body.theme-cashier .notif-tab-btn:hover,
+.theme-cashier .notif-tab-btn:hover {
+  background: var(--surface) !important;
+  color: var(--sidebar) !important;
+  border-color: var(--ring) !important;
+}
+
+body.theme-cashier .notif-tab-btn.active,
+.theme-cashier .notif-tab-btn.active,
 body.theme-cashier .notif-filter-tab.active,
 .theme-cashier .notif-filter-tab.active {
   background: var(--primary) !important;
-  border-color: var(--primary) !important;
+  border-color: var(--primary-hover) !important;
   color: #FFFFFF !important;
+  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.3) !important;
+}
+
+body.theme-cashier .notif-tab-btn.active .notif-tab-count,
+.theme-cashier .notif-tab-btn.active .notif-tab-count {
+  background: rgba(255, 255, 255, 0.25) !important;
+  color: #FFFFFF !important;
+}
+
+body.theme-cashier .notif-nav-action-btn,
+.theme-cashier .notif-nav-action-btn {
+  color: var(--primary) !important;
+  background: var(--primary-soft) !important;
+  border: 1.5px solid rgba(20, 184, 166, 0.35) !important;
+}
+
+body.theme-cashier .notif-nav-action-btn:hover,
+.theme-cashier .notif-nav-action-btn:hover {
+  background: var(--primary) !important;
+  color: #FFFFFF !important;
+  border-color: var(--primary-hover) !important;
 }
 
 body.theme-cashier .notif-kpi-icon.all,
