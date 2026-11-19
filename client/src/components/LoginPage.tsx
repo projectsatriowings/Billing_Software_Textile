@@ -295,27 +295,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                     <span>{currentMeta.badge}</span>
                   </div>
                   <h1 className="modern-left-heading">{currentMeta.heroTitle}</h1>
-                  <p className="modern-left-subtitle">{currentMeta.heroSubtitle}</p>
-                  <div className="modern-left-feature-chips">
-                    <span className="modern-left-chip">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#34D399" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                      Multi-Branch Consolidation
-                    </span>
-                    <span className="modern-left-chip">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#34D399" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                      Audit &amp; Reconciliation Controls
-                    </span>
-                    <span className="modern-left-chip">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#34D399" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                      Real-Time Headquarter Sync
-                    </span>
-                  </div>
                 </div>
 
                 {hasImage && currentMeta.image && (
