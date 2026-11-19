@@ -2,7 +2,7 @@
    MODERN FULL-SCREEN SPLIT LOGIN DESIGN (Matching Image 2 Reference)
    Role-Adaptive Themes:
    - Super Admin: Purple / Indigo (#5B4DF5, #4838E6, #EEF0FE)
-   - Store Manager: Ocean Blue (#0284C7, #0369A1, #F0F9FF)
+   - Store Manager: Deep Plum Wine (#653B4B, #502D3A, #FAF4F6)
    - Cashier Counter: Deep Emerald Teal (#0F766E, #115E59, #E6F4F3)
    ========================================================================== */
 
@@ -41,19 +41,21 @@
   --role-primary-hover: #4838E6;
   --role-primary-soft: #EEF0FE;
   --role-ring: #818CF8;
+  --role-ring-soft: rgba(91, 77, 245, 0.12);
   --role-shadow: rgba(91, 77, 245, 0.35);
   --role-border: #C7D2FE;
   --role-banner-bg: linear-gradient(145deg, #4A3EE0 0%, #2A2175 100%);
 }
 
 .modern-login-card.role-store-manager {
-  --role-primary: #0284C7;
-  --role-primary-hover: #0369A1;
-  --role-primary-soft: #F0F9FF;
-  --role-ring: #38BDF8;
-  --role-shadow: rgba(2, 132, 199, 0.35);
-  --role-border: #BAE6FD;
-  --role-banner-bg: linear-gradient(145deg, #0284C7 0%, #075985 100%);
+  --role-primary: #653B4B;
+  --role-primary-hover: #502D3A;
+  --role-primary-soft: #FAF4F6;
+  --role-ring: #945B6F;
+  --role-ring-soft: rgba(101, 59, 75, 0.14);
+  --role-shadow: rgba(101, 59, 75, 0.35);
+  --role-border: #DEC7CF;
+  --role-banner-bg: linear-gradient(145deg, #653B4B 0%, #351C26 100%);
 }
 
 .modern-login-card.role-cashier {
@@ -61,6 +63,7 @@
   --role-primary-hover: #115E59;
   --role-primary-soft: #E6F4F3;
   --role-ring: #14B8A6;
+  --role-ring-soft: rgba(15, 118, 110, 0.12);
   --role-shadow: rgba(15, 118, 110, 0.35);
   --role-border: #99F6E4;
   --role-banner-bg: linear-gradient(145deg, #0F766E 0%, #0F2D2E 100%);
@@ -498,7 +501,7 @@
 
 .felix-input:focus {
   border-color: var(--role-primary, #5B4DF5);
-  box-shadow: 0 0 0 3px rgba(91, 77, 245, 0.12);
+  box-shadow: 0 0 0 3px var(--role-ring-soft, rgba(91, 77, 245, 0.12));
 }
 
 .felix-input-relative .felix-input {
@@ -795,7 +798,7 @@
 }
 
 .modern-role-tab.active.tab-store-manager {
-  color: #0284C7;
+  color: #653B4B;
 }
 
 .modern-role-tab.active.tab-cashier {
@@ -1173,7 +1176,7 @@
 }
 
 .modern-demo-card-icon.role-manager {
-  color: #0284C7;
+  color: #653B4B;
 }
 
 .modern-demo-card-icon.role-cashier {
