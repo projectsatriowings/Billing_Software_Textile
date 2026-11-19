@@ -144,15 +144,15 @@
 
 /* Super-Admin-specific illustration sizing & position */
 .super-admin-layout .modern-admin-illustration-area {
-  width: 142%;
-  max-width: 1220px;
-  max-height: 79vh;
-  bottom: -28px;
+  width: 148%;
+  max-width: 1280px;
+  max-height: 83vh;
+  bottom: -32px;
   right: -135px;
 }
 
 .super-admin-layout .modern-admin-hero-img {
-  max-height: 75vh;
+  max-height: 80vh;
 }
 
 /* Cashier-specific illustration sizing & position */
