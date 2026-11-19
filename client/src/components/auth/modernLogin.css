@@ -67,32 +67,41 @@
 }
 
 /* --------------------------------------------------------------------------
-   LEFT HALF: FULL-SCREEN DEDICATED GRAPHIC / USER IMAGE SLOT
+   LEFT HALF: FULL-SCREEN DEDICATED GRAPHIC / USER IMAGE SLOT / TOP WORDINGS
    -------------------------------------------------------------------------- */
 .modern-login-left {
   background: var(--role-banner-bg);
   position: relative;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1.5rem;
-  color: #FFFFFF;
   overflow: hidden;
   transition: background 0.4s ease;
   min-height: 100vh;
   box-sizing: border-box;
 }
 
-/* Subtle decorative circles behind image slot */
+.modern-login-left.has-image {
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.modern-login-left.text-only-layout {
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 5rem 4.5rem;
+}
+
+/* Subtle decorative circles behind image / text */
 .modern-login-left::before {
   content: '';
   position: absolute;
   top: -120px;
   right: -120px;
-  width: 480px;
-  height: 480px;
+  width: 500px;
+  height: 500px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.12) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.14) 0%, transparent 70%);
   pointer-events: none;
 }
 
@@ -101,10 +110,10 @@
   position: absolute;
   bottom: -100px;
   left: -100px;
-  width: 400px;
-  height: 400px;
+  width: 440px;
+  height: 440px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.08) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.09) 0%, transparent 70%);
   pointer-events: none;
 }
 
@@ -123,68 +132,86 @@
   display: block;
 }
 
-.image-placeholder-frame {
+/* Top Wordings Layout (When no illustration image is used) */
+.modern-login-top-wordings {
   position: relative;
   z-index: 2;
-  height: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  gap: 1.35rem;
+  max-width: 540px;
+  margin-top: 0;
+  padding-top: 0;
 }
 
-.placeholder-badge {
+.modern-left-badge {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  background: rgba(255, 255, 255, 0.18);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  padding: 0.45rem 1rem;
+  background: rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  padding: 0.45rem 1.1rem;
   border-radius: 9999px;
   font-size: 0.8rem;
-  font-weight: 700;
-  letter-spacing: 0.03em;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  color: #FFFFFF;
   width: fit-content;
   text-transform: uppercase;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
-.placeholder-hero-text-block {
-  margin: auto 0;
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-}
-
-.placeholder-hero-title {
+.modern-left-heading {
   margin: 0;
-  font-size: 2.75rem;
-  font-weight: 900;
+  font-size: 2.85rem;
+  font-weight: 850;
   line-height: 1.15;
   letter-spacing: -0.03em;
   color: #FFFFFF;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.16);
 }
 
-.placeholder-hero-subtitle {
+.modern-left-subtitle {
   margin: 0;
-  font-size: 1.05rem;
-  color: rgba(255, 255, 255, 0.85);
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.88);
   line-height: 1.65;
-  max-width: 460px;
+  font-weight: 450;
+  max-width: 480px;
 }
 
-.placeholder-upload-hint {
+.modern-left-feature-chips {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.modern-left-chip {
   display: inline-flex;
   align-items: center;
   gap: 0.65rem;
-  background: rgba(0, 0, 0, 0.22);
-  border: 1px dashed rgba(255, 255, 255, 0.4);
-  padding: 0.75rem 1.15rem;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  padding: 0.65rem 1.15rem;
   border-radius: 12px;
-  font-size: 0.825rem;
-  color: rgba(255, 255, 255, 0.95);
+  font-size: 0.875rem;
   font-weight: 600;
-  backdrop-filter: blur(4px);
+  color: #FFFFFF;
   width: fit-content;
+  transition: all 0.2s ease;
+}
+
+.modern-left-chip .chip-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #34D399;
+  box-shadow: 0 0 8px #34D399;
 }
 
 /* --------------------------------------------------------------------------
@@ -609,7 +636,11 @@
   }
 
   .modern-login-left {
-    min-height: 320px;
+    min-height: 280px;
+    padding: 2.5rem 2rem;
+  }
+
+  .modern-login-left.text-only-layout {
     padding: 2.5rem 2rem;
   }
 
@@ -623,7 +654,7 @@
     min-height: auto;
   }
 
-  .placeholder-hero-title {
-    font-size: 2rem;
+  .modern-left-heading {
+    font-size: 2.1rem;
   }
 }

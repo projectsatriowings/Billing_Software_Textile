@@ -146,10 +146,21 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   const isCashier = selectedRole === 'cashier' || selectedRole === 'cashier2';
   const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
 
-  const roleMeta = {
+  const roleMeta: Record<string, {
+    key: string;
+    image: string | null;
+    title: string;
+    subtitle: string;
+    heroTitle: string;
+    heroSubtitle: string;
+    inputLabel: string;
+    placeholder: string;
+    btnText: string;
+    badge: string;
+  }> = {
     super_admin: {
       key: 'super-admin',
-      image: '/images/super-admin.png',
+      image: null,
       title: 'Super Admin Portal',
       subtitle: 'Enterprise headquarters: consolidated sales, multi-branch network & governance.',
       heroTitle: 'Consolidated Enterprise Control.',
@@ -195,41 +206,48 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     <div className="modern-login-page">
       <div className={`modern-login-card role-${currentMeta.key}`}>
         {/* ------------------------------------------------------------------
-            LEFT HALF: USER'S GENERATED IMAGE DISPLAY
+            LEFT HALF: USER'S GENERATED IMAGE DISPLAY / BRANDING
             ------------------------------------------------------------------ */}
-        <div className="modern-login-left">
-          {currentMeta.image && !failedImages[currentMeta.image] ? (
-            <img
-              key={currentMeta.image}
-              src={currentMeta.image}
-              alt={`${currentMeta.title} Illustration`}
-              className="user-login-image"
-              onError={() => {
-                setFailedImages((prev) => ({ ...prev, [currentMeta.image!]: true }));
-              }}
-            />
-          ) : (
-            <div id="user-image-fallback-frame" className="image-placeholder-frame">
-              <div className="placeholder-badge">
-                <span>{currentMeta.badge}</span>
-              </div>
-
-              <div className="placeholder-hero-text-block">
-                <h2 className="placeholder-hero-title">{currentMeta.heroTitle}</h2>
-                <p className="placeholder-hero-subtitle">{currentMeta.heroSubtitle}</p>
-              </div>
-
-              <div className="placeholder-upload-hint">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                  <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                  <polyline points="21 15 16 10 5 21"></polyline>
-                </svg>
-                <span>Image slot reserved • Ready for your custom illustration</span>
-              </div>
+        {(() => {
+          const hasImage = Boolean(currentMeta.image && !failedImages[currentMeta.image]);
+          return (
+            <div className={`modern-login-left ${hasImage ? 'has-image' : 'text-only-layout'}`}>
+              {hasImage && currentMeta.image ? (
+                <img
+                  key={currentMeta.image}
+                  src={currentMeta.image}
+                  alt={`${currentMeta.title} Illustration`}
+                  className="user-login-image"
+                  onError={() => {
+                    setFailedImages((prev) => ({ ...prev, [currentMeta.image!]: true }));
+                  }}
+                />
+              ) : (
+                <div className="modern-login-top-wordings">
+                  <div className="modern-left-badge">
+                    <span>{currentMeta.badge}</span>
+                  </div>
+                  <h1 className="modern-left-heading">{currentMeta.heroTitle}</h1>
+                  <p className="modern-left-subtitle">{currentMeta.heroSubtitle}</p>
+                  <div className="modern-left-feature-chips">
+                    <span className="modern-left-chip">
+                      <span className="chip-dot" />
+                      Multi-Branch Consolidation
+                    </span>
+                    <span className="modern-left-chip">
+                      <span className="chip-dot" />
+                      Audit &amp; Reconciliation Controls
+                    </span>
+                    <span className="modern-left-chip">
+                      <span className="chip-dot" />
+                      Real-Time Headquarter Sync
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          );
+        })()}
 
         {/* ------------------------------------------------------------------
             RIGHT HALF: CLEAN MODERN LOGIN FORM (Matching Image 2 Reference)
