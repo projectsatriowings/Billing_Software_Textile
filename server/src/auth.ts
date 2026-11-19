@@ -1,6 +1,34 @@
 import { can, type Perm } from '../../shared/types.ts';
 import { forbidden, unauthorized, type AuthUser, type Ctx, type Handler } from './http.ts';
 import { passwordStamp, verifyToken } from './security.ts';
+import { getTenantModuleAccess } from './routes/moduleManagement.ts';
+import { isModuleEnabledForRole } from '../../shared/modules.ts';
+
+export const PERM_TO_MODULE: Partial<Record<Perm, string>> = {
+  sell: 'pos',
+  returns: 'pos',
+  'items.view': 'items',
+  'items.write': 'items',
+  'stock.view': 'inventory',
+  'stock.adjust': 'inventory.levels',
+  'stock.transfer': 'inventory.transfers',
+  purchases: 'accounts',
+  'purchases.void': 'accounts',
+  'purchases.pay': 'accounts.payments',
+  expenses: 'accounts.expenses',
+  'expenses.write': 'accounts.expenses',
+  'expenses.void': 'accounts.expenses',
+  'gst.view': 'gst',
+  'gst.manage': 'gst',
+  'promotions.view': 'promotions',
+  'promotions.write': 'promotions',
+  'promotions.reports': 'promotions',
+  'promotions.apply': 'promotions',
+  users: 'user-management',
+  settings: 'settings',
+  'config.edit': 'settings',
+  reports: 'sales-analysis',
+};
 
 /**
  * Reads the "Authorization: Bearer <token>" header. Returns null (never throws) when there is no valid session,
@@ -57,7 +85,21 @@ export const requireUser: Handler = (ctx) => {
 };
 
 /** Route guard: signed in AND allowed to do `perm` (the same table the client uses to hide buttons). */
-export const requirePerm = (perm: Perm): Handler => (ctx) => {
+export const requirePerm = (perm: Perm): Handler => async (ctx) => {
   if (!ctx.user) throw unauthorized();
-  if (!can(ctx.user.role, perm)) throw forbidden('You do not have permission to do this. Ask the shop owner.', 'FORBIDDEN', { needs: perm });
+  if (!can(ctx.user.role, perm)) {
+    throw forbidden('You do not have permission to do this. Ask the shop owner.', 'FORBIDDEN', { needs: perm });
+  }
+
+  // Check dynamic role module access enforcement
+  const targetModule = PERM_TO_MODULE[perm];
+  if (targetModule && ctx.user.role !== 'owner' && String(ctx.user.role).toUpperCase() !== 'SUPER_ADMIN') {
+    const access = await getTenantModuleAccess(ctx.db, ctx.user.tenantId);
+    if (!isModuleEnabledForRole(access, ctx.user.role, targetModule)) {
+      throw forbidden('This module has been disabled by your administrator.', 'MODULE_DISABLED', {
+        needs: perm,
+        module: targetModule,
+      });
+    }
+  }
 };

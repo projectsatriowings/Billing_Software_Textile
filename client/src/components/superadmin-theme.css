@@ -1,0 +1,2559 @@
+/* ==========================================================================
+   SUPER ADMIN GLOBAL THEME: DEEP PLUM (#49364A)
+   Scoped strictly under .theme-super-admin and body.theme-super-admin
+   to avoid any leakage to Store Manager (#653B4B) or Cashier (#0F766E).
+
+   User-Specified Palette:
+   - Primary:          #49364A
+   - Hover:            #604B61
+   - Active / Dark:    #352638
+   - Light Background: #F3EDF3
+   - Light Accent:     #E9DFE9
+   - Border:           #D8CBD8
+   ========================================================================== */
+
+body.theme-super-admin,
+.theme-super-admin {
+  --primary: #49364A;
+  --primary-hover: #604B61;
+  --primary-active: #352638;
+  --primary-soft: #F3EDF3;
+  --primary-light: #F3EDF3;
+  --primary-accent: #E9DFE9;
+  --primary-glow: rgba(73, 54, 74, 0.35);
+  --primary-grad: linear-gradient(135deg, #604B61 0%, #49364A 100%);
+
+  --sidebar: #1F1620;
+  --sidebar-active: #49364A;
+  --sidebar-hover: rgba(73, 54, 74, 0.32);
+
+  --deep-purple: #49364A;
+  --deep-purple-hover: #604B61;
+  --accent-purple: #604B61;
+  --accent-purple-light: #F3EDF3;
+
+  --border: #D8CBD8;
+  --border-light: #E9DFE9;
+  --border-focus: #49364A;
+  --ring: #604B61;
+
+  --text-main: #1D151F;
+  --text-on-primary: #FFFFFF;
+
+  --notif-primary: #49364A;
+  --notif-primary-hover: #604B61;
+  --notif-primary-active: #352638;
+  --notif-primary-soft: #F3EDF3;
+  --notif-primary-border: #D8CBD8;
+
+  --dc-accent: #49364A;
+  --dc-accent-soft: #F3EDF3;
+  --dc-accent-border: #D8CBD8;
+  --dc-accent-text: #49364A;
+
+  --tag-chip-bg: #F3EDF3;
+  --tag-chip-text: #49364A;
+  --promo-green-tint: #F3EDF3;
+  --promo-green-text: #49364A;
+  --filter-ring-color: #49364A;
+  --bg-main: #FAF8FA;
+  --bg-card-hover: #F8F4F8;
+
+  --shadow-sm: 0 1px 3px 0 rgba(73, 54, 74, 0.06), 0 1px 2px -1px rgba(73, 54, 74, 0.04);
+  --shadow-md: 0 4px 10px -2px rgba(73, 54, 74, 0.1), 0 2px 4px -2px rgba(73, 54, 74, 0.05);
+  --shadow-lg: 0 12px 24px -4px rgba(73, 54, 74, 0.15), 0 4px 6px -2px rgba(73, 54, 74, 0.06);
+  --shadow-xl: 0 20px 35px -5px rgba(73, 54, 74, 0.2), 0 8px 10px -6px rgba(73, 54, 74, 0.08);
+
+  color-scheme: light;
+}
+
+/* --------------------------------------------------------------------------
+   1. SUPER ADMIN SIDEBAR NAVIGATION
+   -------------------------------------------------------------------------- */
+.theme-super-admin .app-sidebar,
+body.theme-super-admin .app-sidebar {
+  background: linear-gradient(180deg, #1F1620 0%, #352638 45%, #1F1620 100%) !important;
+  border-right: 1px solid rgba(216, 203, 216, 0.15) !important;
+  box-shadow: 4px 0 24px rgba(31, 22, 32, 0.35) !important;
+}
+
+.theme-super-admin .sidebar-brand-icon,
+body.theme-super-admin .sidebar-brand-icon {
+  background: #49364A !important;
+  box-shadow: 0 4px 14px rgba(73, 54, 74, 0.4) !important;
+  color: #FFFFFF !important;
+}
+
+.theme-super-admin .sidebar-user-avatar,
+body.theme-super-admin .sidebar-user-avatar,
+.theme-super-admin .sidebar-user-card .sidebar-user-avatar,
+body.theme-super-admin .sidebar-user-card .sidebar-user-avatar,
+.theme-super-admin .app-sidebar.icon-only .sidebar-user-avatar,
+body.theme-super-admin .app-sidebar.icon-only .sidebar-user-avatar {
+  background: #49364A !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 8px rgba(73, 54, 74, 0.45) !important;
+}
+
+.theme-super-admin .sidebar-nav-item.active,
+body.theme-super-admin .sidebar-nav-item.active {
+  background: #49364A !important;
+  border-color: rgba(255, 255, 255, 0.22) !important;
+  box-shadow: 0 2px 8px rgba(73, 54, 74, 0.45) !important;
+  color: #FFFFFF !important;
+}
+
+.theme-super-admin .sidebar-nav-item.active .nav-count-badge,
+body.theme-super-admin .sidebar-nav-item.active .nav-count-badge {
+  color: #49364A !important;
+  background: #FFFFFF !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15) !important;
+}
+
+.theme-super-admin .sidebar-nav-item:hover:not(.active),
+body.theme-super-admin .sidebar-nav-item:hover:not(.active) {
+  background: rgba(73, 54, 74, 0.32) !important;
+  color: #FFFFFF !important;
+}
+
+.theme-super-admin .sidebar-store-btn,
+.theme-super-admin .sidebar-store-icon-tile,
+.theme-super-admin .app-sidebar.icon-only .sidebar-store-btn,
+body.theme-super-admin .sidebar-store-btn,
+body.theme-super-admin .sidebar-store-icon-tile,
+body.theme-super-admin .app-sidebar.icon-only .sidebar-store-btn {
+  background: linear-gradient(135deg, #604B61 0%, #49364A 100%) !important;
+  box-shadow: 0 2px 8px rgba(73, 54, 74, 0.35) !important;
+}
+
+.theme-super-admin .sidebar-store-badge,
+body.theme-super-admin .sidebar-store-badge {
+  background: rgba(73, 54, 74, 0.45) !important;
+  border-color: rgba(216, 203, 216, 0.3) !important;
+  color: #FFFFFF !important;
+}
+
+.theme-super-admin .sidebar-collapse-toggle:hover,
+body.theme-super-admin .sidebar-collapse-toggle:hover {
+  background: rgba(73, 54, 74, 0.4) !important;
+  color: #FFFFFF !important;
+}
+
+.theme-super-admin .sidebar-submenu-item.active,
+body.theme-super-admin .sidebar-submenu-item.active {
+  background: rgba(73, 54, 74, 0.35) !important;
+  color: #FFFFFF !important;
+  border-left: 2px solid #604B61 !important;
+}
+
+.theme-super-admin .sidebar-brand-subtitle,
+body.theme-super-admin .sidebar-brand-subtitle,
+.theme-super-admin .sidebar-store-chevron,
+body.theme-super-admin .sidebar-store-chevron {
+  color: #D8CBD8 !important;
+}
+
+.theme-super-admin .sidebar-nav-item .nav-icon .wholesale-nav-icon,
+body.theme-super-admin .sidebar-nav-item .nav-icon .wholesale-nav-icon {
+  filter: brightness(0) invert(1) drop-shadow(0 0 0.3px #ffffff) !important;
+}
+
+/* --------------------------------------------------------------------------
+   2. SUPER ADMIN TOP GLOBAL HEADER BAR
+   -------------------------------------------------------------------------- */
+.theme-super-admin .top-user-avatar,
+body.theme-super-admin .top-user-avatar {
+  background: #49364A !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 8px rgba(73, 54, 74, 0.35) !important;
+}
+
+.theme-super-admin .top-user-chip:hover,
+body.theme-super-admin .top-user-chip:hover {
+  border-color: #49364A !important;
+}
+
+.theme-super-admin .top-user-role,
+body.theme-super-admin .top-user-role {
+  color: #49364A !important;
+}
+
+.theme-super-admin .header-today-pill .today-pill-icon,
+body.theme-super-admin .header-today-pill .today-pill-icon {
+  color: #49364A !important;
+}
+
+.theme-super-admin .top-notification-btn:hover,
+body.theme-super-admin .top-notification-btn:hover {
+  background: #F3EDF3 !important;
+  border-color: #49364A !important;
+  color: #49364A !important;
+}
+
+.theme-super-admin .bento-notif-open-full-btn,
+body.theme-super-admin .bento-notif-open-full-btn {
+  background: #F3EDF3 !important;
+  border-color: #D8CBD8 !important;
+  color: #49364A !important;
+}
+
+.theme-super-admin .bento-notif-role-badge.admin,
+body.theme-super-admin .bento-notif-role-badge.admin {
+  background: #F3EDF3 !important;
+  border-color: #D8CBD8 !important;
+  color: #49364A !important;
+}
+
+/* --------------------------------------------------------------------------
+   2B. SUPER ADMIN BRANCH SELECTOR ICON (DEEP PLUM #49364A)
+   Strictly scoped to Super Admin so Store Manager and Cashier are untouched.
+   Applies across all modules in default, hover, focus and active states.
+   -------------------------------------------------------------------------- */
+.theme-super-admin .top-branch-icon,
+body.theme-super-admin .top-branch-icon,
+.theme-super-admin .top-branch-selector-pill .top-branch-icon,
+body.theme-super-admin .top-branch-selector-pill .top-branch-icon,
+.theme-super-admin svg.top-branch-icon,
+body.theme-super-admin svg.top-branch-icon,
+.theme-super-admin .branch-switcher-store-icon,
+body.theme-super-admin .branch-switcher-store-icon {
+  color: #49364A !important;
+  stroke: #49364A !important;
+}
+
+/* Hover State */
+.theme-super-admin .top-branch-selector-pill:hover .top-branch-icon,
+body.theme-super-admin .top-branch-selector-pill:hover .top-branch-icon,
+.theme-super-admin .top-branch-icon:hover,
+body.theme-super-admin .top-branch-icon:hover,
+.theme-super-admin .branch-switcher-trigger:hover .branch-switcher-store-icon,
+body.theme-super-admin .branch-switcher-trigger:hover .branch-switcher-store-icon {
+  color: #49364A !important;
+  stroke: #49364A !important;
+}
+
+/* Focus State */
+.theme-super-admin .top-branch-selector-pill:focus-within .top-branch-icon,
+body.theme-super-admin .top-branch-selector-pill:focus-within .top-branch-icon,
+.theme-super-admin .top-branch-icon:focus,
+body.theme-super-admin .top-branch-icon:focus,
+.theme-super-admin .top-branch-select:focus,
+body.theme-super-admin .top-branch-select:focus,
+.theme-super-admin .branch-switcher-trigger:focus .branch-switcher-store-icon,
+body.theme-super-admin .branch-switcher-trigger:focus .branch-switcher-store-icon {
+  color: #49364A !important;
+  stroke: #49364A !important;
+}
+
+.theme-super-admin .top-branch-select:focus,
+body.theme-super-admin .top-branch-select:focus {
+  outline: 2px solid #49364A !important;
+  outline-offset: 2px !important;
+}
+
+/* Active State */
+.theme-super-admin .top-branch-selector-pill:active .top-branch-icon,
+body.theme-super-admin .top-branch-selector-pill:active .top-branch-icon,
+.theme-super-admin .top-branch-icon:active,
+body.theme-super-admin .top-branch-icon:active,
+.theme-super-admin .branch-switcher-trigger:active .branch-switcher-store-icon,
+body.theme-super-admin .branch-switcher-trigger:active .branch-switcher-store-icon,
+.theme-super-admin .branch-switcher-trigger.is-open .branch-switcher-store-icon,
+body.theme-super-admin .branch-switcher-trigger.is-open .branch-switcher-store-icon {
+  color: #49364A !important;
+  stroke: #49364A !important;
+}
+
+/* --------------------------------------------------------------------------
+   3. PRIMARY BUTTONS & CTAS ACROSS ALL MODULES
+   -------------------------------------------------------------------------- */
+.theme-super-admin .btn-primary,
+.theme-super-admin .btn.btn-primary,
+.theme-super-admin .btn-dash-primary,
+.theme-super-admin .btn-primary-small,
+.theme-super-admin .bento-btn-primary,
+.theme-super-admin .complete-sale-btn,
+.theme-super-admin .btn-empty-find,
+.theme-super-admin .btn-scan-action,
+.theme-super-admin .btn-empty-start,
+.theme-super-admin .stock-transfer-btn-create,
+.theme-super-admin .stock-transfer-btn-dispatch,
+.theme-super-admin .stock-transfer-btn-details-dispatch,
+.theme-super-admin .stock-transfer-btn-confirm-dispatch,
+.theme-super-admin .btn-save,
+.theme-super-admin .btn-submit,
+.theme-super-admin .btn-action-primary,
+.theme-super-admin .pbm-btn-primary,
+.theme-super-admin .srb-btn-primary,
+.theme-super-admin .cust-primary-btn,
+.theme-super-admin .supp-primary-btn,
+.theme-super-admin .btn-wholesale-primary,
+body.theme-super-admin .btn-primary,
+body.theme-super-admin .btn.btn-primary,
+body.theme-super-admin .btn-dash-primary,
+body.theme-super-admin .btn-primary-small,
+body.theme-super-admin .bento-btn-primary,
+body.theme-super-admin .complete-sale-btn,
+body.theme-super-admin .btn-empty-find,
+body.theme-super-admin .btn-scan-action,
+body.theme-super-admin .btn-empty-start,
+body.theme-super-admin .stock-transfer-btn-create,
+body.theme-super-admin .stock-transfer-btn-dispatch,
+body.theme-super-admin .stock-transfer-btn-details-dispatch,
+body.theme-super-admin .stock-transfer-btn-confirm-dispatch,
+body.theme-super-admin .btn-save,
+body.theme-super-admin .btn-submit,
+body.theme-super-admin .btn-action-primary,
+body.theme-super-admin .pbm-btn-primary,
+body.theme-super-admin .srb-btn-primary,
+body.theme-super-admin .cust-primary-btn,
+body.theme-super-admin .supp-primary-btn,
+body.theme-super-admin .btn-wholesale-primary {
+  background: #49364A !important;
+  border: 1px solid #352638 !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 14px rgba(73, 54, 74, 0.35) !important;
+}
+
+.theme-super-admin .btn-primary:hover,
+.theme-super-admin .btn.btn-primary:hover,
+.theme-super-admin .btn-dash-primary:hover,
+.theme-super-admin .btn-primary-small:hover,
+.theme-super-admin .bento-btn-primary:hover,
+.theme-super-admin .complete-sale-btn:hover,
+.theme-super-admin .btn-empty-find:hover,
+.theme-super-admin .btn-scan-action:hover,
+.theme-super-admin .btn-empty-start:hover,
+.theme-super-admin .stock-transfer-btn-create:hover,
+.theme-super-admin .stock-transfer-btn-dispatch:hover,
+.theme-super-admin .stock-transfer-btn-details-dispatch:hover,
+.theme-super-admin .stock-transfer-btn-confirm-dispatch:hover,
+.theme-super-admin .pbm-btn-primary:hover,
+.theme-super-admin .srb-btn-primary:hover,
+body.theme-super-admin .btn-primary:hover,
+body.theme-super-admin .btn.btn-primary:hover,
+body.theme-super-admin .btn-dash-primary:hover,
+body.theme-super-admin .btn-primary-small:hover,
+body.theme-super-admin .bento-btn-primary:hover,
+body.theme-super-admin .complete-sale-btn:hover,
+body.theme-super-admin .btn-empty-find:hover,
+body.theme-super-admin .btn-scan-action:hover,
+body.theme-super-admin .btn-empty-start:hover,
+body.theme-super-admin .stock-transfer-btn-create:hover,
+body.theme-super-admin .stock-transfer-btn-dispatch:hover,
+body.theme-super-admin .stock-transfer-btn-details-dispatch:hover,
+body.theme-super-admin .stock-transfer-btn-confirm-dispatch:hover,
+body.theme-super-admin .pbm-btn-primary:hover,
+body.theme-super-admin .srb-btn-primary:hover {
+  background: #604B61 !important;
+  border-color: #352638 !important;
+  box-shadow: 0 6px 18px rgba(73, 54, 74, 0.45) !important;
+  transform: translateY(-1px) !important;
+}
+
+.theme-super-admin .btn-primary:active,
+.theme-super-admin .btn.btn-primary:active,
+.theme-super-admin .btn-dash-primary:active,
+.theme-super-admin .complete-sale-btn:active,
+.theme-super-admin .stock-transfer-btn-create:active,
+.theme-super-admin .stock-transfer-btn-dispatch:active,
+body.theme-super-admin .btn-primary:active,
+body.theme-super-admin .btn.btn-primary:active,
+body.theme-super-admin .btn-dash-primary:active,
+body.theme-super-admin .complete-sale-btn:active,
+body.theme-super-admin .stock-transfer-btn-create:active,
+body.theme-super-admin .stock-transfer-btn-dispatch:active {
+  background: #352638 !important;
+  transform: translateY(0) !important;
+  box-shadow: 0 2px 6px rgba(73, 54, 74, 0.35) !important;
+}
+
+.theme-super-admin .btn-primary:focus-visible,
+.theme-super-admin .stock-transfer-btn-create:focus-visible,
+.theme-super-admin .stock-transfer-btn-dispatch:focus-visible,
+body.theme-super-admin .btn-primary:focus-visible,
+body.theme-super-admin .stock-transfer-btn-create:focus-visible,
+body.theme-super-admin .stock-transfer-btn-dispatch:focus-visible {
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(73, 54, 74, 0.35) !important;
+}
+
+.theme-super-admin .btn-dash-action:hover,
+body.theme-super-admin .btn-dash-action:hover {
+  border-color: #604B61 !important;
+  color: #49364A !important;
+}
+
+.theme-super-admin .link-action-btn,
+.theme-super-admin .link-action-btn:hover,
+body.theme-super-admin .link-action-btn,
+body.theme-super-admin .link-action-btn:hover {
+  color: #49364A !important;
+}
+
+.theme-super-admin .quick-action-pill:hover,
+.theme-super-admin .bento-quick-btn:hover,
+body.theme-super-admin .quick-action-pill:hover,
+body.theme-super-admin .bento-quick-btn:hover {
+  border-color: #604B61 !important;
+  color: #49364A !important;
+  background: #F3EDF3 !important;
+}
+
+/* --------------------------------------------------------------------------
+   4. DASHBOARD - KPI CARDS, METRICS & NOTIFICATION BANNER
+   -------------------------------------------------------------------------- */
+.theme-super-admin .today-kpi-card.purple-highlight,
+body.theme-super-admin .today-kpi-card.purple-highlight {
+  background: linear-gradient(135deg, #604B61 0%, #49364A 55%, #352638 100%) !important;
+  border: 1px solid #352638 !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 14px rgba(73, 54, 74, 0.32), 0 2px 4px rgba(73, 54, 74, 0.18) !important;
+}
+
+.theme-super-admin .today-kpi-card.purple-highlight:hover,
+body.theme-super-admin .today-kpi-card.purple-highlight:hover {
+  border-color: #352638 !important;
+  box-shadow: 0 8px 22px rgba(73, 54, 74, 0.42), 0 3px 6px rgba(73, 54, 74, 0.24) !important;
+}
+
+.theme-super-admin .today-kpi-card.purple-highlight .kpi-label,
+body.theme-super-admin .today-kpi-card.purple-highlight .kpi-label {
+  color: rgba(255, 255, 255, 0.92) !important;
+}
+
+.theme-super-admin .today-kpi-card.purple-highlight .kpi-value,
+body.theme-super-admin .today-kpi-card.purple-highlight .kpi-value {
+  color: #FFFFFF !important;
+}
+
+.theme-super-admin .kpi-icon-badge.purple,
+body.theme-super-admin .kpi-icon-badge.purple {
+  background: rgba(255, 255, 255, 0.2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  color: #FFFFFF !important;
+}
+
+.theme-super-admin .toggle-seg-btn.active.active-sales,
+body.theme-super-admin .toggle-seg-btn.active.active-sales {
+  color: #49364A !important;
+}
+
+.theme-super-admin .segmented-metric-toggle .toggle-seg-btn.active,
+body.theme-super-admin .segmented-metric-toggle .toggle-seg-btn.active {
+  box-shadow: 0 2px 6px rgba(73, 54, 74, 0.25) !important;
+}
+
+.theme-super-admin .chart-tab-btn.active,
+.theme-super-admin .chart-filter-pill.active,
+body.theme-super-admin .chart-tab-btn.active,
+body.theme-super-admin .chart-filter-pill.active {
+  background: #49364A !important;
+  color: #FFFFFF !important;
+  border-color: #49364A !important;
+}
+
+/* NO RETAIL BILLS YET TODAY NOTIFICATION CARD */
+body.theme-super-admin .today-empty-alert-banner,
+.theme-super-admin .today-empty-alert-banner {
+  background: linear-gradient(135deg, #FAF4FA 0%, #F3EDF3 100%) !important;
+  border: 1px solid #D8CBD8 !important;
+  color: #49364A !important;
+  box-shadow: 0 4px 14px rgba(73, 54, 74, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.95) !important;
+}
+
+body.theme-super-admin .today-empty-alert-banner strong,
+.theme-super-admin .today-empty-alert-banner strong {
+  color: #352638 !important;
+}
+
+body.theme-super-admin .empty-alert-content,
+.theme-super-admin .empty-alert-content {
+  color: #49364A !important;
+}
+
+body.theme-super-admin .empty-alert-icon,
+.theme-super-admin .empty-alert-icon {
+  color: #49364A !important;
+  fill: none !important;
+}
+
+body.theme-super-admin .btn-empty-start,
+.theme-super-admin .btn-empty-start {
+  background: #49364A !important;
+  color: #FFFFFF !important;
+  border: 1px solid #352638 !important;
+  box-shadow: 0 2px 8px rgba(73, 54, 74, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+}
+
+body.theme-super-admin .btn-empty-start:hover,
+.theme-super-admin .btn-empty-start:hover {
+  background: #604B61 !important;
+  border-color: #352638 !important;
+  box-shadow: 0 4px 12px rgba(73, 54, 74, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
+  transform: translateY(-1px) !important;
+}
+
+body.theme-super-admin .btn-empty-start:active,
+.theme-super-admin .btn-empty-start:active {
+  background: #352638 !important;
+  transform: translateY(0) !important;
+  box-shadow: 0 1px 4px rgba(73, 54, 74, 0.3) !important;
+}
+
+/* --------------------------------------------------------------------------
+   5. POS BILLING COUNTER (BENTO POS HUB)
+   -------------------------------------------------------------------------- */
+
+/* 5.1 Top Bento Bar, Lightning Icon & Loyalty Badge */
+.theme-super-admin .bento-pos-badge .bento-badge-icon,
+body.theme-super-admin .bento-pos-badge .bento-badge-icon {
+  background: #49364A !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 8px rgba(73, 54, 74, 0.35) !important;
+}
+
+.theme-super-admin .bento-pos-badge .bento-badge-icon svg,
+body.theme-super-admin .bento-pos-badge .bento-badge-icon svg {
+  stroke: #FFFFFF !important;
+  fill: #FFFFFF !important;
+}
+
+.theme-super-admin .bento-loyalty-pill.active,
+body.theme-super-admin .bento-loyalty-pill.active {
+  background: #F3EDF3 !important;
+  border: 1.2px solid #D8CBD8 !important;
+  color: #49364A !important;
+  box-shadow: 0 1px 4px rgba(73, 54, 74, 0.15) !important;
+}
+
+.theme-super-admin .bento-loyalty-pill.active span[style*="background"],
+body.theme-super-admin .bento-loyalty-pill.active span[style*="background"] {
+  background: #49364A !important;
+  color: #FFFFFF !important;
+}
+
+.theme-super-admin .bento-loyalty-pill.active svg,
+body.theme-super-admin .bento-loyalty-pill.active svg {
+  color: #49364A !important;
+  stroke: #49364A !important;
+}
+
+.theme-super-admin .bento-cfd-pill:hover,
+body.theme-super-admin .bento-cfd-pill:hover {
+  background: #F3EDF3 !important;
+  border-color: #49364A !important;
+  color: #49364A !important;
+}
+
+/* 5.2 Billing Terminal Header, Icon Box & Action Buttons */
+.theme-super-admin .terminal-icon-box,
+body.theme-super-admin .terminal-icon-box {
+  background: #F3EDF3 !important;
+  border: 1.5px solid #D8CBD8 !important;
+  color: #49364A !important;
+}
+
+.theme-super-admin .terminal-icon-box svg,
+body.theme-super-admin .terminal-icon-box svg {
+  color: #49364A !important;
+  stroke: #49364A !important;
+}
+
+.theme-super-admin .bento-exchange-btn,
+body.theme-super-admin .bento-exchange-btn {
+  background: #49364A !important;
+  border: 1px solid #352638 !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 6px rgba(73, 54, 74, 0.3) !important;
+}
+
+.theme-super-admin .bento-exchange-btn:hover,
+body.theme-super-admin .bento-exchange-btn:hover {
+  background: #604B61 !important;
+  border-color: #352638 !important;
+}
+
+.theme-super-admin .bento-hold-cart-btn:hover,
+body.theme-super-admin .bento-hold-cart-btn:hover {
+  background: #F3EDF3 !important;
+  border-color: #49364A !important;
+  color: #49364A !important;
+}
+
+/* 5.3 Empty Cart State & Find Products Button */
+.theme-super-admin .bento-empty-icon-wrap,
+body.theme-super-admin .bento-empty-icon-wrap,
+.theme-super-admin .bento-empty-icon-wrap svg,
+body.theme-super-admin .bento-empty-icon-wrap svg,
+.theme-super-admin .cart-empty-state .cart-empty-icon,
+body.theme-super-admin .cart-empty-state .cart-empty-icon {
+  color: #49364A !important;
+  stroke: #49364A !important;
+}
+
+.theme-super-admin .empty-cart-ping,
+body.theme-super-admin .empty-cart-ping {
+  background: #49364A !important;
+  color: #FFFFFF !important;
+}
+
+.theme-super-admin .bento-start-add-btn,
+body.theme-super-admin .bento-start-add-btn {
+  background: #49364A !important;
+  border: 1px solid #352638 !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 12px rgba(73, 54, 74, 0.25) !important;
+}
+
+.theme-super-admin .bento-start-add-btn:hover,
+body.theme-super-admin .bento-start-add-btn:hover {
+  background: #604B61 !important;
+  border-color: #352638 !important;
+}
+
+/* 5.4 Cart Rows & Stepper */
+.theme-super-admin .bento-cart-cat-badge,
+body.theme-super-admin .bento-cart-cat-badge {
+  background: #F3EDF3 !important;
+  border: 1px solid #D8CBD8 !important;
+  color: #49364A !important;
+}
+
+.theme-super-admin .bento-qty-btn:hover:not(:disabled),
+body.theme-super-admin .bento-qty-btn:hover:not(:disabled) {
+  background: #F3EDF3 !important;
+  color: #49364A !important;
+}
+
+/* 5.5 Bill Discount Pills */
+.theme-super-admin .bento-disc-pill.active,
+body.theme-super-admin .bento-disc-pill.active {
+  background: #49364A !important;
+  border-color: #352638 !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 6px rgba(73, 54, 74, 0.3) !important;
+}
+
+.theme-super-admin .bento-disc-pill:hover:not(.active),
+body.theme-super-admin .bento-disc-pill:hover:not(.active) {
+  background: #F3EDF3 !important;
+  border-color: #D8CBD8 !important;
+  color: #49364A !important;
+}
+
+/* 5.6 Customer Details Box & Browse Button */
+.theme-super-admin .bento-cust-browse-btn,
+body.theme-super-admin .bento-cust-browse-btn {
+  background: #F3EDF3 !important;
+  border: 1px solid #D8CBD8 !important;
+  color: #49364A !important;
+}
+
+.theme-super-admin .bento-cust-browse-btn:hover,
+body.theme-super-admin .bento-cust-browse-btn:hover {
+  background: #49364A !important;
+  border-color: #352638 !important;
+  color: #FFFFFF !important;
+}
+
+.theme-super-admin .bento-cust-prefix,
+body.theme-super-admin .bento-cust-prefix {
+  background: #F3EDF3 !important;
+  color: #49364A !important;
+  border-color: #D8CBD8 !important;
+}
+
+.theme-super-admin .bento-billing-customer-box input:focus,
+body.theme-super-admin .bento-billing-customer-box input:focus {
+  border-color: #49364A !important;
+  box-shadow: 0 0 0 2px rgba(73, 54, 74, 0.2) !important;
+}
+
+/* 5.7 Payment Tender Modes */
+.theme-super-admin .bento-pay-mode-btn.active,
+body.theme-super-admin .bento-pay-mode-btn.active {
+  background: #49364A !important;
+  border-color: #352638 !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 6px rgba(73, 54, 74, 0.3) !important;
+}
+
+.theme-super-admin .bento-pay-mode-btn:hover:not(.active):not(:disabled),
+body.theme-super-admin .bento-pay-mode-btn:hover:not(.active):not(:disabled) {
+  background: #F3EDF3 !important;
+  border-color: #D8CBD8 !important;
+  color: #49364A !important;
+}
+
+.theme-super-admin .bento-tender-exact-btn:hover,
+body.theme-super-admin .bento-tender-exact-btn:hover {
+  background: #F3EDF3 !important;
+  border-color: #49364A !important;
+  color: #49364A !important;
+}
+
+.theme-super-admin .split-fill-btn,
+.theme-super-admin .split-quick-half-btn,
+body.theme-super-admin .split-fill-btn,
+body.theme-super-admin .split-quick-half-btn {
+  background: #F3EDF3 !important;
+  border: 1px solid #D8CBD8 !important;
+  color: #49364A !important;
+}
+
+.theme-super-admin .split-fill-btn:hover,
+.theme-super-admin .split-quick-half-btn:hover,
+body.theme-super-admin .split-fill-btn:hover,
+body.theme-super-admin .split-quick-half-btn:hover {
+  background: #49364A !important;
+  color: #FFFFFF !important;
+  border-color: #352638 !important;
+}
+
+.theme-super-admin .tender-icon-box,
+.theme-super-admin .split-icon-box,
+body.theme-super-admin .tender-icon-box,
+body.theme-super-admin .split-icon-box {
+  background: #F3EDF3 !important;
+  color: #49364A !important;
+}
+
+/* 5.8 Complete Sale / Checkout Button */
+.theme-super-admin .bento-checkout-btn,
+body.theme-super-admin .bento-checkout-btn {
+  background: #49364A !important;
+  background-color: #49364A !important;
+  background-image: none !important;
+  color: #FFFFFF !important;
+  border: 1px solid #352638 !important;
+  box-shadow: 0 4px 14px rgba(73, 54, 74, 0.3) !important;
+}
+
+.theme-super-admin .bento-checkout-btn:hover:not(:disabled),
+body.theme-super-admin .bento-checkout-btn:hover:not(:disabled) {
+  background: #604B61 !important;
+  border-color: #352638 !important;
+  box-shadow: 0 6px 18px rgba(73, 54, 74, 0.4) !important;
+}
+
+/* 5.9 Barcode Scanner Card */
+.theme-super-admin .scanner-laser-icon svg,
+body.theme-super-admin .scanner-laser-icon svg {
+  color: #49364A !important;
+  stroke: #49364A !important;
+}
+
+.theme-super-admin #pos-product-search-input:focus,
+.theme-super-admin .scanner-input:focus,
+body.theme-super-admin #pos-product-search-input:focus,
+body.theme-super-admin .scanner-input:focus {
+  border-color: #49364A !important;
+  box-shadow: 0 0 0 3px rgba(73, 54, 74, 0.2) !important;
+}
+
+.theme-super-admin .bento-trigger-scan-btn,
+body.theme-super-admin .bento-trigger-scan-btn {
+  background: #49364A !important;
+  color: #FFFFFF !important;
+  border: 1px solid #352638 !important;
+}
+
+.theme-super-admin .bento-trigger-scan-btn:hover,
+body.theme-super-admin .bento-trigger-scan-btn:hover {
+  background: #604B61 !important;
+  border-color: #352638 !important;
+}
+
+.theme-super-admin .bento-mobile-scanner-btn,
+body.theme-super-admin .bento-mobile-scanner-btn {
+  background: #FFFFFF !important;
+  border: 1.5px solid #D8CBD8 !important;
+  color: #49364A !important;
+}
+
+.theme-super-admin .bento-mobile-scanner-btn:hover,
+body.theme-super-admin .bento-mobile-scanner-btn:hover {
+  background: #F3EDF3 !important;
+  border-color: #49364A !important;
+  color: #49364A !important;
+}
+
+.theme-super-admin .bento-find-product-btn,
+body.theme-super-admin .bento-find-product-btn {
+  background: #F3EDF3 !important;
+  border: 1.5px solid #D8CBD8 !important;
+  color: #49364A !important;
+}
+
+.theme-super-admin .bento-find-product-btn:hover,
+body.theme-super-admin .bento-find-product-btn:hover {
+  background: #49364A !important;
+  border-color: #352638 !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 12px rgba(73, 54, 74, 0.25) !important;
+}
+
+/* 5.10 Register Card (#1 Live Synced) */
+.theme-super-admin .bento-icon-circle.purple,
+body.theme-super-admin .bento-icon-circle.purple {
+  background: #F3EDF3 !important;
+  color: #49364A !important;
+}
+
+.theme-super-admin .bento-icon-circle.purple svg,
+body.theme-super-admin .bento-icon-circle.purple svg {
+  color: #49364A !important;
+  stroke: #49364A !important;
+}
+
+.theme-super-admin .bento-action-tile:hover:not(:disabled),
+body.theme-super-admin .bento-action-tile:hover:not(:disabled) {
+  border-color: #49364A !important;
+  background: #F3EDF3 !important;
+  box-shadow: 0 4px 12px rgba(73, 54, 74, 0.15) !important;
+}
+
+.theme-super-admin .bento-tile-icon,
+body.theme-super-admin .bento-tile-icon {
+  background: #F3EDF3 !important;
+  border: 1px solid #D8CBD8 !important;
+  color: #49364A !important;
+}
+
+.theme-super-admin .bento-tile-icon svg,
+body.theme-super-admin .bento-tile-icon svg {
+  color: #49364A !important;
+  stroke: #49364A !important;
+}
+
+.theme-super-admin .bento-action-tile:hover:not(:disabled) .bento-tile-icon,
+body.theme-super-admin .bento-action-tile:hover:not(:disabled) .bento-tile-icon {
+  background: #49364A !important;
+  border-color: #352638 !important;
+  color: #FFFFFF !important;
+}
+
+.theme-super-admin .bento-action-tile:hover:not(:disabled) .bento-tile-icon svg,
+body.theme-super-admin .bento-action-tile:hover:not(:disabled) .bento-tile-icon svg {
+  color: #FFFFFF !important;
+  stroke: #FFFFFF !important;
+}
+
+/* 5.11 Product Catalog Flyout Drawer */
+.theme-super-admin .bento-drawer-cat-pill:hover,
+body.theme-super-admin .bento-drawer-cat-pill:hover {
+  border-color: #49364A !important;
+  color: #49364A !important;
+}
+
+.theme-super-admin .bento-drawer-cat-pill.active,
+body.theme-super-admin .bento-drawer-cat-pill.active {
+  background: #49364A !important;
+  border-color: #352638 !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 8px rgba(73, 54, 74, 0.3) !important;
+}
+
+.theme-super-admin .bento-product-tile:hover,
+body.theme-super-admin .bento-product-tile:hover {
+  border-color: #49364A !important;
+  box-shadow: 0 8px 22px -4px rgba(73, 54, 74, 0.22) !important;
+}
+
+.theme-super-admin .bento-product-tile.in-cart,
+body.theme-super-admin .bento-product-tile.in-cart {
+  border-color: #49364A !important;
+  box-shadow: 0 0 0 1.5px #49364A, 0 6px 18px rgba(73, 54, 74, 0.16) !important;
+}
+
+.theme-super-admin .bento-product-tile.keyboard-selected,
+body.theme-super-admin .bento-product-tile.keyboard-selected {
+  outline: 3px solid #49364A !important;
+  box-shadow: 0 0 0 4px rgba(73, 54, 74, 0.35) !important;
+}
+
+.theme-super-admin .bento-tile-cat,
+body.theme-super-admin .bento-tile-cat {
+  background: #F3EDF3 !important;
+  border: 1px solid #D8CBD8 !important;
+  color: #49364A !important;
+}
+
+.theme-super-admin .bento-quick-add-btn,
+body.theme-super-admin .bento-quick-add-btn {
+  background: #49364A !important;
+  color: #FFFFFF !important;
+  border: 1px solid #352638 !important;
+  box-shadow: 0 2px 6px rgba(73, 54, 74, 0.25) !important;
+}
+
+.theme-super-admin .bento-quick-add-btn:hover:not(:disabled),
+body.theme-super-admin .bento-quick-add-btn:hover:not(:disabled) {
+  background: #604B61 !important;
+}
+
+.theme-super-admin .tile-stepper-btn.plus,
+body.theme-super-admin .tile-stepper-btn.plus {
+  background: #49364A !important;
+  color: #FFFFFF !important;
+}
+
+.theme-super-admin .tile-stepper-btn:hover,
+body.theme-super-admin .tile-stepper-btn:hover {
+  background: #49364A !important;
+  color: #FFFFFF !important;
+}
+
+/* --------------------------------------------------------------------------
+   6. WHOLESALE BILLING MODULE
+   -------------------------------------------------------------------------- */
+.theme-super-admin .wholesale-step-badge.active,
+body.theme-super-admin .wholesale-step-badge.active,
+.theme-super-admin .ws-step-circle.active,
+body.theme-super-admin .ws-step-circle.active {
+  background: #49364A !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 8px rgba(73, 54, 74, 0.3) !important;
+}
+
+.theme-super-admin .btn-new-wholesale-customer,
+body.theme-super-admin .btn-new-wholesale-customer {
+  background: #F3EDF3 !important;
+  border: 1px solid #D8CBD8 !important;
+  color: #49364A !important;
+}
+
+.theme-super-admin .btn-new-wholesale-customer:hover,
+body.theme-super-admin .btn-new-wholesale-customer:hover {
+  background: #49364A !important;
+  color: #FFFFFF !important;
+}
+
+.theme-super-admin .wholesale-customer-select:focus,
+body.theme-super-admin .wholesale-customer-select:focus {
+  border-color: #49364A !important;
+  box-shadow: 0 0 0 3px rgba(73, 54, 74, 0.18) !important;
+}
+
+.theme-super-admin .wholesale-save-btn,
+body.theme-super-admin .wholesale-save-btn {
+  background: #49364A !important;
+  border-color: #352638 !important;
+  color: #FFFFFF !important;
+}
+
+.theme-super-admin .wholesale-save-btn:hover,
+body.theme-super-admin .wholesale-save-btn:hover {
+  background: #604B61 !important;
+}
+
+/* Wholesale Tax Invoice Summary - WH Series Badge */
+.theme-super-admin .ws-series-badge,
+body.theme-super-admin .ws-series-badge {
+  background: #F3EDF3 !important;
+  color: #49364A !important;
+  border: 1px solid #D8CBD8 !important;
+}
+
+/* Wholesale Step 3 - Payment Terms & Settlement Buttons */
+.theme-super-admin .ws-payment-mode-btn.active,
+body.theme-super-admin .ws-payment-mode-btn.active {
+  background: #F3EDF3 !important;
+  border: 2px solid #49364A !important;
+  color: #49364A !important;
+}
+
+.theme-super-admin .ws-payment-mode-btn.active svg,
+body.theme-super-admin .ws-payment-mode-btn.active svg {
+  color: #49364A !important;
+  stroke: #49364A !important;
+}
+
+.theme-super-admin .ws-payment-mode-btn.active:hover,
+body.theme-super-admin .ws-payment-mode-btn.active:hover {
+  background: #E9DFE9 !important;
+  border-color: #352638 !important;
+  color: #352638 !important;
+}
+
+.theme-super-admin .ws-payment-mode-btn.active:hover svg,
+body.theme-super-admin .ws-payment-mode-btn.active:hover svg {
+  color: #352638 !important;
+  stroke: #352638 !important;
+}
+
+.theme-super-admin .ws-payment-mode-btn:not(.active):hover,
+body.theme-super-admin .ws-payment-mode-btn:not(.active):hover {
+  background: #F3EDF3 !important;
+  border-color: #D8CBD8 !important;
+  color: #49364A !important;
+}
+
+.theme-super-admin .ws-payment-mode-btn:focus-visible,
+body.theme-super-admin .ws-payment-mode-btn:focus-visible {
+  outline: 2px solid #49364A !important;
+  outline-offset: 1px !important;
+}
+
+/* --------------------------------------------------------------------------
+   7. PRODUCTS & CATEGORIES MODULES
+   -------------------------------------------------------------------------- */
+.theme-super-admin .cat-pill.active,
+body.theme-super-admin .cat-pill.active {
+  background: #49364A !important;
+  border-color: #49364A !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 6px rgba(73, 54, 74, 0.3) !important;
+}
+
+.theme-super-admin .cat-pill:hover:not(.active),
+body.theme-super-admin .cat-pill:hover:not(.active) {
+  background: #F3EDF3 !important;
+  border-color: #D8CBD8 !important;
+  color: #49364A !important;
+}
+
+.theme-super-admin .product-action-btn:hover,
+body.theme-super-admin .product-action-btn:hover {
+  background: #F3EDF3 !important;
+  border-color: #49364A !important;
+  color: #49364A !important;
+}
+
+/* --------------------------------------------------------------------------
+   8. INVENTORY HUB (STOCK TRANSFER, ADJUSTMENT & REPORT)
+   -------------------------------------------------------------------------- */
+/* Stock Adjustment Button in Inventory Hub */
+.theme-super-admin .btn-stock-adjustment,
+.theme-super-admin .btn-stock-adjust-deep-plum,
+body.theme-super-admin .btn-stock-adjustment,
+body.theme-super-admin .btn-stock-adjust-deep-plum {
+  background: #49364A !important;
+  border: 1px solid #352638 !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 6px rgba(73, 54, 74, 0.25) !important;
+}
+
+.theme-super-admin .btn-stock-adjustment:hover,
+.theme-super-admin .btn-stock-adjust-deep-plum:hover,
+body.theme-super-admin .btn-stock-adjustment:hover,
+body.theme-super-admin .btn-stock-adjust-deep-plum:hover {
+  background: #604B61 !important;
+  border-color: #49364A !important;
+  color: #FFFFFF !important;
+}
+
+.theme-super-admin .btn-stock-adjustment:active,
+.theme-super-admin .btn-stock-adjust-deep-plum:active,
+body.theme-super-admin .btn-stock-adjustment:active,
+body.theme-super-admin .btn-stock-adjust-deep-plum:active {
+  background: #352638 !important;
+  border-color: #271A2A !important;
+  color: #FFFFFF !important;
+}
+
+.theme-super-admin .btn-stock-adjustment:focus-visible,
+.theme-super-admin .btn-stock-adjust-deep-plum:focus-visible,
+body.theme-super-admin .btn-stock-adjustment:focus-visible,
+body.theme-super-admin .btn-stock-adjust-deep-plum:focus-visible {
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(73, 54, 74, 0.25) !important;
+}
+
+/* Inventory Subnavigation Active Tab */
+.theme-super-admin .inv-tab-btn.active,
+body.theme-super-admin .inv-tab-btn.active {
+  background: #49364A !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 6px rgba(73, 54, 74, 0.3) !important;
+}
+
+/* Inventory Badges & Icons */
+.theme-super-admin .cat-icon-badge.purple,
+body.theme-super-admin .cat-icon-badge.purple,
+.theme-super-admin .cat-icon-badge.indigo,
+body.theme-super-admin .cat-icon-badge.indigo {
+  background: #F3EDF3 !important;
+  color: #49364A !important;
+}
+
+.theme-super-admin .kpi-sub-badge.purple,
+body.theme-super-admin .kpi-sub-badge.purple {
+  background: #F3EDF3 !important;
+  color: #49364A !important;
+  border-color: #D8CBD8 !important;
+}
+
+.theme-super-admin .table-loading-spinner .spinner,
+body.theme-super-admin .table-loading-spinner .spinner,
+.theme-super-admin .spinner,
+body.theme-super-admin .spinner,
+.theme-super-admin .spinner-icon,
+body.theme-super-admin .spinner-icon {
+  border: 3px solid rgba(73, 54, 74, 0.18) !important;
+  border-top-color: #49364A !important;
+}
+
+.theme-super-admin .table-loading-spinner p,
+body.theme-super-admin .table-loading-spinner p {
+  color: #49364A !important;
+  font-weight: 600 !important;
+}
+
+.theme-super-admin .skeleton-line,
+body.theme-super-admin .skeleton-line,
+.theme-super-admin .skeleton-row,
+body.theme-super-admin .skeleton-row,
+.theme-super-admin .skeleton-card,
+body.theme-super-admin .skeleton-card {
+  background: #E9DFE9 !important;
+}
+
+/* Bento KPI Stat Cards & Selection Glow for Super Admin */
+.theme-super-admin .cat-bento-kpi-card.active-filter,
+body.theme-super-admin .cat-bento-kpi-card.active-filter {
+  border-color: #49364A !important;
+  box-shadow: 0 10px 25px -5px rgba(73, 54, 74, 0.25), 0 0 0 2px rgba(73, 54, 74, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+}
+
+.theme-super-admin .cat-bento-kpi-card.bento-cat-kpi-total:hover,
+body.theme-super-admin .cat-bento-kpi-card.bento-cat-kpi-total:hover {
+  border-color: #604B61 !important;
+  box-shadow: 0 10px 25px -5px rgba(73, 54, 74, 0.2) !important;
+}
+
+.theme-super-admin .cat-kpi-arrow,
+body.theme-super-admin .cat-kpi-arrow {
+  color: #49364A !important;
+  background: rgba(73, 54, 74, 0.08) !important;
+}
+
+.theme-super-admin .cat-bento-kpi-card:hover .cat-kpi-arrow,
+body.theme-super-admin .cat-bento-kpi-card:hover .cat-kpi-arrow {
+  background: rgba(73, 54, 74, 0.18) !important;
+  color: #49364A !important;
+}
+
+.theme-super-admin .table-empty-icon-wrap,
+body.theme-super-admin .table-empty-icon-wrap {
+  background: #F3EDF3 !important;
+  color: #49364A !important;
+}
+
+.theme-super-admin .stock-transfer-btn-create,
+.theme-super-admin .stock-transfer-btn-dispatch,
+.theme-super-admin .stock-transfer-btn-details-dispatch,
+.theme-super-admin .stock-transfer-btn-confirm-dispatch,
+body.theme-super-admin .stock-transfer-btn-create,
+body.theme-super-admin .stock-transfer-btn-dispatch,
+body.theme-super-admin .stock-transfer-btn-details-dispatch,
+body.theme-super-admin .stock-transfer-btn-confirm-dispatch {
+  background: #49364A !important;
+  border: 1px solid #352638 !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 6px rgba(73, 54, 74, 0.3) !important;
+}
+
+.theme-super-admin .stock-transfer-btn-create:hover,
+.theme-super-admin .stock-transfer-btn-dispatch:hover,
+.theme-super-admin .stock-transfer-btn-details-dispatch:hover,
+.theme-super-admin .stock-transfer-btn-confirm-dispatch:hover,
+body.theme-super-admin .stock-transfer-btn-create:hover,
+body.theme-super-admin .stock-transfer-btn-dispatch:hover,
+body.theme-super-admin .stock-transfer-btn-details-dispatch:hover,
+body.theme-super-admin .stock-transfer-btn-confirm-dispatch:hover {
+  background: #604B61 !important;
+  border-color: #352638 !important;
+}
+
+.theme-super-admin .step-circle.active,
+body.theme-super-admin .step-circle.active {
+  background: #49364A !important;
+  border-color: #49364A !important;
+  color: #FFFFFF !important;
+}
+
+.theme-super-admin .srb-header::before,
+body.theme-super-admin .srb-header::before {
+  background: linear-gradient(90deg, #49364A 0%, #604B61 50%, #10b981 100%) !important;
+}
+
+.theme-super-admin .srb-header-icon-box,
+body.theme-super-admin .srb-header-icon-box {
+  background: #F3EDF3 !important;
+  color: #49364A !important;
+  border-color: #D8CBD8 !important;
+}
+
+/* --------------------------------------------------------------------------
+   9. SALES ANALYSIS & REPORTS
+   -------------------------------------------------------------------------- */
+.theme-super-admin .sales-modal-icon-badge,
+body.theme-super-admin .sales-modal-icon-badge {
+  background: #F3EDF3 !important;
+  color: #49364A !important;
+  border: 1px solid #D8CBD8 !important;
+}
+
+.theme-super-admin .sales-metric-pill.active,
+body.theme-super-admin .sales-metric-pill.active {
+  background: #49364A !important;
+  color: #FFFFFF !important;
+  border-color: #49364A !important;
+}
+
+/* --------------------------------------------------------------------------
+   10. DISCOUNTS & OFFERS
+   -------------------------------------------------------------------------- */
+.theme-super-admin .promo-tab-btn.active,
+body.theme-super-admin .promo-tab-btn.active {
+  background: #49364A !important;
+  border-color: #49364A !important;
+  color: #FFFFFF !important;
+}
+
+.theme-super-admin .promo-tag-badge,
+body.theme-super-admin .promo-tag-badge {
+  background: #F3EDF3 !important;
+  border: 1px solid #D8CBD8 !important;
+  color: #49364A !important;
+}
+
+/* --------------------------------------------------------------------------
+   11. CUSTOMERS & SUPPLIERS DIRECTORY
+   -------------------------------------------------------------------------- */
+.theme-super-admin .customer-kpi-card.purple:hover,
+body.theme-super-admin .customer-kpi-card.purple:hover {
+  border-color: #49364A !important;
+}
+
+.theme-super-admin .kpi-icon-box.purple,
+body.theme-super-admin .kpi-icon-box.purple {
+  background: #F3EDF3 !important;
+  color: #49364A !important;
+  border-color: #D8CBD8 !important;
+}
+
+.theme-super-admin .cust-dir-card-header,
+body.theme-super-admin .cust-dir-card-header {
+  background: linear-gradient(135deg, #1F1620 0%, #352638 50%, #49364A 100%) !important;
+}
+
+.theme-super-admin .cust-primary-btn,
+.theme-super-admin .supp-primary-btn,
+body.theme-super-admin .cust-primary-btn,
+body.theme-super-admin .supp-primary-btn {
+  background: #49364A !important;
+  color: #FFFFFF !important;
+  border-color: #352638 !important;
+}
+
+.theme-super-admin .cust-primary-btn:hover,
+.theme-super-admin .supp-primary-btn:hover,
+body.theme-super-admin .cust-primary-btn:hover,
+body.theme-super-admin .supp-primary-btn:hover {
+  background: #604B61 !important;
+}
+
+/* --------------------------------------------------------------------------
+   12. ACCOUNTS & FINANCE
+   -------------------------------------------------------------------------- */
+.theme-super-admin .expense-modal-icon-badge,
+body.theme-super-admin .expense-modal-icon-badge {
+  background: #F3EDF3 !important;
+  color: #49364A !important;
+  border: 1px solid #D8CBD8 !important;
+}
+
+.theme-super-admin .expense-calc-pill-val,
+body.theme-super-admin .expense-calc-pill-val {
+  color: #49364A !important;
+}
+
+/* --------------------------------------------------------------------------
+   13. GST FILING
+   -------------------------------------------------------------------------- */
+.theme-super-admin .gst-tab-btn.active,
+body.theme-super-admin .gst-tab-btn.active {
+  background: #49364A !important;
+  color: #FFFFFF !important;
+  border-color: #49364A !important;
+}
+
+/* --------------------------------------------------------------------------
+   14. USER MANAGEMENT & SETTINGS
+   -------------------------------------------------------------------------- */
+/* Super Admin Settings Button in Sidebar */
+.theme-super-admin .sidebar-action-row-btn.active,
+body.theme-super-admin .sidebar-action-row-btn.active {
+  background: #49364A !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 8px rgba(73, 54, 74, 0.45) !important;
+}
+
+.theme-super-admin .sidebar-action-row-btn:hover:not(.signout),
+body.theme-super-admin .sidebar-action-row-btn:hover:not(.signout) {
+  background: rgba(73, 54, 74, 0.32) !important;
+  color: #FFFFFF !important;
+}
+
+.theme-super-admin .settings-profile-tab.active,
+body.theme-super-admin .settings-profile-tab.active {
+  background: #49364A !important;
+  color: #FFFFFF !important;
+  border-color: #49364A !important;
+}
+
+.theme-super-admin .role-badge-superadmin,
+body.theme-super-admin .role-badge-superadmin {
+  background: #F3EDF3 !important;
+  border: 1px solid #D8CBD8 !important;
+  color: #49364A !important;
+}
+
+/* --------------------------------------------------------------------------
+   15. TABLES, INVOICES, PAGINATION & FORM CONTROLS
+   -------------------------------------------------------------------------- */
+.theme-super-admin .table thead th,
+.theme-super-admin .invoices-bento-table thead th,
+body.theme-super-admin .table thead th,
+body.theme-super-admin .invoices-bento-table thead th {
+  background: #F3EDF3 !important;
+  color: #1D151F !important;
+  border-bottom: 1.5px solid #D8CBD8 !important;
+}
+
+.theme-super-admin .pagination-item.active,
+.theme-super-admin .page-link.active,
+.theme-super-admin .pagination-btn.active,
+.theme-super-admin .page-btn.active,
+body.theme-super-admin .pagination-item.active,
+body.theme-super-admin .page-link.active,
+body.theme-super-admin .pagination-btn.active,
+body.theme-super-admin .page-btn.active {
+  background: #49364A !important;
+  border-color: #49364A !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 6px rgba(73, 54, 74, 0.3) !important;
+}
+
+.theme-super-admin input:focus,
+.theme-super-admin select:focus,
+.theme-super-admin textarea:focus,
+.theme-super-admin .form-input:focus,
+.theme-super-admin .form-select:focus,
+.theme-super-admin .pos-input:focus,
+.theme-super-admin .bento-search-input:focus,
+.theme-super-admin .search-input:focus,
+body.theme-super-admin input:focus,
+body.theme-super-admin select:focus,
+body.theme-super-admin textarea:focus,
+body.theme-super-admin .form-input:focus,
+body.theme-super-admin .form-select:focus,
+body.theme-super-admin .pos-input:focus,
+body.theme-super-admin .bento-search-input:focus,
+body.theme-super-admin .search-input:focus {
+  border-color: #49364A !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(73, 54, 74, 0.18) !important;
+}
+
+.theme-super-admin input[type="checkbox"]:checked,
+body.theme-super-admin input[type="checkbox"]:checked {
+  background-color: #49364A !important;
+  border-color: #49364A !important;
+}
+
+/* --------------------------------------------------------------------------
+   16. NOTIFICATIONS & SHIFT ACTIVITY MODULE (FULL VIEW & TOP POPOVER)
+   Deep Plum Theme (#49364A) strictly scoped to Super Admin
+   -------------------------------------------------------------------------- */
+.theme-super-admin .notif-page-wrapper,
+body.theme-super-admin .notif-page-wrapper {
+  --notif-primary: #49364A;
+  --notif-primary-hover: #604B61;
+  --notif-primary-soft: #F3EDF3;
+  --notif-ring: #604B61;
+  --notif-border: #D8CBD8;
+  --notif-sidebar: #1F1620;
+}
+
+.theme-super-admin .notif-kpi-card:hover,
+body.theme-super-admin .notif-kpi-card:hover,
+.theme-super-admin .notif-card-item:hover,
+body.theme-super-admin .notif-card-item:hover {
+  border-color: #49364A !important;
+  box-shadow:
+    0 2px 6px rgba(73, 54, 74, 0.04),
+    0 10px 24px -4px rgba(73, 54, 74, 0.1),
+    0 20px 36px -6px rgba(73, 54, 74, 0.14),
+    inset 0 1px 0 0 #ffffff !important;
+}
+
+/* 16.1 Header Command Card */
+.theme-super-admin .notif-page-header-card::before,
+body.theme-super-admin .notif-page-header-card::before {
+  background: linear-gradient(90deg, #352638 0%, #49364A 50%, #604B61 100%) !important;
+}
+
+.theme-super-admin .notif-header-icon-box,
+body.theme-super-admin .notif-header-icon-box {
+  background: #F3EDF3 !important;
+  border: 1.5px solid #D8CBD8 !important;
+  color: #49364A !important;
+  box-shadow: 0 4px 14px rgba(73, 54, 74, 0.12) !important;
+}
+
+.theme-super-admin .notif-header-icon-box svg,
+body.theme-super-admin .notif-header-icon-box svg {
+  color: #49364A !important;
+  stroke: #49364A !important;
+}
+
+.theme-super-admin .notif-unread-badge-pill,
+body.theme-super-admin .notif-unread-badge-pill {
+  background: #49364A !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 8px rgba(73, 54, 74, 0.35) !important;
+}
+
+.theme-super-admin .notif-role-tag,
+body.theme-super-admin .notif-role-tag {
+  background: #F3EDF3 !important;
+  border: 1.5px solid #D8CBD8 !important;
+  color: #49364A !important;
+}
+
+.theme-super-admin .notif-btn-refresh,
+body.theme-super-admin .notif-btn-refresh {
+  background: #FFFFFF !important;
+  border: 1.5px solid #D8CBD8 !important;
+  color: #1F1620 !important;
+  box-shadow: 0 1px 3px rgba(73, 54, 74, 0.04) !important;
+}
+
+.theme-super-admin .notif-btn-refresh:hover,
+body.theme-super-admin .notif-btn-refresh:hover {
+  background: #F3EDF3 !important;
+  border-color: #49364A !important;
+  color: #49364A !important;
+  transform: translateY(-1px) !important;
+}
+
+.theme-super-admin .notif-btn-mark-all,
+body.theme-super-admin .notif-btn-mark-all {
+  background: #49364A !important;
+  border: 1.5px solid #352638 !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 14px rgba(73, 54, 74, 0.3) !important;
+}
+
+.theme-super-admin .notif-btn-mark-all:hover,
+body.theme-super-admin .notif-btn-mark-all:hover {
+  background: #604B61 !important;
+  border-color: #352638 !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 6px 18px rgba(73, 54, 74, 0.4) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* 16.2 Bento KPI Deck */
+.theme-super-admin .notif-kpi-hero-card,
+body.theme-super-admin .notif-kpi-hero-card {
+  background: linear-gradient(135deg, rgba(73, 54, 74, 0.08) 0%, #FFFFFF 100%) !important;
+  border: 2px solid #49364A !important;
+  box-shadow: 0 4px 16px rgba(73, 54, 74, 0.12) !important;
+}
+
+.theme-super-admin .notif-kpi-hero-tag,
+body.theme-super-admin .notif-kpi-hero-tag {
+  color: #49364A !important;
+}
+
+.theme-super-admin .notif-kpi-hero-icon,
+body.theme-super-admin .notif-kpi-hero-icon {
+  background: #49364A !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 12px rgba(73, 54, 74, 0.35) !important;
+}
+
+.theme-super-admin .notif-kpi-hero-icon svg,
+body.theme-super-admin .notif-kpi-hero-icon svg {
+  color: #FFFFFF !important;
+  stroke: #FFFFFF !important;
+}
+
+.theme-super-admin .notif-kpi-icon.all,
+body.theme-super-admin .notif-kpi-icon.all {
+  background: #F3EDF3 !important;
+  color: #49364A !important;
+  border: 1px solid #D8CBD8 !important;
+}
+
+.theme-super-admin .notif-kpi-icon.all svg,
+body.theme-super-admin .notif-kpi-icon.all svg {
+  color: #49364A !important;
+  stroke: #49364A !important;
+}
+
+/* 16.3 Controls, Tabs & Filter Bar */
+.theme-super-admin .notif-tab-btn,
+body.theme-super-admin .notif-tab-btn {
+  background: #FFFFFF !important;
+  border: 1.5px solid #D8CBD8 !important;
+  color: #5C584E !important;
+}
+
+.theme-super-admin .notif-tab-btn:hover,
+body.theme-super-admin .notif-tab-btn:hover {
+  background: #F3EDF3 !important;
+  color: #49364A !important;
+  border-color: #49364A !important;
+}
+
+.theme-super-admin .notif-tab-btn .notif-tab-count,
+body.theme-super-admin .notif-tab-btn .notif-tab-count {
+  background: #F3EDF3 !important;
+  color: #49364A !important;
+  border: 1px solid #D8CBD8 !important;
+}
+
+.theme-super-admin .notif-tab-btn.active,
+body.theme-super-admin .notif-tab-btn.active,
+.theme-super-admin .notif-filter-tab.active,
+body.theme-super-admin .notif-filter-tab.active {
+  background: #49364A !important;
+  border-color: #352638 !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 12px rgba(73, 54, 74, 0.3) !important;
+}
+
+.theme-super-admin .notif-tab-btn.active .notif-tab-count,
+body.theme-super-admin .notif-tab-btn.active .notif-tab-count {
+  background: rgba(255, 255, 255, 0.25) !important;
+  color: #FFFFFF !important;
+  border: none !important;
+}
+
+.theme-super-admin .notif-search-box,
+body.theme-super-admin .notif-search-box {
+  background: #FFFFFF !important;
+  border: 1.5px solid #D8CBD8 !important;
+}
+
+.theme-super-admin .notif-search-box:focus-within,
+body.theme-super-admin .notif-search-box:focus-within {
+  border-color: #49364A !important;
+  background: #FFFFFF !important;
+  box-shadow: 0 0 0 3px rgba(73, 54, 74, 0.18) !important;
+}
+
+.theme-super-admin .notif-unread-only-toggle,
+body.theme-super-admin .notif-unread-only-toggle {
+  background: #FFFFFF !important;
+  border: 1.5px solid #D8CBD8 !important;
+  color: #1F1620 !important;
+}
+
+.theme-super-admin .notif-unread-only-toggle input,
+body.theme-super-admin .notif-unread-only-toggle input {
+  accent-color: #49364A !important;
+}
+
+/* 16.4 Notification Feed Cards */
+.theme-super-admin .notif-card-item.shift-close,
+body.theme-super-admin .notif-card-item.shift-close {
+  border-left: 5px solid #49364A !important;
+}
+
+.theme-super-admin .notif-card-item.unread,
+body.theme-super-admin .notif-card-item.unread {
+  background: linear-gradient(90deg, rgba(73, 54, 74, 0.05) 0%, #FFFFFF 100%) !important;
+  border-color: rgba(73, 54, 74, 0.4) !important;
+}
+
+.theme-super-admin .notif-unread-dot,
+body.theme-super-admin .notif-unread-dot {
+  background: #49364A !important;
+  box-shadow: 0 0 0 3px rgba(73, 54, 74, 0.3) !important;
+}
+
+.theme-super-admin .notif-card-icon-pill.close,
+body.theme-super-admin .notif-card-icon-pill.close {
+  background: #F3EDF3 !important;
+  color: #49364A !important;
+  border: 1px solid #D8CBD8 !important;
+}
+
+.theme-super-admin .notif-card-icon-pill.close svg,
+body.theme-super-admin .notif-card-icon-pill.close svg {
+  color: #49364A !important;
+  stroke: #49364A !important;
+}
+
+.theme-super-admin .notif-card-status-pill.close,
+body.theme-super-admin .notif-card-status-pill.close {
+  background: #F3EDF3 !important;
+  border: 1px solid #D8CBD8 !important;
+  color: #49364A !important;
+}
+
+.theme-super-admin .notif-branch-badge,
+body.theme-super-admin .notif-branch-badge {
+  background: #F3EDF3 !important;
+  border: 1px solid #D8CBD8 !important;
+  color: #49364A !important;
+}
+
+.theme-super-admin .notif-branch-badge svg,
+body.theme-super-admin .notif-branch-badge svg {
+  color: #49364A !important;
+  stroke: #49364A !important;
+}
+
+.theme-super-admin .notif-counter-badge,
+body.theme-super-admin .notif-counter-badge {
+  background: #F3EDF3 !important;
+  border: 1px solid #D8CBD8 !important;
+  color: #1F1620 !important;
+}
+
+.theme-super-admin .notif-timestamp svg,
+body.theme-super-admin .notif-timestamp svg {
+  color: #49364A !important;
+  stroke: #49364A !important;
+}
+
+.theme-super-admin .notif-metric-value.drawer,
+body.theme-super-admin .notif-metric-value.drawer {
+  color: #49364A !important;
+}
+
+.theme-super-admin .notif-nav-action-btn,
+body.theme-super-admin .notif-nav-action-btn {
+  color: #49364A !important;
+  background: #F3EDF3 !important;
+  border: 1.5px solid #D8CBD8 !important;
+}
+
+.theme-super-admin .notif-nav-action-btn svg,
+body.theme-super-admin .notif-nav-action-btn svg {
+  color: #49364A !important;
+  stroke: #49364A !important;
+}
+
+.theme-super-admin .notif-nav-action-btn:hover,
+body.theme-super-admin .notif-nav-action-btn:hover {
+  background: #49364A !important;
+  color: #FFFFFF !important;
+  border-color: #352638 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(73, 54, 74, 0.25) !important;
+}
+
+.theme-super-admin .notif-nav-action-btn:hover svg,
+body.theme-super-admin .notif-nav-action-btn:hover svg {
+  color: #FFFFFF !important;
+  stroke: #FFFFFF !important;
+}
+
+.theme-super-admin .notif-dismiss-btn,
+body.theme-super-admin .notif-dismiss-btn {
+  background: #FFFFFF !important;
+  border: 1px solid #D8CBD8 !important;
+  color: #49364A !important;
+}
+
+.theme-super-admin .notif-dismiss-btn:hover,
+body.theme-super-admin .notif-dismiss-btn:hover {
+  background: #F3EDF3 !important;
+  color: #352638 !important;
+  border-color: #49364A !important;
+}
+
+.theme-super-admin .notif-empty-icon,
+body.theme-super-admin .notif-empty-icon {
+  background: #F3EDF3 !important;
+  border: 1.5px solid #D8CBD8 !important;
+  color: #49364A !important;
+}
+
+.theme-super-admin .notif-empty-icon svg,
+body.theme-super-admin .notif-empty-icon svg {
+  color: #49364A !important;
+  stroke: #49364A !important;
+}
+
+/* 16.5 Top Bar Notification Popover Dropdown */
+.theme-super-admin .bento-notif-icon-bubble,
+body.theme-super-admin .bento-notif-icon-bubble {
+  background: #F3EDF3 !important;
+  border: 1px solid #D8CBD8 !important;
+  color: #49364A !important;
+}
+
+.theme-super-admin .bento-notif-icon-bubble svg,
+body.theme-super-admin .bento-notif-icon-bubble svg {
+  stroke: #49364A !important;
+}
+
+.theme-super-admin .bento-notif-unread-count-pill,
+body.theme-super-admin .bento-notif-unread-count-pill {
+  background: #49364A !important;
+  color: #FFFFFF !important;
+  border: none !important;
+}
+
+.theme-super-admin .bento-notif-unread-dot,
+body.theme-super-admin .bento-notif-unread-dot {
+  background-color: #49364A !important;
+  box-shadow: 0 0 0 3px rgba(73, 54, 74, 0.25) !important;
+}
+
+.theme-super-admin .bento-notif-card:hover,
+body.theme-super-admin .bento-notif-card:hover {
+  border-color: #49364A !important;
+  box-shadow: 0 4px 14px rgba(73, 54, 74, 0.12) !important;
+}
+
+.theme-super-admin .bento-notif-card.active-shift,
+body.theme-super-admin .bento-notif-card.active-shift {
+  border-left: 4px solid #49364A !important;
+}
+
+.theme-super-admin .bento-notif-card.shift-close,
+body.theme-super-admin .bento-notif-card.shift-close {
+  border-left: 4px solid #49364A !important;
+}
+
+.theme-super-admin .bento-notif-card-icon.shift-close-icon,
+body.theme-super-admin .bento-notif-card-icon.shift-close-icon {
+  background: #F3EDF3 !important;
+  color: #49364A !important;
+}
+
+.theme-super-admin .bento-notif-card-icon.shift-close-icon svg,
+body.theme-super-admin .bento-notif-card-icon.shift-close-icon svg {
+  stroke: #49364A !important;
+}
+
+.theme-super-admin .bento-notif-action-btn:hover,
+body.theme-super-admin .bento-notif-action-btn:hover {
+  background: #F3EDF3 !important;
+  border-color: #49364A !important;
+  color: #49364A !important;
+}
+
+.theme-super-admin .bento-notif-action-btn.primary,
+body.theme-super-admin .bento-notif-action-btn.primary {
+  background: #49364A !important;
+  border-color: #352638 !important;
+  color: #FFFFFF !important;
+}
+
+.theme-super-admin .bento-notif-action-btn.primary:hover,
+body.theme-super-admin .bento-notif-action-btn.primary:hover {
+  background: #604B61 !important;
+}
+
+.theme-super-admin .bento-notif-branch-badge svg,
+body.theme-super-admin .bento-notif-branch-badge svg {
+  stroke: #49364A !important;
+}
+
+.theme-super-admin .bento-notif-stat-box.drawer .bento-notif-stat-val,
+body.theme-super-admin .bento-notif-stat-box.drawer .bento-notif-stat-val {
+  color: #49364A !important;
+}
+
+.theme-super-admin .bento-notif-status-pill.live,
+.theme-super-admin .bento-notif-status-pill.pos,
+body.theme-super-admin .bento-notif-status-pill.live,
+body.theme-super-admin .bento-notif-status-pill.pos {
+  background: #F3EDF3 !important;
+  color: #49364A !important;
+  border: 1px solid #D8CBD8 !important;
+}
+
+/* --------------------------------------------------------------------------
+   17. COMPREHENSIVE INLINE STYLE & PURPLE COLOR TOKEN CATCH-ALLS
+   Strictly overrides any remaining hardcoded violet/purple/indigo inline styles
+   -------------------------------------------------------------------------- */
+body.theme-super-admin button[style*="#6d4aff"],
+body.theme-super-admin button[style*="#4f46e5"],
+body.theme-super-admin button[style*="#6366f1"],
+body.theme-super-admin button[style*="#8b5cf6"],
+body.theme-super-admin button[style*="#a855f7"],
+body.theme-super-admin button[style*="#7c3aed"],
+body.theme-super-admin button[style*="#4338ca"],
+body.theme-super-admin button[style*="#3730a3"],
+body.theme-super-admin button[style*="#6d28d9"],
+body.theme-super-admin button[style*="#5B3BE8"],
+body.theme-super-admin button[style*="#5b3be8"],
+body.theme-super-admin button[style*="#5b4cf5"],
+body.theme-super-admin button[style*="#482bc2"],
+body.theme-super-admin button[style*="#4a2fc4"],
+body.theme-super-admin a[style*="#6d4aff"],
+body.theme-super-admin a[style*="#4f46e5"],
+body.theme-super-admin a[style*="#6366f1"],
+body.theme-super-admin a[style*="#5B3BE8"],
+body.theme-super-admin a[style*="#5b3be8"],
+.theme-super-admin button[style*="#6d4aff"],
+.theme-super-admin button[style*="#4f46e5"],
+.theme-super-admin button[style*="#6366f1"],
+.theme-super-admin button[style*="#8b5cf6"],
+.theme-super-admin button[style*="#a855f7"],
+.theme-super-admin button[style*="#7c3aed"],
+.theme-super-admin button[style*="#4338ca"],
+.theme-super-admin button[style*="#3730a3"],
+.theme-super-admin button[style*="#6d28d9"],
+.theme-super-admin button[style*="#5B3BE8"],
+.theme-super-admin button[style*="#5b3be8"],
+.theme-super-admin button[style*="#5b4cf5"],
+.theme-super-admin button[style*="#482bc2"],
+.theme-super-admin button[style*="#4a2fc4"],
+.theme-super-admin a[style*="#6d4aff"],
+.theme-super-admin a[style*="#4f46e5"],
+.theme-super-admin a[style*="#6366f1"],
+.theme-super-admin a[style*="#5B3BE8"],
+.theme-super-admin a[style*="#5b3be8"] {
+  background: #49364A !important;
+  border-color: #352638 !important;
+  color: #FFFFFF !important;
+}
+
+body.theme-super-admin button[style*="#6d4aff"]:hover,
+body.theme-super-admin button[style*="#4f46e5"]:hover,
+body.theme-super-admin button[style*="#6366f1"]:hover,
+body.theme-super-admin button[style*="#8b5cf6"]:hover,
+body.theme-super-admin button[style*="#a855f7"]:hover,
+body.theme-super-admin button[style*="#7c3aed"]:hover,
+body.theme-super-admin button[style*="#4338ca"]:hover,
+body.theme-super-admin button[style*="#5B3BE8"]:hover,
+body.theme-super-admin button[style*="#5b3be8"]:hover,
+body.theme-super-admin button[style*="#5b4cf5"]:hover,
+body.theme-super-admin button[style*="#482bc2"]:hover,
+.theme-super-admin button[style*="#6d4aff"]:hover,
+.theme-super-admin button[style*="#4f46e5"]:hover,
+.theme-super-admin button[style*="#6366f1"]:hover,
+.theme-super-admin button[style*="#8b5cf6"]:hover,
+.theme-super-admin button[style*="#a855f7"]:hover,
+.theme-super-admin button[style*="#7c3aed"]:hover,
+.theme-super-admin button[style*="#4338ca"]:hover,
+.theme-super-admin button[style*="#5B3BE8"]:hover,
+.theme-super-admin button[style*="#5b3be8"]:hover,
+.theme-super-admin button[style*="#5b4cf5"]:hover,
+.theme-super-admin button[style*="#482bc2"]:hover {
+  background: #604B61 !important;
+  border-color: #352638 !important;
+}
+
+/* Light Purple / Indigo Container Overrides (Hex and RGB) */
+body.theme-super-admin [style*="background: #eef2ff"],
+body.theme-super-admin [style*="background: #ede9fe"],
+body.theme-super-admin [style*="background: #f5f3ff"],
+body.theme-super-admin [style*="background: #f3e8ff"],
+body.theme-super-admin [style*="background: #faf5ff"],
+body.theme-super-admin [style*="background: #fdf4ff"],
+body.theme-super-admin [style*="background: #fae8ff"],
+body.theme-super-admin [style*="background: #f3f0ff"],
+body.theme-super-admin [style*="background: #efebff"],
+body.theme-super-admin [style*="background: #f4f1ff"],
+body.theme-super-admin [style*="background: #e0e7ff"],
+body.theme-super-admin [style*="background: rgb(238, 242, 255)"],
+body.theme-super-admin [style*="background: rgb(245, 243, 255)"],
+body.theme-super-admin [style*="background: rgb(243, 232, 255)"],
+body.theme-super-admin [style*="background: rgb(237, 233, 254)"],
+body.theme-super-admin [style*="background: rgb(224, 231, 255)"],
+body.theme-super-admin [style*="background-color: #eef2ff"],
+body.theme-super-admin [style*="background-color: #ede9fe"],
+body.theme-super-admin [style*="background-color: #f5f3ff"],
+body.theme-super-admin [style*="background-color: #f3e8ff"],
+body.theme-super-admin [style*="background-color: #faf5ff"],
+body.theme-super-admin [style*="background-color: #fdf4ff"],
+body.theme-super-admin [style*="background-color: #fae8ff"],
+body.theme-super-admin [style*="background-color: #f3f0ff"],
+body.theme-super-admin [style*="background-color: #efebff"],
+body.theme-super-admin [style*="background-color: #f4f1ff"],
+body.theme-super-admin [style*="background-color: #e0e7ff"],
+body.theme-super-admin [style*="background-color: rgb(238, 242, 255)"],
+body.theme-super-admin [style*="background-color: rgb(245, 243, 255)"],
+body.theme-super-admin [style*="background-color: rgb(243, 232, 255)"],
+body.theme-super-admin [style*="background-color: rgb(237, 233, 254)"],
+body.theme-super-admin [style*="background-color: rgb(224, 231, 255)"],
+.theme-super-admin [style*="background: #eef2ff"],
+.theme-super-admin [style*="background: #ede9fe"],
+.theme-super-admin [style*="background: #f5f3ff"],
+.theme-super-admin [style*="background: #f3e8ff"],
+.theme-super-admin [style*="background: #faf5ff"],
+.theme-super-admin [style*="background: #fdf4ff"],
+.theme-super-admin [style*="background: #fae8ff"],
+.theme-super-admin [style*="background: #f3f0ff"],
+.theme-super-admin [style*="background: #efebff"],
+.theme-super-admin [style*="background: #f4f1ff"],
+.theme-super-admin [style*="background: #e0e7ff"],
+.theme-super-admin [style*="background: rgb(238, 242, 255)"],
+.theme-super-admin [style*="background: rgb(245, 243, 255)"],
+.theme-super-admin [style*="background: rgb(243, 232, 255)"],
+.theme-super-admin [style*="background: rgb(237, 233, 254)"],
+.theme-super-admin [style*="background: rgb(224, 231, 255)"],
+.theme-super-admin [style*="background-color: #eef2ff"],
+.theme-super-admin [style*="background-color: #ede9fe"],
+.theme-super-admin [style*="background-color: #f5f3ff"],
+.theme-super-admin [style*="background-color: #f3e8ff"],
+.theme-super-admin [style*="background-color: #faf5ff"],
+.theme-super-admin [style*="background-color: #fdf4ff"],
+.theme-super-admin [style*="background-color: #fae8ff"],
+.theme-super-admin [style*="background-color: #f3f0ff"],
+.theme-super-admin [style*="background-color: #efebff"],
+.theme-super-admin [style*="background-color: #f4f1ff"],
+.theme-super-admin [style*="background-color: #e0e7ff"],
+.theme-super-admin [style*="background-color: rgb(238, 242, 255)"],
+.theme-super-admin [style*="background-color: rgb(245, 243, 255)"],
+.theme-super-admin [style*="background-color: rgb(243, 232, 255)"],
+.theme-super-admin [style*="background-color: rgb(237, 233, 254)"],
+.theme-super-admin [style*="background-color: rgb(224, 231, 255)"] {
+  background: #F3EDF3 !important;
+  border-color: #D8CBD8 !important;
+}
+
+/* Primary Purple / Indigo Background Overrides (Hex and RGB) */
+body.theme-super-admin [style*="background: #6366f1"],
+body.theme-super-admin [style*="background: #4f46e5"],
+body.theme-super-admin [style*="background: #4338ca"],
+body.theme-super-admin [style*="background: #6d4aff"],
+body.theme-super-admin [style*="background: #8b5cf6"],
+body.theme-super-admin [style*="background: #a855f7"],
+body.theme-super-admin [style*="background: #7c3aed"],
+body.theme-super-admin [style*="background: #5B3BE8"],
+body.theme-super-admin [style*="background: #5b3be8"],
+body.theme-super-admin [style*="background: #5b4cf5"],
+body.theme-super-admin [style*="background-color: #6366f1"],
+body.theme-super-admin [style*="background-color: #4f46e5"],
+body.theme-super-admin [style*="background-color: #4338ca"],
+body.theme-super-admin [style*="background-color: #6d4aff"],
+body.theme-super-admin [style*="background-color: #8b5cf6"],
+body.theme-super-admin [style*="background-color: #a855f7"],
+body.theme-super-admin [style*="background-color: #7c3aed"],
+body.theme-super-admin [style*="background-color: #5B3BE8"],
+body.theme-super-admin [style*="background-color: #5b3be8"],
+body.theme-super-admin [style*="background-color: #5b4cf5"],
+.theme-super-admin [style*="background: #6366f1"],
+.theme-super-admin [style*="background: #4f46e5"],
+.theme-super-admin [style*="background: #4338ca"],
+.theme-super-admin [style*="background: #6d4aff"],
+.theme-super-admin [style*="background: #8b5cf6"],
+.theme-super-admin [style*="background: #a855f7"],
+.theme-super-admin [style*="background: #7c3aed"],
+.theme-super-admin [style*="background: #5B3BE8"],
+.theme-super-admin [style*="background: #5b3be8"],
+.theme-super-admin [style*="background: #5b4cf5"],
+.theme-super-admin [style*="background-color: #6366f1"],
+.theme-super-admin [style*="background-color: #4f46e5"],
+.theme-super-admin [style*="background-color: #4338ca"],
+.theme-super-admin [style*="background-color: #6d4aff"],
+.theme-super-admin [style*="background-color: #8b5cf6"],
+.theme-super-admin [style*="background-color: #a855f7"],
+.theme-super-admin [style*="background-color: #7c3aed"],
+.theme-super-admin [style*="background-color: #5B3BE8"],
+.theme-super-admin [style*="background-color: #5b3be8"],
+.theme-super-admin [style*="background-color: #5b4cf5"] {
+  background: #49364A !important;
+  color: #FFFFFF !important;
+}
+
+/* Text and Icon Colors (Hex and RGB) */
+body.theme-super-admin [style*="color: #6366f1"],
+body.theme-super-admin [style*="color: #4f46e5"],
+body.theme-super-admin [style*="color: #4338ca"],
+body.theme-super-admin [style*="color: #6d4aff"],
+body.theme-super-admin [style*="color: #8b5cf6"],
+body.theme-super-admin [style*="color: #a855f7"],
+body.theme-super-admin [style*="color: #7c3aed"],
+body.theme-super-admin [style*="color: #5b21b6"],
+body.theme-super-admin [style*="color: #6d28d9"],
+body.theme-super-admin [style*="color: #5B3BE8"],
+body.theme-super-admin [style*="color: #5b3be8"],
+body.theme-super-admin [style*="color: #5b4cf5"],
+body.theme-super-admin [style*="color: #482bc2"],
+body.theme-super-admin [style*="color: #4a2fc4"],
+body.theme-super-admin [style*="color: rgb(99, 102, 241)"],
+body.theme-super-admin [style*="color: rgb(79, 70, 229)"],
+body.theme-super-admin [style*="color: rgb(109, 74, 255)"],
+body.theme-super-admin [style*="color: rgb(67, 56, 202)"],
+body.theme-super-admin [style*="color: rgb(124, 58, 237)"],
+body.theme-super-admin [style*="color: rgb(139, 92, 246)"],
+body.theme-super-admin [style*="color: rgb(168, 85, 247)"],
+body.theme-super-admin [style*="color: rgb(91, 59, 232)"],
+.theme-super-admin [style*="color: #6366f1"],
+.theme-super-admin [style*="color: #4f46e5"],
+.theme-super-admin [style*="color: #4338ca"],
+.theme-super-admin [style*="color: #6d4aff"],
+.theme-super-admin [style*="color: #8b5cf6"],
+.theme-super-admin [style*="color: #a855f7"],
+.theme-super-admin [style*="color: #7c3aed"],
+.theme-super-admin [style*="color: #5b21b6"],
+.theme-super-admin [style*="color: #6d28d9"],
+.theme-super-admin [style*="color: #5B3BE8"],
+.theme-super-admin [style*="color: #5b3be8"],
+.theme-super-admin [style*="color: #5b4cf5"],
+.theme-super-admin [style*="color: #482bc2"],
+.theme-super-admin [style*="color: #4a2fc4"],
+.theme-super-admin [style*="color: rgb(99, 102, 241)"],
+.theme-super-admin [style*="color: rgb(79, 70, 229)"],
+.theme-super-admin [style*="color: rgb(109, 74, 255)"],
+.theme-super-admin [style*="color: rgb(67, 56, 202)"],
+.theme-super-admin [style*="color: rgb(124, 58, 237)"],
+.theme-super-admin [style*="color: rgb(139, 92, 246)"],
+.theme-super-admin [style*="color: rgb(168, 85, 247)"],
+.theme-super-admin [style*="color: rgb(91, 59, 232)"] {
+  color: #49364A !important;
+}
+
+/* SVG Strokes & Fills */
+body.theme-super-admin svg[stroke="#6366f1"],
+body.theme-super-admin svg[stroke="#4f46e5"],
+body.theme-super-admin svg[stroke="#4338ca"],
+body.theme-super-admin svg[stroke="#6d4aff"],
+body.theme-super-admin svg[stroke="#8b5cf6"],
+body.theme-super-admin svg[stroke="#a855f7"],
+body.theme-super-admin svg[stroke="#7c3aed"],
+body.theme-super-admin svg[stroke="#5B3BE8"],
+body.theme-super-admin svg[stroke="#5b3be8"],
+body.theme-super-admin svg[stroke="#5b4cf5"],
+body.theme-super-admin path[stroke="#6366f1"],
+body.theme-super-admin path[stroke="#4f46e5"],
+body.theme-super-admin path[stroke="#4338ca"],
+body.theme-super-admin path[stroke="#6d4aff"],
+body.theme-super-admin path[stroke="#5B3BE8"],
+body.theme-super-admin path[stroke="#5b3be8"],
+.theme-super-admin svg[stroke="#6366f1"],
+.theme-super-admin svg[stroke="#4f46e5"],
+.theme-super-admin svg[stroke="#4338ca"],
+.theme-super-admin svg[stroke="#6d4aff"],
+.theme-super-admin svg[stroke="#8b5cf6"],
+.theme-super-admin svg[stroke="#a855f7"],
+.theme-super-admin svg[stroke="#7c3aed"],
+.theme-super-admin svg[stroke="#5B3BE8"],
+.theme-super-admin svg[stroke="#5b3be8"],
+.theme-super-admin svg[stroke="#5b4cf5"],
+.theme-super-admin path[stroke="#6366f1"],
+.theme-super-admin path[stroke="#4f46e5"],
+.theme-super-admin path[stroke="#4338ca"],
+.theme-super-admin path[stroke="#6d4aff"],
+.theme-super-admin path[stroke="#5B3BE8"],
+.theme-super-admin path[stroke="#5b3be8"] {
+  stroke: #49364A !important;
+}
+
+body.theme-super-admin svg[fill="#6366f1"],
+body.theme-super-admin svg[fill="#4f46e5"],
+body.theme-super-admin svg[fill="#4338ca"],
+body.theme-super-admin svg[fill="#6d4aff"],
+body.theme-super-admin svg[fill="#8b5cf6"],
+body.theme-super-admin svg[fill="#a855f7"],
+body.theme-super-admin svg[fill="#7c3aed"],
+body.theme-super-admin svg[fill="#5B3BE8"],
+body.theme-super-admin svg[fill="#5b3be8"],
+body.theme-super-admin svg[fill="#5b4cf5"],
+body.theme-super-admin path[fill="#6366f1"],
+body.theme-super-admin path[fill="#4f46e5"],
+body.theme-super-admin path[fill="#4338ca"],
+body.theme-super-admin path[fill="#6d4aff"],
+body.theme-super-admin path[fill="#5B3BE8"],
+body.theme-super-admin path[fill="#5b3be8"],
+.theme-super-admin svg[fill="#6366f1"],
+.theme-super-admin svg[fill="#4f46e5"],
+.theme-super-admin svg[fill="#4338ca"],
+.theme-super-admin svg[fill="#6d4aff"],
+.theme-super-admin svg[fill="#8b5cf6"],
+.theme-super-admin svg[fill="#a855f7"],
+.theme-super-admin svg[fill="#7c3aed"],
+.theme-super-admin svg[fill="#5B3BE8"],
+.theme-super-admin svg[fill="#5b3be8"],
+.theme-super-admin svg[fill="#5b4cf5"],
+.theme-super-admin path[fill="#6366f1"],
+.theme-super-admin path[fill="#4f46e5"],
+.theme-super-admin path[fill="#4338ca"],
+.theme-super-admin path[fill="#6d4aff"],
+.theme-super-admin path[fill="#5B3BE8"],
+.theme-super-admin path[fill="#5b3be8"] {
+  fill: #49364A !important;
+}
+
+/* Borders */
+body.theme-super-admin [style*="border-color: #6366f1"],
+body.theme-super-admin [style*="border-color: #4f46e5"],
+body.theme-super-admin [style*="border-color: #4338ca"],
+body.theme-super-admin [style*="border-color: #6d4aff"],
+body.theme-super-admin [style*="border-color: #8b5cf6"],
+body.theme-super-admin [style*="border-color: #a855f7"],
+body.theme-super-admin [style*="border-color: #7c3aed"],
+body.theme-super-admin [style*="border-color: #5B3BE8"],
+body.theme-super-admin [style*="border-color: #5b3be8"],
+body.theme-super-admin [style*="border-color: #5b4cf5"],
+body.theme-super-admin [style*="border: 1px solid #6366f1"],
+body.theme-super-admin [style*="border: 1.5px solid #6366f1"],
+body.theme-super-admin [style*="border: 2px solid #6366f1"],
+body.theme-super-admin [style*="border: 1px solid #4f46e5"],
+body.theme-super-admin [style*="border: 1px solid #6d4aff"],
+body.theme-super-admin [style*="border: 1px solid #5B3BE8"],
+body.theme-super-admin [style*="border: 1px solid #5b3be8"],
+.theme-super-admin [style*="border-color: #6366f1"],
+.theme-super-admin [style*="border-color: #4f46e5"],
+.theme-super-admin [style*="border-color: #4338ca"],
+.theme-super-admin [style*="border-color: #6d4aff"],
+.theme-super-admin [style*="border-color: #8b5cf6"],
+.theme-super-admin [style*="border-color: #a855f7"],
+.theme-super-admin [style*="border-color: #7c3aed"],
+.theme-super-admin [style*="border-color: #5B3BE8"],
+.theme-super-admin [style*="border-color: #5b3be8"],
+.theme-super-admin [style*="border-color: #5b4cf5"],
+.theme-super-admin [style*="border: 1px solid #6366f1"],
+.theme-super-admin [style*="border: 1.5px solid #6366f1"],
+.theme-super-admin [style*="border: 2px solid #6366f1"],
+.theme-super-admin [style*="border: 1px solid #4f46e5"],
+.theme-super-admin [style*="border: 1px solid #6d4aff"],
+.theme-super-admin [style*="border: 1px solid #5B3BE8"],
+.theme-super-admin [style*="border: 1px solid #5b3be8"] {
+  border-color: #49364A !important;
+}
+
+/* Light Borders */
+body.theme-super-admin [style*="border-color: #c7d2fe"],
+body.theme-super-admin [style*="border-color: #ddd6fe"],
+body.theme-super-admin [style*="border-color: #ede9fe"],
+body.theme-super-admin [style*="border-color: #e0e7ff"],
+body.theme-super-admin [style*="border-color: #cfc6ff"],
+body.theme-super-admin [style*="border-color: #c4b5fd"],
+body.theme-super-admin [style*="border: 1px solid #c7d2fe"],
+body.theme-super-admin [style*="border: 1px solid #ddd6fe"],
+body.theme-super-admin [style*="border: 1px solid #ede9fe"],
+body.theme-super-admin [style*="border: 1px solid #e0e7ff"],
+body.theme-super-admin [style*="border: 1px solid #cfc6ff"],
+body.theme-super-admin [style*="border: 1px solid #c4b5fd"],
+.theme-super-admin [style*="border-color: #c7d2fe"],
+.theme-super-admin [style*="border-color: #ddd6fe"],
+.theme-super-admin [style*="border-color: #ede9fe"],
+.theme-super-admin [style*="border-color: #e0e7ff"],
+.theme-super-admin [style*="border-color: #cfc6ff"],
+.theme-super-admin [style*="border-color: #c4b5fd"],
+.theme-super-admin [style*="border: 1px solid #c7d2fe"],
+.theme-super-admin [style*="border: 1px solid #ddd6fe"],
+.theme-super-admin [style*="border: 1px solid #ede9fe"],
+.theme-super-admin [style*="border: 1px solid #e0e7ff"],
+.theme-super-admin [style*="border: 1px solid #cfc6ff"],
+.theme-super-admin [style*="border: 1px solid #c4b5fd"] {
+  border-color: #D8CBD8 !important;
+}
+
+/* --------------------------------------------------------------------------
+   18. COMPREHENSIVE MODULE COMPONENT OVERRIDES
+   -------------------------------------------------------------------------- */
+
+/* Top Bar Icons & Tiles */
+.theme-super-admin .top-stock-transfer-icon-tile,
+body.theme-super-admin .top-stock-transfer-icon-tile {
+  background: linear-gradient(135deg, #604B61 0%, #49364A 100%) !important;
+  color: #FFFFFF !important;
+}
+
+.theme-super-admin .top-pos-badge-icon.counter,
+body.theme-super-admin .top-pos-badge-icon.counter {
+  background: #F3EDF3 !important;
+  color: #49364A !important;
+  border: 1px solid #D8CBD8 !important;
+}
+
+.theme-super-admin .top-pos-badge-icon.counter svg,
+body.theme-super-admin .top-pos-badge-icon.counter svg {
+  color: #49364A !important;
+  stroke: #49364A !important;
+}
+
+.theme-super-admin .top-product-movement-info-icon:hover,
+body.theme-super-admin .top-product-movement-info-icon:hover {
+  color: #49364A !important;
+}
+
+/* Product Catalogue Category & Status Pills */
+.theme-super-admin .badge-blue,
+.theme-super-admin .badge-purple,
+body.theme-super-admin .badge-blue,
+body.theme-super-admin .badge-purple {
+  background: #F3EDF3 !important;
+  color: #49364A !important;
+  border: 1px solid #D8CBD8 !important;
+}
+
+/* User Management System */
+.theme-super-admin .um-btn-primary,
+body.theme-super-admin .um-btn-primary {
+  background-color: #49364A !important;
+  border-color: #352638 !important;
+  color: #FFFFFF !important;
+}
+.theme-super-admin .um-btn-primary:hover:not(:disabled),
+body.theme-super-admin .um-btn-primary:hover:not(:disabled) {
+  background-color: #604B61 !important;
+  border-color: #352638 !important;
+}
+.theme-super-admin .um-btn-secondary:hover:not(:disabled),
+body.theme-super-admin .um-btn-secondary:hover:not(:disabled) {
+  border-color: #D8CBD8 !important;
+  background-color: #F3EDF3 !important;
+}
+.theme-super-admin .um-btn-purple-tint,
+body.theme-super-admin .um-btn-purple-tint {
+  background-color: #F3EDF3 !important;
+  border-color: #D8CBD8 !important;
+  color: #49364A !important;
+}
+.theme-super-admin .um-btn-purple-tint:hover,
+body.theme-super-admin .um-btn-purple-tint:hover {
+  background-color: #E9DFE9 !important;
+  border-color: #49364A !important;
+  color: #352638 !important;
+}
+.theme-super-admin .um-stat-icon-tile.purple,
+body.theme-super-admin .um-stat-icon-tile.purple {
+  background-color: #F3EDF3 !important;
+  color: #49364A !important;
+}
+.theme-super-admin .um-tab-btn.active,
+body.theme-super-admin .um-tab-btn.active {
+  color: #49364A !important;
+}
+.theme-super-admin .um-tab-btn.active::after,
+body.theme-super-admin .um-tab-btn.active::after {
+  background-color: #49364A !important;
+}
+.theme-super-admin .um-tab-btn.active .um-tab-badge,
+body.theme-super-admin .um-tab-btn.active .um-tab-badge {
+  background-color: #F3EDF3 !important;
+  color: #49364A !important;
+}
+.theme-super-admin .um-search-input:focus,
+.theme-super-admin .um-select:focus,
+.theme-super-admin .um-form-input:focus,
+body.theme-super-admin .um-search-input:focus,
+body.theme-super-admin .um-select:focus,
+body.theme-super-admin .um-form-input:focus {
+  border-color: #49364A !important;
+  box-shadow: 0 0 0 3px rgba(73, 54, 74, 0.18) !important;
+}
+.theme-super-admin .um-avatar-circle.purple,
+body.theme-super-admin .um-avatar-circle.purple,
+.theme-super-admin .um-avatar-circle,
+body.theme-super-admin .um-avatar-circle {
+  background-color: #F3EDF3 !important;
+  color: #49364A !important;
+}
+.theme-super-admin .um-user-handle,
+body.theme-super-admin .um-user-handle {
+  color: #49364A !important;
+}
+.theme-super-admin .um-action-btn:hover,
+.theme-super-admin .um-action-btn.view:hover,
+.theme-super-admin .um-action-btn.manager:hover,
+body.theme-super-admin .um-action-btn:hover,
+body.theme-super-admin .um-action-btn.view:hover,
+body.theme-super-admin .um-action-btn.manager:hover {
+  background-color: #F3EDF3 !important;
+  border-color: #49364A !important;
+  color: #49364A !important;
+  box-shadow: 0 2px 6px rgba(73, 54, 74, 0.15) !important;
+}
+.theme-super-admin .um-action-btn:focus-visible,
+body.theme-super-admin .um-action-btn:focus-visible {
+  outline: 2px solid #49364A !important;
+}
+.theme-super-admin .um-btn-action:hover,
+body.theme-super-admin .um-btn-action:hover {
+  border-color: #D8CBD8 !important;
+}
+.theme-super-admin .um-suggestion-btn,
+body.theme-super-admin .um-suggestion-btn {
+  background-color: #F3EDF3 !important;
+  border: 1px solid #D8CBD8 !important;
+  color: #49364A !important;
+}
+.theme-super-admin .um-suggestion-btn:hover,
+body.theme-super-admin .um-suggestion-btn:hover {
+  background-color: #E9DFE9 !important;
+}
+.theme-super-admin .um-pick-existing-panel,
+body.theme-super-admin .um-pick-existing-panel {
+  background-color: #F3EDF3 !important;
+  border: 1px solid #D8CBD8 !important;
+}
+.theme-super-admin .um-pick-existing-panel .panel-title,
+body.theme-super-admin .um-pick-existing-panel .panel-title {
+  color: #49364A !important;
+}
+.theme-super-admin .um-temp-password-box,
+body.theme-super-admin .um-temp-password-box {
+  background-color: #F3EDF3 !important;
+  border: 1px solid #D8CBD8 !important;
+}
+.theme-super-admin .um-temp-password-box .temp-password-val,
+body.theme-super-admin .um-temp-password-box .temp-password-val {
+  color: #49364A !important;
+}
+.theme-super-admin .um-branch-badge.assigned,
+body.theme-super-admin .um-branch-badge.assigned {
+  background-color: #F3EDF3 !important;
+  border-color: #D8CBD8 !important;
+  color: #49364A !important;
+}
+.theme-super-admin .um-role-badge.superadmin,
+.theme-super-admin .um-table-role-pill.superadmin,
+body.theme-super-admin .um-role-badge.superadmin,
+body.theme-super-admin .um-table-role-pill.superadmin {
+  background-color: #F3EDF3 !important;
+  border: 1px solid #D8CBD8 !important;
+  color: #49364A !important;
+}
+.theme-super-admin .um-role-card.selected,
+body.theme-super-admin .um-role-card.selected {
+  border-color: #49364A !important;
+  background-color: #F3EDF3 !important;
+}
+.theme-super-admin .um-permission-item.checked,
+body.theme-super-admin .um-permission-item.checked {
+  border-color: #49364A !important;
+  background-color: #F3EDF3 !important;
+}
+
+/* Branch Switcher */
+.theme-super-admin .branch-switcher-trigger,
+body.theme-super-admin .branch-switcher-trigger {
+  border: 1px solid #352638 !important;
+  background: linear-gradient(135deg, #604B61 0%, #49364A 100%) !important;
+  color: #FFFFFF !important;
+}
+.theme-super-admin .branch-switcher-trigger:hover,
+body.theme-super-admin .branch-switcher-trigger:hover {
+  background: linear-gradient(135deg, #49364A 0%, #352638 100%) !important;
+}
+.theme-super-admin .branch-switcher-pill,
+body.theme-super-admin .branch-switcher-pill {
+  background: #F3EDF3 !important;
+  color: #49364A !important;
+  border: 1px solid #D8CBD8 !important;
+}
+.theme-super-admin .branch-switcher-option:hover,
+body.theme-super-admin .branch-switcher-option:hover {
+  background: #F3EDF3 !important;
+  border-left-color: #49364A !important;
+}
+.theme-super-admin .branch-switcher-option.is-selected,
+body.theme-super-admin .branch-switcher-option.is-selected {
+  background: #F3EDF3 !important;
+  border-left-color: #49364A !important;
+}
+.theme-super-admin .branch-switcher-option.is-selected .branch-switcher-option-name,
+body.theme-super-admin .branch-switcher-option.is-selected .branch-switcher-option-name {
+  color: #49364A !important;
+}
+.theme-super-admin .branch-switcher-pin-btn.is-pinned,
+body.theme-super-admin .branch-switcher-pin-btn.is-pinned {
+  color: #49364A !important;
+}
+.theme-super-admin .branch-switcher-check-icon,
+body.theme-super-admin .branch-switcher-check-icon {
+  color: #49364A !important;
+}
+.theme-super-admin .branch-switcher-manage-btn,
+body.theme-super-admin .branch-switcher-manage-btn {
+  color: #49364A !important;
+}
+.theme-super-admin .branch-switcher-manage-btn:hover,
+body.theme-super-admin .branch-switcher-manage-btn:hover {
+  color: #352638 !important;
+  background: #F3EDF3 !important;
+}
+
+/* Stock Report Bento View */
+.theme-super-admin .srb-header-icon-box,
+body.theme-super-admin .srb-header-icon-box {
+  background: linear-gradient(135deg, #F3EDF3 0%, #E9DFE9 100%) !important;
+  color: #49364A !important;
+}
+.theme-super-admin .srb-pulse-badge,
+body.theme-super-admin .srb-pulse-badge {
+  background: #F3EDF3 !important;
+  color: #49364A !important;
+}
+.theme-super-admin .srb-metric-tile.violet,
+body.theme-super-admin .srb-metric-tile.violet {
+  background: linear-gradient(145deg, #F3EDF3 0%, #FFFFFF 80%) !important;
+  border: 1px solid #D8CBD8 !important;
+}
+.theme-super-admin .srb-tile-icon-box.purple,
+body.theme-super-admin .srb-tile-icon-box.purple {
+  background: #F3EDF3 !important;
+  color: #49364A !important;
+}
+.theme-super-admin .srb-tile-pill.purple,
+body.theme-super-admin .srb-tile-pill.purple {
+  background: #F3EDF3 !important;
+  color: #49364A !important;
+  border: 1px solid #D8CBD8 !important;
+}
+.theme-super-admin .srb-tile-big-num.purple,
+body.theme-super-admin .srb-tile-big-num.purple {
+  color: #49364A !important;
+}
+.theme-super-admin .srb-icon-squircle.purple,
+body.theme-super-admin .srb-icon-squircle.purple {
+  background: #F3EDF3 !important;
+  color: #49364A !important;
+}
+.theme-super-admin .srb-micro-pill.sku,
+body.theme-super-admin .srb-micro-pill.sku {
+  background: #F3EDF3 !important;
+  color: #49364A !important;
+}
+.theme-super-admin .srb-pillar-col:hover .srb-pillar-fill,
+body.theme-super-admin .srb-pillar-col:hover .srb-pillar-fill {
+  background: linear-gradient(180deg, #604B61 0%, #49364A 100%) !important;
+}
+.theme-super-admin .srb-card-accent-bar.purple,
+body.theme-super-admin .srb-card-accent-bar.purple {
+  background: #49364A !important;
+}
+
+/* Purchase Bento Modal */
+.theme-super-admin .pbm-accent-bar,
+body.theme-super-admin .pbm-accent-bar {
+  background: linear-gradient(90deg, #49364A 0%, #604B61 50%, #10b981 100%) !important;
+}
+.theme-super-admin .pbm-icon-box,
+body.theme-super-admin .pbm-icon-box {
+  background: linear-gradient(135deg, #F3EDF3 0%, #E9DFE9 100%) !important;
+  color: #49364A !important;
+}
+.theme-super-admin .pbm-select:focus,
+.theme-super-admin .pbm-input:focus,
+body.theme-super-admin .pbm-select:focus,
+body.theme-super-admin .pbm-input:focus {
+  border-color: #49364A !important;
+  box-shadow: 0 0 0 3px rgba(73, 54, 74, 0.15) !important;
+}
+.theme-super-admin .pbm-pill-btn.purple,
+body.theme-super-admin .pbm-pill-btn.purple {
+  border-color: #D8CBD8 !important;
+  background: #F3EDF3 !important;
+  color: #49364A !important;
+}
+.theme-super-admin .pbm-summary-card,
+body.theme-super-admin .pbm-summary-card {
+  border: 1px solid #D8CBD8 !important;
+}
+.theme-super-admin .pbm-btn-primary,
+body.theme-super-admin .pbm-btn-primary {
+  background: linear-gradient(135deg, #604B61 0%, #49364A 100%) !important;
+  box-shadow: 0 4px 12px rgba(73, 54, 74, 0.25) !important;
+}
+.theme-super-admin .pbm-btn-primary:hover:not(:disabled),
+body.theme-super-admin .pbm-btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #49364A 0%, #352638 100%) !important;
+}
+
+/* Customer Directory & Loyalty Config */
+.theme-super-admin .customer-kpi-card.selected,
+body.theme-super-admin .customer-kpi-card.selected {
+  border-color: #49364A !important;
+  box-shadow: 0 0 0 3px rgba(73, 54, 74, 0.18) !important;
+}
+.theme-super-admin .customer-kpi-card.purple:hover,
+body.theme-super-admin .customer-kpi-card.purple:hover {
+  border-color: #49364A !important;
+}
+.theme-super-admin .drawer-btn.primary,
+body.theme-super-admin .drawer-btn.primary {
+  background: linear-gradient(135deg, #604B61 0%, #49364A 100%) !important;
+  color: #FFFFFF !important;
+}
+.theme-super-admin .loyalty-config-pane.purple-pane,
+body.theme-super-admin .loyalty-config-pane.purple-pane {
+  border-color: #D8CBD8 !important;
+}
+.theme-super-admin .loyalty-config-pane.purple-pane .pane-header,
+body.theme-super-admin .loyalty-config-pane.purple-pane .pane-header {
+  background: #F3EDF3 !important;
+}
+.theme-super-admin .loyalty-live-preview-box.purple,
+body.theme-super-admin .loyalty-live-preview-box.purple {
+  background: linear-gradient(135deg, #F3EDF3 0%, #FFFFFF 100%) !important;
+  border-color: #D8CBD8 !important;
+}
+.theme-super-admin .preview-pill-stat.purple,
+body.theme-super-admin .preview-pill-stat.purple {
+  color: #49364A !important;
+}
+
+/* Supplier Directory */
+.theme-super-admin .supplier-kpi-card.selected,
+body.theme-super-admin .supplier-kpi-card.selected {
+  border-color: #49364A !important;
+  box-shadow: 0 0 0 3px rgba(73, 54, 74, 0.18) !important;
+}
+.theme-super-admin .btn-action-more.active,
+body.theme-super-admin .btn-action-more.active {
+  background: #F3EDF3 !important;
+  color: #49364A !important;
+  border-color: #D8CBD8 !important;
+}
+.theme-super-admin .supplier-digital-card,
+body.theme-super-admin .supplier-digital-card {
+  background: linear-gradient(135deg, #1F1620 0%, #352638 60%, #49364A 100%) !important;
+}
+
+/* Return Reports */
+.theme-super-admin .returns-header-icon-box,
+body.theme-super-admin .returns-header-icon-box {
+  background: linear-gradient(135deg, #F3EDF3 0%, #E9DFE9 100%) !important;
+  color: #49364A !important;
+}
+.theme-super-admin .returns-tab-pill.active,
+body.theme-super-admin .returns-tab-pill.active {
+  background: linear-gradient(135deg, #F3EDF3 0%, #E9DFE9 100%) !important;
+  color: #49364A !important;
+  box-shadow: inset 0 0 0 1px rgba(73, 54, 74, 0.3) !important;
+}
+.theme-super-admin .returns-tab-pill.active .tab-badge-num,
+body.theme-super-admin .returns-tab-pill.active .tab-badge-num {
+  background: #49364A !important;
+  color: #FFFFFF !important;
+}
+.theme-super-admin .returns-kpi-card.purple,
+body.theme-super-admin .returns-kpi-card.purple {
+  border-color: #D8CBD8 !important;
+  background: linear-gradient(180deg, #FFFFFF 0%, #F3EDF3 100%) !important;
+}
+.theme-super-admin .returns-kpi-card.purple .returns-kpi-icon,
+body.theme-super-admin .returns-kpi-card.purple .returns-kpi-icon {
+  background: #F3EDF3 !important;
+  color: #49364A !important;
+}
+.theme-super-admin .badge-pill.bill-count,
+body.theme-super-admin .badge-pill.bill-count {
+  background: #F3EDF3 !important;
+  color: #49364A !important;
+}
+
+/* Promotions & Offers */
+.theme-super-admin .promo-root,
+body.theme-super-admin .promo-root {
+  --primary: #49364A !important;
+  --primary-hover: #604B61 !important;
+  --primary-grad: linear-gradient(135deg, #604B61 0%, #49364A 100%) !important;
+  --primary-soft: #F3EDF3 !important;
+  --tag-chip-bg: #F3EDF3 !important;
+  --tag-chip-text: #49364A !important;
+  --promo-green-tint: #F3EDF3 !important;
+  --promo-green-text: #49364A !important;
+}

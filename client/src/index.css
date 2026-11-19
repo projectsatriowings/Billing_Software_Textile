@@ -1150,6 +1150,7 @@ body {
   color: var(--text-muted);
   display: block;
   margin-top: 0.2rem;
+  margin-left: 10px;
 }
 
 /* Wholesale Billing Top Header Layout */
@@ -1222,6 +1223,7 @@ body {
   .wholesale-billing-container {
     padding: 1rem 1rem 2.5rem;
   }
+
   .wholesale-billing-grid {
     grid-template-columns: 1fr;
     column-gap: 0;
@@ -1233,6 +1235,7 @@ body {
   .wholesale-billing-container {
     padding: 0.75rem 0.65rem 2rem;
   }
+
   .wholesale-billing-grid {
     grid-template-columns: 1fr;
     row-gap: 1rem;
@@ -7254,17 +7257,21 @@ body {
     padding: 2.25rem 2.5rem;
     gap: 1.75rem 2rem;
   }
+
   .cta-banner-left {
     flex: 1 1 100%;
     max-width: 100%;
   }
+
   .cta-banner-text {
     max-width: 680px;
   }
+
   .cta-banner-center-actions {
     flex: 1;
     justify-content: flex-start;
   }
+
   .cta-banner-stats {
     padding-left: 1.75rem;
     gap: 1.75rem;
@@ -33024,9 +33031,20 @@ select.expense-input-control {
 }
 
 @keyframes pulseDot {
-  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(15, 118, 110, 0.7); }
-  70% { transform: scale(1.1); box-shadow: 0 0 0 5px rgba(15, 118, 110, 0); }
-  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(15, 118, 110, 0); }
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(15, 118, 110, 0.7);
+  }
+
+  70% {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 5px rgba(15, 118, 110, 0);
+  }
+
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(15, 118, 110, 0);
+  }
 }
 
 .bento-notif-branch-row {
@@ -36210,12 +36228,15 @@ select.expense-input-control {
 }
 
 @keyframes topOverdueGlowBlink {
-  0%, 100% {
+
+  0%,
+  100% {
     background-color: #fee2e2;
     border-color: #ef4444;
     color: #991b1b;
     box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6);
   }
+
   50% {
     background-color: #dc2626;
     border-color: #b91c1c;
@@ -36271,10 +36292,13 @@ select.expense-input-control {
 }
 
 @keyframes dashboardBannerBlink {
-  0%, 100% {
+
+  0%,
+  100% {
     border-color: #fecdd3;
     box-shadow: 0 2px 10px rgba(225, 29, 72, 0.08);
   }
+
   50% {
     border-color: #f43f5e;
     box-shadow: 0 0 16px 3px rgba(244, 63, 94, 0.28);
@@ -36282,10 +36306,13 @@ select.expense-input-control {
 }
 
 @keyframes overdueButtonPulse {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: scale(1);
     box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.6);
   }
+
   50% {
     transform: scale(1.05);
     box-shadow: 0 0 14px 4px rgba(225, 29, 72, 0.5);
@@ -36297,6 +36324,7 @@ select.expense-input-control {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -36307,6 +36335,7 @@ select.expense-input-control {
     opacity: 0;
     transform: scale(0.94);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
