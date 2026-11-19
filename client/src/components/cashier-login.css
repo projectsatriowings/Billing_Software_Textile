@@ -3359,31 +3359,186 @@ body.theme-cashier .select-counter-card-active .counter-card-radio,
   color: #FFFFFF !important;
 }
 
-/* Day Closing View in Cashier Role */
+/* Day Closing View in Cashier Role (Luxury 3D Bento Design) */
 div.app-container.theme-cashier .day-closing-wrapper,
 body.theme-cashier .day-closing-wrapper,
 .theme-cashier .day-closing-wrapper {
-  background-color: var(--bg) !important;
+  background-color: transparent !important;
+  background: transparent !important;
 }
 
 div.app-container.theme-cashier .day-closing-header-card,
-div.app-container.theme-cashier .day-closing-kpi-card,
-div.app-container.theme-cashier .day-closing-panel,
-div.app-container.theme-cashier .day-closing-table-card,
+div.app-container.theme-cashier .day-closing-bento-hero,
+div.app-container.theme-cashier .day-closing-card,
+div.app-container.theme-cashier .day-closing-filter-bar,
+div.app-container.theme-cashier .day-closing-filter-banner,
+div.app-container.theme-cashier .day-closing-status-banner,
+div.app-container.theme-cashier .quick-kpi-strip,
+div.app-container.theme-cashier .fin-kpi-card,
+div.app-container.theme-cashier .tender-kpi-card,
 body.theme-cashier .day-closing-header-card,
-body.theme-cashier .day-closing-kpi-card,
-body.theme-cashier .day-closing-panel,
-body.theme-cashier .day-closing-table-card,
+body.theme-cashier .day-closing-bento-hero,
+body.theme-cashier .day-closing-card,
+body.theme-cashier .day-closing-filter-bar,
+body.theme-cashier .day-closing-filter-banner,
+body.theme-cashier .day-closing-status-banner,
+body.theme-cashier .quick-kpi-strip,
+body.theme-cashier .fin-kpi-card,
+body.theme-cashier .tender-kpi-card,
 .theme-cashier .day-closing-header-card,
-.theme-cashier .day-closing-kpi-card,
-.theme-cashier .day-closing-panel,
-.theme-cashier .day-closing-table-card {
+.theme-cashier .day-closing-bento-hero,
+.theme-cashier .day-closing-card,
+.theme-cashier .day-closing-filter-bar,
+.theme-cashier .day-closing-filter-banner,
+.theme-cashier .day-closing-status-banner,
+.theme-cashier .quick-kpi-strip,
+.theme-cashier .fin-kpi-card,
+.theme-cashier .tender-kpi-card {
   background: var(--surface) !important;
   background-color: var(--surface) !important;
-  background-image: none !important;
-  border: 1px solid var(--border) !important;
-  border-radius: 16px !important;
-  box-shadow: 0 4px 18px rgba(15, 45, 46, 0.06), 0 1px 3px rgba(15, 45, 46, 0.04) !important;
+  border: 1.5px solid var(--border) !important;
+  border-radius: 20px !important;
+  box-shadow:
+    0 1px 2px rgba(15, 45, 46, 0.04),
+    0 6px 18px -2px rgba(15, 45, 46, 0.06),
+    0 16px 32px -4px rgba(15, 45, 46, 0.08),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 0 0 rgba(208, 199, 184, 0.35) !important;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease !important;
+}
+
+div.app-container.theme-cashier .fin-kpi-card:hover,
+div.app-container.theme-cashier .tender-kpi-card:hover,
+div.app-container.theme-cashier .day-closing-card:hover,
+body.theme-cashier .fin-kpi-card:hover,
+body.theme-cashier .tender-kpi-card:hover,
+body.theme-cashier .day-closing-card:hover,
+.theme-cashier .fin-kpi-card:hover,
+.theme-cashier .tender-kpi-card:hover,
+.theme-cashier .day-closing-card:hover {
+  transform: translateY(-3px) !important;
+  box-shadow:
+    0 2px 6px rgba(15, 45, 46, 0.04),
+    0 12px 28px -4px rgba(15, 45, 46, 0.1),
+    0 24px 44px -6px rgba(15, 118, 110, 0.14),
+    inset 0 1px 0 0 #ffffff !important;
+  border-color: rgba(20, 184, 166, 0.55) !important;
+}
+
+/* Ensure 4px Top Accent Gradient Bar is visible in Hero */
+div.app-container.theme-cashier .day-closing-bento-hero .bento-hero-gradient-bar,
+body.theme-cashier .day-closing-bento-hero .bento-hero-gradient-bar,
+.theme-cashier .day-closing-bento-hero .bento-hero-gradient-bar {
+  display: block !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  height: 4px !important;
+  background: linear-gradient(90deg, #0F2D2E 0%, #0F766E 50%, #14B8A6 100%) !important;
+  z-index: 10 !important;
+}
+
+/* Expected Closing Cash Luxury Banner in Cashier Theme */
+div.app-container.theme-cashier .cash-rec-expected-box,
+body.theme-cashier .cash-rec-expected-box,
+.theme-cashier .cash-rec-expected-box {
+  background: linear-gradient(135deg, #0F2D2E 0%, #153E3F 100%) !important;
+  border: 1.5px solid #14B8A6 !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 8px 24px rgba(15, 45, 46, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+}
+
+div.app-container.theme-cashier .cash-rec-expected-label,
+body.theme-cashier .cash-rec-expected-label,
+.theme-cashier .cash-rec-expected-label {
+  color: #99F6E4 !important;
+}
+
+div.app-container.theme-cashier .cash-rec-expected-val,
+body.theme-cashier .cash-rec-expected-val,
+.theme-cashier .cash-rec-expected-val {
+  color: #5EEAD4 !important;
+}
+
+/* Net Sales Hero Highlight in Cashier Theme */
+div.app-container.theme-cashier .fin-kpi-card.highlight,
+body.theme-cashier .fin-kpi-card.highlight,
+.theme-cashier .fin-kpi-card.highlight {
+  border: 2px solid var(--primary) !important;
+  background: linear-gradient(135deg, rgba(15, 118, 110, 0.08) 0%, var(--surface) 100%) !important;
+  box-shadow:
+    0 1px 3px rgba(15, 118, 110, 0.08),
+    0 8px 24px -3px rgba(15, 118, 110, 0.14),
+    0 20px 40px -4px rgba(15, 118, 110, 0.12),
+    inset 0 1px 0 0 #ffffff !important;
+}
+
+div.app-container.theme-cashier .fin-kpi-card.highlight .fin-kpi-label,
+body.theme-cashier .fin-kpi-card.highlight .fin-kpi-label,
+.theme-cashier .fin-kpi-card.highlight .fin-kpi-label {
+  color: var(--primary) !important;
+  font-weight: 800 !important;
+}
+
+div.app-container.theme-cashier .fin-kpi-card.highlight .fin-kpi-val,
+body.theme-cashier .fin-kpi-card.highlight .fin-kpi-val,
+.theme-cashier .fin-kpi-card.highlight .fin-kpi-val {
+  color: var(--sidebar) !important;
+  font-weight: 900 !important;
+}
+
+/* Day Closing Button & Deck Overrides in Cashier Theme */
+div.app-container.theme-cashier .cash-rec-submit-btn,
+body.theme-cashier .cash-rec-submit-btn,
+.theme-cashier .cash-rec-submit-btn {
+  background: var(--primary, #0F766E) !important;
+  color: #FFFFFF !important;
+  border: 1.5px solid var(--primary-hover, #115E59) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 4px 14px rgba(15, 118, 110, 0.35) !important;
+}
+
+div.app-container.theme-cashier .cash-rec-submit-btn:hover:not(:disabled),
+body.theme-cashier .cash-rec-submit-btn:hover:not(:disabled),
+.theme-cashier .cash-rec-submit-btn:hover:not(:disabled) {
+  background: var(--primary-hover, #115E59) !important;
+  box-shadow: 0 8px 22px rgba(15, 118, 110, 0.45) !important;
+}
+
+div.app-container.theme-cashier .smart-audit-toggle-btn,
+body.theme-cashier .smart-audit-toggle-btn,
+.theme-cashier .smart-audit-toggle-btn {
+  background: var(--primary, #0F766E) !important;
+  color: #FFFFFF !important;
+  border: 1.5px solid var(--primary-hover, #115E59) !important;
+  box-shadow: 0 2px 8px rgba(15, 118, 110, 0.3) !important;
+}
+
+div.app-container.theme-cashier .smart-audit-toggle-btn:hover,
+body.theme-cashier .smart-audit-toggle-btn:hover,
+.theme-cashier .smart-audit-toggle-btn:hover {
+  background: var(--primary-hover, #115E59) !important;
+}
+
+div.app-container.theme-cashier .bento-kpi-hero-card,
+body.theme-cashier .bento-kpi-hero-card,
+.theme-cashier .bento-kpi-hero-card {
+  background: linear-gradient(135deg, rgba(15, 118, 110, 0.08) 0%, var(--surface) 100%) !important;
+  border: 2px solid var(--primary) !important;
+  border-radius: 20px !important;
+  box-shadow:
+    0 1px 2px rgba(15, 45, 46, 0.04),
+    0 8px 24px -2px rgba(15, 118, 110, 0.12),
+    0 20px 40px -4px rgba(15, 118, 110, 0.14),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.95) !important;
+}
+
+div.app-container.theme-cashier .bento-kpi-hero-icon,
+body.theme-cashier .bento-kpi-hero-icon,
+.theme-cashier .bento-kpi-hero-icon {
+  background: var(--primary) !important;
+  color: #FFFFFF !important;
 }
 
 /* --------------------------------------------------------------------------
@@ -3638,19 +3793,75 @@ body.theme-cashier .notif-card-item.unread,
   background: #F4FAF9 !important;
 }
 
+body.theme-cashier .notif-btn-refresh,
+.theme-cashier .notif-btn-refresh {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+  color: var(--sidebar) !important;
+}
+
 body.theme-cashier .notif-btn-refresh:hover,
-.theme-cashier .notif-btn-refresh:hover,
-body.theme-cashier .notif-btn-mark-all:hover,
-.theme-cashier .notif-btn-mark-all:hover {
-  border-color: var(--primary) !important;
+.theme-cashier .notif-btn-refresh:hover {
+  background: var(--primary-soft) !important;
+  border-color: var(--ring) !important;
   color: var(--primary) !important;
 }
 
+body.theme-cashier .notif-btn-mark-all,
+.theme-cashier .notif-btn-mark-all {
+  background: var(--primary) !important;
+  border-color: var(--primary-hover) !important;
+  color: #FFFFFF !important;
+}
+
+body.theme-cashier .notif-btn-mark-all:hover,
+.theme-cashier .notif-btn-mark-all:hover {
+  background: var(--primary-hover) !important;
+  color: #FFFFFF !important;
+}
+
+body.theme-cashier .notif-tab-btn,
+.theme-cashier .notif-tab-btn {
+  background: var(--surface-inner) !important;
+  border-color: var(--border) !important;
+  color: var(--text-muted) !important;
+}
+
+body.theme-cashier .notif-tab-btn:hover,
+.theme-cashier .notif-tab-btn:hover {
+  background: var(--surface) !important;
+  color: var(--sidebar) !important;
+  border-color: var(--ring) !important;
+}
+
+body.theme-cashier .notif-tab-btn.active,
+.theme-cashier .notif-tab-btn.active,
 body.theme-cashier .notif-filter-tab.active,
 .theme-cashier .notif-filter-tab.active {
   background: var(--primary) !important;
-  border-color: var(--primary) !important;
+  border-color: var(--primary-hover) !important;
   color: #FFFFFF !important;
+  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.3) !important;
+}
+
+body.theme-cashier .notif-tab-btn.active .notif-tab-count,
+.theme-cashier .notif-tab-btn.active .notif-tab-count {
+  background: rgba(255, 255, 255, 0.25) !important;
+  color: #FFFFFF !important;
+}
+
+body.theme-cashier .notif-nav-action-btn,
+.theme-cashier .notif-nav-action-btn {
+  color: var(--primary) !important;
+  background: var(--primary-soft) !important;
+  border: 1.5px solid rgba(20, 184, 166, 0.35) !important;
+}
+
+body.theme-cashier .notif-nav-action-btn:hover,
+.theme-cashier .notif-nav-action-btn:hover {
+  background: var(--primary) !important;
+  color: #FFFFFF !important;
+  border-color: var(--primary-hover) !important;
 }
 
 body.theme-cashier .notif-kpi-icon.all,

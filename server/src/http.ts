@@ -129,10 +129,16 @@ function serveStatic(root: string, pathname: string, req: http.IncomingMessage, 
   let file = full;
   let isSpaFallback = false;
   if (!fs.existsSync(file) || !fs.statSync(file).isFile()) {
-    if (path.extname(rel)) return false; // missing asset -> 404
-    file = path.join(root, 'index.html'); // SPA route
-    isSpaFallback = true;
-    if (!fs.existsSync(file)) return false;
+    const publicFallback = path.join(path.resolve('client/public'), path.normalize(rel));
+    if (fs.existsSync(publicFallback) && fs.statSync(publicFallback).isFile()) {
+      file = publicFallback;
+    } else if (path.extname(rel)) {
+      return false; // missing asset -> 404
+    } else {
+      file = path.join(root, 'index.html'); // SPA route
+      isSpaFallback = true;
+      if (!fs.existsSync(file)) return false;
+    }
   }
   const ext = path.extname(file);
   const stat = fs.statSync(file);

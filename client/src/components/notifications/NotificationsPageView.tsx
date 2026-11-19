@@ -139,7 +139,7 @@ export const NotificationsPageView: React.FC<NotificationsPageViewProps> = ({
   return (
     <div className="notif-page-wrapper">
       {/* 1. Header Card */}
-      <div className="notif-page-header-card">
+      <div className="notif-page-header-card bento-card-3d">
         <div className="notif-header-left">
           <div className="notif-header-icon-box">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
@@ -195,84 +195,106 @@ export const NotificationsPageView: React.FC<NotificationsPageViewProps> = ({
         </div>
       </div>
 
-      {/* 2. KPI Summary Row */}
-      <div className="notif-kpi-row">
-        <div className="notif-kpi-card">
-          <div className="notif-kpi-icon all">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-            </svg>
+      {/* 2. Asymmetrical Bento KPI Deck */}
+      <div className="notif-kpi-deck">
+        {/* 2A. Hero Bento Tile: Unread Alerts */}
+        <div className="notif-kpi-hero-card bento-card-3d">
+          <div className="notif-kpi-hero-top">
+            <div>
+              <span className="notif-kpi-hero-tag">Actionable Alerts</span>
+              <h3 className="notif-kpi-hero-title">Unread Shift Alerts</h3>
+            </div>
+            <div className="notif-kpi-hero-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+            </div>
           </div>
-          <div className="notif-kpi-meta">
-            <span className="notif-kpi-val">{counts.total}</span>
-            <span className="notif-kpi-label">Total Notifications</span>
+
+          <div className={`notif-kpi-hero-val ${counts.unread > 0 ? 'has-unread' : ''}`}>
+            {counts.unread}
           </div>
+
+          <div className={`notif-kpi-hero-status ${counts.unread > 0 ? 'active' : 'clear'}`}>
+            {counts.unread > 0 ? '● Real-Time Review Required' : '✓ All Alerts Reviewed'}
+          </div>
+
+          <p className="notif-kpi-hero-desc">
+            {counts.unread > 0
+              ? `${counts.unread} unread shift & closing events pending review.`
+              : 'All terminal shifts and register events are caught up.'}
+          </p>
         </div>
 
-        <div className="notif-kpi-card">
-          <div className="notif-kpi-icon unread">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="12" y1="8" x2="12" y2="12"></line>
-              <line x1="12" y1="16" x2="12.01" y2="16"></line>
-            </svg>
+        {/* 2B. Secondary 2x2 Bento Grid */}
+        <div className="notif-kpi-secondary-grid">
+          {/* Card 1: Total Notifications */}
+          <div className="notif-kpi-card bento-card-3d">
+            <div className="notif-kpi-icon all">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+              </svg>
+            </div>
+            <div className="notif-kpi-meta">
+              <span className="notif-kpi-val">{counts.total}</span>
+              <span className="notif-kpi-label">Total Notifications</span>
+            </div>
           </div>
-          <div className="notif-kpi-meta">
-            <span className="notif-kpi-val" style={{ color: counts.unread > 0 ? '#ef4444' : '#0f172a' }}>
-              {counts.unread}
-            </span>
-            <span className="notif-kpi-label">Unread Alerts</span>
-          </div>
-        </div>
 
-        <div className="notif-kpi-card">
-          <div className="notif-kpi-icon open">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-              <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-              <line x1="12" y1="22.08" x2="12" y2="12"></line>
-            </svg>
+          {/* Card 2: Shift Starts */}
+          <div className="notif-kpi-card bento-card-3d">
+            <div className="notif-kpi-icon open">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                <line x1="12" y1="22.08" x2="12" y2="12"></line>
+              </svg>
+            </div>
+            <div className="notif-kpi-meta">
+              <span className="notif-kpi-val">{counts.open}</span>
+              <span className="notif-kpi-label">Shift Starts (Float Checks)</span>
+            </div>
           </div>
-          <div className="notif-kpi-meta">
-            <span className="notif-kpi-val">{counts.open}</span>
-            <span className="notif-kpi-label">Shift Starts (Float Checks)</span>
-          </div>
-        </div>
 
-        <div className="notif-kpi-card">
-          <div className="notif-kpi-icon close">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-              <line x1="8" y1="21" x2="16" y2="21"></line>
-              <line x1="12" y1="17" x2="12" y2="21"></line>
-            </svg>
+          {/* Card 3: Shift Closings */}
+          <div className="notif-kpi-card bento-card-3d">
+            <div className="notif-kpi-icon close">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                <line x1="8" y1="21" x2="16" y2="21"></line>
+                <line x1="12" y1="17" x2="12" y2="21"></line>
+              </svg>
+            </div>
+            <div className="notif-kpi-meta">
+              <span className="notif-kpi-val">{counts.close}</span>
+              <span className="notif-kpi-label">Shift Closings (Sales &amp; Bills)</span>
+            </div>
           </div>
-          <div className="notif-kpi-meta">
-            <span className="notif-kpi-val">{counts.close}</span>
-            <span className="notif-kpi-label">Shift Closings (Sales &amp; Bills)</span>
-          </div>
-        </div>
 
-        <div className="notif-kpi-card">
-          <div className="notif-kpi-icon variance">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-              <line x1="12" y1="9" x2="12" y2="13"></line>
-              <line x1="12" y1="17" x2="12.01" y2="17"></line>
-            </svg>
-          </div>
-          <div className="notif-kpi-meta">
-            <span className="notif-kpi-val" style={{ color: counts.discrepancy > 0 ? '#d97706' : '#0f172a' }}>
-              {counts.discrepancy}
-            </span>
-            <span className="notif-kpi-label">Cash Discrepancies</span>
+          {/* Card 4: Cash Discrepancies */}
+          <div className="notif-kpi-card bento-card-3d">
+            <div className="notif-kpi-icon variance">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+            </div>
+            <div className="notif-kpi-meta">
+              <span className="notif-kpi-val" style={{ color: counts.discrepancy > 0 ? '#d97706' : 'inherit' }}>
+                {counts.discrepancy}
+              </span>
+              <span className="notif-kpi-label">Cash Discrepancies</span>
+            </div>
           </div>
         </div>
       </div>
 
       {/* 3. Controls & Filter Bar */}
-      <div className="notif-filter-bar">
+      <div className="notif-filter-bar bento-card-3d">
         <div className="notif-tabs-group">
           <button
             type="button"
@@ -360,7 +382,7 @@ export const NotificationsPageView: React.FC<NotificationsPageViewProps> = ({
       {/* 4. Notifications List */}
       <div className="notif-cards-list">
         {filteredNotifications.length === 0 ? (
-          <div className="notif-empty-state">
+          <div className="notif-empty-state bento-card-3d">
             <div className="notif-empty-icon">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
@@ -401,7 +423,7 @@ export const NotificationsPageView: React.FC<NotificationsPageViewProps> = ({
             const cashierName = n.cashierName || n.cashier_name || meta.cashierName || 'Cashier';
             const isVarianceWarning = isShiftClose && meta.varianceMinor && meta.varianceMinor !== 0;
 
-            const cardClass = `notif-card-item ${
+            const cardClass = `notif-card-item bento-card-3d ${
               isShiftOpen ? 'shift-open' : isVarianceWarning ? 'variance-warning' : isShiftClose ? 'shift-close' : ''
             } ${isUnread ? 'unread' : ''}`;
 

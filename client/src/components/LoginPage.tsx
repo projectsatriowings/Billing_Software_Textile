@@ -1,6 +1,76 @@
 import React, { useState } from 'react';
 import { api, setToken, type User, type Shop } from '../api';
-import './cashier-login.css';
+import './auth/modernLogin.css';
+
+// Crisp inline SVG Icons to eliminate all unicode emojis
+const CrownIcon: React.FC<{ size?: number; className?: string }> = ({ size = 16, className = '' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z" />
+    <path d="M3 20h18" strokeWidth="2.4" />
+  </svg>
+);
+
+const StoreIcon: React.FC<{ size?: number; className?: string }> = ({ size = 16, className = '' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+    <polyline points="9 22 9 12 15 12 15 22" />
+  </svg>
+);
+
+const CashierIcon: React.FC<{ size?: number; className?: string }> = ({ size = 16, className = '' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <rect x="2" y="4" width="20" height="16" rx="3" />
+    <line x1="2" y1="10" x2="22" y2="10" />
+    <line x1="6" y1="15" x2="10" y2="15" />
+    <line x1="14" y1="15" x2="18" y2="15" />
+  </svg>
+);
+
+const LightningBoltIcon: React.FC<{ size?: number; className?: string }> = ({ size = 16, className = '' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+  </svg>
+);
+
+const MailIcon: React.FC<{ size?: number; className?: string }> = ({ size = 18, className = '' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+    <polyline points="22,6 12,13 2,6" />
+  </svg>
+);
+
+const UserIcon: React.FC<{ size?: number; className?: string }> = ({ size = 18, className = '' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+    <circle cx="12" cy="7" r="4" />
+  </svg>
+);
+
+const LockIcon: React.FC<{ size?: number; className?: string }> = ({ size = 18, className = '' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+  </svg>
+);
+
+const ShieldLockIcon: React.FC<{ size?: number; className?: string }> = ({ size = 14, className = '' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+  </svg>
+);
+
+const ArrowRightIcon: React.FC<{ size?: number; className?: string }> = ({ size = 16, className = '' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <line x1="5" y1="12" x2="19" y2="12" />
+    <polyline points="12 5 19 12 12 19" />
+  </svg>
+);
+
+const RoleIcon: React.FC<{ role: string; size?: number; className?: string }> = ({ role, size = 16, className = '' }) => {
+  if (role === 'super-admin' || role === 'super_admin') return <CrownIcon size={size} className={className} />;
+  if (role === 'store-manager' || role === 'store_manager') return <StoreIcon size={size} className={className} />;
+  return <CashierIcon size={size} className={className} />;
+};
 
 interface LoginPageProps {
   initialRole?: 'super_admin' | 'store_manager' | 'cashier';
@@ -109,22 +179,16 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         onSuccess(data as { token: string; user: User; shop: Shop });
       }
     } catch (err: any) {
-      setError(err?.message || 'Invalid email or password. Please try again.');
+      setError(err?.message || 'Invalid email or password. Please verify your credentials.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleDemoSelect = (demoEmail: string, demoPass: string) => {
-    setEmail(demoEmail);
-    setPassword(demoPass);
-    setError('');
-  };
-
   const handleSendForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!forgotIdentifier.trim()) {
-      setForgotStatus({ message: 'Please enter your username or email ID.', isError: true });
+      setForgotStatus({ message: 'Please enter your username or registered email address.', isError: true });
       return;
     }
 
@@ -136,12 +200,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         body: JSON.stringify({ identifier: forgotIdentifier.trim() }),
       });
       setForgotStatus({
-        message: "If an account with this username or email exists, we've sent a password reset link to your email.",
+        message: "If an account with this identifier exists, a password reset link has been dispatched to your email.",
         isError: false,
       });
     } catch (err: any) {
       setForgotStatus({
-        message: err?.message || 'Unable to process password reset at this time.',
+        message: err?.message || 'Unable to process password reset request at this time.',
         isError: true,
       });
     } finally {
@@ -149,241 +213,270 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     }
   };
 
+  const isCashier = selectedRole === 'cashier' || selectedRole === 'cashier2';
+  const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
+
+  const roleMeta: Record<string, {
+    key: string;
+    image: string | null;
+    title: string;
+    subtitle: string;
+    heroTitle: string;
+    heroSubtitle: string;
+    inputLabel: string;
+    placeholder: string;
+    btnText: string;
+    badge: string;
+    securityTag: string;
+  }> = {
+    super_admin: {
+      key: 'super-admin',
+      image: '/images/admin.png',
+      title: 'Super Admin Portal',
+      subtitle: 'Enterprise headquarters: consolidated sales, multi-branch network & governance.',
+      heroTitle: 'Consolidated Enterprise Control.',
+      heroSubtitle: 'Manage headquarters sales, branch inventory and company governance all in one real-time workspace.',
+      inputLabel: 'Super Admin Email',
+      placeholder: 'demo@billing.local',
+      btnText: 'Log In as Super Admin',
+      badge: 'HQ Super Admin',
+      securityTag: 'HQ Executive Clearance',
+    },
+    store_manager: {
+      key: 'store-manager',
+      image: '/images/manager.png',
+      title: 'Store Manager Portal',
+      subtitle: 'Branch operations: register closing approvals, cash float audits & staff supervision.',
+      heroTitle: 'Keep In Touch With Your Store.',
+      heroSubtitle: 'Monitor live cashier counters, balance register floats, and approve daily shift audits seamlessly.',
+      inputLabel: 'Store Manager Username or Email',
+      placeholder: 'manager@billing.local',
+      btnText: 'Log In as Store Manager',
+      badge: 'Store Manager',
+      securityTag: 'Branch Operations Clearance',
+    },
+    cashier: {
+      key: 'cashier',
+      image: '/images/cashier.png',
+      title: 'Cashier Billing Counter',
+      subtitle: 'High-speed retail checkout, cash drawer shift balancing & rapid barcode billing.',
+      heroTitle: 'High-Speed Cashier POS.',
+      heroSubtitle: 'Instant barcode scanning, customer-facing display sync & offline transaction buffering.',
+      inputLabel: 'Cashier Employee ID or Email',
+      placeholder: 'cashier@billing.local',
+      btnText: selectedRole === 'cashier2' ? 'Log In as Cashier 2 (Lakshmi)' : 'Log In as Cashier',
+      badge: 'Cashier Station',
+      securityTag: 'POS Register Terminal',
+    },
+  };
+
+  const currentMeta = isCashier
+    ? roleMeta.cashier
+    : selectedRole === 'store_manager'
+    ? roleMeta.store_manager
+    : roleMeta.super_admin;
+
   return (
-    <div className={`login-split-page ${selectedRole === 'cashier' || selectedRole === 'cashier2' ? 'theme-cashier' : ''}`}>
-      {/* Left Branding Pane - Matching Screen 7 */}
-      <div className="login-left-pane">
-        <div className="login-left-content">
-          <div className="login-brand" onClick={onBackToHome} style={{ cursor: onBackToHome ? 'pointer' : 'default' }}>
-            <span className="brand-icon">⚡</span>
-            <span className="brand-name">Adaptive Billing</span>
-          </div>
+    <div className="modern-login-page">
+      <div className={`modern-login-card role-${currentMeta.key}`}>
+        {/* ------------------------------------------------------------------
+            LEFT HALF: USER'S GENERATED IMAGE DISPLAY / BRANDING
+            ------------------------------------------------------------------ */}
+        {(() => {
+          const isSuperAdmin = currentMeta.key === 'super-admin';
+          const hasImage = Boolean(currentMeta.image && !failedImages[currentMeta.image]);
 
-          <div className="login-hero-copy">
-            <h1 className="login-hero-title">
-              {selectedRole === 'cashier' ? (
-                <>
-                  Cashier POS. <br />
-                  <span className="login-hero-highlight">High Speed.</span>
-                </>
+          if (isSuperAdmin) {
+            return (
+              <div className="modern-login-left super-admin-layout">
+                <div className="modern-login-top-wordings">
+                  <div className="modern-left-badge">
+                    <RoleIcon role={currentMeta.key} size={15} />
+                    <span>{currentMeta.badge}</span>
+                  </div>
+                  <h1 className="modern-left-heading">{currentMeta.heroTitle}</h1>
+                </div>
+
+                {hasImage && currentMeta.image && (
+                  <div className="modern-admin-illustration-area">
+                    <img
+                      key={currentMeta.image}
+                      src={currentMeta.image}
+                      alt={`${currentMeta.title} Illustration`}
+                      className="modern-admin-hero-img"
+                      onError={() => {
+                        setFailedImages((prev) => ({ ...prev, [currentMeta.image!]: true }));
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+            );
+          }
+
+          return (
+            <div className={`modern-login-left ${hasImage ? 'has-image' : 'text-only-layout'}`}>
+              {hasImage && currentMeta.image ? (
+                <img
+                  key={currentMeta.image}
+                  src={currentMeta.image}
+                  alt={`${currentMeta.title} Illustration`}
+                  className="user-login-image"
+                  onError={() => {
+                    setFailedImages((prev) => ({ ...prev, [currentMeta.image!]: true }));
+                  }}
+                />
               ) : (
-                <>
-                  Your Business. <br />
-                  <span className="login-hero-highlight">Our Platform.</span>
-                </>
+                <div className="modern-login-top-wordings">
+                  <div className="modern-left-badge">
+                    <RoleIcon role={currentMeta.key} size={15} />
+                    <span>{currentMeta.badge}</span>
+                  </div>
+                  <h1 className="modern-left-heading">{currentMeta.heroTitle}</h1>
+                  <p className="modern-left-subtitle">{currentMeta.heroSubtitle}</p>
+                </div>
               )}
-            </h1>
-            <p className="login-hero-sub">
-              {selectedRole === 'cashier'
-                ? 'High-speed billing counter, cash drawer balancing & instant barcode checkout.'
-                : 'Manage sales, inventory, customers and more — all in one place.'}
-            </p>
-          </div>
+            </div>
+          );
+        })()}
 
-          {/* Visual Platform Showcase Preview */}
-          <div className="login-preview-graphic">
-            <div className="preview-tablet-frame">
-              <div className="tablet-header">
-                <span className="tablet-dot red"></span>
-                <span className="tablet-dot yellow"></span>
-                <span className="tablet-dot green"></span>
-                <span className="tablet-title-bar">adaptive-billing.app/pos</span>
-              </div>
-              <div className="tablet-screen-mock">
-                <div className="mock-stat-row">
-                  <div className="mock-stat-chip">
-                    <span className="chip-label">Sales</span>
-                    <span className="chip-val">₹45,320</span>
-                  </div>
-                  <div className="mock-stat-chip">
-                    <span className="chip-label">Orders</span>
-                    <span className="chip-val">24</span>
-                  </div>
-                  <div className="mock-stat-chip">
-                    <span className="chip-label">Products</span>
-                    <span className="chip-val">120</span>
-                  </div>
+        {/* ------------------------------------------------------------------
+            RIGHT HALF: CLEAN MODERN LOGIN FORM (Matching Image 2 Reference)
+            ------------------------------------------------------------------ */}
+        <div className="modern-login-right">
+          <div className="modern-login-form-inner">
+            {/* Top Navigation Row */}
+            <div className="modern-login-top-row">
+              <div className="modern-brand-logo" onClick={onBackToHome} style={{ cursor: onBackToHome ? 'pointer' : 'default' }}>
+                <div className="modern-brand-icon">
+                  <LightningBoltIcon size={17} />
                 </div>
-                <div className="mock-grid-preview">
-                  <div className="mock-item-cell">🛒 Groceries</div>
-                  <div className="mock-item-cell">💊 Medicine</div>
-                  <div className="mock-item-cell">👗 Textiles</div>
-                  <div className="mock-item-cell">🍽️ Menu</div>
+                <div className="modern-brand-text-block">
+                  <span className="modern-brand-title">Adaptive Billing</span>
+                  <span className="modern-brand-badge">ENTERPRISE</span>
                 </div>
               </div>
-            </div>
-          </div>
 
-          {/* Value Tags matching Screen 7 */}
-          <div className="login-value-tags">
-            <div className="value-tag">
-              <span className="tag-icon">🏢</span>
-              <span>Multiple Business Types</span>
-            </div>
-            <div className="value-tag">
-              <span className="tag-icon">🔒</span>
-              <span>Secure & Reliable</span>
-            </div>
-            <div className="value-tag">
-              <span className="tag-icon">⚡</span>
-              <span>Easy to Access</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Right Form Pane */}
-      <div className="login-right-pane">
-        {onBackToHome && (
-          <div className="login-top-nav">
-            <button type="button" onClick={onBackToHome} className="nav-back-home-btn">
-              ← Back to Home
-            </button>
-          </div>
-        )}
-
-        <div className="login-form-container">
-          <div className="login-card">
-            {/* 3 Role Selection Tabs */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px', background: '#f1f5f9', padding: '6px', borderRadius: '12px', marginBottom: '1.25rem' }}>
-              <button
-                type="button"
-                onClick={() => handleRoleTabChange('super_admin')}
-                style={{
-                  padding: '10px 4px',
-                  borderRadius: '10px',
-                  border: 'none',
-                  fontSize: '0.75rem',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '4px',
-                  background: selectedRole === 'super_admin' ? '#ffffff' : 'transparent',
-                  color: selectedRole === 'super_admin' ? '#4338ca' : '#64748b',
-                  boxShadow: selectedRole === 'super_admin' ? '0 2px 8px rgba(67, 56, 202, 0.15)' : 'none',
-                  borderBottom: selectedRole === 'super_admin' ? '2px solid #4338ca' : 'none',
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                <span style={{ fontSize: '1.25rem' }}>👑</span>
-                <span>Super Admin</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleRoleTabChange('store_manager')}
-                style={{
-                  padding: '10px 4px',
-                  borderRadius: '10px',
-                  border: 'none',
-                  fontSize: '0.75rem',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '4px',
-                  background: selectedRole === 'store_manager' ? '#ffffff' : 'transparent',
-                  color: selectedRole === 'store_manager' ? '#0369a1' : '#64748b',
-                  boxShadow: selectedRole === 'store_manager' ? '0 2px 8px rgba(3, 105, 161, 0.15)' : 'none',
-                  borderBottom: selectedRole === 'store_manager' ? '2px solid #0284c7' : 'none',
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                <span style={{ fontSize: '1.25rem' }}>🏪</span>
-                <span>Store Manager</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleRoleTabChange('cashier')}
-                style={{
-                  padding: '10px 4px',
-                  borderRadius: '10px',
-                  border: 'none',
-                  fontSize: '0.75rem',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '4px',
-                  background: (selectedRole === 'cashier' || selectedRole === 'cashier2') ? '#0F766E' : 'transparent',
-                  color: (selectedRole === 'cashier' || selectedRole === 'cashier2') ? '#ffffff' : '#64748b',
-                  boxShadow: (selectedRole === 'cashier' || selectedRole === 'cashier2') ? '0 2px 8px rgba(15, 118, 110, 0.25)' : 'none',
-                  borderBottom: (selectedRole === 'cashier' || selectedRole === 'cashier2') ? '2px solid #115E59' : 'none',
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                <span style={{ fontSize: '1.25rem' }}>💳</span>
-                <span>Cashier Counter</span>
-              </button>
+              {onBackToHome && (
+                <button
+                  type="button"
+                  className="modern-btn-back"
+                  onClick={onBackToHome}
+                  title="Return to home page"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                  </svg>
+                  <span>Back to Home</span>
+                </button>
+              )}
             </div>
 
-            {/* Role Purpose Pill & Subtitle */}
-            <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
-              <h2 className="login-card-title" style={{ margin: 0, fontSize: '1.4rem', fontWeight: 800, color: '#0f172a' }}>
-                {selectedRole === 'super_admin' && '👑 Super Admin Portal'}
-                {selectedRole === 'store_manager' && '🏪 Store Manager Portal'}
-                {(selectedRole === 'cashier' || selectedRole === 'cashier2') && '💳 Cashier Billing Portal'}
-              </h2>
-              <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>
-                {selectedRole === 'super_admin' && 'Enterprise headquarters: consolidated sales, multi-branch network & governance.'}
-                {selectedRole === 'store_manager' && 'Branch-level management: shift approvals, counter controls & staff supervision.'}
-                {(selectedRole === 'cashier' || selectedRole === 'cashier2') && 'Register checkout counter: POS billing, cash float & drawer shift operations.'}
-              </p>
-            </div>
+            {/* Elevated Form Card */}
+            <div className="modern-form-card">
+              {/* 3 Role Selection Segmented Tabs with Icons */}
+              <div className="modern-role-tabs-strip">
+                <button
+                  type="button"
+                  className={`modern-role-tab tab-super-admin ${selectedRole === 'super_admin' ? 'active' : ''}`}
+                  onClick={() => handleRoleTabChange('super_admin')}
+                >
+                  <CrownIcon size={15} className="role-tab-icon" />
+                  <span>Super Admin</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`modern-role-tab tab-store-manager ${selectedRole === 'store_manager' ? 'active' : ''}`}
+                  onClick={() => handleRoleTabChange('store_manager')}
+                >
+                  <StoreIcon size={15} className="role-tab-icon" />
+                  <span>Store Manager</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`modern-role-tab tab-cashier ${isCashier ? 'active' : ''}`}
+                  onClick={() => handleRoleTabChange('cashier')}
+                >
+                  <CashierIcon size={15} className="role-tab-icon" />
+                  <span>Cashier Counter</span>
+                </button>
+              </div>
+
+              {/* Form Title & Clearance Pill */}
+              <div className="modern-form-heading-block">
+                <div className="modern-security-badge">
+                  <span className="security-pulse-dot" />
+                  <span>{currentMeta.securityTag}</span>
+                </div>
+                <h2 className="modern-form-title">{currentMeta.title}</h2>
+                <p className="modern-form-subtitle">{currentMeta.subtitle}</p>
+              </div>
 
             {error && (
-              <div className="login-alert-error">
-                <span className="alert-icon">⚠️</span>
+              <div className="modern-error-banner" role="alert">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
                 <span>{error}</span>
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="login-auth-form">
-              <div className="form-group">
-                <label className="form-label" htmlFor="login-email">
-                  {selectedRole === 'super_admin' && 'Super Admin Email'}
-                  {selectedRole === 'store_manager' && 'Store Manager Username or Email'}
-                  {(selectedRole === 'cashier' || selectedRole === 'cashier2') && 'Cashier Employee ID or Email'}{' '}
-                  <span className="required-star">*</span>
+            {/* Main Login Form */}
+            <form onSubmit={handleSubmit} className="modern-auth-form">
+              <div className="modern-input-group">
+                <label className="modern-label" htmlFor="modern-login-email">
+                  <span className="modern-label-title">{currentMeta.inputLabel}</span>
+                  <span className="req-pill">Required</span>
                 </label>
-                <div className="input-with-icon">
+                <div className="modern-input-wrapper">
+                  <div className="modern-input-icon-slot">
+                    {selectedRole === 'super_admin' ? (
+                      <MailIcon size={17} />
+                    ) : (
+                      <UserIcon size={17} />
+                    )}
+                  </div>
                   <input
-                    id="login-email"
+                    id="modern-login-email"
                     type={selectedRole === 'super_admin' ? 'email' : 'text'}
-                    className="form-input"
+                    className="modern-input"
                     required
                     autoFocus
-                    placeholder={(selectedRole === 'cashier' || selectedRole === 'cashier2') ? 'e.g. CSH-101 or cashier@billing.local' : selectedRole === 'store_manager' ? 'e.g. @karthik.r or manager@store.com' : 'you@business.com'}
+                    placeholder={currentMeta.placeholder}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    autoComplete={(selectedRole === 'cashier' || selectedRole === 'cashier2') ? 'username' : 'email'}
+                    autoComplete={isCashier ? 'username' : 'email'}
                   />
                 </div>
               </div>
 
-              <div className="form-group">
-                <label className="form-label" htmlFor="login-password">
-                  Password <span className="required-star">*</span>
+              <div className="modern-input-group">
+                <label className="modern-label" htmlFor="modern-login-password">
+                  <span className="modern-label-title">Password</span>
+                  <span className="req-pill">Required</span>
                 </label>
-                <div className="password-input-wrapper">
+                <div className="modern-input-wrapper">
+                  <div className="modern-input-icon-slot">
+                    <LockIcon size={17} />
+                  </div>
                   <input
-                    id="login-password"
+                    id="modern-login-password"
                     type={showPassword ? 'text' : 'password'}
-                    className="form-input"
+                    className="modern-input"
                     required
-                    placeholder="Enter your password"
+                    placeholder="Enter your security password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     autoComplete="current-password"
                   />
                   <button
                     type="button"
-                    className="password-toggle-btn"
+                    className="modern-pwd-toggle"
                     onClick={() => setShowPassword(!showPassword)}
                     title={showPassword ? 'Hide password' : 'Show password'}
                   >
@@ -402,19 +495,19 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 </div>
               </div>
 
-              <div className="login-row-options">
-                <label className="checkbox-label">
+              <div className="modern-options-row">
+                <label className="modern-checkbox-label">
                   <input
                     type="checkbox"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
                   />
-                  <span>Remember me</span>
+                  <span>Remember my session</span>
                 </label>
 
                 <button
                   type="button"
-                  className="forgot-password-link"
+                  className="modern-forgot-link"
                   onClick={() => {
                     setForgotIdentifier(email);
                     setForgotStatus(null);
@@ -427,247 +520,230 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
               <button
                 type="submit"
-                className="btn-primary-login"
+                className="modern-btn-submit"
                 disabled={isLoading}
-                style={
-                  selectedRole === 'cashier'
-                    ? { background: 'var(--primary)', color: 'var(--text-on-primary)' }
-                    : {
-                        background:
-                          selectedRole === 'super_admin'
-                            ? 'linear-gradient(135deg, #4338ca 0%, #6d4aff 100%)'
-                            : 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
-                      }
-                }
               >
                 {isLoading ? (
-                  <span className="btn-loading-content">
-                    <span className="spinner-icon"></span> Authenticating...
+                  <span className="btn-loading-flex">
+                    <svg className="spin-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                      <path d="M12 2a10 10 0 0 1 10 10" />
+                    </svg>
+                    <span>Authenticating...</span>
                   </span>
                 ) : (
-                  `Login as ${
-                    selectedRole === 'super_admin'
-                      ? 'Super Admin'
-                      : selectedRole === 'store_manager'
-                      ? 'Store Manager'
-                      : 'Cashier'
-                  }`
+                  <>
+                    <span>{currentMeta.btnText}</span>
+                    <ArrowRightIcon size={17} className="btn-arrow-icon" />
+                  </>
                 )}
               </button>
             </form>
+          </div>
 
-            {/* Quick 1-Click Role Logins */}
-            <div className="demo-accounts-box" style={{ marginTop: '1.25rem' }}>
-              <div className="demo-accounts-title">1-Click Role Demonstrations</div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '8px', marginTop: '8px' }}>
+            {/* 1-Click Role Demonstrations Cards */}
+            <div className="modern-demos-box">
+              <div className="modern-demos-header-row">
+                <span className="modern-demos-header-label">1-Click Role Demonstrations</span>
+                <span className="modern-demos-badge">Instant Fill</span>
+              </div>
+              <div className="modern-demos-grid">
                 <button
                   type="button"
+                  className={`modern-demo-card ${selectedRole === 'super_admin' ? 'active' : ''}`}
                   onClick={() => handleRoleTabChange('super_admin')}
-                  style={{
-                    padding: '8px 10px',
-                    borderRadius: '10px',
-                    border: selectedRole === 'super_admin' ? '1.5px solid #6366f1' : '1px solid #c7d2fe',
-                    background: selectedRole === 'super_admin' ? '#eef2ff' : '#ffffff',
-                    color: '#3730a3',
-                    fontSize: '0.78rem',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'flex-start',
-                    gap: '2px',
-                    minWidth: 0,
-                    textAlign: 'left',
-                    boxShadow: selectedRole === 'super_admin' ? '0 2px 6px rgba(99, 102, 241, 0.15)' : 'none',
-                    transition: 'all 0.15s ease',
-                  }}
                   title="Super Admin (demo@billing.local)"
                 >
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                    <span>👑</span>
-                    <span>Admin</span>
-                  </span>
-                  <span style={{ fontSize: '0.66rem', color: '#6366f1', fontWeight: 600, width: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    demo@billing.local
-                  </span>
+                  <div className="modern-demo-card-icon role-admin">
+                    <CrownIcon size={14} />
+                  </div>
+                  <div className="modern-demo-card-body">
+                    <span className="modern-demo-role-name">Super Admin</span>
+                    <span className="modern-demo-email">demo@billing.local</span>
+                  </div>
+                  {selectedRole === 'super_admin' && <span className="active-pill">Active</span>}
                 </button>
 
                 <button
                   type="button"
+                  className={`modern-demo-card ${selectedRole === 'store_manager' ? 'active' : ''}`}
                   onClick={() => handleRoleTabChange('store_manager')}
-                  style={{
-                    padding: '8px 10px',
-                    borderRadius: '10px',
-                    border: selectedRole === 'store_manager' ? '1.5px solid #0284c7' : '1px solid #bae6fd',
-                    background: selectedRole === 'store_manager' ? '#f0f9ff' : '#ffffff',
-                    color: '#0369a1',
-                    fontSize: '0.78rem',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'flex-start',
-                    gap: '2px',
-                    minWidth: 0,
-                    textAlign: 'left',
-                    boxShadow: selectedRole === 'store_manager' ? '0 2px 6px rgba(2, 132, 199, 0.15)' : 'none',
-                    transition: 'all 0.15s ease',
-                  }}
                   title="Store Manager (manager@billing.local)"
                 >
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                    <span>🏪</span>
-                    <span>Manager</span>
-                  </span>
-                  <span style={{ fontSize: '0.66rem', color: '#0284c7', fontWeight: 600, width: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    manager@billing.local
-                  </span>
+                  <div className="modern-demo-card-icon role-manager">
+                    <StoreIcon size={14} />
+                  </div>
+                  <div className="modern-demo-card-body">
+                    <span className="modern-demo-role-name">Store Manager</span>
+                    <span className="modern-demo-email">manager@billing.local</span>
+                  </div>
+                  {selectedRole === 'store_manager' && <span className="active-pill">Active</span>}
                 </button>
 
                 <button
                   type="button"
+                  className={`modern-demo-card ${selectedRole === 'cashier' ? 'active' : ''}`}
                   onClick={() => handleRoleTabChange('cashier')}
-                  style={{
-                    padding: '8px 10px',
-                    borderRadius: '10px',
-                    border: selectedRole === 'cashier' ? '1.5px solid #0F766E' : '1px solid #D9E5E5',
-                    background: selectedRole === 'cashier' ? '#E6F4F3' : '#ffffff',
-                    color: selectedRole === 'cashier' ? '#0F766E' : '#334155',
-                    fontSize: '0.78rem',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'flex-start',
-                    gap: '2px',
-                    minWidth: 0,
-                    textAlign: 'left',
-                    boxShadow: selectedRole === 'cashier' ? '0 2px 6px rgba(15, 118, 110, 0.15)' : 'none',
-                    transition: 'all 0.15s ease',
-                  }}
                   title="Cashier 1 (cashier@billing.local)"
                 >
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                    <span>💳</span>
-                    <span>Cashier 1</span>
-                  </span>
-                  <span style={{ fontSize: '0.66rem', color: selectedRole === 'cashier' ? '#0F766E' : '#059669', fontWeight: 600, width: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    cashier@billing.local
-                  </span>
+                  <div className="modern-demo-card-icon role-cashier">
+                    <CashierIcon size={14} />
+                  </div>
+                  <div className="modern-demo-card-body">
+                    <span className="modern-demo-role-name">Cashier Counter</span>
+                    <span className="modern-demo-email">cashier@billing.local</span>
+                  </div>
+                  {selectedRole === 'cashier' && <span className="active-pill">Active</span>}
                 </button>
 
                 <button
                   type="button"
+                  className={`modern-demo-card ${selectedRole === 'cashier2' ? 'active' : ''}`}
                   onClick={() => handleRoleTabChange('cashier2')}
-                  style={{
-                    padding: '8px 10px',
-                    borderRadius: '10px',
-                    border: selectedRole === 'cashier2' ? '1.5px solid #ea580c' : '1px solid #fed7aa',
-                    background: selectedRole === 'cashier2' ? '#fff7ed' : '#ffffff',
-                    color: selectedRole === 'cashier2' ? '#c2410c' : '#334155',
-                    fontSize: '0.78rem',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'flex-start',
-                    gap: '2px',
-                    minWidth: 0,
-                    textAlign: 'left',
-                    boxShadow: selectedRole === 'cashier2' ? '0 2px 6px rgba(234, 88, 12, 0.15)' : 'none',
-                    transition: 'all 0.15s ease',
-                  }}
-                  title="Cashier 2 - Lakshmi (lakshmi@billing.local)"
+                  title="Cashier 2 (lakshmi@billing.local)"
                 >
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                    <span>💳</span>
-                    <span>Cashier 2</span>
-                  </span>
-                  <span style={{ fontSize: '0.66rem', color: selectedRole === 'cashier2' ? '#c2410c' : '#ea580c', fontWeight: 600, width: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    lakshmi@billing.local
-                  </span>
+                  <div className="modern-demo-card-icon role-cashier">
+                    <CashierIcon size={14} />
+                  </div>
+                  <div className="modern-demo-card-body">
+                    <span className="modern-demo-role-name">Cashier 2</span>
+                    <span className="modern-demo-email">lakshmi@billing.local</span>
+                  </div>
+                  {selectedRole === 'cashier2' && <span className="active-pill">Active</span>}
                 </button>
               </div>
             </div>
 
-            <div className="login-footer-action">
-              <span>Don't have an account? </span>
+            {/* Footer Navigation & Security */}
+            <div className="modern-footer-row">
+              <span className="modern-footer-text">Don't have an account? </span>
               <button
                 type="button"
-                className="register-highlight-link"
+                className="modern-register-link"
                 onClick={onNavigateRegister}
               >
                 Register Your Business
               </button>
             </div>
+
+            <div className="modern-compliance-row">
+              <ShieldLockIcon size={13} />
+              <span>256-bit SSL Encrypted • Enterprise Multi-Branch Synchronization</span>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Forgot Password Modal */}
+      {/* Modern Forgot Password Modal */}
       {showForgotModal && (
-        <div className="modal-backdrop">
-          <div className="modal-dialog forgot-dialog">
-            <div className="modal-header">
-              <h3 className="modal-title">Reset Your Password</h3>
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.65)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '1.5rem',
+          }}
+          onClick={() => setShowForgotModal(false)}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: '460px',
+              background: '#FFFFFF',
+              borderRadius: '20px',
+              padding: '2rem',
+              boxShadow: '0 20px 40px rgba(0, 0, 0, 0.2)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1.25rem',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <h3 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800, color: '#0F172A' }}>
+                Reset Your Password
+              </h3>
               <button
                 type="button"
-                className="modal-close-btn"
+                style={{ background: 'none', border: 'none', fontSize: '1.25rem', cursor: 'pointer', color: '#94A3B8' }}
                 onClick={() => setShowForgotModal(false)}
               >
                 ✕
               </button>
             </div>
 
-            <div className="modal-body">
-              <p className="forgot-modal-desc">
-                Enter your username or registered email address. If your account is found with an email on file, we will send a password reset link.
-              </p>
+            <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748B', lineHeight: '1.5' }}>
+              Enter your username or registered email address. We'll send you a secure link to reset your credentials.
+            </p>
 
-              {forgotStatus && (
-                <div className={`forgot-status-banner ${forgotStatus.isError ? 'error' : 'success'}`}>
-                  <span>{forgotStatus.isError ? '⚠️' : '✅'}</span>
-                  <span>{forgotStatus.message}</span>
-                </div>
-              )}
+            {forgotStatus && (
+              <div
+                style={{
+                  padding: '0.75rem 1rem',
+                  borderRadius: '10px',
+                  fontSize: '0.825rem',
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  background: forgotStatus.isError ? '#FEE2E2' : '#DCFCE7',
+                  color: forgotStatus.isError ? '#B91C1C' : '#15803D',
+                  border: `1px solid ${forgotStatus.isError ? '#FCA5A5' : '#86EFAC'}`,
+                }}
+              >
+                <span>{forgotStatus.isError ? '⚠️' : '✅'}</span>
+                <span>{forgotStatus.message}</span>
+              </div>
+            )}
 
-              <form onSubmit={handleSendForgotPassword} className="forgot-form">
-                <div className="form-group">
-                  <label className="form-label" htmlFor="forgot-identifier">
-                    Username or email ID
-                  </label>
-                  <input
-                    id="forgot-identifier"
-                    type="text"
-                    className="form-input"
-                    required
-                    placeholder="e.g. karthik.r or manager@store.com"
-                    value={forgotIdentifier}
-                    onChange={(e) => setForgotIdentifier(e.target.value)}
-                  />
-                  <div style={{ marginTop: '8px', fontSize: '12px', color: '#64748b', lineHeight: '1.4' }}>
-                    <strong>Note:</strong> Counters and cashiers without an email address: Ask your store manager to reset your password.
-                  </div>
-                </div>
+            <form onSubmit={handleSendForgotPassword} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div className="modern-input-group">
+                <label className="modern-label" htmlFor="forgot-identifier">
+                  <span>Username or Registered Email</span>
+                </label>
+                <input
+                  id="forgot-identifier"
+                  type="text"
+                  className="modern-input"
+                  required
+                  placeholder="e.g. manager@billing.local or demo@billing.local"
+                  value={forgotIdentifier}
+                  onChange={(e) => setForgotIdentifier(e.target.value)}
+                />
+              </div>
 
-                <div className="modal-actions-row">
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={() => setShowForgotModal(false)}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="btn btn-primary"
-                    disabled={isSendingReset}
-                  >
-                    {isSendingReset ? 'Sending...' : 'Send reset link'}
-                  </button>
-                </div>
-              </form>
-            </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
+                <button
+                  type="button"
+                  style={{
+                    background: '#F1F5F9',
+                    border: 'none',
+                    padding: '0.65rem 1.15rem',
+                    borderRadius: '10px',
+                    fontWeight: 700,
+                    fontSize: '0.85rem',
+                    color: '#475569',
+                    cursor: 'pointer',
+                  }}
+                  onClick={() => setShowForgotModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="modern-btn-submit"
+                  style={{ width: 'auto', padding: '0.65rem 1.25rem', marginTop: 0 }}
+                  disabled={isSendingReset}
+                >
+                  {isSendingReset ? 'Sending...' : 'Send Reset Link'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

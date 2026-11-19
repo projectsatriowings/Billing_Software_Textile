@@ -2,6 +2,7 @@ import { requirePerm, requireUser } from '../auth.ts';
 import { audit } from '../audit.ts';
 import { bad, conflict, notFound, forbidden, V, type Router } from '../http.ts';
 import { newId } from '../security.ts';
+import type { Queryable } from '../db/index.ts';
 import type { StockTransfer, StockTransferLine, StockTransferStatus, StockMove } from '../../../shared/types.ts';
 
 async function resolveBranch(
@@ -603,7 +604,7 @@ export function registerStockTransfers(r: Router) {
     }
 
     // Role & branch verification: Source branch must match active operating branch
-    const isSuper = ctx.user?.role === 'owner' || ctx.user?.role === 'admin' || String(ctx.user?.role).toUpperCase() === 'SUPER_ADMIN';
+    const isSuper = (ctx.user?.role as string) === 'owner' || (ctx.user?.role as string) === 'admin' || String(ctx.user?.role).toUpperCase() === 'SUPER_ADMIN';
     const activeBranch = await getActiveOperatingBranch(ctx.db, ctx);
     if (!isSuper) {
       if (activeBranch && fb.id !== activeBranch.id && fb.code !== activeBranch.code) {
@@ -618,7 +619,7 @@ export function registerStockTransfers(r: Router) {
     }
 
     // Execute creation in a transaction
-    return await ctx.db.tx(async (q) => {
+    return await ctx.db.tx(async (q: Queryable) => {
       // 1. Atomically generate sequence transfer number: TRF-0001
       const fromBranchId = fb.id;
       const fromBranchCode = fb.code;
@@ -763,7 +764,7 @@ export function registerStockTransfers(r: Router) {
     const tenantId = ctx.user!.tenantId;
     const transferId = ctx.params.id;
 
-    return await ctx.db.tx(async (q) => {
+    return await ctx.db.tx(async (q: Queryable) => {
       // 1. Lock transfer row
       const st = await q.one<any>(
         `SELECT * FROM stock_transfers WHERE tenant_id = ? AND id = ? FOR UPDATE`,
@@ -896,7 +897,7 @@ export function registerStockTransfers(r: Router) {
     const body = ctx.body ?? {};
     const itemReceipts: any[] = Array.isArray(body.lines) ? body.lines : [];
 
-    return await ctx.db.tx(async (q) => {
+    return await ctx.db.tx(async (q: Queryable) => {
       // 1. Lock transfer row
       const st = await q.one<any>(
         `SELECT * FROM stock_transfers WHERE tenant_id = ? AND id = ? FOR UPDATE`,
@@ -1206,7 +1207,7 @@ export function registerStockTransfers(r: Router) {
     const transferId = ctx.params.id;
     const reason = typeof ctx.body?.reason === 'string' ? ctx.body.reason.trim() : 'Cancelled by user';
 
-    return await ctx.db.tx(async (q) => {
+    return await ctx.db.tx(async (q: Queryable) => {
       const st = await q.one<any>(
         `SELECT * FROM stock_transfers WHERE tenant_id = ? AND id = ? FOR UPDATE`,
         [tenantId, transferId],
