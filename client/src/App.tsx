@@ -8235,9 +8235,9 @@ export function App() {
                           }}
                           title="Open dedicated full Notifications page"
                           style={{
-                            background: '#eef2ff',
-                            border: '1px solid #c7d2fe',
-                            color: '#4f46e5',
+                            background: user?.role === 'cashier' ? 'var(--primary-soft, #E6F4F3)' : '#eef2ff',
+                            border: user?.role === 'cashier' ? '1px solid rgba(20, 184, 166, 0.4)' : '1px solid #c7d2fe',
+                            color: user?.role === 'cashier' ? 'var(--primary, #0F766E)' : '#4f46e5',
                             borderRadius: '6px',
                             padding: '3px 8px',
                             fontSize: '0.72rem',

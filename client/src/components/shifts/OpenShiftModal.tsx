@@ -249,7 +249,7 @@ export const OpenShiftModal: React.FC<OpenShiftModalProps> = ({
               <div className="shift-bento-ribbon-tile">
                 <div className="ribbon-tile-label">
                   <span>Counter Terminal</span>
-                  <StoreIcon size={13} style={{ color: '#6366f1' }} />
+                  <StoreIcon size={13} style={{ color: 'var(--primary, #0F766E)' }} />
                 </div>
                 <div className="ribbon-tile-val" style={{ fontSize: '1.15rem' }}>
                   {counter}
@@ -406,7 +406,7 @@ export const OpenShiftModal: React.FC<OpenShiftModalProps> = ({
               <div className="shift-bento-panel">
                 <div className="shift-bento-panel-header">
                   <div className="panel-header-title-box">
-                    <ShieldCheckIcon size={16} style={{ color: '#4f46e5' }} />
+                    <ShieldCheckIcon size={16} style={{ color: 'var(--primary, #0F766E)' }} />
                     <h4 className="panel-header-title">Shift Audit Readiness</h4>
                   </div>
                   <span className="bento-pill-badge primary" style={{ fontSize: '0.68rem', padding: '0.15rem 0.5rem' }}>
@@ -417,7 +417,7 @@ export const OpenShiftModal: React.FC<OpenShiftModalProps> = ({
                 {/* Cashier Briefing Box */}
                 <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '0.9rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: '#e0e7ff', color: '#4338ca', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'var(--primary-soft, #E6F4F3)', color: 'var(--primary, #0F766E)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <UserIcon size={18} />
                     </div>
                     <div>

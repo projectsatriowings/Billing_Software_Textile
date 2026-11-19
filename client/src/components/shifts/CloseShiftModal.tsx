@@ -200,7 +200,7 @@ export const CloseShiftModal: React.FC<CloseShiftModalProps> = ({
               <div className="shift-bento-ribbon-tile">
                 <div className="ribbon-tile-label">
                   <span>Opening Float</span>
-                  <WalletIcon size={13} style={{ color: '#6366f1' }} />
+                  <WalletIcon size={13} style={{ color: 'var(--primary, #0F766E)' }} />
                 </div>
                 <div className="ribbon-tile-val">{formatMoney(activeSummary.openingCashMinor)}</div>
                 <div className="ribbon-tile-sub">Shift starting cash</div>
@@ -233,9 +233,9 @@ export const CloseShiftModal: React.FC<CloseShiftModalProps> = ({
               <div className="shift-bento-ribbon-tile highlight">
                 <div className="ribbon-tile-label">
                   <span>Authoritative Expected</span>
-                  <ScaleIcon size={13} style={{ color: '#4f46e5' }} />
+                  <ScaleIcon size={13} style={{ color: 'var(--primary, #0F766E)' }} />
                 </div>
-                <div className="ribbon-tile-val" style={{ color: '#4338ca' }}>
+                <div className="ribbon-tile-val" style={{ color: 'var(--primary, #0F766E)' }}>
                   {formatMoney(expectedMinor)}
                 </div>
                 <div className="ribbon-tile-sub">
@@ -339,7 +339,7 @@ export const CloseShiftModal: React.FC<CloseShiftModalProps> = ({
               <div className="shift-bento-panel">
                 <div className="shift-bento-panel-header">
                   <div className="panel-header-title-box">
-                    <ScaleIcon size={16} style={{ color: '#4f46e5' }} />
+                    <ScaleIcon size={16} style={{ color: 'var(--primary, #0F766E)' }} />
                     <h4 className="panel-header-title">Variance Reconciliation</h4>
                   </div>
                   <span

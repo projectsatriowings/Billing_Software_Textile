@@ -214,7 +214,7 @@ export const CashMovementModal: React.FC<CashMovementModalProps> = ({
               <div className="shift-bento-ribbon-tile">
                 <div className="ribbon-tile-label">
                   <span>Current Drawer Cash</span>
-                  <WalletIcon size={13} style={{ color: '#6366f1' }} />
+                  <WalletIcon size={13} style={{ color: 'var(--primary, #0F766E)' }} />
                 </div>
                 <div className="ribbon-tile-val">{formatMoney(currentDrawerMinor)}</div>
                 <div className="ribbon-tile-sub">Live recorded balance</div>
@@ -241,11 +241,11 @@ export const CashMovementModal: React.FC<CashMovementModalProps> = ({
               <div className="shift-bento-ribbon-tile highlight">
                 <div className="ribbon-tile-label">
                   <span>Projected Drawer Balance</span>
-                  <ScaleIcon size={13} style={{ color: '#4f46e5' }} />
+                  <ScaleIcon size={13} style={{ color: 'var(--primary, #0F766E)' }} />
                 </div>
                 <div
                   className="ribbon-tile-val"
-                  style={{ color: isOverdraw ? '#dc2626' : '#4338ca' }}
+                  style={{ color: isOverdraw ? '#dc2626' : 'var(--primary, #0F766E)' }}
                 >
                   {formatMoney(projectedDrawerMinor)}
                 </div>
@@ -272,7 +272,7 @@ export const CashMovementModal: React.FC<CashMovementModalProps> = ({
               <div className="shift-bento-panel">
                 <div className="shift-bento-panel-header">
                   <div className="panel-header-title-box">
-                    <WalletIcon size={16} style={{ color: '#6366f1' }} />
+                    <WalletIcon size={16} style={{ color: 'var(--primary, #0F766E)' }} />
                     <h4 className="panel-header-title">Movement Specification</h4>
                   </div>
                   <span className="bento-pill-badge info" style={{ fontSize: '0.68rem', padding: '0.15rem 0.5rem' }}>

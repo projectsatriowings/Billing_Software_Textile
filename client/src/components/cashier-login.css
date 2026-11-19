@@ -3870,6 +3870,80 @@ body.theme-cashier .notif-kpi-icon.all,
   color: var(--primary) !important;
 }
 
+/* Actionable Alerts Hero Card & Icon */
+body.theme-cashier .notif-kpi-hero-card,
+.theme-cashier .notif-kpi-hero-card {
+  border-color: var(--primary) !important;
+  background: linear-gradient(135deg, rgba(15, 118, 110, 0.08) 0%, var(--surface) 100%) !important;
+}
+
+body.theme-cashier .notif-kpi-hero-tag,
+.theme-cashier .notif-kpi-hero-tag {
+  color: var(--primary) !important;
+}
+
+body.theme-cashier .notif-kpi-hero-icon,
+.theme-cashier .notif-kpi-hero-icon {
+  background: var(--primary) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.35) !important;
+}
+
+/* Notification Item Closed Shift Icon & Pill */
+body.theme-cashier .notif-card-icon-pill.close,
+.theme-cashier .notif-card-icon-pill.close {
+  background: var(--primary-soft) !important;
+  color: var(--primary) !important;
+  border: 1px solid rgba(20, 184, 166, 0.35) !important;
+}
+
+body.theme-cashier .notif-card-status-pill.close,
+.theme-cashier .notif-card-status-pill.close {
+  background: var(--primary-soft) !important;
+  border: 1px solid rgba(20, 184, 166, 0.4) !important;
+  color: var(--primary) !important;
+}
+
+/* Notification Meta Badges */
+body.theme-cashier .notif-branch-badge,
+.theme-cashier .notif-branch-badge,
+body.theme-cashier .notif-counter-badge,
+.theme-cashier .notif-counter-badge,
+body.theme-cashier .notif-cashier-badge,
+.theme-cashier .notif-cashier-badge {
+  background: var(--surface-inner) !important;
+  border-color: var(--border) !important;
+  color: var(--sidebar) !important;
+}
+
+body.theme-cashier .notif-branch-badge svg,
+.theme-cashier .notif-branch-badge svg,
+body.theme-cashier .notif-counter-badge svg,
+.theme-cashier .notif-counter-badge svg,
+body.theme-cashier .notif-cashier-badge svg,
+.theme-cashier .notif-cashier-badge svg,
+body.theme-cashier .notif-timestamp svg,
+.theme-cashier .notif-timestamp svg {
+  color: var(--primary) !important;
+  stroke: var(--primary) !important;
+}
+
+/* Sidebar Store Profile Tile (Collapsed & Expanded) */
+body.theme-cashier .sidebar-store-icon-tile,
+.theme-cashier .sidebar-store-icon-tile,
+div.app-container.theme-cashier .sidebar-store-icon-tile {
+  background: linear-gradient(135deg, #0F766E 0%, #0D9488 100%) !important;
+  box-shadow: 0 2px 8px rgba(15, 118, 110, 0.35) !important;
+  color: #FFFFFF !important;
+}
+
+body.theme-cashier .sidebar-store-btn:hover .sidebar-store-icon-tile,
+.theme-cashier .sidebar-store-btn:hover .sidebar-store-icon-tile,
+div.app-container.theme-cashier .sidebar-store-btn:hover .sidebar-store-icon-tile {
+  background: linear-gradient(135deg, #115E59 0%, #0F766E 100%) !important;
+  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.45) !important;
+}
+
 /* --------------------------------------------------------------------------
    5.10 RECENT BILLS / INVOICES BENTO VIEW (Teal & Slate Theme)
    -------------------------------------------------------------------------- */

@@ -168,7 +168,7 @@ export const ShiftClosingReportModal: React.FC<ShiftClosingReportModalProps> = (
                 <div className="shift-bento-ribbon-tile">
                   <div className="ribbon-tile-label">
                     <span>Expected Cash</span>
-                    <WalletIcon size={13} style={{ color: '#6366f1' }} />
+                    <WalletIcon size={13} style={{ color: 'var(--primary, #0F766E)' }} />
                   </div>
                   <div className="ribbon-tile-val">{formatMoney(report.summary.expectedCashMinor)}</div>
                   <div className="ribbon-tile-sub">Calculated drawer total</div>
@@ -190,7 +190,7 @@ export const ShiftClosingReportModal: React.FC<ShiftClosingReportModalProps> = (
                 <div className="shift-bento-ribbon-tile highlight">
                   <div className="ribbon-tile-label">
                     <span>Variance</span>
-                    <ScaleIcon size={13} style={{ color: '#4f46e5' }} />
+                    <ScaleIcon size={13} style={{ color: 'var(--primary, #0F766E)' }} />
                   </div>
                   <div
                     className="ribbon-tile-val"
@@ -214,9 +214,9 @@ export const ShiftClosingReportModal: React.FC<ShiftClosingReportModalProps> = (
                 <div className="shift-bento-ribbon-tile">
                   <div className="ribbon-tile-label">
                     <span>Total Collections</span>
-                    <TrendingUpIcon size={13} style={{ color: '#7c3aed' }} />
+                    <TrendingUpIcon size={13} style={{ color: 'var(--primary, #0F766E)' }} />
                   </div>
-                  <div className="ribbon-tile-val" style={{ color: '#7c3aed' }}>
+                  <div className="ribbon-tile-val" style={{ color: 'var(--primary, #0F766E)' }}>
                     {formatMoney(report.summary.totalCollectedMinor)}
                   </div>
                   <div className="ribbon-tile-sub">Cash + Digital combined</div>
@@ -326,7 +326,7 @@ export const ShiftClosingReportModal: React.FC<ShiftClosingReportModalProps> = (
                 <div className="shift-bento-panel">
                   <div className="shift-bento-panel-header">
                     <div className="panel-header-title-box">
-                      <ShieldCheckIcon size={16} style={{ color: '#7c3aed' }} />
+                      <ShieldCheckIcon size={16} style={{ color: 'var(--primary, #0F766E)' }} />
                       <h4 className="panel-header-title">Audit Log & Sign-Off</h4>
                     </div>
                     <span
