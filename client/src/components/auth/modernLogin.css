@@ -157,11 +157,11 @@
 
 /* Store-Manager-specific illustration sizing & position */
 .store-manager-layout .modern-admin-illustration-area {
-  width: 132%;
-  max-width: 1120px;
+  width: 136%;
+  max-width: 1150px;
   max-height: 75vh;
   bottom: -30px;
-  right: -135px;
+  right: -180px;
 }
 
 .store-manager-layout .modern-admin-hero-img {
