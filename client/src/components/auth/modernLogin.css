@@ -142,6 +142,19 @@
   user-select: none;
 }
 
+/* Super-Admin-specific illustration sizing & position */
+.super-admin-layout .modern-admin-illustration-area {
+  width: 130%;
+  max-width: 1100px;
+  max-height: 72vh;
+  bottom: -25px;
+  right: -150px;
+}
+
+.super-admin-layout .modern-admin-hero-img {
+  max-height: 68vh;
+}
+
 /* Cashier-specific illustration sizing & position */
 .cashier-layout .modern-admin-illustration-area {
   width: 134%;
@@ -1287,6 +1300,7 @@
     right: -45px;
   }
 
+  .super-admin-layout .modern-admin-illustration-area,
   .cashier-layout .modern-admin-illustration-area,
   .store-manager-layout .modern-admin-illustration-area {
     width: 118%;
