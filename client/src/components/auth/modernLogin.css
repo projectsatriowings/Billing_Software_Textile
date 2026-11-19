@@ -96,7 +96,8 @@
 }
 
 .modern-login-left.super-admin-layout,
-.modern-login-left.cashier-layout {
+.modern-login-left.cashier-layout,
+.modern-login-left.store-manager-layout {
   flex-direction: column;
   align-items: flex-start;
   justify-content: flex-start;
@@ -107,7 +108,8 @@
 }
 
 .modern-login-left.super-admin-layout::before,
-.modern-login-left.cashier-layout::before {
+.modern-login-left.cashier-layout::before,
+.modern-login-left.store-manager-layout::before {
   display: none;
 }
 
@@ -151,6 +153,19 @@
 
 .cashier-layout .modern-admin-hero-img {
   max-height: 72vh;
+}
+
+/* Store-Manager-specific illustration sizing & position */
+.store-manager-layout .modern-admin-illustration-area {
+  width: 135%;
+  max-width: 1160px;
+  max-height: 76vh;
+  bottom: -30px;
+  right: -90px;
+}
+
+.store-manager-layout .modern-admin-hero-img {
+  max-height: 74vh;
 }
 
 /* Subtle decorative circles behind image / text */
