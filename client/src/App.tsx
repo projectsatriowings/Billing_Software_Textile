@@ -673,15 +673,23 @@ export function App() {
     }
   }, [user?.role, activeTabRaw]);
 
-  // Synchronize .theme-cashier on document.body for cashier session & portaled modals
+  // Synchronize role themes (.theme-cashier / .theme-manager) on document.body for session & portaled modals
   useEffect(() => {
     if (user?.role === 'cashier') {
       document.body.classList.add('theme-cashier');
     } else {
       document.body.classList.remove('theme-cashier');
     }
+
+    if (user?.role === 'manager' || user?.role === 'store_manager') {
+      document.body.classList.add('theme-manager');
+    } else {
+      document.body.classList.remove('theme-manager');
+    }
+
     return () => {
       document.body.classList.remove('theme-cashier');
+      document.body.classList.remove('theme-manager');
     };
   }, [user?.role]);
 
@@ -6911,7 +6919,7 @@ export function App() {
       branches={branches}
       onGlobalBranchChange={handleGlobalBranchChange}
     >
-      <div className={`app-container ${user?.role === 'cashier' ? 'theme-cashier' : ''}`}>
+      <div className={`app-container ${user?.role === 'cashier' ? 'theme-cashier' : ''} ${(user?.role === 'manager' || user?.role === 'store_manager') ? 'theme-manager' : ''}`}>
         {/* Enterprise Custom Toast Notifications */}
         {toasts.length > 0 && (
           <div className="enterprise-toast-container" aria-live="polite">

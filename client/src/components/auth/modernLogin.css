@@ -2,7 +2,7 @@
    MODERN FULL-SCREEN SPLIT LOGIN DESIGN (Matching Image 2 Reference)
    Role-Adaptive Themes:
    - Super Admin: Purple / Indigo (#5B4DF5, #4838E6, #EEF0FE)
-   - Store Manager: Ocean Blue (#0284C7, #0369A1, #F0F9FF)
+   - Store Manager: Deep Burgundy (#653B4B, #522E3C, #F9F5F7)
    - Cashier Counter: Deep Emerald Teal (#0F766E, #115E59, #E6F4F3)
    ========================================================================== */
 
@@ -47,13 +47,13 @@
 }
 
 .modern-login-card.role-store-manager {
-  --role-primary: #0284C7;
-  --role-primary-hover: #0369A1;
-  --role-primary-soft: #F0F9FF;
-  --role-ring: #38BDF8;
-  --role-shadow: rgba(2, 132, 199, 0.35);
-  --role-border: #BAE6FD;
-  --role-banner-bg: linear-gradient(145deg, #0284C7 0%, #075985 100%);
+  --role-primary: #653B4B;
+  --role-primary-hover: #522E3C;
+  --role-primary-soft: #F9F5F7;
+  --role-ring: #8E586C;
+  --role-shadow: rgba(101, 59, 75, 0.35);
+  --role-border: #E8D6DE;
+  --role-banner-bg: linear-gradient(145deg, #653B4B 0%, #452431 100%);
 }
 
 .modern-login-card.role-cashier {
@@ -431,7 +431,7 @@
 }
 
 .modern-role-tab.active.tab-store-manager {
-  color: #0284C7;
+  color: #653B4B;
 }
 
 .modern-role-tab.active.tab-cashier {
@@ -809,7 +809,7 @@
 }
 
 .modern-demo-card-icon.role-manager {
-  color: #0284C7;
+  color: #653B4B;
 }
 
 .modern-demo-card-icon.role-cashier {
