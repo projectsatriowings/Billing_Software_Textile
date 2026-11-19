@@ -66,6 +66,27 @@ const ArrowRightIcon: React.FC<{ size?: number; className?: string }> = ({ size 
   </svg>
 );
 
+const GoogleIcon: React.FC<{ size?: number; className?: string }> = ({ size = 18, className = '' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" className={className}>
+    <path
+      fill="#4285F4"
+      d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"
+    />
+    <path
+      fill="#34A853"
+      d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"
+    />
+    <path
+      fill="#FBBC05"
+      d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.17 0 9.97 0 12s.45 3.83 1.25 5.42l4.03-3.15z"
+    />
+    <path
+      fill="#EA4335"
+      d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
+    />
+  </svg>
+);
+
 const RoleIcon: React.FC<{ role: string; size?: number; className?: string }> = ({ role, size = 16, className = '' }) => {
   if (role === 'super-admin' || role === 'super_admin') return <CrownIcon size={size} className={className} />;
   if (role === 'store-manager' || role === 'store_manager') return <StoreIcon size={size} className={className} />;
@@ -343,77 +364,63 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         })()}
 
         {/* ------------------------------------------------------------------
-            RIGHT HALF: CLEAN MODERN LOGIN FORM (Matching Image 2 Reference)
+            RIGHT HALF: CLEAN MINIMALIST LOGIN FORM (Matching Reference Design)
             ------------------------------------------------------------------ */}
         <div className="modern-login-right">
-          <div className="modern-login-form-inner">
-            {/* Top Navigation Row */}
-            <div className="modern-login-top-row">
-              <div className="modern-brand-logo" onClick={onBackToHome}>
-                <div className="modern-brand-icon">
-                  <LightningBoltIcon size={17} />
-                </div>
-                <div className="modern-brand-text-block">
-                  <span className="modern-brand-title">Adaptive Billing</span>
-                  <span className="modern-brand-badge">ENTERPRISE</span>
-                </div>
+          <div className="felix-login-container">
+            {/* Top Row: Brand Mark & Role Switcher + Back to Home */}
+            <div className="felix-top-nav">
+              <div className="felix-brand-mark" onClick={onBackToHome} title="Adaptive Billing">
+                <LightningBoltIcon size={26} className="felix-bolt-icon" />
               </div>
 
-              <button
-                type="button"
-                className="modern-btn-back"
-                onClick={onBackToHome}
-                title="Return to home page"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="19" y1="12" x2="5" y2="12"></line>
-                  <polyline points="12 19 5 12 12 5"></polyline>
-                </svg>
-                <span>Back to Home</span>
-              </button>
-            </div>
-
-            {/* Elevated Form Card */}
-            <div className="modern-form-card">
-              {/* 3 Role Selection Segmented Tabs with Icons */}
-              <div className="modern-role-tabs-strip">
+              {/* Minimal Pill Role Tabs */}
+              <div className="felix-role-tabs-strip">
                 <button
                   type="button"
-                  className={`modern-role-tab tab-super-admin ${selectedRole === 'super_admin' ? 'active' : ''}`}
+                  className={`felix-role-pill ${selectedRole === 'super_admin' ? 'active' : ''}`}
                   onClick={() => handleRoleTabChange('super_admin')}
                 >
-                  <CrownIcon size={15} className="role-tab-icon" />
+                  <CrownIcon size={13} />
                   <span>Super Admin</span>
                 </button>
-
                 <button
                   type="button"
-                  className={`modern-role-tab tab-store-manager ${selectedRole === 'store_manager' ? 'active' : ''}`}
+                  className={`felix-role-pill ${selectedRole === 'store_manager' ? 'active' : ''}`}
                   onClick={() => handleRoleTabChange('store_manager')}
                 >
-                  <StoreIcon size={15} className="role-tab-icon" />
+                  <StoreIcon size={13} />
                   <span>Store Manager</span>
                 </button>
-
                 <button
                   type="button"
-                  className={`modern-role-tab tab-cashier ${isCashier ? 'active' : ''}`}
+                  className={`felix-role-pill ${isCashier ? 'active' : ''}`}
                   onClick={() => handleRoleTabChange('cashier')}
                 >
-                  <CashierIcon size={15} className="role-tab-icon" />
+                  <CashierIcon size={13} />
                   <span>Cashier Counter</span>
                 </button>
               </div>
 
-              {/* Form Title & Clearance Pill */}
-              <div className="modern-form-heading-block">
-                <div className="modern-security-badge">
-                  <span className="security-pulse-dot" />
-                  <span>{currentMeta.securityTag}</span>
-                </div>
-                <h2 className="modern-form-title">{currentMeta.title}</h2>
-                <p className="modern-form-subtitle">{currentMeta.subtitle}</p>
-              </div>
+              <button
+                type="button"
+                className="felix-btn-back"
+                onClick={onBackToHome}
+                title="Return to home page"
+              >
+                <span>Back</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="19" y1="12" x2="5" y2="12"></line>
+                  <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+              </button>
+            </div>
+
+            {/* Title & Subtitle Matching Screenshot */}
+            <div className="felix-heading-block">
+              <h1 className="felix-title">Login</h1>
+              <p className="felix-subtitle">See your growth and get consulting support!</p>
+            </div>
 
             {error && (
               <div className="modern-error-banner" role="alert">
@@ -426,67 +433,72 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               </div>
             )}
 
-            {/* Main Login Form */}
-            <form onSubmit={handleSubmit} className="modern-auth-form">
-              <div className="modern-input-group">
-                <label className="modern-label" htmlFor="modern-login-email">
-                  <span className="modern-label-title">{currentMeta.inputLabel}</span>
-                  <span className="req-pill">Required</span>
+            {/* Sign in with Google Button */}
+            <button
+              type="button"
+              className="felix-google-btn"
+              onClick={() => {
+                handleRoleTabChange(selectedRole);
+              }}
+            >
+              <GoogleIcon size={18} />
+              <span>Sign in with Google</span>
+            </button>
+
+            {/* Divider */}
+            <div className="felix-divider-row">
+              <div className="felix-divider-line" />
+              <span className="felix-divider-text">or Sign in with Email</span>
+              <div className="felix-divider-line" />
+            </div>
+
+            {/* Main Form Matching Screenshot */}
+            <form onSubmit={handleSubmit} className="felix-auth-form">
+              <div className="felix-input-group">
+                <label className="felix-label" htmlFor="felix-email">
+                  Email*
                 </label>
-                <div className="modern-input-wrapper">
-                  <div className="modern-input-icon-slot">
-                    {selectedRole === 'super_admin' ? (
-                      <MailIcon size={17} />
-                    ) : (
-                      <UserIcon size={17} />
-                    )}
-                  </div>
-                  <input
-                    id="modern-login-email"
-                    type={selectedRole === 'super_admin' ? 'email' : 'text'}
-                    className="modern-input"
-                    required
-                    autoFocus
-                    placeholder={currentMeta.placeholder}
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    autoComplete={isCashier ? 'username' : 'email'}
-                  />
-                </div>
+                <input
+                  id="felix-email"
+                  type={selectedRole === 'super_admin' ? 'email' : 'text'}
+                  className="felix-input"
+                  required
+                  autoFocus
+                  placeholder="mail@website.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  autoComplete={isCashier ? 'username' : 'email'}
+                />
               </div>
 
-              <div className="modern-input-group">
-                <label className="modern-label" htmlFor="modern-login-password">
-                  <span className="modern-label-title">Password</span>
-                  <span className="req-pill">Required</span>
+              <div className="felix-input-group">
+                <label className="felix-label" htmlFor="felix-password">
+                  Password*
                 </label>
-                <div className="modern-input-wrapper">
-                  <div className="modern-input-icon-slot">
-                    <LockIcon size={17} />
-                  </div>
+                <div className="felix-input-relative">
                   <input
-                    id="modern-login-password"
+                    id="felix-password"
                     type={showPassword ? 'text' : 'password'}
-                    className="modern-input"
+                    className="felix-input"
                     required
-                    placeholder="Enter your security password"
+                    placeholder="Min. 8 character"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     autoComplete="current-password"
                   />
                   <button
                     type="button"
-                    className="modern-pwd-toggle"
+                    className="felix-pwd-toggle"
                     onClick={() => setShowPassword(!showPassword)}
                     title={showPassword ? 'Hide password' : 'Show password'}
                   >
                     {showPassword ? (
-                      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
+                      <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
                         <line x1="1" y1="1" x2="23" y2="23" />
                       </svg>
                     ) : (
-                      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
+                      <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
                         <circle cx="12" cy="12" r="3" />
                       </svg>
@@ -495,32 +507,32 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 </div>
               </div>
 
-              <div className="modern-options-row">
-                <label className="modern-checkbox-label">
+              <div className="felix-options-row">
+                <label className="felix-checkbox-label">
                   <input
                     type="checkbox"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
                   />
-                  <span>Remember my session</span>
+                  <span>Remember me</span>
                 </label>
 
                 <button
                   type="button"
-                  className="modern-forgot-link"
+                  className="felix-forgot-link"
                   onClick={() => {
                     setForgotIdentifier(email);
                     setForgotStatus(null);
                     setShowForgotModal(true);
                   }}
                 >
-                  Forgot password?
+                  Forget password?
                 </button>
               </div>
 
               <button
                 type="submit"
-                className="modern-btn-submit"
+                className="felix-btn-submit"
                 disabled={isLoading}
               >
                 {isLoading ? (
@@ -529,22 +541,28 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                       <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
                       <path d="M12 2a10 10 0 0 1 10 10" />
                     </svg>
-                    <span>Authenticating...</span>
+                    <span>Logging in...</span>
                   </span>
                 ) : (
-                  <>
-                    <span>{currentMeta.btnText}</span>
-                    <ArrowRightIcon size={17} className="btn-arrow-icon" />
-                  </>
+                  'Login'
                 )}
               </button>
-            </form>
-          </div>
 
-            {/* Compliance Seal */}
-            <div className="modern-compliance-row">
-              <ShieldLockIcon size={13} />
-              <span>256-bit SSL Encrypted • Enterprise Multi-Branch Synchronization</span>
+              <div className="felix-register-row">
+                <span>Not registered yet? </span>
+                <button
+                  type="button"
+                  className="felix-create-account-link"
+                  onClick={onNavigateRegister}
+                >
+                  Create an Account
+                </button>
+              </div>
+            </form>
+
+            {/* Footer Copyright Matching Screenshot */}
+            <div className="felix-copyright">
+              ©2026 Felix All rights reserved.
             </div>
           </div>
         </div>
