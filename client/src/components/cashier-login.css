@@ -674,12 +674,16 @@ body.theme-cashier .bento-pos-root,
   background-color: var(--bg) !important;
 }
 
-/* 4.1 Top Global Bar (Branch / Counter Badges & Top Nav) */
+/* 4.1 Top Global Bar (Branch / Counter Badges & Top Nav) - Clean borderless navigation */
 div.app-container.theme-cashier .top-global-bar,
 body.theme-cashier .top-global-bar,
-.theme-cashier .top-global-bar {
+.theme-cashier .top-global-bar,
+div.app-container.theme-cashier .top-global-bar.dashboard-top-bar,
+body.theme-cashier .top-global-bar.dashboard-top-bar,
+.theme-cashier .top-global-bar.dashboard-top-bar {
   background-color: var(--bg) !important;
-  border-bottom: 1px solid var(--border) !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
 }
 
 div.app-container.theme-cashier .top-pos-bento-badge,
@@ -2121,9 +2125,13 @@ body.theme-cashier .tab-content-wrapper,
 
 div.app-container.theme-cashier .top-global-bar,
 body.theme-cashier .top-global-bar,
-.theme-cashier .top-global-bar {
+.theme-cashier .top-global-bar,
+div.app-container.theme-cashier .top-global-bar.dashboard-top-bar,
+body.theme-cashier .top-global-bar.dashboard-top-bar,
+.theme-cashier .top-global-bar.dashboard-top-bar {
   background-color: var(--bg) !important;
-  border-bottom: 1px solid var(--border) !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
 }
 
 /* 5.2 Header Hero Card: Active Shift Banner */
