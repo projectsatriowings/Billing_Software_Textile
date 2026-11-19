@@ -29,7 +29,7 @@
   border-radius: 0;
   box-shadow: none;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 40% 60%;
   overflow: hidden;
   position: relative;
   transition: all 0.3s ease;
