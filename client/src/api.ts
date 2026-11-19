@@ -394,13 +394,14 @@ export {
   type Role,
   type Perm,
 } from '../../shared/types.ts';
-export type { WholesaleCustomer } from '../../shared/types.ts';
+import type { WholesaleCustomer } from '../../shared/types.ts';
+export type { WholesaleCustomer };
 export { calcPurchase, planSupplierPayment, type PurchaseLineInput, type CalculatedPurchase, type CalculatedPurchaseLine, type SupplierPaymentAllocationPlan, type OpenPurchaseForAllocation } from '../../shared/purchases.ts';
 
 export interface Party {
   id: string;
   name: string;
-  type: 'customer' | 'supplier';
+  type: 'customer' | 'supplier' | 'wholesale';
   phone?: string;
   email?: string;
   gstin?: string;
@@ -1945,11 +1946,12 @@ export const getStockTransfers = (params?: {
 export const getNextStockTransferNumber = (branch?: string) =>
   api<{ nextTransferNumber: string }>(branch ? `/api/stock-transfers/next-number?branch=${encodeURIComponent(branch)}` : '/api/stock-transfers/next-number');
 
-export const getBranchStock = (branch: string, q?: string, limit?: number) => {
+export const getBranchStock = (branch: string, q?: string, limit?: number, category?: string) => {
   const query = new URLSearchParams();
   query.set('branch', branch);
   if (q) query.set('q', q);
   if (limit) query.set('limit', String(limit));
+  if (category && category !== 'ALL') query.set('category', category);
   return api<{ branch: string; items: any[] }>(`/api/stock-transfers/branch-stock?${query.toString()}`);
 };
 
@@ -3239,6 +3241,33 @@ export const exportSupplierInvoiceExcel = async (payload: {
   resBlob.filename = filename || fallbackFilename;
   return resBlob;
 };
+
+export const fetchWholesaleCustomers = (params?: { search?: string; includeInactive?: boolean }) => {
+  const q = new URLSearchParams();
+  if (params?.search) q.set('search', params.search);
+  if (params?.includeInactive) q.set('includeInactive', '1');
+  q.set('limit', '500');
+  const qs = q.toString() ? `?${q.toString()}` : '';
+  return api<{ customers: WholesaleCustomer[] }>(`/api/wholesale-customers${qs}`);
+};
+
+export const createWholesaleCustomer = (payload: Partial<WholesaleCustomer>) =>
+  api<{ customer: WholesaleCustomer }>('/api/wholesale-customers', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+
+export const updateWholesaleCustomer = (id: string, payload: Partial<WholesaleCustomer>) =>
+  api<{ customer: WholesaleCustomer }>(`/api/wholesale-customers/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  });
+
+export const deleteWholesaleCustomer = (id: string) =>
+  api<{ ok: boolean; deleted: boolean }>(`/api/wholesale-customers/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+  });
+
 
 
 

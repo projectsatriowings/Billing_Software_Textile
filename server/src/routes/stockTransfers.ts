@@ -2,6 +2,7 @@ import { requirePerm, requireUser } from '../auth.ts';
 import { audit } from '../audit.ts';
 import { bad, conflict, notFound, forbidden, V, type Router } from '../http.ts';
 import { newId } from '../security.ts';
+import type { Queryable } from '../db/index.ts';
 import type { StockTransfer, StockTransferLine, StockTransferStatus, StockMove } from '../../../shared/types.ts';
 
 async function resolveBranch(
@@ -252,12 +253,13 @@ export function registerStockTransfers(r: Router) {
     };
   });
 
-  // 3. Available stock per item for a specific branch
+  // 3. Available stock per item for a specific branch (consolidated by unique product)
   r.get('/api/stock-transfers/branch-stock', requireUser, async (ctx) => {
     const tenantId = ctx.user!.tenantId;
     const branchParam = ((ctx.query.branch as string) ?? 'MAIN').trim();
     const q = (ctx.query.q ?? '').trim().toLowerCase();
-    const limit = Math.min(100, Math.max(1, V.int(ctx.query.limit ?? 50, 'Limit', { min: 1, max: 100 })));
+    const categoryParam = ((ctx.query.category as string) ?? '').trim();
+    const limit = Math.min(200, Math.max(1, V.int(ctx.query.limit ?? 100, 'Limit', { min: 1, max: 200 })));
     const availableOnly = ctx.query.availableOnly === 'true' || ctx.query.availableOnly === '1';
 
     const fb = await resolveBranch(ctx.db, tenantId, branchParam);
@@ -269,82 +271,103 @@ export function registerStockTransfers(r: Router) {
     }
 
     let querySql = `
-      SELECT 
-        i.id,
-        i.name,
-        i.sku,
-        i.barcode,
-        i.unit,
-        i.category,
-        i.cost_minor,
-        i.price_minor,
-        i.track_batch,
-        COALESCE((
-          SELECT SUM(sm.qty_milli)
-          FROM stock_moves sm
-          WHERE sm.item_id = i.id 
-            AND sm.tenant_id = i.tenant_id 
-            AND (
-              sm.branch_id = ? 
-              OR (sm.branch_id IS NULL AND (UPPER(sm.location) = UPPER(?) OR UPPER(sm.location) = UPPER(?)))
-            )
-        ), 0)::bigint AS available_stock_milli
-      FROM items i
-      WHERE i.tenant_id = ? 
-        AND i.active = true 
-        AND i.track_stock = true
-        AND (
-          i.branch_id = ?
-          OR EXISTS (
-            SELECT 1 
-            FROM stock_moves sm2 
-            WHERE sm2.tenant_id = i.tenant_id 
-              AND sm2.item_id = i.id 
+      WITH branch_item_stock AS (
+        SELECT 
+          i.id,
+          i.tenant_id,
+          i.name,
+          i.sku,
+          i.barcode,
+          i.unit,
+          i.category,
+          i.cost_minor,
+          i.price_minor,
+          i.track_batch,
+          i.branch_id,
+          i.created_at,
+          COALESCE((
+            SELECT SUM(sm.qty_milli)
+            FROM stock_moves sm
+            WHERE sm.item_id = i.id 
+              AND sm.tenant_id = i.tenant_id 
               AND (
-                sm2.branch_id = ? 
-                OR (sm2.branch_id IS NULL AND (UPPER(sm2.location) = UPPER(?) OR UPPER(sm2.location) = UPPER(?)))
+                sm.branch_id = ? 
+                OR (sm.branch_id IS NULL AND (UPPER(sm.location) = UPPER(?) OR UPPER(sm.location) = UPPER(?)))
               )
+          ), 0)::bigint AS stock_milli
+        FROM items i
+        WHERE i.tenant_id = ? 
+          AND i.active = true 
+          AND i.track_stock = true
+          AND (
+            i.branch_id = ?
+            OR EXISTS (
+              SELECT 1 
+              FROM stock_moves sm2 
+              WHERE sm2.tenant_id = i.tenant_id 
+                AND sm2.item_id = i.id 
+                AND (
+                  sm2.branch_id = ? 
+                  OR (sm2.branch_id IS NULL AND (UPPER(sm2.location) = UPPER(?) OR UPPER(sm2.location) = UPPER(?)))
+                )
+            )
           )
-        )
+      ),
+      consolidated AS (
+        SELECT 
+          (ARRAY_AGG(id ORDER BY (branch_id = ?) DESC, stock_milli DESC, created_at ASC))[1] AS id,
+          (ARRAY_AGG(name ORDER BY (branch_id = ?) DESC, stock_milli DESC, created_at ASC))[1] AS name,
+          (ARRAY_AGG(sku ORDER BY (branch_id = ?) DESC, stock_milli DESC, created_at ASC))[1] AS sku,
+          (ARRAY_AGG(barcode ORDER BY (branch_id = ?) DESC, stock_milli DESC, created_at ASC))[1] AS barcode,
+          (ARRAY_AGG(unit ORDER BY (branch_id = ?) DESC, stock_milli DESC, created_at ASC))[1] AS unit,
+          (ARRAY_AGG(category ORDER BY (branch_id = ?) DESC, stock_milli DESC, created_at ASC))[1] AS category,
+          (ARRAY_AGG(cost_minor ORDER BY (branch_id = ?) DESC, stock_milli DESC, created_at ASC))[1] AS cost_minor,
+          (ARRAY_AGG(price_minor ORDER BY (branch_id = ?) DESC, stock_milli DESC, created_at ASC))[1] AS price_minor,
+          BOOL_OR(track_batch) AS track_batch,
+          SUM(stock_milli) AS available_stock_milli,
+          ARRAY_AGG(id) AS all_item_ids
+        FROM branch_item_stock
+        GROUP BY 
+          COALESCE(NULLIF(UPPER(TRIM(sku)), ''), NULLIF(TRIM(barcode), ''), NULLIF(LOWER(TRIM(name)), ''))
+      )
+      SELECT * FROM consolidated
+      WHERE 1=1
     `;
     const params: unknown[] = [
       fb.id, fb.code, fb.id,
       tenantId,
-      fb.id, fb.id, fb.code, fb.id,
+      fb.id,
+      fb.id, fb.code, fb.id,
+      fb.id, fb.id, fb.id, fb.id, fb.id, fb.id, fb.id, fb.id,
     ];
 
     if (q) {
       querySql += ` AND (
-        lower(i.name) LIKE ? 
-        OR lower(COALESCE(i.sku, '')) LIKE ? 
-        OR lower(COALESCE(i.barcode, '')) LIKE ?
+        LOWER(name) LIKE ? 
+        OR LOWER(COALESCE(sku, '')) LIKE ? 
+        OR LOWER(COALESCE(barcode, '')) LIKE ?
+        OR LOWER(COALESCE(category, '')) LIKE ?
         OR EXISTS (
           SELECT 1 
           FROM product_barcodes pb 
-          WHERE pb.tenant_id = i.tenant_id 
-            AND pb.product_id = i.id 
-            AND (pb.branch_id = ? OR pb.branch_id IS NULL)
-            AND lower(pb.barcode) LIKE ?
+          WHERE pb.tenant_id = ? 
+            AND pb.product_id = ANY(all_item_ids)
+            AND LOWER(pb.barcode) LIKE ?
         )
       )`;
-      params.push(`%${q}%`, `%${q}%`, `%${q}%`, fb.id, `%${q}%`);
+      params.push(`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`, tenantId, `%${q}%`);
+    }
+
+    if (categoryParam && categoryParam.toUpperCase() !== 'ALL') {
+      querySql += ` AND LOWER(category) = LOWER(?)`;
+      params.push(categoryParam);
     }
 
     if (availableOnly) {
-      querySql += ` AND (
-        SELECT COALESCE(SUM(sm_avail.qty_milli), 0)
-        FROM stock_moves sm_avail
-        WHERE sm_avail.item_id = i.id 
-          AND sm_avail.tenant_id = i.tenant_id 
-          AND (
-            sm_avail.branch_id = ? 
-            OR (sm_avail.branch_id IS NULL AND (UPPER(sm_avail.location) = UPPER(?) OR UPPER(sm_avail.location) = UPPER(?)))
-          )
-      ) > 0`;
-      params.push(fb.id, fb.code, fb.id);
+      querySql += ` AND available_stock_milli > 0`;
     }
 
-    querySql += ` ORDER BY i.name ASC LIMIT ?`;
+    querySql += ` ORDER BY name ASC LIMIT ?`;
     params.push(limit);
 
     const rows = await ctx.db.query<any>(querySql, params);
@@ -363,6 +386,7 @@ export function registerStockTransfers(r: Router) {
         trackBatch: Boolean(r.trackBatch ?? r.track_batch),
         availableStockMilli: Number(r.availableStockMilli ?? r.available_stock_milli ?? 0),
         availableStockUnits: Number(r.availableStockMilli ?? r.available_stock_milli ?? 0) / 1000,
+        allItemIds: r.allItemIds ?? r.all_item_ids ?? [r.id],
       })),
     };
   });
@@ -439,8 +463,14 @@ export function registerStockTransfers(r: Router) {
         COALESCE((
           SELECT SUM(sm.qty_milli)
           FROM stock_moves sm
-          WHERE sm.item_id = stl.item_id 
-            AND sm.tenant_id = stl.tenant_id 
+          JOIN items i_match ON i_match.id = sm.item_id AND i_match.tenant_id = sm.tenant_id
+          WHERE sm.tenant_id = stl.tenant_id 
+            AND (
+              i_match.id = stl.item_id
+              OR (i_match.sku IS NOT NULL AND i_match.sku != '' AND UPPER(TRIM(i_match.sku)) = UPPER(TRIM(i.sku)))
+              OR (i_match.barcode IS NOT NULL AND i_match.barcode != '' AND TRIM(i_match.barcode) = TRIM(i.barcode))
+              OR (LOWER(TRIM(i_match.name)) = LOWER(TRIM(i.name)))
+            )
             AND (
               sm.branch_id = ?
               OR (sm.branch_id IS NULL AND (UPPER(sm.location) = UPPER(?) OR UPPER(sm.location) = UPPER(?)))
@@ -603,7 +633,7 @@ export function registerStockTransfers(r: Router) {
     }
 
     // Role & branch verification: Source branch must match active operating branch
-    const isSuper = ctx.user?.role === 'owner' || ctx.user?.role === 'admin' || String(ctx.user?.role).toUpperCase() === 'SUPER_ADMIN';
+    const isSuper = (ctx.user?.role as string) === 'owner' || (ctx.user?.role as string) === 'admin' || String(ctx.user?.role).toUpperCase() === 'SUPER_ADMIN';
     const activeBranch = await getActiveOperatingBranch(ctx.db, ctx);
     if (!isSuper) {
       if (activeBranch && fb.id !== activeBranch.id && fb.code !== activeBranch.code) {
@@ -618,7 +648,7 @@ export function registerStockTransfers(r: Router) {
     }
 
     // Execute creation in a transaction
-    return await ctx.db.tx(async (q) => {
+    return await ctx.db.tx(async (q: Queryable) => {
       // 1. Atomically generate sequence transfer number: TRF-0001
       const fromBranchId = fb.id;
       const fromBranchCode = fb.code;
@@ -675,10 +705,6 @@ export function registerStockTransfers(r: Router) {
       const seenItems = new Set<string>();
       for (const item of rawLines) {
         const itemId = V.str(item.itemId ?? item.id, 'Product ID');
-        if (seenItems.has(itemId)) {
-          throw bad(`Duplicate product in transfer list. Please consolidate quantities into one row.`);
-        }
-        seenItems.add(itemId);
 
         const rawQty = item.qty ?? item.quantity ?? (item.qtyMilli ? item.qtyMilli / 1000 : 0);
         const qty = typeof rawQty === 'number' ? rawQty : Number(rawQty);
@@ -689,31 +715,51 @@ export function registerStockTransfers(r: Router) {
 
         // Verify item exists and belongs to or has inventory in source branch
         const itemRow = await q.one<any>(
-          `SELECT id, name, unit, track_stock, track_batch, branch_id FROM items WHERE tenant_id = ? AND id = ? AND active = true`,
+          `SELECT id, name, unit, sku, barcode, track_stock, track_batch, branch_id FROM items WHERE tenant_id = ? AND id = ? AND active = true`,
           [tenantId, itemId],
         );
         if (!itemRow) {
           throw bad(`Product with ID ${itemId} was not found or is inactive.`);
         }
 
+        const productKey = itemRow.sku ? `sku:${String(itemRow.sku).trim().toUpperCase()}` : (itemRow.barcode ? `bc:${String(itemRow.barcode).trim()}` : `name:${String(itemRow.name).trim().toLowerCase()}`);
+        if (seenItems.has(itemId) || seenItems.has(productKey)) {
+          throw bad(`Duplicate product "${itemRow.name}" in transfer list. Please consolidate quantities into one row.`);
+        }
+        seenItems.add(itemId);
+        seenItems.add(productKey);
+
+        // Find all matching item IDs belonging to this product
+        const matchingItems = await q.query<{ id: string }>(
+          `SELECT id FROM items
+           WHERE tenant_id = ? AND active = true AND (
+             id = ?
+             OR (sku IS NOT NULL AND sku != '' AND UPPER(TRIM(sku)) = UPPER(TRIM(?)))
+             OR (barcode IS NOT NULL AND barcode != '' AND TRIM(barcode) = TRIM(?))
+             OR (LOWER(TRIM(name)) = LOWER(TRIM(?)))
+           )`,
+          [tenantId, itemId, itemRow.sku || '', itemRow.barcode || '', itemRow.name],
+        );
+        const matchingIds = matchingItems.map((m) => m.id);
+
         const belongs = (itemRow.branchId ?? itemRow.branch_id) === fromBranchId || await q.one(
-          `SELECT 1 FROM stock_moves WHERE tenant_id = ? AND item_id = ? AND (
+          `SELECT 1 FROM stock_moves WHERE tenant_id = ? AND item_id = ANY(?) AND (
              branch_id = ? OR (branch_id IS NULL AND (UPPER(location) = UPPER(?) OR UPPER(location) = UPPER(?)))
            ) LIMIT 1`,
-          [tenantId, itemId, fromBranchId, fromBranchCode, fromBranchId],
+          [tenantId, matchingIds, fromBranchId, fromBranchCode, fromBranchId],
         );
         if (!belongs) {
           throw bad(`Product "${itemRow.name}" does not belong to source branch ${fb.name} (${fb.code}).`);
         }
 
-        // Available stock check at fromBranch
+        // Available stock check across all consolidated item records for this product at fromBranch
         const stockRow = await q.one<{ stockMilli?: number; stock_milli?: number }>(
           `SELECT COALESCE(SUM(qty_milli), 0)::bigint AS stock_milli
            FROM stock_moves
-           WHERE tenant_id = ? AND item_id = ? AND (
+           WHERE tenant_id = ? AND item_id = ANY(?) AND (
              branch_id = ? OR (branch_id IS NULL AND (UPPER(location) = UPPER(?) OR UPPER(location) = UPPER(?)))
            )`,
-          [tenantId, itemId, fromBranchId, fromBranchCode, fromBranchId],
+          [tenantId, matchingIds, fromBranchId, fromBranchCode, fromBranchId],
         );
         const availableStockMilli = Number(stockRow?.stockMilli ?? stockRow?.stock_milli ?? 0);
 
@@ -763,7 +809,7 @@ export function registerStockTransfers(r: Router) {
     const tenantId = ctx.user!.tenantId;
     const transferId = ctx.params.id;
 
-    return await ctx.db.tx(async (q) => {
+    return await ctx.db.tx(async (q: Queryable) => {
       // 1. Lock transfer row
       const st = await q.one<any>(
         `SELECT * FROM stock_transfers WHERE tenant_id = ? AND id = ? FOR UPDATE`,
@@ -775,10 +821,13 @@ export function registerStockTransfers(r: Router) {
         throw conflict('This stock transfer is already in transit.', 'ALREADY_DISPATCHED');
       }
       if (st.status === 'completed' || st.status === 'received' || st.status === 'partially_received') {
-        throw bad('Cannot dispatch a transfer that is already received or completed.');
+        throw bad('Cannot dispatch a transfer that is already received or completed.', 'ALREADY_COMPLETED');
       }
       if (st.status === 'cancelled' || st.status === 'rejected') {
-        throw bad('Cannot dispatch a cancelled or rejected transfer.');
+        throw bad('Cannot dispatch a cancelled or rejected transfer.', 'INVALID_STATUS');
+      }
+      if (!['draft', 'requested', 'approved', 'pending'].includes(st.status)) {
+        throw bad(`Cannot dispatch transfer with status "${st.status}". Transfer must be in Pending status.`, 'INVALID_STATUS');
       }
 
       const fromBranch = st.fromBranch ?? st.from_branch;
@@ -793,11 +842,23 @@ export function registerStockTransfers(r: Router) {
       const toBranchId = tb?.id || toBranch;
       const toBranchCode = tb?.code || toBranch;
 
-      // Check user permissions for source branch
-      if (ctx.user!.role === 'manager') {
-        const allowed = ctx.user!.allowedLocations || [ctx.user!.assignedLocation || 'MAIN'];
-        if (!allowed.includes(fromBranchCode) && !allowed.includes(fromBranchId)) {
-          throw forbidden(`You do not have dispatch authority for source branch ${fromBranchCode}.`);
+      // Check user permissions: ONLY sending / source branch can dispatch
+      const userRole = String(ctx.user?.role ?? '').toLowerCase();
+      const isSuper = userRole === 'owner' || userRole === 'admin' || userRole === 'super_admin';
+      const headerBranch = (ctx.req?.headers?.['x-branch-id'] as string || ctx.query?.branch as string || ctx.body?.branch as string || '').trim();
+
+      if (isSuper) {
+        if (headerBranch && headerBranch.toLowerCase() !== 'all') {
+          const cb = await resolveBranch(q, tenantId, headerBranch);
+          if (cb && cb.id !== fromBranchId && cb.code !== fromBranchCode) {
+            throw forbidden(`Only source / sending branch (${fb?.name || fromBranchCode}) can dispatch this transfer.`);
+          }
+        }
+      } else {
+        const mgrBranch = ctx.user!.branchId || ctx.user!.assignedLocation;
+        const cb = await resolveBranch(q, tenantId, mgrBranch);
+        if (!cb || (cb.id !== fromBranchId && cb.code !== fromBranchCode)) {
+          throw forbidden(`Only source / sending branch (${fb?.name || fromBranchCode}) can dispatch this transfer.`);
         }
       }
 
@@ -811,51 +872,105 @@ export function registerStockTransfers(r: Router) {
       );
       if (lines.length === 0) throw bad('Transfer has no line items.');
 
-      // 3. Re-verify source branch stock with row-level safety
+      // 3. Re-verify source branch stock with row-level safety and allocate across underlying product item records
       for (const line of lines) {
         const lineItemId = line.itemId ?? line.item_id;
         const lineItemName = line.itemName ?? line.item_name;
         const lineBatchNo = line.batchNo ?? line.batch_no ?? null;
         const lineExpiry = line.expiry ?? null;
-
-        const stockRow = await q.one<{ stockMilli?: number; stock_milli?: number }>(
-          `SELECT COALESCE(SUM(qty_milli), 0)::bigint AS stock_milli
-           FROM stock_moves
-           WHERE tenant_id = ? AND item_id = ? AND (
-             branch_id = ? OR (branch_id IS NULL AND (UPPER(location) = UPPER(?) OR UPPER(location) = UPPER(?)))
-           )`,
-          [tenantId, lineItemId, fromBranchId, fromBranchCode, fromBranchId],
-        );
-        const available = Number(stockRow?.stockMilli ?? stockRow?.stock_milli ?? 0);
         const required = Number(line.qtyMilli ?? line.qty_milli);
 
-        if (available < required) {
+        const lineItemRow = await q.one<any>(
+          `SELECT sku, barcode, name FROM items WHERE id = ? AND tenant_id = ?`,
+          [lineItemId, tenantId],
+        );
+        const matchingItems = await q.query<{ id: string }>(
+          `SELECT id FROM items
+           WHERE tenant_id = ? AND active = true AND (
+             id = ?
+             OR (sku IS NOT NULL AND sku != '' AND UPPER(TRIM(sku)) = UPPER(TRIM(?)))
+             OR (barcode IS NOT NULL AND barcode != '' AND TRIM(barcode) = TRIM(?))
+             OR (LOWER(TRIM(name)) = LOWER(TRIM(?)))
+           )`,
+          [tenantId, lineItemId, lineItemRow?.sku || '', lineItemRow?.barcode || '', lineItemRow?.name || ''],
+        );
+        const matchingIds = matchingItems.map((m) => m.id);
+
+        const stockRows = await q.query<{ itemId?: string; item_id?: string; availableMilli?: number; available_milli?: number }>(
+          `SELECT sm.item_id, COALESCE(SUM(sm.qty_milli), 0)::bigint AS available_milli
+           FROM stock_moves sm
+           WHERE sm.tenant_id = ? 
+             AND sm.item_id = ANY(?) 
+             AND (
+               sm.branch_id = ? OR (sm.branch_id IS NULL AND (UPPER(sm.location) = UPPER(?) OR UPPER(sm.location) = UPPER(?)))
+             )
+           GROUP BY sm.item_id
+           HAVING COALESCE(SUM(sm.qty_milli), 0) > 0
+           ORDER BY (sm.item_id = ?) DESC, available_milli DESC`,
+          [tenantId, matchingIds, fromBranchId, fromBranchCode, fromBranchId, lineItemId],
+        );
+
+        const totalAvailable = stockRows.reduce((acc, r) => acc + Number(r.availableMilli ?? r.available_milli ?? 0), 0);
+        if (totalAvailable < required) {
           throw bad(
-            `Cannot dispatch: stock for "${lineItemName}" dropped below transfer quantity at ${fromBranchCode}. Available: ${available / 1000}, Required: ${required / 1000}`,
+            `Cannot dispatch: stock for "${lineItemName}" dropped below transfer quantity at ${fromBranchCode}. Available: ${totalAvailable / 1000}, Required: ${required / 1000}`,
           );
         }
 
-        // Append negative stock movement at source branch
-        const moveId = newId('sm');
-        await q.exec(
-          `INSERT INTO stock_moves (
-            id, tenant_id, branch_id, item_id, location, qty_milli, kind, ref_type, ref_id, ref_line_id, batch_no, expiry, reason, notes, user_id, created_at
-          ) VALUES (?, ?, ?, ?, ?, ?, 'transfer', 'stock_transfer', ?, ?, ?, ?, 'Stock transfer dispatch out', ?, ?, now())`,
-          [
-            moveId,
-            tenantId,
-            fromBranchId,
-            lineItemId,
-            fromBranchCode,
-            -required, // Negative movement at source branch
-            transferId,
-            line.id,
-            lineBatchNo,
-            lineExpiry,
-            `Transferred to ${toBranchCode} (${transferNumber})`,
-            ctx.user!.id,
-          ],
-        );
+        let remainingToDeduct = required;
+        for (const sr of stockRows) {
+          if (remainingToDeduct <= 0) break;
+          const targetItemId = sr.itemId ?? sr.item_id!;
+          const avail = Number(sr.availableMilli ?? sr.available_milli ?? 0);
+          const deductMilli = Math.min(remainingToDeduct, avail);
+          if (deductMilli <= 0) continue;
+
+          const moveId = newId('sm');
+          await q.exec(
+            `INSERT INTO stock_moves (
+              id, tenant_id, branch_id, item_id, location, qty_milli, kind, ref_type, ref_id, ref_line_id, batch_no, expiry, reason, notes, user_id, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, 'transfer', 'stock_transfer', ?, ?, ?, ?, 'Stock transfer dispatch out', ?, ?, now())`,
+            [
+              moveId,
+              tenantId,
+              fromBranchId,
+              targetItemId,
+              fromBranchCode,
+              -deductMilli, // Negative movement at source branch
+              transferId,
+              line.id,
+              lineBatchNo,
+              lineExpiry,
+              `Transferred to ${toBranchCode} (${transferNumber})`,
+              ctx.user!.id,
+            ],
+          );
+
+          remainingToDeduct -= deductMilli;
+        }
+
+        if (remainingToDeduct > 0) {
+          const moveId = newId('sm');
+          await q.exec(
+            `INSERT INTO stock_moves (
+              id, tenant_id, branch_id, item_id, location, qty_milli, kind, ref_type, ref_id, ref_line_id, batch_no, expiry, reason, notes, user_id, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, 'transfer', 'stock_transfer', ?, ?, ?, ?, 'Stock transfer dispatch out', ?, ?, now())`,
+            [
+              moveId,
+              tenantId,
+              fromBranchId,
+              lineItemId,
+              fromBranchCode,
+              -remainingToDeduct,
+              transferId,
+              line.id,
+              lineBatchNo,
+              lineExpiry,
+              `Transferred to ${toBranchCode} (${transferNumber})`,
+              ctx.user!.id,
+            ],
+          );
+        }
       }
 
       // 4. Update transfer status
@@ -896,7 +1011,7 @@ export function registerStockTransfers(r: Router) {
     const body = ctx.body ?? {};
     const itemReceipts: any[] = Array.isArray(body.lines) ? body.lines : [];
 
-    return await ctx.db.tx(async (q) => {
+    return await ctx.db.tx(async (q: Queryable) => {
       // 1. Lock transfer row
       const st = await q.one<any>(
         `SELECT * FROM stock_transfers WHERE tenant_id = ? AND id = ? FOR UPDATE`,
@@ -909,7 +1024,13 @@ export function registerStockTransfers(r: Router) {
         throw conflict('This stock transfer has already been accepted and completed.', 'ALREADY_ACCEPTED');
       }
       if (st.status === 'cancelled' || st.status === 'rejected') {
-        throw bad(`Cannot accept a transfer that is in "${st.status}" status.`);
+        throw bad(`Cannot accept a transfer that is in "${st.status}" status.`, 'INVALID_STATUS');
+      }
+      if (['draft', 'requested', 'approved', 'pending'].includes(st.status)) {
+        throw bad('Cannot receive transfer: Transfer is in Pending status and has not been dispatched by the sending branch yet.', 'NOT_DISPATCHED');
+      }
+      if (st.status !== 'in_transit' && st.status !== 'partially_received') {
+        throw bad(`Cannot receive transfer with status "${st.status}". Only dispatched transfers can be received.`, 'INVALID_STATUS');
       }
 
       const fromBranch = st.fromBranch ?? st.from_branch;
@@ -924,24 +1045,32 @@ export function registerStockTransfers(r: Router) {
       const toBranchId = tb?.id || toBranch;
       const toBranchCode = tb?.code || toBranch;
 
-      // 3. Destination branch authorization: ONLY destination branch can accept
-      const isSuper = ctx.user!.role === 'owner' || ctx.user!.role === 'admin' || String(ctx.user!.role).toUpperCase() === 'SUPER_ADMIN';
+      // 3. Destination branch authorization: ONLY destination branch can accept / receive
+      // Sending branch cannot receive its own transfer
+      const userRole = String(ctx.user?.role ?? '').toLowerCase();
+      const isSuper = userRole === 'owner' || userRole === 'admin' || userRole === 'super_admin';
       const headerBranch = (ctx.req?.headers?.['x-branch-id'] as string || ctx.query?.branch as string || ctx.body?.branch as string || '').trim();
 
       if (isSuper) {
         // For Super Admin: if operating with an explicit branch scope (from header/query/body), that scope MUST match destination branch
         if (headerBranch && headerBranch.toLowerCase() !== 'all') {
           const cb = await resolveBranch(q, tenantId, headerBranch);
+          if (cb && (cb.id === fromBranchId || cb.code === fromBranchCode)) {
+            throw forbidden(`Sending branch (${fb?.name || fromBranchCode}) cannot receive its own transfer.`);
+          }
           if (cb && cb.id !== toBranchId && cb.code !== toBranchCode) {
-            throw forbidden(`Only destination branch (${tb?.name || toBranchCode}) can accept this transfer.`);
+            throw forbidden(`Only destination branch (${tb?.name || toBranchCode}) can receive this transfer.`);
           }
         }
       } else {
         // For non-Super Admin (managers / staff): strictly check their assigned branch
         const mgrBranch = ctx.user!.branchId || ctx.user!.assignedLocation;
         const cb = await resolveBranch(q, tenantId, mgrBranch);
+        if (cb && (cb.id === fromBranchId || cb.code === fromBranchCode)) {
+          throw forbidden(`Sending branch (${fb?.name || fromBranchCode}) cannot receive its own transfer.`);
+        }
         if (!cb || (cb.id !== toBranchId && cb.code !== toBranchCode)) {
-          throw forbidden(`Only destination branch (${tb?.name || toBranchCode}) can accept this transfer.`);
+          throw forbidden(`Only destination branch (${tb?.name || toBranchCode}) can receive this transfer.`);
         }
       }
 
@@ -955,58 +1084,13 @@ export function registerStockTransfers(r: Router) {
       );
       if (lines.length === 0) throw bad('Transfer has no line items.');
 
-      // 5. Check if stock was already deducted from source branch
+      // 5. Verify that stock was already deducted from source branch during dispatch
       const existingSourceMoves = await q.query<any>(
         `SELECT id FROM stock_moves WHERE tenant_id = ? AND ref_type = 'stock_transfer' AND ref_id = ? AND qty_milli < 0`,
         [tenantId, transferId],
       );
-      const sourceAlreadyDeducted = existingSourceMoves.length > 0;
-
-      // If source branch was not yet deducted (e.g. direct accept of created transfer), deduct now
-      if (!sourceAlreadyDeducted) {
-        for (const line of lines) {
-          const lineItemId = line.itemId ?? line.item_id;
-          const lineItemName = line.itemName ?? line.item_name;
-          const lineBatchNo = line.batchNo ?? line.batch_no ?? null;
-          const lineExpiry = line.expiry ?? null;
-          const lineQtyMilli = Number(line.qtyMilli ?? line.qty_milli);
-
-          const stockRow = await q.one<{ stockMilli?: number; stock_milli?: number }>(
-            `SELECT COALESCE(SUM(qty_milli), 0)::bigint AS stock_milli
-             FROM stock_moves
-             WHERE tenant_id = ? AND item_id = ? AND (
-               branch_id = ? OR (branch_id IS NULL AND (UPPER(location) = UPPER(?) OR UPPER(location) = UPPER(?)))
-             )`,
-            [tenantId, lineItemId, fromBranchId, fromBranchCode, fromBranchId],
-          );
-          const available = Number(stockRow?.stockMilli ?? stockRow?.stock_milli ?? 0);
-          if (available < lineQtyMilli) {
-            throw bad(
-              `Cannot accept transfer: insufficient stock for "${lineItemName}" at source branch ${fromBranchCode}. Available: ${available / 1000}, Required: ${lineQtyMilli / 1000}`,
-            );
-          }
-
-          const moveId = newId('sm');
-          await q.exec(
-            `INSERT INTO stock_moves (
-              id, tenant_id, branch_id, item_id, location, qty_milli, kind, ref_type, ref_id, ref_line_id, batch_no, expiry, reason, notes, user_id, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, 'transfer', 'stock_transfer', ?, ?, ?, ?, 'Stock transfer accepted - deducted from source', ?, ?, now())`,
-            [
-              moveId,
-              tenantId,
-              fromBranchId,
-              lineItemId,
-              fromBranchCode,
-              -lineQtyMilli,
-              transferId,
-              line.id,
-              lineBatchNo,
-              lineExpiry,
-              `Transferred to ${toBranchCode} (${transferNumber})`,
-              ctx.user!.id,
-            ],
-          );
-        }
+      if (existingSourceMoves.length === 0) {
+        throw bad('Integrity error: Source branch stock was not deducted during dispatch. Transfer cannot be received.', 'CORRUPTED_TRANSFER');
       }
 
       // 6. Check destination stock moves to prevent duplicate addition
@@ -1078,6 +1162,18 @@ export function registerStockTransfers(r: Router) {
         const deltaToAddMilli = newReceivedMilli - previouslyReceivedMilli;
 
         if (deltaToAddMilli > 0) {
+          // Check if destination branch has a primary matching item row
+          const destItem = await q.one<{ id: string }>(
+            `SELECT id FROM items WHERE tenant_id = ? AND active = true AND branch_id = ? AND (
+               id = ?
+               OR (sku IS NOT NULL AND sku != '' AND UPPER(TRIM(sku)) = UPPER(TRIM(?)))
+               OR (barcode IS NOT NULL AND barcode != '' AND TRIM(barcode) = TRIM(?))
+               OR (LOWER(TRIM(name)) = LOWER(TRIM(?)))
+             ) ORDER BY created_at ASC LIMIT 1`,
+            [tenantId, toBranchId, lineItemId, line.itemSku || line.sku || '', line.itemBarcode || line.barcode || '', lineItemName],
+          );
+          const destItemId = destItem?.id || lineItemId;
+
           // Append positive stock movement at destination branch
           const moveId = newId('sm');
           await q.exec(
@@ -1088,7 +1184,7 @@ export function registerStockTransfers(r: Router) {
               moveId,
               tenantId,
               toBranchId,
-              lineItemId,
+              destItemId,
               toBranchCode,
               deltaToAddMilli, // Positive movement at destination branch
               transferId,
@@ -1206,7 +1302,7 @@ export function registerStockTransfers(r: Router) {
     const transferId = ctx.params.id;
     const reason = typeof ctx.body?.reason === 'string' ? ctx.body.reason.trim() : 'Cancelled by user';
 
-    return await ctx.db.tx(async (q) => {
+    return await ctx.db.tx(async (q: Queryable) => {
       const st = await q.one<any>(
         `SELECT * FROM stock_transfers WHERE tenant_id = ? AND id = ? FOR UPDATE`,
         [tenantId, transferId],
@@ -1229,14 +1325,13 @@ export function registerStockTransfers(r: Router) {
 
       // If it was in transit, restore deducted stock to source branch
       if (st.status === 'in_transit') {
-        const lines = await q.query<any>(
-          `SELECT * FROM stock_transfer_lines WHERE tenant_id = ? AND transfer_id = ?`,
+        const dispatchMoves = await q.query<any>(
+          `SELECT * FROM stock_moves 
+           WHERE tenant_id = ? AND ref_type = 'stock_transfer' AND ref_id = ? AND qty_milli < 0`,
           [tenantId, transferId],
         );
 
-        for (const line of lines) {
-          const lineItemId = line.itemId ?? line.item_id;
-          const lineQtyMilli = Number(line.qtyMilli ?? line.qty_milli);
+        for (const dm of dispatchMoves) {
           const moveId = newId('sm');
           await q.exec(
             `INSERT INTO stock_moves (
@@ -1245,12 +1340,12 @@ export function registerStockTransfers(r: Router) {
             [
               moveId,
               tenantId,
-              fromBranchIdRev,
-              lineItemId,
-              fromBranchCodeRev,
-              lineQtyMilli, // Re-credit source branch
+              dm.branchId ?? dm.branch_id ?? fromBranchIdRev,
+              dm.itemId ?? dm.item_id,
+              dm.location ?? fromBranchCodeRev,
+              Math.abs(Number(dm.qtyMilli ?? dm.qty_milli)), // Re-credit source branch exactly what was deducted
               transferId,
-              line.id,
+              dm.refLineId ?? dm.ref_line_id,
               `Reversal due to cancellation of ${transferNumber}`,
               ctx.user!.id,
             ],

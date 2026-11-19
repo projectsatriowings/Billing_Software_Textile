@@ -46,8 +46,8 @@ export interface Ctx {
 export type Handler = (ctx: Ctx) => unknown | Promise<unknown>;
 
 /** Non-JSON responses. */
-export class FileResponse { constructor(public data: Buffer | string, public contentType: string, public filename?: string) {} }
-export class HtmlResponse { constructor(public html: string, public status = 200) {} }
+export class FileResponse { constructor(public data: Buffer | string, public contentType: string, public filename?: string) { } }
+export class HtmlResponse { constructor(public html: string, public status = 200) { } }
 
 interface Route { method: string; re: RegExp; keys: string[]; handlers: Handler[] }
 
@@ -139,7 +139,8 @@ function serveStatic(root: string, pathname: string, req: http.IncomingMessage, 
   const etag = `"${stat.size}-${Math.floor(stat.mtimeMs)}"`;
 
   const isHtml = ext === '.html' || isSpaFallback;
-  const cacheControl = isHtml
+  const isJsOrCss = ext === '.js' || ext === '.css';
+  const cacheControl = (isHtml || isJsOrCss)
     ? 'no-cache, must-revalidate'
     : 'public, max-age=86400, stale-while-revalidate=604800';
 

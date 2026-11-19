@@ -18,8 +18,8 @@ import {
   Printer,
   Download,
 } from 'lucide-react';
-import type { User, Shop, Item, Party, Branch } from '../../api';
-import { api, downloadInvoicePdf, triggerBlobDownload } from '../../api';
+import type { User, Shop, Item, Party, Branch, WholesaleCustomer } from '../../api';
+import { api, downloadInvoicePdf, triggerBlobDownload, fetchWholesaleCustomers, createWholesaleCustomer } from '../../api';
 import { BranchContext } from '../../contexts/BranchContext';
 import { moneyInWords } from '../../../../shared/money.ts';
 import { STATES } from '../../../../shared/states.ts';
@@ -79,7 +79,6 @@ export interface WholesaleBillingViewProps {
   user: User;
   shop: Shop | null;
   items: Item[];
-  parties: Party[];
   branches: Branch[];
   selectedBranch: string;
   onRefreshData?: () => Promise<void> | void;
@@ -101,7 +100,6 @@ export function WholesaleBillingView({
   user,
   shop,
   items,
-  parties,
   branches,
   selectedBranch,
   onRefreshData,
@@ -224,10 +222,26 @@ export function WholesaleBillingView({
     });
   }, [catalogItems, items, activeBranchObj]);
 
-  // Wholesale customers
-  const wholesaleCustomers = useMemo(() => {
-    return parties.filter((p) => p.type === 'customer' && p.active !== false);
-  }, [parties]);
+  // Dedicated Wholesale Customers state (exclusively from wholesale_customers table)
+  const [wholesaleCustomers, setWholesaleCustomers] = useState<WholesaleCustomer[]>([]);
+  const [isLoadingWholesaleCustomers, setIsLoadingWholesaleCustomers] = useState(false);
+
+  const loadWholesaleCustomers = useCallback(async () => {
+    setIsLoadingWholesaleCustomers(true);
+    try {
+      const res = await fetchWholesaleCustomers();
+      setWholesaleCustomers(res.customers || []);
+    } catch (err: any) {
+      console.error('Failed to load wholesale customers:', err);
+      showToast(err.message || 'Failed to load wholesale customers', 'error');
+    } finally {
+      setIsLoadingWholesaleCustomers(false);
+    }
+  }, [showToast]);
+
+  useEffect(() => {
+    loadWholesaleCustomers();
+  }, [loadWholesaleCustomers]);
 
   // Selected Customer State
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
@@ -235,15 +249,27 @@ export function WholesaleBillingView({
   const [isCustomerDropdownOpen, setIsCustomerDropdownOpen] = useState(false);
 
   const selectedCustomer = useMemo(() => {
-    return parties.find((p) => p.id === selectedCustomerId) || null;
-  }, [parties, selectedCustomerId]);
+    return wholesaleCustomers.find((p) => p.id === selectedCustomerId) || null;
+  }, [wholesaleCustomers, selectedCustomerId]);
+
+  const displayedWholesaleCustomers = useMemo(() => {
+    if (!customerSearchQuery.trim()) return wholesaleCustomers;
+    const q = customerSearchQuery.trim().toLowerCase();
+    return wholesaleCustomers.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        (c.companyName && c.companyName.toLowerCase().includes(q)) ||
+        (c.phone && c.phone.includes(q)) ||
+        (c.gstin && c.gstin.toLowerCase().includes(q))
+    );
+  }, [wholesaleCustomers, customerSearchQuery]);
 
   // Shipping address override for this order
   const [shippingAddress, setShippingAddress] = useState('');
 
   useEffect(() => {
     if (selectedCustomer) {
-      setShippingAddress((selectedCustomer as any).shippingAddress || selectedCustomer.address || '');
+      setShippingAddress(selectedCustomer.shippingAddress || selectedCustomer.billingAddress || selectedCustomer.address || '');
     } else {
       setShippingAddress('');
     }
@@ -498,7 +524,7 @@ export function WholesaleBillingView({
     };
   }, [selectedCustomer, balanceOnCredit]);
 
-  // Save new Wholesale Customer
+  // Save new Wholesale Customer (saved exclusively to wholesale_customers table)
   const handleSaveNewCustomer = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCustomerName.trim()) {
@@ -512,25 +538,23 @@ export function WholesaleBillingView({
 
     setIsSavingCustomer(true);
     try {
-      const payload = {
+      const payload: Partial<WholesaleCustomer> = {
         name: newCustomerName.trim(),
-        type: 'customer',
-        customerType: 'wholesale',
+        companyName: newCustomerName.trim(),
         contactPerson: newCustomerContact.trim() || null,
         phone: newCustomerPhone.trim(),
         email: newCustomerEmail.trim() || null,
         gstin: newCustomerGstin.trim().toUpperCase() || null,
-        address: newCustomerBillingAddress.trim() || null,
+        billingAddress: newCustomerBillingAddress.trim() || null,
         shippingAddress: newCustomerShippingAddress.trim() || newCustomerBillingAddress.trim() || null,
         creditLimitMinor: newCustomerCreditLimit ? Math.round(parseFloat(newCustomerCreditLimit) * 100) : 0,
+        branchId: activeBranchObj?.id || (selectedBranch && selectedBranch.toLowerCase() !== 'all' ? selectedBranch : null),
       };
 
-      const res = await api<{ party: Party }>('/api/parties', {
-        method: 'POST',
-        body: JSON.stringify(payload),
-      });
+      const res = await createWholesaleCustomer(payload);
+      const created = res.customer;
 
-      showToast(`Wholesale Customer "${res.party.name}" created successfully!`, 'success');
+      showToast(`Wholesale Customer "${created.name}" created successfully!`, 'success');
       setShowAddCustomerModal(false);
       setNewCustomerName('');
       setNewCustomerContact('');
@@ -541,13 +565,16 @@ export function WholesaleBillingView({
       setNewCustomerShippingAddress('');
       setNewCustomerCreditLimit('');
 
-      // Refresh branch catalog & stock immediately
-      fetchBranchCatalog();
-      fetchBranchStock();
+      // Immediately add to wholesale customers list and select it so it appears in the dropdown immediately
+      setWholesaleCustomers((prev) => [created, ...prev.filter((c) => c.id !== created.id)]);
+      setSelectedCustomerId(created.id);
+      setCustomerSearchQuery('');
+
+      // Background refresh
+      loadWholesaleCustomers();
       if (onRefreshData) await onRefreshData();
-      setSelectedCustomerId(res.party.id);
     } catch (err: any) {
-      showToast(err.message || 'Failed to create customer', 'error');
+      showToast(err.message || 'Failed to create wholesale customer', 'error');
     } finally {
       setIsSavingCustomer(false);
     }
@@ -617,7 +644,7 @@ export function WholesaleBillingView({
       const payload = {
         invoiceType: 'wholesale',
         branchId: activeBranchObj?.id || (selectedBranch && selectedBranch.toLowerCase() !== 'all' ? selectedBranch : undefined),
-        partyId: selectedCustomer.id,
+        wholesaleCustomerId: selectedCustomer.id,
         customerId: selectedCustomer.id,
         customerName: custName,
         customerPhone: custPhone,
@@ -674,9 +701,10 @@ export function WholesaleBillingView({
       setBillDiscountRupees(0);
       setPaidAmountRupees('');
       setPaymentReference('');
-      // Refresh branch catalog & stock immediately
+      // Refresh branch catalog, stock & wholesale customer balances immediately
       fetchBranchCatalog();
       fetchBranchStock();
+      loadWholesaleCustomers();
       if (onRefreshData) await onRefreshData();
     } catch (err: any) {
       showToast(err.message || 'Failed to generate wholesale invoice', 'error');
@@ -731,16 +759,47 @@ export function WholesaleBillingView({
 
                 {/* Customer Dropdown / Search */}
                 <div style={{ position: 'relative', marginBottom: '0.75rem' }}>
+                  {wholesaleCustomers.length > 8 && (
+                    <div style={{ marginBottom: '0.45rem', position: 'relative' }}>
+                      <input
+                        type="text"
+                        className="form-input"
+                        placeholder="Search wholesale customers by name, phone, or GSTIN..."
+                        value={customerSearchQuery}
+                        onChange={(e) => setCustomerSearchQuery(e.target.value)}
+                        style={{ fontSize: '0.84rem', padding: '0.35rem 0.6rem 0.35rem 2rem' }}
+                      />
+                      <Search size={14} style={{ position: 'absolute', left: '0.65rem', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                      {customerSearchQuery && (
+                        <button
+                          type="button"
+                          onClick={() => setCustomerSearchQuery('')}
+                          style={{ position: 'absolute', right: '0.65rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}
+                        >
+                          <X size={13} />
+                        </button>
+                      )}
+                    </div>
+                  )}
                   <select
                     className="form-input"
                     value={selectedCustomerId}
                     onChange={(e) => setSelectedCustomerId(e.target.value)}
                     style={{ fontWeight: 500, fontSize: '0.9rem' }}
+                    disabled={isLoadingWholesaleCustomers}
                   >
-                    <option value="">-- Choose Wholesale Buyer / Company --</option>
-                    {wholesaleCustomers.map((c) => (
+                    <option value="">
+                      {isLoadingWholesaleCustomers
+                        ? '-- Loading Wholesale Customers... --'
+                        : displayedWholesaleCustomers.length === 0 && customerSearchQuery
+                        ? '-- No Matching Wholesale Customers Found --'
+                        : wholesaleCustomers.length === 0
+                        ? '-- No Wholesale Customers Found (Click "+ New Wholesale Customer") --'
+                        : '-- Choose Wholesale Buyer / Company --'}
+                    </option>
+                    {displayedWholesaleCustomers.map((c) => (
                       <option key={c.id} value={c.id}>
-                        {c.name} {c.phone ? `(${c.phone})` : ''} {c.gstin ? `· GSTIN: ${c.gstin}` : '· Unregistered'}
+                        {c.name} {c.phone ? `(${c.phone})` : ''} · {c.gstin ? `GSTIN: ${c.gstin}` : 'Unregistered'}
                       </option>
                     ))}
                   </select>
