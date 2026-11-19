@@ -29,7 +29,7 @@
   border-radius: 0;
   box-shadow: none;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 40% 60%;
   overflow: hidden;
   position: relative;
   transition: all 0.3s ease;
@@ -92,48 +92,62 @@
   padding: 5rem 4.5rem;
 }
 
-.modern-login-left.super-admin-layout {
+.modern-login-left.super-admin-layout,
+.modern-login-left.cashier-layout {
   flex-direction: column;
   align-items: flex-start;
   justify-content: flex-start;
   padding: 4.5rem 4rem 0 4.5rem;
   position: relative;
-  overflow: hidden;
+  overflow: visible !important;
+  z-index: 10;
+}
+
+.modern-login-left.super-admin-layout::before,
+.modern-login-left.cashier-layout::before {
+  display: none;
 }
 
 .modern-admin-illustration-area {
   position: absolute;
-  bottom: 11%;
-  right: -25px;
-  width: 92%;
-  max-width: 860px;
-  max-height: 72vh;
+  bottom: -40px;
+  right: -85px;
+  width: 155%;
+  max-width: 1350px;
+  max-height: 86vh;
   display: flex;
   align-items: flex-end;
   justify-content: flex-end;
   pointer-events: none;
-  z-index: 2;
+  z-index: 15;
+  margin-bottom: 0;
 }
 
 .modern-admin-hero-img {
   width: 100%;
   height: 100%;
-  max-height: 70vh;
+  max-height: 84vh;
   object-fit: contain;
   object-position: bottom right;
-  filter: drop-shadow(0 20px 36px rgba(0, 0, 0, 0.32));
-  animation: fadeInIllustration 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  display: block;
+  vertical-align: bottom;
+  margin-bottom: 0;
+  filter: drop-shadow(0 22px 46px rgba(0, 0, 0, 0.34));
+  pointer-events: none;
+  user-select: none;
 }
 
-@keyframes fadeInIllustration {
-  from {
-    opacity: 0;
-    transform: translateY(24px) scale(0.97);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+/* Cashier-specific illustration sizing & position */
+.cashier-layout .modern-admin-illustration-area {
+  width: 125%;
+  max-width: 1080px;
+  max-height: 74vh;
+  bottom: -25px;
+  right: -100px;
+}
+
+.cashier-layout .modern-admin-hero-img {
+  max-height: 72vh;
 }
 
 /* Subtle decorative circles behind image / text */
@@ -179,7 +193,7 @@
 /* Top Wordings Layout (When no illustration image is used) */
 .modern-login-top-wordings {
   position: relative;
-  z-index: 2;
+  z-index: 20;
   display: flex;
   flex-direction: column;
   gap: 1.35rem;
@@ -271,6 +285,8 @@
   box-sizing: border-box;
   min-height: 100vh;
   overflow-y: auto;
+  position: relative;
+  z-index: 1;
 }
 
 .modern-login-form-inner {
@@ -281,6 +297,8 @@
   flex-direction: column;
   gap: 1.25rem;
   box-sizing: border-box;
+  position: relative;
+  z-index: 25;
 }
 
 /* Top Navigation Row */
@@ -899,10 +917,17 @@
 /* Responsive Media Queries */
 @media (max-width: 1200px) {
   .modern-admin-illustration-area {
-    width: 88%;
-    max-height: 65vh;
-    bottom: 9%;
-    right: -15px;
+    width: 130%;
+    max-height: 78vh;
+    bottom: -25px;
+    right: -45px;
+  }
+
+  .cashier-layout .modern-admin-illustration-area {
+    width: 110%;
+    max-height: 66vh;
+    bottom: -15px;
+    right: -60px;
   }
 }
 
@@ -913,7 +938,8 @@
   .modern-login-left {
     padding: 3rem 2.5rem;
   }
-  .modern-login-left.super-admin-layout {
+  .modern-login-left.super-admin-layout,
+  .modern-login-left.cashier-layout {
     padding: 3rem 2.5rem 0;
   }
 }
@@ -933,9 +959,11 @@
     padding: 2.5rem 2rem;
   }
 
-  .modern-login-left.super-admin-layout {
+  .modern-login-left.super-admin-layout,
+  .modern-login-left.cashier-layout {
     min-height: 480px;
     padding: 2.5rem 2rem 0;
+    overflow: hidden !important;
   }
 
   .modern-admin-illustration-area {
@@ -945,6 +973,8 @@
     max-height: 280px;
     margin: 1.5rem auto 0;
     justify-content: center;
+    bottom: auto;
+    right: auto;
   }
 
   .modern-admin-hero-img {

@@ -284,11 +284,13 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             ------------------------------------------------------------------ */}
         {(() => {
           const isSuperAdmin = currentMeta.key === 'super-admin';
+          const isCashierRole = currentMeta.key === 'cashier';
+          const isHeroLayout = isSuperAdmin || isCashierRole;
           const hasImage = Boolean(currentMeta.image && !failedImages[currentMeta.image]);
 
-          if (isSuperAdmin) {
+          if (isHeroLayout) {
             return (
-              <div className="modern-login-left super-admin-layout">
+              <div className={`modern-login-left ${isSuperAdmin ? 'super-admin-layout' : 'cashier-layout'}`}>
                 <div className="modern-login-top-wordings">
                   <div className="modern-left-badge">
                     <RoleIcon role={currentMeta.key} size={15} />
@@ -541,91 +543,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             </form>
           </div>
 
-            {/* 1-Click Role Demonstrations Cards */}
-            <div className="modern-demos-box">
-              <div className="modern-demos-header-row">
-                <span className="modern-demos-header-label">1-Click Role Demonstrations</span>
-                <span className="modern-demos-badge">Instant Fill</span>
-              </div>
-              <div className="modern-demos-grid">
-                <button
-                  type="button"
-                  className={`modern-demo-card ${selectedRole === 'super_admin' ? 'active' : ''}`}
-                  onClick={() => handleRoleTabChange('super_admin')}
-                  title="Super Admin (demo@billing.local)"
-                >
-                  <div className="modern-demo-card-icon role-admin">
-                    <CrownIcon size={14} />
-                  </div>
-                  <div className="modern-demo-card-body">
-                    <span className="modern-demo-role-name">Super Admin</span>
-                    <span className="modern-demo-email">demo@billing.local</span>
-                  </div>
-                  {selectedRole === 'super_admin' && <span className="active-pill">Active</span>}
-                </button>
-
-                <button
-                  type="button"
-                  className={`modern-demo-card ${selectedRole === 'store_manager' ? 'active' : ''}`}
-                  onClick={() => handleRoleTabChange('store_manager')}
-                  title="Store Manager (manager@billing.local)"
-                >
-                  <div className="modern-demo-card-icon role-manager">
-                    <StoreIcon size={14} />
-                  </div>
-                  <div className="modern-demo-card-body">
-                    <span className="modern-demo-role-name">Store Manager</span>
-                    <span className="modern-demo-email">manager@billing.local</span>
-                  </div>
-                  {selectedRole === 'store_manager' && <span className="active-pill">Active</span>}
-                </button>
-
-                <button
-                  type="button"
-                  className={`modern-demo-card ${selectedRole === 'cashier' ? 'active' : ''}`}
-                  onClick={() => handleRoleTabChange('cashier')}
-                  title="Cashier 1 (cashier@billing.local)"
-                >
-                  <div className="modern-demo-card-icon role-cashier">
-                    <CashierIcon size={14} />
-                  </div>
-                  <div className="modern-demo-card-body">
-                    <span className="modern-demo-role-name">Cashier Counter</span>
-                    <span className="modern-demo-email">cashier@billing.local</span>
-                  </div>
-                  {selectedRole === 'cashier' && <span className="active-pill">Active</span>}
-                </button>
-
-                <button
-                  type="button"
-                  className={`modern-demo-card ${selectedRole === 'cashier2' ? 'active' : ''}`}
-                  onClick={() => handleRoleTabChange('cashier2')}
-                  title="Cashier 2 (lakshmi@billing.local)"
-                >
-                  <div className="modern-demo-card-icon role-cashier">
-                    <CashierIcon size={14} />
-                  </div>
-                  <div className="modern-demo-card-body">
-                    <span className="modern-demo-role-name">Cashier 2</span>
-                    <span className="modern-demo-email">lakshmi@billing.local</span>
-                  </div>
-                  {selectedRole === 'cashier2' && <span className="active-pill">Active</span>}
-                </button>
-              </div>
-            </div>
-
-            {/* Footer Navigation & Security */}
-            <div className="modern-footer-row">
-              <span className="modern-footer-text">Don't have an account? </span>
-              <button
-                type="button"
-                className="modern-register-link"
-                onClick={onNavigateRegister}
-              >
-                Register Your Business
-              </button>
-            </div>
-
+            {/* Compliance Seal */}
             <div className="modern-compliance-row">
               <ShieldLockIcon size={13} />
               <span>256-bit SSL Encrypted • Enterprise Multi-Branch Synchronization</span>
