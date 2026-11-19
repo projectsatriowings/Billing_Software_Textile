@@ -76,7 +76,7 @@ interface LoginPageProps {
   initialRole?: 'super_admin' | 'store_manager' | 'cashier';
   onSuccess: (data: { token: string; user: User; shop: Shop }) => void;
   onNavigateRegister: () => void;
-  onBackToHome: () => void;
+  onBackToHome?: () => void;
   onRequirePasswordChange?: (params: {
     changeToken: string;
     tempPassword?: string;

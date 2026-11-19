@@ -86,6 +86,7 @@ function buildBranchAssociationClause(branchId: string, branchCode: string) {
   return {
     sql: `(
       i.branch_id = ?
+      OR (i.branch_id IS NOT NULL AND (UPPER(i.branch_id) = UPPER(?) OR UPPER(i.branch_id) = UPPER(?)))
       OR EXISTS (
         SELECT 1 FROM stock_moves sm_assoc
         WHERE sm_assoc.tenant_id = i.tenant_id
@@ -104,7 +105,7 @@ function buildBranchAssociationClause(branchId: string, branchCode: string) {
           AND (st_assoc.to_branch = ? OR st_assoc.to_branch = ?)
       )
     )`,
-    params: [branchId, branchId, branchCode, branchId, branchId, branchCode],
+    params: [branchId, branchId, branchCode, branchId, branchCode, branchId, branchId, branchCode],
   };
 }
 

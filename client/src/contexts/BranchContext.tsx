@@ -16,7 +16,7 @@ export interface BranchContextType {
   registerReloadHandler: (key: string, handler: (branch: string) => Promise<void> | void) => () => void;
 }
 
-const BranchContext = createContext<BranchContextType | null>(null);
+export const BranchContext = createContext<BranchContextType | null>(null);
 
 export interface BranchProviderProps {
   children: React.ReactNode;

@@ -151,13 +151,13 @@ test('3. Line Items parsing computes cost price and handles multi-line wrapped d
   assert.ok(items[0].name.includes('Refined Sunflower Oil'));
   assert.equal(items[0].openingStock, '40');
   assert.equal(items[0].uom, 'ltr');
-  assert.equal(items[0].costPrice, '125.00');
+  assert.equal(items[0].costPrice, '131.25');
   assert.equal(items[0].gstRate, '5%');
 
   assert.ok(items[1].name.includes('Toor Dal Premium'));
   assert.equal(items[1].openingStock, '30');
   assert.equal(items[1].uom, 'kg');
-  assert.equal(items[1].costPrice, '110.00');
+  assert.equal(items[1].costPrice, '115.50');
 });
 
 test('4. Cross-referencing catalog retrieves Selling Price for existing items, leaves new items blank', () => {
@@ -299,7 +299,7 @@ Grand Total: ₹11,634.00
   const atta = res.body.products.find((p: any) => p.name.includes('Aashirvaad Atta'));
   assert.ok(atta);
   assert.equal(atta.sellingPrice, '270.00');
-  assert.equal(atta.costPrice, '235.00');
+  assert.equal(atta.costPrice, '246.75');
 });
 
 test('7. POST /api/supplier-invoices/mappings saves supplier mapping and GET retrieves it', async () => {
@@ -443,7 +443,7 @@ test('9. Extract from binary PDF document using pdf-parse', async () => {
     assert.ok(res.body.products.length >= 2);
     const rice = res.body.products.find((p: any) => p.name.includes('Basmati Rice'));
     assert.ok(rice);
-    assert.equal(rice.costPrice, '65.00');
+    assert.equal(rice.costPrice, '68.25');
     assert.equal(rice.openingStock, '100');
   } catch (err: any) {
     console.error('TEST 9 CAUGHT ERROR:', err);
@@ -573,4 +573,151 @@ test('11. End-to-end OCR extraction of Sharma Grocery Shop invoice extracts 2 it
   assert.equal(juice.costPrice, '94.29');
   assert.equal(juice.gstRate, '5%');
   assert.equal(juice.uom, 'PAC');
+});
+
+test('12. End-to-end OCR extraction of Fresh Express invoice extracts exactly 4 items with correct HSN, UOM, and GST-inclusive Cost Prices', { timeout: 90000 }, async () => {
+  const fs = await import('fs');
+  const path = await import('path');
+
+  const testFilePaths = [
+    'C:/Users/Lucky/.gemini/antigravity/brain/fe5b9f59-65fd-455c-8312-2d38ddd9affb/.user_uploaded/media_1794980640402_e195d9e7.jpg',
+    'C:/Users/Lucky/.gemini/antigravity/brain/fe5b9f59-65fd-455c-8312-2d38ddd9affb/.user_uploaded/media_1794980631190_737d1025.jpg',
+  ];
+  const validPath = testFilePaths.find((p) => fs.existsSync(p));
+  if (!validPath) {
+    console.log('Skipping test 12: Fresh Express test image not found locally');
+    return;
+  }
+
+  const fileBuf = fs.readFileSync(validPath);
+  const base64Data = fileBuf.toString('base64');
+
+  const res = await api(
+    'POST',
+    '/api/supplier-invoices/extract',
+    {},
+    {
+      fileName: path.basename(validPath),
+      fileData: base64Data,
+      mimeType: 'image/jpeg',
+    },
+    ownerToken
+  );
+
+  assert.equal(res.status, 200);
+  assert.equal(res.body.ok, true);
+
+  // Metadata verification
+  assert.equal(res.body.metadata.supplierGstin, '26CORPP3939N1ZA');
+  assert.ok(['3', '46'].includes(res.body.metadata.invoiceNumber));
+  assert.equal(res.body.metadata.totalAmount, 2522);
+  assert.ok(!res.body.metadata.supplierName.toLowerCase().includes('order call'));
+
+  // Exactly 4 product items, no Total or Total Tax
+  assert.equal(res.body.products.length, 4);
+
+  // 1. Kellogg's Corn Flakes
+  const cornFlakes = res.body.products.find((p: any) => p.name.toLowerCase().includes('kellogg'));
+  assert.ok(cornFlakes, 'Kelloggs product should be found');
+  assert.equal(cornFlakes.hsn, '1006');
+  assert.equal(cornFlakes.uom.toUpperCase(), 'KGS');
+  assert.equal(cornFlakes.costPrice, '420.00');
+  assert.equal(cornFlakes.sellingPrice, '');
+
+  // 2. Skybags Backpack
+  const skybags = res.body.products.find((p: any) => p.name.toLowerCase().includes('skybags'));
+  assert.ok(skybags, 'Skybags product should be found');
+  assert.equal(skybags.hsn, '1006');
+  assert.equal(skybags.uom.toUpperCase(), 'PCS');
+  assert.equal(skybags.costPrice, '1680.00');
+  assert.equal(skybags.sellingPrice, '');
+
+  // 3. Star Bright Detergent
+  const detergent = res.body.products.find((p: any) => p.name.toLowerCase().includes('star bright'));
+  assert.ok(detergent, 'Star Bright product should be found');
+  assert.equal(detergent.hsn, '1006');
+  assert.equal(detergent.uom.toUpperCase(), 'PCS');
+  assert.equal(detergent.costPrice, '315.00');
+  assert.equal(detergent.sellingPrice, '');
+
+  // 4. Sunpride Sunflower Oil
+  const oil = res.body.products.find((p: any) => p.name.toLowerCase().includes('sunpride'));
+  assert.ok(oil, 'Sunpride product should be found');
+  assert.equal(oil.hsn, '1006');
+  assert.equal(oil.uom.toUpperCase(), 'LTR');
+  assert.equal(oil.costPrice, '107.00');
+  assert.equal(oil.sellingPrice, '');
+});
+
+test('13. End-to-end PDF extraction of Grocery Simple Invoice extracts exactly 3 items with correct supplier, HSN, UOM, and Cost Prices', async () => {
+  const fs = await import('fs');
+  const path = await import('path');
+
+  const testFilePaths = [
+    'C:/Users/Lucky/.gemini/antigravity/brain/fe5b9f59-65fd-455c-8312-2d38ddd9affb/.user_uploaded/media_1794982742918_f0935ffe.pdf',
+  ];
+  const validPath = testFilePaths.find((p) => fs.existsSync(p));
+  if (!validPath) {
+    console.log('Skipping test 13: Grocery Simple Invoice PDF not found locally');
+    return;
+  }
+
+  const fileBuf = fs.readFileSync(validPath);
+  const base64Data = fileBuf.toString('base64');
+
+  const res = await api(
+    'POST',
+    '/api/supplier-invoices/extract',
+    {},
+    {
+      fileName: 'Grocery_Simple_Invoice.pdf',
+      fileData: base64Data,
+      mimeType: 'application/pdf',
+    },
+    ownerToken
+  );
+
+  assert.equal(res.status, 200);
+  assert.equal(res.body.ok, true);
+
+  // Metadata verification
+  assert.equal(res.body.metadata.supplierName, 'My Company');
+  assert.equal(res.body.metadata.supplierGstin, '09AAACH7409R1ZZ');
+  assert.equal(res.body.metadata.invoiceNumber, '0001/25-26');
+  assert.equal(res.body.metadata.invoiceDate, '05-Aug-25');
+  assert.equal(res.body.metadata.totalAmount, 13250.65);
+  assert.ok(!res.body.metadata.discrepancyWarning);
+
+  // Exactly 3 product items
+  assert.equal(res.body.products.length, 3);
+
+  // 1. Basmati Rice 5kg
+  const rice = res.body.products.find((p: any) => p.name.toLowerCase().includes('basmati'));
+  assert.ok(rice, 'Basmati Rice should be found');
+  assert.equal(rice.hsn, '1006');
+  assert.equal(rice.uom, 'Bags');
+  assert.equal(rice.costPrice, '420.00');
+  assert.equal(rice.gstRate, '5%');
+  assert.equal(rice.openingStock, '30');
+  assert.equal(rice.sellingPrice, '');
+
+  // 2. Sunflower Oil 1L
+  const oil = res.body.products.find((p: any) => p.name.toLowerCase().includes('sunflower'));
+  assert.ok(oil, 'Sunflower Oil should be found');
+  assert.equal(oil.hsn, '1512');
+  assert.equal(oil.uom, 'Pcs.');
+  assert.equal(oil.costPrice, '179.55');
+  assert.equal(oil.gstRate, '5%');
+  assert.equal(oil.openingStock, '3');
+  assert.equal(oil.sellingPrice, '');
+
+  // 3. Toothpaste 150g
+  const paste = res.body.products.find((p: any) => p.name.toLowerCase().includes('toothpaste'));
+  assert.ok(paste, 'Toothpaste should be found');
+  assert.equal(paste.hsn, '3306');
+  assert.equal(paste.uom, 'Pcs.');
+  assert.equal(paste.costPrice, '112.00');
+  assert.equal(paste.gstRate, '12%');
+  assert.equal(paste.openingStock, '1');
+  assert.equal(paste.sellingPrice, '');
 });

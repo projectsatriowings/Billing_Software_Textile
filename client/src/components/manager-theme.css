@@ -1,0 +1,1163 @@
+/* ==========================================================================
+   STORE MANAGER THEME: "DEEP BURGUNDY" (#653B4B)
+   Scoped strictly under .theme-manager to avoid any leakage to other roles
+   ========================================================================== */
+
+body.theme-manager,
+.theme-manager {
+  --sidebar: #2D1822;
+  --primary: #653B4B;
+  --primary-hover: #522E3C;
+  --primary-soft: #F5ECF0;
+  --primary-light: #F9F5F7;
+  --primary-glow: rgba(101, 59, 75, 0.35);
+  --bg: #EFE7EB;
+  /* Soft rose-oatmeal cream canvas */
+  --bg-cream: #EFE7EB;
+  --surface: #FAF6F8;
+  /* Light blush cream for all elevated bento cards */
+  --border: #D9C8D0;
+  /* Defined burgundy-tinted border for card boundaries */
+  --border-light: #E8D6DE;
+  --border-focus: #653B4B;
+  --text: #1A0F14;
+  --text-muted: #64555E;
+  --text-on-primary: #FFFFFF;
+  --danger: #B91C1C;
+  --danger-bg: #FEE2E2;
+  --success: #15803D;
+  --success-bg: #DCFCE7;
+  --ring: #8E586C;
+  --sidebar-active: #653B4B;
+  --sidebar-hover: rgba(101, 59, 75, 0.28);
+  color-scheme: light;
+}
+
+/* --------------------------------------------------------------------------
+   1. STORE MANAGER SIDEBAR NAVIGATION
+   -------------------------------------------------------------------------- */
+.theme-manager .app-sidebar {
+  background: linear-gradient(180deg, #2D1822 0%, #3D222D 45%, #2D1822 100%) !important;
+  border-right: 1px solid rgba(232, 214, 222, 0.15) !important;
+  box-shadow: 4px 0 24px rgba(45, 24, 34, 0.35) !important;
+}
+
+.theme-manager .sidebar-brand-badge,
+.theme-manager .sidebar-badge {
+  background: rgba(101, 59, 75, 0.45) !important;
+  color: #F9F5F7 !important;
+  border: 1px solid rgba(232, 214, 222, 0.3) !important;
+}
+
+.theme-manager .sidebar-nav-item.active {
+  background: #653B4B !important;
+  border-color: rgba(255, 255, 255, 0.22) !important;
+  box-shadow: 0 2px 8px rgba(101, 59, 75, 0.4) !important;
+}
+
+.theme-manager .sidebar-nav-item.active .nav-count-badge {
+  color: #653B4B !important;
+  background: #ffffff !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15) !important;
+}
+
+.theme-manager .sidebar-nav-item:hover:not(.active) {
+  background: rgba(101, 59, 75, 0.28) !important;
+}
+
+.theme-manager .sidebar-store-btn,
+.theme-manager .sidebar-store-icon-tile,
+.theme-manager .app-sidebar.icon-only .sidebar-store-btn {
+  background: linear-gradient(135deg, #7A475B 0%, #653B4B 100%) !important;
+  box-shadow: 0 2px 8px rgba(101, 59, 75, 0.35) !important;
+}
+
+.theme-manager .sidebar-store-badge {
+  background: rgba(101, 59, 75, 0.45) !important;
+  border-color: rgba(232, 214, 222, 0.3) !important;
+  color: #F9F5F7 !important;
+}
+
+.theme-manager .sidebar-collapse-toggle:hover {
+  background: rgba(101, 59, 75, 0.4) !important;
+  color: #ffffff !important;
+}
+
+.theme-manager .sidebar-submenu-item.active {
+  background: rgba(101, 59, 75, 0.35) !important;
+  color: #ffffff !important;
+  border-left: 2px solid #8E586C !important;
+}
+
+/* --------------------------------------------------------------------------
+   2. STORE MANAGER DASHBOARD HEADER & TOP BAR
+   -------------------------------------------------------------------------- */
+.theme-manager .top-global-bar {
+  background-color: var(--bg) !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+
+.theme-manager .top-global-bar.dashboard-top-bar {
+  border-bottom: 1px solid rgba(101, 59, 75, 0.15) !important;
+}
+
+.theme-manager .top-user-avatar {
+  background: linear-gradient(135deg, #7A475B 0%, #653B4B 100%) !important;
+  color: #ffffff !important;
+}
+
+.theme-manager .top-user-chip:hover {
+  border-color: #653B4B !important;
+}
+
+.theme-manager .top-user-role {
+  color: #653B4B !important;
+}
+
+.theme-manager .btn-dash-primary {
+  background: linear-gradient(135deg, #7A475B 0%, #653B4B 100%) !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+  box-shadow:
+    0 4px 14px rgba(101, 59, 75, 0.38),
+    0 2px 4px rgba(101, 59, 75, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+}
+
+.theme-manager .btn-dash-primary:hover {
+  background: linear-gradient(135deg, #653B4B 0%, #522E3C 100%) !important;
+  box-shadow:
+    0 8px 20px rgba(101, 59, 75, 0.48),
+    0 3px 6px rgba(101, 59, 75, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55) !important;
+}
+
+.theme-manager .btn-dash-action:hover {
+  border-color: #8E586C !important;
+  color: #653B4B !important;
+}
+
+.theme-manager .header-today-pill .today-pill-icon {
+  color: #653B4B !important;
+}
+
+.theme-manager .bento-notif-open-full-btn {
+  background: #F9F5F7 !important;
+  border-color: #E8D6DE !important;
+  color: #653B4B !important;
+}
+
+.theme-manager .bento-notif-role-badge.admin {
+  background: #F9F5F7 !important;
+  border-color: #E8D6DE !important;
+  color: #653B4B !important;
+}
+
+/* --------------------------------------------------------------------------
+   3. STORE MANAGER DASHBOARD - KPI CARDS & BENTO PANELS
+   -------------------------------------------------------------------------- */
+.theme-manager .today-kpi-card.purple-highlight {
+  background: linear-gradient(135deg, #7A475B 0%, #653B4B 55%, #522E3C 100%) !important;
+  border: 1px solid #522E3C !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(101, 59, 75, 0.32), 0 2px 4px rgba(101, 59, 75, 0.18) !important;
+}
+
+.theme-manager .today-kpi-card.purple-highlight:hover {
+  border-color: #3D222D !important;
+  box-shadow: 0 8px 22px rgba(101, 59, 75, 0.42), 0 3px 6px rgba(101, 59, 75, 0.24) !important;
+}
+
+.theme-manager .today-kpi-card.purple-highlight .kpi-label {
+  color: rgba(255, 255, 255, 0.92) !important;
+}
+
+.theme-manager .today-kpi-card.purple-highlight .kpi-value {
+  color: #ffffff !important;
+}
+
+.theme-manager .kpi-icon-badge.purple {
+  background: rgba(255, 255, 255, 0.2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  color: #ffffff !important;
+}
+
+.theme-manager .toggle-seg-btn.active.active-sales {
+  color: #653B4B !important;
+}
+
+.theme-manager .segmented-metric-toggle .toggle-seg-btn.active {
+  box-shadow: 0 2px 6px rgba(101, 59, 75, 0.22) !important;
+}
+
+.theme-manager .chart-tab-btn.active,
+.theme-manager .chart-filter-pill.active {
+  background: #653B4B !important;
+  color: #ffffff !important;
+  border-color: #653B4B !important;
+}
+
+.theme-manager .quick-action-pill:hover,
+.theme-manager .bento-quick-btn:hover {
+  border-color: #8E586C !important;
+  color: #653B4B !important;
+  background: #F9F5F7 !important;
+}
+
+.theme-manager .link-action-btn,
+.theme-manager .link-action-btn:hover {
+  color: #653B4B !important;
+}
+
+/* --------------------------------------------------------------------------
+   4. POS COUNTER BENTO TERMINAL (MATCHING CASHIER STRUCTURE IN BURGUNDY)
+   -------------------------------------------------------------------------- */
+.theme-manager .bento-pos-root {
+  background-color: var(--bg) !important;
+}
+
+.theme-manager .top-pos-bento-badge {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 1px 3px rgba(45, 24, 34, 0.05) !important;
+}
+
+.theme-manager .top-pos-badge-icon.branch,
+.theme-manager .top-pos-badge-icon.counter,
+.theme-manager .top-pos-badge-icon.register {
+  background: var(--primary-soft) !important;
+  border: 1px solid rgba(142, 88, 108, 0.35) !important;
+  color: var(--primary) !important;
+}
+
+.theme-manager .top-pos-badge-icon svg {
+  color: var(--primary) !important;
+  stroke: var(--primary) !important;
+}
+
+.theme-manager .top-pos-code-tag {
+  background: var(--primary-soft) !important;
+  color: var(--primary) !important;
+  border: 1px solid rgba(142, 88, 108, 0.35) !important;
+}
+
+.theme-manager .top-pos-badge-val {
+  color: var(--sidebar) !important;
+  font-weight: 700 !important;
+}
+
+.theme-manager .bento-pos-badge .bento-badge-icon {
+  background: var(--primary) !important;
+  color: #FFFFFF !important;
+}
+
+.theme-manager .bento-badge-title {
+  color: var(--sidebar) !important;
+  font-weight: 800 !important;
+}
+
+.theme-manager .bento-pos-card {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 4px 18px rgba(45, 24, 34, 0.05), 0 1px 3px rgba(45, 24, 34, 0.03) !important;
+}
+
+.theme-manager .bento-card-title {
+  color: var(--sidebar) !important;
+}
+
+.theme-manager .btn-empty-find {
+  background: var(--primary) !important;
+  border-color: var(--primary-hover) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 8px rgba(101, 59, 75, 0.35) !important;
+}
+
+.theme-manager .btn-empty-find:hover {
+  background: var(--primary-hover) !important;
+  box-shadow: 0 4px 14px rgba(101, 59, 75, 0.45) !important;
+}
+
+.theme-manager .cart-empty-state .cart-empty-icon {
+  color: var(--primary) !important;
+}
+
+/* Discount Bar Pills */
+.theme-manager .discount-pill.active {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 6px rgba(101, 59, 75, 0.3) !important;
+}
+
+/* Payment Method Buttons */
+.theme-manager .pmt-method-btn.active {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 3px 10px rgba(101, 59, 75, 0.35) !important;
+}
+
+.theme-manager .pmt-method-btn:hover:not(.active) {
+  background: var(--primary-soft) !important;
+  border-color: var(--border) !important;
+  color: var(--primary) !important;
+}
+
+/* Complete Sale Primary Action */
+.theme-manager .complete-sale-btn {
+  background: linear-gradient(135deg, #7A475B 0%, #653B4B 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  color: #FFFFFF !important;
+  box-shadow:
+    0 4px 14px rgba(101, 59, 75, 0.4),
+    0 2px 4px rgba(101, 59, 75, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+}
+
+.theme-manager .complete-sale-btn:hover {
+  background: linear-gradient(135deg, #653B4B 0%, #522E3C 100%) !important;
+  box-shadow:
+    0 6px 18px rgba(101, 59, 75, 0.5),
+    0 3px 6px rgba(101, 59, 75, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55) !important;
+}
+
+/* Barcode Scanner Action Buttons */
+.theme-manager .btn-scanner-action.primary,
+.theme-manager .btn-scanner-find {
+  background: var(--primary-soft) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--primary) !important;
+}
+
+.theme-manager .btn-scanner-action.primary:hover,
+.theme-manager .btn-scanner-find:hover {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 8px rgba(101, 59, 75, 0.35) !important;
+}
+
+/* Register Sync Actions Grid */
+.theme-manager .bento-reg-act-btn:hover {
+  background: var(--primary-soft) !important;
+  border-color: var(--border) !important;
+  color: var(--primary) !important;
+  box-shadow: 0 2px 8px rgba(45, 24, 34, 0.08) !important;
+}
+
+.theme-manager .top-notification-btn:hover {
+  background: var(--primary-soft) !important;
+  border-color: var(--primary) !important;
+  color: var(--primary) !important;
+}
+
+/* --------------------------------------------------------------------------
+   5. MODALS & PORTALS UNDER STORE MANAGER
+   -------------------------------------------------------------------------- */
+body.theme-manager .modal-overlay,
+.theme-manager .modal-overlay {
+  background: rgba(45, 24, 34, 0.5) !important;
+  backdrop-filter: blur(4px) !important;
+}
+
+body.theme-manager .modal-content,
+.theme-manager .modal-content,
+body.theme-manager .product-edit-rectangle-modal,
+.theme-manager .product-edit-rectangle-modal {
+  background: var(--surface) !important;
+  border: 1.5px solid var(--border) !important;
+  box-shadow: 0 20px 50px rgba(45, 24, 34, 0.28) !important;
+  color: var(--text) !important;
+}
+
+body.theme-manager .product-edit-rectangle-modal .card-title,
+.theme-manager .product-edit-rectangle-modal .card-title {
+  color: var(--sidebar) !important;
+}
+
+body.theme-manager .bento-catalog-drawer,
+.theme-manager .bento-catalog-drawer {
+  background: var(--bg) !important;
+  border-left: 1.5px solid var(--border) !important;
+  box-shadow: -14px 0 45px rgba(45, 24, 34, 0.25) !important;
+}
+
+/* --------------------------------------------------------------------------
+   6. TABLES, LISTINGS & INVOICES UNDER STORE MANAGER
+   -------------------------------------------------------------------------- */
+.theme-manager .invoices-filter-pill.active {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 6px rgba(101, 59, 75, 0.3) !important;
+}
+
+.theme-manager .invoices-bento-table thead th {
+  background: var(--primary-soft) !important;
+  color: var(--sidebar) !important;
+  border-bottom: 1.5px solid var(--border) !important;
+}
+
+.theme-manager .bento-bill-btn {
+  color: var(--primary) !important;
+}
+
+.theme-manager .bento-bill-btn:hover {
+  color: var(--primary-hover) !important;
+}
+
+.theme-manager .bento-act-btn.view:hover,
+.theme-manager .bento-act-btn.a4:hover {
+  background: var(--primary-soft) !important;
+  border-color: var(--primary) !important;
+  color: var(--primary) !important;
+}
+
+.theme-manager .bento-act-btn.thermal {
+  background: var(--primary) !important;
+  border-color: var(--primary-hover) !important;
+  color: #FFFFFF !important;
+}
+
+.theme-manager .bento-act-btn.thermal:hover {
+  background: var(--primary-hover) !important;
+  box-shadow: 0 2px 8px rgba(101, 59, 75, 0.35) !important;
+}
+
+/* --------------------------------------------------------------------------
+   7. CUSTOMER MANAGEMENT - DEEP BURGUNDY BUTTONS & CONTROLS
+   -------------------------------------------------------------------------- */
+body.theme-manager .customer-primary-add-btn,
+.theme-manager .customer-primary-add-btn,
+body.theme-manager .customer-dir-root .btn-add-customer,
+.theme-manager .customer-dir-root .btn-add-customer,
+body.theme-manager .btn-add-customer,
+.theme-manager .btn-add-customer {
+  background: linear-gradient(135deg, #7A475B 0%, #653B4B 100%) !important;
+  box-shadow: 0 3px 10px rgba(101, 59, 75, 0.38) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  color: #FFFFFF !important;
+}
+
+body.theme-manager .customer-primary-add-btn:hover,
+.theme-manager .customer-primary-add-btn:hover,
+body.theme-manager .customer-dir-root .btn-add-customer:hover,
+.theme-manager .customer-dir-root .btn-add-customer:hover,
+body.theme-manager .btn-add-customer:hover,
+.theme-manager .btn-add-customer:hover {
+  background: linear-gradient(135deg, #653B4B 0%, #522E3C 100%) !important;
+  box-shadow: 0 5px 14px rgba(101, 59, 75, 0.48) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Loyalty Scheme Button & Badges */
+body.theme-manager .btn-loyalty-rules,
+.theme-manager .btn-loyalty-rules {
+  background: #F5ECF0 !important;
+  border: 1.5px solid #D9C8D0 !important;
+  color: #653B4B !important;
+}
+
+body.theme-manager .btn-loyalty-rules:hover,
+.theme-manager .btn-loyalty-rules:hover {
+  background: #EFE7EB !important;
+  border-color: #653B4B !important;
+  color: #522E3C !important;
+  box-shadow: 0 3px 10px rgba(101, 59, 75, 0.22) !important;
+  transform: translateY(-1px) !important;
+}
+
+body.theme-manager .loyalty-rule-badge,
+.theme-manager .loyalty-rule-badge {
+  background: #653B4B !important;
+  color: #FFFFFF !important;
+}
+
+body.theme-manager .customer-loyalty-pill,
+.theme-manager .customer-loyalty-pill {
+  border-color: #D9C8D0 !important;
+  background: #F5ECF0 !important;
+  color: #653B4B !important;
+}
+
+body.theme-manager .customer-loyalty-pill .loyalty-pill-badge,
+.theme-manager .customer-loyalty-pill .loyalty-pill-badge {
+  background: #653B4B !important;
+  color: #FFFFFF !important;
+}
+
+/* Header Icon Box in Customer Management */
+body.theme-manager .header-icon-box,
+.theme-manager .header-icon-box {
+  background: #F5ECF0 !important;
+  border: 1.5px solid #D9C8D0 !important;
+  color: #653B4B !important;
+}
+
+/* Filter Strip & Active Pills */
+body.theme-manager .customer-filter-strip .filter-pill.active,
+.theme-manager .customer-filter-strip .filter-pill.active,
+body.theme-manager .supplier-filter-strip .filter-pill.active,
+.theme-manager .supplier-filter-strip .filter-pill.active,
+body.theme-manager .filter-pill.active,
+.theme-manager .filter-pill.active,
+body.theme-manager .pill.active,
+.theme-manager .pill.active {
+  background: #653B4B !important;
+  border-color: #653B4B !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 6px rgba(101, 59, 75, 0.28) !important;
+}
+
+body.theme-manager .filter-pill.active .pill-count,
+.theme-manager .filter-pill.active .pill-count {
+  background: rgba(255, 255, 255, 0.28) !important;
+  color: #FFFFFF !important;
+}
+
+/* Customer KPI Card Highlight in Burgundy */
+body.theme-manager .customer-kpi-card.purple:hover,
+.theme-manager .customer-kpi-card.purple:hover,
+body.theme-manager .customer-kpi-card.purple.selected,
+.theme-manager .customer-kpi-card.purple.selected,
+body.theme-manager .customer-kpi-card.selected,
+.theme-manager .customer-kpi-card.selected {
+  border-color: #653B4B !important;
+  box-shadow: 0 0 0 3px rgba(101, 59, 75, 0.22) !important;
+}
+
+body.theme-manager .customer-kpi-card .kpi-icon-box.purple,
+.theme-manager .customer-kpi-card .kpi-icon-box.purple,
+body.theme-manager .kpi-icon-box.purple,
+.theme-manager .kpi-icon-box.purple {
+  background: #F5ECF0 !important;
+  color: #653B4B !important;
+  border: 1px solid #D9C8D0 !important;
+}
+
+body.theme-manager .customer-kpi-card .kpi-tag.purple,
+.theme-manager .customer-kpi-card .kpi-tag.purple,
+body.theme-manager .kpi-tag.purple,
+.theme-manager .kpi-tag.purple {
+  background: #F5ECF0 !important;
+  color: #653B4B !important;
+}
+
+/* Customer Table Action Buttons & Export */
+body.theme-manager .btn-export-csv:hover,
+.theme-manager .btn-export-csv:hover {
+  background: #F5ECF0 !important;
+  border-color: #653B4B !important;
+  color: #653B4B !important;
+}
+
+body.theme-manager .customer-row-action-btn:hover,
+.theme-manager .customer-row-action-btn:hover {
+  background: #F5ECF0 !important;
+  color: #653B4B !important;
+}
+
+/* --------------------------------------------------------------------------
+   8. RETURNS, EXCHANGES & PROFIT REPORTS IN DEEP BURGUNDY
+   -------------------------------------------------------------------------- */
+body.theme-manager .returns-header-icon,
+.theme-manager .returns-header-icon {
+  background: linear-gradient(135deg, #F5ECF0 0%, #E8D6DE 100%) !important;
+  color: #653B4B !important;
+  box-shadow: 0 2px 6px rgba(101, 59, 75, 0.2) !important;
+}
+
+body.theme-manager .returns-filter-btn.active,
+.theme-manager .returns-filter-btn.active {
+  background: #FFFFFF !important;
+  color: #653B4B !important;
+  box-shadow: 0 1px 4px rgba(101, 59, 75, 0.25) !important;
+}
+
+body.theme-manager .returns-tab-pill.active,
+.theme-manager .returns-tab-pill.active {
+  background: linear-gradient(135deg, #F5ECF0 0%, #E8D6DE 100%) !important;
+  color: #653B4B !important;
+  box-shadow: inset 0 0 0 1px rgba(101, 59, 75, 0.38) !important;
+}
+
+body.theme-manager .returns-tab-pill.active .tab-badge-num,
+.theme-manager .returns-tab-pill.active .tab-badge-num {
+  background: #653B4B !important;
+  color: #FFFFFF !important;
+}
+
+body.theme-manager .returns-export-btn:hover,
+.theme-manager .returns-export-btn:hover,
+body.theme-manager .returns-refresh-btn:hover,
+.theme-manager .returns-refresh-btn:hover {
+  background: #F5ECF0 !important;
+  color: #653B4B !important;
+  border-color: #653B4B !important;
+}
+
+body.theme-manager .returns-kpi-card:hover,
+.theme-manager .returns-kpi-card:hover {
+  border-color: #D9C8D0 !important;
+  box-shadow: 0 4px 14px rgba(101, 59, 75, 0.12) !important;
+}
+
+/* --------------------------------------------------------------------------
+   9. SUPPLIERS & PURCHASE BILLS IN DEEP BURGUNDY
+   -------------------------------------------------------------------------- */
+body.theme-manager .supplier-primary-add-btn,
+.theme-manager .supplier-primary-add-btn,
+body.theme-manager .supplier-dir-root .btn-add-supplier,
+.theme-manager .supplier-dir-root .btn-add-supplier,
+body.theme-manager .btn-add-supplier,
+.theme-manager .btn-add-supplier {
+  background: linear-gradient(135deg, #7A475B 0%, #653B4B 100%) !important;
+  box-shadow: 0 3px 10px rgba(101, 59, 75, 0.38) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  color: #FFFFFF !important;
+}
+
+body.theme-manager .supplier-primary-add-btn:hover,
+.theme-manager .supplier-primary-add-btn:hover,
+body.theme-manager .supplier-dir-root .btn-add-supplier:hover,
+.theme-manager .supplier-dir-root .btn-add-supplier:hover,
+body.theme-manager .btn-add-supplier:hover,
+.theme-manager .btn-add-supplier:hover {
+  background: linear-gradient(135deg, #653B4B 0%, #522E3C 100%) !important;
+  box-shadow: 0 5px 14px rgba(101, 59, 75, 0.48) !important;
+  transform: translateY(-1px) !important;
+}
+
+body.theme-manager .supplier-kpi-card.purple:hover,
+.theme-manager .supplier-kpi-card.purple:hover,
+body.theme-manager .supplier-kpi-card.purple.selected,
+.theme-manager .supplier-kpi-card.purple.selected,
+body.theme-manager .supplier-kpi-card.selected,
+.theme-manager .supplier-kpi-card.selected {
+  border-color: #653B4B !important;
+  box-shadow: 0 0 0 3px rgba(101, 59, 75, 0.22) !important;
+}
+
+/* --------------------------------------------------------------------------
+   10. PRODUCTS, CATEGORIES & INVENTORY IN DEEP BURGUNDY
+   -------------------------------------------------------------------------- */
+body.theme-manager .cat-btn-primary,
+.theme-manager .cat-btn-primary,
+body.theme-manager .srb-btn-primary,
+.theme-manager .srb-btn-primary,
+body.theme-manager .pbm-btn-primary,
+.theme-manager .pbm-btn-primary {
+  background: linear-gradient(135deg, #7A475B 0%, #653B4B 100%) !important;
+  box-shadow:
+    0 3px 10px rgba(101, 59, 75, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
+  border: none !important;
+  color: #FFFFFF !important;
+}
+
+body.theme-manager .cat-btn-primary:hover:not(:disabled),
+.theme-manager .cat-btn-primary:hover:not(:disabled),
+body.theme-manager .srb-btn-primary:hover:not(:disabled),
+.theme-manager .srb-btn-primary:hover:not(:disabled),
+body.theme-manager .pbm-btn-primary:hover:not(:disabled),
+.theme-manager .pbm-btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #653B4B 0%, #522E3C 100%) !important;
+  box-shadow:
+    0 6px 18px rgba(101, 59, 75, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45) !important;
+  transform: translateY(-2px) !important;
+}
+
+body.theme-manager .category-pill.active,
+.theme-manager .category-pill.active,
+body.theme-manager .cat-pill.active,
+.theme-manager .cat-pill.active,
+body.theme-manager .inv-tab-btn.active,
+.theme-manager .inv-tab-btn.active,
+body.theme-manager .inventory-tab.active,
+.theme-manager .inventory-tab.active {
+  background: #653B4B !important;
+  border-color: #653B4B !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 6px rgba(101, 59, 75, 0.28) !important;
+}
+
+/* --------------------------------------------------------------------------
+   11. BRANCH USER MANAGEMENT IN DEEP BURGUNDY
+   -------------------------------------------------------------------------- */
+body.theme-manager .um-btn-primary,
+.theme-manager .um-btn-primary,
+body.theme-manager .um-btn-base.um-btn-primary,
+.theme-manager .um-btn-base.um-btn-primary {
+  background-color: #653B4B !important;
+  border-color: #522E3C !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 8px rgba(101, 59, 75, 0.32) !important;
+}
+
+body.theme-manager .um-btn-primary:hover:not(:disabled),
+.theme-manager .um-btn-primary:hover:not(:disabled),
+body.theme-manager .um-btn-base.um-btn-primary:hover:not(:disabled),
+.theme-manager .um-btn-base.um-btn-primary:hover:not(:disabled) {
+  background-color: #522E3C !important;
+  border-color: #3D222D !important;
+  box-shadow: 0 4px 14px rgba(101, 59, 75, 0.45) !important;
+}
+
+body.theme-manager .um-btn-base:focus-visible,
+.theme-manager .um-btn-base:focus-visible {
+  outline: 2px solid #653B4B !important;
+  outline-offset: 2px !important;
+}
+
+body.theme-manager .um-tab.active,
+.theme-manager .um-tab.active,
+body.theme-manager .um-pill.active,
+.theme-manager .um-pill.active {
+  background-color: #653B4B !important;
+  color: #FFFFFF !important;
+  border-color: #653B4B !important;
+}
+
+body.theme-manager .um-locked-branch-badge .code-chip,
+.theme-manager .um-locked-branch-badge .code-chip {
+  background: #F5ECF0 !important;
+  color: #653B4B !important;
+  border-color: #D9C8D0 !important;
+}
+
+/* --------------------------------------------------------------------------
+   12. NOTIFICATIONS & SALES DIGEST IN DEEP BURGUNDY
+   -------------------------------------------------------------------------- */
+body.theme-manager .notif-page-header-card::before,
+.theme-manager .notif-page-header-card::before {
+  background: linear-gradient(90deg, #2D1822 0%, #653B4B 50%, #8E586C 100%) !important;
+}
+
+body.theme-manager .notif-header-icon-box,
+.theme-manager .notif-header-icon-box {
+  background: #F5ECF0 !important;
+  border: 1.5px solid #D9C8D0 !important;
+  color: #653B4B !important;
+  box-shadow: 0 4px 14px rgba(101, 59, 75, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
+}
+
+body.theme-manager .notif-header-icon-box svg,
+.theme-manager .notif-header-icon-box svg {
+  color: #653B4B !important;
+  stroke: #653B4B !important;
+}
+
+body.theme-manager .notif-btn-mark-all,
+.theme-manager .notif-btn-mark-all {
+  background: #653B4B !important;
+  border-color: #522E3C !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 3px 10px rgba(101, 59, 75, 0.35) !important;
+}
+
+body.theme-manager .notif-btn-mark-all:hover,
+.theme-manager .notif-btn-mark-all:hover {
+  background: #522E3C !important;
+  box-shadow: 0 5px 14px rgba(101, 59, 75, 0.45) !important;
+}
+
+body.theme-manager .notif-filter-pill.active,
+.theme-manager .notif-filter-pill.active {
+  background: #653B4B !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 8px rgba(101, 59, 75, 0.32) !important;
+}
+
+body.theme-manager .notif-unread-badge-pill,
+.theme-manager .notif-unread-badge-pill {
+  background: #653B4B !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 8px rgba(101, 59, 75, 0.35) !important;
+}
+
+body.theme-manager .sales-schedule-btn,
+.theme-manager .sales-schedule-btn {
+  background: linear-gradient(135deg, #7A475B 0%, #653B4B 100%) !important;
+  border-color: #522E3C !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 12px rgba(101, 59, 75, 0.35) !important;
+}
+
+body.theme-manager .sales-schedule-btn:hover,
+.theme-manager .sales-schedule-btn:hover {
+  background: linear-gradient(135deg, #653B4B 0%, #522E3C 100%) !important;
+  box-shadow: 0 6px 18px rgba(101, 59, 75, 0.45) !important;
+}
+
+body.theme-manager .sales-action-btn:hover,
+.theme-manager .sales-action-btn:hover {
+  background: #F5ECF0 !important;
+  border-color: #653B4B !important;
+  color: #653B4B !important;
+}
+
+/* --------------------------------------------------------------------------
+   13. UNIVERSAL PRIMARY BUTTONS & GLOBAL APPLICATION CONTROLS
+   -------------------------------------------------------------------------- */
+body.theme-manager .btn-primary,
+.theme-manager .btn-primary,
+body.theme-manager .btn.btn-primary,
+.theme-manager .btn.btn-primary,
+body.theme-manager button.btn-primary,
+.theme-manager button.btn-primary,
+body.theme-manager .primary-btn,
+.theme-manager .primary-btn,
+body.theme-manager .action-btn.primary,
+.theme-manager .action-btn.primary,
+body.theme-manager .btn-action-small.primary,
+.theme-manager .btn-action-small.primary,
+body.theme-manager .btn-primary-small,
+.theme-manager .btn-primary-small,
+body.theme-manager .btn-primary-login,
+.theme-manager .btn-primary-login,
+body.theme-manager .btn-modal-save,
+.theme-manager .btn-modal-save,
+body.theme-manager .btn-save-primary,
+.theme-manager .btn-save-primary {
+  background: #653B4B !important;
+  border-color: #522E3C !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 12px rgba(101, 59, 75, 0.35) !important;
+}
+
+body.theme-manager .btn-primary:hover:not(:disabled),
+.theme-manager .btn-primary:hover:not(:disabled),
+body.theme-manager .btn.btn-primary:hover:not(:disabled),
+.theme-manager .btn.btn-primary:hover:not(:disabled),
+body.theme-manager button.btn-primary:hover:not(:disabled),
+.theme-manager button.btn-primary:hover:not(:disabled),
+body.theme-manager .primary-btn:hover:not(:disabled),
+.theme-manager .primary-btn:hover:not(:disabled),
+body.theme-manager .action-btn.primary:hover:not(:disabled),
+.theme-manager .action-btn.primary:hover:not(:disabled),
+body.theme-manager .btn-action-small.primary:hover:not(:disabled),
+.theme-manager .btn-action-small.primary:hover:not(:disabled),
+body.theme-manager .btn-primary-small:hover:not(:disabled),
+.theme-manager .btn-primary-small:hover:not(:disabled),
+body.theme-manager .btn-primary-login:hover:not(:disabled),
+.theme-manager .btn-primary-login:hover:not(:disabled),
+body.theme-manager .btn-modal-save:hover:not(:disabled),
+.theme-manager .btn-modal-save:hover:not(:disabled) {
+  background: #522E3C !important;
+  border-color: #3D222D !important;
+  box-shadow: 0 6px 18px rgba(101, 59, 75, 0.45) !important;
+}
+
+/* Secondary Buttons Hover */
+body.theme-manager .btn-secondary:hover,
+.theme-manager .btn-secondary:hover {
+  background: #F5ECF0 !important;
+  border-color: #653B4B !important;
+  color: #653B4B !important;
+}
+
+/* Pagination & Tab States */
+body.theme-manager .pagination-btn.active,
+.theme-manager .pagination-btn.active,
+body.theme-manager .page-btn.active,
+.theme-manager .page-btn.active,
+body.theme-manager .page-link.active,
+.theme-manager .page-link.active,
+body.theme-manager .preset-chip-btn.active,
+.theme-manager .preset-chip-btn.active {
+  background: #653B4B !important;
+  border-color: #653B4B !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 6px rgba(101, 59, 75, 0.3) !important;
+}
+
+body.theme-manager .tab-btn.active,
+.theme-manager .tab-btn.active {
+  border-color: #653B4B !important;
+  color: #653B4B !important;
+}
+
+/* Focus States Across Form Inputs */
+body.theme-manager input:focus,
+.theme-manager input:focus,
+body.theme-manager select:focus,
+.theme-manager select:focus,
+body.theme-manager textarea:focus,
+.theme-manager textarea:focus {
+  border-color: #653B4B !important;
+  outline-color: #653B4B !important;
+  box-shadow: 0 0 0 3px rgba(101, 59, 75, 0.18) !important;
+}
+
+/* --------------------------------------------------------------------------
+   14. COMPREHENSIVE BUTTONS & INTERACTIVE CONTROLS UNDER STORE MANAGER ONLY
+   Ensures ALL action buttons, submit buttons, modals, and pills across all
+   modules strictly use Store Manager Deep Burgundy (#653B4B) without leaking
+   to Super Admin or Cashier.
+   -------------------------------------------------------------------------- */
+
+/* Specific Button Classes Across Submodules */
+body.theme-manager .stock-transfer-btn-create,
+.theme-manager .stock-transfer-btn-create,
+body.theme-manager .cat-submit-btn,
+.theme-manager .cat-submit-btn,
+body.theme-manager .cat-bento-submit-btn,
+.theme-manager .cat-bento-submit-btn,
+body.theme-manager .bento-checkout-btn:not(:disabled),
+.theme-manager .bento-checkout-btn:not(:disabled),
+body.theme-manager .btn-checkout,
+.theme-manager .btn-checkout,
+body.theme-manager .btn-proceed-payment,
+.theme-manager .btn-proceed-payment,
+body.theme-manager .bento-quick-add-btn,
+.theme-manager .bento-quick-add-btn,
+body.theme-manager .bento-find-product-btn,
+.theme-manager .bento-find-product-btn,
+body.theme-manager .bento-open-shift-btn,
+.theme-manager .bento-open-shift-btn,
+body.theme-manager .btn-start-shift,
+.theme-manager .btn-start-shift,
+body.theme-manager .btn-start-shopping,
+.theme-manager .btn-start-shopping,
+body.theme-manager .btn-empty-start,
+.theme-manager .btn-empty-start,
+body.theme-manager .bento-add-btn,
+.theme-manager .bento-add-btn,
+body.theme-manager .bento-new-item-btn,
+.theme-manager .bento-new-item-btn,
+body.theme-manager .bento-trigger-scan-btn,
+.theme-manager .bento-trigger-scan-btn,
+body.theme-manager .bento-mobile-scanner-btn,
+.theme-manager .bento-mobile-scanner-btn,
+body.theme-manager .gst-hero-btn-primary,
+.theme-manager .gst-hero-btn-primary,
+body.theme-manager .gst-pill-btn.primary,
+.theme-manager .gst-pill-btn.primary,
+body.theme-manager .gst-import-hero-btn,
+.theme-manager .gst-import-hero-btn,
+body.theme-manager .gst-ca-bundle-btn,
+.theme-manager .gst-ca-bundle-btn,
+body.theme-manager .drawer-btn.primary,
+.theme-manager .drawer-btn.primary,
+body.theme-manager .pos-enroll-btn,
+.theme-manager .pos-enroll-btn,
+body.theme-manager .pos-redeem-points-btn,
+.theme-manager .pos-redeem-points-btn,
+body.theme-manager .invoices-quick-pos-btn,
+.theme-manager .invoices-quick-pos-btn,
+body.theme-manager .invoices-empty-action-btn,
+.theme-manager .invoices-empty-action-btn,
+body.theme-manager .table-empty-state .reset-filter-btn,
+.theme-manager .table-empty-state .reset-filter-btn,
+body.theme-manager .btn-inv-header-primary,
+.theme-manager .btn-inv-header-primary,
+body.theme-manager .inv-btn-primary-blue,
+.theme-manager .inv-btn-primary-blue,
+body.theme-manager .bento-hero-btn.primary,
+.theme-manager .bento-hero-btn.primary,
+body.theme-manager .wizard-btn-submit,
+.theme-manager .wizard-btn-submit,
+body.theme-manager .banner-btn-primary,
+.theme-manager .banner-btn-primary,
+body.theme-manager .hero-btn-primary,
+.theme-manager .hero-btn-primary,
+body.theme-manager .manual-submit-btn,
+.theme-manager .manual-submit-btn {
+  background: linear-gradient(135deg, #7A475B 0%, #653B4B 100%) !important;
+  border-color: #522E3C !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 14px rgba(101, 59, 75, 0.35) !important;
+}
+
+body.theme-manager .stock-transfer-btn-create:hover,
+.theme-manager .stock-transfer-btn-create:hover,
+body.theme-manager .cat-submit-btn:hover,
+.theme-manager .cat-submit-btn:hover,
+body.theme-manager .cat-bento-submit-btn:hover,
+.theme-manager .cat-bento-submit-btn:hover,
+body.theme-manager .bento-checkout-btn:not(:disabled):hover,
+.theme-manager .bento-checkout-btn:not(:disabled):hover,
+body.theme-manager .btn-checkout:hover,
+.theme-manager .btn-checkout:hover,
+body.theme-manager .btn-proceed-payment:hover,
+.theme-manager .btn-proceed-payment:hover,
+body.theme-manager .bento-quick-add-btn:hover:not(:disabled),
+.theme-manager .bento-quick-add-btn:hover:not(:disabled),
+body.theme-manager .bento-find-product-btn:hover,
+.theme-manager .bento-find-product-btn:hover,
+body.theme-manager .bento-open-shift-btn:hover,
+.theme-manager .bento-open-shift-btn:hover,
+body.theme-manager .btn-start-shift:hover,
+.theme-manager .btn-start-shift:hover,
+body.theme-manager .btn-start-shopping:hover,
+.theme-manager .btn-start-shopping:hover,
+body.theme-manager .btn-empty-start:hover,
+.theme-manager .btn-empty-start:hover,
+body.theme-manager .bento-add-btn:hover,
+.theme-manager .bento-add-btn:hover,
+body.theme-manager .bento-new-item-btn:hover,
+.theme-manager .bento-new-item-btn:hover,
+body.theme-manager .bento-trigger-scan-btn:hover,
+.theme-manager .bento-trigger-scan-btn:hover,
+body.theme-manager .bento-mobile-scanner-btn:hover,
+.theme-manager .bento-mobile-scanner-btn:hover,
+body.theme-manager .gst-hero-btn-primary:hover,
+.theme-manager .gst-hero-btn-primary:hover,
+body.theme-manager .gst-pill-btn.primary:hover,
+.theme-manager .gst-pill-btn.primary:hover,
+body.theme-manager .gst-import-hero-btn:hover,
+.theme-manager .gst-import-hero-btn:hover,
+body.theme-manager .gst-ca-bundle-btn:hover,
+.theme-manager .gst-ca-bundle-btn:hover,
+body.theme-manager .drawer-btn.primary:hover,
+.theme-manager .drawer-btn.primary:hover,
+body.theme-manager .pos-enroll-btn:hover:not(:disabled),
+.theme-manager .pos-enroll-btn:hover:not(:disabled),
+body.theme-manager .pos-redeem-points-btn:hover,
+.theme-manager .pos-redeem-points-btn:hover,
+body.theme-manager .invoices-quick-pos-btn:hover,
+.theme-manager .invoices-quick-pos-btn:hover,
+body.theme-manager .invoices-empty-action-btn:hover,
+.theme-manager .invoices-empty-action-btn:hover,
+body.theme-manager .table-empty-state .reset-filter-btn:hover,
+.theme-manager .table-empty-state .reset-filter-btn:hover,
+body.theme-manager .btn-inv-header-primary:hover,
+.theme-manager .btn-inv-header-primary:hover,
+body.theme-manager .inv-btn-primary-blue:hover,
+.theme-manager .inv-btn-primary-blue:hover,
+body.theme-manager .bento-hero-btn.primary:hover,
+.theme-manager .bento-hero-btn.primary:hover,
+body.theme-manager .wizard-btn-submit:hover:not(:disabled),
+.theme-manager .wizard-btn-submit:hover:not(:disabled),
+body.theme-manager .banner-btn-primary:hover,
+.theme-manager .banner-btn-primary:hover,
+body.theme-manager .hero-btn-primary:hover,
+.theme-manager .hero-btn-primary:hover,
+body.theme-manager .manual-submit-btn:hover,
+.theme-manager .manual-submit-btn:hover {
+  background: linear-gradient(135deg, #653B4B 0%, #522E3C 100%) !important;
+  border-color: #3D222D !important;
+  box-shadow: 0 6px 18px rgba(101, 59, 75, 0.48) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* Modals & Forms Submit Buttons */
+body.theme-manager .modal-content button[type="submit"]:not(.btn-secondary):not(.btn-danger):not(.cat-btn-danger):not(.um-btn-secondary),
+.theme-manager .modal-content button[type="submit"]:not(.btn-secondary):not(.btn-danger):not(.cat-btn-danger):not(.um-btn-secondary),
+body.theme-manager .modal-footer button[type="submit"]:not(.btn-secondary):not(.btn-danger):not(.cat-btn-danger):not(.um-btn-secondary),
+.theme-manager .modal-footer button[type="submit"]:not(.btn-secondary):not(.btn-danger):not(.cat-btn-danger):not(.um-btn-secondary),
+body.theme-manager form button[type="submit"]:not(.btn-secondary):not(.btn-danger):not(.cat-btn-danger):not(.um-btn-secondary):not(.drawer-btn.secondary):not(.btn-modal-cancel),
+.theme-manager form button[type="submit"]:not(.btn-secondary):not(.btn-danger):not(.cat-btn-danger):not(.um-btn-secondary):not(.drawer-btn.secondary):not(.btn-modal-cancel) {
+  background: #653B4B !important;
+  border-color: #522E3C !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 12px rgba(101, 59, 75, 0.35) !important;
+}
+
+body.theme-manager .modal-content button[type="submit"]:hover:not(:disabled),
+.theme-manager .modal-content button[type="submit"]:hover:not(:disabled),
+body.theme-manager .modal-footer button[type="submit"]:hover:not(:disabled),
+.theme-manager .modal-footer button[type="submit"]:hover:not(:disabled),
+body.theme-manager form button[type="submit"]:hover:not(:disabled),
+.theme-manager form button[type="submit"]:hover:not(:disabled) {
+  background: #522E3C !important;
+  border-color: #3D222D !important;
+  box-shadow: 0 6px 18px rgba(101, 59, 75, 0.45) !important;
+}
+
+/* Active Mode & Tender Buttons */
+body.theme-manager .bento-pay-mode-btn.active,
+.theme-manager .bento-pay-mode-btn.active {
+  background: linear-gradient(135deg, #7A475B 0%, #653B4B 100%) !important;
+  border-color: #522E3C !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 16px rgba(101, 59, 75, 0.38) !important;
+}
+
+body.theme-manager .bento-pay-mode-btn:hover:not(.active),
+.theme-manager .bento-pay-mode-btn:hover:not(.active) {
+  border-color: #653B4B !important;
+  color: #653B4B !important;
+  background: #F5ECF0 !important;
+}
+
+/* Sidebar Brand & Avatar Tiles in Deep Burgundy */
+body.theme-manager .sidebar-brand-icon,
+.theme-manager .sidebar-brand-icon {
+  background: linear-gradient(135deg, #7A475B 0%, #653B4B 100%) !important;
+  box-shadow: 0 4px 14px rgba(101, 59, 75, 0.4) !important;
+  color: #FFFFFF !important;
+}
+
+body.theme-manager .sidebar-user-avatar,
+.theme-manager .sidebar-user-avatar {
+  background: linear-gradient(135deg, #7A475B 0%, #653B4B 100%) !important;
+  box-shadow: 0 2px 8px rgba(101, 59, 75, 0.4) !important;
+  color: #FFFFFF !important;
+}
+
+/* Top Icon Tiles across Specific Views */
+body.theme-manager .top-stock-transfer-icon-tile,
+.theme-manager .top-stock-transfer-icon-tile,
+body.theme-manager .expense-modal-icon-badge,
+.theme-manager .expense-modal-icon-badge,
+body.theme-manager .sales-module-brand-icon,
+.theme-manager .sales-module-brand-icon,
+body.theme-manager .gst-ca-bundle-icon,
+.theme-manager .gst-ca-bundle-icon,
+body.theme-manager .modal-icon-badge.purple,
+.theme-manager .modal-icon-badge.purple {
+  background: linear-gradient(135deg, #7A475B 0%, #653B4B 100%) !important;
+  box-shadow: 0 4px 14px rgba(101, 59, 75, 0.35) !important;
+  color: #FFFFFF !important;
+}
+
+/* Additional Navigation Pills & Active Tabs */
+body.theme-manager .dashboard-branch-pill.active,
+.theme-manager .dashboard-branch-pill.active,
+body.theme-manager .inv-saas-tab-btn.active,
+.theme-manager .inv-saas-tab-btn.active,
+body.theme-manager .inv-page-num-btn.active,
+.theme-manager .inv-page-num-btn.active,
+body.theme-manager .segment-btn.active,
+.theme-manager .segment-btn.active,
+body.theme-manager .movement-toggle-btn.active,
+.theme-manager .movement-toggle-btn.active {
+  background: #653B4B !important;
+  border-color: #653B4B !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 6px rgba(101, 59, 75, 0.3) !important;
+}
+
+/* --------------------------------------------------------------------------
+   15. EXPENSE MANAGEMENT IN DEEP BURGUNDY (STORE MANAGER ONLY)
+   -------------------------------------------------------------------------- */
+body.theme-manager .btn-record-expense,
+.theme-manager .btn-record-expense {
+  background: linear-gradient(135deg, #7A475B 0%, #653B4B 100%) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 14px rgba(101, 59, 75, 0.35) !important;
+}
+
+body.theme-manager .btn-record-expense:hover,
+.theme-manager .btn-record-expense:hover {
+  background: linear-gradient(135deg, #653B4B 0%, #522E3C 100%) !important;
+  box-shadow: 0 6px 18px rgba(101, 59, 75, 0.45) !important;
+}
+
+body.theme-manager .expense-preset-btn.active,
+.theme-manager .expense-preset-btn.active {
+  background: #653B4B !important;
+  border-color: #653B4B !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 6px rgba(101, 59, 75, 0.3) !important;
+}
+
+body.theme-manager .expense-preset-btn:hover:not(.active),
+.theme-manager .expense-preset-btn:hover:not(.active) {
+  background: #F5ECF0 !important;
+  border-color: #D9C8D0 !important;
+  color: #653B4B !important;
+}

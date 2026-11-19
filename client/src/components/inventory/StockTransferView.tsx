@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback, useContext } from 'react';
 import { createPortal } from 'react-dom';
 import {
   getStockTransfers,
@@ -8,10 +8,12 @@ import {
   createStockTransfer,
   dispatchStockTransfer,
   receiveStockTransfer,
+  acceptStockTransfer,
   cancelStockTransfer,
   api,
   type User,
 } from '../../api';
+import { BranchContext } from '../../contexts/BranchContext';
 import type {
   StockTransfer,
   StockTransferLine,
@@ -66,33 +68,13 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
   const [totalTransfers, setTotalTransfers] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [loadingList, setLoadingList] = useState(false);
 
-  // Filters for Screen 1
-  const [filterBranch, setFilterBranch] = useState<string>(
-    selectedBranch && selectedBranch.toLowerCase() !== 'all' ? selectedBranch : 'ALL'
-  );
-
-  useEffect(() => {
-    if (selectedBranch) {
-      setFilterBranch(selectedBranch.toLowerCase() === 'all' ? 'ALL' : selectedBranch);
-    }
-  }, [selectedBranch]);
-
-  useEffect(() => {
-    const handleBranchScopeChanged = (e: any) => {
-      const b = e.detail?.branch || e.detail;
-      if (b) {
-        setFilterBranch(b.toLowerCase() === 'all' ? 'ALL' : b);
-      }
-    };
-    window.addEventListener('branch_scope_changed', handleBranchScopeChanged);
-    return () => window.removeEventListener('branch_scope_changed', handleBranchScopeChanged);
-  }, []);
-  const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [filterSearch, setFilterSearch] = useState<string>('');
+  // Filters for Screen 1 (Date range only)
   const [filterFromDate, setFilterFromDate] = useState<string>('');
   const [filterToDate, setFilterToDate] = useState<string>('');
+  const [submittingAcceptId, setSubmittingAcceptId] = useState<string | null>(null);
 
   // Screens 2, 3, 4: Creation Wizard State
   const [nextTransferNumber, setNextTransferNumber] = useState<string>('TRF-0001');
@@ -116,6 +98,7 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
 
   // Product search in Screen 3
   const [productSearchQuery, setProductSearchQuery] = useState('');
+  const [wizardCategoryFilter, setWizardCategoryFilter] = useState('ALL');
   const [branchProducts, setBranchProducts] = useState<any[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [showProductDropdown, setShowProductDropdown] = useState(false);
@@ -153,62 +136,304 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
   // Submitting Creation
   const [submittingCreate, setSubmittingCreate] = useState(false);
 
+  // Stable callback refs to prevent unnecessary re-fetches
+  const showToastRef = useRef(showToast);
+  useEffect(() => {
+    showToastRef.current = showToast;
+  }, [showToast]);
+
+  const onReloadItemsRef = useRef(onReloadItems);
+  useEffect(() => {
+    onReloadItemsRef.current = onReloadItems;
+  }, [onReloadItems]);
+
+  // Request deduplication, cancellation & sequence tracking refs
+  const fetchSeqRef = useRef(0);
+  const inFlightKeyRef = useRef<string | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const hasLoadedBranchRef = useRef<string | null>(null);
+  const prevBranchKeyRef = useRef<string>('');
+
+  // Clean up any pending network request on unmount
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
+
   // Load branches on mount
   useEffect(() => {
     loadBranches();
   }, []);
 
-  const isSuperAdmin = Boolean(user && (user.role === 'owner' || String(user.role).toUpperCase() === 'SUPER_ADMIN'));
+  const branchCtx = useContext(BranchContext);
+  const isSuperAdmin = Boolean(
+    user && (user.role === 'owner' || user.role === 'admin' || String(user.role).toUpperCase() === 'SUPER_ADMIN')
+  );
+
+  // Stable active branch key (primitive string) to avoid re-renders on object changes
+  const activeBranchKey = useMemo(() => {
+    if (!isSuperAdmin) {
+      return (user?.branchId || user?.assignedLocation || 'MAIN').trim();
+    }
+    const currentScope = (branchCtx?.selectedBranch || selectedBranch || '').trim();
+    const isAll = !currentScope || currentScope.toLowerCase() === 'all';
+    if (!isAll) {
+      return currentScope;
+    }
+    return (
+      branchCtx?.activeBranch?.code ||
+      branchCtx?.selectedBranchCode ||
+      (branches[0] ? branches[0].code : 'MAIN')
+    ).trim();
+  }, [
+    isSuperAdmin,
+    user?.branchId,
+    user?.assignedLocation,
+    branchCtx?.selectedBranch,
+    selectedBranch,
+    branchCtx?.activeBranch?.code,
+    branchCtx?.selectedBranchCode,
+    branches,
+  ]);
+
+  const currentBranchObj = useMemo(() => {
+    const list = branches.length > 0 ? branches : (branchCtx?.branches || []);
+    if (!isSuperAdmin) {
+      const assigned = (user?.branchId || user?.assignedLocation || 'MAIN').trim();
+      return (
+        list.find((b) => b.id === assigned || (b.code && b.code.toUpperCase() === assigned.toUpperCase())) ||
+        branchCtx?.activeBranch ||
+        null
+      );
+    }
+    const currentScope = (branchCtx?.selectedBranch || selectedBranch || '').trim();
+    const isAll = !currentScope || currentScope.toLowerCase() === 'all';
+    if (!isAll) {
+      const match = list.find(
+        (b) => b.id === currentScope || (b.code && b.code.toUpperCase() === currentScope.toUpperCase())
+      );
+      if (match) return match;
+    }
+    return branchCtx?.activeBranch || list[0] || null;
+  }, [
+    branches,
+    branchCtx?.branches,
+    selectedBranch,
+    user?.branchId,
+    user?.assignedLocation,
+    isSuperAdmin,
+    branchCtx?.selectedBranch,
+    branchCtx?.activeBranch,
+  ]);
+
+  const checkIsSourceBranch = useCallback(
+    (trf: StockTransfer | null | undefined) => {
+      if (!trf) return false;
+      if (user?.id && trf.requestedBy === user.id) return true;
+      if (user?.name != null && trf.requestedByName != null && user.name.trim().toLowerCase() === trf.requestedByName.trim().toLowerCase()) return true;
+      if (user?.username != null && trf.requestedByName != null && user.username.trim().toLowerCase() === trf.requestedByName.trim().toLowerCase()) return true;
+
+      const candidates = new Set<string>();
+      if (user?.branchId) {
+        candidates.add(user.branchId.toLowerCase());
+      } else if (user?.assignedLocation) {
+        candidates.add(user.assignedLocation.toLowerCase());
+      }
+      if (branchCtx?.selectedBranch && branchCtx.selectedBranch.toLowerCase() !== 'all') {
+        candidates.add(branchCtx.selectedBranch.toLowerCase());
+      }
+      if (branchCtx?.selectedBranchCode && branchCtx.selectedBranchCode.toLowerCase() !== 'all') {
+        candidates.add(branchCtx.selectedBranchCode.toLowerCase());
+      }
+      if (currentBranchObj?.id) candidates.add(currentBranchObj.id.toLowerCase());
+      if (currentBranchObj?.code) candidates.add(currentBranchObj.code.toLowerCase());
+      if (currentBranchObj?.name) candidates.add(currentBranchObj.name.toLowerCase());
+
+      const list = branches.length > 0 ? branches : (branchCtx?.branches || []);
+      for (const b of list) {
+        if (candidates.has(b.id.toLowerCase()) || candidates.has(b.code.toLowerCase()) || (b.name && candidates.has(b.name.toLowerCase()))) {
+          candidates.add(b.id.toLowerCase());
+          candidates.add(b.code.toLowerCase());
+          if (b.name) candidates.add(b.name.toLowerCase());
+        }
+      }
+
+      const fromB = (trf.fromBranch || '').toLowerCase();
+      const fromN = (trf.fromBranchName || '').toLowerCase();
+
+      return Boolean((fromB && candidates.has(fromB)) || (fromN && candidates.has(fromN)));
+    },
+    [currentBranchObj, user, branchCtx, branches]
+  );
+
+  const checkIsDestinationBranch = useCallback(
+    (trf: StockTransfer | null | undefined) => {
+      if (!trf) return false;
+      // The sending branch / creator can NEVER be the destination branch
+      if (checkIsSourceBranch(trf)) return false;
+      if (user?.id && trf.requestedBy === user.id) return false;
+      if (user?.name != null && trf.requestedByName != null && user.name.trim().toLowerCase() === trf.requestedByName.trim().toLowerCase()) return false;
+      if (user?.username != null && trf.requestedByName != null && user.username.trim().toLowerCase() === trf.requestedByName.trim().toLowerCase()) return false;
+
+      const candidates = new Set<string>();
+      if (user?.branchId) {
+        candidates.add(user.branchId.toLowerCase());
+      } else if (user?.assignedLocation) {
+        candidates.add(user.assignedLocation.toLowerCase());
+      }
+      if (branchCtx?.selectedBranch && branchCtx.selectedBranch.toLowerCase() !== 'all') {
+        candidates.add(branchCtx.selectedBranch.toLowerCase());
+      }
+      if (branchCtx?.selectedBranchCode && branchCtx.selectedBranchCode.toLowerCase() !== 'all') {
+        candidates.add(branchCtx.selectedBranchCode.toLowerCase());
+      }
+      if (currentBranchObj?.id) candidates.add(currentBranchObj.id.toLowerCase());
+      if (currentBranchObj?.code) candidates.add(currentBranchObj.code.toLowerCase());
+      if (currentBranchObj?.name) candidates.add(currentBranchObj.name.toLowerCase());
+
+      const list = branches.length > 0 ? branches : (branchCtx?.branches || []);
+      for (const b of list) {
+        if (candidates.has(b.id.toLowerCase()) || candidates.has(b.code.toLowerCase()) || (b.name && candidates.has(b.name.toLowerCase()))) {
+          candidates.add(b.id.toLowerCase());
+          candidates.add(b.code.toLowerCase());
+          if (b.name) candidates.add(b.name.toLowerCase());
+        }
+      }
+
+      const toB = (trf.toBranch || '').toLowerCase();
+      const toN = (trf.toBranchName || '').toLowerCase();
+
+      return Boolean((toB && candidates.has(toB)) || (toN && candidates.has(toN)));
+    },
+    [currentBranchObj, user, branchCtx, branches, checkIsSourceBranch]
+  );
 
   const loadBranches = async () => {
     try {
       setLoadingBranches(true);
-      const endpoint = isSuperAdmin ? '/api/branches' : '/api/branches?for=transfer_destinations';
-      const res = await api<{ branches: Branch[] }>(endpoint);
+      const res = await api<{ branches: Branch[] }>('/api/branches?for=transfer_destinations');
       const bList = res.branches || [];
       setBranches(bList);
-
-      // Default wizard branches
-      if (bList.length > 0) {
-        const defaultSource = user.assignedLocation || (bList.find(b => b.code === user.assignedLocation)?.code) || bList[0].code;
-        setWizardFromBranch(defaultSource);
-
-        const defaultDest = bList.find((b) => b.code !== defaultSource)?.code || '';
-        setWizardToBranch(defaultDest);
-      }
     } catch (err: any) {
-      showToast(err.message || 'Failed to load branches', 'error');
+      showToastRef.current(err.message || 'Failed to load branches', 'error');
     } finally {
       setLoadingBranches(false);
     }
   };
 
-  // Load Transfers List
+  // Keep wizard source branch in sync when the branch actually changes
   useEffect(() => {
-    if (activeView === 'list') {
+    if (!activeBranchKey) return;
+    if (prevBranchKeyRef.current && prevBranchKeyRef.current !== activeBranchKey) {
+      // User switched branch
+      setCurrentPage(1);
+      setTransfers([]); // Prevent displaying previous branch's records
+      setInitialLoading(true);
+      if (currentBranchObj) {
+        setWizardFromBranch(currentBranchObj.code);
+        const list = branches.length > 0 ? branches : (branchCtx?.branches || []);
+        const other = list.find((b) => b.code !== currentBranchObj.code && b.id !== currentBranchObj.id)?.code || '';
+        setWizardToBranch(other);
+      }
+    } else if (!prevBranchKeyRef.current && currentBranchObj) {
+      setWizardFromBranch(currentBranchObj.code);
+      const list = branches.length > 0 ? branches : (branchCtx?.branches || []);
+      const other = list.find((b) => b.code !== currentBranchObj.code && b.id !== currentBranchObj.id)?.code || '';
+      setWizardToBranch(other);
+    }
+    prevBranchKeyRef.current = activeBranchKey;
+  }, [activeBranchKey, currentBranchObj, branches, branchCtx?.branches]);
+
+  const loadTransfersList = useCallback(
+    async (options?: { isRefresh?: boolean; forceInitialLoading?: boolean }) => {
+      const branchToQuery = currentBranchObj?.code || currentBranchObj?.id || activeBranchKey;
+      if (!branchToQuery) return;
+
+      const isRefresh = Boolean(options?.isRefresh);
+      const queryKey = `${branchToQuery}|${filterFromDate}|${filterToDate}|${currentPage}`;
+
+      // Prevent duplicate identical request if already in-flight (unless user clicked Refresh)
+      if (!isRefresh && inFlightKeyRef.current === queryKey) {
+        return;
+      }
+
+      // Abort previous in-flight request to prevent race conditions
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      const abortCtrl = new AbortController();
+      abortControllerRef.current = abortCtrl;
+
+      const currentSeq = ++fetchSeqRef.current;
+      inFlightKeyRef.current = queryKey;
+
+      const isNewBranch = hasLoadedBranchRef.current !== branchToQuery;
+      if (isNewBranch || options?.forceInitialLoading) {
+        setInitialLoading(true);
+      }
+      setLoadingList(true);
+
+      try {
+        const res = await getStockTransfers({
+          branch: branchToQuery,
+          from: filterFromDate || undefined,
+          to: filterToDate || undefined,
+          page: currentPage,
+          limit: 10,
+        });
+
+        // Ensure this response is the latest one requested
+        if (currentSeq !== fetchSeqRef.current) return;
+
+        setTransfers(res.transfers || []);
+        setTotalTransfers(res.total || 0);
+        setTotalPages(res.totalPages || 1);
+        hasLoadedBranchRef.current = branchToQuery;
+        setInitialLoading(false);
+      } catch (err: any) {
+        if (err.name === 'AbortError' || abortCtrl.signal.aborted) {
+          return;
+        }
+        if (currentSeq === fetchSeqRef.current) {
+          setInitialLoading(false);
+          showToastRef.current(err.message || 'Failed to load transfers', 'error');
+        }
+      } finally {
+        if (currentSeq === fetchSeqRef.current) {
+          setLoadingList(false);
+          inFlightKeyRef.current = null;
+        }
+      }
+    },
+    [activeBranchKey, currentBranchObj?.code, currentBranchObj?.id, filterFromDate, filterToDate, currentPage]
+  );
+
+  // Load Transfers List only when view, branch, date filters, or page changes
+  useEffect(() => {
+    if (activeView === 'list' && activeBranchKey) {
       loadTransfersList();
     }
-  }, [activeView, currentPage, filterBranch, filterStatus, filterFromDate, filterToDate]);
+  }, [activeView, activeBranchKey, filterFromDate, filterToDate, currentPage, loadTransfersList]);
 
-  const loadTransfersList = async () => {
+  // Direct accept handler
+  const handleDirectAccept = async (id: string) => {
     try {
-      setLoadingList(true);
-      const res = await getStockTransfers({
-        branch: filterBranch !== 'ALL' ? filterBranch : undefined,
-        status: filterStatus !== 'all' ? filterStatus : undefined,
-        search: filterSearch.trim() || undefined,
-        from: filterFromDate || undefined,
-        to: filterToDate || undefined,
-        page: currentPage,
-        limit: 10,
-      });
-      setTransfers(res.transfers || []);
-      setTotalTransfers(res.total || 0);
-      setTotalPages(res.totalPages || 1);
+      setSubmittingAcceptId(id);
+      const res = await acceptStockTransfer(id);
+      showToastRef.current(res.message || 'Transfer accepted successfully! Stock updated for both branches.', 'success');
+      onReloadItemsRef.current?.();
+      if (activeView === 'details') {
+        handleViewTransferDetails(id);
+      } else {
+        await loadTransfersList({ isRefresh: true });
+      }
     } catch (err: any) {
-      showToast(err.message || 'Failed to load transfers', 'error');
+      showToastRef.current(err.message || 'Failed to accept transfer', 'error');
     } finally {
-      setLoadingList(false);
+      setSubmittingAcceptId(null);
     }
   };
 
@@ -229,8 +454,12 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
 
   // Fetch next transfer number when entering Screen 2
   const handleStartCreateTransfer = async () => {
+    const srcBranch = currentBranchObj?.code || currentBranchObj?.id || 'MAIN';
+    setWizardFromBranch(srcBranch);
+    const dest = branches.find((b) => b.code !== srcBranch && b.id !== currentBranchObj?.id)?.code || '';
+    setWizardToBranch(dest);
     try {
-      const res = await getNextStockTransferNumber(wizardFromBranch || undefined);
+      const res = await getNextStockTransferNumber(srcBranch);
       setNextTransferNumber(res.nextTransferNumber || 'TRF-0001');
     } catch {
       setNextTransferNumber('TRF-0001');
@@ -238,6 +467,7 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
     setWizardLines([]);
     setWizardNotes('');
     setProductSearchQuery('');
+    setWizardCategoryFilter('ALL');
     setBranchProducts([]);
     setShowProductDropdown(false);
     setWizardTransferDate(new Date().toISOString().split('T')[0]);
@@ -249,16 +479,26 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
     if (activeView === 'create_step2' && wizardFromBranch) {
       loadSourceBranchProducts();
     }
-  }, [activeView, wizardFromBranch, productSearchQuery]);
+  }, [activeView, wizardFromBranch, productSearchQuery, wizardCategoryFilter]);
 
   const loadSourceBranchProducts = async () => {
     if (!wizardFromBranch) return;
     const currentSeq = ++searchSeqRef.current;
     try {
       setLoadingProducts(true);
-      const res = await getBranchStock(wizardFromBranch, productSearchQuery.trim());
+      const res = await getBranchStock(wizardFromBranch, productSearchQuery.trim(), 100, wizardCategoryFilter);
       if (searchSeqRef.current === currentSeq) {
-        setBranchProducts(res.items || []);
+        const raw = res.items || [];
+        const seen = new Set<string>();
+        const deduplicated: typeof raw = [];
+        for (const p of raw) {
+          const key = (p.sku ? `sku:${String(p.sku).trim().toUpperCase()}` : (p.barcode ? `bc:${String(p.barcode).trim()}` : `name:${String(p.name).trim().toLowerCase()}`));
+          if (!seen.has(key)) {
+            seen.add(key);
+            deduplicated.push(p);
+          }
+        }
+        setBranchProducts(deduplicated);
       }
     } catch (err: any) {
       if (searchSeqRef.current === currentSeq) {
@@ -271,6 +511,16 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
       }
     }
   };
+
+  const wizardCategories = useMemo(() => {
+    const cats = new Set<string>();
+    for (const p of branchProducts) {
+      if (p.category && String(p.category).trim()) {
+        cats.add(String(p.category).trim());
+      }
+    }
+    return Array.from(cats).sort();
+  }, [branchProducts]);
 
   // Load details for Screen 5 & 6
   const handleViewTransferDetails = async (id: string) => {
@@ -346,7 +596,12 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
 
   // Screen 3: Add product to transfer list
   const handleAddProductToTransfer = (prod: any) => {
-    if (wizardLines.some((l) => l.itemId === prod.id)) {
+    const isAlreadyAdded = wizardLines.some((l) =>
+      l.itemId === prod.id ||
+      (prod.sku && l.sku && l.sku.trim().toUpperCase() === prod.sku.trim().toUpperCase()) ||
+      (prod.barcode && l.barcode && l.barcode.trim() === prod.barcode.trim())
+    );
+    if (isAlreadyAdded) {
       showToast(`"${prod.name}" is already in the transfer list. Adjust its quantity below.`, 'info');
       setShowProductDropdown(false);
       return;
@@ -604,22 +859,6 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
             ● Partially Received
           </span>
         );
-      case 'approved':
-        return (
-          <span
-            style={{
-              background: '#f3e8ff',
-              color: '#7e22ce',
-              border: '1px solid #e9d5ff',
-              padding: '0.25rem 0.65rem',
-              borderRadius: '9999px',
-              fontSize: '0.78rem',
-              fontWeight: 700,
-            }}
-          >
-            ● Approved
-          </span>
-        );
       case 'cancelled':
       case 'rejected':
         return (
@@ -637,20 +876,26 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
             ● {status === 'cancelled' ? 'Cancelled' : 'Rejected'}
           </span>
         );
+      case 'draft':
+      case 'requested':
+      case 'approved':
       default:
         return (
           <span
             style={{
-              background: '#f1f5f9',
-              color: '#475569',
-              border: '1px solid #e2e8f0',
+              background: '#fef3c7',
+              color: '#b45309',
+              border: '1px solid #fde68a',
               padding: '0.25rem 0.65rem',
               borderRadius: '9999px',
               fontSize: '0.78rem',
               fontWeight: 700,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
             }}
           >
-            ● Draft
+            ● Pending
           </span>
         );
     }
@@ -762,7 +1007,8 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
           <div className="stock-transfer-actions-row">
             <button
               type="button"
-              onClick={loadTransfersList}
+              onClick={() => loadTransfersList({ isRefresh: true })}
+              disabled={loadingList}
               title="Refresh transfer list"
               className="stock-transfer-btn-refresh"
             >
@@ -790,17 +1036,15 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
             }}
           >
 
-            {/* Incoming Shipments Alert Banner (visible when transfers in transit are arriving at user's branch) */}
+            {/* Incoming Transfers Alert Banner - Dispatched / In Transit Only */}
             {(() => {
-              const incomingInTransit = transfers.filter(
+              const incomingPending = transfers.filter(
                 (t) =>
-                  t.status === 'in_transit' &&
-                  (user.role === 'owner' ||
-                    user.assignedLocation === t.toBranch ||
-                    Boolean(user.allowedLocations?.includes(t.toBranch)))
+                  checkIsDestinationBranch(t) &&
+                  (t.status === 'in_transit' || t.status === 'partially_received')
               );
 
-              if (incomingInTransit.length === 0) return null;
+              if (incomingPending.length === 0) return null;
 
               return (
                 <div
@@ -837,251 +1081,111 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                     </div>
                     <div>
                       <div style={{ fontWeight: 800, color: '#065f46', fontSize: '0.92rem' }}>
-                        {incomingInTransit.length} Incoming Shipment{incomingInTransit.length > 1 ? 's' : ''} in Transit Ready for Receiving
+                        {incomingPending.length} Incoming Stock Transfer{incomingPending.length > 1 ? 's' : ''} In Transit
                       </div>
                       <div style={{ fontSize: '0.8rem', color: '#047857', marginTop: '2px' }}>
-                        Transfers dispatched to your branch. Inspect the delivered items and click <strong>Receive</strong> to credit them to your live inventory.
+                        Transfers dispatched to {currentBranchObj?.name || 'your branch'}. Click <strong>Receive Stock</strong> in the table below to credit stock into your live inventory.
                       </div>
                     </div>
-                  </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setFilterStatus('in_transit');
-                      }}
-                      style={{
-                        background: '#16a34a',
-                        color: '#ffffff',
-                        border: 'none',
-                        padding: '0.45rem 1rem',
-                        borderRadius: '8px',
-                        fontWeight: 700,
-                        fontSize: '0.82rem',
-                        cursor: 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                      }}
-                    >
-                      View In-Transit ({incomingInTransit.length}) ➔
-                    </button>
                   </div>
                 </div>
               );
             })()}
 
-            {/* Filters Toolbar */}
+            {/* Filters Toolbar - Date Filter Only */}
             <div
               style={{
                 display: 'flex',
-                flexWrap: 'wrap',
-                gap: '0.75rem',
                 alignItems: 'center',
+                justifyContent: 'space-between',
                 background: '#f8fafc',
-                padding: '0.85rem 1rem',
+                padding: '0.75rem 1rem',
                 borderRadius: '12px',
                 border: '1px solid #e2e8f0',
                 marginBottom: '1.25rem',
+                flexWrap: 'wrap',
+                gap: '0.75rem',
               }}
             >
-              {/* Branch Filter */}
-              <div style={{ flex: '0 1 180px', minWidth: '150px' }}>
-                <select
-                  className="form-input"
-                  value={filterBranch}
-                  onChange={(e) => {
-                    setFilterBranch(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  style={{
-                    background: '#ffffff',
-                    borderColor: '#cbd5e1',
-                    borderRadius: '8px',
-                    padding: '0.45rem 0.75rem',
-                    fontSize: '0.85rem',
-                    width: '100%',
-                    height: '38px',
-                    boxSizing: 'border-box',
-                  }}
-                >
-                  <option value="ALL">All Branches</option>
-                  {branches.map((b) => (
-                    <option key={b.id} value={b.code}>
-                      {b.name} ({b.code})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Status Filter */}
-              <div style={{ flex: '0 1 160px', minWidth: '135px' }}>
-                <select
-                  className="form-input"
-                  value={filterStatus}
-                  onChange={(e) => {
-                    setFilterStatus(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  style={{
-                    background: '#ffffff',
-                    borderColor: '#cbd5e1',
-                    borderRadius: '8px',
-                    padding: '0.45rem 0.75rem',
-                    fontSize: '0.85rem',
-                    width: '100%',
-                    height: '38px',
-                    boxSizing: 'border-box',
-                  }}
-                >
-                  <option value="all">All Status</option>
-                  <option value="in_transit">In Transit</option>
-                  <option value="completed">Completed</option>
-                  <option value="partially_received">Partially Received</option>
-                  <option value="draft">Draft</option>
-                  <option value="cancelled">Cancelled</option>
-                </select>
-              </div>
-
-              {/* Date Range Filter Capsule */}
-              <div
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
-                  background: '#ffffff',
-                  border: '1px solid #cbd5e1',
-                  borderRadius: '8px',
-                  padding: '0 0.6rem',
-                  height: '38px',
-                  boxSizing: 'border-box',
-                  flex: '0 0 auto',
-                  minWidth: '290px',
-                }}
-              >
-                <CalendarIcon size={14} style={{ color: '#94a3b8', flexShrink: 0 }} />
-                <input
-                  type="date"
-                  value={filterFromDate}
-                  onChange={(e) => {
-                    setFilterFromDate(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  title="From Date"
-                  style={{
-                    border: 'none',
-                    outline: 'none',
-                    fontSize: '0.82rem',
-                    color: filterFromDate ? '#1e293b' : '#64748b',
-                    background: 'transparent',
-                    padding: '0',
-                    width: '125px',
-                    cursor: 'pointer',
-                  }}
-                />
-                <span style={{ color: '#94a3b8', fontSize: '0.8rem', padding: '0 2px' }}>–</span>
-                <input
-                  type="date"
-                  value={filterToDate}
-                  onChange={(e) => {
-                    setFilterToDate(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  title="To Date"
-                  style={{
-                    border: 'none',
-                    outline: 'none',
-                    fontSize: '0.82rem',
-                    color: filterToDate ? '#1e293b' : '#64748b',
-                    background: 'transparent',
-                    padding: '0',
-                    width: '125px',
-                    cursor: 'pointer',
-                  }}
-                />
-              </div>
-
-              {/* Search Input - flexible to take remaining space */}
-              <div style={{ position: 'relative', flex: '1 1 220px', minWidth: '200px' }}>
-                <input
-                  type="text"
-                  className="form-input"
-                  placeholder="Search by transfer number..."
-                  value={filterSearch}
-                  onChange={(e) => {
-                    setFilterSearch(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') loadTransfersList();
-                  }}
-                  style={{
-                    background: '#ffffff',
-                    borderColor: '#cbd5e1',
-                    borderRadius: '8px',
-                    padding: '0.45rem 2rem 0.45rem 2.2rem',
-                    fontSize: '0.85rem',
-                    width: '100%',
-                    height: '38px',
-                    boxSizing: 'border-box',
-                  }}
-                />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
                 <span
                   style={{
-                    position: 'absolute',
-                    left: '10px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    color: '#94a3b8',
-                    pointerEvents: 'none',
+                    fontSize: '0.85rem',
+                    fontWeight: 600,
+                    color: '#475569',
                     display: 'flex',
                     alignItems: 'center',
+                    gap: '6px',
                   }}
                 >
-                  <SearchIcon size={14} />
+                  <FilterIcon size={14} /> Date Range:
                 </span>
-                {filterSearch && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setFilterSearch('');
+
+                {/* Date Range Filter Capsule */}
+                <div
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    background: '#ffffff',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '8px',
+                    padding: '0 0.6rem',
+                    height: '38px',
+                    boxSizing: 'border-box',
+                    flex: '0 0 auto',
+                    minWidth: '290px',
+                  }}
+                >
+                  <CalendarIcon size={14} style={{ color: '#94a3b8', flexShrink: 0 }} />
+                  <input
+                    type="date"
+                    value={filterFromDate}
+                    onChange={(e) => {
+                      setFilterFromDate(e.target.value);
                       setCurrentPage(1);
                     }}
+                    title="From Date"
                     style={{
-                      position: 'absolute',
-                      right: '8px',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      background: 'transparent',
                       border: 'none',
-                      color: '#94a3b8',
+                      outline: 'none',
+                      fontSize: '0.82rem',
+                      color: filterFromDate ? '#1e293b' : '#64748b',
+                      background: 'transparent',
+                      padding: '0',
+                      width: '125px',
                       cursor: 'pointer',
-                      padding: '2px',
-                      display: 'flex',
-                      alignItems: 'center',
                     }}
-                    title="Clear search"
-                  >
-                    <XIcon size={13} />
-                  </button>
-                )}
-              </div>
+                  />
+                  <span style={{ color: '#94a3b8', fontSize: '0.8rem', padding: '0 2px' }}>–</span>
+                  <input
+                    type="date"
+                    value={filterToDate}
+                    onChange={(e) => {
+                      setFilterToDate(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    title="To Date"
+                    style={{
+                      border: 'none',
+                      outline: 'none',
+                      fontSize: '0.82rem',
+                      color: filterToDate ? '#1e293b' : '#64748b',
+                      background: 'transparent',
+                      padding: '0',
+                      width: '125px',
+                      cursor: 'pointer',
+                    }}
+                  />
+                </div>
 
-              {/* Clear All Filters Button */}
-              {(filterBranch !== 'ALL' ||
-                filterStatus !== 'all' ||
-                Boolean(filterFromDate) ||
-                Boolean(filterToDate) ||
-                Boolean(filterSearch.trim())) && (
+                {/* Reset Date Filter Button */}
+                {(Boolean(filterFromDate) || Boolean(filterToDate)) && (
                   <button
                     type="button"
                     onClick={() => {
-                      setFilterBranch('ALL');
-                      setFilterStatus('all');
                       setFilterFromDate('');
                       setFilterToDate('');
-                      setFilterSearch('');
                       setCurrentPage(1);
                     }}
                     style={{
@@ -1098,23 +1202,17 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                       gap: '0.35rem',
                       cursor: 'pointer',
                       flexShrink: 0,
-                      transition: 'all 0.15s ease',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = '#fee2e2';
-                      e.currentTarget.style.color = '#b91c1c';
-                      e.currentTarget.style.borderColor = '#fca5a5';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = '#f1f5f9';
-                      e.currentTarget.style.color = '#475569';
-                      e.currentTarget.style.borderColor = '#cbd5e1';
                     }}
                   >
                     <XIcon size={13} />
-                    <span>Reset</span>
+                    <span>Reset Date</span>
                   </button>
                 )}
+              </div>
+
+              <div style={{ fontSize: '0.82rem', color: '#64748b' }}>
+                Showing transfers for <strong>{currentBranchObj?.name || 'Current Branch'}</strong>
+              </div>
             </div>
 
             {/* Table Matching Reference Image */}
@@ -1163,8 +1261,8 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                     </th>
                   </tr>
                 </thead>
-                <tbody>
-                  {loadingList ? (
+                <tbody style={{ opacity: loadingList && !initialLoading ? 0.65 : 1, transition: 'opacity 0.2s ease' }}>
+                  {initialLoading && transfers.length === 0 ? (
                     <tr>
                       <td colSpan={8} style={{ textAlign: 'center', padding: '3rem', color: '#64748b' }}>
                         <RefreshCwIcon size={24} className="spin" style={{ marginBottom: '8px' }} />
@@ -1230,14 +1328,54 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                               View
                             </button>
 
-                            {/* Direct Receive button for incoming in-transit transfers */}
-                            {trf.status === 'in_transit' &&
-                              (user.role === 'owner' ||
-                                user.assignedLocation === trf.toBranch ||
-                                Boolean(user.allowedLocations?.includes(trf.toBranch))) && (
+                            {/* Dispatch button: Displayed when Pending and not destination-only */}
+                            {(() => {
+                              const isPending = ['draft', 'requested', 'approved', 'pending'].includes(trf.status);
+                              const isDestOnly = !isSuperAdmin && checkIsDestinationBranch(trf) && !checkIsSourceBranch(trf) && trf.requestedBy !== user?.id;
+                              const canDispatchTrf = isPending && !isDestOnly;
+                              if (!canDispatchTrf) return null;
+                              return (
                                 <button
                                   type="button"
-                                  onClick={() => handleDirectReceive(trf.id)}
+                                  onClick={() => {
+                                    handleViewTransferDetails(trf.id);
+                                    setShowDispatchModal(true);
+                                  }}
+                                  style={{
+                                    background: 'linear-gradient(135deg, #4f46e5 0%, #4338ca 100%)',
+                                    color: '#ffffff',
+                                    border: 'none',
+                                    padding: '0.35rem 0.75rem',
+                                    borderRadius: '6px',
+                                    fontSize: '0.8rem',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    boxShadow: '0 2px 6px rgba(79, 70, 229, 0.3)',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                  }}
+                                >
+                                  <TruckIcon size={13} /> Dispatch
+                                </button>
+                              );
+                            })()}
+
+                            {/* Receive Stock button: Destination branch ONLY AFTER dispatch (In Transit) - NEVER for sending branch */}
+                            {(() => {
+                              const isTrfSending =
+                                checkIsSourceBranch(trf) ||
+                                (Boolean(user?.id) && trf.requestedBy === user?.id) ||
+                                (trf.requestedByName != null && user?.name != null && user.name.trim().toLowerCase() === trf.requestedByName.trim().toLowerCase()) ||
+                                (trf.requestedByName != null && user?.username != null && user.username.trim().toLowerCase() === trf.requestedByName.trim().toLowerCase());
+                              if (trf.status !== 'in_transit' || isTrfSending) return null;
+                              const canReceiveTrf = !isTrfSending && (checkIsDestinationBranch(trf) || isSuperAdmin);
+                              if (!canReceiveTrf) return null;
+                              return (
+                                <button
+                                  type="button"
+                                  onClick={() => handleDirectAccept(trf.id)}
+                                  disabled={submittingAcceptId === trf.id}
                                   style={{
                                     background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
                                     color: '#ffffff',
@@ -1246,16 +1384,17 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                                     borderRadius: '6px',
                                     fontSize: '0.8rem',
                                     fontWeight: 700,
-                                    cursor: 'pointer',
+                                    cursor: submittingAcceptId === trf.id ? 'not-allowed' : 'pointer',
                                     boxShadow: '0 2px 6px rgba(22, 163, 74, 0.3)',
                                     display: 'inline-flex',
                                     alignItems: 'center',
                                     gap: '4px',
                                   }}
                                 >
-                                  <CheckCircleIcon size={13} /> Receive
+                                  <CheckCircleIcon size={13} /> {submittingAcceptId === trf.id ? 'Receiving...' : 'Receive Stock'}
                                 </button>
-                              )}
+                              );
+                            })()}
                           </div>
                         </td>
                       </tr>
@@ -1416,29 +1555,27 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
               </span>
             </div>
 
-            {/* From Branch */}
+            {/* From Branch (Source - Read Only) */}
             <div>
               <label className="form-label" style={{ fontWeight: 600, fontSize: '0.85rem', color: '#334155' }}>
-                From Branch * {!isSuperAdmin && <span style={{ fontSize: '0.75rem', color: '#6366f1', fontWeight: 500, marginLeft: '4px' }}>(Locked)</span>}
+                From Branch <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 500, marginLeft: '4px' }}>(Current Branch - Read Only)</span>
               </label>
-              <select
+              <input
+                type="text"
                 className="form-input"
-                value={wizardFromBranch}
-                disabled={!isSuperAdmin}
-                onChange={(e) => handleSourceBranchChange(e.target.value)}
+                value={`${currentBranchObj?.name || wizardFromBranch} (${currentBranchObj?.code || wizardFromBranch})`}
+                disabled
+                readOnly
                 style={{
+                  background: '#f8fafc',
+                  color: '#1e293b',
+                  fontWeight: 600,
                   borderRadius: '8px',
-                  borderColor: '#cbd5e1',
+                  border: '1px solid #cbd5e1',
                   padding: '0.65rem 0.85rem',
-                  ...(!isSuperAdmin ? { background: '#f8fafc', cursor: 'not-allowed', color: '#475569' } : {}),
+                  cursor: 'not-allowed',
                 }}
-              >
-                {branches.map((b) => (
-                  <option key={b.id} value={b.code}>
-                    {b.name} ({b.code})
-                  </option>
-                ))}
-              </select>
+              />
             </div>
 
             {/* To Branch */}
@@ -1458,7 +1595,7 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
               >
                 <option value="">-- Select Destination Branch --</option>
                 {branches
-                  .filter((b) => b.code !== wizardFromBranch)
+                  .filter((b) => b.code !== currentBranchObj?.code && b.id !== currentBranchObj?.id)
                   .map((b) => (
                     <option key={b.id} value={b.code}>
                       {b.name} ({b.code})
@@ -1616,60 +1753,90 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
           {/* Stepper Progress */}
           {renderCreateStepper(2)}
 
-          {/* Product Search Input with Barcode Icon */}
+          {/* Product Search Input with Barcode Icon & Category Filter */}
           <div style={{ position: 'relative', marginBottom: '1.5rem' }}>
-            <div style={{ position: 'relative' }}>
-              <input
-                type="text"
-                className="form-input"
-                placeholder="Search products by name, SKU or barcode..."
-                value={productSearchQuery}
-                onFocus={() => setShowProductDropdown(true)}
-                onChange={(e) => {
-                  setProductSearchQuery(e.target.value);
-                  setShowProductDropdown(true);
-                }}
-                style={{
-                  borderRadius: '10px',
-                  borderColor: '#cbd5e1',
-                  padding: '0.75rem 3rem 0.75rem 2.5rem',
-                  fontSize: '0.92rem',
-                  width: '100%',
-                }}
-              />
-              <span
-                style={{
-                  position: 'absolute',
-                  left: '12px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: '#94a3b8',
-                }}
-              >
-                <SearchIcon size={18} />
-              </span>
-              <button
-                type="button"
-                title="Barcode scanner"
-                onClick={() => {
-                  showToast('Barcode scanner ready. Focus search bar to scan item.', 'info');
-                }}
-                style={{
-                  position: 'absolute',
-                  right: '10px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: '#f1f5f9',
-                  border: '1px solid #cbd5e1',
-                  borderRadius: '6px',
-                  padding: '0.3rem 0.5rem',
-                  fontSize: '0.75rem',
-                  color: '#475569',
-                  cursor: 'pointer',
-                }}
-              >
-                |||| Barcode
-              </button>
+            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+              <div style={{ position: 'relative', flex: 1 }}>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="Search products by name, SKU or barcode..."
+                  value={productSearchQuery}
+                  onFocus={() => setShowProductDropdown(true)}
+                  onChange={(e) => {
+                    setProductSearchQuery(e.target.value);
+                    setShowProductDropdown(true);
+                  }}
+                  style={{
+                    borderRadius: '10px',
+                    borderColor: '#cbd5e1',
+                    padding: '0.75rem 3rem 0.75rem 2.5rem',
+                    fontSize: '0.92rem',
+                    width: '100%',
+                  }}
+                />
+                <span
+                  style={{
+                    position: 'absolute',
+                    left: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: '#94a3b8',
+                  }}
+                >
+                  <SearchIcon size={18} />
+                </span>
+                <button
+                  type="button"
+                  title="Barcode scanner"
+                  onClick={() => {
+                    showToast('Barcode scanner ready. Focus search bar to scan item.', 'info');
+                  }}
+                  style={{
+                    position: 'absolute',
+                    right: '10px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: '#f1f5f9',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '6px',
+                    padding: '0.3rem 0.5rem',
+                    fontSize: '0.75rem',
+                    color: '#475569',
+                    cursor: 'pointer',
+                  }}
+                >
+                  |||| Barcode
+                </button>
+              </div>
+
+              {wizardCategories.length > 0 && (
+                <select
+                  className="form-input"
+                  value={wizardCategoryFilter}
+                  onChange={(e) => {
+                    setWizardCategoryFilter(e.target.value);
+                    setShowProductDropdown(true);
+                  }}
+                  style={{
+                    width: '180px',
+                    borderRadius: '10px',
+                    borderColor: '#cbd5e1',
+                    padding: '0.75rem 0.85rem',
+                    fontSize: '0.88rem',
+                    background: '#ffffff',
+                    color: '#334155',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <option value="ALL">All Categories</option>
+                  {wizardCategories.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
 
             {/* Dropdown Results */}
@@ -1719,7 +1886,11 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                   </div>
                 ) : (
                   branchProducts.map((p) => {
-                    const isAlreadyAdded = wizardLines.some((l) => l.itemId === p.id);
+                    const isAlreadyAdded = wizardLines.some((l) =>
+                      l.itemId === p.id ||
+                      (p.sku && l.sku && l.sku.trim().toUpperCase() === p.sku.trim().toUpperCase()) ||
+                      (p.barcode && l.barcode && l.barcode.trim() === p.barcode.trim())
+                    );
                     const stock = p.availableStockUnits;
                     const isOutOfStock = stock <= 0;
                     return (
@@ -2338,176 +2509,165 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
               </div>
 
               {/* Action buttons */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
-                <button
-                  type="button"
-                  onClick={handlePrintTransferNote}
-                  style={{
-                    background: '#ffffff',
-                    border: '1px solid #cbd5e1',
-                    color: '#334155',
-                    padding: '0.55rem 1rem',
-                    borderRadius: '8px',
-                    fontSize: '0.84rem',
-                    fontWeight: 600,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.45rem',
-                    cursor: 'pointer',
-                    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
-                    transition: 'all 0.15s ease',
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = '#f8fafc')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = '#ffffff')}
-                >
-                  <PrinterIcon size={16} /> Print Transfer Note
-                </button>
+              {(() => {
+                const isPending = ['draft', 'requested', 'approved', 'pending'].includes(detailedTransfer.status);
+                const isInTransit = detailedTransfer.status === 'in_transit';
 
-                {/* Dispatch Button (allowed when draft/requested) */}
-                {['draft', 'requested', 'approved'].includes(detailedTransfer.status) && (
-                  <button
-                    type="button"
-                    onClick={() => setShowDispatchModal(true)}
-                    style={{
-                      background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
-                      color: '#ffffff',
-                      border: 'none',
-                      padding: '0.55rem 1.15rem',
-                      borderRadius: '8px',
-                      fontSize: '0.84rem',
-                      fontWeight: 700,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.45rem',
-                      cursor: 'pointer',
-                      boxShadow: '0 2px 8px rgba(99, 102, 241, 0.3)',
-                    }}
-                  >
-                    <TruckIcon size={16} /> Dispatch Stock
-                  </button>
-                )}
+                // Strict branch role checks
+                const isSendingBranch = 
+                  checkIsSourceBranch(detailedTransfer) || 
+                  (Boolean(user?.id) && detailedTransfer.requestedBy === user?.id) ||
+                  (detailedTransfer.requestedByName != null && user?.name != null && user.name.trim().toLowerCase() === detailedTransfer.requestedByName.trim().toLowerCase()) ||
+                  (detailedTransfer.requestedByName != null && user?.username != null && user.username.trim().toLowerCase() === detailedTransfer.requestedByName.trim().toLowerCase());
+                const isDestBranch = !isSendingBranch && (checkIsDestinationBranch(detailedTransfer) || isSuperAdmin);
 
-                {/* Receive Button (allowed when in_transit or partially_received) */}
-                {['in_transit', 'partially_received'].includes(detailedTransfer.status) && (
-                  (() => {
-                    const isDestinationStaff =
-                      user?.assignedLocation === detailedTransfer.toBranch ||
-                      Boolean(user?.allowedLocations?.includes(detailedTransfer.toBranch));
-                    const isSourceStaff =
-                      user?.assignedLocation === detailedTransfer.fromBranch &&
-                      !Boolean(user?.allowedLocations?.includes(detailedTransfer.toBranch));
-                    const isOwner = user?.role === 'owner';
+                const canDispatch = isPending && isSendingBranch;
+                // STRICTLY REMOVE RECEIVE STOCK FOR SENDING BRANCH
+                const canReceive = isInTransit && !isSendingBranch && isDestBranch;
+                const canCancel = isPending && (isSendingBranch || isSuperAdmin);
 
-                    if (isSourceStaff && !isOwner) {
-                      return (
-                        <div
-                          style={{
-                            padding: '0.5rem 0.95rem',
-                            background: '#eff6ff',
-                            border: '1px solid #bfdbfe',
-                            borderRadius: '8px',
-                            fontSize: '0.82rem',
-                            color: '#1e40af',
-                            fontWeight: 600,
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.4rem',
-                          }}
-                        >
-                          <TruckIcon size={16} /> In Transit – Awaiting receipt by {detailedTransfer.toBranchName}
-                        </div>
-                      );
-                    }
+                return (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      onClick={handlePrintTransferNote}
+                      style={{
+                        background: '#ffffff',
+                        border: '1px solid #cbd5e1',
+                        color: '#334155',
+                        padding: '0.6rem 1.1rem',
+                        borderRadius: '8px',
+                        fontSize: '0.86rem',
+                        fontWeight: 600,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.45rem',
+                        cursor: 'pointer',
+                        boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
+                        transition: 'all 0.15s ease',
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = '#f8fafc')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = '#ffffff')}
+                    >
+                      <PrinterIcon size={16} /> Print Transfer Note
+                    </button>
 
-                    if (isDestinationStaff) {
-                      return (
-                        <button
-                          type="button"
-                          onClick={handleOpenReceiveModal}
-                          style={{
-                            background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
-                            color: '#ffffff',
-                            border: 'none',
-                            padding: '0.55rem 1.25rem',
-                            borderRadius: '8px',
-                            fontSize: '0.84rem',
-                            fontWeight: 700,
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.45rem',
-                            cursor: 'pointer',
-                            boxShadow: '0 2px 10px rgba(22, 163, 74, 0.35)',
-                          }}
-                        >
-                          <CheckCircleIcon size={16} /> Receive Stock
-                        </button>
-                      );
-                    }
+                    {/* 1. Dispatch Transfer Button: Displayed prominently when Pending */}
+                    {canDispatch && (
+                      <button
+                        type="button"
+                        onClick={() => setShowDispatchModal(true)}
+                        disabled={submittingDispatch}
+                        style={{
+                          background: 'linear-gradient(135deg, #4f46e5 0%, #3730a3 100%)',
+                          color: '#ffffff',
+                          border: 'none',
+                          padding: '0.65rem 1.45rem',
+                          borderRadius: '8px',
+                          fontSize: '0.88rem',
+                          fontWeight: 700,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.55rem',
+                          cursor: submittingDispatch ? 'not-allowed' : 'pointer',
+                          boxShadow: '0 4px 14px rgba(79, 70, 229, 0.45)',
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        <TruckIcon size={18} />
+                        <span>{submittingDispatch ? 'Dispatching...' : 'Dispatch Transfer'}</span>
+                      </button>
+                    )}
 
-                    // Owner / Super Admin
-                    return (
-                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.6rem' }}>
-                        <div
-                          style={{
-                            padding: '0.45rem 0.85rem',
-                            background: '#eff6ff',
-                            border: '1px solid #bfdbfe',
-                            borderRadius: '8px',
-                            fontSize: '0.8rem',
-                            color: '#1e40af',
-                            fontWeight: 600,
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.4rem',
-                          }}
-                        >
-                          <TruckIcon size={16} /> In Transit to {detailedTransfer.toBranchName}
-                        </div>
-                        <button
-                          type="button"
-                          onClick={handleOpenReceiveModal}
-                          style={{
-                            background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
-                            color: '#ffffff',
-                            border: 'none',
-                            padding: '0.55rem 1.25rem',
-                            borderRadius: '8px',
-                            fontSize: '0.84rem',
-                            fontWeight: 700,
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.45rem',
-                            cursor: 'pointer',
-                            boxShadow: '0 2px 10px rgba(22, 163, 74, 0.35)',
-                          }}
-                        >
-                          <CheckCircleIcon size={16} /> Receive at {detailedTransfer.toBranchName}
-                        </button>
+                    {/* 2. Receive Stock Button: Destination branch ONLY AFTER dispatch (In Transit) - NEVER for sending branch */}
+                    {canReceive && (
+                      <button
+                        type="button"
+                        onClick={() => handleDirectAccept(detailedTransfer.id)}
+                        disabled={submittingAcceptId === detailedTransfer.id}
+                        style={{
+                          background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
+                          color: '#ffffff',
+                          border: 'none',
+                          padding: '0.65rem 1.45rem',
+                          borderRadius: '8px',
+                          fontSize: '0.88rem',
+                          fontWeight: 700,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.55rem',
+                          cursor: submittingAcceptId === detailedTransfer.id ? 'not-allowed' : 'pointer',
+                          boxShadow: '0 4px 14px rgba(22, 163, 74, 0.45)',
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        <CheckCircleIcon size={18} />
+                        <span>{submittingAcceptId === detailedTransfer.id ? 'Receiving...' : 'Receive Stock'}</span>
+                      </button>
+                    )}
+
+                    {/* 3. Awaiting Dispatch Indicator: Only for receiving branch while transfer is Pending */}
+                    {isPending && !isSendingBranch && isDestBranch && (
+                      <div
+                        style={{
+                          padding: '0.55rem 1rem',
+                          background: '#fffbeb',
+                          border: '1px solid #fde68a',
+                          borderRadius: '8px',
+                          fontSize: '0.84rem',
+                          color: '#92400e',
+                          fontWeight: 600,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.45rem',
+                        }}
+                      >
+                        <ClockIcon size={16} /> Awaiting dispatch from {detailedTransfer.fromBranchName || detailedTransfer.fromBranch}
                       </div>
-                    );
-                  })()
-                )}
+                    )}
 
-                {/* Cancel Button */}
-                {['draft', 'requested'].includes(detailedTransfer.status) && (
-                  <button
-                    type="button"
-                    onClick={handleCancelTransfer}
-                    style={{
-                      background: '#fee2e2',
-                      color: '#b91c1c',
-                      border: '1px solid #fecaca',
-                      padding: '0.55rem 0.95rem',
-                      borderRadius: '8px',
-                      fontSize: '0.84rem',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Cancel Transfer
-                  </button>
-                )}
-              </div>
+                    {/* 4. In Transit Indicator: For sending branch while transfer is In Transit */}
+                    {isInTransit && isSendingBranch && (
+                      <div
+                        style={{
+                          padding: '0.55rem 1rem',
+                          background: '#eff6ff',
+                          border: '1px solid #bfdbfe',
+                          borderRadius: '8px',
+                          fontSize: '0.84rem',
+                          color: '#1e40af',
+                          fontWeight: 600,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.45rem',
+                        }}
+                      >
+                        <TruckIcon size={16} /> Dispatched · In transit to {detailedTransfer.toBranchName || detailedTransfer.toBranch}
+                      </div>
+                    )}
+
+                    {/* Cancel Button: Allowed only when Pending */}
+                    {canCancel && (
+                      <button
+                        type="button"
+                        onClick={handleCancelTransfer}
+                        style={{
+                          background: '#fee2e2',
+                          color: '#b91c1c',
+                          border: '1px solid #fecaca',
+                          padding: '0.6rem 1rem',
+                          borderRadius: '8px',
+                          fontSize: '0.86rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Cancel Transfer
+                      </button>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
 
             {/* 4 Modern Stat Cards */}
@@ -2831,7 +2991,11 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                                 )}
                               </td>
                               <td style={{ padding: '0.85rem 1rem', textAlign: 'center', fontWeight: 700, color: '#0f172a' }}>
-                                {l.qtyMilli / 1000}
+                                {Boolean(detailedTransfer.dispatchedAt) || ['in_transit', 'completed', 'received', 'partially_received'].includes(detailedTransfer.status) ? (
+                                  l.qtyMilli / 1000
+                                ) : (
+                                  <span style={{ color: '#94a3b8', fontSize: '0.82rem' }}>—</span>
+                                )}
                               </td>
                               <td style={{ padding: '0.85rem 1rem', textAlign: 'center' }}>
                                 {detailedTransfer.status === 'completed' || detailedTransfer.status === 'partially_received' ? (
@@ -3101,9 +3265,10 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                     </div>
                   </div>
 
-                  {/* Step 2: In Transit */}
+                  {/* Step 2: Dispatched & In Transit */}
                   {(() => {
-                    const isDispatched = Boolean(detailedTransfer.dispatchedAt) || ['in_transit', 'completed', 'partially_received'].includes(detailedTransfer.status);
+                    const isCancelled = ['cancelled', 'rejected'].includes(detailedTransfer.status);
+                    const isDispatched = Boolean(detailedTransfer.dispatchedAt) || ['in_transit', 'completed', 'received', 'partially_received'].includes(detailedTransfer.status);
                     return (
                       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.85rem', position: 'relative', marginBottom: '1.25rem', zIndex: 1 }}>
                         <div
@@ -3111,7 +3276,7 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                             width: '24px',
                             height: '24px',
                             borderRadius: '50%',
-                            background: isDispatched ? '#16a34a' : (detailedTransfer.status === 'in_transit' ? '#2563eb' : '#cbd5e1'),
+                            background: isDispatched ? '#16a34a' : (isCancelled ? '#ef4444' : '#cbd5e1'),
                             color: '#ffffff',
                             display: 'flex',
                             alignItems: 'center',
@@ -3122,25 +3287,29 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                             boxShadow: isDispatched ? '0 2px 4px rgba(22, 163, 74, 0.3)' : 'none',
                           }}
                         >
-                          {isDispatched ? '✓' : '●'}
+                          {isDispatched ? '✓' : (isCancelled ? '✕' : '○')}
                         </div>
                         <div>
                           <div style={{ fontWeight: 700, color: '#1e293b', fontSize: '0.88rem' }}>
                             Dispatched &amp; In Transit
                           </div>
                           <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '2px' }}>
-                            {detailedTransfer.dispatchedAt
-                              ? `Dispatched ${new Date(detailedTransfer.dispatchedAt).toLocaleString('en-IN')}`
-                              : (isDispatched ? 'Dispatched' : 'Awaiting dispatch at source branch')}
+                            {isCancelled
+                              ? 'Transfer cancelled'
+                              : detailedTransfer.dispatchedAt
+                                ? `Dispatched ${new Date(detailedTransfer.dispatchedAt).toLocaleString('en-IN')}`
+                                : (isDispatched ? 'Dispatched' : `Awaiting dispatch from ${detailedTransfer.fromBranchName || 'source branch'}`)}
                           </div>
                         </div>
                       </div>
                     );
                   })()}
 
-                  {/* Step 3: Received at Target Branch */}
+                  {/* Step 3: Received at Destination */}
                   {(() => {
-                    const isReceived = Boolean(detailedTransfer.receivedAt) || ['completed', 'partially_received'].includes(detailedTransfer.status);
+                    const isCancelled = ['cancelled', 'rejected'].includes(detailedTransfer.status);
+                    const isDispatched = Boolean(detailedTransfer.dispatchedAt) || ['in_transit', 'completed', 'received', 'partially_received'].includes(detailedTransfer.status);
+                    const isReceived = Boolean(detailedTransfer.receivedAt) || ['completed', 'received', 'partially_received'].includes(detailedTransfer.status);
                     return (
                       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.85rem', position: 'relative', marginBottom: '1.25rem', zIndex: 1 }}>
                         <div
@@ -3148,7 +3317,7 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                             width: '24px',
                             height: '24px',
                             borderRadius: '50%',
-                            background: isReceived ? '#16a34a' : '#cbd5e1',
+                            background: isReceived ? '#16a34a' : (isCancelled ? '#ef4444' : '#cbd5e1'),
                             color: '#ffffff',
                             display: 'flex',
                             alignItems: 'center',
@@ -3159,25 +3328,33 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                             boxShadow: isReceived ? '0 2px 4px rgba(22, 163, 74, 0.3)' : 'none',
                           }}
                         >
-                          {isReceived ? '✓' : '○'}
+                          {isReceived ? '✓' : (isCancelled ? '✕' : '○')}
                         </div>
                         <div>
                           <div style={{ fontWeight: 700, color: '#1e293b', fontSize: '0.88rem' }}>
                             Received at Destination
                           </div>
                           <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '2px' }}>
-                            {detailedTransfer.receivedAt
-                              ? `Received ${new Date(detailedTransfer.receivedAt).toLocaleString('en-IN')}`
-                              : (isReceived ? 'Received at branch' : `Pending receipt at ${detailedTransfer.toBranchName}`)}
+                            {isCancelled
+                              ? 'Transfer cancelled'
+                              : detailedTransfer.receivedAt
+                                ? `Received ${new Date(detailedTransfer.receivedAt).toLocaleString('en-IN')}`
+                                : (isReceived
+                                    ? 'Received at branch'
+                                    : (isDispatched
+                                        ? `In transit to ${detailedTransfer.toBranchName || 'destination'}`
+                                        : 'Awaiting dispatch & receipt'))}
                           </div>
                         </div>
                       </div>
                     );
                   })()}
 
-                  {/* Step 4: Stock Updated */}
+                  {/* Step 4: Inventory Ledger Synchronized */}
                   {(() => {
-                    const isStockUpdated = Boolean(detailedTransfer.receivedAt) || ['completed', 'partially_received'].includes(detailedTransfer.status);
+                    const isCancelled = ['cancelled', 'rejected'].includes(detailedTransfer.status);
+                    const isDispatched = Boolean(detailedTransfer.dispatchedAt) || ['in_transit', 'completed', 'received', 'partially_received'].includes(detailedTransfer.status);
+                    const isStockUpdated = Boolean(detailedTransfer.receivedAt) || ['completed', 'received', 'partially_received'].includes(detailedTransfer.status);
                     return (
                       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.85rem', position: 'relative', marginBottom: '1.25rem', zIndex: 1 }}>
                         <div
@@ -3185,7 +3362,7 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                             width: '24px',
                             height: '24px',
                             borderRadius: '50%',
-                            background: isStockUpdated ? '#16a34a' : '#cbd5e1',
+                            background: isStockUpdated ? '#16a34a' : (isCancelled ? '#ef4444' : '#cbd5e1'),
                             color: '#ffffff',
                             display: 'flex',
                             alignItems: 'center',
@@ -3196,25 +3373,31 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                             boxShadow: isStockUpdated ? '0 2px 4px rgba(22, 163, 74, 0.3)' : 'none',
                           }}
                         >
-                          {isStockUpdated ? '✓' : '○'}
+                          {isStockUpdated ? '✓' : (isCancelled ? '✕' : '○')}
                         </div>
                         <div>
                           <div style={{ fontWeight: 700, color: '#1e293b', fontSize: '0.88rem' }}>
                             Inventory Ledger Synchronized
                           </div>
                           <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '2px' }}>
-                            {isStockUpdated
-                              ? `+Stock added at ${detailedTransfer.toBranchName}`
-                              : 'Pending receipt confirmation'}
+                            {isCancelled
+                              ? 'Transfer cancelled'
+                              : isStockUpdated
+                                ? `+Stock added at ${detailedTransfer.toBranchName || 'destination'}`
+                                : (isDispatched
+                                    ? `Source stock deducted; pending destination receipt`
+                                    : 'Pending destination receipt confirmation')}
                           </div>
                         </div>
                       </div>
                     );
                   })()}
 
-                  {/* Step 5: Completed */}
+                  {/* Step 5: Transfer Completed */}
                   {(() => {
-                    const isCompleted = detailedTransfer.status === 'completed';
+                    const isCancelled = ['cancelled', 'rejected'].includes(detailedTransfer.status);
+                    const isCompleted = ['completed', 'received'].includes(detailedTransfer.status);
+                    const isPartial = detailedTransfer.status === 'partially_received';
                     return (
                       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.85rem', position: 'relative', zIndex: 1 }}>
                         <div
@@ -3222,7 +3405,7 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                             width: '24px',
                             height: '24px',
                             borderRadius: '50%',
-                            background: isCompleted ? '#16a34a' : '#cbd5e1',
+                            background: isCompleted ? '#16a34a' : (isPartial ? '#d97706' : (isCancelled ? '#ef4444' : '#cbd5e1')),
                             color: '#ffffff',
                             display: 'flex',
                             alignItems: 'center',
@@ -3233,18 +3416,22 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                             boxShadow: isCompleted ? '0 2px 4px rgba(22, 163, 74, 0.3)' : 'none',
                           }}
                         >
-                          {isCompleted ? '✓' : '○'}
+                          {isCompleted ? '✓' : (isPartial ? '!' : (isCancelled ? '✕' : '○'))}
                         </div>
                         <div>
                           <div style={{ fontWeight: 700, color: '#1e293b', fontSize: '0.88rem' }}>
                             Transfer Completed
                           </div>
                           <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '2px' }}>
-                            {isCompleted
-                              ? 'Transfer cycle finalized successfully'
-                              : detailedTransfer.status === 'partially_received'
-                                ? 'Partially received with recorded shortage'
-                                : 'Awaiting remaining steps'}
+                            {isCancelled
+                              ? 'Transfer cancelled'
+                              : isCompleted
+                                ? 'Transfer cycle finalized successfully'
+                                : (isPartial
+                                    ? 'Partially received with recorded shortage'
+                                    : (detailedTransfer.status === 'in_transit'
+                                        ? 'Awaiting destination receipt'
+                                        : 'Awaiting dispatch and receipt'))}
                           </div>
                         </div>
                       </div>
@@ -3613,6 +3800,19 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
               </div>
             </div>
 
+            {/* Confirmation Message matching prompt spec */}
+            <div
+              style={{
+                fontSize: '0.92rem',
+                color: '#334155',
+                lineHeight: '1.5',
+                marginBottom: '1rem',
+              }}
+            >
+              Are you sure you want to dispatch this stock transfer to{' '}
+              <strong>{detailedTransfer.toBranchName || detailedTransfer.toBranch}</strong>? Once dispatched, the receiving branch will be able to confirm receipt.
+            </div>
+
             {/* Warning Alert */}
             <div
               style={{
@@ -3633,12 +3833,12 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
               <div>
                 <strong>Stock Deduction Notice:</strong> Confirming dispatch will immediately deduct{' '}
                 <strong>{detailedLines.reduce((acc, l) => acc + (l.qtyMilli / 1000), 0)} units</strong> from{' '}
-                <strong>{detailedTransfer.fromBranchName}</strong> live inventory ledger and transition the status to{' '}
+                <strong>{detailedTransfer.fromBranchName || detailedTransfer.fromBranch}</strong> live inventory ledger and transition the status to{' '}
                 <span style={{ fontWeight: 700, color: '#1d4ed8' }}>In Transit</span>.
               </div>
             </div>
 
-            {/* Actions */}
+            {/* Actions: Go Back and Confirm Dispatch */}
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', alignItems: 'center' }}>
               <button
                 type="button"
@@ -3658,7 +3858,7 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                 onMouseEnter={(e) => (e.currentTarget.style.background = '#f8fafc')}
                 onMouseLeave={(e) => (e.currentTarget.style.background = '#ffffff')}
               >
-                Cancel
+                Go Back
               </button>
               <button
                 type="button"
@@ -3682,7 +3882,7 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                 }}
               >
                 <TruckIcon size={16} />
-                <span>{submittingDispatch ? 'Dispatching Stock...' : 'Confirm Stock Dispatch'}</span>
+                <span>{submittingDispatch ? 'Dispatching...' : 'Confirm Dispatch'}</span>
               </button>
             </div>
           </div>

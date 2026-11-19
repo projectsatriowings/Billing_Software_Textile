@@ -110,6 +110,19 @@ export function ExpensesView({
   selectedBranch = 'all',
   onBranchChange,
 }: ExpensesViewProps) {
+  const isStoreManager = Boolean(
+    (userRole && (userRole.toLowerCase() === 'manager' || userRole.toLowerCase() === 'store_manager')) ||
+    (typeof document !== 'undefined' && document.body?.classList?.contains('theme-manager'))
+  );
+  const primaryColor = isStoreManager ? '#653B4B' : '#6d4aff';
+  const primaryHover = isStoreManager ? '#522E3C' : '#4f46e5';
+  const primarySoft = isStoreManager ? '#F5ECF0' : '#f3f0ff';
+  const primaryBorder = isStoreManager ? '#D9C8D0' : '#ede9fe';
+  const primaryShadow = isStoreManager ? 'rgba(101, 59, 75, 0.35)' : 'rgba(109, 74, 255, 0.35)';
+  const primaryGradient = isStoreManager
+    ? 'linear-gradient(135deg, #7A475B 0%, #653B4B 100%)'
+    : 'linear-gradient(135deg, #6d4aff 0%, #4f46e5 100%)';
+
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -515,15 +528,15 @@ export function ExpensesView({
             display: 'inline-flex',
             alignItems: 'center',
             gap: '0.4rem',
-            background: '#f3f0ff',
-            color: '#6d4aff',
+            background: primarySoft,
+            color: primaryColor,
             padding: '0.35rem 0.85rem',
             borderRadius: '9999px',
             fontSize: '0.8rem',
             fontWeight: 700,
-            border: '1px solid #ede9fe',
+            border: `1px solid ${primaryBorder}`,
           }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}><ZapIcon size={14} style={{ color: '#6d4aff' }} /> Expense Register &amp; ITC Tracker</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}><ZapIcon size={14} style={{ color: primaryColor }} /> Expense Register &amp; ITC Tracker</span>
           </span>
           <span style={{ fontSize: '0.85rem', color: '#64748b' }}>
             • {totalCount} total entries recorded
@@ -578,9 +591,10 @@ export function ExpensesView({
           {canWrite && (
             <button
               type="button"
+              className="btn-record-expense"
               onClick={handleOpenNew}
               style={{
-                background: 'linear-gradient(135deg, #6d4aff 0%, #4f46e5 100%)',
+                background: primaryGradient,
                 color: '#ffffff',
                 border: 'none',
                 borderRadius: '10px',
@@ -591,7 +605,7 @@ export function ExpensesView({
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.4rem',
-                boxShadow: '0 4px 14px rgba(109, 74, 255, 0.35)',
+                boxShadow: `0 4px 14px ${primaryShadow}`,
               }}
             >
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}><PlusIcon size={15} /> Record Expense</span>
@@ -617,18 +631,18 @@ export function ExpensesView({
       {/* Summary KPI Cards Grid (Fully Responsive) */}
       <div className="expense-kpi-grid">
         {/* Card 1: Total Expenses */}
-        <div className="expense-kpi-card" style={{ border: '1.5px solid #e0e7ff' }}>
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: 'linear-gradient(90deg, #6d4aff, #818cf8)' }} />
+        <div className="expense-kpi-card" style={{ border: isStoreManager ? `1.5px solid ${primaryBorder}` : '1.5px solid #e0e7ff' }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: isStoreManager ? 'linear-gradient(90deg, #7A475B, #8E586C)' : 'linear-gradient(90deg, #6d4aff, #818cf8)' }} />
           <div className="expense-kpi-top">
-            <span className="expense-kpi-label" style={{ color: '#4338ca' }}>
+            <span className="expense-kpi-label" style={{ color: isStoreManager ? primaryColor : '#4338ca' }}>
               Total Expenses
             </span>
-            <BriefcaseIcon size={18} style={{ color: '#4338ca' }} />
+            <BriefcaseIcon size={18} style={{ color: isStoreManager ? primaryColor : '#4338ca' }} />
           </div>
-          <div className="expense-kpi-value" style={{ color: '#1e1b4b' }}>
+          <div className="expense-kpi-value" style={{ color: isStoreManager ? '#2D1822' : '#1e1b4b' }}>
             {fmtMoney(summary.totalMinor)}
           </div>
-          <div className="expense-kpi-sub" style={{ color: '#6366f1' }}>
+          <div className="expense-kpi-sub" style={{ color: isStoreManager ? primaryColor : '#6366f1' }}>
             {totalCount} voucher{totalCount === 1 ? '' : 's'} recorded
           </div>
         </div>
@@ -704,9 +718,9 @@ export function ExpensesView({
 
       {/* Branch-Wise Breakdown Pills for Super Admin */}
       {branches.length > 0 && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap', marginBottom: '1rem', background: '#ffffff', padding: '0.75rem 1rem', borderRadius: '12px', border: '1.5px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap', marginBottom: '1rem', background: '#ffffff', padding: '0.75rem 1rem', borderRadius: '12px', border: isStoreManager ? `1.5px solid ${primaryBorder}` : '1.5px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
           <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#334155', display: 'flex', alignItems: 'center', gap: '5px' }}>
-            <Building2Icon size={14} style={{ color: '#6d4aff' }} /> Branch Breakdown:
+            <Building2Icon size={14} style={{ color: primaryColor }} /> Branch Breakdown:
           </span>
           <button
             type="button"
@@ -714,9 +728,9 @@ export function ExpensesView({
             style={{
               padding: '0.35rem 0.75rem',
               borderRadius: '8px',
-              border: branchFilter.toUpperCase() === 'ALL' ? '1.5px solid #6d4aff' : '1px solid #cbd5e1',
-              background: branchFilter.toUpperCase() === 'ALL' ? '#f3f0ff' : '#ffffff',
-              color: branchFilter.toUpperCase() === 'ALL' ? '#6d4aff' : '#475569',
+              border: branchFilter.toUpperCase() === 'ALL' ? (isStoreManager ? `1.5px solid ${primaryColor}` : '1.5px solid #6d4aff') : '1px solid #cbd5e1',
+              background: branchFilter.toUpperCase() === 'ALL' ? primarySoft : '#ffffff',
+              color: branchFilter.toUpperCase() === 'ALL' ? primaryColor : '#475569',
               fontWeight: branchFilter.toUpperCase() === 'ALL' ? 700 : 500,
               fontSize: '0.78rem',
               cursor: 'pointer',
@@ -735,9 +749,9 @@ export function ExpensesView({
                 style={{
                   padding: '0.35rem 0.75rem',
                   borderRadius: '8px',
-                  border: isSelected ? '1.5px solid #6d4aff' : '1px solid #cbd5e1',
-                  background: isSelected ? '#f3f0ff' : '#ffffff',
-                  color: isSelected ? '#6d4aff' : '#475569',
+                  border: isSelected ? (isStoreManager ? `1.5px solid ${primaryColor}` : '1.5px solid #6d4aff') : '1px solid #cbd5e1',
+                  background: isSelected ? primarySoft : '#ffffff',
+                  color: isSelected ? primaryColor : '#475569',
                   fontWeight: isSelected ? 700 : 500,
                   fontSize: '0.78rem',
                   cursor: 'pointer',
@@ -776,10 +790,10 @@ export function ExpensesView({
                   onClick={() => handleSelectPreset(p.id)}
                   className="expense-preset-btn"
                   style={{
-                    border: active ? '1.5px solid #6d4aff' : '1.5px solid #e2e8f0',
-                    background: active ? '#6d4aff' : '#f8f7ff',
+                    border: active ? (isStoreManager ? `1.5px solid ${primaryColor}` : '1.5px solid #6d4aff') : '1.5px solid #e2e8f0',
+                    background: active ? primaryColor : (isStoreManager ? '#F9F5F7' : '#f8f7ff'),
                     color: active ? '#ffffff' : '#475569',
-                    boxShadow: active ? '0 2px 6px rgba(109, 74, 255, 0.3)' : 'none',
+                    boxShadow: active ? `0 2px 6px ${primaryShadow}` : 'none',
                   }}
                 >
                   {p.label}
@@ -797,20 +811,20 @@ export function ExpensesView({
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.45rem',
-                background: datePreset === 'custom' || from || to ? '#f3f0ff' : '#ffffff',
-                border: datePreset === 'custom' || from || to ? '1.5px solid #6d4aff' : '1.5px solid #cbd5e1',
+                background: datePreset === 'custom' || from || to ? primarySoft : '#ffffff',
+                border: datePreset === 'custom' || from || to ? (isStoreManager ? `1.5px solid ${primaryColor}` : '1.5px solid #6d4aff') : '1.5px solid #cbd5e1',
                 borderRadius: '8px',
                 padding: '0.4rem 0.85rem',
                 fontSize: '0.82rem',
                 fontWeight: 600,
-                color: datePreset === 'custom' || from || to ? '#6d4aff' : '#334155',
+                color: datePreset === 'custom' || from || to ? primaryColor : '#334155',
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',
                 boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
               }}
               title="Click to select custom dates or pick by month"
             >
-              <CalendarIcon size={15} style={{ color: '#6d4aff' }} />
+              <CalendarIcon size={15} style={{ color: primaryColor }} />
               <span>
                 {from && to
                   ? `${formatDateDisplay(from)} → ${formatDateDisplay(to)}`
@@ -820,7 +834,7 @@ export function ExpensesView({
                       ? `Until ${formatDateDisplay(to)}`
                       : 'Pick Custom Date Range...'}
               </span>
-              <span style={{ fontSize: '0.65rem', marginLeft: '0.15rem', color: '#6d4aff' }}>▼</span>
+              <span style={{ fontSize: '0.65rem', marginLeft: '0.15rem', color: primaryColor }}>▼</span>
             </button>
             {(from || to) && (
               <button
@@ -853,7 +867,7 @@ export function ExpensesView({
           {branches.length > 0 && (
             <div>
               <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                <Building2Icon size={12} style={{ color: '#6d4aff' }} /> Branch
+                <Building2Icon size={12} style={{ color: primaryColor }} /> Branch
               </label>
               <select
                 value={branchFilter}
@@ -1042,12 +1056,12 @@ export function ExpensesView({
               height: '56px',
               margin: '0 auto 1rem',
               borderRadius: '16px',
-              background: '#f1f5f9',
+              background: isStoreManager ? primarySoft : '#f1f5f9',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#6366f1',
-              border: '1px solid #e0e7ff',
+              color: isStoreManager ? primaryColor : '#6366f1',
+              border: `1px solid ${primaryBorder}`,
             }}>
               <FileSpreadsheetIcon size={26} />
             </div>
@@ -1083,7 +1097,7 @@ export function ExpensesView({
                   type="button"
                   onClick={handleOpenNew}
                   style={{
-                    background: 'linear-gradient(135deg, #6d4aff 0%, #4f46e5 100%)',
+                    background: primaryGradient,
                     color: '#ffffff',
                     border: 'none',
                     borderRadius: '10px',
@@ -1091,7 +1105,7 @@ export function ExpensesView({
                     fontSize: '0.85rem',
                     fontWeight: 700,
                     cursor: 'pointer',
-                    boxShadow: '0 4px 14px rgba(109, 74, 255, 0.35)',
+                    boxShadow: `0 4px 14px ${primaryShadow}`,
                   }}
                 >
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}><PlusIcon size={15} /> Record New Expense</span>
@@ -1162,7 +1176,7 @@ export function ExpensesView({
                       )}
                       <td style={{ padding: '0.85rem 1rem', color: '#475569', whiteSpace: 'nowrap' }}>{exp.expenseDate}</td>
                       <td style={{ padding: '0.85rem 1rem' }}>
-                        <span style={{ background: '#f8f7ff', color: '#4338ca', border: '1px solid #e0e7ff', padding: '0.2rem 0.55rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '600' }}>
+                        <span style={{ background: primarySoft, color: primaryColor, border: `1px solid ${primaryBorder}`, padding: '0.2rem 0.55rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '600' }}>
                           {catLabel}
                         </span>
                       </td>
@@ -1376,7 +1390,7 @@ export function ExpensesView({
             {/* Modal Header */}
             <div className="expense-modal-header">
               <div className="expense-modal-title-wrap">
-                <div className="expense-modal-icon-badge" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}><BriefcaseIcon size={20} style={{ color: '#6d4aff' }} /></div>
+                <div className="expense-modal-icon-badge" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}><BriefcaseIcon size={20} style={{ color: primaryColor }} /></div>
                 <div>
                   <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800, color: '#0f172a' }}>
                     {editingExpense ? `Edit Expense (${editingExpense.expenseNumber})` : 'Record Business Expense'}
@@ -1462,7 +1476,7 @@ export function ExpensesView({
               <div className="expense-form-card">
                 <div className="expense-card-header">
                   <div className="expense-card-title">
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><Building2Icon size={16} style={{ color: '#6d4aff' }} /> Vendor / Supplier Details</span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><Building2Icon size={16} style={{ color: primaryColor }} /> Vendor / Supplier Details</span>
                   </div>
                   <span className="expense-badge-pill expense-badge-optional">Optional</span>
                 </div>
@@ -1535,7 +1549,7 @@ export function ExpensesView({
               <div className="expense-form-card">
                 <div className="expense-card-header">
                   <div className="expense-card-title">
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><RupeeIcon size={16} style={{ color: '#6d4aff' }} /> Amount &amp; GST Details</span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><RupeeIcon size={16} style={{ color: primaryColor }} /> Amount &amp; GST Details</span>
                   </div>
                   <span className="expense-badge-pill expense-badge-auto">Live Tax Engine</span>
                 </div>
@@ -1546,7 +1560,7 @@ export function ExpensesView({
                       Expense Amount (₹) <span className="required">*</span>
                     </label>
                     <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                      <span style={{ position: 'absolute', left: '0.85rem', fontWeight: 800, color: '#6d4aff', fontSize: '1.05rem', pointerEvents: 'none' }}>₹</span>
+                      <span style={{ position: 'absolute', left: '0.85rem', fontWeight: 800, color: primaryColor, fontSize: '1.05rem', pointerEvents: 'none' }}>₹</span>
                       <input
                         type="number"
                         step="0.01"
@@ -1626,7 +1640,7 @@ export function ExpensesView({
                     id="taxInclusiveCheck"
                     checked={formTaxInclusive}
                     onChange={(e) => setFormTaxInclusive(e.target.checked)}
-                    style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: '#6d4aff' }}
+                    style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: primaryColor }}
                     onClick={(e) => e.stopPropagation()}
                   />
                   <div>
@@ -1652,7 +1666,7 @@ export function ExpensesView({
                     </div>
                     <div className="expense-calc-pill-item">
                       <span className="expense-calc-pill-label">Total Payable</span>
-                      <span className="expense-calc-pill-val" style={{ color: '#6d4aff' }}>{fmtMoney(liveCalc.totalMinor)}</span>
+                      <span className="expense-calc-pill-val" style={{ color: primaryColor }}>{fmtMoney(liveCalc.totalMinor)}</span>
                     </div>
                     <div className="expense-calc-pill-item" style={{ gridColumn: 'span 3', borderTop: '1px solid #e0e7ff', paddingTop: '0.45rem', marginTop: '0.15rem', display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334155' }}>
@@ -1678,7 +1692,7 @@ export function ExpensesView({
               <div className="expense-form-card">
                 <div className="expense-card-header">
                   <div className="expense-card-title">
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><CreditCardIcon size={16} style={{ color: '#6d4aff' }} /> Payment Status &amp; Mode</span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><CreditCardIcon size={16} style={{ color: primaryColor }} /> Payment Status &amp; Mode</span>
                   </div>
                 </div>
 
@@ -1766,7 +1780,7 @@ export function ExpensesView({
                     type="submit"
                     disabled={isSubmitting}
                     style={{
-                      background: 'linear-gradient(135deg, #6d4aff 0%, #4f46e5 100%)',
+                      background: primaryGradient,
                       color: '#ffffff',
                       border: 'none',
                       borderRadius: '10px',
@@ -1774,7 +1788,7 @@ export function ExpensesView({
                       fontWeight: 700,
                       fontSize: '0.85rem',
                       cursor: isSubmitting ? 'not-allowed' : 'pointer',
-                      boxShadow: '0 4px 14px rgba(109, 74, 255, 0.35)',
+                      boxShadow: `0 4px 14px ${primaryShadow}`,
                       transition: 'transform 0.15s ease, box-shadow 0.15s ease',
                     }}
                   >
@@ -1798,7 +1812,7 @@ export function ExpensesView({
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1.5px solid #f1f5f9', paddingBottom: '0.75rem' }}>
               <div>
                 <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                  <FileTextIcon size={18} style={{ color: '#6d4aff' }} /> Expense Voucher #{viewingExpense.expenseNumber}
+                  <FileTextIcon size={18} style={{ color: primaryColor }} /> Expense Voucher #{viewingExpense.expenseNumber}
                 </h3>
                 <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '0.15rem' }}>
                   Recorded on {formatDateDisplay(viewingExpense.expenseDate)}
@@ -1834,7 +1848,7 @@ export function ExpensesView({
               <div><strong style={{ color: '#64748b' }}>Total GST:</strong> <span style={{ color: '#d97706', fontWeight: 700, fontFamily: 'monospace' }}>{fmtMoney(viewingExpense.cgstMinor + viewingExpense.sgstMinor + viewingExpense.igstMinor)}</span></div>
               <div style={{ gridColumn: '1 / -1', background: '#ffffff', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontWeight: 700, color: '#334155' }}>Total Expense Amount:</span>
-                <span style={{ fontSize: '1.15rem', fontWeight: 800, color: '#6d4aff', fontFamily: 'monospace' }}>{fmtMoney(viewingExpense.totalMinor)}</span>
+                <span style={{ fontSize: '1.15rem', fontWeight: 800, color: primaryColor, fontFamily: 'monospace' }}>{fmtMoney(viewingExpense.totalMinor)}</span>
               </div>
               <div><strong style={{ color: '#64748b' }}>Payment Mode:</strong> <span style={{ textTransform: 'capitalize' }}>{viewingExpense.paymentMethod} ({viewingExpense.paymentStatus})</span></div>
               <div><strong style={{ color: '#64748b' }}>ITC Status:</strong> <span style={{ color: viewingExpense.itcEligibility === 'eligible' ? '#059669' : '#dc2626', fontWeight: 700 }}>{viewingExpense.itcEligibility}</span> ({fmtMoney(viewingExpense.itcMinor)})</div>
@@ -1951,7 +1965,7 @@ export function ExpensesView({
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.75rem' }}>
               <div>
                 <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                  <CalendarIcon size={18} style={{ color: '#6d4aff' }} /> Select Accounting Period
+                  <CalendarIcon size={18} style={{ color: primaryColor }} /> Select Accounting Period
                 </h4>
                 <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '0.15rem' }}>
                   Pick a calendar month or choose an exact custom date range
@@ -1977,9 +1991,9 @@ export function ExpensesView({
             </div>
 
             {/* Quick 1-Click Month Grid with Year Stepper */}
-            <div style={{ background: '#f8f7ff', border: '1px solid #ede9fe', borderRadius: '10px', padding: '0.85rem' }}>
+            <div style={{ background: isStoreManager ? primarySoft : '#f8f7ff', border: isStoreManager ? `1px solid ${primaryBorder}` : '1px solid #ede9fe', borderRadius: '10px', padding: '0.85rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.65rem' }}>
-                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#4338ca', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: isStoreManager ? primaryColor : '#4338ca', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                   Single Month View
                 </span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -2039,8 +2053,8 @@ export function ExpensesView({
                         fontSize: '0.8rem',
                         fontWeight: isCurrentSelection ? 700 : 500,
                         borderRadius: '7px',
-                        border: isCurrentSelection ? '1.5px solid #6d4aff' : '1px solid #e2e8f0',
-                        background: isCurrentSelection ? '#6d4aff' : '#ffffff',
+                        border: isCurrentSelection ? (isStoreManager ? `1.5px solid ${primaryColor}` : '1.5px solid #6d4aff') : '1px solid #e2e8f0',
+                        background: isCurrentSelection ? primaryColor : '#ffffff',
                         color: isCurrentSelection ? '#ffffff' : '#334155',
                         cursor: 'pointer',
                         transition: 'all 0.15s ease',
@@ -2144,7 +2158,7 @@ export function ExpensesView({
                   type="button"
                   onClick={handleApplyCustomModalRange}
                   style={{
-                    background: 'linear-gradient(135deg, #6d4aff 0%, #4f46e5 100%)',
+                    background: primaryGradient,
                     color: '#ffffff',
                     border: 'none',
                     borderRadius: '8px',
@@ -2152,7 +2166,7 @@ export function ExpensesView({
                     fontSize: '0.82rem',
                     fontWeight: 700,
                     cursor: 'pointer',
-                    boxShadow: '0 3px 10px rgba(109, 74, 255, 0.3)',
+                    boxShadow: `0 3px 10px ${primaryShadow}`,
                   }}
                 >
                   Apply Range

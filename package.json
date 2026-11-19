@@ -16,12 +16,14 @@
     "test": "node --import tsx --test --test-concurrency=1 \"shared/test/*.test.ts\" \"server/test/*.test.ts\"",
     "backup": "node scripts/backup-db.mjs",
     "typecheck": "tsc -p server/tsconfig.json && tsc -p client/tsconfig.json",
+    "deploy:vps": "bash scripts/deploy.sh",
     "tunnel": "npx -y cloudflared tunnel --url http://localhost:3001"
   },
   "dependencies": {
     "exceljs": "^4.4.0",
     "html5-qrcode": "^2.3.8",
     "jpeg-js": "^0.4.4",
+    "lucide-react": "^1.75.0",
     "nodemailer": "^10.3.1",
     "pdf-lib": "^1.17.1",
     "pdf-parse": "^2.4.5",

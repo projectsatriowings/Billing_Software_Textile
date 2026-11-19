@@ -6,6 +6,7 @@ import { CustomerDisplay } from './components/CustomerDisplay';
 import './index.css';
 import './components/inventory/PurchaseBentoModal.css';
 import './components/cashier-login.css';
+import './components/manager-theme.css';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -174,7 +175,11 @@ class RootErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState
 
 const container = document.getElementById('root');
 if (container) {
-  const root = createRoot(container);
+  const win = window as any;
+  if (!win.__react_app_root__) {
+    win.__react_app_root__ = createRoot(container);
+  }
+  const root = win.__react_app_root__;
   const urlParams = new URLSearchParams(window.location.search);
   const isScanner = window.location.pathname.startsWith('/scanner') || urlParams.get('mode') === 'scanner' || urlParams.has('scanner');
   const isCfd = window.location.pathname.startsWith('/customer-display') || window.location.pathname.startsWith('/cfd') || urlParams.get('mode') === 'cfd' || urlParams.has('cfd');

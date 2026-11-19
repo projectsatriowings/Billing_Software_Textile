@@ -82,9 +82,13 @@ export const CustomerDirectory: React.FC<CustomerDirectoryProps> = ({
   const [selectedCustomer, setSelectedCustomer] = useState<Party | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  // Filter customers to only customer parties
+  // Filter customers to strictly retail customer parties (excluding wholesale customers)
   const customersList = useMemo(() => {
-    return parties.filter((p) => p.type === 'customer' || !p.type);
+    return parties.filter(
+      (p) =>
+        (p.type === 'customer' || !p.type) &&
+        p.customerType !== 'wholesale'
+    );
   }, [parties]);
 
   // Dynamic Customer Points & Invoice History:

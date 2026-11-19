@@ -245,6 +245,64 @@ export function registerInventory(r: Router) {
     };
   });
 
+  // 1b. Fast branch-specific live stock map for product catalogues (Wholesale/Retail/Transfers)
+  r.get('/api/inventory/branch-stock', requirePerm('items.view'), async (ctx) => {
+    const tenantId = ctx.user!.tenantId;
+    const scope = await resolveBranchScope(ctx);
+
+    let targetBranchId = scope.branchId;
+    let targetBranchCode = scope.branchId;
+
+    if (!targetBranchId) {
+      const fallback = await ctx.db.one<{ id: string; code: string }>(
+        "SELECT id, code FROM branches WHERE tenant_id = ? AND (deleted_at IS NULL OR active = true) ORDER BY (code = 'MAIN') DESC, created_at ASC LIMIT 1",
+        [tenantId],
+      );
+      if (fallback) {
+        targetBranchId = fallback.id;
+        targetBranchCode = fallback.code;
+      }
+    } else {
+      const br = await ctx.db.one<{ id: string; code: string }>(
+        "SELECT id, code FROM branches WHERE tenant_id = ? AND (id = ? OR UPPER(code) = UPPER(?)) AND (deleted_at IS NULL OR active = true) LIMIT 1",
+        [tenantId, targetBranchId, targetBranchId],
+      );
+      if (br) {
+        targetBranchId = br.id;
+        targetBranchCode = br.code;
+      }
+    }
+
+    if (!targetBranchId) {
+      return { branchId: null, branchCode: null, stock: {} };
+    }
+
+    // Reuse existing stock calculation from stock_moves table
+    const rows = await ctx.db.query<{ itemId: string; stockMilli: number }>(
+      `SELECT sm.item_id AS "itemId", COALESCE(SUM(sm.qty_milli), 0)::bigint AS "stockMilli"
+       FROM stock_moves sm
+       WHERE sm.tenant_id = ?
+         AND (
+           sm.branch_id = ?
+           OR (sm.branch_id IS NULL AND (UPPER(sm.location) = UPPER(?) OR UPPER(sm.location) = UPPER(?)))
+         )
+       GROUP BY sm.item_id`,
+      [tenantId, targetBranchId, targetBranchCode || targetBranchId, targetBranchId],
+    );
+
+    const stockMap: Record<string, number> = {};
+    for (const r of rows) {
+      const units = Number(r.stockMilli) / 1000;
+      stockMap[r.itemId] = units > 0 ? units : 0;
+    }
+
+    return {
+      branchId: targetBranchId,
+      branchCode: targetBranchCode,
+      stock: stockMap,
+    };
+  });
+
   // 2. Filterable Inventory Item List
   r.get('/api/inventory/items', requirePerm('stock.view'), async (ctx) => {
     const tenantId = ctx.user!.tenantId;
