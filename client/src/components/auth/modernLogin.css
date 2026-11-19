@@ -111,7 +111,7 @@
 .modern-admin-illustration-area {
   position: absolute;
   bottom: -40px;
-  right: -50px;
+  right: -85px;
   width: 155%;
   max-width: 1350px;
   max-height: 86vh;
@@ -920,7 +920,7 @@
     width: 130%;
     max-height: 78vh;
     bottom: -25px;
-    right: -30px;
+    right: -45px;
   }
 
   .cashier-layout .modern-admin-illustration-area {
