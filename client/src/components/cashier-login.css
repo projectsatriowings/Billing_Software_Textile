@@ -2147,6 +2147,23 @@ body.theme-cashier .cat-bento-icon-box,
   background: var(--primary-soft) !important;
   border: 1px solid rgba(20, 184, 166, 0.35) !important;
   color: var(--primary) !important;
+  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.95) !important;
+}
+
+div.app-container.theme-cashier .cat-bento-header-card:hover,
+div.app-container.theme-cashier .shifts-bento-header-card:hover,
+body.theme-cashier .cat-bento-header-card:hover,
+body.theme-cashier .shifts-bento-header-card:hover,
+.theme-cashier .cat-bento-header-card:hover,
+.theme-cashier .shifts-bento-header-card:hover {
+  border-color: rgba(20, 184, 166, 0.4) !important;
+  box-shadow: 0 6px 22px rgba(15, 45, 46, 0.08), 0 2px 4px rgba(15, 45, 46, 0.04) !important;
+}
+
+div.app-container.theme-cashier .cat-bento-header-card:hover .cat-bento-icon-box,
+body.theme-cashier .cat-bento-header-card:hover .cat-bento-icon-box,
+.theme-cashier .cat-bento-header-card:hover .cat-bento-icon-box {
+  box-shadow: 0 6px 16px rgba(15, 118, 110, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.95) !important;
 }
 
 div.app-container.theme-cashier .cat-bento-icon-box svg,
@@ -2534,23 +2551,39 @@ body.theme-cashier .side-actions-bento-card::before,
   content: none !important;
 }
 
-/* Bento card headers & title groups (force transparent background over cream cards) */
+/* Bento card headers (force transparent background over cream cards) */
 div.app-container.theme-cashier .bento-card-header,
 div.app-container.theme-cashier .cat-card-header,
-div.app-container.theme-cashier .bento-card-title-group,
-div.app-container.theme-cashier .cat-bento-header-content,
 body.theme-cashier .bento-card-header,
 body.theme-cashier .cat-card-header,
-body.theme-cashier .bento-card-title-group,
-body.theme-cashier .cat-bento-header-content,
 .theme-cashier .bento-card-header,
-.theme-cashier .cat-card-header,
-.theme-cashier .bento-card-title-group,
-.theme-cashier .cat-bento-header-content {
+.theme-cashier .cat-card-header {
   background: transparent !important;
   background-color: transparent !important;
   background-image: none !important;
   border-bottom: 1px solid var(--border) !important;
+}
+
+/* Header content, shifts hero banner and title groups must NOT have any border-bottom divider line */
+div.app-container.theme-cashier .bento-card-title-group,
+div.app-container.theme-cashier .cat-bento-title-group,
+div.app-container.theme-cashier .cat-bento-header-content,
+div.app-container.theme-cashier .cat-bento-header-card .cat-bento-header-content,
+div.app-container.theme-cashier .shifts-bento-header-card .cat-bento-header-content,
+body.theme-cashier .bento-card-title-group,
+body.theme-cashier .cat-bento-title-group,
+body.theme-cashier .cat-bento-header-content,
+body.theme-cashier .cat-bento-header-card .cat-bento-header-content,
+body.theme-cashier .shifts-bento-header-card .cat-bento-header-content,
+.theme-cashier .bento-card-title-group,
+.theme-cashier .cat-bento-title-group,
+.theme-cashier .cat-bento-header-content,
+.theme-cashier .cat-bento-header-card .cat-bento-header-content,
+.theme-cashier .shifts-bento-header-card .cat-bento-header-content {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border-bottom: none !important;
 }
 
 div.app-container.theme-cashier .bento-card-title,
