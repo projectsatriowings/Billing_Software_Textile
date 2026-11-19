@@ -302,26 +302,26 @@ const ChevronDownIcon = ({ size = 12, color = 'currentColor' }: { size?: number;
 
 // ── GST rate options ──────────────────────────────────────────────────────────
 export const GST_RATE_OPTIONS = [
-  { bp: 0,    label: '0%',    value: '0' },
-  { bp: 250,  label: '2.5%',  value: '2.5' },
-  { bp: 500,  label: '5%',    value: '5' },
-  { bp: 1200, label: '12%',   value: '12' },
-  { bp: 1800, label: '18%',   value: '18' },
-  { bp: 2800, label: '28%',   value: '28' },
+  { bp: 0, label: '0%', value: '0' },
+  { bp: 250, label: '2.5%', value: '2.5' },
+  { bp: 500, label: '5%', value: '5' },
+  { bp: 1200, label: '12%', value: '12' },
+  { bp: 1800, label: '18%', value: '18' },
+  { bp: 2800, label: '28%', value: '28' },
 ];
 
 export const VALID_GST_BPS = new Set([0, 250, 500, 1200, 1800, 2800]);
 
 // ── Standard Units of measurement ─────────────────────────────────────────────
 export const UOM_OPTIONS = [
-  { code: 'pcs',  label: 'Pieces (pcs)' },
-  { code: 'kg',   label: 'Kilogram (kg)' },
-  { code: 'g',    label: 'Gram (g)' },
-  { code: 'l',    label: 'Litre (l)' },
-  { code: 'ml',   label: 'Millilitre (ml)' },
-  { code: 'box',  label: 'Box (box)' },
+  { code: 'pcs', label: 'Pieces (pcs)' },
+  { code: 'kg', label: 'Kilogram (kg)' },
+  { code: 'g', label: 'Gram (g)' },
+  { code: 'l', label: 'Litre (l)' },
+  { code: 'ml', label: 'Millilitre (ml)' },
+  { code: 'box', label: 'Box (box)' },
   { code: 'pack', label: 'Pack (pack)' },
-  { code: 'm',    label: 'Metre (m)' },
+  { code: 'm', label: 'Metre (m)' },
 ];
 
 // ── Simplified Supplier Excel / CSV Template Columns ───────────────────────────
@@ -1010,17 +1010,17 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
       return -1;
     };
 
-    const iName     = findCol(['product name', 'item name', 'product', 'name', 'item', 'description']);
-    const iUnit     = findCol(['uom', 'unit', 'measurement']);
-    const iPrice    = findCol(['selling price', 'sale price', 'price', 'mrp', 'rate']);
-    const iCost     = findCol(['cost price', 'cost', 'purchase price', 'buying price']);
-    const iHsn      = findCol(['hsn', 'sac', 'hsn code']);
-    const iGst      = findCol(['gst rate', 'gst', 'tax rate', 'tax']);
-    const iInclusive= findCol(['price inclusive of gst', 'price inclusive', 'inclusive', 'incl']);
-    const iStock    = findCol(['opening stock', 'current stock', 'stock', 'qty', 'quantity']);
-    const iBarcode  = findCol(['barcode', 'ean', 'upc', 'gtin', 'bar code']);
-    const iReorder  = findCol(['reorder level', 'reorder qty', 'reorder quantity', 'reorder', 'min stock', 'minimum stock']);
-    const iImage    = findCol([
+    const iName = findCol(['product name', 'item name', 'product', 'name', 'item', 'description']);
+    const iUnit = findCol(['uom', 'unit', 'measurement']);
+    const iPrice = findCol(['selling price', 'sale price', 'price', 'mrp', 'rate']);
+    const iCost = findCol(['cost price', 'cost', 'purchase price', 'buying price']);
+    const iHsn = findCol(['hsn', 'sac', 'hsn code']);
+    const iGst = findCol(['gst rate', 'gst', 'tax rate', 'tax']);
+    const iInclusive = findCol(['price inclusive of gst', 'price inclusive', 'inclusive', 'incl']);
+    const iStock = findCol(['opening stock', 'current stock', 'stock', 'qty', 'quantity']);
+    const iBarcode = findCol(['barcode', 'ean', 'upc', 'gtin', 'bar code']);
+    const iReorder = findCol(['reorder level', 'reorder qty', 'reorder quantity', 'reorder', 'min stock', 'minimum stock']);
+    const iImage = findCol([
       'drive link',
       'drive_link',
       'google drive',
@@ -1060,13 +1060,13 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
       const parts = dataLines[li];
       if (!parts || parts.every((p) => !String(p || '').trim())) continue;
 
-      const name     = getVal(parts, iName, 0);
-      const unitRaw  = getVal(parts, iUnit, 1);
+      const name = getVal(parts, iName, 0);
+      const unitRaw = getVal(parts, iUnit, 1);
       const rawPrice = getVal(parts, iPrice, 2);
-      const rawCost  = getVal(parts, iCost, 3);
-      const hsn      = getVal(parts, iHsn, 4);
-      const gst      = getVal(parts, iGst, 5);
-      const incl     = getVal(parts, iInclusive, 6);
+      const rawCost = getVal(parts, iCost, 3);
+      const hsn = getVal(parts, iHsn, 4);
+      const gst = getVal(parts, iGst, 5);
+      const incl = getVal(parts, iInclusive, 6);
       const rawStock = getVal(parts, iStock, 7);
       const reorderRaw = getVal(parts, iReorder, -1);
 
@@ -2202,183 +2202,183 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
             display: isScanModalOpen ? 'none' : 'flex',
             flexDirection: 'column',
             boxShadow: '0 25px 60px -12px rgba(49, 46, 129, 0.35)',
-          overflow: 'hidden',
-          borderRadius: '16px',
-          margin: '0 auto',
-          background: '#ffffff',
-        }}
-      >
-        {/* ── HEADER ── */}
-        <div
-          className="modal-header"
-          style={{
-            flexShrink: 0,
-            padding: '1rem 1.5rem',
+            overflow: 'hidden',
+            borderRadius: '16px',
+            margin: '0 auto',
             background: '#ffffff',
-            borderBottom: '1px solid var(--border)',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            gap: '1rem',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem' }}>
-            <div
+          {/* ── HEADER ── */}
+          <div
+            className="modal-header"
+            style={{
+              flexShrink: 0,
+              padding: '1rem 1.5rem',
+              background: '#ffffff',
+              borderBottom: '1px solid var(--border)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              gap: '1rem',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem' }}>
+              <div
+                style={{
+                  width: 42,
+                  height: 42,
+                  borderRadius: '10px',
+                  background: 'linear-gradient(135deg, #6d4aff 0%, #4f46e5 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 4px 12px rgba(109, 74, 255, 0.25)',
+                  color: '#ffffff',
+                  flexShrink: 0,
+                }}
+              >
+                <PackageBoxIcon size={22} color="#ffffff" />
+              </div>
+              <div>
+                <h3
+                  className="card-title"
+                  style={{
+                    margin: 0,
+                    fontSize: '1.2rem',
+                    fontWeight: 800,
+                    color: 'var(--text-main)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.55rem',
+                    letterSpacing: '-0.02em',
+                  }}
+                >
+                  Bulk Product Import
+                  <span
+                    style={{
+                      fontSize: '0.78rem',
+                      fontWeight: 600,
+                      color: 'var(--text-muted)',
+                      background: 'var(--bg-main)',
+                      padding: '2px 8px',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border)',
+                    }}
+                  >
+                    {shopName || 'Supermarket & Retail'}
+                  </span>
+                </h3>
+                {/* Modern Step Progression Pills */}
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    marginTop: '0.35rem',
+                    fontSize: '0.8rem',
+                  }}
+                >
+                  {[
+                    { key: 'choose', num: 1, label: 'Choose Data' },
+                    { key: 'review', num: 2, label: 'Review & Fix' },
+                    { key: 'confirm', num: 3, label: 'Confirm' },
+                    { key: 'results', num: 4, label: 'Results' },
+                  ].map((s, idx, arr) => {
+                    const stepOrder = ['choose', 'review', 'confirm', 'results'];
+                    const currIdx = stepOrder.indexOf(step);
+                    const isCurrent = step === s.key;
+                    const isPast = currIdx > idx;
+
+                    return (
+                      <React.Fragment key={s.key}>
+                        <div
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.35rem',
+                            padding: isCurrent ? '0.2rem 0.65rem' : '0.15rem 0.5rem',
+                            borderRadius: '12px',
+                            background: isCurrent ? 'var(--primary-light)' : (isPast ? '#f0fdf4' : 'transparent'),
+                            color: isCurrent ? 'var(--primary)' : (isPast ? '#15803d' : 'var(--text-muted)'),
+                            fontWeight: isCurrent ? 700 : (isPast ? 600 : 500),
+                            border: isCurrent ? '1px solid var(--primary-light)' : (isPast ? '1px solid #dcfce7' : '1px solid transparent'),
+                            transition: 'all 0.15s ease',
+                          }}
+                        >
+                          <span
+                            style={{
+                              width: 17,
+                              height: 17,
+                              borderRadius: '50%',
+                              background: isCurrent ? 'var(--primary)' : (isPast ? '#16a34a' : '#cbd5e1'),
+                              color: '#ffffff',
+                              fontSize: '0.65rem',
+                              fontWeight: 800,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            {isPast ? <CheckIcon size={10} color="#ffffff" /> : s.num}
+                          </span>
+                          <span>{s.label}</span>
+                        </div>
+                        {idx < arr.length - 1 && (
+                          <ChevronRightIcon size={12} color="#cbd5e1" />
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+            <button
+              id="bulk-import-close-btn"
               style={{
-                width: 42,
-                height: 42,
-                borderRadius: '10px',
-                background: 'linear-gradient(135deg, #6d4aff 0%, #4f46e5 100%)',
+                background: '#f8fafc',
+                border: '1px solid var(--border)',
+                color: 'var(--text-muted)',
+                cursor: 'pointer',
+                width: '34px',
+                height: '34px',
+                borderRadius: '8px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 4px 12px rgba(109, 74, 255, 0.25)',
-                color: '#ffffff',
-                flexShrink: 0,
+                transition: 'all 0.15s ease',
+              }}
+              onClick={onClose}
+              disabled={isSubmitting}
+              title="Close"
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#fee2e2';
+                e.currentTarget.style.color = '#ef4444';
+                e.currentTarget.style.borderColor = '#fca5a5';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = '#f8fafc';
+                e.currentTarget.style.color = 'var(--text-muted)';
+                e.currentTarget.style.borderColor = 'var(--border)';
               }}
             >
-              <PackageBoxIcon size={22} color="#ffffff" />
-            </div>
-            <div>
-              <h3
-                className="card-title"
-                style={{
-                  margin: 0,
-                  fontSize: '1.2rem',
-                  fontWeight: 800,
-                  color: 'var(--text-main)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.55rem',
-                  letterSpacing: '-0.02em',
-                }}
-              >
-                Bulk Product Import
-                <span
-                  style={{
-                    fontSize: '0.78rem',
-                    fontWeight: 600,
-                    color: 'var(--text-muted)',
-                    background: 'var(--bg-main)',
-                    padding: '2px 8px',
-                    borderRadius: '6px',
-                    border: '1px solid var(--border)',
-                  }}
-                >
-                  {shopName || 'Supermarket & Retail'}
-                </span>
-              </h3>
-              {/* Modern Step Progression Pills */}
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
-                  marginTop: '0.35rem',
-                  fontSize: '0.8rem',
-                }}
-              >
-                {[
-                  { key: 'choose', num: 1, label: 'Choose Data' },
-                  { key: 'review', num: 2, label: 'Review & Fix' },
-                  { key: 'confirm', num: 3, label: 'Confirm' },
-                  { key: 'results', num: 4, label: 'Results' },
-                ].map((s, idx, arr) => {
-                  const stepOrder = ['choose', 'review', 'confirm', 'results'];
-                  const currIdx = stepOrder.indexOf(step);
-                  const isCurrent = step === s.key;
-                  const isPast = currIdx > idx;
-
-                  return (
-                    <React.Fragment key={s.key}>
-                      <div
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.35rem',
-                          padding: isCurrent ? '0.2rem 0.65rem' : '0.15rem 0.5rem',
-                          borderRadius: '12px',
-                          background: isCurrent ? 'var(--primary-light)' : (isPast ? '#f0fdf4' : 'transparent'),
-                          color: isCurrent ? 'var(--primary)' : (isPast ? '#15803d' : 'var(--text-muted)'),
-                          fontWeight: isCurrent ? 700 : (isPast ? 600 : 500),
-                          border: isCurrent ? '1px solid var(--primary-light)' : (isPast ? '1px solid #dcfce7' : '1px solid transparent'),
-                          transition: 'all 0.15s ease',
-                        }}
-                      >
-                        <span
-                          style={{
-                            width: 17,
-                            height: 17,
-                            borderRadius: '50%',
-                            background: isCurrent ? 'var(--primary)' : (isPast ? '#16a34a' : '#cbd5e1'),
-                            color: '#ffffff',
-                            fontSize: '0.65rem',
-                            fontWeight: 800,
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}
-                        >
-                          {isPast ? <CheckIcon size={10} color="#ffffff" /> : s.num}
-                        </span>
-                        <span>{s.label}</span>
-                      </div>
-                      {idx < arr.length - 1 && (
-                        <ChevronRightIcon size={12} color="#cbd5e1" />
-                      )}
-                    </React.Fragment>
-                  );
-                })}
-              </div>
-            </div>
+              <CloseXIcon size={16} />
+            </button>
           </div>
-          <button
-            id="bulk-import-close-btn"
+
+          {/* ── BODY ── */}
+          <div
             style={{
-              background: '#f8fafc',
-              border: '1px solid var(--border)',
-              color: 'var(--text-muted)',
-              cursor: 'pointer',
-              width: '34px',
-              height: '34px',
-              borderRadius: '8px',
+              flex: 1,
+              minHeight: 0,
+              overflowY: step === 'review' ? 'hidden' : 'auto',
               display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'all 0.15s ease',
-            }}
-            onClick={onClose}
-            disabled={isSubmitting}
-            title="Close"
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#fee2e2';
-              e.currentTarget.style.color = '#ef4444';
-              e.currentTarget.style.borderColor = '#fca5a5';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = '#f8fafc';
-              e.currentTarget.style.color = 'var(--text-muted)';
-              e.currentTarget.style.borderColor = 'var(--border)';
+              flexDirection: 'column',
+              padding: step === 'review' ? '0.75rem 1.25rem' : '1.5rem',
+              background: '#ffffff',
             }}
           >
-            <CloseXIcon size={16} />
-          </button>
-        </div>
-
-        {/* ── BODY ── */}
-        <div
-          style={{
-            flex: 1,
-            minHeight: 0,
-            overflowY: step === 'review' ? 'hidden' : 'auto',
-            display: 'flex',
-            flexDirection: 'column',
-            padding: step === 'review' ? '0.75rem 1.25rem' : '1.5rem',
-            background: '#ffffff',
-          }}
-        >
-          {/* Inject micro styles for animations and focus */}
-          <style>{`
+            {/* Inject micro styles for animations and focus */}
+            <style>{`
             @keyframes bulkSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
             .bulk-spin { animation: bulkSpin 0.9s linear infinite; }
             @keyframes bulkToastIn {
@@ -2398,1369 +2398,1390 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
             }
           `}</style>
 
-          {/* ══════════════════════════════════════════════════════════════════════
+            {/* ══════════════════════════════════════════════════════════════════════
               STEP 1: CHOOSE DATA (8-COLUMN SUPPLIER FORMAT)
              ══════════════════════════════════════════════════════════════════════ */}
-          {step === 'choose' && (
-            <div className="bulk-bento-container">
-              {/* Method Navigation Segmented Pills */}
-              <div className="bulk-method-nav">
-                <button
-                  id="bulk-tab-upload"
-                  onClick={() => { setActiveTab('upload'); setParseError(''); }}
-                  className={`bulk-method-pill ${activeTab === 'upload' ? 'active' : ''}`}
-                >
-                  <UploadCloudIcon size={16} color={activeTab === 'upload' ? 'var(--primary)' : 'var(--text-muted)'} />
-                  <span>Upload File (Excel / CSV)</span>
-                  {activeTab === 'upload' && <span className="bulk-method-dot"></span>}
-                </button>
-                <button
-                  id="bulk-tab-paste"
-                  onClick={() => { setActiveTab('paste'); setParseError(''); }}
-                  className={`bulk-method-pill ${activeTab === 'paste' ? 'active' : ''}`}
-                >
-                  <ClipboardPasteIcon size={16} color={activeTab === 'paste' ? 'var(--primary)' : 'var(--text-muted)'} />
-                  <span>Paste Spreadsheet Data</span>
-                  {activeTab === 'paste' && <span className="bulk-method-dot"></span>}
-                </button>
-                <button
-                  id="bulk-tab-manual"
-                  onClick={() => { setActiveTab('manual'); setParseError(''); }}
-                  className={`bulk-method-pill ${activeTab === 'manual' ? 'active' : ''}`}
-                >
-                  <Edit3Icon size={16} color={activeTab === 'manual' ? 'var(--primary)' : 'var(--text-muted)'} />
-                  <span>Enter Data Manually</span>
-                  {activeTab === 'manual' && <span className="bulk-method-dot"></span>}
-                </button>
-                {onOpenSupplierInvoiceConverter && (
+            {step === 'choose' && (
+              <div className="bulk-bento-container">
+                {/* Method Navigation Segmented Pills */}
+                <div className="bulk-method-nav">
                   <button
-                    type="button"
-                    id="bulk-tab-convert-invoice"
-                    onClick={onOpenSupplierInvoiceConverter}
-                    className="bulk-method-pill"
-                    title="Upload PDF, JPG, or PNG supplier invoices to extract products"
-                    style={{ background: '#f5f3ff', border: '1px solid #ddd6fe', color: '#4f46e5', fontWeight: 600 }}
+                    id="bulk-tab-upload"
+                    onClick={() => { setActiveTab('upload'); setParseError(''); }}
+                    className={`bulk-method-pill ${activeTab === 'upload' ? 'active' : ''}`}
                   >
-                    <FileSpreadsheetIcon size={16} color="#4f46e5" />
-                    <span>Convert Supplier Invoice to Excel</span>
+                    <UploadCloudIcon size={16} color={activeTab === 'upload' ? 'var(--primary)' : 'var(--text-muted)'} />
+                    <span>Upload File (Excel / CSV)</span>
+                    {activeTab === 'upload' && <span className="bulk-method-dot"></span>}
                   </button>
-                )}
-              </div>
-
-              {/* TAB A: UPLOAD FILE BENTO GRID */}
-              {activeTab === 'upload' && (
-                <div className="bulk-bento-grid">
-                  {/* LEFT BENTO TILE: Interactive Hero Dropzone */}
-                  <div
-                    id="bulk-drop-zone"
-                    onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-                    onDragLeave={() => setIsDragging(false)}
-                    onDrop={handleDrop}
-                    onClick={() => fileInputRef.current?.click()}
-                    className={`bulk-bento-hero-dropzone ${isDragging ? 'dragging' : ''}`}
+                  <button
+                    id="bulk-tab-paste"
+                    onClick={() => { setActiveTab('paste'); setParseError(''); }}
+                    className={`bulk-method-pill ${activeTab === 'paste' ? 'active' : ''}`}
                   >
-                    <div className="bulk-drop-icon-squircle">
-                      <UploadCloudIcon size={26} color="#4f46e5" />
-                    </div>
-
-                    <div className="bulk-bento-hero-title">
-                      {fileName ? (
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', color: '#16a34a' }}>
-                          <CheckCircleIcon size={18} color="#16a34a" />
-                          <span>File Ready: {fileName}</span>
-                        </span>
-                      ) : (
-                        <span>Drop supplier CSV or Excel file here</span>
-                      )}
-                    </div>
-
-                    <div className="bulk-bento-hero-subtitle">
-                      {fileName
-                        ? 'Click browse to select a different file or continue to review.'
-                        : 'Drag & drop your catalog spreadsheet or click browse to upload from your device'}
-                    </div>
-
+                    <ClipboardPasteIcon size={16} color={activeTab === 'paste' ? 'var(--primary)' : 'var(--text-muted)'} />
+                    <span>Paste Spreadsheet Data</span>
+                    {activeTab === 'paste' && <span className="bulk-method-dot"></span>}
+                  </button>
+                  <button
+                    id="bulk-tab-manual"
+                    onClick={() => { setActiveTab('manual'); setParseError(''); }}
+                    className={`bulk-method-pill ${activeTab === 'manual' ? 'active' : ''}`}
+                  >
+                    <Edit3Icon size={16} color={activeTab === 'manual' ? 'var(--primary)' : 'var(--text-muted)'} />
+                    <span>Enter Data Manually</span>
+                    {activeTab === 'manual' && <span className="bulk-method-dot"></span>}
+                  </button>
+                  {onOpenSupplierInvoiceConverter && (
                     <button
                       type="button"
-                      className="bulk-bento-browse-btn"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        fileInputRef.current?.click();
-                      }}
+                      id="bulk-tab-convert-invoice"
+                      onClick={onOpenSupplierInvoiceConverter}
+                      className="bulk-method-pill"
+                      title="Upload PDF, JPG, or PNG supplier invoices to extract products"
+                      style={{ background: '#f5f3ff', border: '1px solid #ddd6fe', color: '#4f46e5', fontWeight: 600 }}
                     >
-                      <UploadCloudIcon size={14} color="#ffffff" />
-                      <span>{fileName ? 'Choose Another File' : 'Browse Computer'}</span>
+                      <FileSpreadsheetIcon size={16} color="#4f46e5" />
+                      <span>Convert Supplier Invoice to Excel</span>
                     </button>
+                  )}
+                </div>
 
-                    <div className="bulk-format-tags">
-                      <span className="bulk-format-tag">.XLSX</span>
-                      <span className="bulk-format-tag">.XLS</span>
-                      <span className="bulk-format-tag">.CSV</span>
-                      <span className="bulk-format-tag">.TSV</span>
-                      <span className="bulk-format-tag">.TXT</span>
+                {/* TAB A: UPLOAD FILE BENTO GRID */}
+                {activeTab === 'upload' && (
+                  <div className="bulk-bento-grid">
+                    {/* LEFT BENTO TILE: Interactive Hero Dropzone */}
+                    <div
+                      id="bulk-drop-zone"
+                      onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                      onDragLeave={() => setIsDragging(false)}
+                      onDrop={handleDrop}
+                      onClick={() => fileInputRef.current?.click()}
+                      className={`bulk-bento-hero-dropzone ${isDragging ? 'dragging' : ''}`}
+                    >
+                      <div className="bulk-drop-icon-squircle">
+                        <UploadCloudIcon size={26} color="#4f46e5" />
+                      </div>
+
+                      <div className="bulk-bento-hero-title">
+                        {fileName ? (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', color: '#16a34a' }}>
+                            <CheckCircleIcon size={18} color="#16a34a" />
+                            <span>File Ready: {fileName}</span>
+                          </span>
+                        ) : (
+                          <span>Drop supplier CSV or Excel file here</span>
+                        )}
+                      </div>
+
+                      <div className="bulk-bento-hero-subtitle">
+                        {fileName
+                          ? 'Click browse to select a different file or continue to review.'
+                          : 'Drag & drop your catalog spreadsheet or click browse to upload from your device'}
+                      </div>
+
+                      <button
+                        type="button"
+                        className="bulk-bento-browse-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          fileInputRef.current?.click();
+                        }}
+                      >
+                        <UploadCloudIcon size={14} color="#ffffff" />
+                        <span>{fileName ? 'Choose Another File' : 'Browse Computer'}</span>
+                      </button>
+
+                      <div className="bulk-format-tags">
+                        <span className="bulk-format-tag">.XLSX</span>
+                        <span className="bulk-format-tag">.XLS</span>
+                        <span className="bulk-format-tag">.CSV</span>
+                        <span className="bulk-format-tag">.TSV</span>
+                        <span className="bulk-format-tag">.TXT</span>
+                      </div>
+
+                      <input
+                        ref={fileInputRef}
+                        id="bulk-file-input"
+                        type="file"
+                        accept=".csv,.xlsx,.xls,.tsv,.txt"
+                        style={{ display: 'none' }}
+                        onChange={handleFileChange}
+                      />
                     </div>
 
-                    <input
-                      ref={fileInputRef}
-                      id="bulk-file-input"
-                      type="file"
-                      accept=".csv,.xlsx,.xls,.tsv,.txt"
-                      style={{ display: 'none' }}
-                      onChange={handleFileChange}
-                    />
-                  </div>
-
-                  {/* RIGHT BENTO COLUMN: Templates + Format Specs */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                    {/* BENTO CARD 1: Official Templates */}
-                    <div className="bulk-bento-card">
-                      <div className="bulk-bento-header-row">
-                        <div className="bulk-bento-header-left">
-                          <div className="bulk-bento-badge-icon indigo">
-                            <FileSpreadsheetIcon size={15} />
+                    {/* RIGHT BENTO COLUMN: Templates + Format Specs */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                      {/* BENTO CARD 1: Official Templates */}
+                      <div className="bulk-bento-card">
+                        <div className="bulk-bento-header-row">
+                          <div className="bulk-bento-header-left">
+                            <div className="bulk-bento-badge-icon indigo">
+                              <FileSpreadsheetIcon size={15} />
+                            </div>
+                            <span className="bulk-bento-card-title">Official Import Templates</span>
                           </div>
-                          <span className="bulk-bento-card-title">Official Import Templates</span>
+                          <span style={{ fontSize: '0.65rem', fontWeight: 700, padding: '0.1rem 0.45rem', borderRadius: '4px', background: '#dcfce7', color: '#15803d' }}>
+                            Recommended
+                          </span>
                         </div>
-                        <span style={{ fontSize: '0.65rem', fontWeight: 700, padding: '0.1rem 0.45rem', borderRadius: '4px', background: '#dcfce7', color: '#15803d' }}>
-                          Recommended
-                        </span>
-                      </div>
-                      <div className="bulk-bento-card-desc">
-                        Pre-formatted files with sample supermarket items for instant catalog upload.
-                      </div>
-
-                      <div className="bulk-template-grid">
-                        <div
-                          className="bulk-template-tile"
-                          id="bulk-download-excel-template"
-                          onClick={downloadExcelTemplate}
-                          title="Download Excel (.xlsx) Template with sample items"
-                        >
-                          <div className="bulk-template-icon-squircle excel">
-                            <FileSpreadsheetIcon size={16} color="#16a34a" />
-                          </div>
-                          <div className="bulk-template-info">
-                            <span className="bulk-template-name">Excel Template</span>
-                            <span className="bulk-template-sub">.xlsx format</span>
-                          </div>
-                          <div className="bulk-template-download-btn">
-                            <DownloadIcon size={13} />
-                          </div>
+                        <div className="bulk-bento-card-desc">
+                          Pre-formatted files with sample supermarket items for instant catalog upload.
                         </div>
 
-                        <div
-                          className="bulk-template-tile"
-                          id="bulk-download-csv-template"
-                          onClick={() => downloadCsv('supplier_product_template.csv', TEMPLATE_COLUMNS, SAMPLE_SUPPLIER_ROWS)}
-                          title="Download CSV Template with sample items"
-                        >
-                          <div className="bulk-template-icon-squircle csv">
-                            <FileSpreadsheetIcon size={16} color="#2563eb" />
-                          </div>
-                          <div className="bulk-template-info">
-                            <span className="bulk-template-name">CSV Template</span>
-                            <span className="bulk-template-sub">.csv format</span>
-                          </div>
-                          <div className="bulk-template-download-btn">
-                            <DownloadIcon size={13} />
-                          </div>
-                        </div>
-
-                        {onOpenSupplierInvoiceConverter && (
+                        <div className="bulk-template-grid">
                           <div
                             className="bulk-template-tile"
-                            id="bulk-open-invoice-converter-btn"
-                            onClick={onOpenSupplierInvoiceConverter}
-                            title="Upload a supplier invoice in PDF, JPG, or PNG to convert to Excel import template"
-                            style={{
-                              gridColumn: '1 / -1',
-                              background: 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)',
-                              border: '1.5px dashed #a5b4fc',
-                            }}
+                            id="bulk-download-excel-template"
+                            onClick={downloadExcelTemplate}
+                            title="Download Excel (.xlsx) Template with sample items"
                           >
-                            <div className="bulk-template-icon-squircle purple">
-                              <FileSpreadsheetIcon size={16} color="#4f46e5" />
+                            <div className="bulk-template-icon-squircle excel">
+                              <FileSpreadsheetIcon size={16} color="#16a34a" />
                             </div>
                             <div className="bulk-template-info">
-                              <span className="bulk-template-name" style={{ color: '#3730a3', fontWeight: 700 }}>
-                                Convert Supplier Invoice to Excel
-                              </span>
-                              <span className="bulk-template-sub">
-                                Scan PDF, JPG, or PNG invoice without AI
-                              </span>
+                              <span className="bulk-template-name">Excel Template</span>
+                              <span className="bulk-template-sub">.xlsx format</span>
                             </div>
-                            <div className="bulk-template-download-btn" style={{ color: '#4f46e5' }}>
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            <div className="bulk-template-download-btn">
+                              <DownloadIcon size={13} />
                             </div>
                           </div>
+
+                          <div
+                            className="bulk-template-tile"
+                            id="bulk-download-csv-template"
+                            onClick={() => downloadCsv('supplier_product_template.csv', TEMPLATE_COLUMNS, SAMPLE_SUPPLIER_ROWS)}
+                            title="Download CSV Template with sample items"
+                          >
+                            <div className="bulk-template-icon-squircle csv">
+                              <FileSpreadsheetIcon size={16} color="#2563eb" />
+                            </div>
+                            <div className="bulk-template-info">
+                              <span className="bulk-template-name">CSV Template</span>
+                              <span className="bulk-template-sub">.csv format</span>
+                            </div>
+                            <div className="bulk-template-download-btn">
+                              <DownloadIcon size={13} />
+                            </div>
+                          </div>
+
+                          {onOpenSupplierInvoiceConverter && (
+                            <div
+                              className="bulk-template-tile"
+                              id="bulk-open-invoice-converter-btn"
+                              onClick={onOpenSupplierInvoiceConverter}
+                              title="Upload a supplier invoice in PDF, JPG, or PNG to convert to Excel import template"
+                              style={{
+                                gridColumn: '1 / -1',
+                                background: 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)',
+                                border: '1.5px dashed #a5b4fc',
+                              }}
+                            >
+                              <div className="bulk-template-icon-squircle purple">
+                                <FileSpreadsheetIcon size={16} color="#4f46e5" />
+                              </div>
+                              <div className="bulk-template-info">
+                                <span className="bulk-template-name" style={{ color: '#3730a3', fontWeight: 700 }}>
+                                  Convert Supplier Invoice to Excel
+                                </span>
+                                <span className="bulk-template-sub">
+                                  Scan PDF, JPG, or PNG invoice
+                                </span>
+                              </div>
+                              <div className="bulk-template-download-btn" style={{ color: '#4f46e5' }}>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* BENTO CARD 2: Simplified 8-Column Format Specs */}
+                      <div className="bulk-bento-card">
+                        <div className="bulk-bento-header-row">
+                          <div className="bulk-bento-header-left">
+                            <div className="bulk-bento-badge-icon purple">
+                              <SparklesIcon size={15} color="var(--primary)" />
+                            </div>
+                            <span className="bulk-bento-card-title">Simplified 8-Column Format</span>
+                          </div>
+                          <span style={{ fontSize: '0.65rem', fontWeight: 700, padding: '0.1rem 0.45rem', borderRadius: '4px', background: '#f5f3ff', color: 'var(--primary)', border: '1px solid #ede9fe' }}>
+                            Smart Auto-Fill
+                          </span>
+                        </div>
+                        <div className="bulk-bento-card-desc">
+                          SKU, Barcode & Category are auto-generated. Only 8 columns needed:
+                        </div>
+
+                        <div className="bulk-columns-spec-grid">
+                          {TEMPLATE_COLUMNS.map((c, i) => (
+                            <div
+                              key={c}
+                              className={`bulk-column-pill ${i === 0 || i === 2 ? 'required' : ''}`}
+                              title={i === 0 || i === 2 ? `${c} is mandatory` : `${c} optional/auto-filled`}
+                            >
+                              <span>{c}</span>
+                              {i === 0 || i === 2 && <span className="bulk-col-req-badge">Req</span>}
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="bulk-bento-ai-footer">
+                          <SparklesIcon size={14} color="#6d4aff" />
+                          <span>Detects existing items and restocks shelf quantity without duplicate products.</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* TAB B: PASTE SPREADSHEET DATA BENTO GRID */}
+                {activeTab === 'paste' && (
+                  <div className="bulk-bento-grid">
+                    <div className="bulk-bento-card" style={{ gap: '0.75rem' }}>
+                      <div className="bulk-bento-header-row">
+                        <div className="bulk-bento-header-left">
+                          <div className="bulk-bento-badge-icon purple">
+                            <ClipboardPasteIcon size={15} color="var(--primary)" />
+                          </div>
+                          <span className="bulk-bento-card-title">Paste Tabular Data</span>
+                        </div>
+                        <button
+                          onClick={() => setPasteText(SAMPLE_SUPPLIER_ROWS.map((r) => r.join('\t')).join('\n'))}
+                          className="btn btn-secondary"
+                          style={{ fontSize: '0.76rem', padding: '0.25rem 0.65rem' }}
+                        >
+                          Insert Sample Data
+                        </button>
+                      </div>
+
+                      <textarea
+                        id="bulk-paste-area"
+                        value={pasteText}
+                        onChange={(e) => setPasteText(e.target.value)}
+                        placeholder={'Product Name\tUOM\tSelling Price\tCost Price\tHSN\tGST Rate\tPrice Inclusive of GST\tOpening Stock\nToor Dal 1kg\tkg\t145.50\t120\t0713\t5%\tYes\t50\nBasmati Rice 1kg\tkg\t89\t65\t1006\t5%\tYes\t100'}
+                        style={{
+                          width: '100%', minHeight: '190px', padding: '0.75rem',
+                          borderRadius: '8px', border: '1px solid var(--border)',
+                          background: '#f8fafc', color: 'var(--text-main)',
+                          fontSize: '0.82rem', fontFamily: 'monospace',
+                          resize: 'none', boxSizing: 'border-box',
+                        }}
+                      />
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <button
+                          id="bulk-parse-paste-btn"
+                          onClick={handleParsePaste}
+                          className="btn btn-primary"
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', padding: '0.5rem 1.25rem', fontSize: '0.85rem' }}
+                        >
+                          <span>Parse &amp; Review Data</span>
+                          <ArrowRightIcon size={14} />
+                        </button>
+                        {pasteText && (
+                          <button
+                            type="button"
+                            onClick={() => setPasteText('')}
+                            className="btn btn-secondary"
+                            style={{ fontSize: '0.78rem', padding: '0.35rem 0.65rem' }}
+                          >
+                            Clear Text
+                          </button>
                         )}
                       </div>
                     </div>
 
-                    {/* BENTO CARD 2: Simplified 8-Column Format Specs */}
-                    <div className="bulk-bento-card">
-                      <div className="bulk-bento-header-row">
-                        <div className="bulk-bento-header-left">
-                          <div className="bulk-bento-badge-icon purple">
-                            <SparklesIcon size={15} color="var(--primary)" />
+                    <div className="bulk-bento-card" style={{ justifyContent: 'space-between' }}>
+                      <div>
+                        <div className="bulk-bento-header-row">
+                          <div className="bulk-bento-header-left">
+                            <div className="bulk-bento-badge-icon indigo">
+                              <SparklesIcon size={15} />
+                            </div>
+                            <span className="bulk-bento-card-title">Expected Column Order</span>
                           </div>
-                          <span className="bulk-bento-card-title">Simplified 8-Column Format</span>
                         </div>
-                        <span style={{ fontSize: '0.65rem', fontWeight: 700, padding: '0.1rem 0.45rem', borderRadius: '4px', background: '#f5f3ff', color: 'var(--primary)', border: '1px solid #ede9fe' }}>
-                          Smart Auto-Fill
-                        </span>
-                      </div>
-                      <div className="bulk-bento-card-desc">
-                        SKU, Barcode & Category are auto-generated. Only 8 columns needed:
-                      </div>
+                        <div className="bulk-bento-card-desc">
+                          Copy all 8 columns from Excel or Google Sheets and paste them on the left:
+                        </div>
 
-                      <div className="bulk-columns-spec-grid">
-                        {TEMPLATE_COLUMNS.map((c, i) => (
-                          <div
-                            key={c}
-                            className={`bulk-column-pill ${i === 0 || i === 2 ? 'required' : ''}`}
-                            title={i === 0 || i === 2 ? `${c} is mandatory` : `${c} optional/auto-filled`}
-                          >
-                            <span>{c}</span>
-                            {i === 0 || i === 2 && <span className="bulk-col-req-badge">Req</span>}
-                          </div>
-                        ))}
+                        <div className="bulk-columns-spec-grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
+                          {TEMPLATE_COLUMNS.map((c, i) => (
+                            <div
+                              key={c}
+                              className={`bulk-column-pill ${i === 0 || i === 2 ? 'required' : ''}`}
+                            >
+                              <span>{i + 1}. {c}</span>
+                              {i === 0 || i === 2 && <span className="bulk-col-req-badge">Req</span>}
+                            </div>
+                          ))}
+                        </div>
                       </div>
 
                       <div className="bulk-bento-ai-footer">
                         <SparklesIcon size={14} color="#6d4aff" />
-                        <span>Detects existing items and restocks shelf quantity without duplicate products.</span>
+                        <span>Tab-separated rows from clipboard are automatically parsed into individual product fields.</span>
                       </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* TAB B: PASTE SPREADSHEET DATA BENTO GRID */}
-              {activeTab === 'paste' && (
-                <div className="bulk-bento-grid">
-                  <div className="bulk-bento-card" style={{ gap: '0.75rem' }}>
-                    <div className="bulk-bento-header-row">
-                      <div className="bulk-bento-header-left">
-                        <div className="bulk-bento-badge-icon purple">
-                          <ClipboardPasteIcon size={15} color="var(--primary)" />
+                {/* TAB C: MANUAL ENTRY BENTO GRID */}
+                {activeTab === 'manual' && (
+                  <div className="bulk-bento-grid">
+                    <div className="bulk-bento-card" style={{ gap: '0.85rem' }}>
+                      <div className="bulk-bento-header-row">
+                        <div className="bulk-bento-header-left">
+                          <div className="bulk-bento-badge-icon purple">
+                            <Edit3Icon size={15} color="var(--primary)" />
+                          </div>
+                          <span className="bulk-bento-card-title">Interactive Smart Grid</span>
                         </div>
-                        <span className="bulk-bento-card-title">Paste Tabular Data</span>
+                        <span style={{ fontSize: '0.65rem', fontWeight: 700, padding: '0.1rem 0.45rem', borderRadius: '4px', background: '#dcfce7', color: '#15803d' }}>
+                          Live  Validation
+                        </span>
                       </div>
-                      <button
-                        onClick={() => setPasteText(SAMPLE_SUPPLIER_ROWS.map((r) => r.join('\t')).join('\n'))}
-                        className="btn btn-secondary"
-                        style={{ fontSize: '0.76rem', padding: '0.25rem 0.65rem' }}
-                      >
-                        Insert Sample Data
-                      </button>
-                    </div>
 
-                    <textarea
-                      id="bulk-paste-area"
-                      value={pasteText}
-                      onChange={(e) => setPasteText(e.target.value)}
-                      placeholder={'Product Name\tUOM\tSelling Price\tCost Price\tHSN\tGST Rate\tPrice Inclusive of GST\tOpening Stock\nToor Dal 1kg\tkg\t145.50\t120\t0713\t5%\tYes\t50\nBasmati Rice 1kg\tkg\t89\t65\t1006\t5%\tYes\t100'}
-                      style={{
-                        width: '100%', minHeight: '190px', padding: '0.75rem',
-                        borderRadius: '8px', border: '1px solid var(--border)',
-                        background: '#f8fafc', color: 'var(--text-main)',
-                        fontSize: '0.82rem', fontFamily: 'monospace',
-                        resize: 'none', boxSizing: 'border-box',
-                      }}
-                    />
+                      <div style={{ fontSize: '0.86rem', color: 'var(--text-main)', fontWeight: 600 }}>
+                        Type products directly with automatic barcode and category suggestions
+                      </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
+                        The Smart Grid allows you to enter products like a spreadsheet with real-time SKU generation, conflict resolution, EAN-13 barcode generation, and duplicate checking.
+                      </div>
+
                       <button
-                        id="bulk-parse-paste-btn"
-                        onClick={handleParsePaste}
+                        id="bulk-start-manual-btn"
+                        onClick={handleStartManual}
                         className="btn btn-primary"
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', padding: '0.5rem 1.25rem', fontSize: '0.85rem' }}
+                        style={{ alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', gap: '0.45rem', padding: '0.55rem 1.25rem', marginTop: 'auto' }}
                       >
-                        <span>Parse &amp; Review Data</span>
+                        <span>Open Interactive Smart Grid</span>
                         <ArrowRightIcon size={14} />
                       </button>
-                      {pasteText && (
-                        <button
-                          type="button"
-                          onClick={() => setPasteText('')}
-                          className="btn btn-secondary"
-                          style={{ fontSize: '0.78rem', padding: '0.35rem 0.65rem' }}
-                        >
-                          Clear Text
-                        </button>
-                      )}
                     </div>
-                  </div>
 
-                  <div className="bulk-bento-card" style={{ justifyContent: 'space-between' }}>
-                    <div>
-                      <div className="bulk-bento-header-row">
-                        <div className="bulk-bento-header-left">
-                          <div className="bulk-bento-badge-icon indigo">
-                            <SparklesIcon size={15} />
+                    <div className="bulk-bento-card" style={{ justifyContent: 'space-between' }}>
+                      <div>
+                        <div className="bulk-bento-header-row">
+                          <div className="bulk-bento-header-left">
+                            <div className="bulk-bento-badge-icon indigo">
+                              <SparklesIcon size={15} />
+                            </div>
+                            <span className="bulk-bento-card-title">Automated Features</span>
                           </div>
-                          <span className="bulk-bento-card-title">Expected Column Order</span>
                         </div>
-                      </div>
-                      <div className="bulk-bento-card-desc">
-                        Copy all 8 columns from Excel or Google Sheets and paste them on the left:
-                      </div>
 
-                      <div className="bulk-columns-spec-grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
-                        {TEMPLATE_COLUMNS.map((c, i) => (
-                          <div
-                            key={c}
-                            className={`bulk-column-pill ${i === 0 || i === 2 ? 'required' : ''}`}
-                          >
-                            <span>{i + 1}. {c}</span>
-                            {i === 0 || i === 2 && <span className="bulk-col-req-badge">Req</span>}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.25rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.45rem', fontSize: '0.78rem' }}>
+                            <CheckCircleIcon size={15} color="#16a34a" />
+                            <span style={{ color: 'var(--text-main)' }}><strong>Unique Short SKUs:</strong> Auto-generated based on item name.</span>
                           </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="bulk-bento-ai-footer">
-                      <SparklesIcon size={14} color="#6d4aff" />
-                      <span>Tab-separated rows from clipboard are automatically parsed into individual product fields.</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* TAB C: MANUAL ENTRY BENTO GRID */}
-              {activeTab === 'manual' && (
-                <div className="bulk-bento-grid">
-                  <div className="bulk-bento-card" style={{ gap: '0.85rem' }}>
-                    <div className="bulk-bento-header-row">
-                      <div className="bulk-bento-header-left">
-                        <div className="bulk-bento-badge-icon purple">
-                          <Edit3Icon size={15} color="var(--primary)" />
-                        </div>
-                        <span className="bulk-bento-card-title">Interactive Smart Grid</span>
-                      </div>
-                      <span style={{ fontSize: '0.65rem', fontWeight: 700, padding: '0.1rem 0.45rem', borderRadius: '4px', background: '#dcfce7', color: '#15803d' }}>
-                        Live AI Validation
-                      </span>
-                    </div>
-
-                    <div style={{ fontSize: '0.86rem', color: 'var(--text-main)', fontWeight: 600 }}>
-                      Type products directly with automatic barcode and category suggestions
-                    </div>
-
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-                      The Smart Grid allows you to enter products like a spreadsheet with real-time SKU generation, conflict resolution, EAN-13 barcode generation, and duplicate checking.
-                    </div>
-
-                    <button
-                      id="bulk-start-manual-btn"
-                      onClick={handleStartManual}
-                      className="btn btn-primary"
-                      style={{ alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', gap: '0.45rem', padding: '0.55rem 1.25rem', marginTop: 'auto' }}
-                    >
-                      <span>Open Interactive Smart Grid</span>
-                      <ArrowRightIcon size={14} />
-                    </button>
-                  </div>
-
-                  <div className="bulk-bento-card" style={{ justifyContent: 'space-between' }}>
-                    <div>
-                      <div className="bulk-bento-header-row">
-                        <div className="bulk-bento-header-left">
-                          <div className="bulk-bento-badge-icon indigo">
-                            <SparklesIcon size={15} />
+                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.45rem', fontSize: '0.78rem' }}>
+                            <CheckCircleIcon size={15} color="#16a34a" />
+                            <span style={{ color: 'var(--text-main)' }}><strong>Internal Barcodes:</strong> Standard EAN-13 check-digit barcodes.</span>
                           </div>
-                          <span className="bulk-bento-card-title">Automated Features</span>
+                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.45rem', fontSize: '0.78rem' }}>
+                            <CheckCircleIcon size={15} color="#16a34a" />
+                            <span style={{ color: 'var(--text-main)' }}><strong>Category Suggestions:</strong> Matches against existing shop departments.</span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.45rem', fontSize: '0.78rem' }}>
+                            <CheckCircleIcon size={15} color="#16a34a" />
+                            <span style={{ color: 'var(--text-main)' }}><strong>Restock Match:</strong> Detects existing items and updates quantity safely.</span>
+                          </div>
                         </div>
                       </div>
 
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.25rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.45rem', fontSize: '0.78rem' }}>
-                          <CheckCircleIcon size={15} color="#16a34a" />
-                          <span style={{ color: 'var(--text-main)' }}><strong>Unique Short SKUs:</strong> Auto-generated based on item name.</span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.45rem', fontSize: '0.78rem' }}>
-                          <CheckCircleIcon size={15} color="#16a34a" />
-                          <span style={{ color: 'var(--text-main)' }}><strong>Internal Barcodes:</strong> Standard EAN-13 check-digit barcodes.</span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.45rem', fontSize: '0.78rem' }}>
-                          <CheckCircleIcon size={15} color="#16a34a" />
-                          <span style={{ color: 'var(--text-main)' }}><strong>Category Suggestions:</strong> Matches against existing shop departments.</span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.45rem', fontSize: '0.78rem' }}>
-                          <CheckCircleIcon size={15} color="#16a34a" />
-                          <span style={{ color: 'var(--text-main)' }}><strong>Restock Match:</strong> Detects existing items and updates quantity safely.</span>
-                        </div>
+                      <div className="bulk-bento-ai-footer">
+                        <SparklesIcon size={14} color="#6d4aff" />
+                        <span>Ready to add up to 500 items in a single transaction.</span>
                       </div>
-                    </div>
-
-                    <div className="bulk-bento-ai-footer">
-                      <SparklesIcon size={14} color="#6d4aff" />
-                      <span>Ready to add up to 500 items in a single transaction.</span>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {parseError && (
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    padding: '0.65rem 0.85rem',
-                    borderRadius: '8px',
-                    background: '#fef2f2',
-                    border: '1px solid #fecaca',
-                    color: '#b91c1c',
-                    fontSize: '0.82rem',
-                    fontWeight: 500,
-                  }}
-                >
-                  <AlertTriangleIcon size={16} color="#dc2626" />
-                  <span>{parseError}</span>
-                </div>
-              )}
-            </div>
-          )}
+                {parseError && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      padding: '0.65rem 0.85rem',
+                      borderRadius: '8px',
+                      background: '#fef2f2',
+                      border: '1px solid #fecaca',
+                      color: '#b91c1c',
+                      fontSize: '0.82rem',
+                      fontWeight: 500,
+                    }}
+                  >
+                    <AlertTriangleIcon size={16} color="#dc2626" />
+                    <span>{parseError}</span>
+                  </div>
+                )}
+              </div>
+            )}
 
-          {/* ══════════════════════════════════════════════════════════════════════
+            {/* ══════════════════════════════════════════════════════════════════════
               STEP 2: REVIEW & FIX — MAIN INTERACTIVE PREVIEW
              ══════════════════════════════════════════════════════════════════════ */}
-          {step === 'review' && (
-            <div
-              style={{
-                flex: 1,
-                minHeight: 0,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '0.55rem',
-                overflow: 'visible',
-              }}
-            >
-              {/* TOP SUMMARY FILTER BAR */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.65rem', flexShrink: 0, padding: '0.2rem 0', position: 'relative', zIndex: 50 }}>
-                <div style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap', alignItems: 'center' }}>
-                  <button
-                    id="bulk-filter-all"
-                    onClick={() => setFilter('all')}
-                    style={{
-                      padding: '0.35rem 0.75rem', borderRadius: '20px',
-                      border: filter === 'all' ? '1.5px solid var(--primary)' : '1px solid var(--border)',
-                      background: filter === 'all' ? 'var(--primary-light)' : '#ffffff',
-                      color: filter === 'all' ? 'var(--primary)' : 'var(--text-main)',
-                      fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer',
-                      display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
-                      transition: 'all 0.15s ease',
-                      boxShadow: filter === 'all' ? '0 1px 4px rgba(109,74,255,0.15)' : 'none',
-                    }}
-                  >
-                    <LayersIcon size={13} color={filter === 'all' ? 'var(--primary)' : '#64748b'} />
-                    <span>All Rows</span>
-                    <span style={{
-                      padding: '1px 6px', borderRadius: '10px',
-                      background: filter === 'all' ? 'var(--primary)' : '#f1f5f9',
-                      color: filter === 'all' ? '#ffffff' : '#475569',
-                      fontSize: '0.72rem', fontWeight: 700,
-                    }}>
-                      {validatedRows.length}
-                    </span>
-                  </button>
-                  <button
-                    id="bulk-filter-new"
-                    onClick={() => setFilter('new')}
-                    style={{
-                      padding: '0.35rem 0.75rem', borderRadius: '20px',
-                      border: filter === 'new' ? '1.5px solid #6366f1' : '1px solid #e0e7ff',
-                      background: filter === 'new' ? '#eef2ff' : '#f8faff',
-                      color: '#4338ca',
-                      fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer',
-                      display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
-                      transition: 'all 0.15s ease',
-                      boxShadow: filter === 'new' ? '0 1px 4px rgba(99,102,241,0.2)' : 'none',
-                    }}
-                  >
-                    <SparklesIcon size={13} color="#4338ca" />
-                    <span>New Products</span>
-                    <span style={{
-                      padding: '1px 6px', borderRadius: '10px',
-                      background: filter === 'new' ? '#4338ca' : '#e0e7ff',
-                      color: filter === 'new' ? '#ffffff' : '#4338ca',
-                      fontSize: '0.72rem', fontWeight: 700,
-                    }}>
-                      {newRows.length}
-                    </span>
-                  </button>
-                  <button
-                    id="bulk-filter-restock"
-                    onClick={() => setFilter('restock')}
-                    style={{
-                      padding: '0.35rem 0.75rem', borderRadius: '20px',
-                      border: filter === 'restock' ? '1.5px solid #16a34a' : '1px solid #bbf7d0',
-                      background: filter === 'restock' ? '#dcfce7' : '#f0fdf4',
-                      color: '#15803d',
-                      fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer',
-                      display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
-                      transition: 'all 0.15s ease',
-                      boxShadow: filter === 'restock' ? '0 1px 4px rgba(22,163,74,0.2)' : 'none',
-                    }}
-                  >
-                    <RefreshCwIcon size={12} color="#15803d" />
-                    <span>Restocks</span>
-                    <span style={{
-                      padding: '1px 6px', borderRadius: '10px',
-                      background: filter === 'restock' ? '#15803d' : '#dcfce7',
-                      color: filter === 'restock' ? '#ffffff' : '#15803d',
-                      fontSize: '0.72rem', fontWeight: 700,
-                    }}>
-                      {restockRows.length}
-                    </span>
-                  </button>
-                  {ambiguousRows.length > 0 && (
+            {step === 'review' && (
+              <div
+                style={{
+                  flex: 1,
+                  minHeight: 0,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.55rem',
+                  overflow: 'visible',
+                }}
+              >
+                {/* TOP SUMMARY FILTER BAR */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.65rem', flexShrink: 0, padding: '0.2rem 0', position: 'relative', zIndex: 50 }}>
+                  <div style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap', alignItems: 'center' }}>
                     <button
-                      id="bulk-filter-ambiguous"
-                      onClick={() => setFilter('ambiguous')}
+                      id="bulk-filter-all"
+                      onClick={() => setFilter('all')}
                       style={{
                         padding: '0.35rem 0.75rem', borderRadius: '20px',
-                        border: filter === 'ambiguous' ? '1.5px solid #d97706' : '1px solid #fde68a',
-                        background: filter === 'ambiguous' ? '#fef3c7' : '#fffbeb',
-                        color: '#b45309',
+                        border: filter === 'all' ? '1.5px solid var(--primary)' : '1px solid var(--border)',
+                        background: filter === 'all' ? 'var(--primary-light)' : '#ffffff',
+                        color: filter === 'all' ? 'var(--primary)' : 'var(--text-main)',
                         fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer',
                         display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
                         transition: 'all 0.15s ease',
+                        boxShadow: filter === 'all' ? '0 1px 4px rgba(109,74,255,0.15)' : 'none',
                       }}
                     >
-                      <AlertTriangleIcon size={13} color="#b45309" />
-                      <span>Needs Review</span>
+                      <LayersIcon size={13} color={filter === 'all' ? 'var(--primary)' : '#64748b'} />
+                      <span>All Rows</span>
                       <span style={{
                         padding: '1px 6px', borderRadius: '10px',
-                        background: filter === 'ambiguous' ? '#b45309' : '#fde68a',
-                        color: filter === 'ambiguous' ? '#ffffff' : '#b45309',
+                        background: filter === 'all' ? 'var(--primary)' : '#f1f5f9',
+                        color: filter === 'all' ? '#ffffff' : '#475569',
                         fontSize: '0.72rem', fontWeight: 700,
                       }}>
-                        {ambiguousRows.length}
+                        {validatedRows.length}
                       </span>
                     </button>
-                  )}
-                  {duplicateRows.length > 0 && (
                     <button
-                      id="bulk-filter-duplicate"
-                      onClick={() => setFilter('duplicate')}
+                      id="bulk-filter-new"
+                      onClick={() => setFilter('new')}
                       style={{
                         padding: '0.35rem 0.75rem', borderRadius: '20px',
-                        border: filter === 'duplicate' ? '1.5px solid #ea580c' : '1px solid #fed7aa',
-                        background: filter === 'duplicate' ? '#ffedd5' : '#fff7ed',
-                        color: '#c2410c',
+                        border: filter === 'new' ? '1.5px solid #6366f1' : '1px solid #e0e7ff',
+                        background: filter === 'new' ? '#eef2ff' : '#f8faff',
+                        color: '#4338ca',
                         fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer',
                         display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
                         transition: 'all 0.15s ease',
+                        boxShadow: filter === 'new' ? '0 1px 4px rgba(99,102,241,0.2)' : 'none',
                       }}
                     >
-                      <CopyIcon size={13} color="#c2410c" />
-                      <span>Duplicate Rows</span>
+                      <SparklesIcon size={13} color="#4338ca" />
+                      <span>New Products</span>
                       <span style={{
                         padding: '1px 6px', borderRadius: '10px',
-                        background: filter === 'duplicate' ? '#c2410c' : '#fed7aa',
-                        color: filter === 'duplicate' ? '#ffffff' : '#c2410c',
+                        background: filter === 'new' ? '#4338ca' : '#e0e7ff',
+                        color: filter === 'new' ? '#ffffff' : '#4338ca',
                         fontSize: '0.72rem', fontWeight: 700,
                       }}>
-                        {duplicateRows.length}
+                        {newRows.length}
                       </span>
                     </button>
-                  )}
-                  {errorRows.length > 0 && (
                     <button
-                      id="bulk-filter-error"
-                      onClick={() => setFilter('error')}
+                      id="bulk-filter-restock"
+                      onClick={() => setFilter('restock')}
                       style={{
                         padding: '0.35rem 0.75rem', borderRadius: '20px',
-                        border: filter === 'error' ? '1.5px solid #dc2626' : '1px solid #fecaca',
-                        background: filter === 'error' ? '#fee2e2' : '#fef2f2',
-                        color: '#b91c1c',
+                        border: filter === 'restock' ? '1.5px solid #16a34a' : '1px solid #bbf7d0',
+                        background: filter === 'restock' ? '#dcfce7' : '#f0fdf4',
+                        color: '#15803d',
                         fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer',
                         display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
                         transition: 'all 0.15s ease',
+                        boxShadow: filter === 'restock' ? '0 1px 4px rgba(22,163,74,0.2)' : 'none',
                       }}
                     >
-                      <AlertCircleIcon size={13} color="#b91c1c" />
-                      <span>Errors</span>
+                      <RefreshCwIcon size={12} color="#15803d" />
+                      <span>Restocks</span>
                       <span style={{
                         padding: '1px 6px', borderRadius: '10px',
-                        background: filter === 'error' ? '#b91c1c' : '#fecaca',
-                        color: filter === 'error' ? '#ffffff' : '#b91c1c',
+                        background: filter === 'restock' ? '#15803d' : '#dcfce7',
+                        color: filter === 'restock' ? '#ffffff' : '#15803d',
                         fontSize: '0.72rem', fontWeight: 700,
                       }}>
-                        {errorRows.length}
+                        {restockRows.length}
                       </span>
                     </button>
-                  )}
-                </div>
+                    {ambiguousRows.length > 0 && (
+                      <button
+                        id="bulk-filter-ambiguous"
+                        onClick={() => setFilter('ambiguous')}
+                        style={{
+                          padding: '0.35rem 0.75rem', borderRadius: '20px',
+                          border: filter === 'ambiguous' ? '1.5px solid #d97706' : '1px solid #fde68a',
+                          background: filter === 'ambiguous' ? '#fef3c7' : '#fffbeb',
+                          color: '#b45309',
+                          fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer',
+                          display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        <AlertTriangleIcon size={13} color="#b45309" />
+                        <span>Needs Review</span>
+                        <span style={{
+                          padding: '1px 6px', borderRadius: '10px',
+                          background: filter === 'ambiguous' ? '#b45309' : '#fde68a',
+                          color: filter === 'ambiguous' ? '#ffffff' : '#b45309',
+                          fontSize: '0.72rem', fontWeight: 700,
+                        }}>
+                          {ambiguousRows.length}
+                        </span>
+                      </button>
+                    )}
+                    {duplicateRows.length > 0 && (
+                      <button
+                        id="bulk-filter-duplicate"
+                        onClick={() => setFilter('duplicate')}
+                        style={{
+                          padding: '0.35rem 0.75rem', borderRadius: '20px',
+                          border: filter === 'duplicate' ? '1.5px solid #ea580c' : '1px solid #fed7aa',
+                          background: filter === 'duplicate' ? '#ffedd5' : '#fff7ed',
+                          color: '#c2410c',
+                          fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer',
+                          display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        <CopyIcon size={13} color="#c2410c" />
+                        <span>Duplicate Rows</span>
+                        <span style={{
+                          padding: '1px 6px', borderRadius: '10px',
+                          background: filter === 'duplicate' ? '#c2410c' : '#fed7aa',
+                          color: filter === 'duplicate' ? '#ffffff' : '#c2410c',
+                          fontSize: '0.72rem', fontWeight: 700,
+                        }}>
+                          {duplicateRows.length}
+                        </span>
+                      </button>
+                    )}
+                    {errorRows.length > 0 && (
+                      <button
+                        id="bulk-filter-error"
+                        onClick={() => setFilter('error')}
+                        style={{
+                          padding: '0.35rem 0.75rem', borderRadius: '20px',
+                          border: filter === 'error' ? '1.5px solid #dc2626' : '1px solid #fecaca',
+                          background: filter === 'error' ? '#fee2e2' : '#fef2f2',
+                          color: '#b91c1c',
+                          fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer',
+                          display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        <AlertCircleIcon size={13} color="#b91c1c" />
+                        <span>Errors</span>
+                        <span style={{
+                          padding: '1px 6px', borderRadius: '10px',
+                          background: filter === 'error' ? '#b91c1c' : '#fecaca',
+                          color: filter === 'error' ? '#ffffff' : '#b91c1c',
+                          fontSize: '0.72rem', fontWeight: 700,
+                        }}>
+                          {errorRows.length}
+                        </span>
+                      </button>
+                    )}
+                  </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', fontSize: '0.82rem', color: 'var(--text-muted)', flexWrap: 'wrap' }}>
-                  {/* ── Global Supplier Selector ── */}
-                  <div ref={supplierDropdownRef} style={{ position: 'relative', display: 'inline-block', zIndex: isSupplierDropdownOpen ? 9999 : 'auto' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', fontSize: '0.82rem', color: 'var(--text-muted)', flexWrap: 'wrap' }}>
+                    {/* ── Global Supplier Selector ── */}
+                    <div ref={supplierDropdownRef} style={{ position: 'relative', display: 'inline-block', zIndex: isSupplierDropdownOpen ? 9999 : 'auto' }}>
+                      <button
+                        id="bulk-global-supplier-btn"
+                        type="button"
+                        onClick={() => setIsSupplierDropdownOpen(!isSupplierDropdownOpen)}
+                        style={{
+                          fontSize: '0.78rem',
+                          padding: '0.35rem 0.75rem',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.45rem',
+                          borderRadius: '8px',
+                          border: selectedSupplier
+                            ? '1.5px solid #10b981'
+                            : '1.5px solid #f59e0b',
+                          background: selectedSupplier ? '#f0fdf4' : '#fffbeb',
+                          color: selectedSupplier ? '#065f46' : '#92400e',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease',
+                          boxShadow: selectedSupplier ? '0 1px 2px rgba(16, 185, 129, 0.1)' : '0 1px 3px rgba(245, 158, 11, 0.2)',
+                        }}
+                        title={selectedSupplier ? `Selected Supplier: ${selectedSupplier.name}` : 'Supplier is mandatory for bulk product import'}
+                      >
+                        <TruckIcon size={14} color={selectedSupplier ? '#059669' : '#d97706'} />
+                        <span style={{ maxWidth: '170px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {selectedSupplier ? (
+                            <span>Supplier: <strong>{selectedSupplier.name}</strong></span>
+                          ) : (
+                            <span>Select Supplier <strong style={{ color: '#dc2626' }}>*</strong></span>
+                          )}
+                        </span>
+                        <ChevronDownIcon size={12} color={selectedSupplier ? '#059669' : '#d97706'} />
+                      </button>
+
+                      {isSupplierDropdownOpen && (
+                        <div
+                          style={{
+                            position: 'absolute',
+                            left: 0,
+                            top: supplierDropDirection === 'up' ? 'auto' : 'calc(100% + 4px)',
+                            bottom: supplierDropDirection === 'up' ? 'calc(100% + 4px)' : 'auto',
+                            zIndex: 9999,
+                            width: '320px',
+                            maxWidth: 'calc(100vw - 32px)',
+                            background: '#ffffff',
+                            border: '1px solid #cbd5e1',
+                            borderRadius: '10px',
+                            boxShadow: '0 12px 28px -4px rgba(0, 0, 0, 0.2), 0 8px 12px -6px rgba(0, 0, 0, 0.12)',
+                            padding: '0.55rem',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '0.45rem',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.2rem 0.35rem 0.35rem', borderBottom: '1px solid #f1f5f9' }}>
+                            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                              Import Supplier <span style={{ color: '#dc2626' }}>*</span>
+                            </span>
+                            {selectedSupplier && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedSupplierId('');
+                                }}
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  color: '#dc2626',
+                                  fontSize: '0.72rem',
+                                  fontWeight: 600,
+                                  cursor: 'pointer',
+                                  padding: 0,
+                                }}
+                              >
+                                Clear
+                              </button>
+                            )}
+                          </div>
+
+                          <div style={{ position: 'relative' }}>
+                            <input
+                              id="bulk-supplier-search-input"
+                              type="text"
+                              value={supplierSearchText}
+                              onChange={(e) => setSupplierSearchText(e.target.value)}
+                              placeholder="Search suppliers..."
+                              autoFocus
+                              style={{
+                                width: '100%',
+                                padding: '0.35rem 0.55rem',
+                                fontSize: '0.8rem',
+                                borderRadius: '6px',
+                                border: '1px solid #cbd5e1',
+                                outline: 'none',
+                                background: '#f8fafc',
+                                boxSizing: 'border-box',
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          </div>
+
+                          <div style={{ maxHeight: '200px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                            {loadingSuppliers ? (
+                              <div style={{ padding: '0.75rem', textAlign: 'center', fontSize: '0.78rem', color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}>
+                                <RefreshCwIcon size={13} color="#6366f1" spinning />
+                                <span>Loading suppliers...</span>
+                              </div>
+                            ) : filteredSuppliers.length === 0 ? (
+                              <div style={{ padding: '0.75rem', textAlign: 'center', fontSize: '0.78rem', color: '#94a3b8' }}>
+                                {supplierSearchText.trim() ? 'No matching suppliers' : 'No active suppliers found in directory'}
+                              </div>
+                            ) : (
+                              filteredSuppliers.map((s) => {
+                                const isSelected = s.id === selectedSupplierId;
+                                return (
+                                  <button
+                                    key={s.id}
+                                    type="button"
+                                    onClick={() => {
+                                      setSelectedSupplierId(s.id);
+                                      setIsSupplierDropdownOpen(false);
+                                      setSupplierSearchText('');
+                                    }}
+                                    style={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'space-between',
+                                      padding: '0.4rem 0.55rem',
+                                      borderRadius: '6px',
+                                      border: 'none',
+                                      background: isSelected ? '#ecfdf5' : 'transparent',
+                                      cursor: 'pointer',
+                                      textAlign: 'left',
+                                      transition: 'background 0.1s ease',
+                                      width: '100%',
+                                    }}
+                                    onMouseEnter={(e) => {
+                                      if (!isSelected) e.currentTarget.style.background = '#f1f5f9';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      if (!isSelected) e.currentTarget.style.background = 'transparent';
+                                    }}
+                                  >
+                                    <div style={{ minWidth: 0, flex: 1 }}>
+                                      <div style={{ fontSize: '0.82rem', fontWeight: 600, color: isSelected ? '#065f46' : '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                        {s.name}
+                                      </div>
+                                      {(s.phone || s.gstin) && (
+                                        <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '1px' }}>
+                                          {s.phone && <span>{s.phone}</span>}
+                                          {s.phone && s.gstin && <span> • </span>}
+                                          {s.gstin && <span>GST: {s.gstin}</span>}
+                                        </div>
+                                      )}
+                                    </div>
+                                    {isSelected && <CheckIcon size={14} color="#059669" />}
+                                  </button>
+                                );
+                              })
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* ── Global Reorder Level Control ── */}
+                    <div
+                      id="bulk-global-reorder-container"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.45rem',
+                        background: '#f8fafc',
+                        padding: '0.22rem 0.55rem',
+                        borderRadius: '8px',
+                        border: '1.5px solid #cbd5e1',
+                      }}
+                    >
+                      <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-main)', whiteSpace: 'nowrap' }}>
+                        Global Reorder Level:
+                      </span>
+                      <input
+                        id="bulk-global-reorder-input"
+                        type="number"
+                        min="0"
+                        step="1"
+                        value={globalReorderLevel}
+                        onChange={(e) => setGlobalReorderLevel(e.target.value)}
+                        placeholder="20"
+                        style={{
+                          width: '56px',
+                          padding: '0.2rem 0.35rem',
+                          fontSize: '0.8rem',
+                          fontWeight: 700,
+                          textAlign: 'center',
+                          borderRadius: '6px',
+                          border: '1px solid #cbd5e1',
+                          background: '#ffffff',
+                          outline: 'none',
+                          color: 'var(--text-main)',
+                        }}
+                      />
+                      <button
+                        id="bulk-apply-reorder-selected-btn"
+                        type="button"
+                        onClick={handleApplySelectedReorder}
+                        disabled={selectedRowIds.size === 0}
+                        className="btn btn-secondary"
+                        style={{
+                          fontSize: '0.76rem',
+                          padding: '0.25rem 0.65rem',
+                          fontWeight: 600,
+                          borderRadius: '6px',
+                          cursor: selectedRowIds.size === 0 ? 'not-allowed' : 'pointer',
+                          whiteSpace: 'nowrap',
+                          background: selectedRowIds.size > 0 ? '#4f46e5' : '#f1f5f9',
+                          color: selectedRowIds.size > 0 ? '#ffffff' : '#94a3b8',
+                          border: selectedRowIds.size > 0 ? '1px solid #4338ca' : '1px solid #cbd5e1',
+                          transition: 'all 0.15s ease',
+                          boxShadow: selectedRowIds.size > 0 ? '0 1px 3px rgba(79, 70, 229, 0.25)' : 'none',
+                        }}
+                        title={
+                          selectedRowIds.size === 0
+                            ? 'Select products using checkboxes to apply this reorder level'
+                            : `Apply reorder level ${globalReorderLevel} to ${selectedRowIds.size} selected product(s)`
+                        }
+                      >
+                        Apply to Selected
+                      </button>
+                      <span
+                        id="bulk-reorder-selected-count"
+                        style={{
+                          fontSize: '0.74rem',
+                          fontWeight: 700,
+                          color: selectedRowIds.size > 0 ? '#4f46e5' : '#94a3b8',
+                          background: selectedRowIds.size > 0 ? '#eef2ff' : '#f1f5f9',
+                          padding: '2px 7px',
+                          borderRadius: '10px',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {selectedRowIds.size} selected
+                      </span>
+                    </div>
+
                     <button
-                      id="bulk-global-supplier-btn"
+                      id="bulk-refresh-cats-btn"
                       type="button"
-                      onClick={() => setIsSupplierDropdownOpen(!isSupplierDropdownOpen)}
+                      onClick={() => loadCategoriesFromDb(true)}
+                      disabled={isRefreshingCats}
+                      className="btn btn-secondary"
                       style={{
                         fontSize: '0.78rem',
                         padding: '0.35rem 0.75rem',
                         display: 'inline-flex',
                         alignItems: 'center',
-                        gap: '0.45rem',
+                        gap: '0.4rem',
                         borderRadius: '8px',
-                        border: selectedSupplier
-                          ? '1.5px solid #10b981'
-                          : '1.5px solid #f59e0b',
-                        background: selectedSupplier ? '#f0fdf4' : '#fffbeb',
-                        color: selectedSupplier ? '#065f46' : '#92400e',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        transition: 'all 0.15s ease',
-                        boxShadow: selectedSupplier ? '0 1px 2px rgba(16, 185, 129, 0.1)' : '0 1px 3px rgba(245, 158, 11, 0.2)',
                       }}
-                      title={selectedSupplier ? `Selected Supplier: ${selectedSupplier.name}` : 'Supplier is mandatory for bulk product import'}
+                      title="Reload latest categories from the database and re-apply suggestions"
                     >
-                      <TruckIcon size={14} color={selectedSupplier ? '#059669' : '#d97706'} />
-                      <span style={{ maxWidth: '170px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {selectedSupplier ? (
-                          <span>Supplier: <strong>{selectedSupplier.name}</strong></span>
-                        ) : (
-                          <span>Select Supplier <strong style={{ color: '#dc2626' }}>*</strong></span>
-                        )}
-                      </span>
-                      <ChevronDownIcon size={12} color={selectedSupplier ? '#059669' : '#d97706'} />
+                      <RefreshCwIcon size={13} color="#475569" spinning={isRefreshingCats} />
+                      <span>{isRefreshingCats ? 'Loading...' : 'Refresh Categories'}</span>
                     </button>
-
-                    {isSupplierDropdownOpen && (
-                      <div
-                        style={{
-                          position: 'absolute',
-                          left: 0,
-                          top: supplierDropDirection === 'up' ? 'auto' : 'calc(100% + 4px)',
-                          bottom: supplierDropDirection === 'up' ? 'calc(100% + 4px)' : 'auto',
-                          zIndex: 9999,
-                          width: '320px',
-                          maxWidth: 'calc(100vw - 32px)',
-                          background: '#ffffff',
-                          border: '1px solid #cbd5e1',
-                          borderRadius: '10px',
-                          boxShadow: '0 12px 28px -4px rgba(0, 0, 0, 0.2), 0 8px 12px -6px rgba(0, 0, 0, 0.12)',
-                          padding: '0.55rem',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: '0.45rem',
+                    <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', cursor: 'pointer', fontWeight: 600, color: 'var(--text-main)' }}>
+                      <input
+                        type="checkbox"
+                        checked={globalUpdatePrices}
+                        onChange={(e) => {
+                          setGlobalUpdatePrices(e.target.checked);
+                          setRawRows((prev) => prev.map((r) => ({ ...r, updatePrices: e.target.checked })));
                         }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.2rem 0.35rem 0.35rem', borderBottom: '1px solid #f1f5f9' }}>
-                          <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                            Import Supplier <span style={{ color: '#dc2626' }}>*</span>
-                          </span>
-                          {selectedSupplier && (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedSupplierId('');
-                              }}
-                              style={{
-                                background: 'none',
-                                border: 'none',
-                                color: '#dc2626',
-                                fontSize: '0.72rem',
-                                fontWeight: 600,
-                                cursor: 'pointer',
-                                padding: 0,
-                              }}
-                            >
-                              Clear
-                            </button>
-                          )}
-                        </div>
-
-                        <div style={{ position: 'relative' }}>
-                          <input
-                            id="bulk-supplier-search-input"
-                            type="text"
-                            value={supplierSearchText}
-                            onChange={(e) => setSupplierSearchText(e.target.value)}
-                            placeholder="Search suppliers..."
-                            autoFocus
-                            style={{
-                              width: '100%',
-                              padding: '0.35rem 0.55rem',
-                              fontSize: '0.8rem',
-                              borderRadius: '6px',
-                              border: '1px solid #cbd5e1',
-                              outline: 'none',
-                              background: '#f8fafc',
-                              boxSizing: 'border-box',
-                            }}
-                            onClick={(e) => e.stopPropagation()}
-                          />
-                        </div>
-
-                        <div style={{ maxHeight: '200px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                          {loadingSuppliers ? (
-                            <div style={{ padding: '0.75rem', textAlign: 'center', fontSize: '0.78rem', color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}>
-                              <RefreshCwIcon size={13} color="#6366f1" spinning />
-                              <span>Loading suppliers...</span>
-                            </div>
-                          ) : filteredSuppliers.length === 0 ? (
-                            <div style={{ padding: '0.75rem', textAlign: 'center', fontSize: '0.78rem', color: '#94a3b8' }}>
-                              {supplierSearchText.trim() ? 'No matching suppliers' : 'No active suppliers found in directory'}
-                            </div>
-                          ) : (
-                            filteredSuppliers.map((s) => {
-                              const isSelected = s.id === selectedSupplierId;
-                              return (
-                                <button
-                                  key={s.id}
-                                  type="button"
-                                  onClick={() => {
-                                    setSelectedSupplierId(s.id);
-                                    setIsSupplierDropdownOpen(false);
-                                    setSupplierSearchText('');
-                                  }}
-                                  style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between',
-                                    padding: '0.4rem 0.55rem',
-                                    borderRadius: '6px',
-                                    border: 'none',
-                                    background: isSelected ? '#ecfdf5' : 'transparent',
-                                    cursor: 'pointer',
-                                    textAlign: 'left',
-                                    transition: 'background 0.1s ease',
-                                    width: '100%',
-                                  }}
-                                  onMouseEnter={(e) => {
-                                    if (!isSelected) e.currentTarget.style.background = '#f1f5f9';
-                                  }}
-                                  onMouseLeave={(e) => {
-                                    if (!isSelected) e.currentTarget.style.background = 'transparent';
-                                  }}
-                                >
-                                  <div style={{ minWidth: 0, flex: 1 }}>
-                                    <div style={{ fontSize: '0.82rem', fontWeight: 600, color: isSelected ? '#065f46' : '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                      {s.name}
-                                    </div>
-                                    {(s.phone || s.gstin) && (
-                                      <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '1px' }}>
-                                        {s.phone && <span>{s.phone}</span>}
-                                        {s.phone && s.gstin && <span> • </span>}
-                                        {s.gstin && <span>GST: {s.gstin}</span>}
-                                      </div>
-                                    )}
-                                  </div>
-                                  {isSelected && <CheckIcon size={14} color="#059669" />}
-                                </button>
-                              );
-                            })
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* ── Global Reorder Level Control ── */}
-                  <div
-                    id="bulk-global-reorder-container"
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.45rem',
-                      background: '#f8fafc',
-                      padding: '0.22rem 0.55rem',
-                      borderRadius: '8px',
-                      border: '1.5px solid #cbd5e1',
-                    }}
-                  >
-                    <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-main)', whiteSpace: 'nowrap' }}>
-                      Global Reorder Level:
-                    </span>
-                    <input
-                      id="bulk-global-reorder-input"
-                      type="number"
-                      min="0"
-                      step="1"
-                      value={globalReorderLevel}
-                      onChange={(e) => setGlobalReorderLevel(e.target.value)}
-                      placeholder="20"
-                      style={{
-                        width: '56px',
-                        padding: '0.2rem 0.35rem',
-                        fontSize: '0.8rem',
-                        fontWeight: 700,
-                        textAlign: 'center',
-                        borderRadius: '6px',
-                        border: '1px solid #cbd5e1',
-                        background: '#ffffff',
-                        outline: 'none',
-                        color: 'var(--text-main)',
-                      }}
-                    />
-                    <button
-                      id="bulk-apply-reorder-selected-btn"
-                      type="button"
-                      onClick={handleApplySelectedReorder}
-                      disabled={selectedRowIds.size === 0}
-                      className="btn btn-secondary"
-                      style={{
-                        fontSize: '0.76rem',
-                        padding: '0.25rem 0.65rem',
-                        fontWeight: 600,
-                        borderRadius: '6px',
-                        cursor: selectedRowIds.size === 0 ? 'not-allowed' : 'pointer',
-                        whiteSpace: 'nowrap',
-                        background: selectedRowIds.size > 0 ? '#4f46e5' : '#f1f5f9',
-                        color: selectedRowIds.size > 0 ? '#ffffff' : '#94a3b8',
-                        border: selectedRowIds.size > 0 ? '1px solid #4338ca' : '1px solid #cbd5e1',
-                        transition: 'all 0.15s ease',
-                        boxShadow: selectedRowIds.size > 0 ? '0 1px 3px rgba(79, 70, 229, 0.25)' : 'none',
-                      }}
-                      title={
-                        selectedRowIds.size === 0
-                          ? 'Select products using checkboxes to apply this reorder level'
-                          : `Apply reorder level ${globalReorderLevel} to ${selectedRowIds.size} selected product(s)`
-                      }
-                    >
-                      Apply to Selected
-                    </button>
-                    <span
-                      id="bulk-reorder-selected-count"
-                      style={{
-                        fontSize: '0.74rem',
-                        fontWeight: 700,
-                        color: selectedRowIds.size > 0 ? '#4f46e5' : '#94a3b8',
-                        background: selectedRowIds.size > 0 ? '#eef2ff' : '#f1f5f9',
-                        padding: '2px 7px',
-                        borderRadius: '10px',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {selectedRowIds.size} selected
+                        style={{ accentColor: 'var(--primary)', cursor: 'pointer' }}
+                      />
+                      Update prices on restock
+                    </label>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <FileSpreadsheetIcon size={13} color="#64748b" />
+                      <span>Source: <strong>{importSource}</strong></span>
                     </span>
                   </div>
-
-                  <button
-                    id="bulk-refresh-cats-btn"
-                    type="button"
-                    onClick={() => loadCategoriesFromDb(true)}
-                    disabled={isRefreshingCats}
-                    className="btn btn-secondary"
-                    style={{
-                      fontSize: '0.78rem',
-                      padding: '0.35rem 0.75rem',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.4rem',
-                      borderRadius: '8px',
-                    }}
-                    title="Reload latest categories from the database and re-apply suggestions"
-                  >
-                    <RefreshCwIcon size={13} color="#475569" spinning={isRefreshingCats} />
-                    <span>{isRefreshingCats ? 'Loading...' : 'Refresh Categories'}</span>
-                  </button>
-                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', cursor: 'pointer', fontWeight: 600, color: 'var(--text-main)' }}>
-                    <input
-                      type="checkbox"
-                      checked={globalUpdatePrices}
-                      onChange={(e) => {
-                        setGlobalUpdatePrices(e.target.checked);
-                        setRawRows((prev) => prev.map((r) => ({ ...r, updatePrices: e.target.checked })));
-                      }}
-                      style={{ accentColor: 'var(--primary)', cursor: 'pointer' }}
-                    />
-                    Update prices on restock
-                  </label>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                    <FileSpreadsheetIcon size={13} color="#64748b" />
-                    <span>Source: <strong>{importSource}</strong></span>
-                  </span>
                 </div>
-              </div>
 
-              {/* AMBIGUOUS MATCH NOTIFICATION BANNER */}
-              {ambiguousRows.length > 0 && (
-                <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '8px', padding: '0.55rem 0.9rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, gap: '0.75rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <AlertTriangleIcon size={18} color="#b45309" />
-                    <div>
-                      <span style={{ fontWeight: 700, color: '#b45309', fontSize: '0.84rem' }}>
-                        {ambiguousRows.length} product{ambiguousRows.length !== 1 ? 's have' : ' has'} multiple possible catalog matches
-                      </span>
-                      <div style={{ fontSize: '0.76rem', color: '#92400e', marginTop: '1px' }}>
-                        Please select whether to link to an existing variant or create as a new product in the table below.
+                {/* AMBIGUOUS MATCH NOTIFICATION BANNER */}
+                {ambiguousRows.length > 0 && (
+                  <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '8px', padding: '0.55rem 0.9rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, gap: '0.75rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <AlertTriangleIcon size={18} color="#b45309" />
+                      <div>
+                        <span style={{ fontWeight: 700, color: '#b45309', fontSize: '0.84rem' }}>
+                          {ambiguousRows.length} product{ambiguousRows.length !== 1 ? 's have' : ' has'} multiple possible catalog matches
+                        </span>
+                        <div style={{ fontSize: '0.76rem', color: '#92400e', marginTop: '1px' }}>
+                          Please select whether to link to an existing variant or create as a new product in the table below.
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <button
-                    onClick={() => setFilter('ambiguous')}
-                    className="btn btn-secondary"
-                    style={{ fontSize: '0.75rem', padding: '0.25rem 0.65rem', borderColor: '#f59e0b', color: '#b45309', flexShrink: 0 }}
-                  >
-                    View Ambiguous Rows ({ambiguousRows.length})
-                  </button>
-                </div>
-              )}
-
-              {/* ── BARCODE WORKFLOW SELECTOR & BULK CONTROLS ── */}
-              <div
-                style={{
-                  background: '#f8fafc',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '10px',
-                  padding: '0.5rem 0.9rem',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  gap: '0.75rem',
-                  flexWrap: 'wrap',
-                  flexShrink: 0,
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-                  <button
-                    id="bulk-generate-barcodes-btn"
-                    data-testid="bulk-workflow-generate-btn"
-                    type="button"
-                    onClick={handleGenerateBarcodes}
-                    style={{
-                      padding: '0.45rem 1.05rem',
-                      borderRadius: '20px',
-                      border: 'none',
-                      background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
-                      color: '#ffffff',
-                      fontWeight: 700,
-                      fontSize: '0.82rem',
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.45rem',
-                      boxShadow: '0 2px 8px rgba(99, 102, 241, 0.35)',
-                      transition: 'all 0.15s ease',
-                    }}
-                  >
-                    <BarcodeIcon size={14} color="#ffffff" />
-                    <span>Generate Internal Barcodes</span>
-                  </button>
-
-                  <button
-                    id="bulk-scan-manufacturer-barcodes-btn"
-                    data-testid="bulk-workflow-scan-btn"
-                    type="button"
-                    onClick={() => {
-                      setScanModalInitialId(null);
-                      setIsScanModalOpen(true);
-                    }}
-                    style={{
-                      padding: '0.45rem 1.05rem',
-                      borderRadius: '20px',
-                      border: '1.5px solid #0d9488',
-                      background: '#f0fdfa',
-                      color: '#0f766e',
-                      fontWeight: 700,
-                      fontSize: '0.82rem',
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.45rem',
-                      boxShadow: '0 1px 4px rgba(13, 148, 136, 0.12)',
-                      transition: 'all 0.15s ease',
-                    }}
-                  >
-                    <CameraIcon size={14} color="#0f766e" />
-                    <span>Scan Manufacturer Barcodes</span>
-                  </button>
-
-                  {generatedBarcodesCount > 0 && (
                     <button
-                      id="bulk-undo-barcodes-btn"
+                      onClick={() => setFilter('ambiguous')}
+                      className="btn btn-secondary"
+                      style={{ fontSize: '0.75rem', padding: '0.25rem 0.65rem', borderColor: '#f59e0b', color: '#b45309', flexShrink: 0 }}
+                    >
+                      View Ambiguous Rows ({ambiguousRows.length})
+                    </button>
+                  </div>
+                )}
+
+                {/* ── BARCODE WORKFLOW SELECTOR & BULK CONTROLS ── */}
+                <div
+                  style={{
+                    background: '#f8fafc',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '10px',
+                    padding: '0.5rem 0.9rem',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    gap: '0.75rem',
+                    flexWrap: 'wrap',
+                    flexShrink: 0,
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                    <button
+                      id="bulk-generate-barcodes-btn"
+                      data-testid="bulk-workflow-generate-btn"
                       type="button"
-                      onClick={handleUndoGeneratedBarcodes}
+                      onClick={handleGenerateBarcodes}
                       style={{
-                        padding: '0.4rem 0.9rem',
+                        padding: '0.45rem 1.05rem',
                         borderRadius: '20px',
-                        border: '1.5px solid #c7d2fe',
-                        background: '#ffffff',
-                        color: '#4338ca',
+                        border: 'none',
+                        background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                        color: '#ffffff',
                         fontWeight: 700,
-                        fontSize: '0.8rem',
+                        fontSize: '0.82rem',
                         cursor: 'pointer',
                         display: 'inline-flex',
                         alignItems: 'center',
-                        gap: '0.35rem',
+                        gap: '0.45rem',
+                        boxShadow: '0 2px 8px rgba(99, 102, 241, 0.35)',
+                        transition: 'all 0.15s ease',
                       }}
                     >
-                      <RotateCcwIcon size={13} color="#4338ca" />
-                      <span>Undo {generatedBarcodesCount} generated</span>
+                      <BarcodeIcon size={14} color="#ffffff" />
+                      <span>Generate Internal Barcodes</span>
                     </button>
-                  )}
-                  <div style={{ width: '1px', height: '22px', background: '#cbd5e1', margin: '0 0.15rem' }} />
-                  <div
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.45rem',
-                      padding: '0.35rem 0.75rem',
-                      borderRadius: '20px',
-                      background: rawRows.filter((r) => Boolean(r.imageUrl)).length > 0 ? '#f0fdf4' : '#f1f5f9',
-                      border: rawRows.filter((r) => Boolean(r.imageUrl)).length > 0 ? '1px solid #bbf7d0' : '1px solid #e2e8f0',
-                      color: rawRows.filter((r) => Boolean(r.imageUrl)).length > 0 ? '#15803d' : '#64748b',
-                      fontSize: '0.8rem',
-                      fontWeight: 600,
-                    }}
-                    title="Number of imported products with images assigned. Click any row photo to change or drag & drop files."
-                  >
-                    <ImageIcon size={14} color={rawRows.filter((r) => Boolean(r.imageUrl)).length > 0 ? '#15803d' : '#64748b'} />
-                    <span>{rawRows.filter((r) => Boolean(r.imageUrl)).length} of {rawRows.length} with Photos</span>
-                  </div>
 
-                  <div style={{ fontSize: '0.78rem', color: '#64748b' }}>
-                    {generatedBarcodesCount > 0
-                      ? `${generatedBarcodesCount} internal barcode${generatedBarcodesCount !== 1 ? 's' : ''} generated.`
-                      : 'Generate internal EAN-13 codes or scan manufacturer barcodes.'}
+                    <button
+                      id="bulk-scan-manufacturer-barcodes-btn"
+                      data-testid="bulk-workflow-scan-btn"
+                      type="button"
+                      onClick={() => {
+                        setScanModalInitialId(null);
+                        setIsScanModalOpen(true);
+                      }}
+                      style={{
+                        padding: '0.45rem 1.05rem',
+                        borderRadius: '20px',
+                        border: '1.5px solid #0d9488',
+                        background: '#f0fdfa',
+                        color: '#0f766e',
+                        fontWeight: 700,
+                        fontSize: '0.82rem',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.45rem',
+                        boxShadow: '0 1px 4px rgba(13, 148, 136, 0.12)',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      <CameraIcon size={14} color="#0f766e" />
+                      <span>Scan Manufacturer Barcodes</span>
+                    </button>
+
+                    {generatedBarcodesCount > 0 && (
+                      <button
+                        id="bulk-undo-barcodes-btn"
+                        type="button"
+                        onClick={handleUndoGeneratedBarcodes}
+                        style={{
+                          padding: '0.4rem 0.9rem',
+                          borderRadius: '20px',
+                          border: '1.5px solid #c7d2fe',
+                          background: '#ffffff',
+                          color: '#4338ca',
+                          fontWeight: 700,
+                          fontSize: '0.8rem',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                        }}
+                      >
+                        <RotateCcwIcon size={13} color="#4338ca" />
+                        <span>Undo {generatedBarcodesCount} generated</span>
+                      </button>
+                    )}
+                    <div style={{ width: '1px', height: '22px', background: '#cbd5e1', margin: '0 0.15rem' }} />
+                    <div
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.45rem',
+                        padding: '0.35rem 0.75rem',
+                        borderRadius: '20px',
+                        background: rawRows.filter((r) => Boolean(r.imageUrl)).length > 0 ? '#f0fdf4' : '#f1f5f9',
+                        border: rawRows.filter((r) => Boolean(r.imageUrl)).length > 0 ? '1px solid #bbf7d0' : '1px solid #e2e8f0',
+                        color: rawRows.filter((r) => Boolean(r.imageUrl)).length > 0 ? '#15803d' : '#64748b',
+                        fontSize: '0.8rem',
+                        fontWeight: 600,
+                      }}
+                      title="Number of imported products with images assigned. Click any row photo to change or drag & drop files."
+                    >
+                      <ImageIcon size={14} color={rawRows.filter((r) => Boolean(r.imageUrl)).length > 0 ? '#15803d' : '#64748b'} />
+                      <span>{rawRows.filter((r) => Boolean(r.imageUrl)).length} of {rawRows.length} with Photos</span>
+                    </div>
+
+                    <div style={{ fontSize: '0.78rem', color: '#64748b' }}>
+                      {generatedBarcodesCount > 0
+                        ? `${generatedBarcodesCount} internal barcode${generatedBarcodesCount !== 1 ? 's' : ''} generated.`
+                        : 'Generate internal EAN-13 codes or scan manufacturer barcodes.'}
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* EDITABLE PRODUCT TABLE */}
-              <div
-                style={{
-                  flex: 1,
-                  minHeight: 0,
-                  overflow: 'auto',
-                  borderRadius: '8px',
-                  border: '1px solid var(--border)',
-                  background: '#ffffff',
-                }}
-              >
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
-                  <thead style={{ position: 'sticky', top: 0, zIndex: 5, background: '#f8f7ff' }}>
-                    <tr>
-                      <th style={{ ...thStyle, width: 36, minWidth: 36, textAlign: 'center', padding: '0.45rem 0.25rem' }}>
-                        <input
-                          id="bulk-select-all-checkbox"
-                          ref={(el) => {
-                            if (el) el.indeterminate = someVisibleSelected;
-                          }}
-                          type="checkbox"
-                          checked={allVisibleSelected}
-                          onChange={handleToggleSelectAll}
-                          style={{ accentColor: 'var(--primary)', cursor: 'pointer', width: '15px', height: '15px', display: 'inline-block', verticalAlign: 'middle' }}
-                          title={allVisibleSelected ? 'Deselect all visible rows' : 'Select all visible rows'}
-                        />
-                      </th>
-                      <th style={thStyle}>ROW</th>
-                      <th style={thStyle}>STATUS</th>
-                      <th style={{ ...thStyle, width: 62, minWidth: 60, textAlign: 'center' }}>IMAGE</th>
-                      <th style={{ ...thStyle, minWidth: 200 }}>PRODUCT / ITEM NAME *</th>
-                      <th style={{ ...thStyle, width: 105, minWidth: 95 }}>SKU / CODE</th>
-                      <th style={{ ...thStyle, width: 145, minWidth: 140 }}>BARCODE / EAN</th>
-                      <th style={{ ...thStyle, minWidth: 140 }}>CATEGORY *</th>
-                      <th style={{ ...thStyle, minWidth: 110 }}>UOM</th>
-                      <th style={{ ...thStyle, minWidth: 95 }}>SELLING ₹ *</th>
-                      <th style={{ ...thStyle, minWidth: 85 }}>COST ₹</th>
-                      <th style={{ ...thStyle, minWidth: 75 }}>HSN</th>
-                      <th style={{ ...thStyle, minWidth: 75 }}>GST</th>
-                      <th style={{ ...thStyle, minWidth: 45, textAlign: 'center' }}>INCL.</th>
-                      <th style={{ ...thStyle, minWidth: 80 }}>INCOMING</th>
-                      <th style={{ ...thStyle, minWidth: 80 }}>CURRENT</th>
-                      <th style={{ ...thStyle, minWidth: 80 }}>FINAL STOCK</th>
-                      <th style={{ ...thStyle, minWidth: 85 }}>REORDER</th>
-                      <th style={{ ...thStyle, width: 35 }}></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {visibleRows.length === 0 ? (
+                {/* EDITABLE PRODUCT TABLE */}
+                <div
+                  style={{
+                    flex: 1,
+                    minHeight: 0,
+                    overflow: 'auto',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border)',
+                    background: '#ffffff',
+                  }}
+                >
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
+                    <thead style={{ position: 'sticky', top: 0, zIndex: 5, background: '#f8f7ff' }}>
                       <tr>
-                        <td colSpan={19} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
-                          No rows match the selected &quot;{filter}&quot; filter.
-                        </td>
+                        <th style={{ ...thStyle, width: 36, minWidth: 36, textAlign: 'center', padding: '0.45rem 0.25rem' }}>
+                          <input
+                            id="bulk-select-all-checkbox"
+                            ref={(el) => {
+                              if (el) el.indeterminate = someVisibleSelected;
+                            }}
+                            type="checkbox"
+                            checked={allVisibleSelected}
+                            onChange={handleToggleSelectAll}
+                            style={{ accentColor: 'var(--primary)', cursor: 'pointer', width: '15px', height: '15px', display: 'inline-block', verticalAlign: 'middle' }}
+                            title={allVisibleSelected ? 'Deselect all visible rows' : 'Select all visible rows'}
+                          />
+                        </th>
+                        <th style={thStyle}>ROW</th>
+                        <th style={thStyle}>STATUS</th>
+                        <th style={{ ...thStyle, width: 62, minWidth: 60, textAlign: 'center' }}>IMAGE</th>
+                        <th style={{ ...thStyle, minWidth: 200 }}>PRODUCT / ITEM NAME *</th>
+                        <th style={{ ...thStyle, width: 105, minWidth: 95 }}>SKU / CODE</th>
+                        <th style={{ ...thStyle, width: 145, minWidth: 140 }}>BARCODE / EAN</th>
+                        <th style={{ ...thStyle, minWidth: 140 }}>CATEGORY *</th>
+                        <th style={{ ...thStyle, minWidth: 110 }}>UOM</th>
+                        <th style={{ ...thStyle, minWidth: 95 }}>SELLING ₹ *</th>
+                        <th style={{ ...thStyle, minWidth: 85 }}>COST ₹</th>
+                        <th style={{ ...thStyle, minWidth: 75 }}>HSN</th>
+                        <th style={{ ...thStyle, minWidth: 75 }}>GST</th>
+                        <th style={{ ...thStyle, minWidth: 45, textAlign: 'center' }}>INCL.</th>
+                        <th style={{ ...thStyle, minWidth: 80 }}>INCOMING</th>
+                        <th style={{ ...thStyle, minWidth: 80 }}>CURRENT</th>
+                        <th style={{ ...thStyle, minWidth: 80 }}>FINAL STOCK</th>
+                        <th style={{ ...thStyle, minWidth: 85 }}>REORDER</th>
+                        <th style={{ ...thStyle, width: 35 }}></th>
                       </tr>
-                    ) : (
-                      visibleRows.map((row, idx) => {
-                        const incomingStock = parseImportNumeric(row.openingStock) || 0;
-                        const existingStock = row.matchedItem ? row.matchedItem.currentStockMilli / 1000 : 0;
-                        const finalStock = existingStock + incomingStock;
+                    </thead>
+                    <tbody>
+                      {visibleRows.length === 0 ? (
+                        <tr>
+                          <td colSpan={19} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
+                            No rows match the selected &quot;{filter}&quot; filter.
+                          </td>
+                        </tr>
+                      ) : (
+                        visibleRows.map((row, idx) => {
+                          const incomingStock = parseImportNumeric(row.openingStock) || 0;
+                          const existingStock = row.matchedItem ? row.matchedItem.currentStockMilli / 1000 : 0;
+                          const finalStock = existingStock + incomingStock;
 
-                        const hasNameErr = row.errors.some((e) => e.field === 'name');
-                        const hasPriceErr = row.errors.some((e) => e.field === 'sellingPrice');
-                        const isSkuDup = row.errors.some((e) => e.field === 'sku' && e.isDuplicate);
-                        const hasSkuErr = row.errors.some((e) => e.field === 'sku');
-                        const hasBarcodeErr = row.errors.some((e) => e.field === 'barcode');
-                        const isBarcodeDup = row.errors.some((e) => e.field === 'barcode' && e.isDuplicate);
-                        const hasCatErr = row.errors.some((e) => e.field === 'category');
+                          const hasNameErr = row.errors.some((e) => e.field === 'name');
+                          const hasPriceErr = row.errors.some((e) => e.field === 'sellingPrice');
+                          const isSkuDup = row.errors.some((e) => e.field === 'sku' && e.isDuplicate);
+                          const hasSkuErr = row.errors.some((e) => e.field === 'sku');
+                          const hasBarcodeErr = row.errors.some((e) => e.field === 'barcode');
+                          const isBarcodeDup = row.errors.some((e) => e.field === 'barcode' && e.isDuplicate);
+                          const hasCatErr = row.errors.some((e) => e.field === 'category');
 
-                        const barcodeTrim = (row.barcode || '').trim();
-                        const hasBarcode = Boolean(barcodeTrim);
-                        const isIbc = hasBarcode && (
-                          row.barcodeType === 'INTERNAL' ||
-                          (row.isBarcodeAutoGenerated && row.barcodeType !== 'MANUFACTURER')
-                        );
-                        const isMbc = hasBarcode && !isIbc;
+                          const barcodeTrim = (row.barcode || '').trim();
+                          const hasBarcode = Boolean(barcodeTrim);
+                          const isIbc = hasBarcode && (
+                            row.barcodeType === 'INTERNAL' ||
+                            (row.isBarcodeAutoGenerated && row.barcodeType !== 'MANUFACTURER')
+                          );
+                          const isMbc = hasBarcode && !isIbc;
 
-                        return (
-                          <React.Fragment key={row._id}>
-                            <tr
-                              style={{
-                                borderBottom: row.errors.length > 0 || row.matchedItem || (row.candidates && row.candidates.length > 1) ? 'none' : '1px solid var(--border)',
-                                background: selectedRowIds.has(row._id) ? '#f8f9ff' : '#ffffff',
-                              }}
-                            >
-                              {/* SELECT CHECKBOX */}
-                              <td style={{ padding: '0.45rem 0.25rem', textAlign: 'center' }}>
-                                <input
-                                  id={`bulk-row-select-${row._id}`}
-                                  type="checkbox"
-                                  checked={selectedRowIds.has(row._id)}
-                                  onChange={(e) => {
-                                    const checked = e.target.checked;
-                                    setSelectedRowIds((prev) => {
-                                      const next = new Set(prev);
-                                      if (checked) next.add(row._id);
-                                      else next.delete(row._id);
-                                      return next;
-                                    });
-                                  }}
-                                  style={{ accentColor: 'var(--primary)', cursor: 'pointer', width: '15px', height: '15px', display: 'inline-block', verticalAlign: 'middle' }}
-                                  title={`Select row ${idx + 1}`}
-                                />
-                              </td>
-
-                              {/* ROW # */}
-                              <td style={{ padding: '0.45rem 0.6rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-                                {idx + 1}
-                              </td>
-
-                              {/* STATUS BADGE */}
-                              <td style={{ padding: '0.45rem 0.5rem' }}>
-                                {row.status === 'NEW_PRODUCT' && (
-                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '0.2rem 0.55rem', borderRadius: '12px', background: '#eef2ff', border: '1px solid #c7d2fe', color: '#4338ca', fontWeight: 700, fontSize: '0.72rem' }}>
-                                    <SparklesIcon size={11} color="#4338ca" />
-                                    <span>New Product</span>
-                                  </span>
-                                )}
-                                {row.status === 'RESTOCK' && (
-                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '0.2rem 0.55rem', borderRadius: '12px', background: '#dcfce7', border: '1px solid #bbf7d0', color: '#15803d', fontWeight: 700, fontSize: '0.72rem' }}>
-                                    <RefreshCwIcon size={11} color="#15803d" />
-                                    <span>Restock</span>
-                                  </span>
-                                )}
-                                {row.status === 'AMBIGUOUS' && (
-                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '0.2rem 0.55rem', borderRadius: '12px', background: '#fef3c7', border: '1px solid #fde68a', color: '#b45309', fontWeight: 700, fontSize: '0.72rem' }}>
-                                    <AlertTriangleIcon size={11} color="#b45309" />
-                                    <span>Needs Review</span>
-                                  </span>
-                                )}
-                                {row.status === 'DUPLICATE' && (
-                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '0.2rem 0.55rem', borderRadius: '12px', background: '#ffedd5', border: '1px solid #fed7aa', color: '#c2410c', fontWeight: 700, fontSize: '0.72rem' }}>
-                                    <CopyIcon size={11} color="#c2410c" />
-                                    <span>Duplicate</span>
-                                  </span>
-                                )}
-                                {row.status === 'ERROR' && (
-                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '0.2rem 0.55rem', borderRadius: '12px', background: '#fee2e2', border: '1px solid #fecaca', color: '#b91c1c', fontWeight: 700, fontSize: '0.72rem' }}>
-                                    <AlertCircleIcon size={11} color="#b91c1c" />
-                                    <span>Error</span>
-                                  </span>
-                                )}
-                              </td>
-
-                                                            {/* IMAGE THUMBNAIL / ATTACH */}
-                              <td
+                          return (
+                            <React.Fragment key={row._id}>
+                              <tr
                                 style={{
-                                  padding: '0.35rem 0.35rem',
-                                  textAlign: 'center',
-                                  verticalAlign: 'middle',
-                                  width: 62,
-                                  minWidth: 60,
-                                }}
-                                onDragOver={(e) => e.preventDefault()}
-                                onDrop={async (e) => {
-                                  e.preventDefault();
-                                  if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                                    try {
-                                      const dataUrl = await fileToOptimizedDataUrl(e.dataTransfer.files[0]);
-                                      updateRowField(row._id, 'imageUrl', dataUrl);
-                                    } catch (err: any) {
-                                      alert(err.message || 'Failed to process image');
-                                    }
-                                  }
+                                  borderBottom: row.errors.length > 0 || row.matchedItem || (row.candidates && row.candidates.length > 1) ? 'none' : '1px solid var(--border)',
+                                  background: selectedRowIds.has(row._id) ? '#f8f9ff' : '#ffffff',
                                 }}
                               >
-                                {row.imageUrl ? (
-                                  <div
-                                    style={{
-                                      position: 'relative',
-                                      width: '34px',
-                                      height: '34px',
-                                      margin: '0 auto',
-                                      borderRadius: '6px',
-                                      overflow: 'hidden',
-                                      border: '1.5px solid #818cf8',
-                                      cursor: 'pointer',
-                                      boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+                                {/* SELECT CHECKBOX */}
+                                <td style={{ padding: '0.45rem 0.25rem', textAlign: 'center' }}>
+                                  <input
+                                    id={`bulk-row-select-${row._id}`}
+                                    type="checkbox"
+                                    checked={selectedRowIds.has(row._id)}
+                                    onChange={(e) => {
+                                      const checked = e.target.checked;
+                                      setSelectedRowIds((prev) => {
+                                        const next = new Set(prev);
+                                        if (checked) next.add(row._id);
+                                        else next.delete(row._id);
+                                        return next;
+                                      });
                                     }}
-                                    onClick={() => {
-                                      setEditingImageRow({ rowId: row._id, name: row.name, currentUrl: row.imageUrl });
-                                      setTempRowImageUrl(row.imageUrl || '');
-                                    }}
-                                    title="Click to edit/replace photo, or drag and drop an image file here"
-                                  >
-                                    <img
-                                      src={row.imageUrl}
-                                      alt={row.name}
-                                      referrerPolicy="no-referrer"
-                                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                      onError={(e) => handleProductImageError(e, row.imageUrl)}
-                                    />
-                                  </div>
-                                ) : (
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setEditingImageRow({ rowId: row._id, name: row.name, currentUrl: '' });
-                                      setTempRowImageUrl('');
-                                    }}
-                                    style={{
-                                      width: '34px',
-                                      height: '34px',
-                                      margin: '0 auto',
-                                      borderRadius: '6px',
-                                      border: '1.5px dashed #cbd5e1',
-                                      background: '#f8fafc',
-                                      color: '#94a3b8',
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'center',
-                                      cursor: 'pointer',
-                                      padding: 0,
-                                      transition: 'all 0.15s ease',
-                                    }}
-                                    onMouseEnter={(e) => {
-                                      e.currentTarget.style.borderColor = '#6366f1';
-                                      e.currentTarget.style.color = '#6366f1';
-                                      e.currentTarget.style.background = '#eef2ff';
-                                    }}
-                                    onMouseLeave={(e) => {
-                                      e.currentTarget.style.borderColor = '#cbd5e1';
-                                      e.currentTarget.style.color = '#94a3b8';
-                                      e.currentTarget.style.background = '#f8fafc';
-                                    }}
-                                    title="Add photo to this product (click to choose or drag & drop file)"
-                                  >
-                                    <CameraIcon size={14} />
-                                  </button>
-                                )}
-                              </td>
-                              {/* PRODUCT NAME */}
-                              <td style={{ padding: '0.45rem 0.35rem' }}>
-                                <input
-                                  type="text"
-                                  value={row.name}
-                                  placeholder="Product name"
-                                  onChange={(e) => updateRowField(row._id, 'name', e.target.value)}
-                                  style={{
-                                    ...cellInputStyle,
-                                    borderColor: hasNameErr ? '#ef4444' : undefined,
-                                    background: hasNameErr ? '#fff1f2' : '#ffffff',
-                                  }}
-                                />
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '3px' }}>
-                                  <button
-                                    type="button"
-                                    onClick={() => toggleRowProductNature(row._id)}
-                                    title={`Classification: ${row.productNature === 'BRANDED' ? 'Branded Product' : 'Shop Product'} (click to change)`}
-                                    style={{
-                                      cursor: 'pointer',
-                                      borderRadius: '8px',
-                                      padding: '1px 6px',
-                                      fontSize: '0.67rem',
-                                      fontWeight: 700,
-                                      background: row.productNature === 'BRANDED' ? '#eff6ff' : '#f8fafc',
-                                      color: row.productNature === 'BRANDED' ? '#1d4ed8' : '#475569',
-                                      border: row.productNature === 'BRANDED'
-                                        ? (row.natureConfidence === 'LOW' ? '1px dashed #93c5fd' : '1px solid #bfdbfe')
-                                        : (row.natureConfidence === 'LOW' ? '1px dashed #cbd5e1' : '1px solid #cbd5e1'),
-                                      display: 'inline-flex',
-                                      alignItems: 'center',
-                                      gap: '3px',
-                                      transition: 'all 0.15s ease',
-                                    }}
-                                  >
-                                    {row.productNature === 'BRANDED' ? (
-                                      <>
-                                        <TagIcon size={11} color="#1d4ed8" />
-                                        <span>Branded</span>
-                                      </>
-                                    ) : (
-                                      <>
-                                        <StoreIcon size={11} color="#475569" />
-                                        <span>Shop</span>
-                                      </>
-                                    )}
-                                    {row.natureConfidence === 'LOW' && (
-                                      <span style={{ fontSize: '0.62rem', opacity: 0.75 }}>?</span>
-                                    )}
-                                  </button>
-                                </div>
-                              </td>
+                                    style={{ accentColor: 'var(--primary)', cursor: 'pointer', width: '15px', height: '15px', display: 'inline-block', verticalAlign: 'middle' }}
+                                    title={`Select row ${idx + 1}`}
+                                  />
+                                </td>
 
-                              {/* GENERATED / EDITABLE COMPACT SKU */}
-                              <td style={{ padding: '0.45rem 0.35rem' }}>
-                                <input
-                                  type="text"
-                                  value={row.sku}
-                                  placeholder="Auto SKU"
-                                  onChange={(e) => updateRowField(row._id, 'sku', e.target.value.toUpperCase().replace(/\s+/g, '-'))}
-                                  style={{
-                                    ...cellInputStyle,
-                                    width: '100px',
-                                    padding: '0.3rem 0.4rem',
-                                    fontSize: '0.74rem',
-                                    fontWeight: 700,
-                                    fontFamily: 'monospace',
-                                    letterSpacing: '0.03em',
-                                    textTransform: 'uppercase',
-                                    borderColor: isSkuDup ? '#f59e0b' : (hasSkuErr ? '#ef4444' : undefined),
-                                    background: isSkuDup ? '#fffbeb' : (hasSkuErr ? '#fff1f2' : '#ffffff'),
-                                  }}
-                                  title={row.matchedItem ? 'Preserving existing product SKU' : 'Auto-generated compact SKU (editable)'}
-                                />
-                              </td>
+                                {/* ROW # */}
+                                <td style={{ padding: '0.45rem 0.6rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                                  {idx + 1}
+                                </td>
 
-                              {/* BARCODE / EAN */}
-                              <td style={{ padding: '0.45rem 0.35rem', minWidth: 145, maxWidth: 175 }}>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                    {(() => {
-                                      if (!hasBarcode) {
-                                        return (
-                                          <span
-                                            style={{
-                                              fontSize: '0.65rem',
-                                              fontWeight: 700,
-                                              padding: '1px 5px',
-                                              borderRadius: '4px',
-                                              background: '#fef3c7',
-                                              color: '#92400e',
-                                              border: '1px solid #fde68a',
-                                              display: 'inline-flex',
-                                              alignItems: 'center',
-                                              gap: '3px',
-                                            }}
-                                            title="Pending: Will be auto-generated or scanned"
-                                          >
-                                            <BarcodeIcon size={10} color="#b45309" />
-                                            <span>Pending EAN</span>
-                                          </span>
-                                        );
+                                {/* STATUS BADGE */}
+                                <td style={{ padding: '0.45rem 0.5rem' }}>
+                                  {row.status === 'NEW_PRODUCT' && (
+                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '0.2rem 0.55rem', borderRadius: '12px', background: '#eef2ff', border: '1px solid #c7d2fe', color: '#4338ca', fontWeight: 700, fontSize: '0.72rem' }}>
+                                      <SparklesIcon size={11} color="#4338ca" />
+                                      <span>New Product</span>
+                                    </span>
+                                  )}
+                                  {row.status === 'RESTOCK' && (
+                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '0.2rem 0.55rem', borderRadius: '12px', background: '#dcfce7', border: '1px solid #bbf7d0', color: '#15803d', fontWeight: 700, fontSize: '0.72rem' }}>
+                                      <RefreshCwIcon size={11} color="#15803d" />
+                                      <span>Restock</span>
+                                    </span>
+                                  )}
+                                  {row.status === 'AMBIGUOUS' && (
+                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '0.2rem 0.55rem', borderRadius: '12px', background: '#fef3c7', border: '1px solid #fde68a', color: '#b45309', fontWeight: 700, fontSize: '0.72rem' }}>
+                                      <AlertTriangleIcon size={11} color="#b45309" />
+                                      <span>Needs Review</span>
+                                    </span>
+                                  )}
+                                  {row.status === 'DUPLICATE' && (
+                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '0.2rem 0.55rem', borderRadius: '12px', background: '#ffedd5', border: '1px solid #fed7aa', color: '#c2410c', fontWeight: 700, fontSize: '0.72rem' }}>
+                                      <CopyIcon size={11} color="#c2410c" />
+                                      <span>Duplicate</span>
+                                    </span>
+                                  )}
+                                  {row.status === 'ERROR' && (
+                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '0.2rem 0.55rem', borderRadius: '12px', background: '#fee2e2', border: '1px solid #fecaca', color: '#b91c1c', fontWeight: 700, fontSize: '0.72rem' }}>
+                                      <AlertCircleIcon size={11} color="#b91c1c" />
+                                      <span>Error</span>
+                                    </span>
+                                  )}
+                                </td>
+
+                                {/* IMAGE THUMBNAIL / ATTACH */}
+                                <td
+                                  style={{
+                                    padding: '0.35rem 0.35rem',
+                                    textAlign: 'center',
+                                    verticalAlign: 'middle',
+                                    width: 62,
+                                    minWidth: 60,
+                                  }}
+                                  onDragOver={(e) => e.preventDefault()}
+                                  onDrop={async (e) => {
+                                    e.preventDefault();
+                                    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                                      try {
+                                        const dataUrl = await fileToOptimizedDataUrl(e.dataTransfer.files[0]);
+                                        updateRowField(row._id, 'imageUrl', dataUrl);
+                                      } catch (err: any) {
+                                        alert(err.message || 'Failed to process image');
                                       }
-                                      if (isMbc) {
+                                    }
+                                  }}
+                                >
+                                  {row.imageUrl ? (
+                                    <div
+                                      style={{
+                                        position: 'relative',
+                                        width: '34px',
+                                        height: '34px',
+                                        margin: '0 auto',
+                                        borderRadius: '6px',
+                                        overflow: 'hidden',
+                                        border: '1.5px solid #818cf8',
+                                        cursor: 'pointer',
+                                        boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+                                      }}
+                                      onClick={() => {
+                                        setEditingImageRow({ rowId: row._id, name: row.name, currentUrl: row.imageUrl });
+                                        setTempRowImageUrl(row.imageUrl || '');
+                                      }}
+                                      title="Click to edit/replace photo, or drag and drop an image file here"
+                                    >
+                                      <img
+                                        src={row.imageUrl}
+                                        alt={row.name}
+                                        referrerPolicy="no-referrer"
+                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                        onError={(e) => handleProductImageError(e, row.imageUrl)}
+                                      />
+                                    </div>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setEditingImageRow({ rowId: row._id, name: row.name, currentUrl: '' });
+                                        setTempRowImageUrl('');
+                                      }}
+                                      style={{
+                                        width: '34px',
+                                        height: '34px',
+                                        margin: '0 auto',
+                                        borderRadius: '6px',
+                                        border: '1.5px dashed #cbd5e1',
+                                        background: '#f8fafc',
+                                        color: '#94a3b8',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        cursor: 'pointer',
+                                        padding: 0,
+                                        transition: 'all 0.15s ease',
+                                      }}
+                                      onMouseEnter={(e) => {
+                                        e.currentTarget.style.borderColor = '#6366f1';
+                                        e.currentTarget.style.color = '#6366f1';
+                                        e.currentTarget.style.background = '#eef2ff';
+                                      }}
+                                      onMouseLeave={(e) => {
+                                        e.currentTarget.style.borderColor = '#cbd5e1';
+                                        e.currentTarget.style.color = '#94a3b8';
+                                        e.currentTarget.style.background = '#f8fafc';
+                                      }}
+                                      title="Add photo to this product (click to choose or drag & drop file)"
+                                    >
+                                      <CameraIcon size={14} />
+                                    </button>
+                                  )}
+                                </td>
+                                {/* PRODUCT NAME */}
+                                <td style={{ padding: '0.45rem 0.35rem' }}>
+                                  <input
+                                    type="text"
+                                    value={row.name}
+                                    placeholder="Product name"
+                                    onChange={(e) => updateRowField(row._id, 'name', e.target.value)}
+                                    style={{
+                                      ...cellInputStyle,
+                                      borderColor: hasNameErr ? '#ef4444' : undefined,
+                                      background: hasNameErr ? '#fff1f2' : '#ffffff',
+                                    }}
+                                  />
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '3px' }}>
+                                    <button
+                                      type="button"
+                                      onClick={() => toggleRowProductNature(row._id)}
+                                      title={`Classification: ${row.productNature === 'BRANDED' ? 'Branded Product' : 'Shop Product'} (click to change)`}
+                                      style={{
+                                        cursor: 'pointer',
+                                        borderRadius: '8px',
+                                        padding: '1px 6px',
+                                        fontSize: '0.67rem',
+                                        fontWeight: 700,
+                                        background: row.productNature === 'BRANDED' ? '#eff6ff' : '#f8fafc',
+                                        color: row.productNature === 'BRANDED' ? '#1d4ed8' : '#475569',
+                                        border: row.productNature === 'BRANDED'
+                                          ? (row.natureConfidence === 'LOW' ? '1px dashed #93c5fd' : '1px solid #bfdbfe')
+                                          : (row.natureConfidence === 'LOW' ? '1px dashed #cbd5e1' : '1px solid #cbd5e1'),
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '3px',
+                                        transition: 'all 0.15s ease',
+                                      }}
+                                    >
+                                      {row.productNature === 'BRANDED' ? (
+                                        <>
+                                          <TagIcon size={11} color="#1d4ed8" />
+                                          <span>Branded</span>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <StoreIcon size={11} color="#475569" />
+                                          <span>Shop</span>
+                                        </>
+                                      )}
+                                      {row.natureConfidence === 'LOW' && (
+                                        <span style={{ fontSize: '0.62rem', opacity: 0.75 }}>?</span>
+                                      )}
+                                    </button>
+                                  </div>
+                                </td>
+
+                                {/* GENERATED / EDITABLE COMPACT SKU */}
+                                <td style={{ padding: '0.45rem 0.35rem' }}>
+                                  <input
+                                    type="text"
+                                    value={row.sku}
+                                    placeholder="Auto SKU"
+                                    onChange={(e) => updateRowField(row._id, 'sku', e.target.value.toUpperCase().replace(/\s+/g, '-'))}
+                                    style={{
+                                      ...cellInputStyle,
+                                      width: '100px',
+                                      padding: '0.3rem 0.4rem',
+                                      fontSize: '0.74rem',
+                                      fontWeight: 700,
+                                      fontFamily: 'monospace',
+                                      letterSpacing: '0.03em',
+                                      textTransform: 'uppercase',
+                                      borderColor: isSkuDup ? '#f59e0b' : (hasSkuErr ? '#ef4444' : undefined),
+                                      background: isSkuDup ? '#fffbeb' : (hasSkuErr ? '#fff1f2' : '#ffffff'),
+                                    }}
+                                    title={row.matchedItem ? 'Preserving existing product SKU' : 'Auto-generated compact SKU (editable)'}
+                                  />
+                                </td>
+
+                                {/* BARCODE / EAN */}
+                                <td style={{ padding: '0.45rem 0.35rem', minWidth: 145, maxWidth: 175 }}>
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                      {(() => {
+                                        if (!hasBarcode) {
+                                          return (
+                                            <span
+                                              style={{
+                                                fontSize: '0.65rem',
+                                                fontWeight: 700,
+                                                padding: '1px 5px',
+                                                borderRadius: '4px',
+                                                background: '#fef3c7',
+                                                color: '#92400e',
+                                                border: '1px solid #fde68a',
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '3px',
+                                              }}
+                                              title="Pending: Will be auto-generated or scanned"
+                                            >
+                                              <BarcodeIcon size={10} color="#b45309" />
+                                              <span>Pending EAN</span>
+                                            </span>
+                                          );
+                                        }
+                                        if (isMbc) {
+                                          return (
+                                            <span
+                                              style={{
+                                                fontSize: '0.65rem',
+                                                fontWeight: 800,
+                                                padding: '1px 5px',
+                                                borderRadius: '4px',
+                                                background: '#ccfbf1',
+                                                color: '#0f766e',
+                                                border: '1px solid #99f6e4',
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '3px',
+                                              }}
+                                              title="Manufacturer Barcode (MBC)"
+                                            >
+                                              <CameraIcon size={10} color="#0f766e" />
+                                              <span>MBC</span>
+                                            </span>
+                                          );
+                                        }
                                         return (
                                           <span
                                             style={{
@@ -3768,1246 +3789,1225 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
                                               fontWeight: 800,
                                               padding: '1px 5px',
                                               borderRadius: '4px',
-                                              background: '#ccfbf1',
-                                              color: '#0f766e',
-                                              border: '1px solid #99f6e4',
+                                              background: '#f3e8ff',
+                                              color: '#7e22ce',
+                                              border: '1px solid #e9d5ff',
                                               display: 'inline-flex',
                                               alignItems: 'center',
                                               gap: '3px',
                                             }}
-                                            title="Manufacturer Barcode (MBC)"
+                                            title="Internal Barcode (IBC)"
                                           >
-                                            <CameraIcon size={10} color="#0f766e" />
-                                            <span>MBC</span>
+                                            <BarcodeIcon size={10} color="#7e22ce" />
+                                            <span>IBC</span>
                                           </span>
                                         );
-                                      }
-                                      return (
+                                      })()}
+
+                                      {row.scannedInSession && (
                                         <span
+                                          id={`bulk-row-scanned-badge-${row._id}`}
                                           style={{
                                             fontSize: '0.65rem',
                                             fontWeight: 800,
                                             padding: '1px 5px',
                                             borderRadius: '4px',
-                                            background: '#f3e8ff',
-                                            color: '#7e22ce',
-                                            border: '1px solid #e9d5ff',
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            gap: '3px',
-                                          }}
-                                          title="Internal Barcode (IBC)"
-                                        >
-                                          <BarcodeIcon size={10} color="#7e22ce" />
-                                          <span>IBC</span>
-                                        </span>
-                                      );
-                                    })()}
-
-                                    {row.scannedInSession && (
-                                      <span
-                                        id={`bulk-row-scanned-badge-${row._id}`}
-                                        style={{
-                                          fontSize: '0.65rem',
-                                          fontWeight: 800,
-                                          padding: '1px 5px',
-                                          borderRadius: '4px',
-                                          background: '#dcfce7',
-                                          color: '#15803d',
-                                          border: '1px solid #86efac',
-                                          display: 'inline-flex',
-                                          alignItems: 'center',
-                                          gap: '2px',
-                                        }}
-                                        title="Manufacturer barcode scanned in this session"
-                                      >
-                                        <CheckIcon size={10} color="#15803d" />
-                                        <span>Scanned</span>
-                                      </span>
-                                    )}
-
-                                    {row.additionalBarcodes && row.additionalBarcodes.map((ab, idx) => {
-                                      const isAbMbc = ab.barcodeType === 'MANUFACTURER';
-                                      return (
-                                        <span
-                                          key={idx}
-                                          style={{
-                                            fontSize: '0.65rem',
-                                            fontWeight: 800,
-                                            padding: '1px 5px',
-                                            borderRadius: '4px',
-                                            background: isAbMbc ? '#ccfbf1' : '#f3e8ff',
-                                            color: isAbMbc ? '#0f766e' : '#7e22ce',
-                                            border: isAbMbc ? '1px solid #99f6e4' : '1px solid #e9d5ff',
+                                            background: '#dcfce7',
+                                            color: '#15803d',
+                                            border: '1px solid #86efac',
                                             display: 'inline-flex',
                                             alignItems: 'center',
                                             gap: '2px',
                                           }}
-                                          title={`Additional Barcode: ${ab.barcode} (${isAbMbc ? 'Manufacturer Barcode' : 'Internal Barcode'})`}
+                                          title="Manufacturer barcode scanned in this session"
                                         >
-                                          {isAbMbc ? <CameraIcon size={10} color="#0f766e" /> : <BarcodeIcon size={10} color="#7e22ce" />}
-                                          <span>+{isAbMbc ? 'MBC' : 'IBC'}</span>
+                                          <CheckIcon size={10} color="#15803d" />
+                                          <span>Scanned</span>
                                         </span>
-                                      );
-                                    })}
-                                  </div>
+                                      )}
 
-                                  <input
-                                    type="text"
-                                    value={row.barcode || ''}
-                                    placeholder="Enter or scan barcode"
-                                    onChange={(e) => updateRowField(row._id, 'barcode', e.target.value)}
-                                    style={{
-                                      ...cellInputStyle,
-                                      width: '100%',
-                                      padding: '0.22rem 0.4rem',
-                                      fontSize: '0.74rem',
-                                      fontFamily: 'monospace',
-                                      fontWeight: 600,
-                                      borderColor: isBarcodeDup ? '#f59e0b' : (hasBarcodeErr ? '#ef4444' : (isIbc ? '#c7d2fe' : undefined)),
-                                      background: isBarcodeDup ? '#fffbeb' : (hasBarcodeErr ? '#fff1f2' : (isIbc ? '#f5f3ff' : '#ffffff')),
-                                    }}
-                                    title={
-                                      hasBarcode
-                                        ? (isIbc ? 'Internal Barcode (IBC)' : 'Manufacturer Barcode (MBC)')
-                                        : 'No barcode assigned yet'
-                                    }
-                                  />
-                                  {hasBarcode && (
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '1px' }}>
-                                      <div
-                                        dangerouslySetInnerHTML={{ __html: renderBarcodeSvg(row.barcode) }}
-                                        style={{ flexShrink: 0, overflow: 'hidden', height: '26px' }}
-                                        title={`Scannable barcode: ${row.barcode}`}
-                                      />
-                                      {isIbc && (
+                                      {row.additionalBarcodes && row.additionalBarcodes.map((ab, idx) => {
+                                        const isAbMbc = ab.barcodeType === 'MANUFACTURER';
+                                        return (
+                                          <span
+                                            key={idx}
+                                            style={{
+                                              fontSize: '0.65rem',
+                                              fontWeight: 800,
+                                              padding: '1px 5px',
+                                              borderRadius: '4px',
+                                              background: isAbMbc ? '#ccfbf1' : '#f3e8ff',
+                                              color: isAbMbc ? '#0f766e' : '#7e22ce',
+                                              border: isAbMbc ? '1px solid #99f6e4' : '1px solid #e9d5ff',
+                                              display: 'inline-flex',
+                                              alignItems: 'center',
+                                              gap: '2px',
+                                            }}
+                                            title={`Additional Barcode: ${ab.barcode} (${isAbMbc ? 'Manufacturer Barcode' : 'Internal Barcode'})`}
+                                          >
+                                            {isAbMbc ? <CameraIcon size={10} color="#0f766e" /> : <BarcodeIcon size={10} color="#7e22ce" />}
+                                            <span>+{isAbMbc ? 'MBC' : 'IBC'}</span>
+                                          </span>
+                                        );
+                                      })}
+                                    </div>
+
+                                    <input
+                                      type="text"
+                                      value={row.barcode || ''}
+                                      placeholder="Enter or scan barcode"
+                                      onChange={(e) => updateRowField(row._id, 'barcode', e.target.value)}
+                                      style={{
+                                        ...cellInputStyle,
+                                        width: '100%',
+                                        padding: '0.22rem 0.4rem',
+                                        fontSize: '0.74rem',
+                                        fontFamily: 'monospace',
+                                        fontWeight: 600,
+                                        borderColor: isBarcodeDup ? '#f59e0b' : (hasBarcodeErr ? '#ef4444' : (isIbc ? '#c7d2fe' : undefined)),
+                                        background: isBarcodeDup ? '#fffbeb' : (hasBarcodeErr ? '#fff1f2' : (isIbc ? '#f5f3ff' : '#ffffff')),
+                                      }}
+                                      title={
+                                        hasBarcode
+                                          ? (isIbc ? 'Internal Barcode (IBC)' : 'Manufacturer Barcode (MBC)')
+                                          : 'No barcode assigned yet'
+                                      }
+                                    />
+                                    {hasBarcode && (
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '1px' }}>
+                                        <div
+                                          dangerouslySetInnerHTML={{ __html: renderBarcodeSvg(row.barcode) }}
+                                          style={{ flexShrink: 0, overflow: 'hidden', height: '26px' }}
+                                          title={`Scannable barcode: ${row.barcode}`}
+                                        />
+                                        {isIbc && (
+                                          <button
+                                            type="button"
+                                            onClick={() => handleRegenerateSingleBarcode(row._id)}
+                                            title="Regenerate internal barcode (IBC)"
+                                            aria-label="Regenerate internal barcode"
+                                            style={{
+                                              background: '#eef2ff',
+                                              border: '1px solid #c7d2fe',
+                                              borderRadius: '4px',
+                                              cursor: 'pointer',
+                                              padding: '2px 5px',
+                                              display: 'inline-flex',
+                                              alignItems: 'center',
+                                              justifyContent: 'center',
+                                              transition: 'all 0.15s ease',
+                                            }}
+                                          >
+                                            <RefreshCwIcon size={12} color="#4f46e5" />
+                                          </button>
+                                        )}
+                                      </div>
+                                    )}
+                                    {row.additionalBarcodes && row.additionalBarcodes.length > 0 && (
+                                      <div style={{ fontSize: '0.64rem', color: '#64748b', lineHeight: 1.2 }}>
+                                        {row.additionalBarcodes.map((ab, idx) => (
+                                          <span key={idx} style={{ display: 'inline-block', marginRight: '4px' }}>
+                                            also: <code style={{ fontFamily: 'monospace', fontWeight: 600 }}>{ab.barcode}</code> ({ab.barcodeType === 'MANUFACTURER' ? 'MBC' : 'IBC'})
+                                          </span>
+                                        ))}
+                                      </div>
+                                    )}
+                                    {row.barcodeError && (
+                                      <div style={{ fontSize: '0.68rem', color: '#dc2626', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '3px' }}>
+                                        <AlertCircleIcon size={11} color="#dc2626" />
+                                        <span>{row.barcodeError}</span>
                                         <button
                                           type="button"
                                           onClick={() => handleRegenerateSingleBarcode(row._id)}
-                                          title="Regenerate internal barcode (IBC)"
-                                          aria-label="Regenerate internal barcode"
-                                          style={{
-                                            background: '#eef2ff',
-                                            border: '1px solid #c7d2fe',
-                                            borderRadius: '4px',
-                                            cursor: 'pointer',
-                                            padding: '2px 5px',
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            transition: 'all 0.15s ease',
-                                          }}
+                                          style={{ textDecoration: 'underline', border: 'none', background: 'none', color: '#dc2626', cursor: 'pointer', padding: 0, fontWeight: 700 }}
                                         >
-                                          <RefreshCwIcon size={12} color="#4f46e5" />
+                                          Retry
                                         </button>
-                                      )}
-                                    </div>
-                                  )}
-                                  {row.additionalBarcodes && row.additionalBarcodes.length > 0 && (
-                                    <div style={{ fontSize: '0.64rem', color: '#64748b', lineHeight: 1.2 }}>
-                                      {row.additionalBarcodes.map((ab, idx) => (
-                                        <span key={idx} style={{ display: 'inline-block', marginRight: '4px' }}>
-                                          also: <code style={{ fontFamily: 'monospace', fontWeight: 600 }}>{ab.barcode}</code> ({ab.barcodeType === 'MANUFACTURER' ? 'MBC' : 'IBC'})
-                                        </span>
-                                      ))}
-                                    </div>
-                                  )}
-                                  {row.barcodeError && (
-                                    <div style={{ fontSize: '0.68rem', color: '#dc2626', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '3px' }}>
-                                      <AlertCircleIcon size={11} color="#dc2626" />
-                                      <span>{row.barcodeError}</span>
-                                      <button
-                                        type="button"
-                                        onClick={() => handleRegenerateSingleBarcode(row._id)}
-                                        style={{ textDecoration: 'underline', border: 'none', background: 'none', color: '#dc2626', cursor: 'pointer', padding: 0, fontWeight: 700 }}
-                                      >
-                                        Retry
-                                      </button>
-                                    </div>
-                                  )}
-                                </div>
-                              </td>
+                                      </div>
+                                    )}
+                                  </div>
+                                </td>
 
-                              {/* SUGGESTED / EDITABLE CATEGORY */}
-                              <td style={{ padding: '0.45rem 0.35rem' }}>
-                                <select
-                                  id={`bulk-row-category-${row._id}`}
-                                  value={
-                                    row.categoryId ||
-                                    activeCategories.find((c) => c.name.toLowerCase() === (row.category || '').trim().toLowerCase())?.id ||
-                                    ''
-                                  }
-                                  onChange={(e) => updateRowCategory(row._id, e.target.value)}
-                                  style={{
-                                    ...cellInputStyle,
-                                    borderColor: hasCatErr ? '#f59e0b' : undefined,
-                                    background: hasCatErr ? '#fffbeb' : '#ffffff',
-                                    color: !row.categoryId && !row.category ? '#b45309' : undefined,
-                                    fontWeight: row.categoryId || row.category ? 600 : 400,
-                                  }}
-                                >
-                                  <option value="">— Needs Category —</option>
-                                  {activeCategories.map((c) => (
-                                    <option key={c.id} value={c.id}>{c.name}</option>
-                                  ))}
-                                </select>
-                              </td>
-
-                              {/* UOM */}
-                              <td style={{ padding: '0.45rem 0.35rem' }}>
-                                <select
-                                  value={row.unit}
-                                  onChange={(e) => updateRowField(row._id, 'unit', e.target.value)}
-                                  style={cellInputStyle}
-                                >
-                                  {UOM_OPTIONS.map((u) => (
-                                    <option key={u.code} value={u.code}>{u.label}</option>
-                                  ))}
-                                </select>
-                              </td>
-
-                              {/* SELLING PRICE */}
-                              <td style={{ padding: '0.45rem 0.35rem' }}>
-                                <input
-                                  type="text"
-                                  value={row.sellingPrice}
-                                  placeholder={hasPriceErr ? 'Required' : 'Price'}
-                                  onChange={(e) => updateRowField(row._id, 'sellingPrice', e.target.value)}
-                                  style={{
-                                    ...cellInputStyle,
-                                    borderColor: hasPriceErr ? '#ef4444' : undefined,
-                                    background: hasPriceErr ? '#fff1f2' : '#ffffff',
-                                  }}
-                                />
-                              </td>
-
-                              {/* COST PRICE */}
-                              <td style={{ padding: '0.45rem 0.35rem' }}>
-                                <input
-                                  type="text"
-                                  value={row.costPrice}
-                                  placeholder="0"
-                                  onChange={(e) => updateRowField(row._id, 'costPrice', e.target.value)}
-                                  style={cellInputStyle}
-                                />
-                              </td>
-
-                              {/* HSN */}
-                              <td style={{ padding: '0.45rem 0.35rem' }}>
-                                <input
-                                  type="text"
-                                  value={row.hsn}
-                                  placeholder="HSN"
-                                  onChange={(e) => updateRowField(row._id, 'hsn', e.target.value)}
-                                  style={cellInputStyle}
-                                />
-                              </td>
-
-                              {/* GST RATE */}
-                              <td style={{ padding: '0.45rem 0.35rem' }}>
-                                <select
-                                  value={parseGstToBp(row.gstRate) !== null ? String(parseGstToBp(row.gstRate)) : '__custom__'}
-                                  onChange={(e) => {
-                                    if (e.target.value !== '__custom__') {
-                                      const opt = GST_RATE_OPTIONS.find((g) => String(g.bp) === e.target.value);
-                                      updateRowField(row._id, 'gstRate', opt ? opt.label : e.target.value);
+                                {/* SUGGESTED / EDITABLE CATEGORY */}
+                                <td style={{ padding: '0.45rem 0.35rem' }}>
+                                  <select
+                                    id={`bulk-row-category-${row._id}`}
+                                    value={
+                                      row.categoryId ||
+                                      activeCategories.find((c) => c.name.toLowerCase() === (row.category || '').trim().toLowerCase())?.id ||
+                                      ''
                                     }
-                                  }}
-                                  style={cellInputStyle}
-                                >
-                                  {GST_RATE_OPTIONS.map((g) => (
-                                    <option key={g.bp} value={String(g.bp)}>{g.label}</option>
-                                  ))}
-                                </select>
-                              </td>
-
-                              {/* INCL */}
-                              <td style={{ padding: '0.45rem 0.35rem', textAlign: 'center' }}>
-                                <input
-                                  type="checkbox"
-                                  checked={row.taxInclusive}
-                                  onChange={(e) => updateRowField(row._id, 'taxInclusive', e.target.checked)}
-                                  style={{ accentColor: 'var(--primary)', cursor: 'pointer' }}
-                                />
-                              </td>
-
-                              {/* INCOMING STOCK */}
-                              <td style={{ padding: '0.45rem 0.35rem' }}>
-                                <input
-                                  type="text"
-                                  value={row.openingStock}
-                                  placeholder="0"
-                                  onChange={(e) => updateRowField(row._id, 'openingStock', e.target.value)}
-                                  style={{ ...cellInputStyle, fontWeight: 600 }}
-                                />
-                              </td>
-
-                              {/* CURRENT STOCK */}
-                              <td style={{ padding: '0.45rem 0.5rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
-                                {row.matchedItem ? `${existingStock} ${row.unit}` : '0 (New)'}
-                              </td>
-
-                              {/* FINAL STOCK */}
-                              <td style={{ padding: '0.45rem 0.5rem', fontWeight: 700, color: '#16a34a', fontSize: '0.82rem' }}>
-                                {finalStock} {row.unit}
-                              </td>
-
-                              {/* REORDER LEVEL */}
-                              <td style={{ padding: '0.45rem 0.35rem' }}>
-                                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                                  <input
-                                    type="number"
-                                    min="0"
-                                    step="1"
-                                    value={row.reorderLevel}
-                                    placeholder="20"
-                                    onChange={(e) => updateRowField(row._id, 'reorderLevel', e.target.value)}
+                                    onChange={(e) => updateRowCategory(row._id, e.target.value)}
                                     style={{
                                       ...cellInputStyle,
-                                      width: '52px',
-                                      fontWeight: 600,
-                                      textAlign: 'center',
-                                      borderColor: row.errors.some((err) => err.field === 'reorderLevel') ? '#ef4444' : undefined,
-                                      background: row.errors.some((err) => err.field === 'reorderLevel') ? '#fff1f2' : '#ffffff',
+                                      borderColor: hasCatErr ? '#f59e0b' : undefined,
+                                      background: hasCatErr ? '#fffbeb' : '#ffffff',
+                                      color: !row.categoryId && !row.category ? '#b45309' : undefined,
+                                      fontWeight: row.categoryId || row.category ? 600 : 400,
+                                    }}
+                                  >
+                                    <option value="">— Needs Category —</option>
+                                    {activeCategories.map((c) => (
+                                      <option key={c.id} value={c.id}>{c.name}</option>
+                                    ))}
+                                  </select>
+                                </td>
+
+                                {/* UOM */}
+                                <td style={{ padding: '0.45rem 0.35rem' }}>
+                                  <select
+                                    value={row.unit}
+                                    onChange={(e) => updateRowField(row._id, 'unit', e.target.value)}
+                                    style={cellInputStyle}
+                                  >
+                                    {UOM_OPTIONS.map((u) => (
+                                      <option key={u.code} value={u.code}>{u.label}</option>
+                                    ))}
+                                  </select>
+                                </td>
+
+                                {/* SELLING PRICE */}
+                                <td style={{ padding: '0.45rem 0.35rem' }}>
+                                  <input
+                                    type="text"
+                                    value={row.sellingPrice}
+                                    placeholder={hasPriceErr ? 'Required' : 'Price'}
+                                    onChange={(e) => updateRowField(row._id, 'sellingPrice', e.target.value)}
+                                    style={{
+                                      ...cellInputStyle,
+                                      borderColor: hasPriceErr ? '#ef4444' : undefined,
+                                      background: hasPriceErr ? '#fff1f2' : '#ffffff',
                                     }}
                                   />
-                                  <span style={{ fontSize: '0.74rem', color: '#64748b', fontWeight: 600 }}>
-                                    {row.unit}
-                                  </span>
-                                </div>
-                              </td>
+                                </td>
 
-                              {/* ACTIONS */}
-                              <td style={{ padding: '0.45rem 0.35rem', textAlign: 'center' }}>
-                                <button
-                                  onClick={() => removeRow(row._id)}
-                                  style={{
-                                    background: 'none',
-                                    border: 'none',
-                                    color: '#94a3b8',
-                                    cursor: 'pointer',
-                                    padding: '4px',
-                                    borderRadius: '4px',
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    transition: 'color 0.15s ease',
-                                  }}
-                                  onMouseEnter={(e) => (e.currentTarget.style.color = '#ef4444')}
-                                  onMouseLeave={(e) => (e.currentTarget.style.color = '#94a3b8')}
-                                  title="Remove row"
-                                >
-                                  <Trash2Icon size={14} />
-                                </button>
-                              </td>
-                            </tr>
+                                {/* COST PRICE */}
+                                <td style={{ padding: '0.45rem 0.35rem' }}>
+                                  <input
+                                    type="text"
+                                    value={row.costPrice}
+                                    placeholder="0"
+                                    onChange={(e) => updateRowField(row._id, 'costPrice', e.target.value)}
+                                    style={cellInputStyle}
+                                  />
+                                </td>
 
-                            {/* INLINE NOTICE / ERROR / AMBIGUITY ROW */}
-                            {(row.errors.length > 0 || row.matchedItem || (row.candidates && row.candidates.length > 1) || row.resolution) && (
-                              <tr style={{ borderBottom: '1px solid var(--border)', background: '#ffffff' }}>
-                                <td colSpan={19} style={{ padding: '0.2rem 0.6rem 0.55rem 2.8rem', fontSize: '0.78rem' }}>
-                                   {/* Unified Matching & Restocking Decision Card for single-match products */}
-                                   {row.matchedItem && (!row.candidates || row.candidates.length <= 1) && (() => {
-                                     const isNewChosen = row.resolution === 'NEW';
-                                     const isRestockChosen = row.resolution === 'LINK';
+                                {/* HSN */}
+                                <td style={{ padding: '0.45rem 0.35rem' }}>
+                                  <input
+                                    type="text"
+                                    value={row.hsn}
+                                    placeholder="HSN"
+                                    onChange={(e) => updateRowField(row._id, 'hsn', e.target.value)}
+                                    style={cellInputStyle}
+                                  />
+                                </td>
 
-                                     return (
-                                       <div
-                                         style={{
-                                           background: '#f8fafc',
-                                           border: '1px solid #e2e8f0',
-                                           borderRadius: '6px',
-                                           padding: '0.35rem 0.65rem',
-                                           margin: '0.2rem 0',
-                                           display: 'flex',
-                                           alignItems: 'center',
-                                           justifyContent: 'space-between',
-                                           flexWrap: 'wrap',
-                                           gap: '0.5rem',
-                                         }}
-                                       >
-                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                                           <CheckCircleIcon size={14} color="#16a34a" />
-                                           <strong style={{ fontSize: '0.8rem', color: '#1e293b' }}>
-                                             Matched Existing Catalog Product
-                                           </strong>
-                                         </div>
+                                {/* GST RATE */}
+                                <td style={{ padding: '0.45rem 0.35rem' }}>
+                                  <select
+                                    value={parseGstToBp(row.gstRate) !== null ? String(parseGstToBp(row.gstRate)) : '__custom__'}
+                                    onChange={(e) => {
+                                      if (e.target.value !== '__custom__') {
+                                        const opt = GST_RATE_OPTIONS.find((g) => String(g.bp) === e.target.value);
+                                        updateRowField(row._id, 'gstRate', opt ? opt.label : e.target.value);
+                                      }
+                                    }}
+                                    style={cellInputStyle}
+                                  >
+                                    {GST_RATE_OPTIONS.map((g) => (
+                                      <option key={g.bp} value={String(g.bp)}>{g.label}</option>
+                                    ))}
+                                  </select>
+                                </td>
 
-                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                           <button
-                                             type="button"
-                                             onClick={() => chooseCreateNewProduct(row._id)}
-                                             style={{
-                                               background: isNewChosen ? '#4f46e5' : '#ffffff',
-                                               color: isNewChosen ? '#ffffff' : '#4338ca',
-                                               border: isNewChosen ? '1.5px solid #4338ca' : '1.5px solid #c7d2fe',
-                                               padding: '0.3rem 0.75rem',
-                                               borderRadius: '6px',
-                                               fontSize: '0.76rem',
-                                               fontWeight: 700,
-                                               cursor: 'pointer',
-                                               display: 'inline-flex',
-                                               alignItems: 'center',
-                                               gap: '5px',
-                                               boxShadow: isNewChosen ? '0 1px 3px rgba(79, 70, 229, 0.25)' : 'none',
-                                               transition: 'all 0.15s ease',
-                                             }}
-                                           >
-                                             {isNewChosen ? <CheckIcon size={12} color="#ffffff" /> : <PlusIcon size={13} color="#4338ca" />}
-                                             <span>Create New Product</span>
-                                           </button>
+                                {/* INCL */}
+                                <td style={{ padding: '0.45rem 0.35rem', textAlign: 'center' }}>
+                                  <input
+                                    type="checkbox"
+                                    checked={row.taxInclusive}
+                                    onChange={(e) => updateRowField(row._id, 'taxInclusive', e.target.checked)}
+                                    style={{ accentColor: 'var(--primary)', cursor: 'pointer' }}
+                                  />
+                                </td>
 
-                                           <button
-                                             type="button"
-                                             onClick={() => chooseRestockProduct(row._id)}
-                                             style={{
-                                               background: isRestockChosen ? '#059669' : '#ffffff',
-                                               color: isRestockChosen ? '#ffffff' : '#047857',
-                                               border: isRestockChosen ? '1.5px solid #047857' : '1.5px solid #a7f3d0',
-                                               padding: '0.3rem 0.75rem',
-                                               borderRadius: '6px',
-                                               fontSize: '0.76rem',
-                                               fontWeight: 700,
-                                               cursor: 'pointer',
-                                               display: 'inline-flex',
-                                               alignItems: 'center',
-                                               gap: '5px',
-                                               boxShadow: isRestockChosen ? '0 1px 3px rgba(5, 150, 105, 0.25)' : 'none',
-                                               transition: 'all 0.15s ease',
-                                             }}
-                                           >
-                                             {isRestockChosen ? <CheckIcon size={12} color="#ffffff" /> : <RefreshCwIcon size={12} color="#047857" />}
-                                             <span>Restock Existing Product</span>
-                                           </button>
-                                         </div>
-                                       </div>
-                                     );
-                                   })()}
+                                {/* INCOMING STOCK */}
+                                <td style={{ padding: '0.45rem 0.35rem' }}>
+                                  <input
+                                    type="text"
+                                    value={row.openingStock}
+                                    placeholder="0"
+                                    onChange={(e) => updateRowField(row._id, 'openingStock', e.target.value)}
+                                    style={{ ...cellInputStyle, fontWeight: 600 }}
+                                  />
+                                </td>
 
-                                  {/* Ambiguous match choices / Candidate Comparison Table */}
-                                  {row.candidates && row.candidates.length > 1 && !row.resolution && (
-                                    <div
+                                {/* CURRENT STOCK */}
+                                <td style={{ padding: '0.45rem 0.5rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                                  {row.matchedItem ? `${existingStock} ${row.unit}` : '0 (New)'}
+                                </td>
+
+                                {/* FINAL STOCK */}
+                                <td style={{ padding: '0.45rem 0.5rem', fontWeight: 700, color: '#16a34a', fontSize: '0.82rem' }}>
+                                  {finalStock} {row.unit}
+                                </td>
+
+                                {/* REORDER LEVEL */}
+                                <td style={{ padding: '0.45rem 0.35rem' }}>
+                                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      step="1"
+                                      value={row.reorderLevel}
+                                      placeholder="20"
+                                      onChange={(e) => updateRowField(row._id, 'reorderLevel', e.target.value)}
                                       style={{
-                                        background: '#fffdf5',
-                                        border: '1.5px solid #fde68a',
-                                        borderRadius: '8px',
-                                        padding: '0.75rem 1rem',
-                                        margin: '0.35rem 0',
-                                        boxShadow: '0 2px 6px rgba(217, 119, 6, 0.08)',
+                                        ...cellInputStyle,
+                                        width: '52px',
+                                        fontWeight: 600,
+                                        textAlign: 'center',
+                                        borderColor: row.errors.some((err) => err.field === 'reorderLevel') ? '#ef4444' : undefined,
+                                        background: row.errors.some((err) => err.field === 'reorderLevel') ? '#fff1f2' : '#ffffff',
                                       }}
-                                    >
-                                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                          <AlertTriangleIcon size={18} color="#b45309" />
-                                          <div>
-                                            <strong style={{ color: '#b45309', fontSize: '0.85rem' }}>
-                                              Ambiguous Catalog Matches Found for &quot;{row.name}&quot;
+                                    />
+                                    <span style={{ fontSize: '0.74rem', color: '#64748b', fontWeight: 600 }}>
+                                      {row.unit}
+                                    </span>
+                                  </div>
+                                </td>
+
+                                {/* ACTIONS */}
+                                <td style={{ padding: '0.45rem 0.35rem', textAlign: 'center' }}>
+                                  <button
+                                    onClick={() => removeRow(row._id)}
+                                    style={{
+                                      background: 'none',
+                                      border: 'none',
+                                      color: '#94a3b8',
+                                      cursor: 'pointer',
+                                      padding: '4px',
+                                      borderRadius: '4px',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      transition: 'color 0.15s ease',
+                                    }}
+                                    onMouseEnter={(e) => (e.currentTarget.style.color = '#ef4444')}
+                                    onMouseLeave={(e) => (e.currentTarget.style.color = '#94a3b8')}
+                                    title="Remove row"
+                                  >
+                                    <Trash2Icon size={14} />
+                                  </button>
+                                </td>
+                              </tr>
+
+                              {/* INLINE NOTICE / ERROR / AMBIGUITY ROW */}
+                              {(row.errors.length > 0 || row.matchedItem || (row.candidates && row.candidates.length > 1) || row.resolution) && (
+                                <tr style={{ borderBottom: '1px solid var(--border)', background: '#ffffff' }}>
+                                  <td colSpan={19} style={{ padding: '0.2rem 0.6rem 0.55rem 2.8rem', fontSize: '0.78rem' }}>
+                                    {/* Unified Matching & Restocking Decision Card for single-match products */}
+                                    {row.matchedItem && (!row.candidates || row.candidates.length <= 1) && (() => {
+                                      const isNewChosen = row.resolution === 'NEW';
+                                      const isRestockChosen = row.resolution === 'LINK';
+
+                                      return (
+                                        <div
+                                          style={{
+                                            background: '#f8fafc',
+                                            border: '1px solid #e2e8f0',
+                                            borderRadius: '6px',
+                                            padding: '0.35rem 0.65rem',
+                                            margin: '0.2rem 0',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            flexWrap: 'wrap',
+                                            gap: '0.5rem',
+                                          }}
+                                        >
+                                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                                            <CheckCircleIcon size={14} color="#16a34a" />
+                                            <strong style={{ fontSize: '0.8rem', color: '#1e293b' }}>
+                                              Matched Existing Catalog Product
                                             </strong>
-                                            <div style={{ fontSize: '0.75rem', color: '#92400e' }}>
-                                              Multiple possible database items matched this row. Review candidate details below and decide whether to restock an existing item or create a brand-new product.
+                                          </div>
+
+                                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                            <button
+                                              type="button"
+                                              onClick={() => chooseCreateNewProduct(row._id)}
+                                              style={{
+                                                background: isNewChosen ? '#4f46e5' : '#ffffff',
+                                                color: isNewChosen ? '#ffffff' : '#4338ca',
+                                                border: isNewChosen ? '1.5px solid #4338ca' : '1.5px solid #c7d2fe',
+                                                padding: '0.3rem 0.75rem',
+                                                borderRadius: '6px',
+                                                fontSize: '0.76rem',
+                                                fontWeight: 700,
+                                                cursor: 'pointer',
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '5px',
+                                                boxShadow: isNewChosen ? '0 1px 3px rgba(79, 70, 229, 0.25)' : 'none',
+                                                transition: 'all 0.15s ease',
+                                              }}
+                                            >
+                                              {isNewChosen ? <CheckIcon size={12} color="#ffffff" /> : <PlusIcon size={13} color="#4338ca" />}
+                                              <span>Create New Product</span>
+                                            </button>
+
+                                            <button
+                                              type="button"
+                                              onClick={() => chooseRestockProduct(row._id)}
+                                              style={{
+                                                background: isRestockChosen ? '#059669' : '#ffffff',
+                                                color: isRestockChosen ? '#ffffff' : '#047857',
+                                                border: isRestockChosen ? '1.5px solid #047857' : '1.5px solid #a7f3d0',
+                                                padding: '0.3rem 0.75rem',
+                                                borderRadius: '6px',
+                                                fontSize: '0.76rem',
+                                                fontWeight: 700,
+                                                cursor: 'pointer',
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '5px',
+                                                boxShadow: isRestockChosen ? '0 1px 3px rgba(5, 150, 105, 0.25)' : 'none',
+                                                transition: 'all 0.15s ease',
+                                              }}
+                                            >
+                                              {isRestockChosen ? <CheckIcon size={12} color="#ffffff" /> : <RefreshCwIcon size={12} color="#047857" />}
+                                              <span>Restock Existing Product</span>
+                                            </button>
+                                          </div>
+                                        </div>
+                                      );
+                                    })()}
+
+                                    {/* Ambiguous match choices / Candidate Comparison Table */}
+                                    {row.candidates && row.candidates.length > 1 && !row.resolution && (
+                                      <div
+                                        style={{
+                                          background: '#fffdf5',
+                                          border: '1.5px solid #fde68a',
+                                          borderRadius: '8px',
+                                          padding: '0.75rem 1rem',
+                                          margin: '0.35rem 0',
+                                          boxShadow: '0 2px 6px rgba(217, 119, 6, 0.08)',
+                                        }}
+                                      >
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                            <AlertTriangleIcon size={18} color="#b45309" />
+                                            <div>
+                                              <strong style={{ color: '#b45309', fontSize: '0.85rem' }}>
+                                                Ambiguous Catalog Matches Found for &quot;{row.name}&quot;
+                                              </strong>
+                                              <div style={{ fontSize: '0.75rem', color: '#92400e' }}>
+                                                Multiple possible database items matched this row. Review candidate details below and decide whether to restock an existing item or create a brand-new product.
+                                              </div>
                                             </div>
                                           </div>
+                                          <button
+                                            type="button"
+                                            onClick={() => createAsNewProduct(row._id)}
+                                            style={{
+                                              background: '#ffffff',
+                                              border: '1.5px solid #6366f1',
+                                              borderRadius: '6px',
+                                              color: '#4338ca',
+                                              padding: '0.35rem 0.85rem',
+                                              fontSize: '0.78rem',
+                                              fontWeight: 700,
+                                              cursor: 'pointer',
+                                              boxShadow: '0 1px 3px rgba(99, 102, 241, 0.15)',
+                                              display: 'inline-flex',
+                                              alignItems: 'center',
+                                              gap: '0.35rem',
+                                            }}
+                                          >
+                                            <SparklesIcon size={13} color="#4338ca" />
+                                            <span>Create as New Product (New SKU &amp; Barcode)</span>
+                                          </button>
+                                        </div>
+
+                                        {/* Candidate Table */}
+                                        <div style={{ overflowX: 'auto', borderRadius: '6px', border: '1px solid #fef3c7', background: '#ffffff' }}>
+                                          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.75rem', textAlign: 'left' }}>
+                                            <thead>
+                                              <tr style={{ background: '#fef3c7', color: '#92400e', borderBottom: '1px solid #fde68a' }}>
+                                                <th style={{ padding: '0.4rem 0.6rem' }}>CANDIDATE PRODUCT</th>
+                                                <th style={{ padding: '0.4rem 0.6rem' }}>SKU</th>
+                                                <th style={{ padding: '0.4rem 0.6rem' }}>BARCODE / EAN</th>
+                                                <th style={{ padding: '0.4rem 0.6rem' }}>CATEGORY</th>
+                                                <th style={{ padding: '0.4rem 0.6rem' }}>UOM</th>
+                                                <th style={{ padding: '0.4rem 0.6rem' }}>PACK SIZE</th>
+                                                <th style={{ padding: '0.4rem 0.6rem' }}>CURRENT STOCK</th>
+                                                <th style={{ padding: '0.4rem 0.6rem' }}>WHY IT MATCHED</th>
+                                                <th style={{ padding: '0.4rem 0.6rem', textAlign: 'right' }}>ACTION</th>
+                                              </tr>
+                                            </thead>
+                                            <tbody>
+                                              {row.candidates.map((cand) => (
+                                                <tr key={cand.id} style={{ borderBottom: '1px solid #fef3c7' }}>
+                                                  <td style={{ padding: '0.4rem 0.6rem', fontWeight: 600, color: '#1e293b' }}>
+                                                    {cand.name}
+                                                  </td>
+                                                  <td style={{ padding: '0.4rem 0.6rem', fontFamily: 'monospace', color: '#475569' }}>
+                                                    {cand.sku || '—'}
+                                                  </td>
+                                                  <td style={{ padding: '0.4rem 0.6rem', fontFamily: 'monospace', color: '#475569' }}>
+                                                    {cand.barcode || '—'}
+                                                  </td>
+                                                  <td style={{ padding: '0.4rem 0.6rem', color: '#475569' }}>
+                                                    {cand.category || '—'}
+                                                  </td>
+                                                  <td style={{ padding: '0.4rem 0.6rem', color: '#475569' }}>
+                                                    {cand.unit || '—'}
+                                                  </td>
+                                                  <td style={{ padding: '0.4rem 0.6rem', color: '#475569' }}>
+                                                    {cand.packSize || extractPackSize(cand.name)?.raw || '—'}
+                                                  </td>
+                                                  <td style={{ padding: '0.4rem 0.6rem', fontWeight: 600, color: '#1e293b' }}>
+                                                    {cand.currentStockMilli / 1000} {cand.unit}
+                                                  </td>
+                                                  <td style={{ padding: '0.4rem 0.6rem', color: '#b45309', fontStyle: 'italic' }}>
+                                                    {cand.matchReason || 'Close catalog name/variant match'}
+                                                  </td>
+                                                  <td style={{ padding: '0.4rem 0.6rem', textAlign: 'right' }}>
+                                                    <button
+                                                      type="button"
+                                                      onClick={() => linkToCandidate(row._id, cand)}
+                                                      style={{
+                                                        background: '#16a34a',
+                                                        color: '#ffffff',
+                                                        border: 'none',
+                                                        borderRadius: '5px',
+                                                        padding: '0.25rem 0.65rem',
+                                                        fontSize: '0.73rem',
+                                                        fontWeight: 600,
+                                                        cursor: 'pointer',
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        gap: '0.35rem',
+                                                      }}
+                                                    >
+                                                      <LinkIcon size={12} color="#ffffff" />
+                                                      <span>Link to this Product</span>
+                                                    </button>
+                                                  </td>
+                                                </tr>
+                                              ))}
+                                            </tbody>
+                                          </table>
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {/* Resolution indicator if resolved from multiple ambiguous candidates */}
+                                    {row.resolution && row.candidates && row.candidates.length > 1 && (
+                                      <div
+                                        style={{
+                                          background: row.resolution === 'LINK' ? '#f0fdf4' : '#f8f7ff',
+                                          border: row.resolution === 'LINK' ? '1px solid #bbf7d0' : '1px solid #e0e7ff',
+                                          borderRadius: '6px',
+                                          padding: '0.45rem 0.75rem',
+                                          margin: '0.25rem 0',
+                                          display: 'flex',
+                                          justifyContent: 'space-between',
+                                          alignItems: 'center',
+                                          fontSize: '0.78rem',
+                                        }}
+                                      >
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                          {row.resolution === 'LINK' && row.matchedItem ? (
+                                            <>
+                                              <CheckCircleIcon size={14} color="#166534" />
+                                              <span style={{ color: '#166534', fontWeight: 600 }}>
+                                                Matched Existing Catalog Product
+                                              </span>
+                                            </>
+                                          ) : (
+                                            <>
+                                              <SparklesIcon size={14} color="#4338ca" />
+                                              <span style={{ color: '#4338ca', fontWeight: 600 }}>
+                                                Create New Product
+                                              </span>
+                                            </>
+                                          )}
                                         </div>
                                         <button
                                           type="button"
-                                          onClick={() => createAsNewProduct(row._id)}
+                                          onClick={() => resetAmbiguityResolution(row._id)}
                                           style={{
-                                            background: '#ffffff',
-                                            border: '1.5px solid #6366f1',
-                                            borderRadius: '6px',
-                                            color: '#4338ca',
-                                            padding: '0.35rem 0.85rem',
-                                            fontSize: '0.78rem',
-                                            fontWeight: 700,
+                                            background: 'none',
+                                            border: '1px solid #cbd5e1',
+                                            borderRadius: '4px',
+                                            padding: '2px 8px',
+                                            fontSize: '0.72rem',
                                             cursor: 'pointer',
-                                            boxShadow: '0 1px 3px rgba(99, 102, 241, 0.15)',
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            gap: '0.35rem',
+                                            color: '#475569',
                                           }}
                                         >
-                                          <SparklesIcon size={13} color="#4338ca" />
-                                          <span>Create as New Product (New SKU &amp; Barcode)</span>
+                                          Change / Re-choose
                                         </button>
                                       </div>
+                                    )}
 
-                                      {/* Candidate Table */}
-                                      <div style={{ overflowX: 'auto', borderRadius: '6px', border: '1px solid #fef3c7', background: '#ffffff' }}>
-                                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.75rem', textAlign: 'left' }}>
-                                          <thead>
-                                            <tr style={{ background: '#fef3c7', color: '#92400e', borderBottom: '1px solid #fde68a' }}>
-                                              <th style={{ padding: '0.4rem 0.6rem' }}>CANDIDATE PRODUCT</th>
-                                              <th style={{ padding: '0.4rem 0.6rem' }}>SKU</th>
-                                              <th style={{ padding: '0.4rem 0.6rem' }}>BARCODE / EAN</th>
-                                              <th style={{ padding: '0.4rem 0.6rem' }}>CATEGORY</th>
-                                              <th style={{ padding: '0.4rem 0.6rem' }}>UOM</th>
-                                              <th style={{ padding: '0.4rem 0.6rem' }}>PACK SIZE</th>
-                                              <th style={{ padding: '0.4rem 0.6rem' }}>CURRENT STOCK</th>
-                                              <th style={{ padding: '0.4rem 0.6rem' }}>WHY IT MATCHED</th>
-                                              <th style={{ padding: '0.4rem 0.6rem', textAlign: 'right' }}>ACTION</th>
-                                            </tr>
-                                          </thead>
-                                          <tbody>
-                                            {row.candidates.map((cand) => (
-                                              <tr key={cand.id} style={{ borderBottom: '1px solid #fef3c7' }}>
-                                                <td style={{ padding: '0.4rem 0.6rem', fontWeight: 600, color: '#1e293b' }}>
-                                                  {cand.name}
-                                                </td>
-                                                <td style={{ padding: '0.4rem 0.6rem', fontFamily: 'monospace', color: '#475569' }}>
-                                                  {cand.sku || '—'}
-                                                </td>
-                                                <td style={{ padding: '0.4rem 0.6rem', fontFamily: 'monospace', color: '#475569' }}>
-                                                  {cand.barcode || '—'}
-                                                </td>
-                                                <td style={{ padding: '0.4rem 0.6rem', color: '#475569' }}>
-                                                  {cand.category || '—'}
-                                                </td>
-                                                <td style={{ padding: '0.4rem 0.6rem', color: '#475569' }}>
-                                                  {cand.unit || '—'}
-                                                </td>
-                                                <td style={{ padding: '0.4rem 0.6rem', color: '#475569' }}>
-                                                  {cand.packSize || extractPackSize(cand.name)?.raw || '—'}
-                                                </td>
-                                                <td style={{ padding: '0.4rem 0.6rem', fontWeight: 600, color: '#1e293b' }}>
-                                                  {cand.currentStockMilli / 1000} {cand.unit}
-                                                </td>
-                                                <td style={{ padding: '0.4rem 0.6rem', color: '#b45309', fontStyle: 'italic' }}>
-                                                  {cand.matchReason || 'Close catalog name/variant match'}
-                                                </td>
-                                                <td style={{ padding: '0.4rem 0.6rem', textAlign: 'right' }}>
-                                                  <button
-                                                    type="button"
-                                                    onClick={() => linkToCandidate(row._id, cand)}
-                                                    style={{
-                                                      background: '#16a34a',
-                                                      color: '#ffffff',
-                                                      border: 'none',
-                                                      borderRadius: '5px',
-                                                      padding: '0.25rem 0.65rem',
-                                                      fontSize: '0.73rem',
-                                                      fontWeight: 600,
-                                                      cursor: 'pointer',
-                                                      display: 'inline-flex',
-                                                      alignItems: 'center',
-                                                      gap: '0.35rem',
-                                                    }}
-                                                  >
-                                                    <LinkIcon size={12} color="#ffffff" />
-                                                    <span>Link to this Product</span>
-                                                  </button>
-                                                </td>
-                                              </tr>
-                                            ))}
-                                          </tbody>
-                                        </table>
-                                      </div>
-                                    </div>
-                                  )}
-
-                                  {/* Resolution indicator if resolved from multiple ambiguous candidates */}
-                                  {row.resolution && row.candidates && row.candidates.length > 1 && (
-                                    <div
-                                      style={{
-                                        background: row.resolution === 'LINK' ? '#f0fdf4' : '#f8f7ff',
-                                        border: row.resolution === 'LINK' ? '1px solid #bbf7d0' : '1px solid #e0e7ff',
-                                        borderRadius: '6px',
-                                        padding: '0.45rem 0.75rem',
-                                        margin: '0.25rem 0',
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center',
-                                        fontSize: '0.78rem',
-                                      }}
-                                    >
-                                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                        {row.resolution === 'LINK' && row.matchedItem ? (
-                                          <>
-                                            <CheckCircleIcon size={14} color="#166534" />
-                                            <span style={{ color: '#166534', fontWeight: 600 }}>
-                                              Matched Existing Catalog Product
-                                            </span>
-                                          </>
-                                        ) : (
-                                          <>
-                                            <SparklesIcon size={14} color="#4338ca" />
-                                            <span style={{ color: '#4338ca', fontWeight: 600 }}>
-                                              Create New Product
-                                            </span>
-                                          </>
-                                        )}
-                                      </div>
-                                      <button
-                                        type="button"
-                                        onClick={() => resetAmbiguityResolution(row._id)}
+                                    {/* Error messages callout */}
+                                    {row.errors.length > 0 && (
+                                      <div
                                         style={{
-                                          background: 'none',
-                                          border: '1px solid #cbd5e1',
-                                          borderRadius: '4px',
-                                          padding: '2px 8px',
-                                          fontSize: '0.72rem',
-                                          cursor: 'pointer',
-                                          color: '#475569',
+                                          marginTop: '4px',
+                                          padding: '0.35rem 0.65rem',
+                                          borderRadius: '6px',
+                                          background: '#fff1f2',
+                                          border: '1px solid #fecaca',
+                                          borderLeft: '3px solid #ef4444',
+                                          display: 'flex',
+                                          flexDirection: 'column',
+                                          gap: '2px',
                                         }}
                                       >
-                                        Change / Re-choose
-                                      </button>
-                                    </div>
-                                  )}
+                                        {row.errors.map((err, idx) => (
+                                          <div
+                                            key={idx}
+                                            style={{
+                                              color: err.isDuplicate ? '#b45309' : '#b91c1c',
+                                              fontWeight: 600,
+                                              fontSize: '0.75rem',
+                                              display: 'flex',
+                                              alignItems: 'center',
+                                              gap: '5px',
+                                            }}
+                                          >
+                                            <AlertCircleIcon size={12} color={err.isDuplicate ? '#d97706' : '#dc2626'} />
+                                            <span>{err.message}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </td>
+                                </tr>
+                              )}
+                            </React.Fragment>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
 
-                                  {/* Error messages callout */}
-                                  {row.errors.length > 0 && (
-                                    <div
-                                      style={{
-                                        marginTop: '4px',
-                                        padding: '0.35rem 0.65rem',
-                                        borderRadius: '6px',
-                                        background: '#fff1f2',
-                                        border: '1px solid #fecaca',
-                                        borderLeft: '3px solid #ef4444',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        gap: '2px',
-                                      }}
-                                    >
-                                      {row.errors.map((err, idx) => (
-                                        <div
-                                          key={idx}
-                                          style={{
-                                            color: err.isDuplicate ? '#b45309' : '#b91c1c',
-                                            fontWeight: 600,
-                                            fontSize: '0.75rem',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '5px',
-                                          }}
-                                        >
-                                          <AlertCircleIcon size={12} color={err.isDuplicate ? '#d97706' : '#dc2626'} />
-                                          <span>{err.message}</span>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  )}
-                                </td>
-                              </tr>
-                            )}
-                          </React.Fragment>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* TABLE ACTION BUTTONS */}
-              <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                <button
-                  id="bulk-add-row-btn"
-                  onClick={addEmptyRow}
-                  style={{
-                    padding: '0.4rem 0.85rem', borderRadius: '8px', border: '1px solid var(--border)',
-                    background: '#ffffff', color: 'var(--text-main)', fontSize: '0.82rem',
-                    fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
-                    transition: 'all 0.15s ease',
-                  }}
-                >
-                  <PlusIcon size={14} color="var(--text-main)" />
-                  <span>Add Row</span>
-                </button>
-
-                {errorRows.length > 0 && (
+                {/* TABLE ACTION BUTTONS */}
+                <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center', flexWrap: 'wrap' }}>
                   <button
-                    id="bulk-remove-errors-btn"
-                    onClick={removeAllErrors}
+                    id="bulk-add-row-btn"
+                    onClick={addEmptyRow}
                     style={{
-                      padding: '0.4rem 0.85rem', borderRadius: '8px', border: '1px solid #fecaca',
-                      background: '#fff1f2', color: '#dc2626', fontSize: '0.82rem',
+                      padding: '0.4rem 0.85rem', borderRadius: '8px', border: '1px solid var(--border)',
+                      background: '#ffffff', color: 'var(--text-main)', fontSize: '0.82rem',
                       fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
+                      transition: 'all 0.15s ease',
                     }}
                   >
-                    <Trash2Icon size={13} color="#dc2626" />
-                    <span>Remove {errorRows.length} error row(s)</span>
+                    <PlusIcon size={14} color="var(--text-main)" />
+                    <span>Add Row</span>
                   </button>
-                )}
 
-                {duplicateRows.length > 0 && (
-                  <button
-                    id="bulk-remove-duplicates-btn"
-                    onClick={removeAllDuplicates}
-                    style={{
-                      padding: '0.4rem 0.85rem', borderRadius: '8px', border: '1px solid #fde68a',
-                      background: '#fffbeb', color: '#d97706', fontSize: '0.82rem',
-                      fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
-                    }}
-                  >
-                    <CopyIcon size={13} color="#d97706" />
-                    <span>Remove {duplicateRows.length} duplicate row(s)</span>
-                  </button>
-                )}
+                  {errorRows.length > 0 && (
+                    <button
+                      id="bulk-remove-errors-btn"
+                      onClick={removeAllErrors}
+                      style={{
+                        padding: '0.4rem 0.85rem', borderRadius: '8px', border: '1px solid #fecaca',
+                        background: '#fff1f2', color: '#dc2626', fontSize: '0.82rem',
+                        fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
+                      }}
+                    >
+                      <Trash2Icon size={13} color="#dc2626" />
+                      <span>Remove {errorRows.length} error row(s)</span>
+                    </button>
+                  )}
+
+                  {duplicateRows.length > 0 && (
+                    <button
+                      id="bulk-remove-duplicates-btn"
+                      onClick={removeAllDuplicates}
+                      style={{
+                        padding: '0.4rem 0.85rem', borderRadius: '8px', border: '1px solid #fde68a',
+                        background: '#fffbeb', color: '#d97706', fontSize: '0.82rem',
+                        fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
+                      }}
+                    >
+                      <CopyIcon size={13} color="#d97706" />
+                      <span>Remove {duplicateRows.length} duplicate row(s)</span>
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* ══════════════════════════════════════════════════════════════════════
+            {/* ══════════════════════════════════════════════════════════════════════
               STEP 3: CONFIRM PREVIEW
              ══════════════════════════════════════════════════════════════════════ */}
-          {step === 'confirm' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', maxWidth: '820px', margin: '0 auto' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                <div
-                  style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '10px',
-                    background: 'rgba(99, 102, 241, 0.1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                  }}
-                >
-                  <LayersIcon size={18} color="#6366f1" />
-                </div>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: '1.15rem', color: 'var(--text-main)' }}>
-                    Confirm Import &amp; Restock Execution
-                  </div>
-                  <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-                    Review summary numbers before applying changes to your inventory
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '0.75rem' }}>
-                <div style={{ ...statCardStyle, background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
-                  <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#eef2ff', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.4rem' }}>
-                    <LayersIcon size={16} color="#6366f1" />
-                  </div>
-                  <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--primary)' }}>{rawRows.length}</div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Total Input Rows</div>
-                </div>
-                <div style={{ ...statCardStyle, background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
-                  <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#e0e7ff', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.4rem' }}>
-                    <SparklesIcon size={16} color="#4338ca" />
-                  </div>
-                  <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#4338ca' }}>{newRows.length}</div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>New Products to Create</div>
-                </div>
-                <div style={{ ...statCardStyle, background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
-                  <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.4rem' }}>
-                    <RefreshCwIcon size={16} color="#16a34a" />
-                  </div>
-                  <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#16a34a' }}>{restockRows.length}</div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Existing Restocks</div>
-                </div>
-                <div style={{ ...statCardStyle, background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
-                  <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#e0f2fe', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.4rem' }}>
-                    <PackageBoxIcon size={16} color="#0284c7" />
-                  </div>
-                  <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#0284c7' }}>{totalInwardStock}</div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Total Inward Units</div>
-                </div>
-                <div style={{ ...statCardStyle, background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
-                  <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.4rem' }}>
-                    <TruckIcon size={16} color="#d97706" />
-                  </div>
-                  <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#b45309', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {selectedSupplier?.name || 'Selected Supplier'}
-                  </div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                    {selectedSupplier?.gstin ? `GST: ${selectedSupplier.gstin}` : 'Linked Supplier'}
-                  </div>
-                </div>
-              </div>
-
-              {/* Explanatory notes */}
-              <div style={{ background: '#f8f7ff', border: '1px solid var(--border)', borderRadius: '12px', padding: '1.25rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontWeight: 700, fontSize: '0.9rem', marginBottom: '0.65rem', color: 'var(--text-main)' }}>
-                  <CheckCircleIcon size={16} color="#4f46e5" />
-                  <span>Execution Details &amp; Safeguards</span>
-                </div>
-                <ul style={{ margin: 0, paddingLeft: '1.25rem', fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.8 }}>
-                  <li>
-                    All <strong style={{ color: '#4f46e5' }}>{eligibleRows.length} imported product rows</strong> and inward stock movements will be linked to supplier <strong style={{ color: '#b45309' }}>{selectedSupplier?.name}</strong>.
-                  </li>
-                  <li>
-                    <strong style={{ color: '#16a34a' }}>{restockRows.length} existing products</strong> will have incoming quantities added to current available inventory without duplicating products or modifying their existing barcodes.
-                  </li>
-                  <li>
-                    <strong style={{ color: '#4338ca' }}>{newRows.length} new products</strong> will be registered with auto-generated unique SKUs and internal EAN barcodes.
-                  </li>
-                  <li>
-                    Branch inventory reorder levels will be saved for all imported products.
-                  </li>
-                  {globalUpdatePrices && (
-                    <li>
-                      Catalog prices and HSN codes for restocked items will be updated to the latest supplier invoice rates.
-                    </li>
-                  )}
-                  {(errorRows.length > 0 || duplicateRows.length > 0 || ambiguousRows.length > 0) && (
-                    <li>
-                      <strong style={{ color: '#dc2626' }}>{errorRows.length + duplicateRows.length + ambiguousRows.length} unconfirmed rows</strong> will be safely skipped.
-                    </li>
-                  )}
-                  <li>
-                    Idempotency protected with batch key <code style={{ background: '#ffffff', padding: '0.15rem 0.4rem', borderRadius: '4px', border: '1px solid var(--border)', fontSize: '0.8rem' }}>{importBatchId.current}</code>.
-                  </li>
-                </ul>
-              </div>
-
-              {rawRows.some((r) => !r.matchedItem && (!r.barcode || !r.barcode.trim())) && (
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.65rem',
-                    padding: '0.85rem 1rem',
-                    borderRadius: '10px',
-                    background: '#fef2f2',
-                    border: '1px solid #fecaca',
-                    color: '#b91c1c',
-                    fontSize: '0.85rem',
-                    fontWeight: 600,
-                  }}
-                >
-                  <AlertTriangleIcon size={18} color="#dc2626" />
-                  <span>
-                    {rawRows.filter((r) => !r.matchedItem && (!r.barcode || !r.barcode.trim())).length} new product(s) are pending barcodes. Please return to Review and click &quot;Generate Internal Barcodes&quot; or scan barcodes.
-                  </span>
-                </div>
-              )}
-
-              {apiError && (
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.65rem',
-                    padding: '0.85rem 1rem',
-                    borderRadius: '10px',
-                    background: '#fef2f2',
-                    border: '1px solid #fecaca',
-                    color: '#b91c1c',
-                    fontSize: '0.85rem',
-                    fontWeight: 600,
-                  }}
-                >
-                  <AlertCircleIcon size={18} color="#dc2626" />
-                  <span>{apiError}</span>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* ══════════════════════════════════════════════════════════════════════
-              STEP 4: RESULTS
-             ══════════════════════════════════════════════════════════════════════ */}
-          {step === 'results' && importResult && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem' }}>
-                <div style={{ ...statCardStyle, background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
-                  <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.45rem' }}>
-                    <LayersIcon size={18} color="var(--primary)" />
-                  </div>
-                  <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--primary)' }}>{importResult.totalRows}</div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Total Rows</div>
-                </div>
-                <div style={{ ...statCardStyle, background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
-                  <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#e0e7ff', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.45rem' }}>
-                    <SparklesIcon size={18} color="#4338ca" />
-                  </div>
-                  <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#4338ca' }}>{importResult.created}</div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>New Products Created</div>
-                </div>
-                <div style={{ ...statCardStyle, background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
-                  <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.45rem' }}>
-                    <RefreshCwIcon size={18} color="#16a34a" />
-                  </div>
-                  <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#16a34a' }}>{importResult.restocked}</div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Products Restocked</div>
-                </div>
-                <div style={{ ...statCardStyle, background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
-                  <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#e0f2fe', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.45rem' }}>
-                    <BarcodeIcon size={18} color="#0284c7" />
-                  </div>
-                  <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0284c7' }}>{importResult.barcodesSaved ?? 0}</div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Barcodes Saved</div>
-                </div>
-                <div style={{ ...statCardStyle, background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
-                  <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: importResult.skipped > 0 ? '#fee2e2' : '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.45rem' }}>
-                    <AlertTriangleIcon size={18} color={importResult.skipped > 0 ? '#dc2626' : '#9ca3af'} />
-                  </div>
-                  <div style={{ fontSize: '1.75rem', fontWeight: 800, color: importResult.skipped > 0 ? '#dc2626' : 'var(--text-muted)' }}>{importResult.skipped}</div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Skipped / Unchanged</div>
-                </div>
-              </div>
-
-              {importResult.created + importResult.restocked > 0 && (
-                <div
-                  style={{
-                    padding: '1rem 1.25rem',
-                    borderRadius: '12px',
-                    background: 'linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%)',
-                    border: '1px solid #a7f3d0',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.85rem',
-                    boxShadow: '0 2px 8px rgba(16, 185, 129, 0.08)',
-                  }}
-                >
+            {step === 'confirm' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', maxWidth: '820px', margin: '0 auto' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
                   <div
                     style={{
-                      width: '38px',
-                      height: '38px',
+                      width: '36px',
+                      height: '36px',
                       borderRadius: '10px',
-                      background: '#d1fae5',
+                      background: 'rgba(99, 102, 241, 0.1)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       flexShrink: 0,
                     }}
                   >
-                    <CheckCircleIcon size={22} color="#059669" />
+                    <LayersIcon size={18} color="#6366f1" />
                   </div>
                   <div>
-                    <div style={{ fontSize: '0.94rem', color: '#065f46', fontWeight: 700 }}>
-                      Import Batch Completed Successfully
+                    <div style={{ fontWeight: 700, fontSize: '1.15rem', color: 'var(--text-main)' }}>
+                      Confirm Import &amp; Restock Execution
                     </div>
-                    <div style={{ fontSize: '0.84rem', color: '#047857', marginTop: '0.2rem' }}>
-                      Successfully imported {importResult.created} new product{importResult.created !== 1 ? 's' : ''}, restocked {importResult.restocked} existing product{importResult.restocked !== 1 ? 's' : ''}, and saved {importResult.barcodesSaved ?? 0} barcode mapping{importResult.barcodesSaved !== 1 ? 's' : ''}!
-                    </div>
-                    <div style={{ fontSize: '0.8rem', color: '#059669', marginTop: '0.3rem', display: 'flex', alignItems: 'center', gap: '0.85rem', flexWrap: 'wrap' }}>
-                      <span>Linked Supplier: <strong>{importResult.supplierName || selectedSupplier?.name || 'Selected Supplier'}</strong></span>
-                      {importResult.purchaseNumber && (
-                        <span>• Purchase Order: <strong>{importResult.purchaseNumber}</strong></span>
-                      )}
+                    <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                      Review summary numbers before applying changes to your inventory
                     </div>
                   </div>
                 </div>
-              )}
 
-              {/* Results table */}
-              <div style={{ overflowX: 'auto', borderRadius: '10px', border: '1px solid var(--border)', background: '#ffffff', maxHeight: '35vh' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
-                  <thead style={{ position: 'sticky', top: 0, background: '#f8f7ff' }}>
-                    <tr>
-                      <th style={thStyle}>Row #</th>
-                      <th style={thStyle}>Product Name</th>
-                      <th style={thStyle}>Action</th>
-                      <th style={thStyle}>Result Details</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {importResult.results.map((r) => (
-                      <tr key={r.rowIndex} style={{ borderBottom: '1px solid var(--border)' }}>
-                        <td style={{ padding: '0.5rem 0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>Row {r.rowIndex}</td>
-                        <td style={{ padding: '0.5rem 0.75rem', fontWeight: 600, color: 'var(--text-main)' }}>{r.name || '(unnamed)'}</td>
-                        <td style={{ padding: '0.5rem 0.75rem' }}>
-                          {r.status === 'created' && (
-                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: '0.2rem 0.6rem', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 700, background: '#eef2ff', color: '#4338ca' }}>
-                              <SparklesIcon size={12} color="#4338ca" />
-                              <span>Created (New)</span>
-                            </span>
-                          )}
-                          {r.status === 'restocked' && (
-                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: '0.2rem 0.6rem', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 700, background: '#dcfce7', color: '#15803d' }}>
-                              <RefreshCwIcon size={12} color="#15803d" />
-                              <span>Restocked</span>
-                            </span>
-                          )}
-                          {r.status === 'skipped' && (
-                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: '0.2rem 0.6rem', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 700, background: '#fee2e2', color: '#b91c1c' }}>
-                              <AlertCircleIcon size={12} color="#b91c1c" />
-                              <span>Skipped</span>
-                            </span>
-                          )}
-                        </td>
-                        <td style={{ padding: '0.5rem 0.75rem', color: r.status === 'skipped' ? '#dc2626' : 'var(--text-muted)' }}>
-                          {r.status === 'skipped' ? r.reason : `Item ID: ${r.itemId}`}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '0.75rem' }}>
+                  <div style={{ ...statCardStyle, background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#eef2ff', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.4rem' }}>
+                      <LayersIcon size={16} color="#6366f1" />
+                    </div>
+                    <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--primary)' }}>{rawRows.length}</div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Total Input Rows</div>
+                  </div>
+                  <div style={{ ...statCardStyle, background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#e0e7ff', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.4rem' }}>
+                      <SparklesIcon size={16} color="#4338ca" />
+                    </div>
+                    <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#4338ca' }}>{newRows.length}</div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>New Products to Create</div>
+                  </div>
+                  <div style={{ ...statCardStyle, background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.4rem' }}>
+                      <RefreshCwIcon size={16} color="#16a34a" />
+                    </div>
+                    <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#16a34a' }}>{restockRows.length}</div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Existing Restocks</div>
+                  </div>
+                  <div style={{ ...statCardStyle, background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#e0f2fe', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.4rem' }}>
+                      <PackageBoxIcon size={16} color="#0284c7" />
+                    </div>
+                    <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#0284c7' }}>{totalInwardStock}</div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Total Inward Units</div>
+                  </div>
+                  <div style={{ ...statCardStyle, background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.4rem' }}>
+                      <TruckIcon size={16} color="#d97706" />
+                    </div>
+                    <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#b45309', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {selectedSupplier?.name || 'Selected Supplier'}
+                    </div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                      {selectedSupplier?.gstin ? `GST: ${selectedSupplier.gstin}` : 'Linked Supplier'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Explanatory notes */}
+                <div style={{ background: '#f8f7ff', border: '1px solid var(--border)', borderRadius: '12px', padding: '1.25rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontWeight: 700, fontSize: '0.9rem', marginBottom: '0.65rem', color: 'var(--text-main)' }}>
+                    <CheckCircleIcon size={16} color="#4f46e5" />
+                    <span>Execution Details &amp; Safeguards</span>
+                  </div>
+                  <ul style={{ margin: 0, paddingLeft: '1.25rem', fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.8 }}>
+                    <li>
+                      All <strong style={{ color: '#4f46e5' }}>{eligibleRows.length} imported product rows</strong> and inward stock movements will be linked to supplier <strong style={{ color: '#b45309' }}>{selectedSupplier?.name}</strong>.
+                    </li>
+                    <li>
+                      <strong style={{ color: '#16a34a' }}>{restockRows.length} existing products</strong> will have incoming quantities added to current available inventory without duplicating products or modifying their existing barcodes.
+                    </li>
+                    <li>
+                      <strong style={{ color: '#4338ca' }}>{newRows.length} new products</strong> will be registered with auto-generated unique SKUs and internal EAN barcodes.
+                    </li>
+                    <li>
+                      Branch inventory reorder levels will be saved for all imported products.
+                    </li>
+                    {globalUpdatePrices && (
+                      <li>
+                        Catalog prices and HSN codes for restocked items will be updated to the latest supplier invoice rates.
+                      </li>
+                    )}
+                    {(errorRows.length > 0 || duplicateRows.length > 0 || ambiguousRows.length > 0) && (
+                      <li>
+                        <strong style={{ color: '#dc2626' }}>{errorRows.length + duplicateRows.length + ambiguousRows.length} unconfirmed rows</strong> will be safely skipped.
+                      </li>
+                    )}
+                    <li>
+                      Idempotency protected with batch key <code style={{ background: '#ffffff', padding: '0.15rem 0.4rem', borderRadius: '4px', border: '1px solid var(--border)', fontSize: '0.8rem' }}>{importBatchId.current}</code>.
+                    </li>
+                  </ul>
+                </div>
+
+                {rawRows.some((r) => !r.matchedItem && (!r.barcode || !r.barcode.trim())) && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.65rem',
+                      padding: '0.85rem 1rem',
+                      borderRadius: '10px',
+                      background: '#fef2f2',
+                      border: '1px solid #fecaca',
+                      color: '#b91c1c',
+                      fontSize: '0.85rem',
+                      fontWeight: 600,
+                    }}
+                  >
+                    <AlertTriangleIcon size={18} color="#dc2626" />
+                    <span>
+                      {rawRows.filter((r) => !r.matchedItem && (!r.barcode || !r.barcode.trim())).length} new product(s) are pending barcodes. Please return to Review and click &quot;Generate Internal Barcodes&quot; or scan barcodes.
+                    </span>
+                  </div>
+                )}
+
+                {apiError && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.65rem',
+                      padding: '0.85rem 1rem',
+                      borderRadius: '10px',
+                      background: '#fef2f2',
+                      border: '1px solid #fecaca',
+                      color: '#b91c1c',
+                      fontSize: '0.85rem',
+                      fontWeight: 600,
+                    }}
+                  >
+                    <AlertCircleIcon size={18} color="#dc2626" />
+                    <span>{apiError}</span>
+                  </div>
+                )}
               </div>
+            )}
 
-              {/* Action Buttons */}
-              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                {importResult.skipped > 0 && (
+            {/* ══════════════════════════════════════════════════════════════════════
+              STEP 4: RESULTS
+             ══════════════════════════════════════════════════════════════════════ */}
+            {step === 'results' && importResult && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem' }}>
+                  <div style={{ ...statCardStyle, background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+                    <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.45rem' }}>
+                      <LayersIcon size={18} color="var(--primary)" />
+                    </div>
+                    <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--primary)' }}>{importResult.totalRows}</div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Total Rows</div>
+                  </div>
+                  <div style={{ ...statCardStyle, background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+                    <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#e0e7ff', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.45rem' }}>
+                      <SparklesIcon size={18} color="#4338ca" />
+                    </div>
+                    <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#4338ca' }}>{importResult.created}</div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>New Products Created</div>
+                  </div>
+                  <div style={{ ...statCardStyle, background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+                    <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.45rem' }}>
+                      <RefreshCwIcon size={18} color="#16a34a" />
+                    </div>
+                    <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#16a34a' }}>{importResult.restocked}</div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Products Restocked</div>
+                  </div>
+                  <div style={{ ...statCardStyle, background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+                    <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#e0f2fe', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.45rem' }}>
+                      <BarcodeIcon size={18} color="#0284c7" />
+                    </div>
+                    <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0284c7' }}>{importResult.barcodesSaved ?? 0}</div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Barcodes Saved</div>
+                  </div>
+                  <div style={{ ...statCardStyle, background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+                    <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: importResult.skipped > 0 ? '#fee2e2' : '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.45rem' }}>
+                      <AlertTriangleIcon size={18} color={importResult.skipped > 0 ? '#dc2626' : '#9ca3af'} />
+                    </div>
+                    <div style={{ fontSize: '1.75rem', fontWeight: 800, color: importResult.skipped > 0 ? '#dc2626' : 'var(--text-muted)' }}>{importResult.skipped}</div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Skipped / Unchanged</div>
+                  </div>
+                </div>
+
+                {importResult.created + importResult.restocked > 0 && (
+                  <div
+                    style={{
+                      padding: '1rem 1.25rem',
+                      borderRadius: '12px',
+                      background: 'linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%)',
+                      border: '1px solid #a7f3d0',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.85rem',
+                      boxShadow: '0 2px 8px rgba(16, 185, 129, 0.08)',
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: '38px',
+                        height: '38px',
+                        borderRadius: '10px',
+                        background: '#d1fae5',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                      }}
+                    >
+                      <CheckCircleIcon size={22} color="#059669" />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.94rem', color: '#065f46', fontWeight: 700 }}>
+                        Import Batch Completed Successfully
+                      </div>
+                      <div style={{ fontSize: '0.84rem', color: '#047857', marginTop: '0.2rem' }}>
+                        Successfully imported {importResult.created} new product{importResult.created !== 1 ? 's' : ''}, restocked {importResult.restocked} existing product{importResult.restocked !== 1 ? 's' : ''}, and saved {importResult.barcodesSaved ?? 0} barcode mapping{importResult.barcodesSaved !== 1 ? 's' : ''}!
+                      </div>
+                      <div style={{ fontSize: '0.8rem', color: '#059669', marginTop: '0.3rem', display: 'flex', alignItems: 'center', gap: '0.85rem', flexWrap: 'wrap' }}>
+                        <span>Linked Supplier: <strong>{importResult.supplierName || selectedSupplier?.name || 'Selected Supplier'}</strong></span>
+                        {importResult.purchaseNumber && (
+                          <span>• Purchase Order: <strong>{importResult.purchaseNumber}</strong></span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Results table */}
+                <div style={{ overflowX: 'auto', borderRadius: '10px', border: '1px solid var(--border)', background: '#ffffff', maxHeight: '35vh' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+                    <thead style={{ position: 'sticky', top: 0, background: '#f8f7ff' }}>
+                      <tr>
+                        <th style={thStyle}>Row #</th>
+                        <th style={thStyle}>Product Name</th>
+                        <th style={thStyle}>Action</th>
+                        <th style={thStyle}>Result Details</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {importResult.results.map((r) => (
+                        <tr key={r.rowIndex} style={{ borderBottom: '1px solid var(--border)' }}>
+                          <td style={{ padding: '0.5rem 0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>Row {r.rowIndex}</td>
+                          <td style={{ padding: '0.5rem 0.75rem', fontWeight: 600, color: 'var(--text-main)' }}>{r.name || '(unnamed)'}</td>
+                          <td style={{ padding: '0.5rem 0.75rem' }}>
+                            {r.status === 'created' && (
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: '0.2rem 0.6rem', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 700, background: '#eef2ff', color: '#4338ca' }}>
+                                <SparklesIcon size={12} color="#4338ca" />
+                                <span>Created (New)</span>
+                              </span>
+                            )}
+                            {r.status === 'restocked' && (
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: '0.2rem 0.6rem', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 700, background: '#dcfce7', color: '#15803d' }}>
+                                <RefreshCwIcon size={12} color="#15803d" />
+                                <span>Restocked</span>
+                              </span>
+                            )}
+                            {r.status === 'skipped' && (
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: '0.2rem 0.6rem', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 700, background: '#fee2e2', color: '#b91c1c' }}>
+                                <AlertCircleIcon size={12} color="#b91c1c" />
+                                <span>Skipped</span>
+                              </span>
+                            )}
+                          </td>
+                          <td style={{ padding: '0.5rem 0.75rem', color: r.status === 'skipped' ? '#dc2626' : 'var(--text-muted)' }}>
+                            {r.status === 'skipped' ? r.reason : `Item ID: ${r.itemId}`}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Action Buttons */}
+                <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                  {importResult.skipped > 0 && (
+                    <button
+                      id="bulk-download-failed-btn"
+                      onClick={handleDownloadFailedRows}
+                      style={{
+                        padding: '0.55rem 1.1rem',
+                        borderRadius: '8px',
+                        border: '1px solid #fca5a5',
+                        background: '#fff1f2',
+                        color: '#b91c1c',
+                        fontSize: '0.84rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.45rem',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      <DownloadIcon size={14} color="#b91c1c" />
+                      <span>Download Failed Rows (CSV)</span>
+                    </button>
+                  )}
                   <button
-                    id="bulk-download-failed-btn"
-                    onClick={handleDownloadFailedRows}
+                    id="bulk-download-report-btn"
+                    onClick={handleDownloadImportReport}
                     style={{
                       padding: '0.55rem 1.1rem',
                       borderRadius: '8px',
-                      border: '1px solid #fca5a5',
-                      background: '#fff1f2',
-                      color: '#b91c1c',
+                      border: '1px solid var(--border)',
+                      background: '#ffffff',
+                      color: 'var(--text-main)',
                       fontSize: '0.84rem',
                       fontWeight: 600,
                       cursor: 'pointer',
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '0.45rem',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
                       transition: 'all 0.15s ease',
                     }}
                   >
-                    <DownloadIcon size={14} color="#b91c1c" />
-                    <span>Download Failed Rows (CSV)</span>
+                    <FileSpreadsheetIcon size={14} color="#4f46e5" />
+                    <span>Download Complete Summary Report (CSV)</span>
                   </button>
-                )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* ── FOOTER ── */}
+          <div
+            style={{
+              borderTop: '1px solid var(--border)',
+              padding: '0.9rem 1.5rem',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexShrink: 0,
+              gap: '0.75rem',
+              background: 'var(--bg-main)',
+            }}
+          >
+            {step === 'choose' && (
+              <>
+                <button onClick={onClose} className="btn btn-secondary">
+                  Cancel
+                </button>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                  Max 500 products per import batch
+                </div>
+              </>
+            )}
+
+            {step === 'review' && (
+              <>
                 <button
-                  id="bulk-download-report-btn"
-                  onClick={handleDownloadImportReport}
+                  id="bulk-start-over-btn"
+                  onClick={() => { setStep('choose'); setRawRows([]); setBarcodeValidationActive(false); }}
+                  className="btn btn-secondary"
+                  style={{ padding: '0.55rem 1rem', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600 }}
+                >
+                  <ArrowLeftIcon size={14} />
+                  <span>Start Over</span>
+                </button>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                    {errorRows.length + duplicateRows.length + ambiguousRows.length > 0 ? (
+                      <span
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.4rem',
+                          padding: '0.35rem 0.8rem',
+                          borderRadius: '20px',
+                          background: '#fffbeb',
+                          border: '1px solid #fde68a',
+                          color: '#b45309',
+                          fontSize: '0.82rem',
+                          fontWeight: 600,
+                        }}
+                      >
+                        <AlertTriangleIcon size={14} color="#d97706" />
+                        <span>
+                          <strong>{errorRows.length + duplicateRows.length + ambiguousRows.length} row(s)</strong> will be skipped unless resolved
+                        </span>
+                      </span>
+                    ) : !selectedSupplierId ? (
+                      <span
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.4rem',
+                          padding: '0.35rem 0.8rem',
+                          borderRadius: '20px',
+                          background: '#fffbeb',
+                          border: '1px solid #fde68a',
+                          color: '#b45309',
+                          fontSize: '0.82rem',
+                          fontWeight: 600,
+                        }}
+                      >
+                        <AlertTriangleIcon size={14} color="#d97706" />
+                        <span>Select a Supplier above to proceed</span>
+                      </span>
+                    ) : (
+                      <span
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.4rem',
+                          padding: '0.35rem 0.8rem',
+                          borderRadius: '20px',
+                          background: '#ecfdf5',
+                          border: '1px solid #a7f3d0',
+                          color: '#047857',
+                          fontSize: '0.82rem',
+                          fontWeight: 600,
+                        }}
+                      >
+                        <CheckCircleIcon size={14} color="#10b981" />
+                        <span>Supplier: <strong>{selectedSupplier?.name}</strong> • All <strong>{eligibleRows.length}</strong> rows ready</span>
+                      </span>
+                    )}
+                  </span>
+
+                  <button
+                    id="bulk-review-import-btn"
+                    onClick={() => {
+                      if (!selectedSupplierId) {
+                        setApiError('Please select a Supplier before proceeding to import.');
+                        setIsSupplierDropdownOpen(true);
+                        return;
+                      }
+                      const hasPendingBarcodes = validatedRows.some(
+                        (r) => !r.matchedItem && r.status !== 'RESTOCK' && (!r.barcode || !r.barcode.trim())
+                      );
+                      if (hasPendingBarcodes) {
+                        setBarcodeValidationActive(true);
+                        return;
+                      }
+                      setStep('confirm');
+                    }}
+                    disabled={eligibleRows.length === 0 || !selectedSupplierId}
+                    style={{
+                      background: eligibleRows.length > 0 && selectedSupplierId ? 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)' : '#cbd5e1',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '10px',
+                      padding: '0.65rem 1.4rem',
+                      fontWeight: 700,
+                      fontSize: '0.9rem',
+                      cursor: eligibleRows.length > 0 && selectedSupplierId ? 'pointer' : 'not-allowed',
+                      boxShadow: eligibleRows.length > 0 && selectedSupplierId ? '0 4px 14px rgba(99, 102, 241, 0.35)' : 'none',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    <span>Review &amp; Import ({eligibleRows.length})</span>
+                    <ArrowRightIcon size={15} color="#ffffff" />
+                  </button>
+                </div>
+              </>
+            )}
+
+            {step === 'confirm' && (
+              <>
+                <button
+                  onClick={() => setStep('review')}
+                  className="btn btn-secondary"
+                  disabled={isSubmitting}
+                  style={{ padding: '0.55rem 1rem', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600 }}
+                >
+                  <ArrowLeftIcon size={14} />
+                  <span>Back to Review</span>
+                </button>
+
+                <button
+                  id="bulk-confirm-import-btn"
+                  onClick={handleExecuteImport}
+                  disabled={isSubmitting || eligibleRows.length === 0}
                   style={{
-                    padding: '0.55rem 1.1rem',
-                    borderRadius: '8px',
-                    border: '1px solid var(--border)',
-                    background: '#ffffff',
-                    color: 'var(--text-main)',
-                    fontSize: '0.84rem',
-                    fontWeight: 600,
-                    cursor: 'pointer',
+                    background: isSubmitting || eligibleRows.length === 0 ? '#cbd5e1' : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '10px',
+                    minWidth: 200,
+                    padding: '0.65rem 1.4rem',
+                    fontSize: '0.9rem',
+                    fontWeight: 700,
+                    cursor: isSubmitting || eligibleRows.length === 0 ? 'not-allowed' : 'pointer',
+                    boxShadow: !isSubmitting && eligibleRows.length > 0 ? '0 4px 14px rgba(16, 185, 129, 0.35)' : 'none',
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '0.45rem',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
                     transition: 'all 0.15s ease',
                   }}
                 >
-                  <FileSpreadsheetIcon size={14} color="#4f46e5" />
-                  <span>Download Complete Summary Report (CSV)</span>
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* ── FOOTER ── */}
-        <div
-          style={{
-            borderTop: '1px solid var(--border)',
-            padding: '0.9rem 1.5rem',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexShrink: 0,
-            gap: '0.75rem',
-            background: 'var(--bg-main)',
-          }}
-        >
-          {step === 'choose' && (
-            <>
-              <button onClick={onClose} className="btn btn-secondary">
-                Cancel
-              </button>
-              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                Max 500 products per import batch
-              </div>
-            </>
-          )}
-
-          {step === 'review' && (
-            <>
-              <button
-                id="bulk-start-over-btn"
-                onClick={() => { setStep('choose'); setRawRows([]); setBarcodeValidationActive(false); }}
-                className="btn btn-secondary"
-                style={{ padding: '0.55rem 1rem', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600 }}
-              >
-                <ArrowLeftIcon size={14} />
-                <span>Start Over</span>
-              </button>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-                <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                  {errorRows.length + duplicateRows.length + ambiguousRows.length > 0 ? (
-                    <span
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.4rem',
-                        padding: '0.35rem 0.8rem',
-                        borderRadius: '20px',
-                        background: '#fffbeb',
-                        border: '1px solid #fde68a',
-                        color: '#b45309',
-                        fontSize: '0.82rem',
-                        fontWeight: 600,
-                      }}
-                    >
-                      <AlertTriangleIcon size={14} color="#d97706" />
-                      <span>
-                        <strong>{errorRows.length + duplicateRows.length + ambiguousRows.length} row(s)</strong> will be skipped unless resolved
-                      </span>
-                    </span>
-                  ) : !selectedSupplierId ? (
-                    <span
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.4rem',
-                        padding: '0.35rem 0.8rem',
-                        borderRadius: '20px',
-                        background: '#fffbeb',
-                        border: '1px solid #fde68a',
-                        color: '#b45309',
-                        fontSize: '0.82rem',
-                        fontWeight: 600,
-                      }}
-                    >
-                      <AlertTriangleIcon size={14} color="#d97706" />
-                      <span>Select a Supplier above to proceed</span>
-                    </span>
+                  {isSubmitting ? (
+                    <>
+                      <RefreshCwIcon size={15} color="#ffffff" spinning={true} />
+                      <span>Importing &amp; Restocking...</span>
+                    </>
                   ) : (
-                    <span
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.4rem',
-                        padding: '0.35rem 0.8rem',
-                        borderRadius: '20px',
-                        background: '#ecfdf5',
-                        border: '1px solid #a7f3d0',
-                        color: '#047857',
-                        fontSize: '0.82rem',
-                        fontWeight: 600,
-                      }}
-                    >
-                      <CheckCircleIcon size={14} color="#10b981" />
-                      <span>Supplier: <strong>{selectedSupplier?.name}</strong> • All <strong>{eligibleRows.length}</strong> rows ready</span>
-                    </span>
+                    <>
+                      <CheckCircleIcon size={16} color="#ffffff" />
+                      <span>Confirm &amp; Import ({eligibleRows.length})</span>
+                      <ArrowRightIcon size={14} color="#ffffff" />
+                    </>
                   )}
-                </span>
+                </button>
+              </>
+            )}
+
+            {step === 'results' && (
+              <>
+                <button
+                  onClick={() => { setStep('choose'); setRawRows([]); setImportResult(null); setBarcodeValidationActive(false); }}
+                  className="btn btn-secondary"
+                  style={{ padding: '0.55rem 1rem', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '0.45rem', fontWeight: 600 }}
+                >
+                  <RotateCcwIcon size={14} />
+                  <span>Import More Products</span>
+                </button>
 
                 <button
-                  id="bulk-review-import-btn"
-                  onClick={() => {
-                    if (!selectedSupplierId) {
-                      setApiError('Please select a Supplier before proceeding to import.');
-                      setIsSupplierDropdownOpen(true);
-                      return;
-                    }
-                    const hasPendingBarcodes = validatedRows.some(
-                      (r) => !r.matchedItem && r.status !== 'RESTOCK' && (!r.barcode || !r.barcode.trim())
-                    );
-                    if (hasPendingBarcodes) {
-                      setBarcodeValidationActive(true);
-                      return;
-                    }
-                    setStep('confirm');
-                  }}
-                  disabled={eligibleRows.length === 0 || !selectedSupplierId}
+                  id="bulk-import-done-btn"
+                  onClick={() => { onImportDone(); onClose(); }}
                   style={{
-                    background: eligibleRows.length > 0 && selectedSupplierId ? 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)' : '#cbd5e1',
+                    background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
                     color: '#ffffff',
                     border: 'none',
                     borderRadius: '10px',
                     padding: '0.65rem 1.4rem',
                     fontWeight: 700,
                     fontSize: '0.9rem',
-                    cursor: eligibleRows.length > 0 && selectedSupplierId ? 'pointer' : 'not-allowed',
-                    boxShadow: eligibleRows.length > 0 && selectedSupplierId ? '0 4px 14px rgba(99, 102, 241, 0.35)' : 'none',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 14px rgba(99, 102, 241, 0.35)',
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '0.5rem',
+                    gap: '0.45rem',
                     transition: 'all 0.15s ease',
                   }}
                 >
-                  <span>Review &amp; Import ({eligibleRows.length})</span>
-                  <ArrowRightIcon size={15} color="#ffffff" />
+                  <CheckIcon size={15} color="#ffffff" />
+                  <span>Done — Go to Products</span>
                 </button>
-              </div>
-            </>
-          )}
-
-          {step === 'confirm' && (
-            <>
-              <button
-                onClick={() => setStep('review')}
-                className="btn btn-secondary"
-                disabled={isSubmitting}
-                style={{ padding: '0.55rem 1rem', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600 }}
-              >
-                <ArrowLeftIcon size={14} />
-                <span>Back to Review</span>
-              </button>
-
-              <button
-                id="bulk-confirm-import-btn"
-                onClick={handleExecuteImport}
-                disabled={isSubmitting || eligibleRows.length === 0}
-                style={{
-                  background: isSubmitting || eligibleRows.length === 0 ? '#cbd5e1' : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                  color: '#ffffff',
-                  border: 'none',
-                  borderRadius: '10px',
-                  minWidth: 200,
-                  padding: '0.65rem 1.4rem',
-                  fontSize: '0.9rem',
-                  fontWeight: 700,
-                  cursor: isSubmitting || eligibleRows.length === 0 ? 'not-allowed' : 'pointer',
-                  boxShadow: !isSubmitting && eligibleRows.length > 0 ? '0 4px 14px rgba(16, 185, 129, 0.35)' : 'none',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.5rem',
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                {isSubmitting ? (
-                  <>
-                    <RefreshCwIcon size={15} color="#ffffff" spinning={true} />
-                    <span>Importing &amp; Restocking...</span>
-                  </>
-                ) : (
-                  <>
-                    <CheckCircleIcon size={16} color="#ffffff" />
-                    <span>Confirm &amp; Import ({eligibleRows.length})</span>
-                    <ArrowRightIcon size={14} color="#ffffff" />
-                  </>
-                )}
-              </button>
-            </>
-          )}
-
-          {step === 'results' && (
-            <>
-              <button
-                onClick={() => { setStep('choose'); setRawRows([]); setImportResult(null); setBarcodeValidationActive(false); }}
-                className="btn btn-secondary"
-                style={{ padding: '0.55rem 1rem', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '0.45rem', fontWeight: 600 }}
-              >
-                <RotateCcwIcon size={14} />
-                <span>Import More Products</span>
-              </button>
-
-              <button
-                id="bulk-import-done-btn"
-                onClick={() => { onImportDone(); onClose(); }}
-                style={{
-                  background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
-                  color: '#ffffff',
-                  border: 'none',
-                  borderRadius: '10px',
-                  padding: '0.65rem 1.4rem',
-                  fontWeight: 700,
-                  fontSize: '0.9rem',
-                  cursor: 'pointer',
-                  boxShadow: '0 4px 14px rgba(99, 102, 241, 0.35)',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.45rem',
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                <CheckIcon size={15} color="#ffffff" />
-                <span>Done — Go to Products</span>
-              </button>
-            </>
-          )}
+              </>
+            )}
+          </div>
         </div>
       </div>
-    </div>
 
       {isScanModalOpen && (
         <ScanManufacturerBarcodeModal
@@ -5022,7 +5022,7 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
           }}
         />
       )}
-          {/* ── ROW IMAGE UPLOAD & PREVIEW STUDIO MODAL ── */}
+      {/* ── ROW IMAGE UPLOAD & PREVIEW STUDIO MODAL ── */}
       {editingImageRow && (
         <div
           className="modal-overlay"

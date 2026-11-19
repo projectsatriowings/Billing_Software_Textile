@@ -80,7 +80,7 @@ export function SupplierInvoiceConverterModal({
           setSavedMappings(res.mappings);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   // Filter supplier parties
@@ -140,10 +140,10 @@ export function SupplierInvoiceConverterModal({
     setStep('extracting');
 
     const progressMessages = [
-      'Reading and analyzing invoice document...',
-      'Running non-AI rule-based parser & OCR engine...',
-      'Detecting table columns & multi-line descriptions...',
-      'Matching catalog items & calculating cost prices...',
+      'Uploading and processing invoice image...',
+      'Extracting product details and descriptions...',
+      'Reading quantities, prices and tax information...',
+      'Converting extracted data into Excel format...',
     ];
     let msgIdx = 0;
     const interval = setInterval(() => {
@@ -450,7 +450,7 @@ export function SupplierInvoiceConverterModal({
                   Convert Supplier Invoice to Excel
                 </h2>
                 <span style={{ fontSize: '0.68rem', fontWeight: 700, background: '#4338ca', color: '#c7d2fe', padding: '0.15rem 0.5rem', borderRadius: '6px', textTransform: 'uppercase' }}>
-                  Non-AI Local Engine
+                  Local Engine
                 </span>
               </div>
               <p style={{ margin: '0.2rem 0 0', fontSize: '0.82rem', color: '#cbd5e1' }}>
