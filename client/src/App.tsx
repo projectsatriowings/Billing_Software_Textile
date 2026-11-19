@@ -11651,8 +11651,8 @@ export function App() {
 
                 {/* ================= PRODUCT CATALOG FLYOUT DRAWER (NON-BARCODED & SEARCHABLE ITEMS) ================= */}
                 {showProductCatalogDrawer && createPortal(
-                  <div className={`bento-catalog-drawer-overlay ${user?.role === 'cashier' ? 'theme-cashier' : ''}`} onClick={() => setShowProductCatalogDrawer(false)}>
-                    <div className={`bento-catalog-drawer ${user?.role === 'cashier' ? 'theme-cashier' : ''}`} onClick={(e) => e.stopPropagation()}>
+                  <div className={`bento-catalog-drawer-overlay ${user?.role === 'cashier' ? 'theme-cashier' : (user?.role === 'manager' || user?.role === 'store_manager') ? 'theme-manager' : ''}`} onClick={() => setShowProductCatalogDrawer(false)}>
+                    <div className={`bento-catalog-drawer ${user?.role === 'cashier' ? 'theme-cashier' : (user?.role === 'manager' || user?.role === 'store_manager') ? 'theme-manager' : ''}`} onClick={(e) => e.stopPropagation()}>
                       {/* Drawer Header */}
                       <div className="bento-drawer-header">
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
@@ -17313,9 +17313,9 @@ export function App() {
 
         {/* Master Data: Item Form Modal (Add & Edit) */}
         {showItemModal && (
-          <div className={`modal-overlay ${user?.role === 'cashier' ? 'theme-cashier' : ''}`} onClick={() => setShowItemModal(false)}>
+          <div className={`modal-overlay ${user?.role === 'cashier' ? 'theme-cashier' : (user?.role === 'manager' || user?.role === 'store_manager') ? 'theme-manager' : ''}`} onClick={() => setShowItemModal(false)}>
             <div
-              className={`modal-content product-edit-rectangle-modal ${user?.role === 'cashier' ? 'theme-cashier' : ''}`}
+              className={`modal-content product-edit-rectangle-modal ${user?.role === 'cashier' ? 'theme-cashier' : (user?.role === 'manager' || user?.role === 'store_manager') ? 'theme-manager' : ''}`}
               style={{
                 maxWidth: '960px',
                 width: '94vw',
