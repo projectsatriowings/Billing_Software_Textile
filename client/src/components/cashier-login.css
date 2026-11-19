@@ -3542,6 +3542,101 @@ body.theme-cashier .bento-kpi-hero-icon,
 }
 
 /* --------------------------------------------------------------------------
+   5.8 DAY CLOSING ICONS, BADGES, AND CARDS (Teal & Slate Theme)
+   -------------------------------------------------------------------------- */
+div.app-container.theme-cashier .day-closing-card-icon-bubble.green,
+body.theme-cashier .day-closing-card-icon-bubble.green,
+.theme-cashier .day-closing-card-icon-bubble.green {
+  background: var(--primary-soft, #E6F4F3) !important;
+  color: var(--primary, #0F766E) !important;
+  border: 1px solid rgba(20, 184, 166, 0.35) !important;
+}
+
+div.app-container.theme-cashier .bento-location-chip svg,
+body.theme-cashier .bento-location-chip svg,
+.theme-cashier .bento-location-chip svg,
+div.app-container.theme-cashier .bento-counter-chip svg,
+body.theme-cashier .bento-counter-chip svg,
+.theme-cashier .bento-counter-chip svg,
+div.app-container.theme-cashier .bento-date-chip svg,
+body.theme-cashier .bento-date-chip svg,
+.theme-cashier .bento-date-chip svg,
+div.app-container.theme-cashier .bento-cashier-chip svg,
+body.theme-cashier .bento-cashier-chip svg,
+.theme-cashier .bento-cashier-chip svg,
+div.app-container.theme-cashier .bento-context-chip svg,
+body.theme-cashier .bento-context-chip svg,
+.theme-cashier .bento-context-chip svg {
+  color: var(--primary, #0F766E) !important;
+  stroke: var(--primary, #0F766E) !important;
+}
+
+div.app-container.theme-cashier .bento-context-select-item,
+body.theme-cashier .bento-context-select-item,
+.theme-cashier .bento-context-select-item {
+  color: var(--primary, #0F766E) !important;
+}
+
+div.app-container.theme-cashier .bento-context-select-item svg,
+body.theme-cashier .bento-context-select-item svg,
+.theme-cashier .bento-context-select-item svg {
+  color: var(--primary, #0F766E) !important;
+  stroke: var(--primary, #0F766E) !important;
+}
+
+div.app-container.theme-cashier .bento-ops-action-btn,
+body.theme-cashier .bento-ops-action-btn,
+.theme-cashier .bento-ops-action-btn {
+  background: var(--primary, #0F766E) !important;
+  color: #FFFFFF !important;
+}
+
+div.app-container.theme-cashier .fin-kpi-card.purple .fin-kpi-icon,
+body.theme-cashier .fin-kpi-card.purple .fin-kpi-icon,
+.theme-cashier .fin-kpi-card.purple .fin-kpi-icon,
+div.app-container.theme-cashier .fin-kpi-card.teal .fin-kpi-icon,
+body.theme-cashier .fin-kpi-card.teal .fin-kpi-icon,
+.theme-cashier .fin-kpi-card.teal .fin-kpi-icon,
+div.app-container.theme-cashier .fin-kpi-card.slate .fin-kpi-icon,
+body.theme-cashier .fin-kpi-card.slate .fin-kpi-icon,
+.theme-cashier .fin-kpi-card.slate .fin-kpi-icon {
+  background: var(--primary-soft, #E6F4F3) !important;
+  color: var(--primary, #0F766E) !important;
+  border-color: rgba(20, 184, 166, 0.3) !important;
+}
+
+div.app-container.theme-cashier .tender-kpi-card.card .tender-header,
+body.theme-cashier .tender-kpi-card.card .tender-header,
+.theme-cashier .tender-kpi-card.card .tender-header,
+div.app-container.theme-cashier .tender-kpi-card.credit .tender-header,
+body.theme-cashier .tender-kpi-card.credit .tender-header,
+.theme-cashier .tender-kpi-card.credit .tender-header {
+  color: var(--primary, #0F766E) !important;
+}
+
+div.app-container.theme-cashier .tender-kpi-card.credit,
+body.theme-cashier .tender-kpi-card.credit,
+.theme-cashier .tender-kpi-card.credit {
+  border-color: rgba(20, 184, 166, 0.4) !important;
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.08) 0%, var(--surface) 100%) !important;
+}
+
+div.app-container.theme-cashier .cash-rec-input-prefix,
+body.theme-cashier .cash-rec-input-prefix,
+.theme-cashier .cash-rec-input-prefix {
+  color: var(--primary, #0F766E) !important;
+}
+
+div.app-container.theme-cashier .detail-list-val.indigo,
+body.theme-cashier .detail-list-val.indigo,
+.theme-cashier .detail-list-val.indigo,
+div.app-container.theme-cashier .detail-list-val.purple,
+body.theme-cashier .detail-list-val.purple,
+.theme-cashier .detail-list-val.purple {
+  color: var(--primary, #0F766E) !important;
+}
+
+/* --------------------------------------------------------------------------
    5.9 NOTIFICATIONS POPOVER (Teal & Slate Theme)
    -------------------------------------------------------------------------- */
 body.theme-cashier .top-notif-popover.bento-notif-popover,
