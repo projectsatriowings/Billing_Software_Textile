@@ -83,8 +83,6 @@ export const OpenShiftModal: React.FC<OpenShiftModalProps> = ({
     };
   }, [isOpen, activeBranchObj?.id]);
 
-  if (!isOpen) return null;
-
   const quickAmounts = [500, 1000, 2000, 5000, 10000];
 
   const branchCounters: Array<{ code: string; name: string; id?: string }> = React.useMemo(() => {
@@ -119,7 +117,7 @@ export const OpenShiftModal: React.FC<OpenShiftModalProps> = ({
 
   // Auto-switch away from occupied counter
   useEffect(() => {
-    if (!branchCounters.length) return;
+    if (!isOpen || !branchCounters.length) return;
     const curObj = branchCounters.find(c => c.code === counter || c.name === counter);
     const occ = curObj ? getOccupantForCounter(curObj.code, curObj.id) : null;
     if (occ) {
@@ -128,7 +126,7 @@ export const OpenShiftModal: React.FC<OpenShiftModalProps> = ({
         setCounter(firstAvailable.code);
       }
     }
-  }, [branchCounters, occupiedList, counter]);
+  }, [isOpen, branchCounters, occupiedList, counter]);
 
   const parsedRupees = parseFloat(openingRupees) || 0;
   const openingCashMinor = Math.round(parsedRupees * 100);
@@ -176,6 +174,8 @@ export const OpenShiftModal: React.FC<OpenShiftModalProps> = ({
   };
 
   const isShiftExistsError = error && error.toLowerCase().includes('already have an active shift open');
+
+  if (!isOpen) return null;
 
   return createPortal(
     <div className="modal-overlay" onClick={onClose}>
