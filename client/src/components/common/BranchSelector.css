@@ -1,42 +1,89 @@
 /* ==========================================================================
    SHARED BRANCH SELECTOR COMPONENT STYLES
+   Executive, vibrant, and theme-adaptive dropdown selector
    ========================================================================== */
 
+/* Outer Card Pill */
 .top-branch-selector-pill {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 10px;
   height: 44px;
   min-height: 44px;
   max-height: 44px;
-  padding: 0 6px 0 14px;
+  padding: 0 8px 0 10px;
   background: #ffffff;
-  border: 1px solid #E2E0EF;
+  border: 1.5px solid #E0E7FF;
   border-radius: 12px;
   box-sizing: border-box;
   font-size: 14px;
-  box-shadow: none;
+  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
   flex-shrink: 0;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.top-branch-selector-pill:hover,
+.top-branch-selector-pill.is-dropdown-open {
+  border-color: #C7D2FE;
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.12), 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+/* Hidden native select for form accessibility / testing */
+.top-branch-native-hidden-select {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  border: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Icon Tile Squircle */
+.top-branch-icon-tile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.32);
+  flex-shrink: 0;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.top-branch-selector-pill:hover .top-branch-icon-tile {
+  transform: scale(1.04);
+  box-shadow: 0 3px 8px rgba(79, 70, 229, 0.42);
 }
 
 .top-branch-icon {
-  flex-shrink: 0;
   width: 18px;
   height: 18px;
   color: #5B4FE9;
+  flex-shrink: 0;
 }
 
+/* "Branch" Label */
 .top-branch-label {
-  font-size: 14px;
-  font-weight: 500;
-  color: #5F6275;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #312E81;
   white-space: nowrap;
   cursor: pointer;
   margin: 0;
   padding: 0;
   line-height: 1;
+  user-select: none;
+  letter-spacing: -0.01em;
 }
 
+/* Interactive Dropdown Wrapper */
 .top-branch-select-wrapper {
   position: relative;
   display: inline-flex;
@@ -44,55 +91,447 @@
   min-width: 0;
 }
 
-.top-branch-select {
-  height: 32px;
-  padding: 0 32px 0 10px;
-  border: none;
-  background: #F3F2FA;
-  border-radius: 8px;
+/* Custom Interactive Trigger Button */
+.top-branch-select-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 33px;
+  padding: 0 12px 0 12px;
+  background: linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 100%);
+  border: 1.5px solid #C4B5FD;
+  border-radius: 9px;
   font-family: inherit;
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 600;
-  color: #1A1838;
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
+  color: #4338CA;
   cursor: pointer;
   outline: none;
   max-width: 280px;
+  box-sizing: border-box;
+  box-shadow: 0 1px 3px rgba(99, 102, 241, 0.08);
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: left;
+}
+
+.top-branch-select-trigger:hover {
+  background: linear-gradient(135deg, #EDE9FE 0%, #E0E7FF 100%);
+  border-color: #818CF8;
+  color: #3730A3;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.18);
+  transform: translateY(-0.5px);
+}
+
+.top-branch-select-trigger:focus-visible {
+  outline: 2px solid #6366F1;
+  outline-offset: 1px;
+}
+
+.top-branch-trigger-text {
+  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  overflow: hidden;
-  box-sizing: border-box;
-  transition: outline 0.15s ease;
+  max-width: 200px;
 }
 
-.top-branch-select:focus {
-  outline: 2px solid #5B4FE9;
-  outline-offset: 2px;
-}
-
-.top-branch-chevron {
-  position: absolute;
-  right: 10px;
-  pointer-events: none;
-  color: #5F6275;
+.top-branch-trigger-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  background: #DDD6FE;
+  color: #3730A3;
+  padding: 2px 6px;
+  border-radius: 5px;
   flex-shrink: 0;
+  text-transform: uppercase;
 }
 
+/* Animated Chevron */
+.top-branch-chevron {
+  color: #6366F1;
+  flex-shrink: 0;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+
+.top-branch-chevron.rotated {
+  transform: rotate(180deg);
+}
+
+/* Branch Count Pill */
 .top-branch-count-pill {
   font-size: 12px;
-  font-weight: 600;
-  color: #4F46E5;
-  background: #EEEDFD;
-  padding: 4px 8px;
+  font-weight: 700;
+  color: #4338CA;
+  background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%);
+  border: 1px solid #C7D2FE;
+  padding: 4px 10px;
   border-radius: 9999px;
   white-space: nowrap;
   line-height: 1.2;
   flex-shrink: 0;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.15s ease;
 }
 
-/* Responsive */
+.top-branch-count-pill:hover {
+  background: #E0E7FF;
+  border-color: #A5B4FC;
+  transform: translateY(-0.5px);
+}
+
+/* ==========================================================================
+   FLOATING POPOVER DROPDOWN MENU
+   ========================================================================== */
+.top-branch-popover-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  min-width: 310px;
+  max-width: 380px;
+  background: #ffffff;
+  border: 1.5px solid #E0E7FF;
+  border-radius: 14px;
+  box-shadow: 0 20px 40px -4px rgba(15, 23, 42, 0.18), 0 8px 16px -2px rgba(99, 102, 241, 0.12);
+  padding: 8px;
+  z-index: 10000;
+  animation: topBranchPopoverEnter 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform-origin: top left;
+  box-sizing: border-box;
+}
+
+@keyframes topBranchPopoverEnter {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Menu Header */
+.top-branch-menu-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px 8px 10px;
+  border-bottom: 1px solid #F1F5F9;
+  margin-bottom: 6px;
+}
+
+.top-branch-menu-title {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #64748B;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.top-branch-menu-live-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #10B981;
+  background: #ECFDF5;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  border: 1px solid #A7F3D0;
+}
+
+.live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10B981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+  animation: liveDotPulse 1.8s infinite;
+}
+
+@keyframes liveDotPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.2);
+  }
+}
+
+/* Menu List */
+.top-branch-menu-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-height: 360px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.top-branch-menu-divider {
+  height: 1px;
+  background: #F1F5F9;
+  margin: 4px 6px;
+}
+
+/* Menu Item */
+.top-branch-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+  user-select: none;
+  outline: none;
+}
+
+.top-branch-menu-item:hover,
+.top-branch-menu-item.highlighted {
+  background: linear-gradient(90deg, #F8FAFC 0%, #EEF2FF 100%);
+  border-color: #E0E7FF;
+  transform: translateX(2px);
+}
+
+.top-branch-menu-item.active {
+  background: linear-gradient(90deg, #EEF2FF 0%, #EDE9FE 100%);
+  border-color: #C4B5FD;
+}
+
+.top-branch-item-icon-tile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.top-branch-item-icon-tile.all-icon {
+  background: #EEF2FF;
+  color: #4F46E5;
+}
+
+.top-branch-item-icon-tile.store-icon {
+  background: #F1F5F9;
+  color: #475569;
+}
+
+.top-branch-menu-item.active .top-branch-item-icon-tile {
+  background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.3);
+}
+
+.top-branch-item-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.top-branch-item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.top-branch-item-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #1E293B;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.top-branch-menu-item.active .top-branch-item-name {
+  color: #312E81;
+  font-weight: 700;
+}
+
+.top-branch-item-sub {
+  font-size: 11.5px;
+  color: #64748B;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.top-branch-menu-item.active .top-branch-item-sub {
+  color: #4338CA;
+}
+
+.top-branch-badge-pill {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  text-transform: uppercase;
+}
+
+.top-branch-badge-pill.overall {
+  background: #EDE9FE;
+  color: #4338CA;
+  border: 1px solid #C4B5FD;
+}
+
+.top-branch-badge-pill.branch-code {
+  background: #F1F5F9;
+  color: #475569;
+  border: 1px solid #E2E8F0;
+}
+
+.top-branch-menu-item.active .top-branch-badge-pill.branch-code {
+  background: #DDD6FE;
+  color: #3730A3;
+  border-color: #C4B5FD;
+}
+
+.top-branch-item-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #EDE9FE;
+  color: #4F46E5;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(79, 70, 229, 0.15);
+}
+
+/* ==========================================================================
+   STORE MANAGER THEME OVERRIDES (.theme-manager / body.theme-manager)
+   Deep Burgundy (#653B4B) Palette
+   ========================================================================== */
+.theme-manager .top-branch-selector-pill,
+body.theme-manager .top-branch-selector-pill {
+  border-color: #EBDCE2;
+}
+
+.theme-manager .top-branch-selector-pill:hover,
+.theme-manager .top-branch-selector-pill.is-dropdown-open,
+body.theme-manager .top-branch-selector-pill:hover,
+body.theme-manager .top-branch-selector-pill.is-dropdown-open {
+  border-color: #D9C8D0;
+  box-shadow: 0 4px 14px rgba(101, 59, 75, 0.12), 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.theme-manager .top-branch-icon-tile,
+body.theme-manager .top-branch-icon-tile {
+  background: linear-gradient(135deg, #7A475B 0%, #653B4B 100%);
+  box-shadow: 0 2px 6px rgba(101, 59, 75, 0.32);
+}
+
+.theme-manager .top-branch-label,
+body.theme-manager .top-branch-label {
+  color: #653B4B;
+}
+
+.theme-manager .top-branch-select-trigger,
+body.theme-manager .top-branch-select-trigger {
+  background: linear-gradient(135deg, #FAF4F6 0%, #F5ECF0 100%);
+  border-color: #D9C8D0;
+  color: #653B4B;
+  box-shadow: 0 1px 3px rgba(101, 59, 75, 0.08);
+}
+
+.theme-manager .top-branch-select-trigger:hover,
+body.theme-manager .top-branch-select-trigger:hover {
+  background: #EBDCE2;
+  border-color: #653B4B;
+  color: #522E3B;
+  box-shadow: 0 2px 8px rgba(101, 59, 75, 0.18);
+}
+
+.theme-manager .top-branch-trigger-badge,
+body.theme-manager .top-branch-trigger-badge {
+  background: #EBDCE2;
+  color: #653B4B;
+}
+
+.theme-manager .top-branch-chevron,
+body.theme-manager .top-branch-chevron {
+  color: #653B4B;
+}
+
+.theme-manager .top-branch-count-pill,
+body.theme-manager .top-branch-count-pill {
+  color: #653B4B;
+  background: #F5ECF0;
+  border-color: #D9C8D0;
+}
+
+.theme-manager .top-branch-count-pill:hover,
+body.theme-manager .top-branch-count-pill:hover {
+  background: #EBDCE2;
+  border-color: #653B4B;
+}
+
+.theme-manager .top-branch-popover-menu,
+body.theme-manager .top-branch-popover-menu {
+  border-color: #EBDCE2;
+  box-shadow: 0 20px 40px -4px rgba(15, 23, 42, 0.18), 0 8px 16px -2px rgba(101, 59, 75, 0.12);
+}
+
+.theme-manager .top-branch-menu-item:hover,
+.theme-manager .top-branch-menu-item.highlighted,
+body.theme-manager .top-branch-menu-item:hover,
+body.theme-manager .top-branch-menu-item.highlighted {
+  background: linear-gradient(90deg, #FDFBFC 0%, #FAF4F6 100%);
+  border-color: #EBDCE2;
+}
+
+.theme-manager .top-branch-menu-item.active,
+body.theme-manager .top-branch-menu-item.active {
+  background: linear-gradient(90deg, #FAF4F6 0%, #F5ECF0 100%);
+  border-color: #D9C8D0;
+}
+
+.theme-manager .top-branch-menu-item.active .top-branch-item-icon-tile,
+body.theme-manager .top-branch-menu-item.active .top-branch-item-icon-tile {
+  background: linear-gradient(135deg, #7A475B 0%, #653B4B 100%);
+  box-shadow: 0 2px 6px rgba(101, 59, 75, 0.3);
+}
+
+.theme-manager .top-branch-menu-item.active .top-branch-item-name,
+body.theme-manager .top-branch-menu-item.active .top-branch-item-name,
+.theme-manager .top-branch-menu-item.active .top-branch-item-sub,
+body.theme-manager .top-branch-menu-item.active .top-branch-item-sub {
+  color: #653B4B;
+}
+
+.theme-manager .top-branch-badge-pill.overall,
+body.theme-manager .top-branch-badge-pill.overall {
+  background: #F5ECF0;
+  color: #653B4B;
+  border-color: #D9C8D0;
+}
+
+.theme-manager .top-branch-item-check,
+body.theme-manager .top-branch-item-check {
+  background: #F5ECF0;
+  color: #653B4B;
+}
+
+/* ==========================================================================
+   RESPONSIVE DESIGN
+   ========================================================================== */
 @media (max-width: 768px) {
   .top-branch-selector-pill {
     width: 100%;
@@ -104,13 +543,20 @@
     min-width: 0;
   }
 
-  .top-branch-select {
+  .top-branch-select-trigger {
     width: 100%;
     max-width: none !important;
+  }
+
+  .top-branch-popover-menu {
+    left: 0;
+    right: 0;
+    min-width: auto;
+    max-width: none;
+    width: 100%;
   }
 
   .top-branch-count-pill {
     flex-shrink: 0;
   }
 }
-

@@ -360,7 +360,7 @@ export const LoyaltySchemeModal: React.FC<LoyaltySchemeModalProps> = ({
             onClick={handleSave}
             disabled={isSaving}
             style={{
-              background: editLoyaltyEnabled ? '#7c3aed' : '#475569',
+              background: editLoyaltyEnabled ? 'var(--primary, #7c3aed)' : '#475569',
             }}
           >
             {isSaving
