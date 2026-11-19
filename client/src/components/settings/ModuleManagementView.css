@@ -1,0 +1,866 @@
+/* client/src/components/settings/ModuleManagementView.css
+   Theme: Deep Plum (#49364A) exclusively for Super Admin Module Management
+*/
+
+.mm-container {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  color: #1F1A20;
+  background-color: transparent;
+  min-height: auto;
+  padding: 0 0 5rem 0;
+}
+
+/* 1. Top Bar & Breadcrumb */
+.mm-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+.mm-breadcrumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #6B6670;
+}
+
+.mm-breadcrumb a,
+.mm-breadcrumb span.crumb-parent {
+  color: #6B6670;
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.mm-breadcrumb a:hover,
+.mm-breadcrumb span.crumb-parent:hover {
+  color: #49364A;
+}
+
+.mm-breadcrumb span.crumb-separator {
+  color: #A39DA5;
+}
+
+.mm-breadcrumb span.crumb-current {
+  color: #49364A;
+  font-weight: 700;
+}
+
+.mm-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.mm-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  border: 1px solid #ECE7EC;
+  background: #FFFFFF;
+  color: #49364A;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.mm-icon-btn:hover {
+  background: #F2EDF2;
+  border-color: #D8CAD8;
+  color: #3D2C3E;
+}
+
+/* 2. Settings Subnavigation Tabs */
+.mm-settings-tabs {
+  display: flex;
+  align-items: center;
+  gap: 1.75rem;
+  margin-bottom: 1.5rem;
+  background: #FFFFFF;
+  padding: 0 1.25rem;
+  border-radius: 12px;
+  border: 1px solid #ECE7EC;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+  overflow-x: auto;
+}
+
+.mm-tab-item {
+  padding: 0.85rem 0.25rem 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #6B6670;
+  background: transparent;
+  border: none;
+  border-bottom: 2.5px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.mm-tab-item:hover {
+  color: #49364A;
+}
+
+.mm-tab-item.active {
+  color: #49364A;
+  border-bottom-color: #49364A;
+  font-weight: 700;
+}
+
+/* 3. Page Header */
+.mm-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+}
+
+.mm-header-title {
+  font-size: 1.55rem;
+  font-weight: 800;
+  color: #1F1A20;
+  letter-spacing: -0.02em;
+  margin: 0 0 0.35rem 0;
+}
+
+.mm-header-desc {
+  font-size: 0.88rem;
+  color: #6B6670;
+  margin: 0;
+}
+
+.mm-header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.mm-unsaved-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.85rem;
+  background: #F2EDF2;
+  border: 1px solid #D8CAD8;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #49364A;
+  animation: mmPillPulse 2s infinite ease-in-out;
+}
+
+@keyframes mmPillPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+
+.mm-btn-outline {
+  height: 38px;
+  padding: 0 1rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #49364A;
+  background: #FFFFFF;
+  border: 1px solid #D8CAD8;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  transition: all 0.15s ease;
+}
+
+.mm-btn-outline:hover:not(:disabled) {
+  background: #F2EDF2;
+  border-color: #49364A;
+  color: #3D2C3E;
+}
+
+.mm-btn-outline:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mm-btn-primary {
+  height: 38px;
+  padding: 0 1.25rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #FFFFFF;
+  background: #49364A;
+  border: 1px solid #302333;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 2px 8px rgba(73, 54, 74, 0.28);
+  transition: all 0.15s ease;
+}
+
+.mm-btn-primary:hover:not(:disabled) {
+  background: #3D2C3E;
+  border-color: #241A26;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(73, 54, 74, 0.35);
+}
+
+.mm-btn-primary:active:not(:disabled) {
+  background: #302333;
+  transform: translateY(0);
+}
+
+.mm-btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.mm-btn-primary:focus-visible,
+.mm-btn-outline:focus-visible {
+  outline: 2px solid #49364A;
+  outline-offset: 2px;
+}
+
+/* 4. Three Summary Cards Grid */
+.mm-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 1.75rem;
+}
+
+@media (max-width: 960px) {
+  .mm-summary-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.mm-summary-card {
+  background: #FFFFFF;
+  border: 1px solid #ECE7EC;
+  border-radius: 16px;
+  padding: 1.25rem 1.4rem;
+  box-shadow: 0 2px 8px rgba(73, 54, 74, 0.04);
+  transition: all 0.2s ease;
+}
+
+.mm-summary-card:hover {
+  border-color: #D8CAD8;
+  box-shadow: 0 6px 18px rgba(73, 54, 74, 0.08);
+}
+
+.mm-summary-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.9rem;
+}
+
+.mm-role-tile {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: #F2EDF2;
+  color: #49364A;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mm-summary-role-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1F1A20;
+}
+
+.mm-summary-sub {
+  font-size: 0.75rem;
+  color: #6B6670;
+  margin-top: 1px;
+}
+
+.mm-summary-count {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #49364A;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.65rem;
+}
+
+.mm-progress-track {
+  width: 100%;
+  height: 6px;
+  background: #EAE3EA;
+  border-radius: 9999px;
+  overflow: hidden;
+  margin-bottom: 0.65rem;
+}
+
+.mm-progress-fill {
+  height: 100%;
+  background: #49364A;
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+}
+
+.mm-summary-note {
+  font-size: 0.78rem;
+  color: #6B6670;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+/* 5. Module Access Configuration Card */
+.mm-config-card {
+  background: #FFFFFF;
+  border: 1px solid #ECE7EC;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(73, 54, 74, 0.05);
+  overflow: hidden;
+}
+
+.mm-config-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #ECE7EC;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.mm-config-title {
+  font-size: 1.12rem;
+  font-weight: 700;
+  color: #1F1A20;
+  margin: 0 0 0.25rem 0;
+}
+
+.mm-config-helper {
+  font-size: 0.8rem;
+  color: #6B6670;
+  margin: 0;
+}
+
+.mm-config-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.mm-search-box {
+  position: relative;
+  width: 220px;
+}
+
+.mm-search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #A39DA5;
+  pointer-events: none;
+}
+
+.mm-search-input {
+  width: 100%;
+  height: 36px;
+  padding: 0 10px 0 32px;
+  border-radius: 9px;
+  border: 1px solid #ECE7EC;
+  background: #FAF9FA;
+  font-size: 0.82rem;
+  color: #1F1A20;
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.mm-search-input:focus {
+  background: #FFFFFF;
+  border-color: #49364A;
+  box-shadow: 0 0 0 2px rgba(73, 54, 74, 0.15);
+}
+
+.mm-segmented-filter {
+  display: inline-flex;
+  background: #F2EDF2;
+  padding: 3px;
+  border-radius: 10px;
+  border: 1px solid #ECE7EC;
+}
+
+.mm-filter-btn {
+  padding: 0.35rem 0.8rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #6B6670;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.mm-filter-btn:hover:not(.active) {
+  color: #1F1A20;
+}
+
+.mm-filter-btn.active {
+  background: #49364A;
+  color: #FFFFFF;
+  box-shadow: 0 1px 4px rgba(73, 54, 74, 0.25);
+}
+
+/* 6. Configuration Table */
+.mm-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.mm-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.mm-table th {
+  padding: 0.85rem 1.25rem;
+  background: #FAF9FA;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #5E5862;
+  border-bottom: 1px solid #ECE7EC;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.mm-th-role {
+  width: 200px;
+  min-width: 180px;
+}
+
+.mm-role-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #49364A;
+  margin-right: 6px;
+  vertical-align: 1px;
+}
+
+.mm-table td {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #F2EDF2;
+  vertical-align: middle;
+}
+
+.mm-row-parent {
+  background: #FFFFFF;
+  transition: background 0.12s ease;
+}
+
+.mm-row-parent:hover {
+  background: #FAF9FA;
+}
+
+.mm-module-col {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 260px;
+}
+
+.mm-chevron-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: transparent;
+  border: none;
+  color: #6B6670;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: transform 0.2s ease, color 0.15s ease;
+}
+
+.mm-chevron-btn:hover {
+  color: #49364A;
+  background: #F2EDF2;
+}
+
+.mm-chevron-btn.open {
+  transform: rotate(90deg);
+}
+
+.mm-chevron-placeholder {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.mm-icon-tile {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: #F2EDF2;
+  color: #49364A;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mm-module-text-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mm-module-name-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.mm-module-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #1F1A20;
+}
+
+.mm-submodule-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+  background: #F2EDF2;
+  border: 1px solid #D8CAD8;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #49364A;
+}
+
+.mm-toplevel-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+  background: #F8F7F8;
+  border: 1px solid #ECE7EC;
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: #7D7782;
+}
+
+.mm-module-desc {
+  font-size: 0.75rem;
+  color: #6B6670;
+  max-width: 380px;
+  white-space: normal;
+}
+
+/* Sub-Module Row */
+.mm-row-sub {
+  background: #FDFCFD;
+  transition: background 0.12s ease;
+}
+
+.mm-row-sub:hover {
+  background: #F8F5F8;
+}
+
+.mm-submodule-col {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding-left: 2rem;
+  min-width: 260px;
+}
+
+.mm-tree-connector {
+  font-family: monospace;
+  font-size: 0.95rem;
+  color: #B5ADB7;
+  user-select: none;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.mm-submodule-name {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: #1F1A20;
+}
+
+.mm-submodule-desc {
+  font-size: 0.72rem;
+  color: #7D7782;
+  max-width: 360px;
+  white-space: normal;
+}
+
+/* 7. Switch Controls */
+.mm-toggle-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.mm-switch-track {
+  width: 40px;
+  height: 22px;
+  border-radius: 9999px;
+  border: none;
+  background: #CFCACF;
+  position: relative;
+  cursor: pointer;
+  padding: 3px;
+  display: inline-flex;
+  align-items: center;
+  transition: background-color 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s ease;
+  flex-shrink: 0;
+}
+
+.mm-switch-track.on {
+  background: #49364A;
+}
+
+.mm-switch-track:focus-visible {
+  outline: 2px solid #49364A;
+  outline-offset: 2px;
+}
+
+.mm-switch-knob {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translateX(0);
+}
+
+.mm-switch-track.on .mm-switch-knob {
+  transform: translateX(18px);
+}
+
+.mm-switch-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  user-select: none;
+  min-width: 58px;
+}
+
+.mm-switch-label.on {
+  color: #49364A;
+}
+
+.mm-switch-label.off {
+  color: #6B6670;
+}
+
+/* Super Admin Settings Lock */
+.mm-switch-track.locked-admin {
+  background: #49364A !important;
+  cursor: not-allowed;
+  opacity: 0.95;
+}
+
+.mm-switch-knob.locked {
+  color: #49364A;
+}
+
+.mm-switch-label.locked {
+  color: #49364A;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mm-lock-helper {
+  font-size: 0.7rem;
+  color: #6B6670;
+  margin-top: 3px;
+  line-height: 1.2;
+}
+
+/* Sub-Module Hidden With Parent (Parent is OFF for role) */
+.mm-switch-track.dashed-inactive {
+  background: transparent !important;
+  border: 1.5px dashed #CFCACF !important;
+  cursor: not-allowed;
+  box-shadow: none !important;
+}
+
+.mm-switch-knob.inactive {
+  background: #CFCACF;
+}
+
+.mm-switch-label.hidden-parent {
+  font-size: 0.72rem;
+  color: #8E8893;
+  font-style: italic;
+  font-weight: 500;
+}
+
+/* Table Footer */
+.mm-table-footer {
+  padding: 1rem 1.5rem;
+  background: #FAF9FA;
+  border-top: 1px solid #ECE7EC;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  font-size: 0.8rem;
+  color: #6B6670;
+}
+
+.mm-footer-info {
+  font-weight: 600;
+}
+
+.mm-footer-lock-notice {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #49364A;
+  font-weight: 600;
+}
+
+/* 8. Sticky Save Bar */
+.mm-sticky-save-bar {
+  position: fixed;
+  bottom: 1.25rem;
+  left: calc(260px + 2rem);
+  right: 2rem;
+  background: #302333;
+  color: #FFFFFF;
+  border-radius: 14px;
+  padding: 0.85rem 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 10px 28px rgba(48, 35, 51, 0.45);
+  z-index: 999;
+  animation: mmSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (max-width: 960px) {
+  .mm-sticky-save-bar {
+    left: 1rem;
+    right: 1rem;
+    bottom: 1rem;
+  }
+}
+
+@keyframes mmSlideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.mm-savebar-left {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+
+.mm-savebar-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #F2EDF2;
+  box-shadow: 0 0 0 3px rgba(242, 237, 242, 0.25);
+}
+
+.mm-savebar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.mm-btn-savebar-discard {
+  height: 36px;
+  padding: 0 1rem;
+  border-radius: 9px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #FFFFFF;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.mm-btn-savebar-discard:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.mm-btn-savebar-save {
+  height: 36px;
+  padding: 0 1.25rem;
+  border-radius: 9px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #302333;
+  background: #FFFFFF;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.15s ease;
+}
+
+.mm-btn-savebar-save:hover:not(:disabled) {
+  background: #F2EDF2;
+  transform: translateY(-1px);
+}
+
+.mm-btn-savebar-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Skeleton Loading */
+.mm-skeleton-row {
+  height: 52px;
+  background: linear-gradient(90deg, #F2EDF2 25%, #EAE3EA 50%, #F2EDF2 75%);
+  background-size: 200% 100%;
+  animation: mmShimmer 1.5s infinite;
+  border-radius: 8px;
+  margin: 8px 16px;
+}
+
+@keyframes mmShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

@@ -397,6 +397,7 @@ export const TodayDashboardView: React.FC<TodayDashboardViewProps> = ({
   }, []);
 
   const isStoreManager = Boolean(user && (user.role === 'manager' || user.role === 'store_manager'));
+  const isSuperAdmin = Boolean(user && (user.role === 'owner' || user.role === 'admin' || String(user.role).toUpperCase() === 'SUPER_ADMIN'));
 
   // Dynamic theme colors for smooth transitions between Bills, Sales, and Profit
   const metricTheme = useMemo(() => {
@@ -416,15 +417,14 @@ export const TodayDashboardView: React.FC<TodayDashboardViewProps> = ({
       case 'sales':
       default:
         return {
-          color: isStoreManager ? '#653B4B' : '#6366f1',
-          stopColor: isStoreManager ? '#653B4B' : '#6366f1',
+          color: isStoreManager ? '#653B4B' : isSuperAdmin ? '#49364A' : '#6366f1',
+          stopColor: isStoreManager ? '#653B4B' : isSuperAdmin ? '#49364A' : '#6366f1',
           label: 'Sales',
         };
     }
-  }, [chartMetric, isStoreManager]);
+  }, [chartMetric, isStoreManager, isSuperAdmin]);
 
   const isOwnerOrManager = ['owner', 'manager'].includes(user.role);
-  const isSuperAdmin = Boolean(user && (user.role === 'owner' || String(user.role).toUpperCase() === 'SUPER_ADMIN'));
   const firstName = user.name ? user.name.split(' ')[0] : 'User';
 
   const initialBranchCode = isSuperAdmin
@@ -930,7 +930,7 @@ export const TodayDashboardView: React.FC<TodayDashboardViewProps> = ({
       {isBilledEmpty && (
         <div className="today-empty-alert-banner">
           <div className="empty-alert-content">
-            <SparklesIcon size={20} className="empty-alert-icon" style={{ color: isStoreManager ? "#653B4B" : "#6366f1" }} />
+            <SparklesIcon size={20} className="empty-alert-icon" style={{ color: isStoreManager ? "#653B4B" : isSuperAdmin ? "#49364A" : "#6366f1" }} />
             <div>
               <strong>No retail bills yet today</strong> — start billing from POS Counter to see live sales, hourly rush curves, and collections!
             </div>
@@ -1410,7 +1410,7 @@ export const TodayDashboardView: React.FC<TodayDashboardViewProps> = ({
                     y1={paddingTop}
                     x2={activeTooltipPoint.x}
                     y2={baselineY}
-                    stroke="#818cf8"
+                    stroke={isStoreManager ? '#8C5E70' : isSuperAdmin ? '#604B61' : '#818cf8'}
                     strokeWidth="1.2"
                     strokeDasharray="3 3"
                     opacity="0.8"
@@ -1421,7 +1421,7 @@ export const TodayDashboardView: React.FC<TodayDashboardViewProps> = ({
                     cy={activeTooltipPoint.todayY}
                     r="6.5"
                     fill="#ffffff"
-                    stroke="#6366f1"
+                    stroke={isStoreManager ? '#653B4B' : isSuperAdmin ? '#49364A' : '#6366f1'}
                     strokeWidth="2.5"
                   />
                 </g>

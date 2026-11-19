@@ -1198,7 +1198,18 @@ export function WholesaleBillingView({
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.65rem' }}>
                     <strong style={{ fontSize: '0.98rem', color: '#1e293b' }}>Tax Invoice Summary</strong>
-                    <span style={{ fontSize: '0.8rem', background: '#ede9fe', color: '#6d4aff', padding: '2px 8px', borderRadius: '12px', fontWeight: 600 }}>
+                    <span
+                      className="ws-series-badge"
+                      style={{
+                        fontSize: '0.8rem',
+                        background: isSuperAdmin ? '#F3EDF3' : '#ede9fe',
+                        color: isSuperAdmin ? '#49364A' : '#6d4aff',
+                        border: isSuperAdmin ? '1px solid #D8CBD8' : 'none',
+                        padding: '2px 8px',
+                        borderRadius: '12px',
+                        fontWeight: 600,
+                      }}
+                    >
                       {wholesaleProfile.invoicePrefix || 'WH'} Series
                     </span>
                   </div>
@@ -1333,13 +1344,20 @@ export function WholesaleBillingView({
                         <button
                           key={p.id}
                           type="button"
+                          className={`ws-payment-mode-btn ${active ? 'active' : ''}`}
                           onClick={() => setPaymentMode(p.id as any)}
                           style={{
                             padding: '0.5rem',
                             borderRadius: '8px',
-                            border: active ? '2px solid #6d4aff' : '1px solid #cbd5e1',
-                            background: active ? '#f5f3ff' : '#ffffff',
-                            color: active ? '#6d4aff' : '#334155',
+                            border: active
+                              ? (isSuperAdmin ? '2px solid #49364A' : '2px solid #6d4aff')
+                              : '1px solid #cbd5e1',
+                            background: active
+                              ? (isSuperAdmin ? '#F3EDF3' : '#f5f3ff')
+                              : '#ffffff',
+                            color: active
+                              ? (isSuperAdmin ? '#49364A' : '#6d4aff')
+                              : '#334155',
                             fontWeight: 600,
                             fontSize: '0.78rem',
                             cursor: 'pointer',
@@ -1347,6 +1365,7 @@ export function WholesaleBillingView({
                             flexDirection: 'column',
                             alignItems: 'center',
                             gap: '0.25rem',
+                            transition: 'all 0.15s ease',
                           }}
                         >
                           <IconComponent size={18} strokeWidth={2} />

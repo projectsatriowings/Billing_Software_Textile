@@ -2067,4 +2067,12 @@ export const MIGRATIONS: Migration[] = [
          AND party_id IN (SELECT id FROM wholesale_customers)`,
     ],
   },
+  {
+    version: 75,
+    statements: [
+      "CREATE TABLE IF NOT EXISTS role_module_access (\r\n        id TEXT PRIMARY KEY,\r\n        tenant_id TEXT NOT NULL REFERENCES tenants(id),\r\n        role TEXT NOT NULL,\r\n        module_key TEXT NOT NULL,\r\n        enabled BOOLEAN NOT NULL DEFAULT TRUE,\r\n        updated_by TEXT,\r\n        updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),\r\n        created_at TIMESTAMPTZ NOT NULL DEFAULT now()\r\n      )",
+      "CREATE UNIQUE INDEX IF NOT EXISTS role_module_access_role_mod_uq ON role_module_access (tenant_id, role, module_key)",
+      "CREATE INDEX IF NOT EXISTS role_module_access_tenant_idx ON role_module_access (tenant_id, role)",
+    ],
+  },
 ];

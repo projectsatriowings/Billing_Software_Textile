@@ -34,140 +34,140 @@ export function registerInventory(r: Router) {
     const branchClause = (!scope.isSuperAdminAll && scope.branchId) ? ' AND i.branch_id = ?' : '';
     const branchParams = (!scope.isSuperAdminAll && scope.branchId) ? [scope.branchId] : [];
 
-    // Products breakdown
-    const counts = await ctx.db.one<{
-      totalActive: number;
-      inStock: number;
-      lowStock: number;
-      outOfStock: number;
-      unconfigured: number;
-      totalStockValueMinor: number;
-    }>(
-      `WITH item_stock AS (
-        SELECT 
-          i.id,
-          i.name,
-          COALESCE(NULLIF(TRIM(i.category), ''), 'Uncategorized') AS category,
-          COALESCE(i.reorder_milli, 0) AS reorder_milli,
-          COALESCE(i.cost_minor, 0) AS cost_minor,
-          COALESCE((SELECT SUM(sm.qty_milli) FROM stock_moves sm WHERE sm.item_id = i.id AND sm.tenant_id = i.tenant_id AND (sm.branch_id IS NOT DISTINCT FROM i.branch_id)), 0)::bigint AS stock_milli
-        FROM items i
-        WHERE i.tenant_id = ? ${branchClause} AND i.active = true AND i.track_stock = true
-      )
-      SELECT
-        COUNT(*)::int AS total_active,
-        COUNT(CASE WHEN stock_milli > 0 AND (reorder_milli = 0 OR stock_milli > reorder_milli) THEN 1 END)::int AS in_stock,
-        COUNT(CASE 
-          WHEN stock_milli > 0 
-           AND reorder_milli > 0
-           AND stock_milli <= reorder_milli
-          THEN 1 
-        END)::int AS low_stock,
-        COUNT(CASE WHEN stock_milli <= 0 THEN 1 END)::int AS out_of_stock,
-        COUNT(CASE WHEN stock_milli = 0 THEN 1 END)::int AS zero_stock,
-        COUNT(CASE WHEN stock_milli < 0 THEN 1 END)::int AS negative_stock,
-        COUNT(CASE WHEN reorder_milli = 0 THEN 1 END)::int AS unconfigured,
-        COUNT(DISTINCT category)::int AS distinct_category_count,
-        COALESCE(SUM(CASE WHEN stock_milli > 0 THEN (stock_milli * cost_minor / 1000) ELSE 0 END), 0)::bigint AS total_stock_value_minor
-      FROM item_stock`,
-      [tenantId, ...branchParams],
-    );
-
-    // Category breakdown
-    const categoryRows = await ctx.db.query<{
-      category: string;
-      productCount: number;
-      totalStockMilli: number;
-      stockValueMinor: number;
-    }>(
-      `WITH item_stock AS (
-        SELECT 
-          COALESCE(NULLIF(TRIM(i.category), ''), 'Uncategorized') AS category,
-          COALESCE((SELECT SUM(sm.qty_milli) FROM stock_moves sm WHERE sm.item_id = i.id AND sm.tenant_id = i.tenant_id AND (sm.branch_id IS NOT DISTINCT FROM i.branch_id)), 0)::bigint AS stock_milli,
-          COALESCE(i.cost_minor, 0) AS cost_minor
-        FROM items i
-        WHERE i.tenant_id = ? ${branchClause} AND i.active = true AND i.track_stock = true
-      )
-      SELECT 
-        category,
-        COUNT(*)::int AS product_count,
-        COALESCE(SUM(stock_milli), 0)::bigint AS total_stock_milli,
-        COALESCE(SUM(CASE WHEN stock_milli > 0 THEN (stock_milli * cost_minor / 1000) ELSE 0 END), 0)::bigint AS stock_value_minor
-      FROM item_stock
-      GROUP BY category
-      ORDER BY total_stock_milli DESC`,
-      [tenantId, ...branchParams],
-    );
-
-    // Recent Stock Movements (top 10)
-    const recentMoves = await ctx.db.query(
-      `SELECT 
-        sm.id, sm.seq, sm.item_id, sm.location, sm.qty_milli, sm.kind,
-        sm.ref_type, sm.ref_id, sm.batch_no, sm.expiry, sm.unit_cost_minor,
-        sm.reason, sm.notes, sm.user_id, sm.created_at,
-        i.name AS item_name, i.sku AS item_sku, i.barcode AS item_barcode, i.unit AS item_unit,
-        u.name AS user_name,
-        COALESCE(inv.number, pur.purchase_number, pur.supplier_invoice_number, cn.number, adj.adjustment_number, sc.count_number, sm.ref_id) AS ref_number
-       FROM stock_moves sm
-       JOIN items i ON i.id = sm.item_id AND i.tenant_id = sm.tenant_id
-       LEFT JOIN users u ON u.id = sm.user_id
-       LEFT JOIN invoices inv ON inv.id = sm.ref_id AND sm.ref_type = 'invoice'
-       LEFT JOIN purchases pur ON pur.id = sm.ref_id AND sm.ref_type = 'purchase'
-       LEFT JOIN invoices cn ON cn.id = sm.ref_id AND sm.ref_type = 'credit_note'
-       LEFT JOIN stock_adjustments adj ON adj.id = sm.ref_id AND sm.ref_type = 'adjustment'
-       LEFT JOIN stock_counts sc ON sc.id = sm.ref_id AND sm.ref_type = 'stock_count'
-       WHERE sm.tenant_id = ? ${!scope.isSuperAdminAll && scope.branchId ? 'AND sm.branch_id = ?' : ''}
-       ORDER BY sm.created_at DESC, sm.seq DESC
-       LIMIT 10`,
-      (!scope.isSuperAdminAll && scope.branchId) ? [tenantId, scope.branchId] : [tenantId],
-    );
-
-    // Replenishment items needing reorder
     const supplierBranchFilter = (!scope.isSuperAdminAll && scope.branchId) ? 'AND (p.branch_id = ? OR p.branch_id IS NULL)' : '';
     const supplierBranchParams = (!scope.isSuperAdminAll && scope.branchId) ? [scope.branchId] : [];
-    const replenishmentRows = await ctx.db.query(
-      `WITH item_stock AS (
+
+    // Parallelize dashboard queries for optimal performance
+    const [counts, categoryRows, recentMoves, replenishmentRows] = await Promise.all([
+      ctx.db.one<{
+        totalActive: number;
+        inStock: number;
+        lowStock: number;
+        outOfStock: number;
+        unconfigured: number;
+        totalStockValueMinor: number;
+      }>(
+        `WITH item_stock AS (
+          SELECT 
+            i.id,
+            i.name,
+            COALESCE(NULLIF(TRIM(i.category), ''), 'Uncategorized') AS category,
+            COALESCE(i.reorder_milli, 0) AS reorder_milli,
+            COALESCE(i.cost_minor, 0) AS cost_minor,
+            COALESCE((SELECT SUM(sm.qty_milli) FROM stock_moves sm WHERE sm.item_id = i.id AND sm.tenant_id = i.tenant_id AND (sm.branch_id IS NOT DISTINCT FROM i.branch_id)), 0)::bigint AS stock_milli
+          FROM items i
+          WHERE i.tenant_id = ? ${branchClause} AND i.active = true AND i.track_stock = true
+        )
+        SELECT
+          COUNT(*)::int AS total_active,
+          COUNT(CASE WHEN stock_milli > 0 AND (reorder_milli = 0 OR stock_milli > reorder_milli) THEN 1 END)::int AS in_stock,
+          COUNT(CASE 
+            WHEN stock_milli > 0 
+             AND reorder_milli > 0
+             AND stock_milli <= reorder_milli
+            THEN 1 
+          END)::int AS low_stock,
+          COUNT(CASE WHEN stock_milli <= 0 THEN 1 END)::int AS out_of_stock,
+          COUNT(CASE WHEN stock_milli = 0 THEN 1 END)::int AS zero_stock,
+          COUNT(CASE WHEN stock_milli < 0 THEN 1 END)::int AS negative_stock,
+          COUNT(CASE WHEN reorder_milli = 0 THEN 1 END)::int AS unconfigured,
+          COUNT(DISTINCT category)::int AS distinct_category_count,
+          COALESCE(SUM(CASE WHEN stock_milli > 0 THEN (stock_milli * cost_minor / 1000) ELSE 0 END), 0)::bigint AS total_stock_value_minor
+        FROM item_stock`,
+        [tenantId, ...branchParams],
+      ),
+
+      ctx.db.query<{
+        category: string;
+        productCount: number;
+        totalStockMilli: number;
+        stockValueMinor: number;
+      }>(
+        `WITH item_stock AS (
+          SELECT 
+            COALESCE(NULLIF(TRIM(i.category), ''), 'Uncategorized') AS category,
+            COALESCE((SELECT SUM(sm.qty_milli) FROM stock_moves sm WHERE sm.item_id = i.id AND sm.tenant_id = i.tenant_id AND (sm.branch_id IS NOT DISTINCT FROM i.branch_id)), 0)::bigint AS stock_milli,
+            COALESCE(i.cost_minor, 0) AS cost_minor
+          FROM items i
+          WHERE i.tenant_id = ? ${branchClause} AND i.active = true AND i.track_stock = true
+        )
         SELECT 
-          i.id,
-          i.branch_id,
-          b.name AS branch_name,
-          b.code AS branch_code,
-          i.name,
-          i.sku,
-          i.barcode,
-          i.category,
-          i.unit,
-          i.reorder_milli,
-          i.preferred_supplier_id,
-          COALESCE((SELECT SUM(sm.qty_milli) FROM stock_moves sm WHERE sm.item_id = i.id AND sm.tenant_id = i.tenant_id AND (sm.branch_id IS NOT DISTINCT FROM i.branch_id)), 0)::bigint AS stock_milli
-        FROM items i
-        LEFT JOIN branches b ON b.id = i.branch_id AND b.tenant_id = i.tenant_id
-        WHERE i.tenant_id = ? ${branchClause} AND i.active = true AND i.track_stock = true
-          AND i.reorder_milli > 0
-      )
-      SELECT 
-        s.id AS item_id,
-        s.branch_id,
-        s.branch_name,
-        s.branch_code,
-        s.name,
-        s.sku,
-        s.barcode,
-        s.category,
-        s.unit,
-        s.stock_milli AS current_stock_milli,
-        s.reorder_milli,
-        p.id AS supplier_id,
-        p.name AS supplier_name,
-        p.phone AS supplier_phone,
-        GREATEST(1000, (s.reorder_milli * 2 - s.stock_milli)) AS suggested_order_qty_milli
-      FROM item_stock s
-      LEFT JOIN parties p ON p.id = s.preferred_supplier_id AND p.tenant_id = ? ${supplierBranchFilter}
-      WHERE s.stock_milli <= s.reorder_milli
-      ORDER BY (s.stock_milli - s.reorder_milli) ASC
-      LIMIT 15`,
-      [tenantId, ...branchParams, tenantId, ...supplierBranchParams],
-    );
+          category,
+          COUNT(*)::int AS product_count,
+          COALESCE(SUM(stock_milli), 0)::bigint AS total_stock_milli,
+          COALESCE(SUM(CASE WHEN stock_milli > 0 THEN (stock_milli * cost_minor / 1000) ELSE 0 END), 0)::bigint AS stock_value_minor
+        FROM item_stock
+        GROUP BY category
+        ORDER BY total_stock_milli DESC`,
+        [tenantId, ...branchParams],
+      ),
+
+      ctx.db.query(
+        `SELECT 
+          sm.id, sm.seq, sm.item_id, sm.location, sm.qty_milli, sm.kind,
+          sm.ref_type, sm.ref_id, sm.batch_no, sm.expiry, sm.unit_cost_minor,
+          sm.reason, sm.notes, sm.user_id, sm.created_at,
+          i.name AS item_name, i.sku AS item_sku, i.barcode AS item_barcode, i.unit AS item_unit,
+          u.name AS user_name,
+          COALESCE(inv.number, pur.purchase_number, pur.supplier_invoice_number, cn.number, adj.adjustment_number, sc.count_number, sm.ref_id) AS ref_number
+         FROM stock_moves sm
+         JOIN items i ON i.id = sm.item_id AND i.tenant_id = sm.tenant_id
+         LEFT JOIN users u ON u.id = sm.user_id
+         LEFT JOIN invoices inv ON inv.id = sm.ref_id AND sm.ref_type = 'invoice'
+         LEFT JOIN purchases pur ON pur.id = sm.ref_id AND sm.ref_type = 'purchase'
+         LEFT JOIN invoices cn ON cn.id = sm.ref_id AND sm.ref_type = 'credit_note'
+         LEFT JOIN stock_adjustments adj ON adj.id = sm.ref_id AND sm.ref_type = 'adjustment'
+         LEFT JOIN stock_counts sc ON sc.id = sm.ref_id AND sm.ref_type = 'stock_count'
+         WHERE sm.tenant_id = ? ${!scope.isSuperAdminAll && scope.branchId ? 'AND sm.branch_id = ?' : ''}
+         ORDER BY sm.created_at DESC, sm.seq DESC
+         LIMIT 10`,
+        (!scope.isSuperAdminAll && scope.branchId) ? [tenantId, scope.branchId] : [tenantId],
+      ),
+
+      ctx.db.query(
+        `WITH item_stock AS (
+          SELECT 
+            i.id,
+            i.branch_id,
+            b.name AS branch_name,
+            b.code AS branch_code,
+            i.name,
+            i.sku,
+            i.barcode,
+            i.category,
+            i.unit,
+            i.reorder_milli,
+            i.preferred_supplier_id,
+            COALESCE((SELECT SUM(sm.qty_milli) FROM stock_moves sm WHERE sm.item_id = i.id AND sm.tenant_id = i.tenant_id AND (sm.branch_id IS NOT DISTINCT FROM i.branch_id)), 0)::bigint AS stock_milli
+          FROM items i
+          LEFT JOIN branches b ON b.id = i.branch_id AND b.tenant_id = i.tenant_id
+          WHERE i.tenant_id = ? ${branchClause} AND i.active = true AND i.track_stock = true
+            AND i.reorder_milli > 0
+        )
+        SELECT 
+          s.id AS item_id,
+          s.branch_id,
+          s.branch_name,
+          s.branch_code,
+          s.name,
+          s.sku,
+          s.barcode,
+          s.category,
+          s.unit,
+          s.stock_milli AS current_stock_milli,
+          s.reorder_milli,
+          p.id AS supplier_id,
+          p.name AS supplier_name,
+          p.phone AS supplier_phone,
+          GREATEST(1000, (s.reorder_milli * 2 - s.stock_milli)) AS suggested_order_qty_milli
+        FROM item_stock s
+        LEFT JOIN parties p ON p.id = s.preferred_supplier_id AND p.tenant_id = ? ${supplierBranchFilter}
+        WHERE s.stock_milli <= s.reorder_milli
+        ORDER BY (s.stock_milli - s.reorder_milli) ASC
+        LIMIT 15`,
+        [tenantId, ...branchParams, tenantId, ...supplierBranchParams],
+      ),
+    ]);
 
     return {
       stats: {
@@ -392,27 +392,18 @@ export function registerInventory(r: Router) {
       )
     `;
 
-    // Fast total count for pagination (avoids heavy subqueries when no stock status filter is applied)
-    let total = 0;
-    if (!statusCondition) {
-      const totalRow = await ctx.db.one<{ total: number }>(
-        `SELECT COUNT(*)::int AS total FROM items i ${whereSql}`,
-        params,
-      );
-      total = Number(totalRow?.total ?? 0);
-    } else {
-      const totalRow = await ctx.db.one<{ total: number }>(
-        `${baseCte} SELECT COUNT(*)::int AS total FROM item_stats ${statusCondition}`,
-        params,
-      );
-      total = Number(totalRow?.total ?? 0);
-    }
+    // Parallelize count and paged rows for fastest response
+    const countPromise = !statusCondition
+      ? ctx.db.one<{ total: number }>(`SELECT COUNT(*)::int AS total FROM items i ${whereSql}`, params)
+      : ctx.db.one<{ total: number }>(`${baseCte} SELECT COUNT(*)::int AS total FROM item_stats ${statusCondition}`, params);
 
-    // Page items
-    const rows = await ctx.db.query(
+    const rowsPromise = ctx.db.query(
       `${baseCte} SELECT * FROM item_stats ${statusCondition} ${orderSql} LIMIT ? OFFSET ?`,
       [...params, limit, offset],
     );
+
+    const [totalRow, rows] = await Promise.all([countPromise, rowsPromise]);
+    const total = Number(totalRow?.total ?? 0);
 
     return {
       total,
