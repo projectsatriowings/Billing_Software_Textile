@@ -157,15 +157,15 @@
 
 /* Store-Manager-specific illustration sizing & position */
 .store-manager-layout .modern-admin-illustration-area {
-  width: 108%;
-  max-width: 860px;
-  max-height: 60vh;
-  bottom: -20px;
-  right: -135px;
+  width: 118%;
+  max-width: 980px;
+  max-height: 68vh;
+  bottom: -25px;
+  right: -125px;
 }
 
 .store-manager-layout .modern-admin-hero-img {
-  max-height: 56vh;
+  max-height: 64vh;
 }
 
 /* Subtle decorative circles behind image / text */
