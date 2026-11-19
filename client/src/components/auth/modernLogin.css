@@ -144,11 +144,11 @@
 
 /* Super-Admin-specific illustration sizing & position */
 .super-admin-layout .modern-admin-illustration-area {
-  width: 122%;
-  max-width: 1040px;
+  width: 128%;
+  max-width: 1080px;
   max-height: 64vh;
   bottom: 0px;
-  right: -95px;
+  right: -130px;
 }
 
 .super-admin-layout .modern-admin-hero-img {
