@@ -619,10 +619,21 @@ export function App() {
     | 'notifications'
   >(() => {
     try {
+      const savedTab = localStorage.getItem('app_active_tab') || sessionStorage.getItem('app_active_tab');
       const stored = localStorage.getItem('user') || sessionStorage.getItem('user');
+      let role = '';
       if (stored) {
         const u = JSON.parse(stored);
-        if (u?.role === 'cashier') return 'pos';
+        role = u?.role || '';
+      }
+      if (role === 'cashier') {
+        if (savedTab && CASHIER_ALLOWED_TABS.has(savedTab as any)) {
+          return savedTab as any;
+        }
+        return 'pos';
+      }
+      if (savedTab) {
+        return savedTab as any;
       }
     } catch { }
     return 'dashboard';
@@ -633,10 +644,15 @@ export function App() {
     (tabOrFn: any) => {
       setActiveTabRaw((prev: any) => {
         const next = typeof tabOrFn === 'function' ? tabOrFn(prev) : tabOrFn;
+        let resolved = next;
         if (user?.role === 'cashier' && !CASHIER_ALLOWED_TABS.has(next)) {
-          return 'pos';
+          resolved = 'pos';
         }
-        return next;
+        try {
+          localStorage.setItem('app_active_tab', resolved);
+          sessionStorage.setItem('app_active_tab', resolved);
+        } catch { }
+        return resolved;
       });
     },
     [user?.role]
@@ -654,6 +670,12 @@ export function App() {
     if (user?.role === 'cashier' && !CASHIER_ALLOWED_TABS.has(activeTabRaw)) {
       setActiveTabRaw('pos');
     }
+    try {
+      if (activeTabRaw) {
+        localStorage.setItem('app_active_tab', activeTabRaw);
+        sessionStorage.setItem('app_active_tab', activeTabRaw);
+      }
+    } catch { }
   }, [user?.role, activeTabRaw]);
 
   // Synchronize .theme-cashier on document.body for cashier session & portaled modals
@@ -917,19 +939,134 @@ export function App() {
   const [items, setItems] = useState<Item[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [categoriesList, setCategoriesList] = useState<Category[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
+  const [selectedCategory, setSelectedCategory] = useState<string>(() => {
+    try {
+      return localStorage.getItem('pos_selected_category') || 'ALL';
+    } catch {
+      return 'ALL';
+    }
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem('pos_selected_category', selectedCategory);
+    } catch { }
+  }, [selectedCategory]);
+
   const [searchQuery, setSearchQuery] = useState('');
-  const [cart, setCart] = useState<PosCartItem[]>([]);
+  const [cart, setCart] = useState<PosCartItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('pos_active_cart');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch { }
+    return [];
+  });
+
+  useEffect(() => {
+    try {
+      if (cart.length > 0) {
+        localStorage.setItem('pos_active_cart', JSON.stringify(cart));
+      } else {
+        localStorage.removeItem('pos_active_cart');
+      }
+    } catch { }
+  }, [cart]);
+
+  // Synchronize cart item data with fresh `items` list when loaded from backend
+  useEffect(() => {
+    if (items.length === 0 || cart.length === 0) return;
+    setCart((prev) => {
+      let changed = false;
+      const updated = prev.map((line) => {
+        const freshItem = items.find((i) => i.id === line.item.id);
+        if (freshItem && (freshItem.priceMinor !== line.item.priceMinor || freshItem.currentStockMilli !== line.item.currentStockMilli)) {
+          changed = true;
+          return { ...line, item: freshItem };
+        }
+        return line;
+      });
+      return changed ? updated : prev;
+    });
+  }, [items]);
+
   const [showReturnExchangeModal, setShowReturnExchangeModal] = useState<boolean>(false);
   const showReturnExchangeModalRef = useRef(showReturnExchangeModal);
   useEffect(() => {
     showReturnExchangeModalRef.current = showReturnExchangeModal;
   }, [showReturnExchangeModal]);
-  const [activeExchangeLines, setActiveExchangeLines] = useState<ReturnSelectedLine[]>([]);
-  const [activeExchangeOrigBill, setActiveExchangeOrigBill] = useState<string>('');
+  const [activeExchangeLines, setActiveExchangeLines] = useState<ReturnSelectedLine[]>(() => {
+    try {
+      const saved = localStorage.getItem('pos_active_exchange_lines');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch { }
+    return [];
+  });
+  useEffect(() => {
+    try {
+      if (activeExchangeLines.length > 0) {
+        localStorage.setItem('pos_active_exchange_lines', JSON.stringify(activeExchangeLines));
+      } else {
+        localStorage.removeItem('pos_active_exchange_lines');
+      }
+    } catch { }
+  }, [activeExchangeLines]);
+
+  const [activeExchangeOrigBill, setActiveExchangeOrigBill] = useState<string>(() => {
+    try {
+      return localStorage.getItem('pos_active_exchange_bill') || '';
+    } catch {
+      return '';
+    }
+  });
+  useEffect(() => {
+    try {
+      if (activeExchangeOrigBill) {
+        localStorage.setItem('pos_active_exchange_bill', activeExchangeOrigBill);
+      } else {
+        localStorage.removeItem('pos_active_exchange_bill');
+      }
+    } catch { }
+  }, [activeExchangeOrigBill]);
+
   const [parties, setParties] = useState<Party[]>([]);
-  const [selectedPartyId, setSelectedPartyId] = useState<string>('');
-  const [selectedPayMode, setSelectedPayMode] = useState<'cash' | 'upi' | 'card' | 'bank' | 'split'>('cash');
+  const [selectedPartyId, setSelectedPartyId] = useState<string>(() => {
+    try {
+      return localStorage.getItem('pos_draft_party_id') || '';
+    } catch {
+      return '';
+    }
+  });
+  useEffect(() => {
+    try {
+      if (selectedPartyId) {
+        localStorage.setItem('pos_draft_party_id', selectedPartyId);
+      } else {
+        localStorage.removeItem('pos_draft_party_id');
+      }
+    } catch { }
+  }, [selectedPartyId]);
+
+  const [selectedPayMode, setSelectedPayMode] = useState<'cash' | 'upi' | 'card' | 'bank' | 'split'>(() => {
+    try {
+      const saved = localStorage.getItem('pos_draft_pay_mode');
+      if (saved && ['cash', 'upi', 'card', 'bank', 'split'].includes(saved)) {
+        return saved as any;
+      }
+    } catch { }
+    return 'cash';
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem('pos_draft_pay_mode', selectedPayMode);
+    } catch { }
+  }, [selectedPayMode]);
   const [cashReceived, setCashReceived] = useState<string>('');
   const [splitMethod1, setSplitMethod1] = useState<'cash' | 'upi' | 'card'>('cash');
   const [splitAmount1, setSplitAmount1] = useState<string>('');
@@ -1280,13 +1417,63 @@ export function App() {
   }, [scannerNetworkInfo, scannerProtocol, customTunnelUrl, scannerSessionId, selectedCounter]);
 
   // Modern Image 2 POS State
-  const [customerSearch, setCustomerSearch] = useState('');
-  const [quickCustomerName, setQuickCustomerName] = useState('');
+  const [customerSearch, setCustomerSearch] = useState(() => {
+    try {
+      return localStorage.getItem('pos_draft_customer_search') || '';
+    } catch {
+      return '';
+    }
+  });
+  useEffect(() => {
+    try {
+      if (customerSearch) {
+        localStorage.setItem('pos_draft_customer_search', customerSearch);
+      } else {
+        localStorage.removeItem('pos_draft_customer_search');
+      }
+    } catch { }
+  }, [customerSearch]);
+
+  const [quickCustomerName, setQuickCustomerName] = useState(() => {
+    try {
+      return localStorage.getItem('pos_draft_customer_name') || '';
+    } catch {
+      return '';
+    }
+  });
+  useEffect(() => {
+    try {
+      if (quickCustomerName) {
+        localStorage.setItem('pos_draft_customer_name', quickCustomerName);
+      } else {
+        localStorage.removeItem('pos_draft_customer_name');
+      }
+    } catch { }
+  }, [quickCustomerName]);
+
   const [isQuickEnrolling, setIsQuickEnrolling] = useState(false);
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
   const [showCustomerPickerModal, setShowCustomerPickerModal] = useState(false);
   const [redeemPoints, setRedeemPoints] = useState(false);
-  const [appliedDiscountPercent, setAppliedDiscountPercent] = useState<number>(0);
+  const [appliedDiscountPercent, setAppliedDiscountPercent] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('pos_draft_discount');
+      if (saved) {
+        const num = Number(saved);
+        if (!isNaN(num) && num >= 0 && num <= 100) return num;
+      }
+    } catch { }
+    return 0;
+  });
+  useEffect(() => {
+    try {
+      if (appliedDiscountPercent > 0) {
+        localStorage.setItem('pos_draft_discount', String(appliedDiscountPercent));
+      } else {
+        localStorage.removeItem('pos_draft_discount');
+      }
+    } catch { }
+  }, [appliedDiscountPercent]);
   const [showDiscountPicker, setShowDiscountPicker] = useState(false);
   const [showPosOpenShiftModal, setShowPosOpenShiftModal] = useState(false);
   const [showCounterModal, setShowCounterModal] = useState<boolean>(false);
@@ -2021,13 +2208,26 @@ export function App() {
         setShop(res.shop);
         initSettingsForm(res.shop);
         loadMyBusinesses();
+        const savedTab = (() => {
+          try {
+            return localStorage.getItem('app_active_tab') || sessionStorage.getItem('app_active_tab');
+          } catch {
+            return null;
+          }
+        })();
         if (res.user?.role === 'cashier') {
-          setActiveTab('pos');
+          if (savedTab && CASHIER_ALLOWED_TABS.has(savedTab)) {
+            setActiveTab(savedTab as any);
+          } else {
+            setActiveTab('pos');
+          }
           try {
             if (!sessionStorage.getItem('pos_selected_counter_id') && !localStorage.getItem('pos_selected_counter_id')) {
               setShowCounterModal(true);
             }
           } catch { }
+        } else if (savedTab) {
+          setActiveTab(savedTab as any);
         }
         const urlParams = new URLSearchParams(window.location.search);
         const tabParam = urlParams.get('tab');
@@ -2969,6 +3169,12 @@ export function App() {
         setSelectedBranchScope(saved);
       }
       setCart([]);
+      setActiveExchangeLines([]);
+      setActiveExchangeOrigBill('');
+      setSelectedPartyId('');
+      setCustomerSearch('');
+      setQuickCustomerName('');
+      setAppliedDiscountPercent(0);
       setSelectedCategory('ALL');
       setShowBusinessDropdown(false);
       showToast(`Switched to ${res.shop.name} (${getBusinessLabel(res.shop.businessType)})`);
@@ -3029,7 +3235,27 @@ export function App() {
       localStorage.removeItem('selected_branch');
       sessionStorage.removeItem('sa_selected_branch');
       sessionStorage.removeItem('selected_branch');
+      localStorage.removeItem('pos_active_cart');
+      localStorage.removeItem('pos_active_exchange_lines');
+      localStorage.removeItem('pos_active_exchange_bill');
+      localStorage.removeItem('pos_draft_party_id');
+      localStorage.removeItem('pos_draft_customer_search');
+      localStorage.removeItem('pos_draft_customer_name');
+      localStorage.removeItem('pos_draft_discount');
+      localStorage.removeItem('pos_draft_pay_mode');
+      localStorage.removeItem('app_active_tab');
+      sessionStorage.removeItem('app_active_tab');
+      localStorage.removeItem('wholesale_active_cart');
+      localStorage.removeItem('wholesale_selected_customer_id');
+      localStorage.removeItem('wholesale_bill_discount');
     } catch { }
+    setCart([]);
+    setActiveExchangeLines([]);
+    setActiveExchangeOrigBill('');
+    setSelectedPartyId('');
+    setCustomerSearch('');
+    setQuickCustomerName('');
+    setAppliedDiscountPercent(0);
     setSelectedCounter('');
     setSelectedCounterId('');
     setActiveShiftNumber(null);
@@ -4911,7 +5137,10 @@ export function App() {
     setCart([]);
     setSelectedPartyId('');
     setCustomerSearch('');
+    setQuickCustomerName('');
     setAppliedDiscountPercent(0);
+    setActiveExchangeLines([]);
+    setActiveExchangeOrigBill('');
   };
 
   const triggerProceedPayment = () => {
@@ -9237,6 +9466,10 @@ export function App() {
                                   setCart([]);
                                   setActiveExchangeLines([]);
                                   setActiveExchangeOrigBill('');
+                                  setSelectedPartyId('');
+                                  setCustomerSearch('');
+                                  setQuickCustomerName('');
+                                  setAppliedDiscountPercent(0);
                                   setCashReceived('');
                                   setActiveQrAttempt(null);
                                   setUpiManualRef('');
