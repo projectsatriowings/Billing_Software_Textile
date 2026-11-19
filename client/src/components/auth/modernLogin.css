@@ -108,7 +108,7 @@
 
 .modern-admin-illustration-area {
   position: absolute;
-  bottom: 0;
+  bottom: -40px;
   right: -50px;
   width: 155%;
   max-width: 1350px;
@@ -904,7 +904,7 @@
   .modern-admin-illustration-area {
     width: 130%;
     max-height: 78vh;
-    bottom: 0;
+    bottom: -25px;
     right: -30px;
   }
 }
