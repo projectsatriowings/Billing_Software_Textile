@@ -231,7 +231,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   }> = {
     super_admin: {
       key: 'super-admin',
-      image: null,
+      image: '/images/admin.png',
       title: 'Super Admin Portal',
       subtitle: 'Enterprise headquarters: consolidated sales, multi-branch network & governance.',
       heroTitle: 'Consolidated Enterprise Control.',
@@ -283,20 +283,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             LEFT HALF: USER'S GENERATED IMAGE DISPLAY / BRANDING
             ------------------------------------------------------------------ */}
         {(() => {
+          const isSuperAdmin = currentMeta.key === 'super-admin';
           const hasImage = Boolean(currentMeta.image && !failedImages[currentMeta.image]);
-          return (
-            <div className={`modern-login-left ${hasImage ? 'has-image' : 'text-only-layout'}`}>
-              {hasImage && currentMeta.image ? (
-                <img
-                  key={currentMeta.image}
-                  src={currentMeta.image}
-                  alt={`${currentMeta.title} Illustration`}
-                  className="user-login-image"
-                  onError={() => {
-                    setFailedImages((prev) => ({ ...prev, [currentMeta.image!]: true }));
-                  }}
-                />
-              ) : (
+
+          if (isSuperAdmin) {
+            return (
+              <div className="modern-login-left super-admin-layout">
                 <div className="modern-login-top-wordings">
                   <div className="modern-left-badge">
                     <RoleIcon role={currentMeta.key} size={15} />
@@ -324,6 +316,45 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                       Real-Time Headquarter Sync
                     </span>
                   </div>
+                </div>
+
+                {hasImage && currentMeta.image && (
+                  <div className="modern-admin-illustration-area">
+                    <img
+                      key={currentMeta.image}
+                      src={currentMeta.image}
+                      alt={`${currentMeta.title} Illustration`}
+                      className="modern-admin-hero-img"
+                      onError={() => {
+                        setFailedImages((prev) => ({ ...prev, [currentMeta.image!]: true }));
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+            );
+          }
+
+          return (
+            <div className={`modern-login-left ${hasImage ? 'has-image' : 'text-only-layout'}`}>
+              {hasImage && currentMeta.image ? (
+                <img
+                  key={currentMeta.image}
+                  src={currentMeta.image}
+                  alt={`${currentMeta.title} Illustration`}
+                  className="user-login-image"
+                  onError={() => {
+                    setFailedImages((prev) => ({ ...prev, [currentMeta.image!]: true }));
+                  }}
+                />
+              ) : (
+                <div className="modern-login-top-wordings">
+                  <div className="modern-left-badge">
+                    <RoleIcon role={currentMeta.key} size={15} />
+                    <span>{currentMeta.badge}</span>
+                  </div>
+                  <h1 className="modern-left-heading">{currentMeta.heroTitle}</h1>
+                  <p className="modern-left-subtitle">{currentMeta.heroSubtitle}</p>
                 </div>
               )}
             </div>
