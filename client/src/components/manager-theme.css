@@ -1130,3 +1130,34 @@ body.theme-manager .movement-toggle-btn.active,
   color: #FFFFFF !important;
   box-shadow: 0 2px 6px rgba(101, 59, 75, 0.3) !important;
 }
+
+/* --------------------------------------------------------------------------
+   15. EXPENSE MANAGEMENT IN DEEP BURGUNDY (STORE MANAGER ONLY)
+   -------------------------------------------------------------------------- */
+body.theme-manager .btn-record-expense,
+.theme-manager .btn-record-expense {
+  background: linear-gradient(135deg, #7A475B 0%, #653B4B 100%) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 14px rgba(101, 59, 75, 0.35) !important;
+}
+
+body.theme-manager .btn-record-expense:hover,
+.theme-manager .btn-record-expense:hover {
+  background: linear-gradient(135deg, #653B4B 0%, #522E3C 100%) !important;
+  box-shadow: 0 6px 18px rgba(101, 59, 75, 0.45) !important;
+}
+
+body.theme-manager .expense-preset-btn.active,
+.theme-manager .expense-preset-btn.active {
+  background: #653B4B !important;
+  border-color: #653B4B !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 6px rgba(101, 59, 75, 0.3) !important;
+}
+
+body.theme-manager .expense-preset-btn:hover:not(.active),
+.theme-manager .expense-preset-btn:hover:not(.active) {
+  background: #F5ECF0 !important;
+  border-color: #D9C8D0 !important;
+  color: #653B4B !important;
+}
