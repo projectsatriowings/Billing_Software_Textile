@@ -118,6 +118,7 @@
   justify-content: flex-end;
   pointer-events: none;
   z-index: 15;
+  margin-bottom: 0;
 }
 
 .modern-admin-hero-img {
@@ -126,6 +127,9 @@
   max-height: 84vh;
   object-fit: contain;
   object-position: bottom right;
+  display: block;
+  vertical-align: bottom;
+  margin-bottom: 0;
   filter: drop-shadow(0 22px 46px rgba(0, 0, 0, 0.34));
   pointer-events: none;
   user-select: none;
