@@ -144,15 +144,15 @@
 
 /* Cashier-specific illustration sizing & position */
 .cashier-layout .modern-admin-illustration-area {
-  width: 125%;
-  max-width: 1080px;
-  max-height: 74vh;
-  bottom: -25px;
-  right: -100px;
+  width: 134%;
+  max-width: 1150px;
+  max-height: 78vh;
+  bottom: -30px;
+  right: -145px;
 }
 
 .cashier-layout .modern-admin-hero-img {
-  max-height: 72vh;
+  max-height: 76vh;
 }
 
 /* Store-Manager-specific illustration sizing & position */
@@ -1287,11 +1287,12 @@
     right: -45px;
   }
 
-  .cashier-layout .modern-admin-illustration-area {
-    width: 110%;
-    max-height: 66vh;
-    bottom: -15px;
-    right: -60px;
+  .cashier-layout .modern-admin-illustration-area,
+  .store-manager-layout .modern-admin-illustration-area {
+    width: 118%;
+    max-height: 70vh;
+    bottom: -20px;
+    right: -80px;
   }
 }
 
@@ -1303,7 +1304,8 @@
     padding: 3rem 2.5rem;
   }
   .modern-login-left.super-admin-layout,
-  .modern-login-left.cashier-layout {
+  .modern-login-left.cashier-layout,
+  .modern-login-left.store-manager-layout {
     padding: 3rem 2.5rem 0;
   }
 }
@@ -1324,7 +1326,8 @@
   }
 
   .modern-login-left.super-admin-layout,
-  .modern-login-left.cashier-layout {
+  .modern-login-left.cashier-layout,
+  .modern-login-left.store-manager-layout {
     min-height: 480px;
     padding: 2.5rem 2rem 0;
     overflow: hidden !important;
