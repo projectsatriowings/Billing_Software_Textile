@@ -3203,6 +3203,30 @@ body {
   box-shadow: 0 4px 14px rgba(91, 59, 232, 0.45);
 }
 
+/* Super Admin explicit override for active sidebar action row buttons (Settings & User Management) */
+body.theme-super-admin .sidebar-action-row-btn.active,
+.theme-super-admin .sidebar-action-row-btn.active,
+body.theme-super-admin .app-sidebar.icon-only .sidebar-action-row-btn.active,
+.theme-super-admin .app-sidebar.icon-only .sidebar-action-row-btn.active,
+body.theme-super-admin .app-sidebar .sidebar-action-row-btn.active,
+.theme-super-admin .app-sidebar .sidebar-action-row-btn.active,
+body.theme-super-admin .sidebar-footer .sidebar-action-row-btn.active,
+.theme-super-admin .sidebar-footer .sidebar-action-row-btn.active,
+body.theme-super-admin .sidebar-footer-buttons-list .sidebar-action-row-btn.active,
+.theme-super-admin .sidebar-footer-buttons-list .sidebar-action-row-btn.active {
+  background: #49364A !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(73, 54, 74, 0.45) !important;
+}
+
+body.theme-super-admin .sidebar-action-row-btn.active:hover,
+.theme-super-admin .sidebar-action-row-btn.active:hover,
+body.theme-super-admin .app-sidebar.icon-only .sidebar-action-row-btn.active:hover,
+.theme-super-admin .app-sidebar.icon-only .sidebar-action-row-btn.active:hover {
+  background: #3D2C3E !important;
+  color: #ffffff !important;
+}
+
 .app-sidebar.icon-only .sidebar-action-row-btn[title]:hover::after {
   content: attr(title);
   position: fixed;

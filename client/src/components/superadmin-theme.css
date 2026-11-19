@@ -1284,18 +1284,71 @@ body.theme-super-admin .gst-tab-btn.active {
 /* --------------------------------------------------------------------------
    14. USER MANAGEMENT & SETTINGS
    -------------------------------------------------------------------------- */
-/* Super Admin Settings Button in Sidebar */
+/* Super Admin Settings & User Management Buttons in Sidebar (both expanded and icon-only collapsed) */
 .theme-super-admin .sidebar-action-row-btn.active,
-body.theme-super-admin .sidebar-action-row-btn.active {
+body.theme-super-admin .sidebar-action-row-btn.active,
+.theme-super-admin .app-sidebar.icon-only .sidebar-action-row-btn.active,
+body.theme-super-admin .app-sidebar.icon-only .sidebar-action-row-btn.active,
+.theme-super-admin .app-sidebar .sidebar-action-row-btn.active,
+body.theme-super-admin .app-sidebar .sidebar-action-row-btn.active,
+.theme-super-admin .sidebar-footer .sidebar-action-row-btn.active,
+body.theme-super-admin .sidebar-footer .sidebar-action-row-btn.active,
+.theme-super-admin .sidebar-footer-buttons-list .sidebar-action-row-btn.active,
+body.theme-super-admin .sidebar-footer-buttons-list .sidebar-action-row-btn.active,
+body.theme-super-admin .app-sidebar.icon-only .sidebar-footer .sidebar-action-row-btn.active,
+body.theme-super-admin .app-sidebar.icon-only .sidebar-footer-buttons-list .sidebar-action-row-btn.active {
   background: #49364A !important;
   color: #FFFFFF !important;
-  box-shadow: 0 2px 8px rgba(73, 54, 74, 0.45) !important;
+  box-shadow: 0 4px 14px rgba(73, 54, 74, 0.45) !important;
 }
 
-.theme-super-admin .sidebar-action-row-btn:hover:not(.signout),
-body.theme-super-admin .sidebar-action-row-btn:hover:not(.signout) {
+.theme-super-admin .sidebar-action-row-btn.active:hover,
+body.theme-super-admin .sidebar-action-row-btn.active:hover,
+.theme-super-admin .app-sidebar.icon-only .sidebar-action-row-btn.active:hover,
+body.theme-super-admin .app-sidebar.icon-only .sidebar-action-row-btn.active:hover,
+.theme-super-admin .app-sidebar .sidebar-action-row-btn.active:hover,
+body.theme-super-admin .app-sidebar .sidebar-action-row-btn.active:hover {
+  background: #3D2C3E !important;
+  color: #FFFFFF !important;
+}
+
+.theme-super-admin .sidebar-action-row-btn.active:active,
+body.theme-super-admin .sidebar-action-row-btn.active:active,
+.theme-super-admin .app-sidebar.icon-only .sidebar-action-row-btn.active:active,
+body.theme-super-admin .app-sidebar.icon-only .sidebar-action-row-btn.active:active {
+  background: #302333 !important;
+  color: #FFFFFF !important;
+}
+
+.theme-super-admin .sidebar-action-row-btn.active .action-row-icon,
+body.theme-super-admin .sidebar-action-row-btn.active .action-row-icon,
+.theme-super-admin .sidebar-action-row-btn.active .action-row-icon svg,
+body.theme-super-admin .sidebar-action-row-btn.active .action-row-icon svg,
+.theme-super-admin .app-sidebar.icon-only .sidebar-action-row-btn.active .action-row-icon,
+body.theme-super-admin .app-sidebar.icon-only .sidebar-action-row-btn.active .action-row-icon,
+.theme-super-admin .app-sidebar.icon-only .sidebar-action-row-btn.active .action-row-icon svg,
+body.theme-super-admin .app-sidebar.icon-only .sidebar-action-row-btn.active .action-row-icon svg {
+  color: #FFFFFF !important;
+  stroke: #FFFFFF !important;
+}
+
+.theme-super-admin .sidebar-action-row-btn:hover:not(.signout):not(.active),
+body.theme-super-admin .sidebar-action-row-btn:hover:not(.signout):not(.active),
+.theme-super-admin .app-sidebar.icon-only .sidebar-action-row-btn:hover:not(.signout):not(.active),
+body.theme-super-admin .app-sidebar.icon-only .sidebar-action-row-btn:hover:not(.signout):not(.active) {
   background: rgba(73, 54, 74, 0.32) !important;
   color: #FFFFFF !important;
+}
+
+/* Tooltips in collapsed sidebar (Super Admin) */
+.theme-super-admin .app-sidebar.icon-only .sidebar-action-row-btn[title]:hover::after,
+body.theme-super-admin .app-sidebar.icon-only .sidebar-action-row-btn[title]:hover::after,
+.theme-super-admin .app-sidebar.icon-only .sidebar-nav-item[title]:hover::after,
+body.theme-super-admin .app-sidebar.icon-only .sidebar-nav-item[title]:hover::after {
+  background: #352638 !important;
+  color: #FFFFFF !important;
+  border: 1px solid rgba(216, 203, 216, 0.3) !important;
+  box-shadow: 0 8px 24px rgba(73, 54, 74, 0.45) !important;
 }
 
 .theme-super-admin .settings-profile-tab.active,
