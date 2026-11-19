@@ -137,6 +137,19 @@
   user-select: none;
 }
 
+/* Cashier-specific illustration sizing & position */
+.cashier-layout .modern-admin-illustration-area {
+  width: 125%;
+  max-width: 1080px;
+  max-height: 74vh;
+  bottom: -25px;
+  right: -100px;
+}
+
+.cashier-layout .modern-admin-hero-img {
+  max-height: 72vh;
+}
+
 /* Subtle decorative circles behind image / text */
 .modern-login-left::before {
   content: '';
@@ -908,6 +921,13 @@
     max-height: 78vh;
     bottom: -25px;
     right: -30px;
+  }
+
+  .cashier-layout .modern-admin-illustration-area {
+    width: 110%;
+    max-height: 66vh;
+    bottom: -15px;
+    right: -60px;
   }
 }
 
