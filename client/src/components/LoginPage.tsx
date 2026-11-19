@@ -347,10 +347,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             ------------------------------------------------------------------ */}
         <div className="modern-login-right">
           <div className="felix-login-container">
-            {/* Top Row: Brand Mark & Role Switcher + Back to Home */}
+            {/* Top Row: Brand Mark & Role Switcher */}
             <div className="felix-top-nav">
               <div className="felix-brand-mark" onClick={onBackToHome} title="Adaptive Billing">
-                <LightningBoltIcon size={26} className="felix-bolt-icon" />
+                <LightningBoltIcon size={38} className="felix-bolt-icon" />
               </div>
 
               {/* Minimal Pill Role Tabs */}
@@ -380,19 +380,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   <span>Cashier Counter</span>
                 </button>
               </div>
-
-              <button
-                type="button"
-                className="felix-btn-back"
-                onClick={onBackToHome}
-                title="Return to home page"
-              >
-                <span>Back</span>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="19" y1="12" x2="5" y2="12"></line>
-                  <polyline points="12 19 5 12 12 5"></polyline>
-                </svg>
-              </button>
             </div>
 
             {/* Title & Subtitle Matching Screenshot */}
@@ -509,9 +496,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               </button>
             </form>
 
-            {/* Footer Copyright Matching Screenshot */}
+            {/* Footer Copyright */}
             <div className="felix-copyright">
-              ©2026 Felix All rights reserved.
+              ©2026 Atriowings All rights reserved.
             </div>
           </div>
         </div>
