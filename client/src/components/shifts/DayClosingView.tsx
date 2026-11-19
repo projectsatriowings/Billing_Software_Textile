@@ -1049,385 +1049,267 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
   const closedRecord = preview?.closedRecord || null;
 
   return (
-    <div className="day-closing-wrapper">
+    <div className="day-closing-wrapper bento-theme-wrapper">
       {/* --------------------------------------------------------------------
-          1. Header Card
+          1. Master Bento Command Hero Deck (Consolidated Header & Controls)
           -------------------------------------------------------------------- */}
-      <div className="day-closing-header-card">
-        <div className="day-closing-header-left">
-          <div className="day-closing-header-icon">
-            <LockIcon size={24} />
-          </div>
-          <div>
-            <h1 className="day-closing-title">Day Closing & Register Reconciliation</h1>
-            <p className="day-closing-subtitle">
-              Audit daily sales, returns, cash drawer floats, and seal register transactions
-            </p>
-          </div>
-        </div>
-
-        <div className="day-closing-header-right">
-          {closedRecord?.id && (
-            <>
-              <button
-                onClick={() => handlePrint(closedRecord.id)}
-                className="btn-print"
-                title="Print Official Closing Statement"
-              >
-                <PrinterIcon size={15} />
-                Print Statement
-              </button>
-
-              <button
-                onClick={() => handleExportCsv(closedRecord.id)}
-                className="btn-export"
-                title="Download closing details in Excel CSV format"
-              >
-                <FileSpreadsheetIcon size={15} />
-                Export CSV
-              </button>
-            </>
-          )}
-
-          <button
-            onClick={() => {
-              if (activeTab === 'closing') loadPreview();
-              else if (activeTab === 'comparison') loadComparison();
-              else if (activeTab === 'analytics') loadAnalytics();
-              else if (activeTab === 'history') loadHistory();
-            }}
-            disabled={loadingPreview || loadingComparison || loadingAnalytics || loadingHistory}
-            className="day-closing-refresh-btn"
-          >
-            <RefreshCwIcon size={14} className={(loadingPreview || loadingComparison || loadingAnalytics || loadingHistory) ? 'animate-spin' : ''} />
-            Refresh
-          </button>
-        </div>
-      </div>
-
-      {/* --------------------------------------------------------------------
-          2. Tab Navigation Bar (4 Clean, Dedicated Tabs)
-          -------------------------------------------------------------------- */}
-      <div className="day-closing-tabs-bar">
-        <button
-          onClick={() => setActiveTab('closing')}
-          className={`day-closing-tab-btn ${activeTab === 'closing' ? 'active' : ''}`}
-        >
-          <LockIcon size={15} />
-          Register Closing & Reconciliation
-        </button>
-
-        {!isCashierUser && (
-          <>
-            <button
-              onClick={() => setActiveTab('breakdown')}
-              className={`day-closing-tab-btn ${activeTab === 'breakdown' ? 'active' : ''}`}
-            >
-              <FileSpreadsheetIcon size={15} />
-              Counter & Cashier Reports
-            </button>
-
-            <button
-              onClick={() => setActiveTab('comparison')}
-              className={`day-closing-tab-btn ${activeTab === 'comparison' ? 'active' : ''}`}
-            >
-              <ScaleIcon size={15} />
-              Today vs Previous Day Comparison
-            </button>
-
-            <button
-              onClick={() => setActiveTab('analytics')}
-              className={`day-closing-tab-btn ${activeTab === 'analytics' ? 'active' : ''}`}
-            >
-              <BarChart3Icon size={15} />
-              Custom Date Range Analytics
-            </button>
-
-            <button
-              onClick={() => setActiveTab('compliance')}
-              className={`day-closing-tab-btn ${activeTab === 'compliance' ? 'active' : ''}`}
-            >
-              <CheckCircleIcon size={15} />
-              Schedules & Compliance
-            </button>
-
-            <button
-              onClick={() => setActiveTab('history')}
-              className={`day-closing-tab-btn ${activeTab === 'history' ? 'active' : ''}`}
-            >
-              <ClockIcon size={15} />
-              Closing History & Audit Logs
-            </button>
-          </>
-        )}
-      </div>
-
-      {/* --------------------------------------------------------------------
-          3. Global Filter Controls Bar
-          -------------------------------------------------------------------- */}
-      <div className="day-closing-filter-bar">
-        <div className="day-closing-filter-group">
-          {branches && branches.length > 0 && !isCashierUser && (
-            <div className="day-closing-filter-item">
-              <Building2Icon size={15} style={{ color: '#4f46e5' }} />
-              <select
-                value={activeBranchId}
-                onChange={(e) => setSelectedBranchId(e.target.value)}
-                className="day-closing-select"
-              >
-                {branches.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.name} ({b.code || b.id})
-                  </option>
-                ))}
-              </select>
+      <div className="cat-bento-header-card bento-card-3d day-closing-bento-hero">
+        <div className="bento-hero-gradient-bar" />
+        <div className="day-closing-header-content">
+          <div className="cat-bento-title-group">
+            <div className="cat-bento-icon-box">
+              <LockIcon size={24} />
             </div>
-          )}
-
-          {isCashierUser && (
-            <div className="day-closing-filter-item" title="Assigned Branch">
-              <Building2Icon size={15} style={{ color: '#4f46e5' }} />
-              <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#0f172a' }}>
-                {branches?.find((b: any) => b.id === activeBranchId)?.name || activeBranchId}
-              </span>
-            </div>
-          )}
-
-          {activeTab === 'closing' || activeTab === 'comparison' ? (
-            <div className="day-closing-filter-item">
-              <ClockIcon size={15} style={{ color: '#059669' }} />
-              {isCashierUser ? (
-                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#0f172a' }}>
-                  {selectedDate}
+            <div>
+              <div className="cat-bento-title-row">
+                <h1 className="cat-bento-title">Day Closing & Register Reconciliation</h1>
+                <span className={`cat-badge-live-sync ${closingStatus}`}>
+                  <span className="live-indicator-dot" />
+                  {closingStatus === 'open' && 'REGISTER OPEN • ACTIVE TRADING'}
+                  {closingStatus === 'submitted' && 'DAY CLOSING SUBMITTED'}
+                  {closingStatus === 'approved' && 'DAY CLOSING SEALED'}
+                  {closingStatus === 'closed' && 'DAY CLOSING CLOSED'}
+                  {closingStatus === 'reopened' && 'REOPENED FOR AUDIT'}
                 </span>
-              ) : (
+              </div>
+              <p className="cat-bento-subtitle">
+                Audit daily sales, returns, cash drawer floats, and seal register transactions
+                {shop?.name && <span> • Organization: <strong>{shop.name}</strong></span>}
+              </p>
+            </div>
+          </div>
+
+          <div className="cat-bento-header-actions">
+            <button
+              type="button"
+              onClick={() => {
+                if (onNavigateToNotifications) {
+                  onNavigateToNotifications();
+                } else {
+                  setShowNotifDrawer(true);
+                }
+              }}
+              className="cat-btn-outline day-closing-notif-hero-btn"
+              title="Open Shift Notifications"
+            >
+              <BellRingIcon size={14} />
+              <span>Shift Notifications</span>
+              {unreadNotifCount > 0 ? (
+                <span className="day-closing-notif-counter-pill red">{unreadNotifCount} new</span>
+              ) : notifications.length > 0 ? (
+                <span className="day-closing-notif-counter-pill teal">{notifications.length}</span>
+              ) : null}
+            </button>
+
+            {closedRecord?.id && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => handlePrint(closedRecord.id)}
+                  className="cat-btn-outline"
+                  title="Print Official Closing Statement"
+                >
+                  <PrinterIcon size={14} />
+                  <span>Print Statement</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleExportCsv(closedRecord.id)}
+                  className="cat-btn-outline"
+                  title="Download closing details in Excel CSV format"
+                >
+                  <FileSpreadsheetIcon size={14} />
+                  <span>Export CSV</span>
+                </button>
+              </>
+            )}
+
+            <button
+              type="button"
+              onClick={() => {
+                if (activeTab === 'closing') loadPreview();
+                else if (activeTab === 'comparison') loadComparison();
+                else if (activeTab === 'analytics') loadAnalytics();
+                else if (activeTab === 'history') loadHistory();
+              }}
+              disabled={loadingPreview || loadingComparison || loadingAnalytics || loadingHistory}
+              className="cat-btn-primary"
+            >
+              <RefreshCwIcon size={14} className={(loadingPreview || loadingComparison || loadingAnalytics || loadingHistory) ? 'animate-spin' : ''} />
+              <span>Refresh</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Integrated Context & Filter Controls inside Hero Deck */}
+        <div className="bento-hero-context-bar">
+          <div className="bento-hero-context-left">
+            {branches && branches.length > 0 && !isCashierUser ? (
+              <div className="bento-context-select-item">
+                <Building2Icon size={14} />
+                <select
+                  value={activeBranchId}
+                  onChange={(e) => setSelectedBranchId(e.target.value)}
+                  className="bento-select"
+                  title="Active Branch"
+                >
+                  {branches.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.name} ({b.code || b.id})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              <span className="bento-context-chip" title="Assigned Branch">
+                <Building2Icon size={14} />
+                <span>{branches?.find((b: any) => b.id === activeBranchId)?.name || activeBranchId || 'Main Branch'}</span>
+              </span>
+            )}
+
+            {!isCashierUser && (activeTab === 'closing' || activeTab === 'comparison') ? (
+              <div className="bento-context-select-item">
+                <ClockIcon size={14} />
                 <input
                   type="date"
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
-                  className="day-closing-input"
+                  className="bento-input-date"
+                  title="Business Date"
                 />
-              )}
-            </div>
-          ) : null}
+              </div>
+            ) : (
+              <span className="bento-context-chip" title="Business Date">
+                <ClockIcon size={14} />
+                <span>{selectedDate}</span>
+              </span>
+            )}
 
-          {/* Cashier Filter / Context Badge */}
-          {activeTab === 'closing' && (
-            <>
-              {isCashierUser ? (
-                <div className="day-closing-filter-item" title="Logged in as Cashier (Counter Register)">
-                  <UserIcon size={14} style={{ color: '#0284c7' }} />
-                  <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#0f172a' }}>
-                    Cashier: {user.name}
-                  </span>
-                </div>
-              ) : (
-                <div className="day-closing-filter-item">
-                  <UserIcon size={14} style={{ color: '#0284c7' }} />
-                  <select
-                    value={selectedCashierId}
-                    onChange={(e) => {
-                      setSelectedCashierId(e.target.value);
-                      setActualCashStr('');
-                      setClosingRemarks('');
-                    }}
-                    className="day-closing-select"
-                    title="Filter by individual Cashier / Counter register"
+            {!isCashierUser && activeTab === 'closing' ? (
+              <div className="bento-context-select-item">
+                <UserIcon size={14} />
+                <select
+                  value={selectedCashierId}
+                  onChange={(e) => {
+                    setSelectedCashierId(e.target.value);
+                    setActualCashStr('');
+                    setClosingRemarks('');
+                  }}
+                  className="bento-select"
+                  title="Cashier / Counter Register"
+                >
+                  <option value="">All Cashiers (Store-wide)</option>
+                  {preview?.availableCashiers?.map((c: any) => (
+                    <option key={c.id} value={c.id}>
+                      Cashier: {c.name} {c.role ? `(${c.role})` : ''}
+                    </option>
+                  ))}
+                </select>
+                {selectedCashierId && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedCashierId('')}
+                    className="bento-chip-clear-btn"
+                    title="Reset to store-wide"
                   >
-                    <option value="">All Cashiers (Consolidated)</option>
-                    {preview?.availableCashiers && preview.availableCashiers.length > 0
-                      ? preview.availableCashiers.map((c: any) => (
-                          <option key={c.id} value={c.id}>
-                            Cashier: {c.name} {c.role ? `(${c.role})` : ''}
-                          </option>
-                        ))
-                      : null}
-                  </select>
-                </div>
-              )}
-            </>
-          )}
+                    ✕
+                  </button>
+                )}
+              </div>
+            ) : (
+              <span className="bento-context-chip" title="Cashier Register">
+                <UserIcon size={14} />
+                <span>Cashier: {user.name}</span>
+              </span>
+            )}
 
-          {/* Counter Filter */}
-          {activeTab === 'closing' && !isCashierUser && preview?.availableCounters && preview.availableCounters.length > 0 && (
-            <div className="day-closing-filter-item">
-              <Building2Icon size={14} style={{ color: '#0d9488' }} />
-              <select
-                value={selectedCounterId}
-                onChange={(e) => setSelectedCounterId(e.target.value)}
-                className="day-closing-select"
-                title="Filter by Counter Terminal"
-              >
-                <option value="">All Counters (Store-wide)</option>
-                {preview.availableCounters.map((cnt: any) => (
-                  <option key={cnt.id} value={cnt.id || cnt.code}>
-                    Counter: {cnt.name} ({cnt.code})
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
+            {activeTab === 'closing' && preview?.availableShifts && preview.availableShifts.length > 0 && (
+              <div className="bento-context-select-item">
+                <FilterIcon size={14} />
+                <select
+                  value={selectedShiftId}
+                  onChange={(e) => setSelectedShiftId(e.target.value)}
+                  className="bento-select"
+                  title="Shift Filter"
+                >
+                  <option value="">All Shifts (Consolidated Full Day)</option>
+                  {preview.availableShifts.map((s: any) => (
+                    <option key={s.id} value={s.id}>
+                      Shift {s.shift_number || s.id.slice(0, 6)} ({s.cashier_name || 'Cashier'})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
 
-          {activeTab === 'closing' && preview?.availableShifts && preview.availableShifts.length > 0 && (
-            <div className="day-closing-filter-item">
-              <FilterIcon size={14} style={{ color: '#6366f1' }} />
-              <select
-                value={selectedShiftId}
-                onChange={(e) => setSelectedShiftId(e.target.value)}
-                className="day-closing-select"
-              >
-                <option value="">All Shifts (Consolidated Full Day)</option>
-                {preview.availableShifts.map((s: any) => (
-                  <option key={s.id} value={s.id}>
-                    Shift {s.shift_number || s.id.slice(0, 6)} ({s.cashier_name || 'Cashier'})
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {activeTab === 'closing' && !isCashierUser && (
+          {!isCashierUser && activeTab === 'closing' && (
             <button
               type="button"
               onClick={() => setActiveTab('breakdown')}
-              className="btn-link"
-              style={{
-                fontSize: '0.8rem',
-                color: '#4f46e5',
-                fontWeight: 700,
-                background: '#eef2ff',
-                border: '1px solid #c7d2fe',
-                padding: '6px 14px',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-              }}
+              className="bento-breakdown-shortcut-btn"
               title="View Multi-Counter & Cashier Breakdown Reports"
             >
-              <LayersIcon size={14} />
-              <span>Counter & Cashier Breakdown</span>
+              <LayersIcon size={13} />
+              <span>Counter Breakdown</span>
               <ArrowRightIcon size={12} />
             </button>
           )}
-
-          <button
-            type="button"
-            onClick={() => {
-              if (onNavigateToNotifications) {
-                onNavigateToNotifications();
-              } else {
-                setShowNotifDrawer(true);
-              }
-            }}
-            className="btn-link"
-            style={{
-              fontSize: '0.8rem',
-              color: unreadNotifCount > 0 ? '#b91c1c' : '#4f46e5',
-              fontWeight: 700,
-              background: unreadNotifCount > 0 ? '#fef2f2' : '#eef2ff',
-              border: `1px solid ${unreadNotifCount > 0 ? '#fca5a5' : '#c7d2fe'}`,
-              padding: '6px 14px',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              transition: 'all 0.15s ease',
-            }}
-            title="Open Dedicated Notifications Page"
-          >
-            <BellRingIcon size={14} />
-            <span>Shift Notifications</span>
-            {notifications.length > 0 && (
-              <span
-                style={{
-                  background: unreadNotifCount > 0 ? '#ef4444' : '#6366f1',
-                  color: '#ffffff',
-                  fontSize: '0.7rem',
-                  fontWeight: 800,
-                  padding: '2px 7px',
-                  borderRadius: '10px',
-                  lineHeight: 1,
-                  marginLeft: '2px',
-                }}
-              >
-                {unreadNotifCount > 0 ? `${unreadNotifCount} new` : notifications.length}
-              </span>
-            )}
-          </button>
-
-          <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>
-            Tenant: <strong style={{ color: '#0f172a' }}>{shop?.name || 'Main Organization'}</strong>
-          </div>
         </div>
-      </div>
 
-      {/* Overdue Register Alert */}
-      {preview?.scheduleInfo?.isOverdue && (
-        <div style={{
-          background: '#fff1f2',
-          border: '1px solid #fecdd3',
-          borderRadius: '8px',
-          padding: '12px 16px',
-          marginBottom: '16px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          color: '#9f1239',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <AlertTriangleIcon size={18} style={{ color: '#e11d48' }} />
-            <div>
-              <strong>Overdue Register Alert:</strong> Expected closing time was{' '}
-              <strong>{preview.scheduleInfo.expectedClosingTime}</strong> ({preview.scheduleInfo.minutesOverdue} mins overdue). Please complete cash count and submit day closing.
-            </div>
-          </div>
-          {preview.scheduleInfo.lastReminderSentAt && (
-            <span style={{ fontSize: '0.75rem', color: '#be123c' }}>
-              Last reminder: {new Date(preview.scheduleInfo.lastReminderSentAt).toLocaleTimeString()}
-            </span>
-          )}
-        </div>
-      )}
-
-      {/* High-priority Recount Requested Alert only (Actionable Day Closing) */}
-      {notifications
-        .filter((n: any) => n.type === 'rejection' && (!n.isRead && !n.is_read))
-        .map((n: any) => (
-          <div key={n.id} style={{
-            background: '#fffbeb',
-            border: '1px solid #fde68a',
-            borderRadius: '8px',
-            padding: '10px 14px',
-            marginBottom: '12px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            color: '#92400e',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <AlertTriangleIcon size={16} />
-              <div>
-                <strong>{n.title}:</strong> {n.message}
-              </div>
-            </div>
+        {/* Multi-Tab Navigation Bar (Rendered ONLY if Manager/Owner) */}
+        {!isCashierUser && (
+          <div className="bento-hero-tabs-segment">
             <button
-              onClick={() => handleDismissNotification(n.id)}
-              style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '0.8rem', color: 'inherit' }}
-              title="Dismiss alert"
+              onClick={() => setActiveTab('closing')}
+              className={`bento-hero-tab ${activeTab === 'closing' ? 'active' : ''}`}
             >
-              ✕
+              <LockIcon size={14} />
+              <span>Register Closing</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('breakdown')}
+              className={`bento-hero-tab ${activeTab === 'breakdown' ? 'active' : ''}`}
+            >
+              <FileSpreadsheetIcon size={14} />
+              <span>Counter & Cashier Reports</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('comparison')}
+              className={`bento-hero-tab ${activeTab === 'comparison' ? 'active' : ''}`}
+            >
+              <ScaleIcon size={14} />
+              <span>Comparison</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('analytics')}
+              className={`bento-hero-tab ${activeTab === 'analytics' ? 'active' : ''}`}
+            >
+              <BarChart3Icon size={14} />
+              <span>Analytics</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('compliance')}
+              className={`bento-hero-tab ${activeTab === 'compliance' ? 'active' : ''}`}
+            >
+              <CheckCircleIcon size={14} />
+              <span>Compliance</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('history')}
+              className={`bento-hero-tab ${activeTab === 'history' ? 'active' : ''}`}
+            >
+              <ClockIcon size={14} />
+              <span>Audit History</span>
             </button>
           </div>
-        ))}
+        )}
+      </div>
 
-      {/* Alerts */}
+      {/* General System Alerts */}
       {error && (
-        <div className="day-closing-alert error">
+        <div className="day-closing-alert error bento-card-3d">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <AlertTriangleIcon size={18} />
             <span><strong>Error:</strong> {error}</span>
@@ -1437,7 +1319,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
       )}
 
       {successMsg && (
-        <div className="day-closing-alert success">
+        <div className="day-closing-alert success bento-card-3d">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <CheckCircle2Icon size={18} />
             <span><strong>Success:</strong> {successMsg}</span>
@@ -1451,149 +1333,73 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
           ==================================================================== */}
       {activeTab === 'closing' && (
         <>
-          {/* Active Specific Counter / Cashier Navigation Banner */}
-          {selectedCounterId && (
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              background: '#f0fdfa',
-              border: '1px solid #99f6e4',
-              borderRadius: '10px',
-              padding: '10px 16px',
-              marginBottom: '14px',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <Building2Icon size={18} style={{ color: '#0d9488' }} />
-                <span style={{ fontSize: '0.875rem', color: '#134e4a', fontWeight: 600 }}>
-                  Filtering Register Closing for Counter: <strong>{preview?.availableCounters?.find((cnt: any) => cnt.id === selectedCounterId || cnt.code === selectedCounterId)?.name || selectedCounterId}</strong>
-                </span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('breakdown')}
-                  style={{
-                    fontSize: '0.78rem',
-                    padding: '5px 12px',
-                    borderRadius: '6px',
-                    border: '1px solid #99f6e4',
-                    background: '#ffffff',
-                    color: '#0d9488',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                  }}
-                >
-                  <LayersIcon size={13} />
-                  <span>All Counters Breakdown</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSelectedCounterId('')}
-                  style={{
-                    fontSize: '0.78rem',
-                    padding: '5px 12px',
-                    borderRadius: '6px',
-                    border: '1px solid #14b8a6',
-                    background: '#0d9488',
-                    color: '#ffffff',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Reset to Store-wide
-                </button>
-              </div>
-            </div>
-          )}
+          {/* ====================================================================
+              ROW 2: DUAL-CARD BENTO DIAGNOSTICS & OPERATIONS DECK (7:5)
+              ==================================================================== */}
+          <div className="bento-diagnostics-deck">
+            {/* 2A: Smart Closing Audit Radar (Col span 7) */}
+            <div className="day-closing-card bento-card-3d bento-audit-deck-card">
+              <div className="day-closing-card-header">
+                <div className="day-closing-card-title-group">
+                  <div className="day-closing-card-icon-bubble green">
+                    <ShieldCheckIcon size={18} />
+                  </div>
+                  <div>
+                    <span className="bento-deck-card-title">Smart Closing Audit Radar</span>
+                    <span className="bento-deck-card-sub">12 Multi-point Financial & Anomaly Detectors</span>
+                  </div>
+                </div>
 
-          {selectedCashierId && (
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              background: '#eff6ff',
-              border: '1px solid #bfdbfe',
-              borderRadius: '10px',
-              padding: '10px 16px',
-              marginBottom: '14px',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <UserIcon size={18} style={{ color: '#2563eb' }} />
-                <span style={{ fontSize: '0.875rem', color: '#1e3a8a', fontWeight: 600 }}>
-                  Filtering Register Closing for Cashier: <strong>{preview?.availableCashiers?.find((c: any) => c.id === selectedCashierId)?.name || selectedCashierId}</strong>
-                </span>
+                <div className="bento-audit-header-actions">
+                  {auditData && (
+                    <div className={`smart-audit-status-badge ${auditData.readinessStatus}`}>
+                      {auditData.readinessStatus === 'ready_to_submit' ? (
+                        <ShieldCheckIcon size={14} />
+                      ) : (
+                        <ShieldAlertIcon size={14} />
+                      )}
+                      <span>
+                        {auditData.readinessStatus === 'ready_to_submit' && 'Ready to Submit'}
+                        {auditData.readinessStatus === 'ready_with_warnings' && 'Ready with Warnings'}
+                        {auditData.readinessStatus === 'action_required' && 'Action Required'}
+                      </span>
+                    </div>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => handleRunLiveAudit()}
+                    disabled={runningLiveAudit || loadingPreview}
+                    className="smart-audit-run-btn"
+                    title="Re-run all 12 financial and operational audit detectors in real time"
+                  >
+                    <RefreshCwIcon size={13} className={runningLiveAudit ? 'animate-spin' : ''} />
+                    <span>{runningLiveAudit ? 'Auditing...' : 'Run Audit'}</span>
+                  </button>
+
+                  {auditData && (
+                    <button
+                      type="button"
+                      onClick={() => setAuditExpanded(!auditExpanded)}
+                      className="smart-audit-toggle-btn"
+                      title={auditExpanded ? 'Collapse audit details' : 'Expand detailed detector report and formula breakdown'}
+                    >
+                      <span>{auditExpanded ? 'Hide Details' : `Audit Details (${auditData.issues.length})`}</span>
+                      {auditExpanded ? <ChevronUpIcon size={14} /> : <ChevronDownIcon size={14} />}
+                    </button>
+                  )}
+                </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('breakdown')}
-                  style={{
-                    fontSize: '0.78rem',
-                    padding: '5px 12px',
-                    borderRadius: '6px',
-                    border: '1px solid #bfdbfe',
-                    background: '#ffffff',
-                    color: '#2563eb',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                  }}
-                >
-                  <LayersIcon size={13} />
-                  <span>Counter & Shift Reports</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSelectedCashierId('')}
-                  style={{
-                    fontSize: '0.78rem',
-                    padding: '5px 12px',
-                    borderRadius: '6px',
-                    border: '1px solid #3b82f6',
-                    background: '#2563eb',
-                    color: '#ffffff',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Reset to Store-wide
-                </button>
-              </div>
-            </div>
-          )}
-          {/* --------------------------------------------------------------------
-              Smart Closing Audit & Detector Overview Bar & Expandable Panel
-              -------------------------------------------------------------------- */}
-          {auditData && (
-            <>
-              <div className="smart-audit-bar">
-                <div className="smart-audit-bar-left">
-                  {/* Readiness Status Badge */}
-                  <div className={`smart-audit-status-badge ${auditData.readinessStatus}`}>
-                    {auditData.readinessStatus === 'ready_to_submit' ? (
-                      <ShieldCheckIcon size={16} />
-                    ) : (
-                      <ShieldAlertIcon size={16} />
-                    )}
-                    <span>
-                      {auditData.readinessStatus === 'ready_to_submit' && 'Ready to Submit'}
-                      {auditData.readinessStatus === 'ready_with_warnings' && 'Ready with Warnings'}
-                      {auditData.readinessStatus === 'action_required' && 'Action Required'}
-                    </span>
+
+              {/* Audit Summary Body */}
+              {auditData ? (
+                <div className="bento-audit-summary-body">
+                  <div className="bento-audit-score-pill">
+                    <span className="bento-audit-score-label">READINESS SCORE</span>
+                    <span className="bento-audit-score-val">{auditData.readinessScore}<span>/100</span></span>
                   </div>
 
-                  {/* Diagnostic Metric Pills */}
-                  <div className="smart-audit-pills-group">
-                    <span className="smart-audit-counter-pill score" title="Overall closing compliance & readiness score">
-                      <strong>Score:</strong> {auditData.readinessScore}/100
-                    </span>
-
+                  <div className="bento-audit-chips-row">
                     {auditData.criticalCount > 0 && (
                       <span className="smart-audit-counter-pill critical">
                         <AlertOctagonIcon size={13} />
@@ -1616,40 +1422,21 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                     )}
 
                     {auditData.issues.length === 0 && (
-                      <span className="smart-audit-counter-pill" style={{ background: '#ecfdf5', borderColor: '#a7f3d0', color: '#047857' }}>
+                      <span className="smart-audit-counter-pill clear">
                         <CheckIcon size={13} />
                         All 12 Detectors Clear
                       </span>
                     )}
                   </div>
                 </div>
-
-                <div className="smart-audit-bar-right">
-                  <button
-                    type="button"
-                    onClick={() => handleRunLiveAudit()}
-                    disabled={runningLiveAudit || loadingPreview}
-                    className="smart-audit-run-btn"
-                    title="Re-run all 12 financial and operational audit detectors in real time"
-                  >
-                    <RefreshCwIcon size={13} className={runningLiveAudit ? 'animate-spin' : ''} />
-                    {runningLiveAudit ? 'Auditing...' : 'Run Audit Check'}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setAuditExpanded(!auditExpanded)}
-                    className="smart-audit-toggle-btn"
-                    title={auditExpanded ? 'Collapse audit details' : 'Expand detailed detector report and formula breakdown'}
-                  >
-                    <span>{auditExpanded ? 'Hide Details' : `Audit Details (${auditData.issues.length})`}</span>
-                    {auditExpanded ? <ChevronUpIcon size={14} /> : <ChevronDownIcon size={14} />}
-                  </button>
+              ) : (
+                <div className="bento-audit-summary-body">
+                  <span style={{ fontSize: '0.85rem', color: 'var(--dc-text-muted)' }}>Audit engine ready for live inspection.</span>
                 </div>
-              </div>
+              )}
 
               {/* Expandable Audit Details Panel */}
-              {auditExpanded && (
+              {auditData && auditExpanded && (
                 <div className="smart-audit-panel">
                   <div className="smart-audit-panel-header">
                     <div className="smart-audit-panel-title-area">
@@ -1902,236 +1689,232 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                   )}
                 </div>
               )}
-            </>
-          )}
-          {/* Closing Reminder Alert Banner */}
-          {preview?.closingReminder?.hasUnclosedPrevDay && (
-            <div className="day-closing-alert warning">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <AlertTriangleIcon size={18} style={{ color: '#d97706', flexShrink: 0 }} />
-                <span>
-                  <strong>Closing Reminder:</strong> Previous business day ({preview.closingReminder.prevDayDate}) register has not been approved and sealed yet. Please review and seal previous day to maintain continuous audit records.
+            </div>
+
+            {/* 2B: Operational Alerts & Register Status (Col span 5) */}
+            <div className="day-closing-card bento-card-3d bento-ops-deck-card">
+              <div className="day-closing-card-header">
+                <div className="day-closing-card-title-group">
+                  <div className={`day-closing-card-icon-bubble ${preview?.scheduleInfo?.isOverdue ? 'rose' : 'green'}`}>
+                    {preview?.scheduleInfo?.isOverdue ? <AlertTriangleIcon size={18} /> : <ClockIcon size={18} />}
+                  </div>
+                  <div>
+                    <span className="bento-deck-card-title">Register Alerts & Compliance</span>
+                    <span className="bento-deck-card-sub">{selectedDate} • {isCashierUser ? user.name : 'Counter Operations'}</span>
+                  </div>
+                </div>
+                <span className={`cat-badge-live-sync sm ${closingStatus}`}>
+                  <span className="live-indicator-dot" />
+                  {closingStatus.toUpperCase()}
                 </span>
               </div>
-              <button
-                onClick={() => setSelectedDate(preview.closingReminder.prevDayDate)}
-                className="day-closing-refresh-btn"
-                style={{ fontSize: '0.75rem', padding: '0.3rem 0.65rem' }}
-              >
-                Inspect {preview.closingReminder.prevDayDate}
-              </button>
-            </div>
-          )}
 
-          {/* Duplicate Transaction Warning Banner */}
-          {preview?.duplicateAlerts && preview.duplicateAlerts.length > 0 && (
-            <div className="day-closing-alert warning">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <AlertOctagonIcon size={18} style={{ color: '#d97706', flexShrink: 0 }} />
-                <span>
-                  <strong>Duplicate Billing Alert:</strong> Detected {preview.duplicateAlerts.length} potential duplicate invoice pair(s) with identical customer phone and amount within 3 minutes ({preview.duplicateAlerts.map((d: any) => `${d.invoice1} & ${d.invoice2} for ${fmt(d.amountMinor)}`).join(', ')}). Please verify before sealing register.
-                </span>
-              </div>
-            </div>
-          )}
+              <div className="bento-ops-body">
+                {preview?.scheduleInfo?.isOverdue && (
+                  <div className="bento-ops-alert-chip overdue">
+                    <AlertTriangleIcon size={16} />
+                    <div className="bento-ops-alert-content">
+                      <strong>Closing Overdue:</strong> Expected at {preview.scheduleInfo.expectedClosingTime} ({preview.scheduleInfo.minutesOverdue}m overdue).
+                    </div>
+                  </div>
+                )}
 
-          {/* Lifecycle Status Ribbon */}
-          <div className={`day-closing-status-banner ${closingStatus}`}>
-            <div className="status-banner-left">
-              <div className={`status-banner-icon ${closingStatus}`}>
-                {closingStatus === 'open' ? (
-                  <CheckCircleIcon size={20} />
-                ) : closingStatus === 'submitted' ? (
-                  <ClockIcon size={20} />
-                ) : closingStatus === 'reopened' ? (
-                  <AlertTriangleIcon size={20} />
-                ) : (
-                  <LockIcon size={20} />
+                {preview?.duplicateAlerts && preview.duplicateAlerts.length > 0 && (
+                  <div className="bento-ops-alert-chip duplicate">
+                    <AlertOctagonIcon size={16} />
+                    <div className="bento-ops-alert-content">
+                      <strong>Duplicate Billing:</strong> {preview.duplicateAlerts.length} potential duplicate pair(s) detected ({preview.duplicateAlerts.map((d: any) => `${d.invoice1} & ${d.invoice2}`).join(', ')}).
+                    </div>
+                  </div>
+                )}
+
+                {notifications
+                  .filter((n: any) => n.type === 'rejection' && (!n.isRead && !n.is_read))
+                  .map((n: any) => (
+                    <div key={n.id} className="bento-ops-alert-chip recount">
+                      <AlertTriangleIcon size={16} />
+                      <div className="bento-ops-alert-content">
+                        <strong>{n.title}:</strong> {n.message}
+                      </div>
+                      <button onClick={() => handleDismissNotification(n.id)} className="bento-ops-alert-dismiss" title="Dismiss alert">✕</button>
+                    </div>
+                  ))}
+
+                {preview?.closingReminder?.hasUnclosedPrevDay && (
+                  <div className="bento-ops-alert-chip reminder">
+                    <AlertTriangleIcon size={16} />
+                    <div className="bento-ops-alert-content">
+                      <strong>Unclosed Previous Day:</strong> Date {preview.closingReminder.prevDayDate} has not been approved and sealed yet.
+                    </div>
+                    <button onClick={() => setSelectedDate(preview.closingReminder.prevDayDate)} className="bento-ops-action-btn">Inspect</button>
+                  </div>
+                )}
+
+                {!preview?.scheduleInfo?.isOverdue &&
+                 (!preview?.duplicateAlerts || preview.duplicateAlerts.length === 0) &&
+                 (!preview?.closingReminder?.hasUnclosedPrevDay) && (
+                  <div className="bento-ops-clean-state">
+                    <CheckCircleIcon size={18} style={{ color: 'var(--dc-primary)', flexShrink: 0 }} />
+                    <div>
+                      <strong>Register Operational & In Balance</strong>
+                      <p>Active trading in progress. All float records are synced and ready for closing submission.</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Manager Actions if submitted or closed */}
+                {closingStatus === 'submitted' && isManagerOrOwner && closedRecord?.id && (
+                  <div className="bento-ops-lifecycle-actions">
+                    <button onClick={() => handleApproveClosing(closedRecord.id)} disabled={actionLoading} className="cat-btn-primary sm">
+                      <CheckCircle2Icon size={13} />
+                      Approve & Lock
+                    </button>
+                    <button onClick={() => handleOpenRejectModal(closedRecord.id)} disabled={actionLoading} className="cat-btn-outline sm">
+                      <RotateCcwIcon size={13} />
+                      Reject / Recount
+                    </button>
+                  </div>
+                )}
+                {(closingStatus === 'approved' || closingStatus === 'closed') && (isOwner || isManager) && closedRecord?.id && (
+                  <div className="bento-ops-lifecycle-actions">
+                    <button onClick={() => handleOpenReopenModal(closedRecord.id)} className="cat-btn-outline sm">
+                      <RotateCcwIcon size={13} />
+                      Reopen Day
+                    </button>
+                  </div>
                 )}
               </div>
-              <div>
-                <div className="status-banner-title">
-                  {closingStatus === 'open' && `Register Open — Active Trading on ${selectedDate}`}
-                  {closingStatus === 'submitted' && `Day Closing Submitted — Awaiting Management Approval`}
-                  {closingStatus === 'approved' && `Day Closing Approved & Sealed (${selectedDate})`}
-                  {closingStatus === 'closed' && `Day Closing Sealed (${selectedDate})`}
-                  {closingStatus === 'reopened' && `Day Closing Reopened for Corrections`}
+            </div>
+          </div>
+
+          {/* ====================================================================
+              ROW 3: ASYMMETRICAL BENTO FINANCIAL KPI DECK (Hero 5 : Secondary 7)
+              ==================================================================== */}
+          <div className="bento-financial-kpi-deck">
+            {/* 3A: Hero Bento Tile: Net Sales (Col span 5) */}
+            <div className="bento-kpi-hero-card bento-card-3d">
+              <div className="bento-kpi-hero-top">
+                <div>
+                  <span className="bento-kpi-hero-tag">PRIMARY FINANCIAL KPI</span>
+                  <h3 className="bento-kpi-hero-title">Net Sales</h3>
                 </div>
-                <div className="status-banner-desc">
-                  {closingStatus === 'open' && 'Cashier can balance drawer floats and submit end-of-day reconciliation.'}
-                  {closingStatus === 'submitted' && `Submitted by ${closedRecord?.closed_by_name || 'Cashier'}. Store Manager or Owner approval required to lock.`}
-                  {closingStatus === 'approved' && `Approved by ${closedRecord?.approved_by_name || 'Manager'}. Transactions are sealed against ordinary edits.`}
-                  {closingStatus === 'reopened' && `Reopened by ${closedRecord?.reopened_by_name || 'Owner'}. Reason: "${closedRecord?.reopen_reason || 'N/A'}"`}
+                <div className="bento-kpi-hero-icon">
+                  <RupeeIcon size={20} />
                 </div>
+              </div>
+
+              <div className="bento-kpi-hero-amount">
+                {fmt(sales.netSalesMinor)}
+              </div>
+
+              <div className="bento-kpi-hero-formula">
+                <span>Gross {fmt(sales.grossSalesMinor)}</span>
+                <span>−</span>
+                <span>Returns {fmt(sales.returnsTotalMinor)}</span>
+                <span>−</span>
+                <span>Discounts {fmt(sales.totalDiscountsMinor)}</span>
+              </div>
+
+              <div className="bento-kpi-hero-footer">
+                <span className="bento-kpi-pill">
+                  <ReceiptIcon size={13} />
+                  <span>{sales.invoicesCount || 0} bills completed</span>
+                </span>
+                <span className="bento-kpi-pill">
+                  <span>Avg: {fmt(sales.averageBillValueMinor)}</span>
+                </span>
+                {sales.cancelledInvoicesCount ? (
+                  <span className="bento-kpi-pill">
+                    <span>{sales.cancelledInvoicesCount} cancelled</span>
+                  </span>
+                ) : null}
               </div>
             </div>
 
-            <div className="status-banner-actions">
-              {closingStatus === 'submitted' && isManagerOrOwner && closedRecord?.id && (
+            {/* 3B: Secondary 2x2 Bento Metric Grid (Col span 7) */}
+            <div className="bento-kpi-secondary-grid">
+              {isCashierUser ? (
                 <>
-                  <button
-                    onClick={() => handleApproveClosing(closedRecord.id)}
-                    disabled={actionLoading}
-                    className="btn-approve"
-                    style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
-                  >
-                    <CheckCircle2Icon size={15} />
-                    Approve & Lock Day Closing
-                  </button>
+                  <div className="fin-kpi-card bento-card-3d blue">
+                    <div className="fin-kpi-top">
+                      <span className="fin-kpi-label">Gross Sales</span>
+                      <div className="fin-kpi-icon"><TrendingUpIcon size={15} /></div>
+                    </div>
+                    <div className="fin-kpi-val">{fmt(sales.grossSalesMinor)}</div>
+                    <span className="fin-kpi-sub">Pre-discount, excl. GST</span>
+                  </div>
 
-                  <button
-                    onClick={() => handleOpenRejectModal(closedRecord.id)}
-                    disabled={actionLoading}
-                    className="btn-reject"
-                    style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
-                  >
-                    <RotateCcwIcon size={15} />
-                    Reject / Recount
-                  </button>
+                  <div className="fin-kpi-card bento-card-3d teal">
+                    <div className="fin-kpi-top">
+                      <span className="fin-kpi-label">Total Invoices</span>
+                      <div className="fin-kpi-icon"><ReceiptIcon size={15} /></div>
+                    </div>
+                    <div className="fin-kpi-val">{sales.invoicesCount || 0} bills</div>
+                    <span className="fin-kpi-sub">{sales.cancelledInvoicesCount || 0} cancelled bills</span>
+                  </div>
+
+                  <div className="fin-kpi-card bento-card-3d emerald">
+                    <div className="fin-kpi-top">
+                      <span className="fin-kpi-label">GST Collected</span>
+                      <div className="fin-kpi-icon"><RupeeIcon size={15} /></div>
+                    </div>
+                    <div className="fin-kpi-val" style={{ color: '#047857' }}>{fmt(sales.gstCollectedMinor)}</div>
+                    <span className="fin-kpi-sub">CGST + SGST + IGST</span>
+                  </div>
+
+                  <div className="fin-kpi-card bento-card-3d rose">
+                    <div className="fin-kpi-top">
+                      <span className="fin-kpi-label">Discounts & Returns</span>
+                      <div className="fin-kpi-icon"><RotateCcwIcon size={15} /></div>
+                    </div>
+                    <div className="fin-kpi-val" style={{ color: '#e11d48' }}>
+                      -{fmt((sales.totalDiscountsMinor || 0) + (sales.returnsTotalMinor || 0))}
+                    </div>
+                    <span className="fin-kpi-sub">{returns.totalReturnsCount || 0} returns • {fmt(sales.totalDiscountsMinor)} disc</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="fin-kpi-card bento-card-3d teal">
+                    <div className="fin-kpi-top">
+                      <span className="fin-kpi-label">Gross Profit</span>
+                      <div className="fin-kpi-icon"><TrendingUpIcon size={15} /></div>
+                    </div>
+                    <div className="fin-kpi-val" style={{ color: 'var(--dc-primary)' }}>{fmt(profit.grossProfitMinor)}</div>
+                    <span className="fin-kpi-sub">{marginPct.toFixed(1)}% Gross Margin</span>
+                  </div>
+
+                  <div className="fin-kpi-card bento-card-3d amber">
+                    <div className="fin-kpi-top">
+                      <span className="fin-kpi-label">Operating Expenses</span>
+                      <div className="fin-kpi-icon"><ArrowUpRightIcon size={15} /></div>
+                    </div>
+                    <div className="fin-kpi-val">{fmt(profit.operatingExpensesMinor)}</div>
+                    <span className="fin-kpi-sub">Branch petty & overheads</span>
+                  </div>
+
+                  <div className="fin-kpi-card bento-card-3d emerald">
+                    <div className="fin-kpi-top">
+                      <span className="fin-kpi-label">Operating Profit</span>
+                      <div className="fin-kpi-icon"><RupeeIcon size={15} /></div>
+                    </div>
+                    <div className="fin-kpi-val" style={{ color: profit.netProfitMinor >= 0 ? '#047857' : '#b91c1c' }}>
+                      {fmt(profit.netProfitMinor)}
+                    </div>
+                    <span className="fin-kpi-sub">{operatingMarginPct.toFixed(1)}% Net Margin</span>
+                  </div>
+
+                  <div className="fin-kpi-card bento-card-3d blue">
+                    <div className="fin-kpi-top">
+                      <span className="fin-kpi-label">GST Collected</span>
+                      <div className="fin-kpi-icon"><RupeeIcon size={15} /></div>
+                    </div>
+                    <div className="fin-kpi-val" style={{ color: '#047857' }}>{fmt(sales.gstCollectedMinor)}</div>
+                    <span className="fin-kpi-sub">CGST + SGST + IGST</span>
+                  </div>
                 </>
               )}
-
-              {closingStatus === 'reopened' && isManagerOrOwner && closedRecord?.id && (
-                <button
-                  onClick={() => handleApproveClosing(closedRecord.id)}
-                  disabled={actionLoading}
-                  className="btn-approve"
-                  style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
-                >
-                  <CheckCircle2Icon size={15} />
-                  Approve & Re-Seal Day Closing
-                </button>
-              )}
-
-              {(closingStatus === 'approved' || closingStatus === 'closed') && (isOwner || isManager) && closedRecord?.id && (
-                <button
-                  onClick={() => handleOpenReopenModal(closedRecord.id)}
-                  className="btn-reopen"
-                >
-                  <RotateCcwIcon size={15} />
-                  Reopen Business Day
-                </button>
-              )}
-
-              {closedRecord?.id && (
-                <button
-                  onClick={() => handlePrint(closedRecord.id)}
-                  className="btn-print"
-                >
-                  <PrinterIcon size={15} />
-                  Print Statement
-                </button>
-              )}
             </div>
-          </div>
-
-          {/* Clean 6-Card Financial KPI Grid */}
-          <div className="financial-kpi-grid">
-            {/* 1. Gross Sales */}
-            <div className="fin-kpi-card blue">
-              <div className="fin-kpi-top">
-                <span className="fin-kpi-label">Gross Sales</span>
-                <div className="fin-kpi-icon"><TrendingUpIcon size={14} /></div>
-              </div>
-              <div className="fin-kpi-val">{fmt(sales.grossSalesMinor)}</div>
-              <span className="fin-kpi-sub">Pre-discount, excl. GST</span>
-            </div>
-
-            {/* 2. Sales Returns */}
-            <div className="fin-kpi-card rose">
-              <div className="fin-kpi-top">
-                <span className="fin-kpi-label">Sales Returns</span>
-                <div className="fin-kpi-icon"><RotateCcwIcon size={14} /></div>
-              </div>
-              <div className="fin-kpi-val" style={{ color: '#e11d48' }}>-{fmt(sales.returnsTotalMinor)}</div>
-              <span className="fin-kpi-sub">{returns.totalReturnsCount || 0} credit notes issued</span>
-            </div>
-
-            {/* 3. Net Sales (Highlight) */}
-            <div className="fin-kpi-card green highlight">
-              <div className="fin-kpi-top">
-                <span className="fin-kpi-label">Net Sales</span>
-                <div className="fin-kpi-icon"><RupeeIcon size={14} /></div>
-              </div>
-              <div className="fin-kpi-val">{fmt(sales.netSalesMinor)}</div>
-              <span className="fin-kpi-sub">Gross - Discounts - Returns</span>
-            </div>
-
-            {/* For Cashiers: Show operational cards (Bills, Discounts, GST). For Management: Show Profitability & Margin cards */}
-            {isCashierUser ? (
-              <>
-                <div className="fin-kpi-card purple">
-                  <div className="fin-kpi-top">
-                    <span className="fin-kpi-label">Total Invoices</span>
-                    <div className="fin-kpi-icon"><ReceiptIcon size={14} /></div>
-                  </div>
-                  <div className="fin-kpi-val" style={{ color: '#7e22ce' }}>{sales.invoicesCount || 0} bills</div>
-                  <span className="fin-kpi-sub">Completed sales transactions</span>
-                </div>
-
-                <div className="fin-kpi-card amber">
-                  <div className="fin-kpi-top">
-                    <span className="fin-kpi-label">Discounts Given</span>
-                    <div className="fin-kpi-icon"><TagIcon size={14} /></div>
-                  </div>
-                  <div className="fin-kpi-val">{fmt(sales.totalDiscountsMinor)}</div>
-                  <span className="fin-kpi-sub">Bill & item discounts applied</span>
-                </div>
-
-                <div className="fin-kpi-card green">
-                  <div className="fin-kpi-top">
-                    <span className="fin-kpi-label">GST Collected</span>
-                    <div className="fin-kpi-icon"><RupeeIcon size={14} /></div>
-                  </div>
-                  <div className="fin-kpi-val" style={{ color: '#15803d' }}>{fmt(sales.gstCollectedMinor)}</div>
-                  <span className="fin-kpi-sub">CGST + SGST + IGST</span>
-                </div>
-              </>
-            ) : (
-              <>
-                {/* 4. Gross Profit */}
-                <div className="fin-kpi-card purple">
-                  <div className="fin-kpi-top">
-                    <span className="fin-kpi-label">Gross Profit</span>
-                    <div className="fin-kpi-icon"><TrendingUpIcon size={14} /></div>
-                  </div>
-                  <div className="fin-kpi-val" style={{ color: '#7e22ce' }}>{fmt(profit.grossProfitMinor)}</div>
-                  <span className="fin-kpi-sub">{marginPct.toFixed(1)}% Gross Margin</span>
-                </div>
-
-                {/* 5. Operating Expenses */}
-                <div className="fin-kpi-card amber">
-                  <div className="fin-kpi-top">
-                    <span className="fin-kpi-label">Operating Expenses</span>
-                    <div className="fin-kpi-icon"><ArrowUpRightIcon size={14} /></div>
-                  </div>
-                  <div className="fin-kpi-val">{fmt(profit.operatingExpensesMinor)}</div>
-                  <span className="fin-kpi-sub">Branch petty & overheads</span>
-                </div>
-
-                {/* 6. Operating Profit */}
-                <div className="fin-kpi-card green">
-                  <div className="fin-kpi-top">
-                    <span className="fin-kpi-label">Operating Profit</span>
-                    <div className="fin-kpi-icon"><RupeeIcon size={14} /></div>
-                  </div>
-                  <div className="fin-kpi-val" style={{ color: profit.netProfitMinor >= 0 ? '#15803d' : '#b91c1c' }}>
-                    {fmt(profit.netProfitMinor)}
-                  </div>
-                  <span className="fin-kpi-sub">{operatingMarginPct.toFixed(1)}% Net Margin</span>
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* Quick KPI Strip */}
-          <div className="quick-kpi-strip">
-            <div>Total Invoices: <strong>{sales.invoicesCount || 0} bills</strong></div>
-            <div>Avg Bill Value: <strong>{fmt(sales.averageBillValueMinor)}</strong></div>
-            <div>GST Collected: <strong>{fmt(sales.gstCollectedMinor)}</strong></div>
-            <div>Discounts Given: <strong>{fmt(sales.totalDiscountsMinor)}</strong></div>
-            <div>Cancelled Invoices: <strong>{sales.cancelledInvoicesCount || 0}</strong></div>
-            <div>Outstanding Credit: <strong style={{ color: '#7e22ce' }}>{fmt(sales.customerCreditBalanceMinor)}</strong></div>
           </div>
 
           {/* Bento Grid: Tender Collections (60%) & Cash Drawer Reconciliation (40%) */}
@@ -2139,10 +1922,12 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
             {/* LEFT 7 COLUMNS: Tender Collections & Returns */}
             <div className="bento-col-7">
               {/* Tender Collections */}
-              <div className="day-closing-card">
+              <div className="day-closing-card bento-card-3d">
                 <div className="day-closing-card-header">
                   <div className="day-closing-card-title-group">
-                    <WalletIcon size={18} style={{ color: '#10b981' }} />
+                    <div className="day-closing-card-icon-bubble green">
+                      <WalletIcon size={18} />
+                    </div>
                     <span>Tender & Settlement Collections</span>
                   </div>
                   <span className="day-closing-card-badge emerald">
@@ -2151,7 +1936,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                 </div>
 
                 <div className="tender-kpi-grid">
-                  <div className="tender-kpi-card cash">
+                  <div className="tender-kpi-card bento-card-3d cash">
                     <div className="tender-header">
                       <BanknoteIcon size={15} />
                       <span>Physical Cash</span>
@@ -2159,7 +1944,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                     <div className="tender-amount">{fmt(payments.cashCollectionsMinor)}</div>
                   </div>
 
-                  <div className="tender-kpi-card upi">
+                  <div className="tender-kpi-card bento-card-3d upi">
                     <div className="tender-header">
                       <RefreshCwIcon size={14} />
                       <span>UPI / QR</span>
@@ -2167,7 +1952,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                     <div className="tender-amount">{fmt(payments.upiCollectionsMinor)}</div>
                   </div>
 
-                  <div className="tender-kpi-card card">
+                  <div className="tender-kpi-card bento-card-3d card">
                     <div className="tender-header">
                       <CreditCardIcon size={14} />
                       <span>Card / POS</span>
@@ -2175,7 +1960,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                     <div className="tender-amount">{fmt(payments.cardCollectionsMinor)}</div>
                   </div>
 
-                  <div className="tender-kpi-card credit">
+                  <div className="tender-kpi-card bento-card-3d credit">
                     <div className="tender-header">
                       <StoreIcon size={14} />
                       <span>Store Credit</span>
@@ -2186,10 +1971,12 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
               </div>
 
               {/* Returns, Refunds & Exchanges */}
-              <div className="day-closing-card">
+              <div className="day-closing-card bento-card-3d">
                 <div className="day-closing-card-header">
                   <div className="day-closing-card-title-group">
-                    <RotateCcwIcon size={18} style={{ color: '#f43f5e' }} />
+                    <div className="day-closing-card-icon-bubble rose">
+                      <RotateCcwIcon size={18} />
+                    </div>
                     <span>Returns, Refunds & Exchanges</span>
                   </div>
                   <span className="day-closing-card-badge rose">
@@ -2216,7 +2003,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                   </div>
                   <div className="detail-list-row">
                     <span className="detail-list-label">Store Credit Notes Issued:</span>
-                    <span className="detail-list-val purple">{fmt(returns.storeCreditsIssuedMinor)}</span>
+                    <span className="detail-list-val teal">{fmt(returns.storeCreditsIssuedMinor)}</span>
                   </div>
                   <div className="detail-list-row">
                     <span className="detail-list-label">New Merchandise Sold in Exchanges:</span>
@@ -2225,7 +2012,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                 </div>
 
                 <div className="detail-notice-box" style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                  <InfoIcon size={16} style={{ color: '#4f46e5', flexShrink: 0, marginTop: '2px' }} />
+                  <InfoIcon size={16} style={{ color: 'var(--dc-primary)', flexShrink: 0, marginTop: '2px' }} />
                   <div>
                     <strong>Accounting Integrity:</strong> Exchanges seamlessly offset customer return credit against new merchandise sold without inflating gross cash collections. Resellable returns restore inventory cost, while damaged goods are quarantined separately.
                   </div>
@@ -2235,10 +2022,12 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
 
             {/* RIGHT 5 COLUMNS: Dedicated Cash Drawer Reconciliation */}
             <div className="bento-col-5">
-              <div className="day-closing-card">
+              <div className="day-closing-card bento-card-3d">
                 <div className="day-closing-card-header">
                   <div className="day-closing-card-title-group">
-                    <BanknoteIcon size={18} style={{ color: '#10b981' }} />
+                    <div className="day-closing-card-icon-bubble green">
+                      <BanknoteIcon size={18} />
+                    </div>
                     <span>Cash Drawer Reconciliation</span>
                   </div>
                   <span className={`day-closing-card-badge ${selectedCashierId || isCashierUser ? 'emerald' : ''}`}>
@@ -2375,7 +2164,8 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                       <button
                         type="submit"
                         disabled={submitting}
-                        className="cash-rec-submit-btn"
+                        className="cash-rec-submit-btn cat-btn-primary"
+                        style={{ width: '100%', padding: '0.85rem 1.25rem', borderRadius: '14px', fontSize: '0.95rem', fontWeight: 800 }}
                       >
                         <LockIcon size={16} />
                         {submitting
@@ -2387,7 +2177,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                     </form>
                   ) : (
                     /* Closed or Submitted View */
-                    <div style={{ marginTop: '0.5rem', background: '#f8fafc', padding: '1rem', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <div style={{ marginTop: '0.5rem', background: 'var(--dc-surface-inner)', padding: '1.1rem', borderRadius: '14px', border: '1.5px solid var(--dc-border)', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.825rem' }}>
                         <span style={{ color: '#64748b' }}>Actual Closing Cash:</span>
                         <strong style={{ color: '#0f172a' }}>{fmt(closedRecord?.actual_cash_minor)}</strong>
@@ -2488,7 +2278,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                 fontWeight: 700,
                 fontSize: '0.85rem',
               }}>
-                <Building2Icon size={16} style={{ color: '#4f46e5' }} />
+                <Building2Icon size={16} style={{ color: 'var(--dc-primary)' }} />
                 <span>Counter & Cashier Sales Report</span>
               </div>
             </div>
@@ -2517,7 +2307,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
             <>
               {loadingCounterSales ? (
                 <div style={{ padding: '3rem', textAlign: 'center', background: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
-                  <RefreshCwIcon size={32} className="animate-spin" style={{ margin: '0 auto 12px auto', color: '#4f46e5' }} />
+                  <RefreshCwIcon size={32} className="animate-spin" style={{ margin: '0 auto 12px auto', color: 'var(--dc-primary)' }} />
                   <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#64748b' }}>Aggregating counter-wise sales records...</p>
                 </div>
               ) : counterSalesData ? (
@@ -2552,7 +2342,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                           /* > 3 counters: Dropdown selector */
                           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                             <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#334155', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <Building2Icon size={16} style={{ color: '#4f46e5' }} />
+                              <Building2Icon size={16} style={{ color: 'var(--dc-primary)' }} />
                               <span>Select Counter:</span>
                             </label>
                             <select
@@ -2605,7 +2395,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                               style={{
                                 padding: '7px 14px',
                                 borderRadius: '8px',
-                                border: selectedCounterKeyFilter === 'ALL' ? '2px solid #4f46e5' : '1px solid #cbd5e1',
+                                border: selectedCounterKeyFilter === 'ALL' ? '2px solid var(--dc-primary)' : '1px solid #cbd5e1',
                                 background: selectedCounterKeyFilter === 'ALL' ? '#eef2ff' : '#ffffff',
                                 color: selectedCounterKeyFilter === 'ALL' ? '#4338ca' : '#475569',
                                 fontWeight: 700,
@@ -2642,7 +2432,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                                   style={{
                                     padding: '7px 14px',
                                     borderRadius: '8px',
-                                    border: isSelected ? '2px solid #4f46e5' : '1px solid #cbd5e1',
+                                    border: isSelected ? '2px solid var(--dc-primary)' : '1px solid #cbd5e1',
                                     background: isSelected ? '#eef2ff' : '#ffffff',
                                     color: isSelected ? '#4338ca' : '#475569',
                                     fontWeight: 700,
@@ -2693,7 +2483,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                             }}
                             title="Toggle Taxable, GST & Gross Profit Audit Columns"
                           >
-                            <EyeIcon size={14} style={{ color: showCounterAuditColumns ? '#4f46e5' : '#64748b' }} />
+                            <EyeIcon size={14} style={{ color: showCounterAuditColumns ? 'var(--dc-primary)' : '#64748b' }} />
                             <span>{showCounterAuditColumns ? 'Hide Audit (GST/Profit)' : 'Audit (GST/Profit)'}</span>
                           </button>
                         </div>
@@ -2731,7 +2521,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                           </div>
                         </div>
 
-                        <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '14px 16px', borderLeft: '4px solid #6366f1', boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)' }}>
+                        <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '14px 16px', borderLeft: '4px solid var(--dc-ring)', boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)' }}>
                           <div style={{ fontSize: '0.74rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                             Bills Issued
                           </div>
@@ -2801,7 +2591,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                         <div className="day-closing-card" style={{ boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)' }}>
                           <div className="day-closing-card-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
                             <div className="day-closing-card-title-group" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                              <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#eef2ff', color: '#4f46e5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#eef2ff', color: 'var(--dc-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                 <Building2Icon size={20} />
                               </div>
                               <div>
@@ -2897,7 +2687,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                                   fontSize: '0.75rem',
                                   fontWeight: 700,
                                   borderRadius: '6px',
-                                  border: selectedDetailCashierFilter === 'ALL' ? '1px solid #4f46e5' : '1px solid #cbd5e1',
+                                  border: selectedDetailCashierFilter === 'ALL' ? '1px solid var(--dc-primary)' : '1px solid #cbd5e1',
                                   background: selectedDetailCashierFilter === 'ALL' ? '#eef2ff' : '#ffffff',
                                   color: selectedDetailCashierFilter === 'ALL' ? '#4338ca' : '#475569',
                                   cursor: 'pointer',
@@ -2918,7 +2708,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                                       fontSize: '0.75rem',
                                       fontWeight: 700,
                                       borderRadius: '6px',
-                                      border: isSelected ? '1px solid #4f46e5' : '1px solid #cbd5e1',
+                                      border: isSelected ? '1px solid var(--dc-primary)' : '1px solid #cbd5e1',
                                       background: isSelected ? '#eef2ff' : '#ffffff',
                                       color: isSelected ? '#4338ca' : '#475569',
                                       cursor: 'pointer',
@@ -3322,7 +3112,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                                           <td>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                                               <div style={{ width: '48px', height: '6px', borderRadius: '3px', background: '#e2e8f0', overflow: 'hidden' }}>
-                                                <div style={{ width: `${Math.min(100, contributionPct)}%`, height: '100%', background: '#4f46e5' }} />
+                                                <div style={{ width: `${Math.min(100, contributionPct)}%`, height: '100%', background: 'var(--dc-primary)' }} />
                                               </div>
                                               <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#4338ca' }}>
                                                 {contributionPct}%
@@ -3367,7 +3157,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                                     <td style={{ color: targetCounter.returnsTotalMinor > 0 ? '#dc2626' : '#64748b' }}>
                                       {targetCounter.returnsTotalMinor > 0 ? `-${fmt(targetCounter.returnsTotalMinor)}` : '₹0.00'}
                                     </td>
-                                    <td style={{ color: '#4f46e5' }}>100%</td>
+                                    <td style={{ color: 'var(--dc-primary)' }}>100%</td>
                                     <td style={{ textAlign: 'center' }}>
                                       <button
                                         type="button"
@@ -3398,7 +3188,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                     <div className="day-closing-card" style={{ boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)' }}>
                       <div className="day-closing-card-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <div className="day-closing-card-title-group">
-                          <Building2Icon size={18} style={{ color: '#4f46e5' }} />
+                          <Building2Icon size={18} style={{ color: 'var(--dc-primary)' }} />
                           <span>Store Counters & Cashier Performance Breakdown ({selectedDate})</span>
                         </div>
                         <span className="day-closing-card-badge">
@@ -3444,7 +3234,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                                             EXCEPTION
                                           </span>
                                         ) : (
-                                          <span style={{ fontSize: '0.72rem', color: '#4f46e5', background: '#eef2ff', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>
+                                          <span style={{ fontSize: '0.72rem', color: 'var(--dc-primary)', background: '#eef2ff', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>
                                             {c.counterCode}
                                           </span>
                                         )}
@@ -3520,7 +3310,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                                     <>
                                       <td>{fmt(c.taxableSalesMinor)}</td>
                                       <td>{fmt(c.gstCollectedMinor)}</td>
-                                      <td style={{ fontWeight: 700, color: '#4f46e5' }}>{fmt(c.grossProfitMinor)}</td>
+                                      <td style={{ fontWeight: 700, color: 'var(--dc-primary)' }}>{fmt(c.grossProfitMinor)}</td>
                                       <td>{c.marginPct}%</td>
                                     </>
                                   )}
@@ -3588,7 +3378,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                                 <>
                                   <td>{fmt(counterSalesData.consolidatedTotal?.taxableSalesMinor)}</td>
                                   <td>{fmt(counterSalesData.consolidatedTotal?.gstCollectedMinor)}</td>
-                                  <td style={{ color: '#4f46e5' }}>{fmt(counterSalesData.consolidatedTotal?.grossProfitMinor)}</td>
+                                  <td style={{ color: 'var(--dc-primary)' }}>{fmt(counterSalesData.consolidatedTotal?.grossProfitMinor)}</td>
                                   <td>{counterSalesData.consolidatedTotal?.marginPct}%</td>
                                 </>
                               )}
@@ -3628,7 +3418,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           {loadingComparison ? (
             <div style={{ padding: '3rem', textAlign: 'center', background: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
-              <RefreshCwIcon size={32} className="animate-spin" style={{ margin: '0 auto 12px auto', color: '#6366f1' }} />
+              <RefreshCwIcon size={32} className="animate-spin" style={{ margin: '0 auto 12px auto', color: 'var(--dc-ring)' }} />
               <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#64748b' }}>Calculating daily comparisons and trend analytics...</p>
             </div>
           ) : comparisonData ? (
@@ -3637,7 +3427,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
               <div className="day-closing-card">
                 <div className="day-closing-card-header">
                   <div className="day-closing-card-title-group">
-                    <ScaleIcon size={18} style={{ color: '#4f46e5' }} />
+                    <ScaleIcon size={18} style={{ color: 'var(--dc-primary)' }} />
                     <span>Detailed Variance & Growth Comparison ({comparisonData.bdate} vs {comparisonData.previousDate})</span>
                   </div>
                 </div>
@@ -3708,7 +3498,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
           <div className="day-closing-card">
             <div className="day-closing-card-header">
               <div className="day-closing-card-title-group">
-                <BarChart3Icon size={18} style={{ color: '#4f46e5' }} />
+                <BarChart3Icon size={18} style={{ color: 'var(--dc-primary)' }} />
                 <span>Custom Date Range Business Analysis</span>
               </div>
 
@@ -3762,7 +3552,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                 onClick={loadAnalytics}
                 disabled={loadingAnalytics}
                 className="btn-approve"
-                style={{ background: '#4f46e5' }}
+                style={{ background: 'var(--dc-primary)' }}
               >
                 <RefreshCwIcon size={14} className={loadingAnalytics ? 'animate-spin' : ''} />
                 Calculate Range
@@ -3772,7 +3562,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
 
           {loadingAnalytics ? (
             <div style={{ padding: '3rem', textAlign: 'center', background: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
-              <RefreshCwIcon size={32} className="animate-spin" style={{ margin: '0 auto 12px auto', color: '#6366f1' }} />
+              <RefreshCwIcon size={32} className="animate-spin" style={{ margin: '0 auto 12px auto', color: 'var(--dc-ring)' }} />
               <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#64748b' }}>Aggregating multi-day financial records...</p>
             </div>
           ) : analyticsData?.current ? (
@@ -3841,7 +3631,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                 <div className="day-closing-card">
                   <div className="day-closing-card-header">
                     <div className="day-closing-card-title-group">
-                      <FileTextIcon size={18} style={{ color: '#4f46e5' }} />
+                      <FileTextIcon size={18} style={{ color: 'var(--dc-primary)' }} />
                       <span>Daily Breakdown in Range ({analyticsStartDate} to {analyticsEndDate})</span>
                     </div>
                     <span className="day-closing-card-badge">
@@ -3867,7 +3657,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                             <td>{d.invoicesCount || 0}</td>
                             <td>{fmt(d.grossSalesMinor)}</td>
                             <td style={{ fontWeight: 700, color: '#15803d' }}>{fmt(d.netSalesMinor)}</td>
-                            <td style={{ fontWeight: 800, color: '#4f46e5' }}>{fmt(d.grossProfitMinor)}</td>
+                            <td style={{ fontWeight: 800, color: 'var(--dc-primary)' }}>{fmt(d.grossProfitMinor)}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -3887,7 +3677,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           {loadingCompliance ? (
             <div style={{ padding: '3rem', textAlign: 'center', background: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
-              <RefreshCwIcon size={32} className="animate-spin" style={{ margin: '0 auto 12px auto', color: '#4f46e5' }} />
+              <RefreshCwIcon size={32} className="animate-spin" style={{ margin: '0 auto 12px auto', color: 'var(--dc-primary)' }} />
               <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#64748b' }}>Checking closing compliance and register schedules...</p>
             </div>
           ) : complianceData ? (
@@ -3948,7 +3738,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                   <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>
                     Send in-app reminder notification to all pending cashiers to seal their registers.
                     {complianceData.lastReminderSentAt && (
-                      <span style={{ marginLeft: '8px', color: '#4f46e5', fontWeight: 600 }}>
+                      <span style={{ marginLeft: '8px', color: 'var(--dc-primary)', fontWeight: 600 }}>
                         (Last sent: {new Date(complianceData.lastReminderSentAt).toLocaleTimeString()} - {complianceData.lastReminderType})
                       </span>
                     )}
@@ -3971,7 +3761,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                 <div className="day-closing-card">
                   <div className="day-closing-card-header">
                     <div className="day-closing-card-title-group">
-                      <CheckCircleIcon size={18} style={{ color: '#4f46e5' }} />
+                      <CheckCircleIcon size={18} style={{ color: 'var(--dc-primary)' }} />
                       <span>Cashier Register Compliance Matrix</span>
                     </div>
                     <span className="day-closing-card-badge">
@@ -4042,7 +3832,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                 <div className="day-closing-card">
                   <div className="day-closing-card-header">
                     <div className="day-closing-card-title-group">
-                      <ClockIcon size={18} style={{ color: '#4f46e5' }} />
+                      <ClockIcon size={18} style={{ color: 'var(--dc-primary)' }} />
                       <span>Closing Schedule Settings</span>
                     </div>
                   </div>
@@ -4157,7 +3947,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
         <div className="day-closing-card">
           <div className="day-closing-card-header">
             <div className="day-closing-card-title-group">
-              <ClockIcon size={18} style={{ color: '#4f46e5' }} />
+              <ClockIcon size={18} style={{ color: 'var(--dc-primary)' }} />
               <span>Previous Day Closings & Sealed Audit Trail</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -4245,7 +4035,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                               {variance >= 0 ? '+' : ''}{fmt(variance)}
                             </span>
                           </td>
-                          <td style={{ fontWeight: 700, color: '#4f46e5' }}>{fmt(h.gross_profit_minor)}</td>
+                          <td style={{ fontWeight: 700, color: 'var(--dc-primary)' }}>{fmt(h.gross_profit_minor)}</td>
                           <td style={{ color: '#64748b' }}>{h.closed_by_name || 'Cashier'}</td>
                           <td style={{ color: '#64748b' }}>{h.approved_by_name || '—'}</td>
                           <td style={{ textAlign: 'right' }}>
@@ -4498,7 +4288,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: '#4F46E5',
+                  color: 'var(--dc-primary)',
                 }}>
                   <BellRingIcon size={18} />
                 </div>
@@ -4523,7 +4313,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                     style={{
                       background: '#EEF2FF',
                       border: '1px solid #C7D2FE',
-                      color: '#4F46E5',
+                      color: 'var(--dc-primary)',
                       fontSize: '0.72rem',
                       fontWeight: 700,
                       padding: '4px 8px',
@@ -4647,7 +4437,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                       style={{
                         background: '#FFFFFF',
                         border: '1px solid #E2E8F0',
-                        borderLeft: `4px solid ${isShiftOpen ? '#16A34A' : isShiftClose ? '#6366F1' : '#F59E0B'}`,
+                        borderLeft: `4px solid ${isShiftOpen ? '#16A34A' : isShiftClose ? 'var(--dc-ring)' : '#F59E0B'}`,
                         borderRadius: '10px',
                         padding: '12px 14px',
                         boxShadow: '0 2px 4px rgba(15, 23, 42, 0.04)',
@@ -4741,7 +4531,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                           </div>
                           <div>
                             <div style={{ fontSize: '0.62rem', textTransform: 'uppercase', color: '#64748B', fontWeight: 600 }}>Drawer</div>
-                            <div style={{ fontSize: '0.76rem', fontWeight: 700, color: '#4F46E5' }}>{meta.countedCashFormatted || '₹0.00'}</div>
+                            <div style={{ fontSize: '0.76rem', fontWeight: 700, color: 'var(--dc-primary)' }}>{meta.countedCashFormatted || '₹0.00'}</div>
                           </div>
                         </div>
                       )}

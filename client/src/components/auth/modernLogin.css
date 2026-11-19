@@ -1,0 +1,998 @@
+/* ==========================================================================
+   MODERN FULL-SCREEN SPLIT LOGIN DESIGN (Matching Image 2 Reference)
+   Role-Adaptive Themes:
+   - Super Admin: Purple / Indigo (#5B4DF5, #4838E6, #EEF0FE)
+   - Store Manager: Deep Burgundy (#653B4B, #522E3C, #F9F5F7)
+   - Cashier Counter: Deep Emerald Teal (#0F766E, #115E59, #E6F4F3)
+   ========================================================================== */
+
+/* Full Screen Edge-to-Edge Container */
+.modern-login-page {
+  min-height: 100vh;
+  width: 100vw;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  color: #0F172A;
+  background: #FFFFFF;
+  overflow-x: hidden;
+  display: flex;
+}
+
+/* Master Full-Screen Split Layout */
+.modern-login-card {
+  width: 100vw;
+  min-height: 100vh;
+  max-width: none;
+  background: #FFFFFF;
+  border-radius: 0;
+  box-shadow: none;
+  display: grid;
+  grid-template-columns: 40% 60%;
+  overflow: hidden;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+/* Role-Specific Tokens */
+.modern-login-card.role-super-admin {
+  --role-primary: #5B4DF5;
+  --role-primary-hover: #4838E6;
+  --role-primary-soft: #EEF0FE;
+  --role-ring: #818CF8;
+  --role-shadow: rgba(91, 77, 245, 0.35);
+  --role-border: #C7D2FE;
+  --role-banner-bg: linear-gradient(145deg, #4A3EE0 0%, #2A2175 100%);
+}
+
+.modern-login-card.role-store-manager {
+  --role-primary: #653B4B;
+  --role-primary-hover: #522E3C;
+  --role-primary-soft: #F9F5F7;
+  --role-ring: #8E586C;
+  --role-shadow: rgba(101, 59, 75, 0.35);
+  --role-border: #E8D6DE;
+  --role-banner-bg: linear-gradient(145deg, #653B4B 0%, #452431 100%);
+}
+
+.modern-login-card.role-cashier {
+  --role-primary: #0F766E;
+  --role-primary-hover: #115E59;
+  --role-primary-soft: #E6F4F3;
+  --role-ring: #14B8A6;
+  --role-shadow: rgba(15, 118, 110, 0.35);
+  --role-border: #99F6E4;
+  --role-banner-bg: linear-gradient(145deg, #0F766E 0%, #0F2D2E 100%);
+}
+
+/* --------------------------------------------------------------------------
+   LEFT HALF: FULL-SCREEN DEDICATED GRAPHIC / USER IMAGE SLOT / TOP WORDINGS
+   -------------------------------------------------------------------------- */
+.modern-login-left {
+  background: var(--role-banner-bg);
+  position: relative;
+  display: flex;
+  overflow: hidden;
+  transition: background 0.4s ease;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.modern-login-left.has-image {
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.modern-login-left.text-only-layout {
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 5rem 4.5rem;
+}
+
+.modern-login-left.super-admin-layout,
+.modern-login-left.cashier-layout {
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 4.5rem 4rem 0 4.5rem;
+  position: relative;
+  overflow: visible !important;
+  z-index: 10;
+}
+
+.modern-login-left.super-admin-layout::before,
+.modern-login-left.cashier-layout::before {
+  display: none;
+}
+
+.modern-admin-illustration-area {
+  position: absolute;
+  bottom: -40px;
+  right: -85px;
+  width: 155%;
+  max-width: 1350px;
+  max-height: 86vh;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  pointer-events: none;
+  z-index: 15;
+  margin-bottom: 0;
+}
+
+.modern-admin-hero-img {
+  width: 100%;
+  height: 100%;
+  max-height: 84vh;
+  object-fit: contain;
+  object-position: bottom right;
+  display: block;
+  vertical-align: bottom;
+  margin-bottom: 0;
+  filter: drop-shadow(0 22px 46px rgba(0, 0, 0, 0.34));
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Cashier-specific illustration sizing & position */
+.cashier-layout .modern-admin-illustration-area {
+  width: 125%;
+  max-width: 1080px;
+  max-height: 74vh;
+  bottom: -25px;
+  right: -100px;
+}
+
+.cashier-layout .modern-admin-hero-img {
+  max-height: 72vh;
+}
+
+/* Subtle decorative circles behind image / text */
+.modern-login-left::before {
+  content: '';
+  position: absolute;
+  top: -120px;
+  right: -120px;
+  width: 500px;
+  height: 500px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.14) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.modern-login-left::after {
+  content: '';
+  position: absolute;
+  bottom: -100px;
+  left: -100px;
+  width: 440px;
+  height: 440px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.09) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* User Custom Image Display (Full visibility top-to-bottom, uncropped) */
+.user-login-image {
+  max-width: 100%;
+  max-height: 94vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  object-position: center;
+  margin: auto;
+  z-index: 1;
+  border-radius: 18px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
+  display: block;
+}
+
+/* Top Wordings Layout (When no illustration image is used) */
+.modern-login-top-wordings {
+  position: relative;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 1.35rem;
+  max-width: 540px;
+  margin-top: 0;
+  padding-top: 0;
+}
+
+.modern-left-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  padding: 0.45rem 1.1rem;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  color: #FFFFFF;
+  width: fit-content;
+  text-transform: uppercase;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.modern-left-heading {
+  margin: 0;
+  font-size: 2.85rem;
+  font-weight: 850;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  color: #FFFFFF;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.16);
+}
+
+.modern-left-subtitle {
+  margin: 0;
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.88);
+  line-height: 1.65;
+  font-weight: 450;
+  max-width: 480px;
+}
+
+.modern-left-feature-chips {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.modern-left-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  padding: 0.65rem 1.15rem;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #FFFFFF;
+  width: fit-content;
+  transition: all 0.2s ease;
+}
+
+.modern-left-chip .chip-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #34D399;
+  box-shadow: 0 0 8px #34D399;
+}
+
+/* --------------------------------------------------------------------------
+   RIGHT HALF: FULL-SCREEN CLEAN LOGIN FORM (Centered Content)
+   -------------------------------------------------------------------------- */
+.modern-login-right {
+  padding: 2.5rem 3.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: radial-gradient(circle at 80% 10%, rgba(91, 77, 245, 0.035) 0%, #FAFBFD 40%, #FFFFFF 85%);
+  box-sizing: border-box;
+  min-height: 100vh;
+  overflow-y: auto;
+  position: relative;
+  z-index: 1;
+}
+
+.modern-login-form-inner {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 25;
+}
+
+/* Top Navigation Row */
+.modern-login-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0.25rem;
+}
+
+.modern-brand-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.modern-brand-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--role-primary) 0%, var(--role-primary-hover) 100%);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px var(--role-shadow);
+  transition: all 0.3s ease;
+}
+
+.modern-brand-text-block {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.modern-brand-title {
+  font-size: 1.15rem;
+  font-weight: 850;
+  color: #0F172A;
+  letter-spacing: -0.02em;
+}
+
+.modern-brand-badge {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: var(--role-primary);
+  background: var(--role-primary-soft);
+  border: 1px solid var(--role-border);
+  padding: 2px 7px;
+  border-radius: 9999px;
+  text-transform: uppercase;
+}
+
+.modern-btn-back {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  color: #64748B;
+  font-size: 0.8rem;
+  font-weight: 650;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 9999px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.modern-btn-back:hover {
+  color: #0F172A;
+  background: #F8FAFC;
+  border-color: #CBD5E1;
+  transform: translateX(-1px);
+}
+
+/* Elevated Form Card Container */
+.modern-form-card {
+  background: #FFFFFF;
+  border: 1.5px solid #EDF2F7;
+  border-radius: 22px;
+  box-shadow: 0 16px 36px -12px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.02);
+  padding: 2rem 2.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.35rem;
+  transition: border-color 0.3s ease;
+}
+
+/* 3 Role Selection Segmented Tabs */
+.modern-role-tabs-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+  background: #F1F5F9;
+  border: 1px solid #E2E8F0;
+  padding: 5px;
+  border-radius: 14px;
+}
+
+.modern-role-tab {
+  padding: 0.65rem 0.5rem;
+  border-radius: 10px;
+  border: none;
+  font-size: 0.785rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  background: transparent;
+  color: #64748B;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+
+.modern-role-tab .role-tab-icon {
+  color: #94A3B8;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.modern-role-tab:hover:not(.active) {
+  color: #0F172A;
+  background: rgba(255, 255, 255, 0.65);
+}
+
+.modern-role-tab:hover:not(.active) .role-tab-icon {
+  color: #475569;
+}
+
+.modern-role-tab.active {
+  background: #FFFFFF;
+  color: var(--role-primary);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.modern-role-tab.active .role-tab-icon {
+  color: var(--role-primary);
+  transform: scale(1.05);
+}
+
+.modern-role-tab.active.tab-super-admin {
+  color: #5B4DF5;
+}
+
+.modern-role-tab.active.tab-store-manager {
+  color: #653B4B;
+}
+
+.modern-role-tab.active.tab-cashier {
+  color: #0F766E;
+}
+
+/* Form Title Header */
+.modern-form-heading-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.modern-security-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: var(--role-primary-soft);
+  border: 1px solid var(--role-border);
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.685rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--role-primary);
+  width: fit-content;
+  margin-bottom: 0.25rem;
+}
+
+.security-pulse-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--role-primary);
+  box-shadow: 0 0 0 3px var(--role-border);
+  animation: pulseSecurityDot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulseSecurityDot {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.9);
+  }
+}
+
+.modern-form-title {
+  margin: 0;
+  font-size: 1.65rem;
+  font-weight: 850;
+  color: #0F172A;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+}
+
+.modern-form-subtitle {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #64748B;
+  line-height: 1.5;
+}
+
+/* Alert Error */
+.modern-error-banner {
+  background: #FEF2F2;
+  border: 1px solid #FECACA;
+  color: #B91C1C;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  font-size: 0.825rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Inputs & Form Groups */
+.modern-auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.modern-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.modern-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.15rem;
+}
+
+.modern-label-title {
+  font-size: 0.825rem;
+  font-weight: 700;
+  color: #1E293B;
+}
+
+.req-pill {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #94A3B8;
+  background: #F1F5F9;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.modern-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border: 1.5px solid #E2E8F0;
+  background: #F8FAFC;
+  border-radius: 13px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modern-input-wrapper:hover {
+  border-color: #CBD5E1;
+  background: #FFFFFF;
+}
+
+.modern-input-wrapper:focus-within {
+  background: #FFFFFF;
+  border-color: var(--role-primary);
+  box-shadow: 0 0 0 3.5px var(--role-primary-soft), 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.modern-input-icon-slot {
+  position: absolute;
+  left: 1rem;
+  color: #94A3B8;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease;
+}
+
+.modern-input-wrapper:focus-within .modern-input-icon-slot {
+  color: var(--role-primary);
+}
+
+.modern-input {
+  width: 100%;
+  height: 48px;
+  padding: 0 1rem 0 2.85rem;
+  border: none;
+  background: transparent;
+  font-size: 0.925rem;
+  font-weight: 600;
+  color: #0F172A;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.modern-input::placeholder {
+  color: #94A3B8;
+  font-weight: 450;
+}
+
+.modern-pwd-toggle {
+  position: absolute;
+  right: 0.75rem;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  color: #94A3B8;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.modern-pwd-toggle:hover {
+  background: #F1F5F9;
+  color: #334155;
+}
+
+/* Utility Row: Remember Me & Forgot Password */
+.modern-options-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.1rem;
+}
+
+.modern-checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.825rem;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  user-select: none;
+}
+
+.modern-checkbox-label input {
+  accent-color: var(--role-primary);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.modern-forgot-link {
+  background: none;
+  border: none;
+  font-size: 0.825rem;
+  font-weight: 700;
+  color: var(--role-primary);
+  cursor: pointer;
+  padding: 0;
+  transition: opacity 0.15s ease;
+}
+
+.modern-forgot-link:hover {
+  text-decoration: underline;
+}
+
+/* Big Vibrant CTA Button */
+.modern-btn-submit {
+  width: 100%;
+  height: 50px;
+  border-radius: 13px;
+  background: linear-gradient(135deg, var(--role-primary) 0%, var(--role-primary-hover) 100%);
+  border: none;
+  color: #FFFFFF;
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  box-shadow: 0 6px 18px var(--role-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  margin-top: 0.25rem;
+}
+
+.modern-btn-submit .btn-arrow-icon {
+  transition: transform 0.2s ease;
+}
+
+.modern-btn-submit:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px var(--role-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.modern-btn-submit:hover:not(:disabled) .btn-arrow-icon {
+  transform: translateX(4px);
+}
+
+.modern-btn-submit:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.modern-btn-submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.btn-loading-flex {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.spin-icon {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* 1-Click Role Demonstrations Cards */
+.modern-demos-box {
+  background: #FFFFFF;
+  border: 1.5px solid #EDF2F7;
+  border-radius: 18px;
+  padding: 1.25rem 1.4rem;
+  box-shadow: 0 4px 16px -4px rgba(15, 23, 42, 0.04);
+}
+
+.modern-demos-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.modern-demos-header-label {
+  font-size: 0.725rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #64748B;
+  letter-spacing: 0.05em;
+}
+
+.modern-demos-badge {
+  font-size: 0.65rem;
+  font-weight: 750;
+  background: #EEF2FF;
+  color: #4F46E5;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.modern-demos-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.modern-demo-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 12px;
+  border: 1.5px solid #E2E8F0;
+  background: #F8FAFC;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modern-demo-card:hover {
+  background: #FFFFFF;
+  border-color: var(--role-primary);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.modern-demo-card.active {
+  background: var(--role-primary-soft);
+  border-color: var(--role-primary);
+  box-shadow: 0 0 0 1px var(--role-primary);
+}
+
+.modern-demo-card-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.modern-demo-card-icon.role-admin {
+  color: #5B4DF5;
+}
+
+.modern-demo-card-icon.role-manager {
+  color: #653B4B;
+}
+
+.modern-demo-card-icon.role-cashier {
+  color: #0F766E;
+}
+
+.modern-demo-card.active .modern-demo-card-icon {
+  background: #FFFFFF;
+  border-color: var(--role-border);
+}
+
+.modern-demo-card-body {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.modern-demo-role-name {
+  font-size: 0.785rem;
+  font-weight: 800;
+  color: #0F172A;
+  line-height: 1.2;
+}
+
+.modern-demo-email {
+  font-size: 0.65rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  color: #64748B;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-top: 1px;
+}
+
+.modern-demo-card .active-pill {
+  position: absolute;
+  top: 5px;
+  right: 6px;
+  font-size: 0.585rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--role-primary);
+  background: #FFFFFF;
+  border: 1px solid var(--role-border);
+  padding: 1px 4px;
+  border-radius: 4px;
+  letter-spacing: 0.03em;
+}
+
+/* Footer Register Row */
+.modern-footer-row {
+  text-align: center;
+  font-size: 0.825rem;
+  color: #64748B;
+  font-weight: 500;
+  margin-top: 0.15rem;
+}
+
+.modern-register-link {
+  background: none;
+  border: none;
+  font-size: 0.825rem;
+  font-weight: 800;
+  color: var(--role-primary);
+  cursor: pointer;
+  padding: 0;
+  margin-left: 4px;
+  transition: opacity 0.15s ease;
+}
+
+.modern-register-link:hover {
+  text-decoration: underline;
+}
+
+/* Compliance Seal Row */
+.modern-compliance-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  font-size: 0.725rem;
+  color: #94A3B8;
+  font-weight: 500;
+  margin-top: 0.25rem;
+}
+
+/* Responsive Media Queries */
+@media (max-width: 1200px) {
+  .modern-admin-illustration-area {
+    width: 130%;
+    max-height: 78vh;
+    bottom: -25px;
+    right: -45px;
+  }
+
+  .cashier-layout .modern-admin-illustration-area {
+    width: 110%;
+    max-height: 66vh;
+    bottom: -15px;
+    right: -60px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .modern-login-right {
+    padding: 2.5rem 2.5rem;
+  }
+  .modern-login-left {
+    padding: 3rem 2.5rem;
+  }
+  .modern-login-left.super-admin-layout,
+  .modern-login-left.cashier-layout {
+    padding: 3rem 2.5rem 0;
+  }
+}
+
+@media (max-width: 860px) {
+  .modern-login-card {
+    grid-template-columns: 1fr;
+    min-height: 100vh;
+  }
+
+  .modern-login-left {
+    min-height: 280px;
+    padding: 2.5rem 2rem;
+  }
+
+  .modern-login-left.text-only-layout {
+    padding: 2.5rem 2rem;
+  }
+
+  .modern-login-left.super-admin-layout,
+  .modern-login-left.cashier-layout {
+    min-height: 480px;
+    padding: 2.5rem 2rem 0;
+    overflow: hidden !important;
+  }
+
+  .modern-admin-illustration-area {
+    position: relative;
+    width: 100%;
+    max-width: 440px;
+    max-height: 280px;
+    margin: 1.5rem auto 0;
+    justify-content: center;
+    bottom: auto;
+    right: auto;
+  }
+
+  .modern-admin-hero-img {
+    object-position: center bottom;
+    max-height: 260px;
+  }
+
+  .modern-login-right {
+    padding: 2.5rem 1.5rem;
+    min-height: auto;
+  }
+
+  .modern-login-form-inner {
+    max-width: 100%;
+    min-height: auto;
+  }
+
+  .modern-left-heading {
+    font-size: 2.1rem;
+  }
+}

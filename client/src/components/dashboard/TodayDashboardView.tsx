@@ -396,6 +396,8 @@ export const TodayDashboardView: React.FC<TodayDashboardViewProps> = ({
     };
   }, []);
 
+  const isStoreManager = Boolean(user && (user.role === 'manager' || user.role === 'store_manager'));
+
   // Dynamic theme colors for smooth transitions between Bills, Sales, and Profit
   const metricTheme = useMemo(() => {
     switch (chartMetric) {
@@ -414,12 +416,12 @@ export const TodayDashboardView: React.FC<TodayDashboardViewProps> = ({
       case 'sales':
       default:
         return {
-          color: '#6366f1',
-          stopColor: '#6366f1',
+          color: isStoreManager ? '#653B4B' : '#6366f1',
+          stopColor: isStoreManager ? '#653B4B' : '#6366f1',
           label: 'Sales',
         };
     }
-  }, [chartMetric]);
+  }, [chartMetric, isStoreManager]);
 
   const isOwnerOrManager = ['owner', 'manager'].includes(user.role);
   const isSuperAdmin = Boolean(user && (user.role === 'owner' || String(user.role).toUpperCase() === 'SUPER_ADMIN'));
@@ -928,7 +930,7 @@ export const TodayDashboardView: React.FC<TodayDashboardViewProps> = ({
       {isBilledEmpty && (
         <div className="today-empty-alert-banner">
           <div className="empty-alert-content">
-            <SparklesIcon size={20} className="empty-alert-icon" style={{ color: "#6366f1" }} />
+            <SparklesIcon size={20} className="empty-alert-icon" style={{ color: isStoreManager ? "#653B4B" : "#6366f1" }} />
             <div>
               <strong>No retail bills yet today</strong> — start billing from POS Counter to see live sales, hourly rush curves, and collections!
             </div>

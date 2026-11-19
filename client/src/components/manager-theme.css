@@ -1,0 +1,423 @@
+/* ==========================================================================
+   STORE MANAGER THEME: "DEEP BURGUNDY" (#653B4B)
+   Scoped strictly under .theme-manager to avoid any leakage to other roles
+   ========================================================================== */
+
+body.theme-manager,
+.theme-manager {
+  --sidebar: #2D1822;
+  --primary: #653B4B;
+  --primary-hover: #522E3C;
+  --primary-soft: #F5ECF0;
+  --primary-light: #F9F5F7;
+  --primary-glow: rgba(101, 59, 75, 0.35);
+  --bg: #EFE7EB;          /* Soft rose-oatmeal cream canvas */
+  --bg-cream: #EFE7EB;
+  --surface: #FAF6F8;     /* Light blush cream for all elevated bento cards */
+  --border: #D9C8D0;      /* Defined burgundy-tinted border for card boundaries */
+  --border-light: #E8D6DE;
+  --border-focus: #653B4B;
+  --text: #1A0F14;
+  --text-muted: #64555E;
+  --text-on-primary: #FFFFFF;
+  --danger: #B91C1C;
+  --danger-bg: #FEE2E2;
+  --success: #15803D;
+  --success-bg: #DCFCE7;
+  --ring: #8E586C;
+  --sidebar-active: #653B4B;
+  --sidebar-hover: rgba(101, 59, 75, 0.28);
+  color-scheme: light;
+}
+
+/* --------------------------------------------------------------------------
+   1. STORE MANAGER SIDEBAR NAVIGATION
+   -------------------------------------------------------------------------- */
+.theme-manager .app-sidebar {
+  background: linear-gradient(180deg, #2D1822 0%, #3D222D 45%, #2D1822 100%) !important;
+  border-right: 1px solid rgba(232, 214, 222, 0.15) !important;
+  box-shadow: 4px 0 24px rgba(45, 24, 34, 0.35) !important;
+}
+
+.theme-manager .sidebar-brand-badge,
+.theme-manager .sidebar-badge {
+  background: rgba(101, 59, 75, 0.45) !important;
+  color: #F9F5F7 !important;
+  border: 1px solid rgba(232, 214, 222, 0.3) !important;
+}
+
+.theme-manager .sidebar-nav-item.active {
+  background: #653B4B !important;
+  border-color: rgba(255, 255, 255, 0.22) !important;
+  box-shadow: 0 2px 8px rgba(101, 59, 75, 0.4) !important;
+}
+
+.theme-manager .sidebar-nav-item.active .nav-count-badge {
+  color: #653B4B !important;
+  background: #ffffff !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15) !important;
+}
+
+.theme-manager .sidebar-nav-item:hover:not(.active) {
+  background: rgba(101, 59, 75, 0.28) !important;
+}
+
+.theme-manager .sidebar-store-btn,
+.theme-manager .sidebar-store-icon-tile,
+.theme-manager .app-sidebar.icon-only .sidebar-store-btn {
+  background: linear-gradient(135deg, #7A475B 0%, #653B4B 100%) !important;
+  box-shadow: 0 2px 8px rgba(101, 59, 75, 0.35) !important;
+}
+
+.theme-manager .sidebar-store-badge {
+  background: rgba(101, 59, 75, 0.45) !important;
+  border-color: rgba(232, 214, 222, 0.3) !important;
+  color: #F9F5F7 !important;
+}
+
+.theme-manager .sidebar-collapse-toggle:hover {
+  background: rgba(101, 59, 75, 0.4) !important;
+  color: #ffffff !important;
+}
+
+.theme-manager .sidebar-submenu-item.active {
+  background: rgba(101, 59, 75, 0.35) !important;
+  color: #ffffff !important;
+  border-left: 2px solid #8E586C !important;
+}
+
+/* --------------------------------------------------------------------------
+   2. STORE MANAGER DASHBOARD HEADER & TOP BAR
+   -------------------------------------------------------------------------- */
+.theme-manager .top-global-bar {
+  background-color: var(--bg) !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+
+.theme-manager .top-global-bar.dashboard-top-bar {
+  border-bottom: 1px solid rgba(101, 59, 75, 0.15) !important;
+}
+
+.theme-manager .top-user-avatar {
+  background: linear-gradient(135deg, #7A475B 0%, #653B4B 100%) !important;
+  color: #ffffff !important;
+}
+
+.theme-manager .top-user-chip:hover {
+  border-color: #653B4B !important;
+}
+
+.theme-manager .top-user-role {
+  color: #653B4B !important;
+}
+
+.theme-manager .btn-dash-primary {
+  background: linear-gradient(135deg, #7A475B 0%, #653B4B 100%) !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+  box-shadow:
+    0 4px 14px rgba(101, 59, 75, 0.38),
+    0 2px 4px rgba(101, 59, 75, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+}
+
+.theme-manager .btn-dash-primary:hover {
+  background: linear-gradient(135deg, #653B4B 0%, #522E3C 100%) !important;
+  box-shadow:
+    0 8px 20px rgba(101, 59, 75, 0.48),
+    0 3px 6px rgba(101, 59, 75, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55) !important;
+}
+
+.theme-manager .btn-dash-action:hover {
+  border-color: #8E586C !important;
+  color: #653B4B !important;
+}
+
+.theme-manager .header-today-pill .today-pill-icon {
+  color: #653B4B !important;
+}
+
+.theme-manager .bento-notif-open-full-btn {
+  background: #F9F5F7 !important;
+  border-color: #E8D6DE !important;
+  color: #653B4B !important;
+}
+
+.theme-manager .bento-notif-role-badge.admin {
+  background: #F9F5F7 !important;
+  border-color: #E8D6DE !important;
+  color: #653B4B !important;
+}
+
+/* --------------------------------------------------------------------------
+   3. STORE MANAGER DASHBOARD - KPI CARDS & BENTO PANELS
+   -------------------------------------------------------------------------- */
+.theme-manager .today-kpi-card.purple-highlight {
+  background: linear-gradient(135deg, #7A475B 0%, #653B4B 55%, #522E3C 100%) !important;
+  border: 1px solid #522E3C !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(101, 59, 75, 0.32), 0 2px 4px rgba(101, 59, 75, 0.18) !important;
+}
+
+.theme-manager .today-kpi-card.purple-highlight:hover {
+  border-color: #3D222D !important;
+  box-shadow: 0 8px 22px rgba(101, 59, 75, 0.42), 0 3px 6px rgba(101, 59, 75, 0.24) !important;
+}
+
+.theme-manager .today-kpi-card.purple-highlight .kpi-label {
+  color: rgba(255, 255, 255, 0.92) !important;
+}
+
+.theme-manager .today-kpi-card.purple-highlight .kpi-value {
+  color: #ffffff !important;
+}
+
+.theme-manager .kpi-icon-badge.purple {
+  background: rgba(255, 255, 255, 0.2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  color: #ffffff !important;
+}
+
+.theme-manager .toggle-seg-btn.active.active-sales {
+  color: #653B4B !important;
+}
+
+.theme-manager .segmented-metric-toggle .toggle-seg-btn.active {
+  box-shadow: 0 2px 6px rgba(101, 59, 75, 0.22) !important;
+}
+
+.theme-manager .chart-tab-btn.active,
+.theme-manager .chart-filter-pill.active {
+  background: #653B4B !important;
+  color: #ffffff !important;
+  border-color: #653B4B !important;
+}
+
+.theme-manager .quick-action-pill:hover,
+.theme-manager .bento-quick-btn:hover {
+  border-color: #8E586C !important;
+  color: #653B4B !important;
+  background: #F9F5F7 !important;
+}
+
+.theme-manager .link-action-btn,
+.theme-manager .link-action-btn:hover {
+  color: #653B4B !important;
+}
+
+/* --------------------------------------------------------------------------
+   4. POS COUNTER BENTO TERMINAL (MATCHING CASHIER STRUCTURE IN BURGUNDY)
+   -------------------------------------------------------------------------- */
+.theme-manager .bento-pos-root {
+  background-color: var(--bg) !important;
+}
+
+.theme-manager .top-pos-bento-badge {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 1px 3px rgba(45, 24, 34, 0.05) !important;
+}
+
+.theme-manager .top-pos-badge-icon.branch,
+.theme-manager .top-pos-badge-icon.counter,
+.theme-manager .top-pos-badge-icon.register {
+  background: var(--primary-soft) !important;
+  border: 1px solid rgba(142, 88, 108, 0.35) !important;
+  color: var(--primary) !important;
+}
+
+.theme-manager .top-pos-badge-icon svg {
+  color: var(--primary) !important;
+  stroke: var(--primary) !important;
+}
+
+.theme-manager .top-pos-code-tag {
+  background: var(--primary-soft) !important;
+  color: var(--primary) !important;
+  border: 1px solid rgba(142, 88, 108, 0.35) !important;
+}
+
+.theme-manager .top-pos-badge-val {
+  color: var(--sidebar) !important;
+  font-weight: 700 !important;
+}
+
+.theme-manager .bento-pos-badge .bento-badge-icon {
+  background: var(--primary) !important;
+  color: #FFFFFF !important;
+}
+
+.theme-manager .bento-badge-title {
+  color: var(--sidebar) !important;
+  font-weight: 800 !important;
+}
+
+.theme-manager .bento-pos-card {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 4px 18px rgba(45, 24, 34, 0.05), 0 1px 3px rgba(45, 24, 34, 0.03) !important;
+}
+
+.theme-manager .bento-card-title {
+  color: var(--sidebar) !important;
+}
+
+.theme-manager .btn-empty-find {
+  background: var(--primary) !important;
+  border-color: var(--primary-hover) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 8px rgba(101, 59, 75, 0.35) !important;
+}
+
+.theme-manager .btn-empty-find:hover {
+  background: var(--primary-hover) !important;
+  box-shadow: 0 4px 14px rgba(101, 59, 75, 0.45) !important;
+}
+
+.theme-manager .cart-empty-state .cart-empty-icon {
+  color: var(--primary) !important;
+}
+
+/* Discount Bar Pills */
+.theme-manager .discount-pill.active {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 6px rgba(101, 59, 75, 0.3) !important;
+}
+
+/* Payment Method Buttons */
+.theme-manager .pmt-method-btn.active {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 3px 10px rgba(101, 59, 75, 0.35) !important;
+}
+
+.theme-manager .pmt-method-btn:hover:not(.active) {
+  background: var(--primary-soft) !important;
+  border-color: var(--border) !important;
+  color: var(--primary) !important;
+}
+
+/* Complete Sale Primary Action */
+.theme-manager .complete-sale-btn {
+  background: linear-gradient(135deg, #7A475B 0%, #653B4B 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  color: #FFFFFF !important;
+  box-shadow:
+    0 4px 14px rgba(101, 59, 75, 0.4),
+    0 2px 4px rgba(101, 59, 75, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+}
+
+.theme-manager .complete-sale-btn:hover {
+  background: linear-gradient(135deg, #653B4B 0%, #522E3C 100%) !important;
+  box-shadow:
+    0 6px 18px rgba(101, 59, 75, 0.5),
+    0 3px 6px rgba(101, 59, 75, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55) !important;
+}
+
+/* Barcode Scanner Action Buttons */
+.theme-manager .btn-scanner-action.primary,
+.theme-manager .btn-scanner-find {
+  background: var(--primary-soft) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--primary) !important;
+}
+
+.theme-manager .btn-scanner-action.primary:hover,
+.theme-manager .btn-scanner-find:hover {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 8px rgba(101, 59, 75, 0.35) !important;
+}
+
+/* Register Sync Actions Grid */
+.theme-manager .bento-reg-act-btn:hover {
+  background: var(--primary-soft) !important;
+  border-color: var(--border) !important;
+  color: var(--primary) !important;
+  box-shadow: 0 2px 8px rgba(45, 24, 34, 0.08) !important;
+}
+
+.theme-manager .top-notification-btn:hover {
+  background: var(--primary-soft) !important;
+  border-color: var(--primary) !important;
+  color: var(--primary) !important;
+}
+
+/* --------------------------------------------------------------------------
+   5. MODALS & PORTALS UNDER STORE MANAGER
+   -------------------------------------------------------------------------- */
+body.theme-manager .modal-overlay,
+.theme-manager .modal-overlay {
+  background: rgba(45, 24, 34, 0.5) !important;
+  backdrop-filter: blur(4px) !important;
+}
+
+body.theme-manager .modal-content,
+.theme-manager .modal-content,
+body.theme-manager .product-edit-rectangle-modal,
+.theme-manager .product-edit-rectangle-modal {
+  background: var(--surface) !important;
+  border: 1.5px solid var(--border) !important;
+  box-shadow: 0 20px 50px rgba(45, 24, 34, 0.28) !important;
+  color: var(--text) !important;
+}
+
+body.theme-manager .product-edit-rectangle-modal .card-title,
+.theme-manager .product-edit-rectangle-modal .card-title {
+  color: var(--sidebar) !important;
+}
+
+body.theme-manager .bento-catalog-drawer,
+.theme-manager .bento-catalog-drawer {
+  background: var(--bg) !important;
+  border-left: 1.5px solid var(--border) !important;
+  box-shadow: -14px 0 45px rgba(45, 24, 34, 0.25) !important;
+}
+
+/* --------------------------------------------------------------------------
+   6. TABLES, LISTINGS & INVOICES UNDER STORE MANAGER
+   -------------------------------------------------------------------------- */
+.theme-manager .invoices-filter-pill.active {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 6px rgba(101, 59, 75, 0.3) !important;
+}
+
+.theme-manager .invoices-bento-table thead th {
+  background: var(--primary-soft) !important;
+  color: var(--sidebar) !important;
+  border-bottom: 1.5px solid var(--border) !important;
+}
+
+.theme-manager .bento-bill-btn {
+  color: var(--primary) !important;
+}
+
+.theme-manager .bento-bill-btn:hover {
+  color: var(--primary-hover) !important;
+}
+
+.theme-manager .bento-act-btn.view:hover,
+.theme-manager .bento-act-btn.a4:hover {
+  background: var(--primary-soft) !important;
+  border-color: var(--primary) !important;
+  color: var(--primary) !important;
+}
+
+.theme-manager .bento-act-btn.thermal {
+  background: var(--primary) !important;
+  border-color: var(--primary-hover) !important;
+  color: #FFFFFF !important;
+}
+
+.theme-manager .bento-act-btn.thermal:hover {
+  background: var(--primary-hover) !important;
+  box-shadow: 0 2px 8px rgba(101, 59, 75, 0.35) !important;
+}
