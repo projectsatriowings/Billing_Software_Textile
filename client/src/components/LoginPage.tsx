@@ -228,6 +228,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     btnText: string;
     badge: string;
     securityTag: string;
+    loginQuote: string;
   }> = {
     super_admin: {
       key: 'super-admin',
@@ -241,6 +242,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       btnText: 'Log In as Super Admin',
       badge: 'HQ Super Admin',
       securityTag: 'HQ Executive Clearance',
+      loginQuote: 'Track enterprise growth, oversee branches, and analyze performance!',
     },
     store_manager: {
       key: 'store-manager',
@@ -254,6 +256,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       btnText: 'Log In as Store Manager',
       badge: 'Store Manager',
       securityTag: 'Branch Operations Clearance',
+      loginQuote: 'Manage daily store operations, track sales, and supervise shifts!',
     },
     cashier: {
       key: 'cashier',
@@ -267,6 +270,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       btnText: selectedRole === 'cashier2' ? 'Log In as Cashier 2 (Lakshmi)' : 'Log In as Cashier',
       badge: 'Cashier Station',
       securityTag: 'POS Register Terminal',
+      loginQuote: 'Start your shift and serve customers with fast, seamless billing!',
     },
   };
 
@@ -392,7 +396,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             {/* Title & Subtitle Matching Screenshot */}
             <div className="felix-heading-block">
               <h1 className="felix-title">Login</h1>
-              <p className="felix-subtitle">See your growth and get consulting support!</p>
+              <p className="felix-subtitle">{currentMeta.loginQuote}</p>
             </div>
 
             {error && (
