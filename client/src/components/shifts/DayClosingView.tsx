@@ -458,7 +458,11 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
 
   const handleMarkAllNotificationsRead = async () => {
     try {
-      await markAllDayClosingNotificationsRead();
+      const unreadIds = notifications
+        .filter(n => !n.isRead && !n.is_read)
+        .map(n => n.id)
+        .filter(Boolean);
+      await markAllDayClosingNotificationsRead(unreadIds.length > 0 ? unreadIds : undefined);
       setNotifications(prev => prev.map(n => ({ ...n, isRead: true, is_read: true })));
       setUnreadNotifCount(0);
     } catch {

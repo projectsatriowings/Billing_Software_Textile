@@ -1085,7 +1085,11 @@ export function App() {
 
   const handleMarkAllNotificationsRead = async () => {
     try {
-      await markAllDayClosingNotificationsRead();
+      const unreadIds = shiftNotifications
+        .filter((n) => !n.isRead && !n.is_read)
+        .map((n) => n.id)
+        .filter(Boolean);
+      await markAllDayClosingNotificationsRead(unreadIds.length > 0 ? unreadIds : undefined);
       setShiftNotifications((prev) =>
         prev.map((n) => ({ ...n, is_read: true, isRead: true }))
       );
@@ -8225,7 +8229,20 @@ export function App() {
                           <span className="bento-notif-unread-count-pill">{unreadShiftNotifCount} new</span>
                         )}
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div className="bento-notif-header-actions">
+                        {unreadShiftNotifCount > 0 && (
+                          <button
+                            type="button"
+                            className="bento-notif-mark-read-btn"
+                            onClick={handleMarkAllNotificationsRead}
+                            title="Mark all notifications as read"
+                          >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            <span>Mark all read</span>
+                          </button>
+                        )}
                         <button
                           type="button"
                           className="bento-notif-open-full-btn"
@@ -8234,32 +8251,9 @@ export function App() {
                             setActiveTab('notifications');
                           }}
                           title="Open dedicated full Notifications page"
-                          style={{
-                            background: user?.role === 'cashier' ? 'var(--primary-soft, #E6F4F3)' : '#eef2ff',
-                            border: user?.role === 'cashier' ? '1px solid rgba(20, 184, 166, 0.4)' : '1px solid #c7d2fe',
-                            color: user?.role === 'cashier' ? 'var(--primary, #0F766E)' : '#4f46e5',
-                            borderRadius: '6px',
-                            padding: '3px 8px',
-                            fontSize: '0.72rem',
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                          }}
                         >
                           <span>Full Page →</span>
                         </button>
-                        {unreadShiftNotifCount > 0 && (
-                          <button
-                            type="button"
-                            className="bento-notif-mark-read-btn"
-                            onClick={handleMarkAllNotificationsRead}
-                            title="Mark all notifications as read"
-                          >
-                            Mark all read
-                          </button>
-                        )}
                         <span className={`bento-notif-role-badge ${user?.role === 'cashier' ? 'cashier' : 'admin'}`}>
                           {user?.role === 'cashier' ? 'Cashier Station' : user?.role === 'manager' ? 'Store Manager' : 'Super Admin'}
                         </span>

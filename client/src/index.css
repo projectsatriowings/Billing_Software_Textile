@@ -32903,8 +32903,8 @@ select.expense-input-control {
   position: absolute;
   top: calc(100% + 10px);
   right: 0;
-  width: 390px;
-  max-width: calc(100vw - 24px);
+  width: 440px;
+  max-width: calc(100vw - 20px);
   background: #ffffff;
   border: 1px solid #E2E0EF;
   border-radius: 16px;
@@ -32920,15 +32920,26 @@ select.expense-input-control {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 13px 16px;
+  padding: 11px 14px;
   background: #FAFAFD;
   border-bottom: 1px solid #E2E0EF;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+.bento-notif-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  flex-wrap: nowrap;
 }
 
 .bento-notif-title-row {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .bento-notif-icon-bubble {
@@ -32939,21 +32950,26 @@ select.expense-input-control {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .bento-notif-title {
   font-size: 0.95rem;
   font-weight: 700;
   color: #1A1838;
+  white-space: nowrap;
 }
 
 .bento-notif-role-badge {
-  font-size: 0.72rem;
-  font-weight: 700;
-  padding: 3px 9px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 3px 8px;
   border-radius: 999px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1.2;
 }
 
 .bento-notif-role-badge.cashier {
@@ -33162,29 +33178,61 @@ select.expense-input-control {
 .bento-notif-unread-count-pill {
   font-size: 0.68rem;
   font-weight: 700;
-  padding: 1px 7px;
+  padding: 2px 7px;
   background: var(--primary-soft, #E6F4F3);
   color: var(--primary, #0F766E);
   border-radius: 999px;
   border: 1px solid rgba(20, 184, 166, 0.35);
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1.2;
 }
 
 .bento-notif-mark-read-btn {
-  background: none;
-  border: none;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
   font-size: 0.72rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--primary, #0F766E);
   cursor: pointer;
-  padding: 2px 6px;
-  border-radius: 4px;
+  padding: 4px 8px;
+  border-radius: 7px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1.2;
   transition: all 0.15s ease;
 }
 
 .bento-notif-mark-read-btn:hover {
   background: var(--primary-soft, #E6F4F3);
+  border-color: var(--primary, #0F766E);
   color: var(--primary-hover, #115E59);
-  text-decoration: underline;
+}
+
+.bento-notif-open-full-btn {
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+  color: #4f46e5;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 7px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1.2;
+  transition: all 0.15s ease;
+}
+
+.bento-notif-open-full-btn:hover {
+  background: #e0e7ff;
+  border-color: #818cf8;
 }
 
 .bento-notif-card.shift-open {

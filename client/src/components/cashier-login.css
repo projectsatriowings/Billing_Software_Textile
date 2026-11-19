@@ -3682,6 +3682,8 @@ body.theme-cashier .detail-list-val.purple,
    -------------------------------------------------------------------------- */
 body.theme-cashier .top-notif-popover.bento-notif-popover,
 .theme-cashier .top-notif-popover.bento-notif-popover {
+  width: 440px !important;
+  max-width: calc(100vw - 20px) !important;
   background: var(--surface) !important;
   border: 1.5px solid var(--border) !important;
   border-radius: 16px !important;
@@ -3692,12 +3694,25 @@ body.theme-cashier .bento-notif-header,
 .theme-cashier .bento-notif-header {
   background: var(--surface) !important;
   border-bottom: 1px solid var(--border) !important;
+  padding: 11px 14px !important;
+  gap: 8px !important;
+  flex-wrap: nowrap !important;
+}
+
+body.theme-cashier .bento-notif-header-actions,
+.theme-cashier .bento-notif-header-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  flex-shrink: 0 !important;
+  flex-wrap: nowrap !important;
 }
 
 body.theme-cashier .bento-notif-title,
 .theme-cashier .bento-notif-title {
   color: var(--sidebar) !important;
   font-weight: 800 !important;
+  white-space: nowrap !important;
 }
 
 body.theme-cashier .bento-notif-icon-bubble,
@@ -3705,11 +3720,30 @@ body.theme-cashier .bento-notif-icon-bubble,
   background: var(--primary-soft) !important;
   border: 1px solid rgba(20, 184, 166, 0.35) !important;
   color: var(--primary) !important;
+  flex-shrink: 0 !important;
 }
 
 body.theme-cashier .bento-notif-icon-bubble svg,
 .theme-cashier .bento-notif-icon-bubble svg {
   stroke: var(--primary) !important;
+}
+
+body.theme-cashier .bento-notif-unread-count-pill,
+.theme-cashier .bento-notif-unread-count-pill {
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+}
+
+body.theme-cashier .bento-notif-role-badge,
+.theme-cashier .bento-notif-role-badge {
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  font-size: 0.68rem !important;
+  font-weight: 800 !important;
+  padding: 3px 8px !important;
+  border-radius: 999px !important;
+  letter-spacing: 0.03em !important;
+  line-height: 1.2 !important;
 }
 
 body.theme-cashier .bento-notif-role-badge.cashier,
@@ -3718,6 +3752,31 @@ body.theme-cashier .bento-notif-role-badge.cashier,
   color: var(--primary) !important;
   border: 1px solid rgba(20, 184, 166, 0.35) !important;
   font-weight: 800 !important;
+}
+
+body.theme-cashier .bento-notif-open-full-btn,
+.theme-cashier .bento-notif-open-full-btn {
+  background: var(--primary-soft) !important;
+  border: 1px solid rgba(20, 184, 166, 0.35) !important;
+  color: var(--primary) !important;
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+  padding: 4px 8px !important;
+  border-radius: 7px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  cursor: pointer !important;
+  line-height: 1.2 !important;
+  transition: all 0.15s ease !important;
+}
+
+body.theme-cashier .bento-notif-open-full-btn:hover,
+.theme-cashier .bento-notif-open-full-btn:hover {
+  background: rgba(20, 184, 166, 0.22) !important;
+  border-color: var(--primary) !important;
 }
 
 body.theme-cashier .bento-notif-body,
@@ -3867,12 +3926,29 @@ body.theme-cashier .bento-notif-unread-dot,
 
 body.theme-cashier .bento-notif-mark-read-btn,
 .theme-cashier .bento-notif-mark-read-btn {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
   color: var(--primary) !important;
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+  padding: 4px 8px !important;
+  border-radius: 7px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  cursor: pointer !important;
+  line-height: 1.2 !important;
+  transition: all 0.15s ease !important;
 }
 
 body.theme-cashier .bento-notif-mark-read-btn:hover,
 .theme-cashier .bento-notif-mark-read-btn:hover {
+  background: var(--primary-soft) !important;
+  border-color: var(--primary) !important;
   color: var(--primary-hover) !important;
+  text-decoration: none !important;
 }
 
 body.theme-cashier .bento-notif-card.unread,
