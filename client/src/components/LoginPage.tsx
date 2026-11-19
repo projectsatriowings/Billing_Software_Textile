@@ -277,8 +277,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   const currentMeta = isCashier
     ? roleMeta.cashier
     : selectedRole === 'store_manager'
-    ? roleMeta.store_manager
-    : roleMeta.super_admin;
+      ? roleMeta.store_manager
+      : roleMeta.super_admin;
 
   return (
     <div className="modern-login-page">
@@ -297,8 +297,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             const roleLayoutClass = isSuperAdmin
               ? 'super-admin-layout'
               : isCashierRole
-              ? 'cashier-layout'
-              : 'store-manager-layout';
+                ? 'cashier-layout'
+                : 'store-manager-layout';
 
             return (
               <div className={`modern-login-left ${roleLayoutClass}`}>
