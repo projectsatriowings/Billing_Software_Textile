@@ -18434,11 +18434,11 @@ export function App() {
 
         {/* WIRELESS MOBILE SCANNER PAIRING MODAL */}
         {showMobileScannerModal && (
-          <div className="modal-overlay" onClick={() => setShowMobileScannerModal(false)}>
-            <div className="modal-content mobile-scanner-modal" onClick={(e) => e.stopPropagation()}>
+          <div className={`modal-overlay ${user?.role === 'cashier' ? 'theme-cashier' : ''}`} onClick={() => setShowMobileScannerModal(false)}>
+            <div className={`modal-content mobile-scanner-modal ${user?.role === 'cashier' ? 'theme-cashier' : ''}`} onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
                 <div className="modal-header-left">
-                  <span className="bento-icon-circle purple">
+                  <span className={`bento-icon-circle ${user?.role === 'cashier' ? 'emerald' : 'purple'}`}>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
                       <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
                       <line x1="12" y1="18" x2="12.01" y2="18" />
@@ -18497,12 +18497,31 @@ export function App() {
                               <span>Point Phone Camera Here</span>
                             </div>
                             <div style={{ marginTop: '0.35rem', textAlign: 'center', width: '100%' }}>
-                              <div style={{ fontSize: '0.7rem', color: '#4f46e5', fontWeight: 600, wordBreak: 'break-all', padding: '0.2rem 0.35rem', background: '#eef2ff', borderRadius: '4px', border: '1px solid #c7d2fe' }}>
+                              <div style={{
+                                fontSize: '0.7rem',
+                                color: 'var(--primary, #0F766E)',
+                                fontWeight: 600,
+                                wordBreak: 'break-all',
+                                padding: '0.2rem 0.35rem',
+                                background: 'var(--primary-soft, #E6F4F3)',
+                                borderRadius: '4px',
+                                border: '1px solid rgba(20, 184, 166, 0.4)',
+                              }}>
                                 {pairingUrl}
                               </div>
                               <button
                                 type="button"
-                                style={{ marginTop: '0.25rem', background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 700, padding: '0.15rem 0.5rem', cursor: 'pointer', color: '#334155' }}
+                                style={{
+                                  marginTop: '0.25rem',
+                                  background: user?.role === 'cashier' ? 'var(--surface, #FAF7F2)' : '#ffffff',
+                                  border: user?.role === 'cashier' ? '1px solid var(--border, #D0C7B8)' : '1px solid #cbd5e1',
+                                  borderRadius: '4px',
+                                  fontSize: '0.7rem',
+                                  fontWeight: 700,
+                                  padding: '0.15rem 0.5rem',
+                                  cursor: 'pointer',
+                                  color: user?.role === 'cashier' ? 'var(--sidebar, #0F2D2E)' : '#334155'
+                                }}
                                 onClick={() => {
                                   navigator.clipboard?.writeText(pairingUrl);
                                   showToast('📋 Link copied to clipboard!');
@@ -18524,10 +18543,14 @@ export function App() {
                           className={`proto-btn ${scannerProtocol === 'tunnel' && !customTunnelUrl ? 'active' : ''}`}
                           onClick={() => { setScannerProtocol('tunnel'); setCustomTunnelUrl(''); }}
                           style={{
-                            background: scannerProtocol === 'tunnel' ? 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)' : '#eef2ff',
-                            color: scannerProtocol === 'tunnel' ? '#ffffff' : '#4338ca',
+                            background: scannerProtocol === 'tunnel'
+                              ? (user?.role === 'cashier' ? 'linear-gradient(135deg, var(--sidebar, #0F2D2E) 0%, var(--primary, #0F766E) 100%)' : 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)')
+                              : (user?.role === 'cashier' ? 'var(--primary-soft, #E6F4F3)' : '#eef2ff'),
+                            color: scannerProtocol === 'tunnel'
+                              ? '#ffffff'
+                              : (user?.role === 'cashier' ? 'var(--primary, #0F766E)' : '#4338ca'),
                             fontWeight: 700,
-                            border: '1px solid #c7d2fe',
+                            border: user?.role === 'cashier' ? '1px solid rgba(20, 184, 166, 0.4)' : '1px solid #c7d2fe',
                             padding: '0.35rem 0.5rem',
                             borderRadius: '6px',
                             display: 'flex',
@@ -18606,7 +18629,7 @@ export function App() {
                         <div className="scanner-link-box">
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
                             <label className="scanner-link-label" style={{ margin: 0 }}>Direct Browser Link:</label>
-                            <span style={{ fontSize: '0.7rem', color: '#6366f1', cursor: 'pointer', fontWeight: 600 }} onClick={() => {
+                            <span style={{ fontSize: '0.7rem', color: 'var(--primary, #0F766E)', cursor: 'pointer', fontWeight: 700 }} onClick={() => {
                               const val = prompt('Optional: Paste public tunnel URL (e.g. from ngrok or localtunnel):', customTunnelUrl);
                               if (val !== null) setCustomTunnelUrl(val.trim());
                             }}>

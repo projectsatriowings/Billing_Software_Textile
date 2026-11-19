@@ -4390,3 +4390,242 @@ body.theme-cashier .cfd-header,
   border-bottom: 1.5px solid var(--border) !important;
   color: var(--sidebar) !important;
 }
+
+/* ==========================================================================
+   5.13 WIRELESS MOBILE BARCODE SCANNER MODAL (Teal & Slate Theme)
+   ========================================================================== */
+body.theme-cashier .mobile-scanner-modal,
+.theme-cashier .mobile-scanner-modal,
+div.app-container.theme-cashier .mobile-scanner-modal {
+  background: var(--surface, #FAF7F2) !important;
+  border: 1.5px solid var(--border, #D0C7B8) !important;
+  color: var(--text, #0F172A) !important;
+  box-shadow: 0 25px 50px -12px rgba(15, 45, 46, 0.35) !important;
+}
+
+body.theme-cashier .mobile-scanner-modal .modal-header,
+.theme-cashier .mobile-scanner-modal .modal-header {
+  background: var(--surface, #FAF7F2) !important;
+  border-bottom: 1px solid var(--border, #D0C7B8) !important;
+  color: var(--text, #0F172A) !important;
+}
+
+body.theme-cashier .mobile-scanner-modal .card-title,
+.theme-cashier .mobile-scanner-modal .card-title {
+  color: var(--sidebar, #0F2D2E) !important;
+  font-weight: 800 !important;
+}
+
+body.theme-cashier .mobile-scanner-modal .modal-subtitle,
+.theme-cashier .mobile-scanner-modal .modal-subtitle {
+  color: var(--text-muted, #475569) !important;
+}
+
+body.theme-cashier .mobile-scanner-modal .bento-icon-circle,
+.theme-cashier .mobile-scanner-modal .bento-icon-circle {
+  background: var(--primary-soft, #E6F4F3) !important;
+  border: 1px solid rgba(20, 184, 166, 0.35) !important;
+  color: var(--primary, #0F766E) !important;
+}
+
+body.theme-cashier .mobile-scanner-modal .bento-icon-circle svg,
+.theme-cashier .mobile-scanner-modal .bento-icon-circle svg {
+  color: var(--primary, #0F766E) !important;
+  stroke: var(--primary, #0F766E) !important;
+}
+
+body.theme-cashier .mobile-scanner-modal .modal-close-icon-btn,
+.theme-cashier .mobile-scanner-modal .modal-close-icon-btn {
+  color: var(--text-muted, #475569) !important;
+  border: 1px solid var(--border, #D0C7B8) !important;
+  background: var(--surface, #FAF7F2) !important;
+  border-radius: 6px !important;
+}
+
+body.theme-cashier .mobile-scanner-modal .modal-close-icon-btn:hover,
+.theme-cashier .mobile-scanner-modal .modal-close-icon-btn:hover {
+  color: var(--danger, #B91C1C) !important;
+  background: var(--danger-bg, #FEE2E2) !important;
+  border-color: rgba(185, 28, 28, 0.3) !important;
+}
+
+body.theme-cashier .mobile-scanner-modal .modal-footer,
+.theme-cashier .mobile-scanner-modal .modal-footer {
+  background: var(--surface, #FAF7F2) !important;
+  border-top: 1px solid var(--border, #D0C7B8) !important;
+}
+
+/* Step list: 1, 2, 3 numbered badges & cards */
+body.theme-cashier .step-num,
+.theme-cashier .step-num {
+  background: var(--primary, #0F766E) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 6px rgba(15, 118, 110, 0.3) !important;
+}
+
+body.theme-cashier .scanner-step-item,
+.theme-cashier .scanner-step-item {
+  background: var(--surface, #FAF7F2) !important;
+  border: 1.5px solid var(--border, #D0C7B8) !important;
+}
+
+body.theme-cashier .scanner-step-item:hover,
+.theme-cashier .scanner-step-item:hover {
+  border-color: rgba(20, 184, 166, 0.5) !important;
+}
+
+body.theme-cashier .scanner-step-item strong,
+.theme-cashier .scanner-step-item strong {
+  color: var(--sidebar, #0F2D2E) !important;
+}
+
+body.theme-cashier .scanner-step-item p,
+.theme-cashier .scanner-step-item p {
+  color: var(--text-muted, #475569) !important;
+}
+
+/* Direct Browser Link section */
+body.theme-cashier .scanner-link-box,
+.theme-cashier .scanner-link-box {
+  background: var(--surface-inner, #F3ECE1) !important;
+  border: 1.5px solid var(--border, #D0C7B8) !important;
+}
+
+body.theme-cashier .scanner-link-label,
+.theme-cashier .scanner-link-label {
+  color: var(--sidebar, #0F2D2E) !important;
+  font-weight: 700 !important;
+}
+
+body.theme-cashier .scanner-url-input,
+.theme-cashier .scanner-url-input {
+  background: var(--surface, #FAF7F2) !important;
+  border: 1px solid var(--border, #D0C7B8) !important;
+  color: var(--text, #0F172A) !important;
+}
+
+body.theme-cashier .scanner-copy-btn,
+.theme-cashier .scanner-copy-btn {
+  background: var(--surface, #FAF7F2) !important;
+  border: 1px solid var(--border, #D0C7B8) !important;
+  color: var(--sidebar, #0F2D2E) !important;
+}
+
+body.theme-cashier .scanner-copy-btn:hover,
+.theme-cashier .scanner-copy-btn:hover {
+  background: #ffffff !important;
+  border-color: var(--primary, #0F766E) !important;
+  color: var(--primary, #0F766E) !important;
+}
+
+body.theme-cashier .scanner-open-btn,
+.theme-cashier .scanner-open-btn {
+  background: var(--primary, #0F766E) !important;
+  border: 1px solid var(--primary-hover, #115E59) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 6px rgba(15, 118, 110, 0.3) !important;
+}
+
+body.theme-cashier .scanner-open-btn:hover,
+.theme-cashier .scanner-open-btn:hover {
+  background: var(--primary-hover, #115E59) !important;
+  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.4) !important;
+}
+
+/* QR Box & Protocols */
+body.theme-cashier .scanner-qr-box,
+.theme-cashier .scanner-qr-box {
+  background: var(--surface, #FAF7F2) !important;
+  border: 1.5px solid var(--border, #D0C7B8) !important;
+}
+
+body.theme-cashier .scanner-qr-caption,
+.theme-cashier .scanner-qr-caption {
+  color: var(--text-muted, #475569) !important;
+  font-weight: 600 !important;
+}
+
+body.theme-cashier .scanner-protocol-toggle,
+.theme-cashier .scanner-protocol-toggle {
+  background: var(--surface-inner, #F3ECE1) !important;
+  border: 1px solid var(--border, #D0C7B8) !important;
+}
+
+body.theme-cashier .proto-btn,
+.theme-cashier .proto-btn {
+  color: var(--text-muted, #475569) !important;
+}
+
+body.theme-cashier .proto-btn.active,
+.theme-cashier .proto-btn.active {
+  background: var(--surface, #FAF7F2) !important;
+  color: var(--primary, #0F766E) !important;
+  font-weight: 700 !important;
+  box-shadow: 0 2px 6px rgba(15, 45, 46, 0.08) !important;
+  border: 1px solid var(--border, #D0C7B8) !important;
+}
+
+/* Troubleshooting Box */
+body.theme-cashier .scanner-troubleshoot-box,
+.theme-cashier .scanner-troubleshoot-box {
+  background: var(--primary-soft, #E6F4F3) !important;
+  border: 1px solid rgba(20, 184, 166, 0.35) !important;
+  color: var(--sidebar, #0F2D2E) !important;
+}
+
+body.theme-cashier .troubleshoot-tag,
+.theme-cashier .troubleshoot-tag {
+  color: var(--primary, #0F766E) !important;
+}
+
+body.theme-cashier .troubleshoot-list,
+.theme-cashier .troubleshoot-list {
+  color: var(--sidebar, #0F2D2E) !important;
+}
+
+/* Simulator & Sound Toggle */
+body.theme-cashier .scanner-simulate-btn,
+.theme-cashier .scanner-simulate-btn {
+  background: var(--surface, #FAF7F2) !important;
+  border: 1px solid var(--border, #D0C7B8) !important;
+  color: var(--text, #0F172A) !important;
+}
+
+body.theme-cashier .scanner-simulate-btn:hover,
+.theme-cashier .scanner-simulate-btn:hover {
+  background: var(--surface-inner, #F3ECE1) !important;
+  border-color: var(--primary, #0F766E) !important;
+  color: var(--primary, #0F766E) !important;
+}
+
+body.theme-cashier .scanner-sound-toggle,
+.theme-cashier .scanner-sound-toggle {
+  color: var(--text, #0F172A) !important;
+}
+
+body.theme-cashier .scanner-sound-toggle input[type="checkbox"],
+.theme-cashier .scanner-sound-toggle input[type="checkbox"] {
+  accent-color: var(--primary, #0F766E) !important;
+}
+
+body.theme-cashier .scanner-session-pill,
+.theme-cashier .scanner-session-pill {
+  background: var(--surface-inner, #F3ECE1) !important;
+  border: 1px solid var(--border, #D0C7B8) !important;
+  color: var(--text-muted, #475569) !important;
+}
+
+body.theme-cashier .mobile-scanner-modal .btn-secondary,
+.theme-cashier .mobile-scanner-modal .btn-secondary {
+  background: var(--surface, #FAF7F2) !important;
+  border: 1px solid var(--border, #D0C7B8) !important;
+  color: var(--sidebar, #0F2D2E) !important;
+  font-weight: 700 !important;
+}
+
+body.theme-cashier .mobile-scanner-modal .btn-secondary:hover,
+.theme-cashier .mobile-scanner-modal .btn-secondary:hover {
+  background: var(--surface-inner, #F3ECE1) !important;
+  border-color: var(--primary, #0F766E) !important;
+  color: var(--primary, #0F766E) !important;
+}
