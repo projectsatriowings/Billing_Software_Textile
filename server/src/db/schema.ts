@@ -2047,4 +2047,24 @@ export const MIGRATIONS: Migration[] = [
          )`,
     ],
   },
+  {
+    version: 74,
+    statements: [
+      `ALTER TABLE parties DROP CONSTRAINT IF EXISTS parties_type_check`,
+      `ALTER TABLE parties ADD CONSTRAINT parties_type_check CHECK (type = ANY (ARRAY['customer'::text, 'supplier'::text, 'wholesale'::text]))`,
+      `UPDATE parties
+       SET type = 'wholesale'
+       WHERE custom->>'customerType' = 'wholesale'
+          OR id IN (SELECT id FROM wholesale_customers)`,
+      `UPDATE invoices
+       SET wholesale_customer_id = party_id
+       WHERE invoice_type = 'wholesale'
+         AND wholesale_customer_id IS NULL
+         AND party_id IN (SELECT id FROM wholesale_customers)`,
+      `UPDATE payments
+       SET wholesale_customer_id = party_id
+       WHERE wholesale_customer_id IS NULL
+         AND party_id IN (SELECT id FROM wholesale_customers)`,
+    ],
+  },
 ];

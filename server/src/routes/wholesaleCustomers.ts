@@ -42,7 +42,7 @@ export function registerWholesaleCustomers(r: Router) {
     const search = typeof ctx.query.search === 'string' ? ctx.query.search.trim().toLowerCase() : '';
     const branchId = typeof ctx.query.branchId === 'string' ? ctx.query.branchId.trim() : '';
     const includeInactive = ctx.query.includeInactive === '1' || ctx.query.includeInactive === 'true';
-    const limit = Math.min(500, Math.max(1, parseInt(ctx.query.limit as string) || 200));
+    const limit = Math.min(1000, Math.max(1, parseInt(ctx.query.limit as string) || 500));
 
     let sql = `
       SELECT
@@ -58,11 +58,6 @@ export function registerWholesaleCustomers(r: Router) {
 
     if (!includeInactive) {
       sql += ' AND wc.active = TRUE';
-    }
-
-    if (branchId && branchId.toLowerCase() !== 'all') {
-      sql += ' AND (wc.branch_id IS NULL OR wc.branch_id = ?)';
-      params.push(branchId);
     }
 
     if (search) {

@@ -1413,7 +1413,7 @@ export function App() {
             counterId: match.id,
             counter: match.code,
             branchId: activeBranch.id,
-          }).catch(() => {});
+          }).catch(() => { });
         }
       }
     } else if (selectedCounter) {
@@ -1432,7 +1432,7 @@ export function App() {
             counterId: match.id,
             counter: match.code,
             branchId: activeBranch.id,
-          }).catch(() => {});
+          }).catch(() => { });
         }
       }
     }
@@ -1442,7 +1442,7 @@ export function App() {
   useEffect(() => {
     if (!user || user.role !== 'cashier' || !selectedCounter) return;
     const interval = setInterval(() => {
-      heartbeatActiveShiftCounter().catch(() => {});
+      heartbeatActiveShiftCounter().catch(() => { });
     }, 45000);
     return () => clearInterval(interval);
   }, [user?.id, user?.role, selectedCounter]);
@@ -1653,7 +1653,7 @@ export function App() {
     isOpen: false,
     title: '',
     message: '',
-    onConfirm: () => {},
+    onConfirm: () => { },
   });
 
   const askConfirmation = (opts: {
@@ -3819,10 +3819,10 @@ export function App() {
   const cartTaxMinor = isExchangeActive
     ? newItemsTaxMinor
     : cart.reduce((acc, c) => {
-        const gross = c.item.priceMinor * c.qty;
-        const taxable = Math.round((gross * 10000) / (10000 + c.item.taxRateBp));
-        return acc + (gross - taxable);
-      }, 0);
+      const gross = c.item.priceMinor * c.qty;
+      const taxable = Math.round((gross * 10000) / (10000 + c.item.taxRateBp));
+      return acc + (gross - taxable);
+    }, 0);
 
   const cartTaxableMinor = isExchangeActive ? newItemsTaxableMinor : cartSubtotalMinor - cartTaxMinor;
   const cartCgstMinor = isExchangeActive ? newItemsCgstMinor : Math.floor(cartTaxMinor / 2);
@@ -4561,7 +4561,7 @@ export function App() {
     // If bill has a customer phone and no customer currently set, auto-link customer
     if (posExchangeSelectedInvoice.customerPhone) {
       const cleanPh = posExchangeSelectedInvoice.customerPhone.replace(/\D/g, '').slice(-10);
-      const existing = parties.find((p) => p.type === 'customer' && p.phone && p.phone.replace(/\D/g, '').endsWith(cleanPh));
+      const existing = parties.find((p) => (p.type === 'customer' || !p.type) && p.customerType !== 'wholesale' && p.phone && p.phone.replace(/\D/g, '').endsWith(cleanPh));
       if (existing) {
         setSelectedPartyId(existing.id);
       }
@@ -4598,8 +4598,8 @@ export function App() {
 
     // Strictly enforce customer phone number for every POS billing transaction
     const cleanSearchDigits = customerSearch.trim().replace(/\D/g, '');
-    const checkoutPhone = selectedCustomer?.phone 
-      ? selectedCustomer.phone.replace(/\D/g, '').slice(-10) 
+    const checkoutPhone = selectedCustomer?.phone
+      ? selectedCustomer.phone.replace(/\D/g, '').slice(-10)
       : (cleanSearchDigits.length >= 10 ? cleanSearchDigits.slice(-10) : undefined);
 
     if (!checkoutPhone || checkoutPhone.length !== 10) {
@@ -4672,8 +4672,8 @@ export function App() {
 
         const ptsMsg = exchangeRes.netLoyaltyPointsAdjusted
           ? (exchangeRes.netLoyaltyPointsAdjusted > 0
-              ? ` (+${exchangeRes.netLoyaltyPointsAdjusted} loyalty pts)`
-              : ` (${exchangeRes.netLoyaltyPointsAdjusted} loyalty pts)`)
+            ? ` (+${exchangeRes.netLoyaltyPointsAdjusted} loyalty pts)`
+            : ` (${exchangeRes.netLoyaltyPointsAdjusted} loyalty pts)`)
           : '';
         showToast(`✓ Exchange completed! New Bill: ${exchangeRes.newInvoiceNumber}, Credit Note: ${exchangeRes.creditNoteNumber}${ptsMsg}`);
         loadParties();
@@ -5143,7 +5143,7 @@ export function App() {
           const d = customerSearch.replace(/\D/g, '');
           if (d.length >= 7) {
             const d10 = d.slice(-10);
-            const match = parties.find(p => p.type === 'customer' && p.phone && (
+            const match = parties.find(p => (p.type === 'customer' || !p.type) && p.customerType !== 'wholesale' && p.phone && (
               p.phone.replace(/\D/g, '') === d ||
               p.phone.replace(/\D/g, '').endsWith(d10) ||
               d.endsWith(p.phone.replace(/\D/g, '').slice(-10))
@@ -5729,7 +5729,7 @@ export function App() {
 
   const openEditPartyModal = (party: Party) => {
     setEditingParty(party);
-    setPartyModalType(party.type);
+    setPartyModalType(party.type === 'supplier' ? 'supplier' : 'customer');
     setPartyFormName(party.name);
     setPartyFormPhone(party.phone || '');
     setPartyFormEmail(party.email || '');
@@ -7524,16 +7524,16 @@ export function App() {
               {user.role !== 'cashier' && (
                 <button
                   type="button"
-                  className={`sidebar-nav-item ${activeTab === 'customers' ? 'active' : ''} ${parties.filter((p) => p.type === 'customer').length > 0 ? 'has-badge' : ''}`}
+                  className={`sidebar-nav-item ${activeTab === 'customers' ? 'active' : ''} ${parties.filter((p) => (p.type === 'customer' || !p.type) && p.customerType !== 'wholesale').length > 0 ? 'has-badge' : ''}`}
                   onClick={() => setActiveTab('customers')}
-                  title={`Customers (${parties.filter((p) => p.type === 'customer').length})`}
+                  title={`Customers (${parties.filter((p) => (p.type === 'customer' || !p.type) && p.customerType !== 'wholesale').length})`}
                 >
                   <span className="nav-icon">
                     <Users size={20} strokeWidth={2.2} />
                   </span>
                   <span className="nav-text">Customers</span>
                   <span className="nav-right-slot">
-                    <span className="nav-count-badge">{parties.filter((p) => p.type === 'customer').length}</span>
+                    <span className="nav-count-badge">{parties.filter((p) => (p.type === 'customer' || !p.type) && p.customerType !== 'wholesale').length}</span>
                   </span>
                 </button>
               )}
@@ -8288,7 +8288,7 @@ export function App() {
                               const isShiftClose = n.type === 'shift_close';
                               let meta = n.metadata;
                               if (typeof meta === 'string') {
-                                try { meta = JSON.parse(meta); } catch {}
+                                try { meta = JSON.parse(meta); } catch { }
                               }
                               meta = meta || {};
 
@@ -8526,7 +8526,7 @@ export function App() {
                               const isShiftClose = n.type === 'shift_close';
                               let meta = n.metadata;
                               if (typeof meta === 'string') {
-                                try { meta = JSON.parse(meta); } catch {}
+                                try { meta = JSON.parse(meta); } catch { }
                               }
                               meta = meta || {};
 
@@ -9391,11 +9391,11 @@ export function App() {
                                 // Also check active promo for this item if not yet unlocked
                                 const activePromoForItem = !isReturn
                                   ? activePromotionsList.find((p) => {
-                                      if (p.rules?.qualifyingProductId === item.id) return true;
-                                      if (p.rules?.productIds && p.rules.productIds.includes(item.id)) return true;
-                                      if (p.rules?.categoryNames && item.category && p.rules.categoryNames.map((c) => c.toLowerCase()).includes(item.category.toLowerCase())) return true;
-                                      return false;
-                                    })
+                                    if (p.rules?.qualifyingProductId === item.id) return true;
+                                    if (p.rules?.productIds && p.rules.productIds.includes(item.id)) return true;
+                                    if (p.rules?.categoryNames && item.category && p.rules.categoryNames.map((c) => c.toLowerCase()).includes(item.category.toLowerCase())) return true;
+                                    return false;
+                                  })
                                   : undefined;
 
                                 const promoBadgeText = (() => {
@@ -9986,7 +9986,7 @@ export function App() {
                                         if (clean10.length === 10) {
                                           // 1. Check local parties for EXACT 10-digit match
                                           const exactParty = parties.find(
-                                            (p) => p.type === 'customer' && p.phone && p.phone.replace(/\D/g, '').slice(-10) === clean10
+                                            (p) => (p.type === 'customer' || !p.type) && p.customerType !== 'wholesale' && p.phone && p.phone.replace(/\D/g, '').slice(-10) === clean10
                                           );
                                           if (exactParty) {
                                             setSelectedPartyId(exactParty.id);
@@ -10024,7 +10024,7 @@ export function App() {
                                                 showToast(`Customer recognized: ${data.party.name}`);
                                               }
                                             })
-                                            .catch(() => {});
+                                            .catch(() => { });
                                         } else {
                                           // Still typing: clear auto-populated name if not manually edited
                                           if (!customerNameManuallyEditedRef.current) {
@@ -11045,10 +11045,10 @@ export function App() {
                                   <span>
                                     {isExchangeActive
                                       ? (exchangeCustomerPayableMinor > 0
-                                          ? `Complete Exchange & Collect ${formatRupees(exchangeCustomerPayableMinor)}`
-                                          : exchangeCustomerRefundMinor > 0
-                                            ? `Complete Exchange & Refund ${formatRupees(exchangeCustomerRefundMinor)}`
-                                            : 'Complete Even Exchange')
+                                        ? `Complete Exchange & Collect ${formatRupees(exchangeCustomerPayableMinor)}`
+                                        : exchangeCustomerRefundMinor > 0
+                                          ? `Complete Exchange & Refund ${formatRupees(exchangeCustomerRefundMinor)}`
+                                          : 'Complete Even Exchange')
                                       : (selectedPayMode === 'cash' ? 'Complete Sale & Generate Bill' :
                                         selectedPayMode === 'upi' ? 'Confirm UPI & Generate Bill' :
                                           selectedPayMode === 'card' ? 'Card Paid & Generate Bill' :
@@ -11471,7 +11471,7 @@ export function App() {
                               if (d.length >= 10) {
                                 e.preventDefault();
                                 const phone10 = d.slice(-10);
-                                const existing = parties.find((p) => p.type === 'customer' && p.phone && p.phone.replace(/\D/g, '').endsWith(phone10));
+                                const existing = parties.find((p) => (p.type === 'customer' || !p.type) && p.customerType !== 'wholesale' && p.phone && p.phone.replace(/\D/g, '').endsWith(phone10));
                                 if (existing) {
                                   setSelectedPartyId(existing.id);
                                   setCustomerSearch(phone10);
@@ -11532,7 +11532,7 @@ export function App() {
                             style={{ background: '#16a34a', borderColor: '#15803d', fontSize: '0.8rem', padding: '0.45rem 0.85rem', fontWeight: 700, whiteSpace: 'nowrap' }}
                             onClick={() => {
                               const phone10 = customerSearch.replace(/\D/g, '').slice(-10);
-                              const existing = parties.find((p) => p.type === 'customer' && p.phone && p.phone.replace(/\D/g, '').endsWith(phone10));
+                              const existing = parties.find((p) => (p.type === 'customer' || !p.type) && p.customerType !== 'wholesale' && p.phone && p.phone.replace(/\D/g, '').endsWith(phone10));
                               if (existing) {
                                 setSelectedPartyId(existing.id);
                                 setCustomerSearch(phone10);
@@ -12026,7 +12026,6 @@ export function App() {
                   user={user}
                   shop={shop}
                   items={items}
-                  parties={parties}
                   branches={branches}
                   selectedBranch={selectedBranchScope}
                   onRefreshData={async () => {
@@ -12196,7 +12195,7 @@ export function App() {
                           fontWeight: 600,
                           padding: '0.45rem 0.85rem',
                         }}
-                        title="Convert Supplier Invoice (PDF, JPG, PNG) to Excel import template without AI"
+                        title="Convert Supplier Invoice (PDF, JPG, PNG) to Excel import template"
                       >
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />

@@ -308,20 +308,24 @@ export function registerInvoices(r: Router) {
     );
     let wholesaleCustomerRow: any = null;
 
-    if (isWholesale && wholesaleCustomerId) {
+    if (isWholesale) {
+      if (!wholesaleCustomerId) {
+        throw bad('Please select a wholesale customer from the Wholesale Customers table for B2B billing.', 'VALIDATION', { field: 'wholesaleCustomerId' });
+      }
       wholesaleCustomerRow = await ctx.db.one<any>(
         'SELECT id, name, company_name, contact_person, phone, email, gstin, state_code, billing_address, shipping_address, credit_limit_minor, custom FROM wholesale_customers WHERE id = ? AND tenant_id = ?',
         [wholesaleCustomerId, tenantId]
       );
-      if (wholesaleCustomerRow) {
-        if (!customerName) customerName = wholesaleCustomerRow.name || wholesaleCustomerRow.companyName || wholesaleCustomerRow.company_name;
-        if (!customerPhone) customerPhone = wholesaleCustomerRow.phone;
-        if (!customerGstin) customerGstin = wholesaleCustomerRow.gstin;
-        if (!customerAddress) customerAddress = wholesaleCustomerRow.billingAddress || wholesaleCustomerRow.billing_address || wholesaleCustomerRow.address;
-        if (!customerShippingAddress) customerShippingAddress = wholesaleCustomerRow.shippingAddress || wholesaleCustomerRow.shipping_address || customerAddress;
-        if (!customerContactPerson) customerContactPerson = wholesaleCustomerRow.contactPerson || wholesaleCustomerRow.contact_person;
-        if (!customerStateCode) customerStateCode = wholesaleCustomerRow.stateCode || wholesaleCustomerRow.state_code || (wholesaleCustomerRow.gstin ? wholesaleCustomerRow.gstin.slice(0, 2) : null);
+      if (!wholesaleCustomerRow) {
+        throw bad('Selected customer does not exist in Wholesale Customers table. Please select a valid wholesale customer.', 'NOT_FOUND');
       }
+      if (!customerName) customerName = wholesaleCustomerRow.name || wholesaleCustomerRow.companyName || wholesaleCustomerRow.company_name;
+      if (!customerPhone) customerPhone = wholesaleCustomerRow.phone;
+      if (!customerGstin) customerGstin = wholesaleCustomerRow.gstin;
+      if (!customerAddress) customerAddress = wholesaleCustomerRow.billingAddress || wholesaleCustomerRow.billing_address || wholesaleCustomerRow.address;
+      if (!customerShippingAddress) customerShippingAddress = wholesaleCustomerRow.shippingAddress || wholesaleCustomerRow.shipping_address || customerAddress;
+      if (!customerContactPerson) customerContactPerson = wholesaleCustomerRow.contactPerson || wholesaleCustomerRow.contact_person;
+      if (!customerStateCode) customerStateCode = wholesaleCustomerRow.stateCode || wholesaleCustomerRow.state_code || (wholesaleCustomerRow.gstin ? wholesaleCustomerRow.gstin.slice(0, 2) : null);
     } else if (partyId) {
       partyRow = await ctx.db.one<any>(
         'SELECT id, name, phone, email, gstin, state_code, address, custom FROM parties WHERE id = ? AND tenant_id = ?',

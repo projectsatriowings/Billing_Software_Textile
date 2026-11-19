@@ -98,6 +98,7 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
 
   // Product search in Screen 3
   const [productSearchQuery, setProductSearchQuery] = useState('');
+  const [wizardCategoryFilter, setWizardCategoryFilter] = useState('ALL');
   const [branchProducts, setBranchProducts] = useState<any[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [showProductDropdown, setShowProductDropdown] = useState(false);
@@ -228,43 +229,92 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
     branchCtx?.activeBranch,
   ]);
 
-  const checkIsDestinationBranch = useCallback(
-    (trf: StockTransfer | null | undefined) => {
-      if (!trf || !currentBranchObj) return false;
-      const curId = currentBranchObj.id;
-      const curCode = currentBranchObj.code;
-      const curName = (currentBranchObj.name || '').toLowerCase();
-
-      return (
-        trf.toBranch === curId ||
-        trf.toBranch === curCode ||
-        Boolean(trf.toBranchName && trf.toBranchName.toLowerCase() === curName)
-      );
-    },
-    [currentBranchObj]
-  );
-
   const checkIsSourceBranch = useCallback(
     (trf: StockTransfer | null | undefined) => {
-      if (!trf || !currentBranchObj) return false;
-      const curId = currentBranchObj.id;
-      const curCode = currentBranchObj.code;
-      const curName = (currentBranchObj.name || '').toLowerCase();
+      if (!trf) return false;
+      if (user?.id && trf.requestedBy === user.id) return true;
+      if (user?.name != null && trf.requestedByName != null && user.name.trim().toLowerCase() === trf.requestedByName.trim().toLowerCase()) return true;
+      if (user?.username != null && trf.requestedByName != null && user.username.trim().toLowerCase() === trf.requestedByName.trim().toLowerCase()) return true;
 
-      return (
-        trf.fromBranch === curId ||
-        trf.fromBranch === curCode ||
-        Boolean(trf.fromBranchName && trf.fromBranchName.toLowerCase() === curName)
-      );
+      const candidates = new Set<string>();
+      if (user?.branchId) {
+        candidates.add(user.branchId.toLowerCase());
+      } else if (user?.assignedLocation) {
+        candidates.add(user.assignedLocation.toLowerCase());
+      }
+      if (branchCtx?.selectedBranch && branchCtx.selectedBranch.toLowerCase() !== 'all') {
+        candidates.add(branchCtx.selectedBranch.toLowerCase());
+      }
+      if (branchCtx?.selectedBranchCode && branchCtx.selectedBranchCode.toLowerCase() !== 'all') {
+        candidates.add(branchCtx.selectedBranchCode.toLowerCase());
+      }
+      if (currentBranchObj?.id) candidates.add(currentBranchObj.id.toLowerCase());
+      if (currentBranchObj?.code) candidates.add(currentBranchObj.code.toLowerCase());
+      if (currentBranchObj?.name) candidates.add(currentBranchObj.name.toLowerCase());
+
+      const list = branches.length > 0 ? branches : (branchCtx?.branches || []);
+      for (const b of list) {
+        if (candidates.has(b.id.toLowerCase()) || candidates.has(b.code.toLowerCase()) || (b.name && candidates.has(b.name.toLowerCase()))) {
+          candidates.add(b.id.toLowerCase());
+          candidates.add(b.code.toLowerCase());
+          if (b.name) candidates.add(b.name.toLowerCase());
+        }
+      }
+
+      const fromB = (trf.fromBranch || '').toLowerCase();
+      const fromN = (trf.fromBranchName || '').toLowerCase();
+
+      return Boolean((fromB && candidates.has(fromB)) || (fromN && candidates.has(fromN)));
     },
-    [currentBranchObj]
+    [currentBranchObj, user, branchCtx, branches]
+  );
+
+  const checkIsDestinationBranch = useCallback(
+    (trf: StockTransfer | null | undefined) => {
+      if (!trf) return false;
+      // The sending branch / creator can NEVER be the destination branch
+      if (checkIsSourceBranch(trf)) return false;
+      if (user?.id && trf.requestedBy === user.id) return false;
+      if (user?.name != null && trf.requestedByName != null && user.name.trim().toLowerCase() === trf.requestedByName.trim().toLowerCase()) return false;
+      if (user?.username != null && trf.requestedByName != null && user.username.trim().toLowerCase() === trf.requestedByName.trim().toLowerCase()) return false;
+
+      const candidates = new Set<string>();
+      if (user?.branchId) {
+        candidates.add(user.branchId.toLowerCase());
+      } else if (user?.assignedLocation) {
+        candidates.add(user.assignedLocation.toLowerCase());
+      }
+      if (branchCtx?.selectedBranch && branchCtx.selectedBranch.toLowerCase() !== 'all') {
+        candidates.add(branchCtx.selectedBranch.toLowerCase());
+      }
+      if (branchCtx?.selectedBranchCode && branchCtx.selectedBranchCode.toLowerCase() !== 'all') {
+        candidates.add(branchCtx.selectedBranchCode.toLowerCase());
+      }
+      if (currentBranchObj?.id) candidates.add(currentBranchObj.id.toLowerCase());
+      if (currentBranchObj?.code) candidates.add(currentBranchObj.code.toLowerCase());
+      if (currentBranchObj?.name) candidates.add(currentBranchObj.name.toLowerCase());
+
+      const list = branches.length > 0 ? branches : (branchCtx?.branches || []);
+      for (const b of list) {
+        if (candidates.has(b.id.toLowerCase()) || candidates.has(b.code.toLowerCase()) || (b.name && candidates.has(b.name.toLowerCase()))) {
+          candidates.add(b.id.toLowerCase());
+          candidates.add(b.code.toLowerCase());
+          if (b.name) candidates.add(b.name.toLowerCase());
+        }
+      }
+
+      const toB = (trf.toBranch || '').toLowerCase();
+      const toN = (trf.toBranchName || '').toLowerCase();
+
+      return Boolean((toB && candidates.has(toB)) || (toN && candidates.has(toN)));
+    },
+    [currentBranchObj, user, branchCtx, branches, checkIsSourceBranch]
   );
 
   const loadBranches = async () => {
     try {
       setLoadingBranches(true);
-      const endpoint = isSuperAdmin ? '/api/branches' : '/api/branches?for=transfer_destinations';
-      const res = await api<{ branches: Branch[] }>(endpoint);
+      const res = await api<{ branches: Branch[] }>('/api/branches?for=transfer_destinations');
       const bList = res.branches || [];
       setBranches(bList);
     } catch (err: any) {
@@ -417,6 +467,7 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
     setWizardLines([]);
     setWizardNotes('');
     setProductSearchQuery('');
+    setWizardCategoryFilter('ALL');
     setBranchProducts([]);
     setShowProductDropdown(false);
     setWizardTransferDate(new Date().toISOString().split('T')[0]);
@@ -428,16 +479,26 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
     if (activeView === 'create_step2' && wizardFromBranch) {
       loadSourceBranchProducts();
     }
-  }, [activeView, wizardFromBranch, productSearchQuery]);
+  }, [activeView, wizardFromBranch, productSearchQuery, wizardCategoryFilter]);
 
   const loadSourceBranchProducts = async () => {
     if (!wizardFromBranch) return;
     const currentSeq = ++searchSeqRef.current;
     try {
       setLoadingProducts(true);
-      const res = await getBranchStock(wizardFromBranch, productSearchQuery.trim());
+      const res = await getBranchStock(wizardFromBranch, productSearchQuery.trim(), 100, wizardCategoryFilter);
       if (searchSeqRef.current === currentSeq) {
-        setBranchProducts(res.items || []);
+        const raw = res.items || [];
+        const seen = new Set<string>();
+        const deduplicated: typeof raw = [];
+        for (const p of raw) {
+          const key = (p.sku ? `sku:${String(p.sku).trim().toUpperCase()}` : (p.barcode ? `bc:${String(p.barcode).trim()}` : `name:${String(p.name).trim().toLowerCase()}`));
+          if (!seen.has(key)) {
+            seen.add(key);
+            deduplicated.push(p);
+          }
+        }
+        setBranchProducts(deduplicated);
       }
     } catch (err: any) {
       if (searchSeqRef.current === currentSeq) {
@@ -450,6 +511,16 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
       }
     }
   };
+
+  const wizardCategories = useMemo(() => {
+    const cats = new Set<string>();
+    for (const p of branchProducts) {
+      if (p.category && String(p.category).trim()) {
+        cats.add(String(p.category).trim());
+      }
+    }
+    return Array.from(cats).sort();
+  }, [branchProducts]);
 
   // Load details for Screen 5 & 6
   const handleViewTransferDetails = async (id: string) => {
@@ -525,7 +596,12 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
 
   // Screen 3: Add product to transfer list
   const handleAddProductToTransfer = (prod: any) => {
-    if (wizardLines.some((l) => l.itemId === prod.id)) {
+    const isAlreadyAdded = wizardLines.some((l) =>
+      l.itemId === prod.id ||
+      (prod.sku && l.sku && l.sku.trim().toUpperCase() === prod.sku.trim().toUpperCase()) ||
+      (prod.barcode && l.barcode && l.barcode.trim() === prod.barcode.trim())
+    );
+    if (isAlreadyAdded) {
       showToast(`"${prod.name}" is already in the transfer list. Adjust its quantity below.`, 'info');
       setShowProductDropdown(false);
       return;
@@ -783,22 +859,6 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
             ● Partially Received
           </span>
         );
-      case 'approved':
-        return (
-          <span
-            style={{
-              background: '#f3e8ff',
-              color: '#7e22ce',
-              border: '1px solid #e9d5ff',
-              padding: '0.25rem 0.65rem',
-              borderRadius: '9999px',
-              fontSize: '0.78rem',
-              fontWeight: 700,
-            }}
-          >
-            ● Approved
-          </span>
-        );
       case 'cancelled':
       case 'rejected':
         return (
@@ -816,20 +876,26 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
             ● {status === 'cancelled' ? 'Cancelled' : 'Rejected'}
           </span>
         );
+      case 'draft':
+      case 'requested':
+      case 'approved':
       default:
         return (
           <span
             style={{
-              background: '#f1f5f9',
-              color: '#475569',
-              border: '1px solid #e2e8f0',
+              background: '#fef3c7',
+              color: '#b45309',
+              border: '1px solid #fde68a',
               padding: '0.25rem 0.65rem',
               borderRadius: '9999px',
               fontSize: '0.78rem',
               fontWeight: 700,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
             }}
           >
-            ● Draft
+            ● Pending
           </span>
         );
     }
@@ -970,14 +1036,12 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
             }}
           >
 
-            {/* Incoming Transfers Alert Banner */}
+            {/* Incoming Transfers Alert Banner - Dispatched / In Transit Only */}
             {(() => {
               const incomingPending = transfers.filter(
                 (t) =>
                   checkIsDestinationBranch(t) &&
-                  t.status !== 'completed' &&
-                  t.status !== 'cancelled' &&
-                  t.status !== 'rejected'
+                  (t.status === 'in_transit' || t.status === 'partially_received')
               );
 
               if (incomingPending.length === 0) return null;
@@ -1017,10 +1081,10 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                     </div>
                     <div>
                       <div style={{ fontWeight: 800, color: '#065f46', fontSize: '0.92rem' }}>
-                        {incomingPending.length} Incoming Stock Transfer{incomingPending.length > 1 ? 's' : ''} Awaiting Acceptance
+                        {incomingPending.length} Incoming Stock Transfer{incomingPending.length > 1 ? 's' : ''} In Transit
                       </div>
                       <div style={{ fontSize: '0.8rem', color: '#047857', marginTop: '2px' }}>
-                        Transfers sent to {currentBranchObj?.name || 'your branch'}. Click <strong>Accept Transfer</strong> in the table below to credit stock into your live inventory.
+                        Transfers dispatched to {currentBranchObj?.name || 'your branch'}. Click <strong>Receive Stock</strong> in the table below to credit stock into your live inventory.
                       </div>
                     </div>
                   </div>
@@ -1264,11 +1328,50 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                               View
                             </button>
 
-                            {/* Accept Transfer button: Destination branch ONLY */}
-                            {checkIsDestinationBranch(trf) &&
-                              trf.status !== 'completed' &&
-                              trf.status !== 'cancelled' &&
-                              trf.status !== 'rejected' && (
+                            {/* Dispatch button: Displayed when Pending and not destination-only */}
+                            {(() => {
+                              const isPending = ['draft', 'requested', 'approved', 'pending'].includes(trf.status);
+                              const isDestOnly = !isSuperAdmin && checkIsDestinationBranch(trf) && !checkIsSourceBranch(trf) && trf.requestedBy !== user?.id;
+                              const canDispatchTrf = isPending && !isDestOnly;
+                              if (!canDispatchTrf) return null;
+                              return (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    handleViewTransferDetails(trf.id);
+                                    setShowDispatchModal(true);
+                                  }}
+                                  style={{
+                                    background: 'linear-gradient(135deg, #4f46e5 0%, #4338ca 100%)',
+                                    color: '#ffffff',
+                                    border: 'none',
+                                    padding: '0.35rem 0.75rem',
+                                    borderRadius: '6px',
+                                    fontSize: '0.8rem',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    boxShadow: '0 2px 6px rgba(79, 70, 229, 0.3)',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                  }}
+                                >
+                                  <TruckIcon size={13} /> Dispatch
+                                </button>
+                              );
+                            })()}
+
+                            {/* Receive Stock button: Destination branch ONLY AFTER dispatch (In Transit) - NEVER for sending branch */}
+                            {(() => {
+                              const isTrfSending =
+                                checkIsSourceBranch(trf) ||
+                                (Boolean(user?.id) && trf.requestedBy === user?.id) ||
+                                (trf.requestedByName != null && user?.name != null && user.name.trim().toLowerCase() === trf.requestedByName.trim().toLowerCase()) ||
+                                (trf.requestedByName != null && user?.username != null && user.username.trim().toLowerCase() === trf.requestedByName.trim().toLowerCase());
+                              if (trf.status !== 'in_transit' || isTrfSending) return null;
+                              const canReceiveTrf = !isTrfSending && (checkIsDestinationBranch(trf) || isSuperAdmin);
+                              if (!canReceiveTrf) return null;
+                              return (
                                 <button
                                   type="button"
                                   onClick={() => handleDirectAccept(trf.id)}
@@ -1288,9 +1391,10 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                                     gap: '4px',
                                   }}
                                 >
-                                  <CheckCircleIcon size={13} /> {submittingAcceptId === trf.id ? 'Accepting...' : 'Accept Transfer'}
+                                  <CheckCircleIcon size={13} /> {submittingAcceptId === trf.id ? 'Receiving...' : 'Receive Stock'}
                                 </button>
-                              )}
+                              );
+                            })()}
                           </div>
                         </td>
                       </tr>
@@ -1649,60 +1753,90 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
           {/* Stepper Progress */}
           {renderCreateStepper(2)}
 
-          {/* Product Search Input with Barcode Icon */}
+          {/* Product Search Input with Barcode Icon & Category Filter */}
           <div style={{ position: 'relative', marginBottom: '1.5rem' }}>
-            <div style={{ position: 'relative' }}>
-              <input
-                type="text"
-                className="form-input"
-                placeholder="Search products by name, SKU or barcode..."
-                value={productSearchQuery}
-                onFocus={() => setShowProductDropdown(true)}
-                onChange={(e) => {
-                  setProductSearchQuery(e.target.value);
-                  setShowProductDropdown(true);
-                }}
-                style={{
-                  borderRadius: '10px',
-                  borderColor: '#cbd5e1',
-                  padding: '0.75rem 3rem 0.75rem 2.5rem',
-                  fontSize: '0.92rem',
-                  width: '100%',
-                }}
-              />
-              <span
-                style={{
-                  position: 'absolute',
-                  left: '12px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: '#94a3b8',
-                }}
-              >
-                <SearchIcon size={18} />
-              </span>
-              <button
-                type="button"
-                title="Barcode scanner"
-                onClick={() => {
-                  showToast('Barcode scanner ready. Focus search bar to scan item.', 'info');
-                }}
-                style={{
-                  position: 'absolute',
-                  right: '10px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: '#f1f5f9',
-                  border: '1px solid #cbd5e1',
-                  borderRadius: '6px',
-                  padding: '0.3rem 0.5rem',
-                  fontSize: '0.75rem',
-                  color: '#475569',
-                  cursor: 'pointer',
-                }}
-              >
-                |||| Barcode
-              </button>
+            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+              <div style={{ position: 'relative', flex: 1 }}>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="Search products by name, SKU or barcode..."
+                  value={productSearchQuery}
+                  onFocus={() => setShowProductDropdown(true)}
+                  onChange={(e) => {
+                    setProductSearchQuery(e.target.value);
+                    setShowProductDropdown(true);
+                  }}
+                  style={{
+                    borderRadius: '10px',
+                    borderColor: '#cbd5e1',
+                    padding: '0.75rem 3rem 0.75rem 2.5rem',
+                    fontSize: '0.92rem',
+                    width: '100%',
+                  }}
+                />
+                <span
+                  style={{
+                    position: 'absolute',
+                    left: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: '#94a3b8',
+                  }}
+                >
+                  <SearchIcon size={18} />
+                </span>
+                <button
+                  type="button"
+                  title="Barcode scanner"
+                  onClick={() => {
+                    showToast('Barcode scanner ready. Focus search bar to scan item.', 'info');
+                  }}
+                  style={{
+                    position: 'absolute',
+                    right: '10px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: '#f1f5f9',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '6px',
+                    padding: '0.3rem 0.5rem',
+                    fontSize: '0.75rem',
+                    color: '#475569',
+                    cursor: 'pointer',
+                  }}
+                >
+                  |||| Barcode
+                </button>
+              </div>
+
+              {wizardCategories.length > 0 && (
+                <select
+                  className="form-input"
+                  value={wizardCategoryFilter}
+                  onChange={(e) => {
+                    setWizardCategoryFilter(e.target.value);
+                    setShowProductDropdown(true);
+                  }}
+                  style={{
+                    width: '180px',
+                    borderRadius: '10px',
+                    borderColor: '#cbd5e1',
+                    padding: '0.75rem 0.85rem',
+                    fontSize: '0.88rem',
+                    background: '#ffffff',
+                    color: '#334155',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <option value="ALL">All Categories</option>
+                  {wizardCategories.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
 
             {/* Dropdown Results */}
@@ -1752,7 +1886,11 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                   </div>
                 ) : (
                   branchProducts.map((p) => {
-                    const isAlreadyAdded = wizardLines.some((l) => l.itemId === p.id);
+                    const isAlreadyAdded = wizardLines.some((l) =>
+                      l.itemId === p.id ||
+                      (p.sku && l.sku && l.sku.trim().toUpperCase() === p.sku.trim().toUpperCase()) ||
+                      (p.barcode && l.barcode && l.barcode.trim() === p.barcode.trim())
+                    );
                     const stock = p.availableStockUnits;
                     const isOutOfStock = stock <= 0;
                     return (
@@ -2371,36 +2509,78 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
               </div>
 
               {/* Action buttons */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
-                <button
-                  type="button"
-                  onClick={handlePrintTransferNote}
-                  style={{
-                    background: '#ffffff',
-                    border: '1px solid #cbd5e1',
-                    color: '#334155',
-                    padding: '0.55rem 1rem',
-                    borderRadius: '8px',
-                    fontSize: '0.84rem',
-                    fontWeight: 600,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.45rem',
-                    cursor: 'pointer',
-                    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
-                    transition: 'all 0.15s ease',
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = '#f8fafc')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = '#ffffff')}
-                >
-                  <PrinterIcon size={16} /> Print Transfer Note
-                </button>
+              {(() => {
+                const isPending = ['draft', 'requested', 'approved', 'pending'].includes(detailedTransfer.status);
+                const isInTransit = detailedTransfer.status === 'in_transit';
 
-                {/* Accept Transfer Button: Destination branch ONLY */}
-                {detailedTransfer.status !== 'completed' &&
-                  detailedTransfer.status !== 'cancelled' &&
-                  detailedTransfer.status !== 'rejected' && (
-                    checkIsDestinationBranch(detailedTransfer) ? (
+                // Strict branch role checks
+                const isSendingBranch = 
+                  checkIsSourceBranch(detailedTransfer) || 
+                  (Boolean(user?.id) && detailedTransfer.requestedBy === user?.id) ||
+                  (detailedTransfer.requestedByName != null && user?.name != null && user.name.trim().toLowerCase() === detailedTransfer.requestedByName.trim().toLowerCase()) ||
+                  (detailedTransfer.requestedByName != null && user?.username != null && user.username.trim().toLowerCase() === detailedTransfer.requestedByName.trim().toLowerCase());
+                const isDestBranch = !isSendingBranch && (checkIsDestinationBranch(detailedTransfer) || isSuperAdmin);
+
+                const canDispatch = isPending && isSendingBranch;
+                // STRICTLY REMOVE RECEIVE STOCK FOR SENDING BRANCH
+                const canReceive = isInTransit && !isSendingBranch && isDestBranch;
+                const canCancel = isPending && (isSendingBranch || isSuperAdmin);
+
+                return (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      onClick={handlePrintTransferNote}
+                      style={{
+                        background: '#ffffff',
+                        border: '1px solid #cbd5e1',
+                        color: '#334155',
+                        padding: '0.6rem 1.1rem',
+                        borderRadius: '8px',
+                        fontSize: '0.86rem',
+                        fontWeight: 600,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.45rem',
+                        cursor: 'pointer',
+                        boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
+                        transition: 'all 0.15s ease',
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = '#f8fafc')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = '#ffffff')}
+                    >
+                      <PrinterIcon size={16} /> Print Transfer Note
+                    </button>
+
+                    {/* 1. Dispatch Transfer Button: Displayed prominently when Pending */}
+                    {canDispatch && (
+                      <button
+                        type="button"
+                        onClick={() => setShowDispatchModal(true)}
+                        disabled={submittingDispatch}
+                        style={{
+                          background: 'linear-gradient(135deg, #4f46e5 0%, #3730a3 100%)',
+                          color: '#ffffff',
+                          border: 'none',
+                          padding: '0.65rem 1.45rem',
+                          borderRadius: '8px',
+                          fontSize: '0.88rem',
+                          fontWeight: 700,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.55rem',
+                          cursor: submittingDispatch ? 'not-allowed' : 'pointer',
+                          boxShadow: '0 4px 14px rgba(79, 70, 229, 0.45)',
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        <TruckIcon size={18} />
+                        <span>{submittingDispatch ? 'Dispatching...' : 'Dispatch Transfer'}</span>
+                      </button>
+                    )}
+
+                    {/* 2. Receive Stock Button: Destination branch ONLY AFTER dispatch (In Transit) - NEVER for sending branch */}
+                    {canReceive && (
                       <button
                         type="button"
                         onClick={() => handleDirectAccept(detailedTransfer.id)}
@@ -2409,59 +2589,85 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                           background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
                           color: '#ffffff',
                           border: 'none',
-                          padding: '0.55rem 1.25rem',
+                          padding: '0.65rem 1.45rem',
                           borderRadius: '8px',
-                          fontSize: '0.84rem',
+                          fontSize: '0.88rem',
                           fontWeight: 700,
                           display: 'inline-flex',
                           alignItems: 'center',
-                          gap: '0.45rem',
+                          gap: '0.55rem',
                           cursor: submittingAcceptId === detailedTransfer.id ? 'not-allowed' : 'pointer',
-                          boxShadow: '0 2px 10px rgba(22, 163, 74, 0.35)',
+                          boxShadow: '0 4px 14px rgba(22, 163, 74, 0.45)',
+                          transition: 'all 0.15s ease',
                         }}
                       >
-                        <CheckCircleIcon size={16} /> {submittingAcceptId === detailedTransfer.id ? 'Accepting...' : 'Accept Transfer'}
+                        <CheckCircleIcon size={18} />
+                        <span>{submittingAcceptId === detailedTransfer.id ? 'Receiving...' : 'Receive Stock'}</span>
                       </button>
-                    ) : (
+                    )}
+
+                    {/* 3. Awaiting Dispatch Indicator: Only for receiving branch while transfer is Pending */}
+                    {isPending && !isSendingBranch && isDestBranch && (
                       <div
                         style={{
-                          padding: '0.5rem 0.95rem',
+                          padding: '0.55rem 1rem',
+                          background: '#fffbeb',
+                          border: '1px solid #fde68a',
+                          borderRadius: '8px',
+                          fontSize: '0.84rem',
+                          color: '#92400e',
+                          fontWeight: 600,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.45rem',
+                        }}
+                      >
+                        <ClockIcon size={16} /> Awaiting dispatch from {detailedTransfer.fromBranchName || detailedTransfer.fromBranch}
+                      </div>
+                    )}
+
+                    {/* 4. In Transit Indicator: For sending branch while transfer is In Transit */}
+                    {isInTransit && isSendingBranch && (
+                      <div
+                        style={{
+                          padding: '0.55rem 1rem',
                           background: '#eff6ff',
                           border: '1px solid #bfdbfe',
                           borderRadius: '8px',
-                          fontSize: '0.82rem',
+                          fontSize: '0.84rem',
                           color: '#1e40af',
                           fontWeight: 600,
                           display: 'inline-flex',
                           alignItems: 'center',
-                          gap: '0.4rem',
+                          gap: '0.45rem',
                         }}
                       >
-                        <TruckIcon size={16} /> Awaiting acceptance by {detailedTransfer.toBranchName || detailedTransfer.toBranch}
+                        <TruckIcon size={16} /> Dispatched · In transit to {detailedTransfer.toBranchName || detailedTransfer.toBranch}
                       </div>
-                    )
-                  )}
+                    )}
 
-                {/* Cancel Button */}
-                {['draft', 'requested'].includes(detailedTransfer.status) && (
-                  <button
-                    type="button"
-                    onClick={handleCancelTransfer}
-                    style={{
-                      background: '#fee2e2',
-                      color: '#b91c1c',
-                      border: '1px solid #fecaca',
-                      padding: '0.55rem 0.95rem',
-                      borderRadius: '8px',
-                      fontSize: '0.84rem',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Cancel Transfer
-                  </button>
-                )}
-              </div>
+                    {/* Cancel Button: Allowed only when Pending */}
+                    {canCancel && (
+                      <button
+                        type="button"
+                        onClick={handleCancelTransfer}
+                        style={{
+                          background: '#fee2e2',
+                          color: '#b91c1c',
+                          border: '1px solid #fecaca',
+                          padding: '0.6rem 1rem',
+                          borderRadius: '8px',
+                          fontSize: '0.86rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Cancel Transfer
+                      </button>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
 
             {/* 4 Modern Stat Cards */}
@@ -2785,7 +2991,11 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                                 )}
                               </td>
                               <td style={{ padding: '0.85rem 1rem', textAlign: 'center', fontWeight: 700, color: '#0f172a' }}>
-                                {l.qtyMilli / 1000}
+                                {Boolean(detailedTransfer.dispatchedAt) || ['in_transit', 'completed', 'received', 'partially_received'].includes(detailedTransfer.status) ? (
+                                  l.qtyMilli / 1000
+                                ) : (
+                                  <span style={{ color: '#94a3b8', fontSize: '0.82rem' }}>—</span>
+                                )}
                               </td>
                               <td style={{ padding: '0.85rem 1rem', textAlign: 'center' }}>
                                 {detailedTransfer.status === 'completed' || detailedTransfer.status === 'partially_received' ? (
@@ -3055,9 +3265,10 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                     </div>
                   </div>
 
-                  {/* Step 2: In Transit */}
+                  {/* Step 2: Dispatched & In Transit */}
                   {(() => {
-                    const isDispatched = Boolean(detailedTransfer.dispatchedAt) || ['in_transit', 'completed', 'partially_received'].includes(detailedTransfer.status);
+                    const isCancelled = ['cancelled', 'rejected'].includes(detailedTransfer.status);
+                    const isDispatched = Boolean(detailedTransfer.dispatchedAt) || ['in_transit', 'completed', 'received', 'partially_received'].includes(detailedTransfer.status);
                     return (
                       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.85rem', position: 'relative', marginBottom: '1.25rem', zIndex: 1 }}>
                         <div
@@ -3065,7 +3276,7 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                             width: '24px',
                             height: '24px',
                             borderRadius: '50%',
-                            background: isDispatched ? '#16a34a' : (detailedTransfer.status === 'in_transit' ? '#2563eb' : '#cbd5e1'),
+                            background: isDispatched ? '#16a34a' : (isCancelled ? '#ef4444' : '#cbd5e1'),
                             color: '#ffffff',
                             display: 'flex',
                             alignItems: 'center',
@@ -3076,25 +3287,29 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                             boxShadow: isDispatched ? '0 2px 4px rgba(22, 163, 74, 0.3)' : 'none',
                           }}
                         >
-                          {isDispatched ? '✓' : '●'}
+                          {isDispatched ? '✓' : (isCancelled ? '✕' : '○')}
                         </div>
                         <div>
                           <div style={{ fontWeight: 700, color: '#1e293b', fontSize: '0.88rem' }}>
                             Dispatched &amp; In Transit
                           </div>
                           <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '2px' }}>
-                            {detailedTransfer.dispatchedAt
-                              ? `Dispatched ${new Date(detailedTransfer.dispatchedAt).toLocaleString('en-IN')}`
-                              : (isDispatched ? 'Dispatched' : 'Awaiting dispatch at source branch')}
+                            {isCancelled
+                              ? 'Transfer cancelled'
+                              : detailedTransfer.dispatchedAt
+                                ? `Dispatched ${new Date(detailedTransfer.dispatchedAt).toLocaleString('en-IN')}`
+                                : (isDispatched ? 'Dispatched' : `Awaiting dispatch from ${detailedTransfer.fromBranchName || 'source branch'}`)}
                           </div>
                         </div>
                       </div>
                     );
                   })()}
 
-                  {/* Step 3: Received at Target Branch */}
+                  {/* Step 3: Received at Destination */}
                   {(() => {
-                    const isReceived = Boolean(detailedTransfer.receivedAt) || ['completed', 'partially_received'].includes(detailedTransfer.status);
+                    const isCancelled = ['cancelled', 'rejected'].includes(detailedTransfer.status);
+                    const isDispatched = Boolean(detailedTransfer.dispatchedAt) || ['in_transit', 'completed', 'received', 'partially_received'].includes(detailedTransfer.status);
+                    const isReceived = Boolean(detailedTransfer.receivedAt) || ['completed', 'received', 'partially_received'].includes(detailedTransfer.status);
                     return (
                       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.85rem', position: 'relative', marginBottom: '1.25rem', zIndex: 1 }}>
                         <div
@@ -3102,7 +3317,7 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                             width: '24px',
                             height: '24px',
                             borderRadius: '50%',
-                            background: isReceived ? '#16a34a' : '#cbd5e1',
+                            background: isReceived ? '#16a34a' : (isCancelled ? '#ef4444' : '#cbd5e1'),
                             color: '#ffffff',
                             display: 'flex',
                             alignItems: 'center',
@@ -3113,25 +3328,33 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                             boxShadow: isReceived ? '0 2px 4px rgba(22, 163, 74, 0.3)' : 'none',
                           }}
                         >
-                          {isReceived ? '✓' : '○'}
+                          {isReceived ? '✓' : (isCancelled ? '✕' : '○')}
                         </div>
                         <div>
                           <div style={{ fontWeight: 700, color: '#1e293b', fontSize: '0.88rem' }}>
                             Received at Destination
                           </div>
                           <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '2px' }}>
-                            {detailedTransfer.receivedAt
-                              ? `Received ${new Date(detailedTransfer.receivedAt).toLocaleString('en-IN')}`
-                              : (isReceived ? 'Received at branch' : `Pending receipt at ${detailedTransfer.toBranchName}`)}
+                            {isCancelled
+                              ? 'Transfer cancelled'
+                              : detailedTransfer.receivedAt
+                                ? `Received ${new Date(detailedTransfer.receivedAt).toLocaleString('en-IN')}`
+                                : (isReceived
+                                    ? 'Received at branch'
+                                    : (isDispatched
+                                        ? `In transit to ${detailedTransfer.toBranchName || 'destination'}`
+                                        : 'Awaiting dispatch & receipt'))}
                           </div>
                         </div>
                       </div>
                     );
                   })()}
 
-                  {/* Step 4: Stock Updated */}
+                  {/* Step 4: Inventory Ledger Synchronized */}
                   {(() => {
-                    const isStockUpdated = Boolean(detailedTransfer.receivedAt) || ['completed', 'partially_received'].includes(detailedTransfer.status);
+                    const isCancelled = ['cancelled', 'rejected'].includes(detailedTransfer.status);
+                    const isDispatched = Boolean(detailedTransfer.dispatchedAt) || ['in_transit', 'completed', 'received', 'partially_received'].includes(detailedTransfer.status);
+                    const isStockUpdated = Boolean(detailedTransfer.receivedAt) || ['completed', 'received', 'partially_received'].includes(detailedTransfer.status);
                     return (
                       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.85rem', position: 'relative', marginBottom: '1.25rem', zIndex: 1 }}>
                         <div
@@ -3139,7 +3362,7 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                             width: '24px',
                             height: '24px',
                             borderRadius: '50%',
-                            background: isStockUpdated ? '#16a34a' : '#cbd5e1',
+                            background: isStockUpdated ? '#16a34a' : (isCancelled ? '#ef4444' : '#cbd5e1'),
                             color: '#ffffff',
                             display: 'flex',
                             alignItems: 'center',
@@ -3150,25 +3373,31 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                             boxShadow: isStockUpdated ? '0 2px 4px rgba(22, 163, 74, 0.3)' : 'none',
                           }}
                         >
-                          {isStockUpdated ? '✓' : '○'}
+                          {isStockUpdated ? '✓' : (isCancelled ? '✕' : '○')}
                         </div>
                         <div>
                           <div style={{ fontWeight: 700, color: '#1e293b', fontSize: '0.88rem' }}>
                             Inventory Ledger Synchronized
                           </div>
                           <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '2px' }}>
-                            {isStockUpdated
-                              ? `+Stock added at ${detailedTransfer.toBranchName}`
-                              : 'Pending receipt confirmation'}
+                            {isCancelled
+                              ? 'Transfer cancelled'
+                              : isStockUpdated
+                                ? `+Stock added at ${detailedTransfer.toBranchName || 'destination'}`
+                                : (isDispatched
+                                    ? `Source stock deducted; pending destination receipt`
+                                    : 'Pending destination receipt confirmation')}
                           </div>
                         </div>
                       </div>
                     );
                   })()}
 
-                  {/* Step 5: Completed */}
+                  {/* Step 5: Transfer Completed */}
                   {(() => {
-                    const isCompleted = detailedTransfer.status === 'completed';
+                    const isCancelled = ['cancelled', 'rejected'].includes(detailedTransfer.status);
+                    const isCompleted = ['completed', 'received'].includes(detailedTransfer.status);
+                    const isPartial = detailedTransfer.status === 'partially_received';
                     return (
                       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.85rem', position: 'relative', zIndex: 1 }}>
                         <div
@@ -3176,7 +3405,7 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                             width: '24px',
                             height: '24px',
                             borderRadius: '50%',
-                            background: isCompleted ? '#16a34a' : '#cbd5e1',
+                            background: isCompleted ? '#16a34a' : (isPartial ? '#d97706' : (isCancelled ? '#ef4444' : '#cbd5e1')),
                             color: '#ffffff',
                             display: 'flex',
                             alignItems: 'center',
@@ -3187,18 +3416,22 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                             boxShadow: isCompleted ? '0 2px 4px rgba(22, 163, 74, 0.3)' : 'none',
                           }}
                         >
-                          {isCompleted ? '✓' : '○'}
+                          {isCompleted ? '✓' : (isPartial ? '!' : (isCancelled ? '✕' : '○'))}
                         </div>
                         <div>
                           <div style={{ fontWeight: 700, color: '#1e293b', fontSize: '0.88rem' }}>
                             Transfer Completed
                           </div>
                           <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '2px' }}>
-                            {isCompleted
-                              ? 'Transfer cycle finalized successfully'
-                              : detailedTransfer.status === 'partially_received'
-                                ? 'Partially received with recorded shortage'
-                                : 'Awaiting remaining steps'}
+                            {isCancelled
+                              ? 'Transfer cancelled'
+                              : isCompleted
+                                ? 'Transfer cycle finalized successfully'
+                                : (isPartial
+                                    ? 'Partially received with recorded shortage'
+                                    : (detailedTransfer.status === 'in_transit'
+                                        ? 'Awaiting destination receipt'
+                                        : 'Awaiting dispatch and receipt'))}
                           </div>
                         </div>
                       </div>
@@ -3567,6 +3800,19 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
               </div>
             </div>
 
+            {/* Confirmation Message matching prompt spec */}
+            <div
+              style={{
+                fontSize: '0.92rem',
+                color: '#334155',
+                lineHeight: '1.5',
+                marginBottom: '1rem',
+              }}
+            >
+              Are you sure you want to dispatch this stock transfer to{' '}
+              <strong>{detailedTransfer.toBranchName || detailedTransfer.toBranch}</strong>? Once dispatched, the receiving branch will be able to confirm receipt.
+            </div>
+
             {/* Warning Alert */}
             <div
               style={{
@@ -3587,12 +3833,12 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
               <div>
                 <strong>Stock Deduction Notice:</strong> Confirming dispatch will immediately deduct{' '}
                 <strong>{detailedLines.reduce((acc, l) => acc + (l.qtyMilli / 1000), 0)} units</strong> from{' '}
-                <strong>{detailedTransfer.fromBranchName}</strong> live inventory ledger and transition the status to{' '}
+                <strong>{detailedTransfer.fromBranchName || detailedTransfer.fromBranch}</strong> live inventory ledger and transition the status to{' '}
                 <span style={{ fontWeight: 700, color: '#1d4ed8' }}>In Transit</span>.
               </div>
             </div>
 
-            {/* Actions */}
+            {/* Actions: Go Back and Confirm Dispatch */}
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', alignItems: 'center' }}>
               <button
                 type="button"
@@ -3612,7 +3858,7 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                 onMouseEnter={(e) => (e.currentTarget.style.background = '#f8fafc')}
                 onMouseLeave={(e) => (e.currentTarget.style.background = '#ffffff')}
               >
-                Cancel
+                Go Back
               </button>
               <button
                 type="button"
@@ -3636,7 +3882,7 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                 }}
               >
                 <TruckIcon size={16} />
-                <span>{submittingDispatch ? 'Dispatching Stock...' : 'Confirm Stock Dispatch'}</span>
+                <span>{submittingDispatch ? 'Dispatching...' : 'Confirm Dispatch'}</span>
               </button>
             </div>
           </div>

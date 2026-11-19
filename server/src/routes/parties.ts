@@ -64,7 +64,7 @@ function formatParty(p: any) {
     custom: typeof p.custom === 'string' ? JSON.parse(p.custom) : (p.custom ?? {}),
     contactPerson: (p.custom && typeof p.custom === 'object' && p.custom.contactPerson) ? String(p.custom.contactPerson) : null,
     shippingAddress: (p.custom && typeof p.custom === 'object' && p.custom.shippingAddress) ? String(p.custom.shippingAddress) : null,
-    customerType: (p.custom && typeof p.custom === 'object' && p.custom.customerType) ? String(p.custom.customerType) : 'wholesale',
+    customerType: (p.custom && typeof p.custom === 'object' && p.custom.customerType) ? String(p.custom.customerType) : 'retail',
     active: Boolean(p.active),
     createdAt: p.createdAt ?? p.created_at,
   };
@@ -100,9 +100,15 @@ export function registerParties(r: Router) {
     }
 
     if (type) {
-      sql += ' AND type = ?';
+      sql += ' AND p.type = ?';
       params.push(type);
+    } else {
+      sql += " AND p.type IN ('customer', 'supplier')";
     }
+
+    // Strictly exclude wholesale customers from retail parties API
+    sql += " AND COALESCE(p.custom->>'customerType', '') != 'wholesale' AND p.type != 'wholesale' AND NOT EXISTS (SELECT 1 FROM wholesale_customers wc WHERE wc.id = p.id AND wc.tenant_id = p.tenant_id)";
+
     if (q) {
       sql += ' AND (lower(name) LIKE ? OR phone LIKE ? OR lower(COALESCE(email, \'\')) LIKE ? OR lower(COALESCE(gstin, \'\')) LIKE ?)';
       params.push(`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`);
@@ -135,11 +141,14 @@ export function registerParties(r: Router) {
       [tenantId, ...branchParams],
     );
 
-    // Fetch all customers with active advance
+    // Fetch all customers with active advance (strictly retail)
     const customers = await ctx.db.query(
       `SELECT id, name, phone, gstin, advance_minor
        FROM parties
-       WHERE tenant_id = ? AND type = 'customer' AND active = true${branchClause}`,
+       WHERE tenant_id = ? AND type = 'customer' AND active = true${branchClause}
+         AND COALESCE(custom->>'customerType', '') != 'wholesale'
+         AND type != 'wholesale'
+         AND NOT EXISTS (SELECT 1 FROM wholesale_customers wc WHERE wc.id = parties.id AND wc.tenant_id = parties.tenant_id)`,
       [tenantId, ...branchParams],
     );
 
@@ -246,6 +255,9 @@ export function registerParties(r: Router) {
               COALESCE((SELECT SUM(i.balance_minor) FROM invoices i WHERE i.party_id = p.id AND i.tenant_id = p.tenant_id AND i.branch_id = p.branch_id AND i.status = 'posted'), 0)::bigint AS unpaid_invoices_minor
        FROM parties p
        WHERE p.tenant_id = ? AND p.type = 'customer' AND p.active = true${branchFilter}
+         AND COALESCE(p.custom->>'customerType', '') != 'wholesale'
+         AND p.type != 'wholesale'
+         AND NOT EXISTS (SELECT 1 FROM wholesale_customers wc WHERE wc.id = p.id AND wc.tenant_id = p.tenant_id)
          AND (p.phone = ? OR REPLACE(p.phone, ' ', '') LIKE ? OR p.phone LIKE ?)
        LIMIT 1`,
       [tenantId, ...branchParams, raw, `%${last10}`, `%${last10}`],
@@ -258,6 +270,9 @@ export function registerParties(r: Router) {
                 COALESCE((SELECT SUM(i.balance_minor) FROM invoices i WHERE i.party_id = p.id AND i.tenant_id = p.tenant_id AND i.status = 'posted'), 0)::bigint AS unpaid_invoices_minor
          FROM parties p
          WHERE p.tenant_id = ? AND p.type = 'customer' AND p.active = true
+           AND COALESCE(p.custom->>'customerType', '') != 'wholesale'
+           AND p.type != 'wholesale'
+           AND NOT EXISTS (SELECT 1 FROM wholesale_customers wc WHERE wc.id = p.id AND wc.tenant_id = p.tenant_id)
            AND (p.phone = ? OR REPLACE(p.phone, ' ', '') LIKE ? OR p.phone LIKE ?)
          LIMIT 1`,
         [tenantId, raw, `%${last10}`, `%${last10}`],
@@ -304,7 +319,11 @@ export function registerParties(r: Router) {
       `SELECT p.*,
               COALESCE((SELECT SUM(i.balance_minor) FROM invoices i WHERE i.party_id = p.id AND i.tenant_id = p.tenant_id AND i.branch_id = p.branch_id AND i.status = 'posted'), 0)::bigint AS unpaid_invoices_minor
        FROM parties p
-       WHERE p.id = ? AND p.tenant_id = ?${branchFilter}`,
+       WHERE p.id = ? AND p.tenant_id = ?${branchFilter}
+         AND p.type IN ('customer', 'supplier')
+         AND COALESCE(p.custom->>'customerType', '') != 'wholesale'
+         AND p.type != 'wholesale'
+         AND NOT EXISTS (SELECT 1 FROM wholesale_customers wc WHERE wc.id = p.id AND wc.tenant_id = p.tenant_id)`,
       [ctx.params.id, tenantId, ...branchParams]
     );
     if (!row) throw notFound('Party');
@@ -379,7 +398,12 @@ export function registerParties(r: Router) {
 
     if (b.contactPerson) custom.contactPerson = String(b.contactPerson).trim();
     if (b.shippingAddress) custom.shippingAddress = String(b.shippingAddress).trim();
-    if (b.customerType) custom.customerType = String(b.customerType).trim();
+    if (type === 'customer') {
+      if (b.customerType === 'wholesale' || custom.customerType === 'wholesale') {
+        throw bad('Wholesale customers must be created using the Wholesale Customer module.', 'VALIDATION', { field: 'customerType' });
+      }
+      custom.customerType = 'retail';
+    }
 
     const id = newId('p');
     await ctx.db.tx(async (q) => {
