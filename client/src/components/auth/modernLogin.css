@@ -37,14 +37,14 @@
 
 /* Role-Specific Tokens */
 .modern-login-card.role-super-admin {
-  --role-primary: #5B4DF5;
-  --role-primary-hover: #4838E6;
-  --role-primary-soft: #EEF0FE;
-  --role-ring: #818CF8;
-  --role-ring-soft: rgba(91, 77, 245, 0.12);
-  --role-shadow: rgba(91, 77, 245, 0.35);
-  --role-border: #C7D2FE;
-  --role-banner-bg: linear-gradient(145deg, #4A3EE0 0%, #2A2175 100%);
+  --role-primary: #49364A;
+  --role-primary-hover: #382939;
+  --role-primary-soft: #F5F1F5;
+  --role-ring: #755777;
+  --role-ring-soft: rgba(73, 54, 74, 0.14);
+  --role-shadow: rgba(73, 54, 74, 0.35);
+  --role-border: #D2C4D4;
+  --role-banner-bg: linear-gradient(145deg, #49364A 0%, #241A25 100%);
 }
 
 .modern-login-card.role-store-manager {
@@ -809,7 +809,7 @@
 }
 
 .modern-role-tab.active.tab-super-admin {
-  color: #5B4DF5;
+  color: #49364A;
 }
 
 .modern-role-tab.active.tab-store-manager {
@@ -1187,7 +1187,7 @@
 }
 
 .modern-demo-card-icon.role-admin {
-  color: #5B4DF5;
+  color: #49364A;
 }
 
 .modern-demo-card-icon.role-manager {
