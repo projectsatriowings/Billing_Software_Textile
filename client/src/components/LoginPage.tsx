@@ -2,6 +2,76 @@ import React, { useState } from 'react';
 import { api, setToken, type User, type Shop } from '../api';
 import './auth/modernLogin.css';
 
+// Crisp inline SVG Icons to eliminate all unicode emojis
+const CrownIcon: React.FC<{ size?: number; className?: string }> = ({ size = 16, className = '' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z" />
+    <path d="M3 20h18" strokeWidth="2.4" />
+  </svg>
+);
+
+const StoreIcon: React.FC<{ size?: number; className?: string }> = ({ size = 16, className = '' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+    <polyline points="9 22 9 12 15 12 15 22" />
+  </svg>
+);
+
+const CashierIcon: React.FC<{ size?: number; className?: string }> = ({ size = 16, className = '' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <rect x="2" y="4" width="20" height="16" rx="3" />
+    <line x1="2" y1="10" x2="22" y2="10" />
+    <line x1="6" y1="15" x2="10" y2="15" />
+    <line x1="14" y1="15" x2="18" y2="15" />
+  </svg>
+);
+
+const LightningBoltIcon: React.FC<{ size?: number; className?: string }> = ({ size = 16, className = '' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+  </svg>
+);
+
+const MailIcon: React.FC<{ size?: number; className?: string }> = ({ size = 18, className = '' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+    <polyline points="22,6 12,13 2,6" />
+  </svg>
+);
+
+const UserIcon: React.FC<{ size?: number; className?: string }> = ({ size = 18, className = '' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+    <circle cx="12" cy="7" r="4" />
+  </svg>
+);
+
+const LockIcon: React.FC<{ size?: number; className?: string }> = ({ size = 18, className = '' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+  </svg>
+);
+
+const ShieldLockIcon: React.FC<{ size?: number; className?: string }> = ({ size = 14, className = '' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+  </svg>
+);
+
+const ArrowRightIcon: React.FC<{ size?: number; className?: string }> = ({ size = 16, className = '' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <line x1="5" y1="12" x2="19" y2="12" />
+    <polyline points="12 5 19 12 12 19" />
+  </svg>
+);
+
+const RoleIcon: React.FC<{ role: string; size?: number; className?: string }> = ({ role, size = 16, className = '' }) => {
+  if (role === 'super-admin' || role === 'super_admin') return <CrownIcon size={size} className={className} />;
+  if (role === 'store-manager' || role === 'store_manager') return <StoreIcon size={size} className={className} />;
+  return <CashierIcon size={size} className={className} />;
+};
+
 interface LoginPageProps {
   initialRole?: 'super_admin' | 'store_manager' | 'cashier';
   onSuccess: (data: { token: string; user: User; shop: Shop }) => void;
@@ -157,6 +227,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     placeholder: string;
     btnText: string;
     badge: string;
+    securityTag: string;
   }> = {
     super_admin: {
       key: 'super-admin',
@@ -168,7 +239,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       inputLabel: 'Super Admin Email',
       placeholder: 'demo@billing.local',
       btnText: 'Log In as Super Admin',
-      badge: '👑 HQ Super Admin',
+      badge: 'HQ Super Admin',
+      securityTag: 'HQ Executive Clearance',
     },
     store_manager: {
       key: 'store-manager',
@@ -180,7 +252,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       inputLabel: 'Store Manager Username or Email',
       placeholder: 'manager@billing.local',
       btnText: 'Log In as Store Manager',
-      badge: '🏪 Store Manager',
+      badge: 'Store Manager',
+      securityTag: 'Branch Operations Clearance',
     },
     cashier: {
       key: 'cashier',
@@ -192,7 +265,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       inputLabel: 'Cashier Employee ID or Email',
       placeholder: 'cashier@billing.local',
       btnText: selectedRole === 'cashier2' ? 'Log In as Cashier 2 (Lakshmi)' : 'Log In as Cashier',
-      badge: '💳 Cashier Station',
+      badge: 'Cashier Station',
+      securityTag: 'POS Register Terminal',
     },
   };
 
@@ -225,21 +299,28 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               ) : (
                 <div className="modern-login-top-wordings">
                   <div className="modern-left-badge">
+                    <RoleIcon role={currentMeta.key} size={15} />
                     <span>{currentMeta.badge}</span>
                   </div>
                   <h1 className="modern-left-heading">{currentMeta.heroTitle}</h1>
                   <p className="modern-left-subtitle">{currentMeta.heroSubtitle}</p>
                   <div className="modern-left-feature-chips">
                     <span className="modern-left-chip">
-                      <span className="chip-dot" />
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#34D399" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
                       Multi-Branch Consolidation
                     </span>
                     <span className="modern-left-chip">
-                      <span className="chip-dot" />
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#34D399" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
                       Audit &amp; Reconciliation Controls
                     </span>
                     <span className="modern-left-chip">
-                      <span className="chip-dot" />
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#34D399" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
                       Real-Time Headquarter Sync
                     </span>
                   </div>
@@ -254,12 +335,16 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             ------------------------------------------------------------------ */}
         <div className="modern-login-right">
           <div className="modern-login-form-inner">
-            <div>
-              {/* Top Navigation Row */}
-              <div className="modern-login-top-row">
+            {/* Top Navigation Row */}
+            <div className="modern-login-top-row">
               <div className="modern-brand-logo" onClick={onBackToHome}>
-                <div className="modern-brand-icon">⚡</div>
-                <span>Adaptive Billing</span>
+                <div className="modern-brand-icon">
+                  <LightningBoltIcon size={17} />
+                </div>
+                <div className="modern-brand-text-block">
+                  <span className="modern-brand-title">Adaptive Billing</span>
+                  <span className="modern-brand-badge">ENTERPRISE</span>
+                </div>
               </div>
 
               <button
@@ -276,41 +361,47 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               </button>
             </div>
 
-            {/* 3 Role Selection Segmented Tabs */}
-            <div className="modern-role-tabs-strip">
-              <button
-                type="button"
-                className={`modern-role-tab tab-super-admin ${selectedRole === 'super_admin' ? 'active' : ''}`}
-                onClick={() => handleRoleTabChange('super_admin')}
-              >
-                <span>👑</span>
-                <span>Super Admin</span>
-              </button>
+            {/* Elevated Form Card */}
+            <div className="modern-form-card">
+              {/* 3 Role Selection Segmented Tabs with Icons */}
+              <div className="modern-role-tabs-strip">
+                <button
+                  type="button"
+                  className={`modern-role-tab tab-super-admin ${selectedRole === 'super_admin' ? 'active' : ''}`}
+                  onClick={() => handleRoleTabChange('super_admin')}
+                >
+                  <CrownIcon size={15} className="role-tab-icon" />
+                  <span>Super Admin</span>
+                </button>
 
-              <button
-                type="button"
-                className={`modern-role-tab tab-store-manager ${selectedRole === 'store_manager' ? 'active' : ''}`}
-                onClick={() => handleRoleTabChange('store_manager')}
-              >
-                <span>🏪</span>
-                <span>Store Manager</span>
-              </button>
+                <button
+                  type="button"
+                  className={`modern-role-tab tab-store-manager ${selectedRole === 'store_manager' ? 'active' : ''}`}
+                  onClick={() => handleRoleTabChange('store_manager')}
+                >
+                  <StoreIcon size={15} className="role-tab-icon" />
+                  <span>Store Manager</span>
+                </button>
 
-              <button
-                type="button"
-                className={`modern-role-tab tab-cashier ${isCashier ? 'active' : ''}`}
-                onClick={() => handleRoleTabChange('cashier')}
-              >
-                <span>💳</span>
-                <span>Cashier Counter</span>
-              </button>
-            </div>
+                <button
+                  type="button"
+                  className={`modern-role-tab tab-cashier ${isCashier ? 'active' : ''}`}
+                  onClick={() => handleRoleTabChange('cashier')}
+                >
+                  <CashierIcon size={15} className="role-tab-icon" />
+                  <span>Cashier Counter</span>
+                </button>
+              </div>
 
-            {/* Form Title & Context */}
-            <div className="modern-form-heading-block">
-              <h2 className="modern-form-title">{currentMeta.title}</h2>
-              <p className="modern-form-subtitle">{currentMeta.subtitle}</p>
-            </div>
+              {/* Form Title & Clearance Pill */}
+              <div className="modern-form-heading-block">
+                <div className="modern-security-badge">
+                  <span className="security-pulse-dot" />
+                  <span>{currentMeta.securityTag}</span>
+                </div>
+                <h2 className="modern-form-title">{currentMeta.title}</h2>
+                <p className="modern-form-subtitle">{currentMeta.subtitle}</p>
+              </div>
 
             {error && (
               <div className="modern-error-banner" role="alert">
@@ -327,10 +418,17 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             <form onSubmit={handleSubmit} className="modern-auth-form">
               <div className="modern-input-group">
                 <label className="modern-label" htmlFor="modern-login-email">
-                  <span>{currentMeta.inputLabel}</span>
-                  <span className="req-star">*</span>
+                  <span className="modern-label-title">{currentMeta.inputLabel}</span>
+                  <span className="req-pill">Required</span>
                 </label>
                 <div className="modern-input-wrapper">
+                  <div className="modern-input-icon-slot">
+                    {selectedRole === 'super_admin' ? (
+                      <MailIcon size={17} />
+                    ) : (
+                      <UserIcon size={17} />
+                    )}
+                  </div>
                   <input
                     id="modern-login-email"
                     type={selectedRole === 'super_admin' ? 'email' : 'text'}
@@ -347,10 +445,13 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
               <div className="modern-input-group">
                 <label className="modern-label" htmlFor="modern-login-password">
-                  <span>Password</span>
-                  <span className="req-star">*</span>
+                  <span className="modern-label-title">Password</span>
+                  <span className="req-pill">Required</span>
                 </label>
                 <div className="modern-input-wrapper">
+                  <div className="modern-input-icon-slot">
+                    <LockIcon size={17} />
+                  </div>
                   <input
                     id="modern-login-password"
                     type={showPassword ? 'text' : 'password'}
@@ -389,7 +490,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
                   />
-                  <span>Remember me</span>
+                  <span>Remember my session</span>
                 </label>
 
                 <button
@@ -401,7 +502,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                     setShowForgotModal(true);
                   }}
                 >
-                  Forgot your password?
+                  Forgot password?
                 </button>
               </div>
 
@@ -411,64 +512,99 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 disabled={isLoading}
               >
                 {isLoading ? (
-                  <span>Authenticating...</span>
+                  <span className="btn-loading-flex">
+                    <svg className="spin-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                      <path d="M12 2a10 10 0 0 1 10 10" />
+                    </svg>
+                    <span>Authenticating...</span>
+                  </span>
                 ) : (
-                  <span>{currentMeta.btnText}</span>
+                  <>
+                    <span>{currentMeta.btnText}</span>
+                    <ArrowRightIcon size={17} className="btn-arrow-icon" />
+                  </>
                 )}
               </button>
             </form>
           </div>
 
-          <div>
-            {/* 1-Click Role Demonstrations */}
+            {/* 1-Click Role Demonstrations Cards */}
             <div className="modern-demos-box">
-              <div className="modern-demos-header">1-Click Role Demonstrations</div>
+              <div className="modern-demos-header-row">
+                <span className="modern-demos-header-label">1-Click Role Demonstrations</span>
+                <span className="modern-demos-badge">Instant Fill</span>
+              </div>
               <div className="modern-demos-grid">
                 <button
                   type="button"
-                  className={`modern-demo-chip ${selectedRole === 'super_admin' ? 'active' : ''}`}
+                  className={`modern-demo-card ${selectedRole === 'super_admin' ? 'active' : ''}`}
                   onClick={() => handleRoleTabChange('super_admin')}
                   title="Super Admin (demo@billing.local)"
                 >
-                  <span className="modern-demo-chip-title">👑 Admin</span>
-                  <span className="modern-demo-chip-email">demo@billing.local</span>
+                  <div className="modern-demo-card-icon role-admin">
+                    <CrownIcon size={14} />
+                  </div>
+                  <div className="modern-demo-card-body">
+                    <span className="modern-demo-role-name">Super Admin</span>
+                    <span className="modern-demo-email">demo@billing.local</span>
+                  </div>
+                  {selectedRole === 'super_admin' && <span className="active-pill">Active</span>}
                 </button>
 
                 <button
                   type="button"
-                  className={`modern-demo-chip ${selectedRole === 'store_manager' ? 'active' : ''}`}
+                  className={`modern-demo-card ${selectedRole === 'store_manager' ? 'active' : ''}`}
                   onClick={() => handleRoleTabChange('store_manager')}
                   title="Store Manager (manager@billing.local)"
                 >
-                  <span className="modern-demo-chip-title">🏪 Manager</span>
-                  <span className="modern-demo-chip-email">manager@billing.local</span>
+                  <div className="modern-demo-card-icon role-manager">
+                    <StoreIcon size={14} />
+                  </div>
+                  <div className="modern-demo-card-body">
+                    <span className="modern-demo-role-name">Store Manager</span>
+                    <span className="modern-demo-email">manager@billing.local</span>
+                  </div>
+                  {selectedRole === 'store_manager' && <span className="active-pill">Active</span>}
                 </button>
 
                 <button
                   type="button"
-                  className={`modern-demo-chip ${selectedRole === 'cashier' ? 'active' : ''}`}
+                  className={`modern-demo-card ${selectedRole === 'cashier' ? 'active' : ''}`}
                   onClick={() => handleRoleTabChange('cashier')}
                   title="Cashier 1 (cashier@billing.local)"
                 >
-                  <span className="modern-demo-chip-title">💳 Cashier 1</span>
-                  <span className="modern-demo-chip-email">cashier@billing.local</span>
+                  <div className="modern-demo-card-icon role-cashier">
+                    <CashierIcon size={14} />
+                  </div>
+                  <div className="modern-demo-card-body">
+                    <span className="modern-demo-role-name">Cashier Counter</span>
+                    <span className="modern-demo-email">cashier@billing.local</span>
+                  </div>
+                  {selectedRole === 'cashier' && <span className="active-pill">Active</span>}
                 </button>
 
                 <button
                   type="button"
-                  className={`modern-demo-chip ${selectedRole === 'cashier2' ? 'active' : ''}`}
+                  className={`modern-demo-card ${selectedRole === 'cashier2' ? 'active' : ''}`}
                   onClick={() => handleRoleTabChange('cashier2')}
                   title="Cashier 2 (lakshmi@billing.local)"
                 >
-                  <span className="modern-demo-chip-title">💳 Cashier 2</span>
-                  <span className="modern-demo-chip-email">lakshmi@billing.local</span>
+                  <div className="modern-demo-card-icon role-cashier">
+                    <CashierIcon size={14} />
+                  </div>
+                  <div className="modern-demo-card-body">
+                    <span className="modern-demo-role-name">Cashier 2</span>
+                    <span className="modern-demo-email">lakshmi@billing.local</span>
+                  </div>
+                  {selectedRole === 'cashier2' && <span className="active-pill">Active</span>}
                 </button>
               </div>
             </div>
 
-            {/* Footer Register Link */}
+            {/* Footer Navigation & Security */}
             <div className="modern-footer-row">
-              <span>Don't have an account? </span>
+              <span className="modern-footer-text">Don't have an account? </span>
               <button
                 type="button"
                 className="modern-register-link"
@@ -477,9 +613,13 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 Register Your Business
               </button>
             </div>
+
+            <div className="modern-compliance-row">
+              <ShieldLockIcon size={13} />
+              <span>256-bit SSL Encrypted • Enterprise Multi-Branch Synchronization</span>
+            </div>
           </div>
         </div>
-      </div>
       </div>
 
       {/* Modern Forgot Password Modal */}

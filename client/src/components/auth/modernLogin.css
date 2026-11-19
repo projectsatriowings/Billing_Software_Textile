@@ -218,12 +218,12 @@
    RIGHT HALF: FULL-SCREEN CLEAN LOGIN FORM (Centered Content)
    -------------------------------------------------------------------------- */
 .modern-login-right {
-  padding: 3rem 4.5rem;
+  padding: 2.5rem 3.5rem;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  background: #FFFFFF;
+  background: radial-gradient(circle at 80% 10%, rgba(91, 77, 245, 0.035) 0%, #FAFBFD 40%, #FFFFFF 85%);
   box-sizing: border-box;
   min-height: 100vh;
   overflow-y: auto;
@@ -231,83 +231,120 @@
 
 .modern-login-form-inner {
   width: 100%;
-  max-width: 460px;
+  max-width: 480px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  min-height: calc(100vh - 6rem);
+  gap: 1.25rem;
   box-sizing: border-box;
 }
 
-/* Top Nav Row */
+/* Top Navigation Row */
 .modern-login-top-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 1.5rem;
+  padding: 0 0.25rem;
 }
 
 .modern-brand-logo {
   display: inline-flex;
   align-items: center;
-  gap: 0.65rem;
-  font-size: 1.15rem;
-  font-weight: 800;
-  color: #0F172A;
+  gap: 0.75rem;
   cursor: pointer;
   user-select: none;
 }
 
 .modern-brand-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  background: var(--role-primary);
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--role-primary) 0%, var(--role-primary-hover) 100%);
   color: #FFFFFF;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1rem;
-  transition: background 0.3s ease;
+  box-shadow: 0 4px 12px var(--role-shadow);
+  transition: all 0.3s ease;
+}
+
+.modern-brand-text-block {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.modern-brand-title {
+  font-size: 1.15rem;
+  font-weight: 850;
+  color: #0F172A;
+  letter-spacing: -0.02em;
+}
+
+.modern-brand-badge {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: var(--role-primary);
+  background: var(--role-primary-soft);
+  border: 1px solid var(--role-border);
+  padding: 2px 7px;
+  border-radius: 9999px;
+  text-transform: uppercase;
 }
 
 .modern-btn-back {
-  background: none;
-  border: none;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
   color: #64748B;
-  font-size: 0.825rem;
-  font-weight: 700;
+  font-size: 0.8rem;
+  font-weight: 650;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.4rem 0.75rem;
-  border-radius: 8px;
-  transition: all 0.2s ease;
+  gap: 0.4rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 9999px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .modern-btn-back:hover {
   color: #0F172A;
-  background: #F1F5F9;
+  background: #F8FAFC;
+  border-color: #CBD5E1;
+  transform: translateX(-1px);
+}
+
+/* Elevated Form Card Container */
+.modern-form-card {
+  background: #FFFFFF;
+  border: 1.5px solid #EDF2F7;
+  border-radius: 22px;
+  box-shadow: 0 16px 36px -12px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.02);
+  padding: 2rem 2.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.35rem;
+  transition: border-color 0.3s ease;
 }
 
 /* 3 Role Selection Segmented Tabs */
 .modern-role-tabs-strip {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
+  gap: 5px;
   background: #F1F5F9;
+  border: 1px solid #E2E8F0;
   padding: 5px;
   border-radius: 14px;
-  margin-bottom: 1.75rem;
 }
 
 .modern-role-tab {
-  padding: 0.7rem 0.5rem;
+  padding: 0.65rem 0.5rem;
   border-radius: 10px;
   border: none;
-  font-size: 0.8rem;
+  font-size: 0.785rem;
   font-weight: 700;
   cursor: pointer;
   display: flex;
@@ -320,15 +357,29 @@
   white-space: nowrap;
 }
 
+.modern-role-tab .role-tab-icon {
+  color: #94A3B8;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
 .modern-role-tab:hover:not(.active) {
   color: #0F172A;
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.65);
+}
+
+.modern-role-tab:hover:not(.active) .role-tab-icon {
+  color: #475569;
 }
 
 .modern-role-tab.active {
   background: #FFFFFF;
   color: var(--role-primary);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.modern-role-tab.active .role-tab-icon {
+  color: var(--role-primary);
+  transform: scale(1.05);
 }
 
 .modern-role-tab.active.tab-super-admin {
@@ -345,37 +396,76 @@
 
 /* Form Title Header */
 .modern-form-heading-block {
-  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.modern-security-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: var(--role-primary-soft);
+  border: 1px solid var(--role-border);
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.685rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--role-primary);
+  width: fit-content;
+  margin-bottom: 0.25rem;
+}
+
+.security-pulse-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--role-primary);
+  box-shadow: 0 0 0 3px var(--role-border);
+  animation: pulseSecurityDot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulseSecurityDot {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.9);
+  }
 }
 
 .modern-form-title {
   margin: 0;
   font-size: 1.65rem;
-  font-weight: 800;
+  font-weight: 850;
   color: #0F172A;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
 }
 
 .modern-form-subtitle {
-  margin: 4px 0 0 0;
+  margin: 0;
   font-size: 0.85rem;
   color: #64748B;
-  line-height: 1.45;
+  line-height: 1.5;
 }
 
 /* Alert Error */
 .modern-error-banner {
-  background: #FEE2E2;
-  border: 1px solid #FCA5A5;
+  background: #FEF2F2;
+  border: 1px solid #FECACA;
   color: #B91C1C;
   padding: 0.75rem 1rem;
-  border-radius: 10px;
+  border-radius: 12px;
   font-size: 0.825rem;
   font-weight: 600;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-bottom: 1.25rem;
 }
 
 /* Inputs & Form Groups */
@@ -392,65 +482,102 @@
 }
 
 .modern-label {
-  font-size: 0.825rem;
-  font-weight: 700;
-  color: #334155;
   display: flex;
   align-items: center;
-  gap: 2px;
+  justify-content: space-between;
+  margin-bottom: 0.15rem;
 }
 
-.modern-label .req-star {
-  color: #EF4444;
+.modern-label-title {
+  font-size: 0.825rem;
+  font-weight: 700;
+  color: #1E293B;
+}
+
+.req-pill {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #94A3B8;
+  background: #F1F5F9;
+  padding: 2px 6px;
+  border-radius: 4px;
 }
 
 .modern-input-wrapper {
   position: relative;
   display: flex;
   align-items: center;
+  border: 1.5px solid #E2E8F0;
+  background: #F8FAFC;
+  border-radius: 13px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modern-input-wrapper:hover {
+  border-color: #CBD5E1;
+  background: #FFFFFF;
+}
+
+.modern-input-wrapper:focus-within {
+  background: #FFFFFF;
+  border-color: var(--role-primary);
+  box-shadow: 0 0 0 3.5px var(--role-primary-soft), 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.modern-input-icon-slot {
+  position: absolute;
+  left: 1rem;
+  color: #94A3B8;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease;
+}
+
+.modern-input-wrapper:focus-within .modern-input-icon-slot {
+  color: var(--role-primary);
 }
 
 .modern-input {
   width: 100%;
-  padding: 0.85rem 1.1rem;
-  border-radius: 12px;
-  border: 1.5px solid #E2E8F0;
-  background: #F8FAFC;
+  height: 48px;
+  padding: 0 1rem 0 2.85rem;
+  border: none;
+  background: transparent;
   font-size: 0.925rem;
   font-weight: 600;
   color: #0F172A;
   outline: none;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   box-sizing: border-box;
-}
-
-.modern-input:focus {
-  background: #FFFFFF;
-  border-color: var(--role-primary);
-  box-shadow: 0 0 0 3px var(--role-primary-soft);
 }
 
 .modern-input::placeholder {
   color: #94A3B8;
-  font-weight: 400;
+  font-weight: 450;
 }
 
 .modern-pwd-toggle {
   position: absolute;
-  right: 0.85rem;
-  background: none;
+  right: 0.75rem;
+  width: 32px;
+  height: 32px;
   border: none;
+  background: transparent;
+  border-radius: 8px;
   color: #94A3B8;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0.25rem;
-  transition: color 0.15s ease;
+  transition: all 0.15s ease;
 }
 
 .modern-pwd-toggle:hover {
-  color: #475569;
+  background: #F1F5F9;
+  color: #334155;
 }
 
 /* Utility Row: Remember Me & Forgot Password */
@@ -458,7 +585,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 0.15rem;
+  margin-top: 0.1rem;
 }
 
 .modern-checkbox-label {
@@ -487,7 +614,7 @@
   color: var(--role-primary);
   cursor: pointer;
   padding: 0;
-  transition: color 0.15s ease;
+  transition: opacity 0.15s ease;
 }
 
 .modern-forgot-link:hover {
@@ -497,27 +624,35 @@
 /* Big Vibrant CTA Button */
 .modern-btn-submit {
   width: 100%;
-  padding: 0.95rem;
-  border-radius: 12px;
-  background: var(--role-primary);
+  height: 50px;
+  border-radius: 13px;
+  background: linear-gradient(135deg, var(--role-primary) 0%, var(--role-primary-hover) 100%);
   border: none;
   color: #FFFFFF;
-  font-size: 0.975rem;
+  font-size: 0.95rem;
   font-weight: 800;
+  letter-spacing: -0.01em;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  box-shadow: 0 4px 14px var(--role-shadow);
+  gap: 0.55rem;
+  box-shadow: 0 6px 18px var(--role-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.22);
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  margin-top: 0.4rem;
+  margin-top: 0.25rem;
+}
+
+.modern-btn-submit .btn-arrow-icon {
+  transition: transform 0.2s ease;
 }
 
 .modern-btn-submit:hover:not(:disabled) {
-  background: var(--role-primary-hover);
   transform: translateY(-2px);
-  box-shadow: 0 8px 22px var(--role-shadow);
+  box-shadow: 0 10px 24px var(--role-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.modern-btn-submit:hover:not(:disabled) .btn-arrow-icon {
+  transform: translateX(4px);
 }
 
 .modern-btn-submit:active:not(:disabled) {
@@ -529,79 +664,164 @@
   cursor: not-allowed;
 }
 
-/* 1-Click Role Demonstrations */
-.modern-demos-box {
-  margin-top: 1.5rem;
-  padding-top: 1.25rem;
-  border-top: 1px solid #E2E8F0;
+.btn-loading-flex {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.modern-demos-header {
-  font-size: 0.72rem;
+.spin-icon {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* 1-Click Role Demonstrations Cards */
+.modern-demos-box {
+  background: #FFFFFF;
+  border: 1.5px solid #EDF2F7;
+  border-radius: 18px;
+  padding: 1.25rem 1.4rem;
+  box-shadow: 0 4px 16px -4px rgba(15, 23, 42, 0.04);
+}
+
+.modern-demos-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.modern-demos-header-label {
+  font-size: 0.725rem;
   font-weight: 800;
   text-transform: uppercase;
-  color: #94A3B8;
+  color: #64748B;
   letter-spacing: 0.05em;
-  margin-bottom: 0.65rem;
+}
+
+.modern-demos-badge {
+  font-size: 0.65rem;
+  font-weight: 750;
+  background: #EEF2FF;
+  color: #4F46E5;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .modern-demos-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
 }
 
-.modern-demo-chip {
-  padding: 0.5rem 0.4rem;
-  border-radius: 8px;
-  border: 1px solid #E2E8F0;
+.modern-demo-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 12px;
+  border: 1.5px solid #E2E8F0;
   background: #F8FAFC;
   cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  transition: all 0.15s ease;
-  text-align: center;
+  text-align: left;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.modern-demo-chip:hover {
+.modern-demo-card:hover {
   background: #FFFFFF;
   border-color: var(--role-primary);
   transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
-.modern-demo-chip.active {
+.modern-demo-card.active {
   background: var(--role-primary-soft);
   border-color: var(--role-primary);
+  box-shadow: 0 0 0 1px var(--role-primary);
 }
 
-.modern-demo-chip-title {
-  font-size: 0.72rem;
-  font-weight: 800;
-  color: #1E293B;
+.modern-demo-card-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
   display: flex;
   align-items: center;
-  gap: 3px;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
 }
 
-.modern-demo-chip-email {
-  font-size: 0.6rem;
+.modern-demo-card-icon.role-admin {
+  color: #5B4DF5;
+}
+
+.modern-demo-card-icon.role-manager {
+  color: #0284C7;
+}
+
+.modern-demo-card-icon.role-cashier {
+  color: #0F766E;
+}
+
+.modern-demo-card.active .modern-demo-card-icon {
+  background: #FFFFFF;
+  border-color: var(--role-border);
+}
+
+.modern-demo-card-body {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.modern-demo-role-name {
+  font-size: 0.785rem;
+  font-weight: 800;
+  color: #0F172A;
+  line-height: 1.2;
+}
+
+.modern-demo-email {
+  font-size: 0.65rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   color: #64748B;
-  font-weight: 600;
-  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  margin-top: 1px;
+}
+
+.modern-demo-card .active-pill {
+  position: absolute;
+  top: 5px;
+  right: 6px;
+  font-size: 0.585rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--role-primary);
+  background: #FFFFFF;
+  border: 1px solid var(--role-border);
+  padding: 1px 4px;
+  border-radius: 4px;
+  letter-spacing: 0.03em;
 }
 
 /* Footer Register Row */
 .modern-footer-row {
-  margin-top: 1.25rem;
   text-align: center;
   font-size: 0.825rem;
   color: #64748B;
   font-weight: 500;
+  margin-top: 0.15rem;
 }
 
 .modern-register-link {
@@ -613,10 +833,23 @@
   cursor: pointer;
   padding: 0;
   margin-left: 4px;
+  transition: opacity 0.15s ease;
 }
 
 .modern-register-link:hover {
   text-decoration: underline;
+}
+
+/* Compliance Seal Row */
+.modern-compliance-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  font-size: 0.725rem;
+  color: #94A3B8;
+  font-weight: 500;
+  margin-top: 0.25rem;
 }
 
 /* Responsive Media Queries */
