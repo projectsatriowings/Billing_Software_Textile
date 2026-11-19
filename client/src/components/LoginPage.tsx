@@ -284,11 +284,13 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             ------------------------------------------------------------------ */}
         {(() => {
           const isSuperAdmin = currentMeta.key === 'super-admin';
+          const isCashierRole = currentMeta.key === 'cashier';
+          const isHeroLayout = isSuperAdmin || isCashierRole;
           const hasImage = Boolean(currentMeta.image && !failedImages[currentMeta.image]);
 
-          if (isSuperAdmin) {
+          if (isHeroLayout) {
             return (
-              <div className="modern-login-left super-admin-layout">
+              <div className={`modern-login-left ${isSuperAdmin ? 'super-admin-layout' : 'cashier-layout'}`}>
                 <div className="modern-login-top-wordings">
                   <div className="modern-left-badge">
                     <RoleIcon role={currentMeta.key} size={15} />
