@@ -11,10 +11,13 @@ body.theme-manager,
   --primary-soft: #F5ECF0;
   --primary-light: #F9F5F7;
   --primary-glow: rgba(101, 59, 75, 0.35);
-  --bg: #EFE7EB;          /* Soft rose-oatmeal cream canvas */
+  --bg: #EFE7EB;
+  /* Soft rose-oatmeal cream canvas */
   --bg-cream: #EFE7EB;
-  --surface: #FAF6F8;     /* Light blush cream for all elevated bento cards */
-  --border: #D9C8D0;      /* Defined burgundy-tinted border for card boundaries */
+  --surface: #FAF6F8;
+  /* Light blush cream for all elevated bento cards */
+  --border: #D9C8D0;
+  /* Defined burgundy-tinted border for card boundaries */
   --border-light: #E8D6DE;
   --border-focus: #653B4B;
   --text: #1A0F14;
@@ -886,4 +889,244 @@ body.theme-manager textarea:focus,
   border-color: #653B4B !important;
   outline-color: #653B4B !important;
   box-shadow: 0 0 0 3px rgba(101, 59, 75, 0.18) !important;
+}
+
+/* --------------------------------------------------------------------------
+   14. COMPREHENSIVE BUTTONS & INTERACTIVE CONTROLS UNDER STORE MANAGER ONLY
+   Ensures ALL action buttons, submit buttons, modals, and pills across all
+   modules strictly use Store Manager Deep Burgundy (#653B4B) without leaking
+   to Super Admin or Cashier.
+   -------------------------------------------------------------------------- */
+
+/* Specific Button Classes Across Submodules */
+body.theme-manager .stock-transfer-btn-create,
+.theme-manager .stock-transfer-btn-create,
+body.theme-manager .cat-submit-btn,
+.theme-manager .cat-submit-btn,
+body.theme-manager .cat-bento-submit-btn,
+.theme-manager .cat-bento-submit-btn,
+body.theme-manager .bento-checkout-btn:not(:disabled),
+.theme-manager .bento-checkout-btn:not(:disabled),
+body.theme-manager .btn-checkout,
+.theme-manager .btn-checkout,
+body.theme-manager .btn-proceed-payment,
+.theme-manager .btn-proceed-payment,
+body.theme-manager .bento-quick-add-btn,
+.theme-manager .bento-quick-add-btn,
+body.theme-manager .bento-find-product-btn,
+.theme-manager .bento-find-product-btn,
+body.theme-manager .bento-open-shift-btn,
+.theme-manager .bento-open-shift-btn,
+body.theme-manager .btn-start-shift,
+.theme-manager .btn-start-shift,
+body.theme-manager .btn-start-shopping,
+.theme-manager .btn-start-shopping,
+body.theme-manager .btn-empty-start,
+.theme-manager .btn-empty-start,
+body.theme-manager .bento-add-btn,
+.theme-manager .bento-add-btn,
+body.theme-manager .bento-new-item-btn,
+.theme-manager .bento-new-item-btn,
+body.theme-manager .bento-trigger-scan-btn,
+.theme-manager .bento-trigger-scan-btn,
+body.theme-manager .bento-mobile-scanner-btn,
+.theme-manager .bento-mobile-scanner-btn,
+body.theme-manager .gst-hero-btn-primary,
+.theme-manager .gst-hero-btn-primary,
+body.theme-manager .gst-pill-btn.primary,
+.theme-manager .gst-pill-btn.primary,
+body.theme-manager .gst-import-hero-btn,
+.theme-manager .gst-import-hero-btn,
+body.theme-manager .gst-ca-bundle-btn,
+.theme-manager .gst-ca-bundle-btn,
+body.theme-manager .drawer-btn.primary,
+.theme-manager .drawer-btn.primary,
+body.theme-manager .pos-enroll-btn,
+.theme-manager .pos-enroll-btn,
+body.theme-manager .pos-redeem-points-btn,
+.theme-manager .pos-redeem-points-btn,
+body.theme-manager .invoices-quick-pos-btn,
+.theme-manager .invoices-quick-pos-btn,
+body.theme-manager .invoices-empty-action-btn,
+.theme-manager .invoices-empty-action-btn,
+body.theme-manager .table-empty-state .reset-filter-btn,
+.theme-manager .table-empty-state .reset-filter-btn,
+body.theme-manager .btn-inv-header-primary,
+.theme-manager .btn-inv-header-primary,
+body.theme-manager .inv-btn-primary-blue,
+.theme-manager .inv-btn-primary-blue,
+body.theme-manager .bento-hero-btn.primary,
+.theme-manager .bento-hero-btn.primary,
+body.theme-manager .wizard-btn-submit,
+.theme-manager .wizard-btn-submit,
+body.theme-manager .banner-btn-primary,
+.theme-manager .banner-btn-primary,
+body.theme-manager .hero-btn-primary,
+.theme-manager .hero-btn-primary,
+body.theme-manager .manual-submit-btn,
+.theme-manager .manual-submit-btn {
+  background: linear-gradient(135deg, #7A475B 0%, #653B4B 100%) !important;
+  border-color: #522E3C !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 14px rgba(101, 59, 75, 0.35) !important;
+}
+
+body.theme-manager .stock-transfer-btn-create:hover,
+.theme-manager .stock-transfer-btn-create:hover,
+body.theme-manager .cat-submit-btn:hover,
+.theme-manager .cat-submit-btn:hover,
+body.theme-manager .cat-bento-submit-btn:hover,
+.theme-manager .cat-bento-submit-btn:hover,
+body.theme-manager .bento-checkout-btn:not(:disabled):hover,
+.theme-manager .bento-checkout-btn:not(:disabled):hover,
+body.theme-manager .btn-checkout:hover,
+.theme-manager .btn-checkout:hover,
+body.theme-manager .btn-proceed-payment:hover,
+.theme-manager .btn-proceed-payment:hover,
+body.theme-manager .bento-quick-add-btn:hover:not(:disabled),
+.theme-manager .bento-quick-add-btn:hover:not(:disabled),
+body.theme-manager .bento-find-product-btn:hover,
+.theme-manager .bento-find-product-btn:hover,
+body.theme-manager .bento-open-shift-btn:hover,
+.theme-manager .bento-open-shift-btn:hover,
+body.theme-manager .btn-start-shift:hover,
+.theme-manager .btn-start-shift:hover,
+body.theme-manager .btn-start-shopping:hover,
+.theme-manager .btn-start-shopping:hover,
+body.theme-manager .btn-empty-start:hover,
+.theme-manager .btn-empty-start:hover,
+body.theme-manager .bento-add-btn:hover,
+.theme-manager .bento-add-btn:hover,
+body.theme-manager .bento-new-item-btn:hover,
+.theme-manager .bento-new-item-btn:hover,
+body.theme-manager .bento-trigger-scan-btn:hover,
+.theme-manager .bento-trigger-scan-btn:hover,
+body.theme-manager .bento-mobile-scanner-btn:hover,
+.theme-manager .bento-mobile-scanner-btn:hover,
+body.theme-manager .gst-hero-btn-primary:hover,
+.theme-manager .gst-hero-btn-primary:hover,
+body.theme-manager .gst-pill-btn.primary:hover,
+.theme-manager .gst-pill-btn.primary:hover,
+body.theme-manager .gst-import-hero-btn:hover,
+.theme-manager .gst-import-hero-btn:hover,
+body.theme-manager .gst-ca-bundle-btn:hover,
+.theme-manager .gst-ca-bundle-btn:hover,
+body.theme-manager .drawer-btn.primary:hover,
+.theme-manager .drawer-btn.primary:hover,
+body.theme-manager .pos-enroll-btn:hover:not(:disabled),
+.theme-manager .pos-enroll-btn:hover:not(:disabled),
+body.theme-manager .pos-redeem-points-btn:hover,
+.theme-manager .pos-redeem-points-btn:hover,
+body.theme-manager .invoices-quick-pos-btn:hover,
+.theme-manager .invoices-quick-pos-btn:hover,
+body.theme-manager .invoices-empty-action-btn:hover,
+.theme-manager .invoices-empty-action-btn:hover,
+body.theme-manager .table-empty-state .reset-filter-btn:hover,
+.theme-manager .table-empty-state .reset-filter-btn:hover,
+body.theme-manager .btn-inv-header-primary:hover,
+.theme-manager .btn-inv-header-primary:hover,
+body.theme-manager .inv-btn-primary-blue:hover,
+.theme-manager .inv-btn-primary-blue:hover,
+body.theme-manager .bento-hero-btn.primary:hover,
+.theme-manager .bento-hero-btn.primary:hover,
+body.theme-manager .wizard-btn-submit:hover:not(:disabled),
+.theme-manager .wizard-btn-submit:hover:not(:disabled),
+body.theme-manager .banner-btn-primary:hover,
+.theme-manager .banner-btn-primary:hover,
+body.theme-manager .hero-btn-primary:hover,
+.theme-manager .hero-btn-primary:hover,
+body.theme-manager .manual-submit-btn:hover,
+.theme-manager .manual-submit-btn:hover {
+  background: linear-gradient(135deg, #653B4B 0%, #522E3C 100%) !important;
+  border-color: #3D222D !important;
+  box-shadow: 0 6px 18px rgba(101, 59, 75, 0.48) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* Modals & Forms Submit Buttons */
+body.theme-manager .modal-content button[type="submit"]:not(.btn-secondary):not(.btn-danger):not(.cat-btn-danger):not(.um-btn-secondary),
+.theme-manager .modal-content button[type="submit"]:not(.btn-secondary):not(.btn-danger):not(.cat-btn-danger):not(.um-btn-secondary),
+body.theme-manager .modal-footer button[type="submit"]:not(.btn-secondary):not(.btn-danger):not(.cat-btn-danger):not(.um-btn-secondary),
+.theme-manager .modal-footer button[type="submit"]:not(.btn-secondary):not(.btn-danger):not(.cat-btn-danger):not(.um-btn-secondary),
+body.theme-manager form button[type="submit"]:not(.btn-secondary):not(.btn-danger):not(.cat-btn-danger):not(.um-btn-secondary):not(.drawer-btn.secondary):not(.btn-modal-cancel),
+.theme-manager form button[type="submit"]:not(.btn-secondary):not(.btn-danger):not(.cat-btn-danger):not(.um-btn-secondary):not(.drawer-btn.secondary):not(.btn-modal-cancel) {
+  background: #653B4B !important;
+  border-color: #522E3C !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 12px rgba(101, 59, 75, 0.35) !important;
+}
+
+body.theme-manager .modal-content button[type="submit"]:hover:not(:disabled),
+.theme-manager .modal-content button[type="submit"]:hover:not(:disabled),
+body.theme-manager .modal-footer button[type="submit"]:hover:not(:disabled),
+.theme-manager .modal-footer button[type="submit"]:hover:not(:disabled),
+body.theme-manager form button[type="submit"]:hover:not(:disabled),
+.theme-manager form button[type="submit"]:hover:not(:disabled) {
+  background: #522E3C !important;
+  border-color: #3D222D !important;
+  box-shadow: 0 6px 18px rgba(101, 59, 75, 0.45) !important;
+}
+
+/* Active Mode & Tender Buttons */
+body.theme-manager .bento-pay-mode-btn.active,
+.theme-manager .bento-pay-mode-btn.active {
+  background: linear-gradient(135deg, #7A475B 0%, #653B4B 100%) !important;
+  border-color: #522E3C !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 16px rgba(101, 59, 75, 0.38) !important;
+}
+
+body.theme-manager .bento-pay-mode-btn:hover:not(.active),
+.theme-manager .bento-pay-mode-btn:hover:not(.active) {
+  border-color: #653B4B !important;
+  color: #653B4B !important;
+  background: #F5ECF0 !important;
+}
+
+/* Sidebar Brand & Avatar Tiles in Deep Burgundy */
+body.theme-manager .sidebar-brand-icon,
+.theme-manager .sidebar-brand-icon {
+  background: linear-gradient(135deg, #7A475B 0%, #653B4B 100%) !important;
+  box-shadow: 0 4px 14px rgba(101, 59, 75, 0.4) !important;
+  color: #FFFFFF !important;
+}
+
+body.theme-manager .sidebar-user-avatar,
+.theme-manager .sidebar-user-avatar {
+  background: linear-gradient(135deg, #7A475B 0%, #653B4B 100%) !important;
+  box-shadow: 0 2px 8px rgba(101, 59, 75, 0.4) !important;
+  color: #FFFFFF !important;
+}
+
+/* Top Icon Tiles across Specific Views */
+body.theme-manager .top-stock-transfer-icon-tile,
+.theme-manager .top-stock-transfer-icon-tile,
+body.theme-manager .expense-modal-icon-badge,
+.theme-manager .expense-modal-icon-badge,
+body.theme-manager .sales-module-brand-icon,
+.theme-manager .sales-module-brand-icon,
+body.theme-manager .gst-ca-bundle-icon,
+.theme-manager .gst-ca-bundle-icon,
+body.theme-manager .modal-icon-badge.purple,
+.theme-manager .modal-icon-badge.purple {
+  background: linear-gradient(135deg, #7A475B 0%, #653B4B 100%) !important;
+  box-shadow: 0 4px 14px rgba(101, 59, 75, 0.35) !important;
+  color: #FFFFFF !important;
+}
+
+/* Additional Navigation Pills & Active Tabs */
+body.theme-manager .dashboard-branch-pill.active,
+.theme-manager .dashboard-branch-pill.active,
+body.theme-manager .inv-saas-tab-btn.active,
+.theme-manager .inv-saas-tab-btn.active,
+body.theme-manager .inv-page-num-btn.active,
+.theme-manager .inv-page-num-btn.active,
+body.theme-manager .segment-btn.active,
+.theme-manager .segment-btn.active,
+body.theme-manager .movement-toggle-btn.active,
+.theme-manager .movement-toggle-btn.active {
+  background: #653B4B !important;
+  border-color: #653B4B !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 6px rgba(101, 59, 75, 0.3) !important;
 }
