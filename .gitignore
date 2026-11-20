@@ -16,3 +16,9 @@ backups/
 *.backup
 *.traineddata
 
+# Electron desktop build outputs
+release/
+dist-electron/
+win-unpacked/
+*.exe
+
