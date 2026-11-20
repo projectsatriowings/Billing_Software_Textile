@@ -3,6 +3,7 @@ import { requireUser } from '../auth.ts';
 import { bad, forbidden, type Router, type Handler } from '../http.ts';
 import { newId } from '../security.ts';
 import { audit } from '../audit.ts';
+import { requireDeveloperMode } from './developer.ts';
 import {
   DEFAULT_ROLE_MODULE_ACCESS,
   type RoleModuleAccessConfig,
@@ -93,7 +94,7 @@ export function requireModule(moduleKey: string): Handler {
   };
 }
 
-export function registerModuleManagement(r: Router) {
+export function registerModuleManagement(r: Router, tokens: { secret: string }) {
   // 1. GET /api/module-access - Load current configuration for tenant
   r.get('/api/module-access', requireUser, async (ctx) => {
     const tenantId = ctx.user!.tenantId;
@@ -104,13 +105,13 @@ export function registerModuleManagement(r: Router) {
     };
   });
 
-  // 2. PUT /api/module-access - Save module access configuration (Super Admin ONLY)
-  r.put('/api/module-access', requireUser, async (ctx) => {
+  // 2. PUT /api/module-access - Save module access configuration (Developer Mode REQUIRED)
+  r.put('/api/module-access', requireUser, requireDeveloperMode(tokens), async (ctx) => {
     const user = ctx.user!;
     const isSuperAdmin = user.role === 'owner' || String(user.role).toUpperCase() === 'SUPER_ADMIN';
 
     if (!isSuperAdmin) {
-      throw forbidden('Only Super Admin can manage module access permissions.', 'SUPER_ADMIN_REQUIRED');
+      throw forbidden('Only Super Admin with Developer Mode can manage module access permissions.', 'SUPER_ADMIN_REQUIRED');
     }
 
     const body = ctx.body as { access?: RoleModuleAccessConfig };
