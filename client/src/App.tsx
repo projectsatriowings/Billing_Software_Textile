@@ -10206,14 +10206,14 @@ export function App() {
                     <div className="bento-card bento-checkout-panel-card">
                       <div className="bento-card-header" style={{ paddingBottom: "0.4rem", marginBottom: "0.2rem" }}>
                         <div className="bento-header-label">
-                          <span className="bento-icon-circle green">
+                          <span className="bento-icon-circle emerald">
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
                               <rect x="2" y="5" width="20" height="14" rx="2" />
                               <line x1="2" y1="10" x2="22" y2="10" />
                             </svg>
                           </span>
                           <div>
-                            <h3 className="bento-card-title">Customer & Payment Settlement</h3>
+                            <h3 className="bento-card-title">Payment & Settlement</h3>
                             <span className="bento-card-subtitle">Fast Counter Checkout</span>
                           </div>
                         </div>

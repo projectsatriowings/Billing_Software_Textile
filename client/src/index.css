@@ -13836,6 +13836,29 @@ body.theme-super-admin .app-sidebar.icon-only .sidebar-action-row-btn.active:hov
   box-sizing: border-box;
 }
 
+.bento-checkout-panel-card .bento-card-header {
+  padding-bottom: 0.35rem !important;
+  margin-bottom: 0.2rem !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+}
+
+.bento-checkout-panel-card .bento-card-title {
+  font-size: 0.92rem !important;
+  font-weight: 800 !important;
+  color: #0f172a !important;
+  text-transform: none !important;
+  letter-spacing: -0.01em !important;
+  line-height: 1.25 !important;
+  white-space: nowrap !important;
+}
+
+.bento-checkout-panel-card .bento-card-subtitle {
+  font-size: 0.72rem !important;
+  color: #64748b !important;
+  font-weight: 500 !important;
+  line-height: 1.2 !important;
+}
+
 .bento-checkout-panel-card .bento-billing-customer-box {
   margin: 0 !important;
   padding: 0.55rem 0.75rem !important;
