@@ -2,7 +2,8 @@
    NOTIFICATIONS & SHIFT REGISTER ALERTS - 3D LUXURY BENTO DESIGN SYSTEM
    ========================================================================== */
 
-:root {
+:root,
+.notif-page-wrapper {
   --notif-bg: var(--bg, #E8E1D5);
   --notif-surface: var(--surface, #FAF7F2);
   --notif-surface-inner: var(--surface-inner, #F3ECE1);
@@ -14,6 +15,24 @@
   --notif-sidebar: var(--sidebar, #0F2D2E);
   --notif-text: var(--text, #1E293B);
   --notif-text-muted: var(--text-muted, #5C584E);
+}
+
+/* Explicit Cashier Palette Binding for Notifications */
+body.theme-cashier .notif-page-wrapper,
+.theme-cashier .notif-page-wrapper,
+body.theme-cashier,
+.theme-cashier {
+  --notif-bg: #E8E1D5 !important;
+  --notif-surface: #FAF7F2 !important;
+  --notif-surface-inner: #F3ECE1 !important;
+  --notif-border: #D0C7B8 !important;
+  --notif-primary: #0F766E !important;
+  --notif-primary-hover: #115E59 !important;
+  --notif-primary-soft: #E6F4F3 !important;
+  --notif-ring: #14B8A6 !important;
+  --notif-sidebar: #0F2D2E !important;
+  --notif-text: #0F172A !important;
+  --notif-text-muted: #475569 !important;
 }
 
 .notif-page-wrapper {

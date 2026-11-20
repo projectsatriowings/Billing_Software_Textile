@@ -244,7 +244,23 @@ export function WholesaleBillingView({
   }, [loadWholesaleCustomers]);
 
   // Selected Customer State
-  const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string>(() => {
+    try {
+      return localStorage.getItem('wholesale_selected_customer_id') || '';
+    } catch {
+      return '';
+    }
+  });
+
+  useEffect(() => {
+    try {
+      if (selectedCustomerId) {
+        localStorage.setItem('wholesale_selected_customer_id', selectedCustomerId);
+      } else {
+        localStorage.removeItem('wholesale_selected_customer_id');
+      }
+    } catch { }
+  }, [selectedCustomerId]);
   const [customerSearchQuery, setCustomerSearchQuery] = useState('');
   const [isCustomerDropdownOpen, setIsCustomerDropdownOpen] = useState(false);
 
@@ -311,7 +327,45 @@ export function WholesaleBillingView({
   }, [customerStateCode, shopStateCode]);
 
   // Cart Lines State
-  const [cart, setCart] = useState<CartLine[]>([]);
+  const [cart, setCart] = useState<CartLine[]>(() => {
+    try {
+      const saved = localStorage.getItem('wholesale_active_cart');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch { }
+    return [];
+  });
+
+  useEffect(() => {
+    try {
+      if (cart.length > 0) {
+        localStorage.setItem('wholesale_active_cart', JSON.stringify(cart));
+      } else {
+        localStorage.removeItem('wholesale_active_cart');
+      }
+    } catch { }
+  }, [cart]);
+
+  // Synchronize cart item data with fresh `items` list when loaded from backend
+  useEffect(() => {
+    if (items.length === 0 || cart.length === 0) return;
+    setCart((prev) => {
+      let changed = false;
+      const updated = prev.map((line) => {
+        const freshItem = items.find((i) => i.id === line.item.id);
+        if (freshItem && freshItem.currentStockMilli !== line.item.currentStockMilli) {
+          changed = true;
+          return { ...line, item: freshItem };
+        }
+        return line;
+      });
+      return changed ? updated : prev;
+    });
+  }, [items]);
 
   // Product Search State
   const [productSearch, setProductSearch] = useState('');
@@ -324,7 +378,26 @@ export function WholesaleBillingView({
   const [paymentReference, setPaymentReference] = useState('');
 
   // Bill-level discount
-  const [billDiscountRupees, setBillDiscountRupees] = useState<number>(0);
+  const [billDiscountRupees, setBillDiscountRupees] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('wholesale_bill_discount');
+      if (saved) {
+        const num = Number(saved);
+        if (!isNaN(num) && num >= 0) return num;
+      }
+    } catch { }
+    return 0;
+  });
+
+  useEffect(() => {
+    try {
+      if (billDiscountRupees > 0) {
+        localStorage.setItem('wholesale_bill_discount', String(billDiscountRupees));
+      } else {
+        localStorage.removeItem('wholesale_bill_discount');
+      }
+    } catch { }
+  }, [billDiscountRupees]);
 
   // Quick Add Customer Modal
   const [showAddCustomerModal, setShowAddCustomerModal] = useState(false);
@@ -701,6 +774,7 @@ export function WholesaleBillingView({
       setBillDiscountRupees(0);
       setPaidAmountRupees('');
       setPaymentReference('');
+      setSelectedCustomerId('');
       // Refresh branch catalog, stock & wholesale customer balances immediately
       fetchBranchCatalog();
       fetchBranchStock();

@@ -674,12 +674,16 @@ body:is(.theme-cashier, .theme-manager) .bento-pos-root,
   background-color: var(--bg) !important;
 }
 
-/* 4.1 Top Global Bar (Branch / Counter Badges & Top Nav) */
+/* 4.1 Top Global Bar (Branch / Counter Badges & Top Nav) - Clean borderless navigation */
 div.app-container:is(.theme-cashier, .theme-manager) .top-global-bar,
 body:is(.theme-cashier, .theme-manager) .top-global-bar,
-:is(.theme-cashier, .theme-manager) .top-global-bar {
+:is(.theme-cashier, .theme-manager) .top-global-bar,
+div.app-container:is(.theme-cashier, .theme-manager) .top-global-bar.dashboard-top-bar,
+body:is(.theme-cashier, .theme-manager) .top-global-bar.dashboard-top-bar,
+:is(.theme-cashier, .theme-manager) .top-global-bar.dashboard-top-bar {
   background-color: var(--bg) !important;
-  border-bottom: 1px solid var(--border) !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
 }
 
 div.app-container:is(.theme-cashier, .theme-manager) .top-pos-bento-badge,
@@ -2121,9 +2125,13 @@ body:is(.theme-cashier, .theme-manager) .tab-content-wrapper,
 
 div.app-container:is(.theme-cashier, .theme-manager) .top-global-bar,
 body:is(.theme-cashier, .theme-manager) .top-global-bar,
-:is(.theme-cashier, .theme-manager) .top-global-bar {
+:is(.theme-cashier, .theme-manager) .top-global-bar,
+div.app-container:is(.theme-cashier, .theme-manager) .top-global-bar.dashboard-top-bar,
+body:is(.theme-cashier, .theme-manager) .top-global-bar.dashboard-top-bar,
+:is(.theme-cashier, .theme-manager) .top-global-bar.dashboard-top-bar {
   background-color: var(--bg) !important;
-  border-bottom: 1px solid var(--border) !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
 }
 
 /* 5.2 Header Hero Card: Active Shift Banner */
@@ -2147,6 +2155,23 @@ body:is(.theme-cashier, .theme-manager) .cat-bento-icon-box,
   background: var(--primary-soft) !important;
   border: 1px solid rgba(20, 184, 166, 0.35) !important;
   color: var(--primary) !important;
+  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.95) !important;
+}
+
+div.app-container.theme-cashier .cat-bento-header-card:hover,
+div.app-container.theme-cashier .shifts-bento-header-card:hover,
+body.theme-cashier .cat-bento-header-card:hover,
+body.theme-cashier .shifts-bento-header-card:hover,
+.theme-cashier .cat-bento-header-card:hover,
+.theme-cashier .shifts-bento-header-card:hover {
+  border-color: rgba(20, 184, 166, 0.4) !important;
+  box-shadow: 0 6px 22px rgba(15, 45, 46, 0.08), 0 2px 4px rgba(15, 45, 46, 0.04) !important;
+}
+
+div.app-container.theme-cashier .cat-bento-header-card:hover .cat-bento-icon-box,
+body.theme-cashier .cat-bento-header-card:hover .cat-bento-icon-box,
+.theme-cashier .cat-bento-header-card:hover .cat-bento-icon-box {
+  box-shadow: 0 6px 16px rgba(15, 118, 110, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.95) !important;
 }
 
 div.app-container:is(.theme-cashier, .theme-manager) .cat-bento-icon-box svg,
@@ -2551,6 +2576,28 @@ body:is(.theme-cashier, .theme-manager) .cat-bento-header-content,
   background-color: transparent !important;
   background-image: none !important;
   border-bottom: 1px solid var(--border) !important;
+}
+
+/* Header content, shifts hero banner and title groups must NOT have any border-bottom divider line */
+div.app-container:is(.theme-cashier, .theme-manager) .bento-card-title-group,
+div.app-container:is(.theme-cashier, .theme-manager) .cat-bento-title-group,
+div.app-container:is(.theme-cashier, .theme-manager) .cat-bento-header-content,
+div.app-container:is(.theme-cashier, .theme-manager) .cat-bento-header-card .cat-bento-header-content,
+div.app-container:is(.theme-cashier, .theme-manager) .shifts-bento-header-card .cat-bento-header-content,
+body:is(.theme-cashier, .theme-manager) .bento-card-title-group,
+body:is(.theme-cashier, .theme-manager) .cat-bento-title-group,
+body:is(.theme-cashier, .theme-manager) .cat-bento-header-content,
+body:is(.theme-cashier, .theme-manager) .cat-bento-header-card .cat-bento-header-content,
+body:is(.theme-cashier, .theme-manager) .shifts-bento-header-card .cat-bento-header-content,
+:is(.theme-cashier, .theme-manager) .bento-card-title-group,
+:is(.theme-cashier, .theme-manager) .cat-bento-title-group,
+:is(.theme-cashier, .theme-manager) .cat-bento-header-content,
+:is(.theme-cashier, .theme-manager) .cat-bento-header-card .cat-bento-header-content,
+:is(.theme-cashier, .theme-manager) .shifts-bento-header-card .cat-bento-header-content {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border-bottom: none !important;
 }
 
 div.app-container:is(.theme-cashier, .theme-manager) .bento-card-title,
@@ -3542,10 +3589,107 @@ body:is(.theme-cashier, .theme-manager) .bento-kpi-hero-icon,
 }
 
 /* --------------------------------------------------------------------------
+   5.8 DAY CLOSING ICONS, BADGES, AND CARDS (Teal & Slate Theme)
+   -------------------------------------------------------------------------- */
+div.app-container.theme-cashier .day-closing-card-icon-bubble.green,
+body.theme-cashier .day-closing-card-icon-bubble.green,
+.theme-cashier .day-closing-card-icon-bubble.green {
+  background: var(--primary-soft, #E6F4F3) !important;
+  color: var(--primary, #0F766E) !important;
+  border: 1px solid rgba(20, 184, 166, 0.35) !important;
+}
+
+div.app-container.theme-cashier .bento-location-chip svg,
+body.theme-cashier .bento-location-chip svg,
+.theme-cashier .bento-location-chip svg,
+div.app-container.theme-cashier .bento-counter-chip svg,
+body.theme-cashier .bento-counter-chip svg,
+.theme-cashier .bento-counter-chip svg,
+div.app-container.theme-cashier .bento-date-chip svg,
+body.theme-cashier .bento-date-chip svg,
+.theme-cashier .bento-date-chip svg,
+div.app-container.theme-cashier .bento-cashier-chip svg,
+body.theme-cashier .bento-cashier-chip svg,
+.theme-cashier .bento-cashier-chip svg,
+div.app-container.theme-cashier .bento-context-chip svg,
+body.theme-cashier .bento-context-chip svg,
+.theme-cashier .bento-context-chip svg {
+  color: var(--primary, #0F766E) !important;
+  stroke: var(--primary, #0F766E) !important;
+}
+
+div.app-container.theme-cashier .bento-context-select-item,
+body.theme-cashier .bento-context-select-item,
+.theme-cashier .bento-context-select-item {
+  color: var(--primary, #0F766E) !important;
+}
+
+div.app-container.theme-cashier .bento-context-select-item svg,
+body.theme-cashier .bento-context-select-item svg,
+.theme-cashier .bento-context-select-item svg {
+  color: var(--primary, #0F766E) !important;
+  stroke: var(--primary, #0F766E) !important;
+}
+
+div.app-container.theme-cashier .bento-ops-action-btn,
+body.theme-cashier .bento-ops-action-btn,
+.theme-cashier .bento-ops-action-btn {
+  background: var(--primary, #0F766E) !important;
+  color: #FFFFFF !important;
+}
+
+div.app-container.theme-cashier .fin-kpi-card.purple .fin-kpi-icon,
+body.theme-cashier .fin-kpi-card.purple .fin-kpi-icon,
+.theme-cashier .fin-kpi-card.purple .fin-kpi-icon,
+div.app-container.theme-cashier .fin-kpi-card.teal .fin-kpi-icon,
+body.theme-cashier .fin-kpi-card.teal .fin-kpi-icon,
+.theme-cashier .fin-kpi-card.teal .fin-kpi-icon,
+div.app-container.theme-cashier .fin-kpi-card.slate .fin-kpi-icon,
+body.theme-cashier .fin-kpi-card.slate .fin-kpi-icon,
+.theme-cashier .fin-kpi-card.slate .fin-kpi-icon {
+  background: var(--primary-soft, #E6F4F3) !important;
+  color: var(--primary, #0F766E) !important;
+  border-color: rgba(20, 184, 166, 0.3) !important;
+}
+
+div.app-container.theme-cashier .tender-kpi-card.card .tender-header,
+body.theme-cashier .tender-kpi-card.card .tender-header,
+.theme-cashier .tender-kpi-card.card .tender-header,
+div.app-container.theme-cashier .tender-kpi-card.credit .tender-header,
+body.theme-cashier .tender-kpi-card.credit .tender-header,
+.theme-cashier .tender-kpi-card.credit .tender-header {
+  color: var(--primary, #0F766E) !important;
+}
+
+div.app-container.theme-cashier .tender-kpi-card.credit,
+body.theme-cashier .tender-kpi-card.credit,
+.theme-cashier .tender-kpi-card.credit {
+  border-color: rgba(20, 184, 166, 0.4) !important;
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.08) 0%, var(--surface) 100%) !important;
+}
+
+div.app-container.theme-cashier .cash-rec-input-prefix,
+body.theme-cashier .cash-rec-input-prefix,
+.theme-cashier .cash-rec-input-prefix {
+  color: var(--primary, #0F766E) !important;
+}
+
+div.app-container.theme-cashier .detail-list-val.indigo,
+body.theme-cashier .detail-list-val.indigo,
+.theme-cashier .detail-list-val.indigo,
+div.app-container.theme-cashier .detail-list-val.purple,
+body.theme-cashier .detail-list-val.purple,
+.theme-cashier .detail-list-val.purple {
+  color: var(--primary, #0F766E) !important;
+}
+
+/* --------------------------------------------------------------------------
    5.9 NOTIFICATIONS POPOVER (Teal & Slate Theme)
    -------------------------------------------------------------------------- */
 body:is(.theme-cashier, .theme-manager) .top-notif-popover.bento-notif-popover,
 :is(.theme-cashier, .theme-manager) .top-notif-popover.bento-notif-popover {
+  width: 440px !important;
+  max-width: calc(100vw - 20px) !important;
   background: var(--surface) !important;
   border: 1.5px solid var(--border) !important;
   border-radius: 16px !important;
@@ -3556,12 +3700,25 @@ body:is(.theme-cashier, .theme-manager) .bento-notif-header,
 :is(.theme-cashier, .theme-manager) .bento-notif-header {
   background: var(--surface) !important;
   border-bottom: 1px solid var(--border) !important;
+  padding: 11px 14px !important;
+  gap: 8px !important;
+  flex-wrap: nowrap !important;
+}
+
+body.theme-cashier .bento-notif-header-actions,
+.theme-cashier .bento-notif-header-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  flex-shrink: 0 !important;
+  flex-wrap: nowrap !important;
 }
 
 body:is(.theme-cashier, .theme-manager) .bento-notif-title,
 :is(.theme-cashier, .theme-manager) .bento-notif-title {
   color: var(--sidebar) !important;
   font-weight: 800 !important;
+  white-space: nowrap !important;
 }
 
 body:is(.theme-cashier, .theme-manager) .bento-notif-icon-bubble,
@@ -3569,11 +3726,30 @@ body:is(.theme-cashier, .theme-manager) .bento-notif-icon-bubble,
   background: var(--primary-soft) !important;
   border: 1px solid rgba(20, 184, 166, 0.35) !important;
   color: var(--primary) !important;
+  flex-shrink: 0 !important;
 }
 
 body:is(.theme-cashier, .theme-manager) .bento-notif-icon-bubble svg,
 :is(.theme-cashier, .theme-manager) .bento-notif-icon-bubble svg {
   stroke: var(--primary) !important;
+}
+
+body:is(.theme-cashier, .theme-manager) .bento-notif-unread-count-pill,
+:is(.theme-cashier, .theme-manager) .bento-notif-unread-count-pill {
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+}
+
+body:is(.theme-cashier, .theme-manager) .bento-notif-role-badge,
+:is(.theme-cashier, .theme-manager) .bento-notif-role-badge {
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  font-size: 0.68rem !important;
+  font-weight: 800 !important;
+  padding: 3px 8px !important;
+  border-radius: 999px !important;
+  letter-spacing: 0.03em !important;
+  line-height: 1.2 !important;
 }
 
 body:is(.theme-cashier, .theme-manager) .bento-notif-role-badge.cashier,
@@ -3582,6 +3758,31 @@ body:is(.theme-cashier, .theme-manager) .bento-notif-role-badge.cashier,
   color: var(--primary) !important;
   border: 1px solid rgba(20, 184, 166, 0.35) !important;
   font-weight: 800 !important;
+}
+
+body:is(.theme-cashier, .theme-manager) .bento-notif-open-full-btn,
+:is(.theme-cashier, .theme-manager) .bento-notif-open-full-btn {
+  background: var(--primary-soft) !important;
+  border: 1px solid rgba(20, 184, 166, 0.35) !important;
+  color: var(--primary) !important;
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+  padding: 4px 8px !important;
+  border-radius: 7px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  cursor: pointer !important;
+  line-height: 1.2 !important;
+  transition: all 0.15s ease !important;
+}
+
+body:is(.theme-cashier, .theme-manager) .bento-notif-open-full-btn:hover,
+:is(.theme-cashier, .theme-manager) .bento-notif-open-full-btn:hover {
+  background: rgba(20, 184, 166, 0.22) !important;
+  border-color: var(--primary) !important;
 }
 
 body:is(.theme-cashier, .theme-manager) .bento-notif-body,
@@ -3731,12 +3932,29 @@ body:is(.theme-cashier, .theme-manager) .bento-notif-unread-dot,
 
 body:is(.theme-cashier, .theme-manager) .bento-notif-mark-read-btn,
 :is(.theme-cashier, .theme-manager) .bento-notif-mark-read-btn {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
   color: var(--primary) !important;
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+  padding: 4px 8px !important;
+  border-radius: 7px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  cursor: pointer !important;
+  line-height: 1.2 !important;
+  transition: all 0.15s ease !important;
 }
 
 body:is(.theme-cashier, .theme-manager) .bento-notif-mark-read-btn:hover,
 :is(.theme-cashier, .theme-manager) .bento-notif-mark-read-btn:hover {
+  background: var(--primary-soft) !important;
+  border-color: var(--primary) !important;
   color: var(--primary-hover) !important;
+  text-decoration: none !important;
 }
 
 body:is(.theme-cashier, .theme-manager) .bento-notif-card.unread,
@@ -3868,6 +4086,80 @@ body:is(.theme-cashier, .theme-manager) .notif-kpi-icon.all,
 :is(.theme-cashier, .theme-manager) .notif-kpi-icon.all {
   background: var(--primary-soft) !important;
   color: var(--primary) !important;
+}
+
+/* Actionable Alerts Hero Card & Icon */
+body.theme-cashier .notif-kpi-hero-card,
+.theme-cashier .notif-kpi-hero-card {
+  border-color: var(--primary) !important;
+  background: linear-gradient(135deg, rgba(15, 118, 110, 0.08) 0%, var(--surface) 100%) !important;
+}
+
+body.theme-cashier .notif-kpi-hero-tag,
+.theme-cashier .notif-kpi-hero-tag {
+  color: var(--primary) !important;
+}
+
+body.theme-cashier .notif-kpi-hero-icon,
+.theme-cashier .notif-kpi-hero-icon {
+  background: var(--primary) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.35) !important;
+}
+
+/* Notification Item Closed Shift Icon & Pill */
+body.theme-cashier .notif-card-icon-pill.close,
+.theme-cashier .notif-card-icon-pill.close {
+  background: var(--primary-soft) !important;
+  color: var(--primary) !important;
+  border: 1px solid rgba(20, 184, 166, 0.35) !important;
+}
+
+body.theme-cashier .notif-card-status-pill.close,
+.theme-cashier .notif-card-status-pill.close {
+  background: var(--primary-soft) !important;
+  border: 1px solid rgba(20, 184, 166, 0.4) !important;
+  color: var(--primary) !important;
+}
+
+/* Notification Meta Badges */
+body.theme-cashier .notif-branch-badge,
+.theme-cashier .notif-branch-badge,
+body.theme-cashier .notif-counter-badge,
+.theme-cashier .notif-counter-badge,
+body.theme-cashier .notif-cashier-badge,
+.theme-cashier .notif-cashier-badge {
+  background: var(--surface-inner) !important;
+  border-color: var(--border) !important;
+  color: var(--sidebar) !important;
+}
+
+body.theme-cashier .notif-branch-badge svg,
+.theme-cashier .notif-branch-badge svg,
+body.theme-cashier .notif-counter-badge svg,
+.theme-cashier .notif-counter-badge svg,
+body.theme-cashier .notif-cashier-badge svg,
+.theme-cashier .notif-cashier-badge svg,
+body.theme-cashier .notif-timestamp svg,
+.theme-cashier .notif-timestamp svg {
+  color: var(--primary) !important;
+  stroke: var(--primary) !important;
+}
+
+/* Sidebar Store Profile Tile (Collapsed & Expanded) */
+body.theme-cashier .sidebar-store-icon-tile,
+.theme-cashier .sidebar-store-icon-tile,
+div.app-container.theme-cashier .sidebar-store-icon-tile {
+  background: linear-gradient(135deg, #0F766E 0%, #0D9488 100%) !important;
+  box-shadow: 0 2px 8px rgba(15, 118, 110, 0.35) !important;
+  color: #FFFFFF !important;
+}
+
+body.theme-cashier .sidebar-store-btn:hover .sidebar-store-icon-tile,
+.theme-cashier .sidebar-store-btn:hover .sidebar-store-icon-tile,
+div.app-container.theme-cashier .sidebar-store-btn:hover .sidebar-store-icon-tile {
+  background: linear-gradient(135deg, #115E59 0%, #0F766E 100%) !important;
+  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.45) !important;
 }
 
 /* --------------------------------------------------------------------------
@@ -4220,4 +4512,243 @@ body:is(.theme-cashier, .theme-manager) .cfd-header,
   background-color: var(--bg) !important;
   border-bottom: 1.5px solid var(--border) !important;
   color: var(--sidebar) !important;
+}
+
+/* ==========================================================================
+   5.13 WIRELESS MOBILE BARCODE SCANNER MODAL (Teal & Slate Theme)
+   ========================================================================== */
+body.theme-cashier .mobile-scanner-modal,
+.theme-cashier .mobile-scanner-modal,
+div.app-container.theme-cashier .mobile-scanner-modal {
+  background: var(--surface, #FAF7F2) !important;
+  border: 1.5px solid var(--border, #D0C7B8) !important;
+  color: var(--text, #0F172A) !important;
+  box-shadow: 0 25px 50px -12px rgba(15, 45, 46, 0.35) !important;
+}
+
+body.theme-cashier .mobile-scanner-modal .modal-header,
+.theme-cashier .mobile-scanner-modal .modal-header {
+  background: var(--surface, #FAF7F2) !important;
+  border-bottom: 1px solid var(--border, #D0C7B8) !important;
+  color: var(--text, #0F172A) !important;
+}
+
+body.theme-cashier .mobile-scanner-modal .card-title,
+.theme-cashier .mobile-scanner-modal .card-title {
+  color: var(--sidebar, #0F2D2E) !important;
+  font-weight: 800 !important;
+}
+
+body.theme-cashier .mobile-scanner-modal .modal-subtitle,
+.theme-cashier .mobile-scanner-modal .modal-subtitle {
+  color: var(--text-muted, #475569) !important;
+}
+
+body.theme-cashier .mobile-scanner-modal .bento-icon-circle,
+.theme-cashier .mobile-scanner-modal .bento-icon-circle {
+  background: var(--primary-soft, #E6F4F3) !important;
+  border: 1px solid rgba(20, 184, 166, 0.35) !important;
+  color: var(--primary, #0F766E) !important;
+}
+
+body.theme-cashier .mobile-scanner-modal .bento-icon-circle svg,
+.theme-cashier .mobile-scanner-modal .bento-icon-circle svg {
+  color: var(--primary, #0F766E) !important;
+  stroke: var(--primary, #0F766E) !important;
+}
+
+body.theme-cashier .mobile-scanner-modal .modal-close-icon-btn,
+.theme-cashier .mobile-scanner-modal .modal-close-icon-btn {
+  color: var(--text-muted, #475569) !important;
+  border: 1px solid var(--border, #D0C7B8) !important;
+  background: var(--surface, #FAF7F2) !important;
+  border-radius: 6px !important;
+}
+
+body.theme-cashier .mobile-scanner-modal .modal-close-icon-btn:hover,
+.theme-cashier .mobile-scanner-modal .modal-close-icon-btn:hover {
+  color: var(--danger, #B91C1C) !important;
+  background: var(--danger-bg, #FEE2E2) !important;
+  border-color: rgba(185, 28, 28, 0.3) !important;
+}
+
+body.theme-cashier .mobile-scanner-modal .modal-footer,
+.theme-cashier .mobile-scanner-modal .modal-footer {
+  background: var(--surface, #FAF7F2) !important;
+  border-top: 1px solid var(--border, #D0C7B8) !important;
+}
+
+/* Step list: 1, 2, 3 numbered badges & cards */
+body.theme-cashier .step-num,
+.theme-cashier .step-num {
+  background: var(--primary, #0F766E) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 6px rgba(15, 118, 110, 0.3) !important;
+}
+
+body.theme-cashier .scanner-step-item,
+.theme-cashier .scanner-step-item {
+  background: var(--surface, #FAF7F2) !important;
+  border: 1.5px solid var(--border, #D0C7B8) !important;
+}
+
+body.theme-cashier .scanner-step-item:hover,
+.theme-cashier .scanner-step-item:hover {
+  border-color: rgba(20, 184, 166, 0.5) !important;
+}
+
+body.theme-cashier .scanner-step-item strong,
+.theme-cashier .scanner-step-item strong {
+  color: var(--sidebar, #0F2D2E) !important;
+}
+
+body.theme-cashier .scanner-step-item p,
+.theme-cashier .scanner-step-item p {
+  color: var(--text-muted, #475569) !important;
+}
+
+/* Direct Browser Link section */
+body.theme-cashier .scanner-link-box,
+.theme-cashier .scanner-link-box {
+  background: var(--surface-inner, #F3ECE1) !important;
+  border: 1.5px solid var(--border, #D0C7B8) !important;
+}
+
+body.theme-cashier .scanner-link-label,
+.theme-cashier .scanner-link-label {
+  color: var(--sidebar, #0F2D2E) !important;
+  font-weight: 700 !important;
+}
+
+body.theme-cashier .scanner-url-input,
+.theme-cashier .scanner-url-input {
+  background: var(--surface, #FAF7F2) !important;
+  border: 1px solid var(--border, #D0C7B8) !important;
+  color: var(--text, #0F172A) !important;
+}
+
+body.theme-cashier .scanner-copy-btn,
+.theme-cashier .scanner-copy-btn {
+  background: var(--surface, #FAF7F2) !important;
+  border: 1px solid var(--border, #D0C7B8) !important;
+  color: var(--sidebar, #0F2D2E) !important;
+}
+
+body.theme-cashier .scanner-copy-btn:hover,
+.theme-cashier .scanner-copy-btn:hover {
+  background: #ffffff !important;
+  border-color: var(--primary, #0F766E) !important;
+  color: var(--primary, #0F766E) !important;
+}
+
+body.theme-cashier .scanner-open-btn,
+.theme-cashier .scanner-open-btn {
+  background: var(--primary, #0F766E) !important;
+  border: 1px solid var(--primary-hover, #115E59) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 6px rgba(15, 118, 110, 0.3) !important;
+}
+
+body.theme-cashier .scanner-open-btn:hover,
+.theme-cashier .scanner-open-btn:hover {
+  background: var(--primary-hover, #115E59) !important;
+  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.4) !important;
+}
+
+/* QR Box & Protocols */
+body.theme-cashier .scanner-qr-box,
+.theme-cashier .scanner-qr-box {
+  background: var(--surface, #FAF7F2) !important;
+  border: 1.5px solid var(--border, #D0C7B8) !important;
+}
+
+body.theme-cashier .scanner-qr-caption,
+.theme-cashier .scanner-qr-caption {
+  color: var(--text-muted, #475569) !important;
+  font-weight: 600 !important;
+}
+
+body.theme-cashier .scanner-protocol-toggle,
+.theme-cashier .scanner-protocol-toggle {
+  background: var(--surface-inner, #F3ECE1) !important;
+  border: 1px solid var(--border, #D0C7B8) !important;
+}
+
+body.theme-cashier .proto-btn,
+.theme-cashier .proto-btn {
+  color: var(--text-muted, #475569) !important;
+}
+
+body.theme-cashier .proto-btn.active,
+.theme-cashier .proto-btn.active {
+  background: var(--surface, #FAF7F2) !important;
+  color: var(--primary, #0F766E) !important;
+  font-weight: 700 !important;
+  box-shadow: 0 2px 6px rgba(15, 45, 46, 0.08) !important;
+  border: 1px solid var(--border, #D0C7B8) !important;
+}
+
+/* Troubleshooting Box */
+body.theme-cashier .scanner-troubleshoot-box,
+.theme-cashier .scanner-troubleshoot-box {
+  background: var(--primary-soft, #E6F4F3) !important;
+  border: 1px solid rgba(20, 184, 166, 0.35) !important;
+  color: var(--sidebar, #0F2D2E) !important;
+}
+
+body.theme-cashier .troubleshoot-tag,
+.theme-cashier .troubleshoot-tag {
+  color: var(--primary, #0F766E) !important;
+}
+
+body.theme-cashier .troubleshoot-list,
+.theme-cashier .troubleshoot-list {
+  color: var(--sidebar, #0F2D2E) !important;
+}
+
+/* Simulator & Sound Toggle */
+body.theme-cashier .scanner-simulate-btn,
+.theme-cashier .scanner-simulate-btn {
+  background: var(--surface, #FAF7F2) !important;
+  border: 1px solid var(--border, #D0C7B8) !important;
+  color: var(--text, #0F172A) !important;
+}
+
+body.theme-cashier .scanner-simulate-btn:hover,
+.theme-cashier .scanner-simulate-btn:hover {
+  background: var(--surface-inner, #F3ECE1) !important;
+  border-color: var(--primary, #0F766E) !important;
+  color: var(--primary, #0F766E) !important;
+}
+
+body.theme-cashier .scanner-sound-toggle,
+.theme-cashier .scanner-sound-toggle {
+  color: var(--text, #0F172A) !important;
+}
+
+body.theme-cashier .scanner-sound-toggle input[type="checkbox"],
+.theme-cashier .scanner-sound-toggle input[type="checkbox"] {
+  accent-color: var(--primary, #0F766E) !important;
+}
+
+body.theme-cashier .scanner-session-pill,
+.theme-cashier .scanner-session-pill {
+  background: var(--surface-inner, #F3ECE1) !important;
+  border: 1px solid var(--border, #D0C7B8) !important;
+  color: var(--text-muted, #475569) !important;
+}
+
+body.theme-cashier .mobile-scanner-modal .btn-secondary,
+.theme-cashier .mobile-scanner-modal .btn-secondary {
+  background: var(--surface, #FAF7F2) !important;
+  border: 1px solid var(--border, #D0C7B8) !important;
+  color: var(--sidebar, #0F2D2E) !important;
+  font-weight: 700 !important;
+}
+
+body.theme-cashier .mobile-scanner-modal .btn-secondary:hover,
+.theme-cashier .mobile-scanner-modal .btn-secondary:hover {
+  background: var(--surface-inner, #F3ECE1) !important;
+  border-color: var(--primary, #0F766E) !important;
+  color: var(--primary, #0F766E) !important;
 }

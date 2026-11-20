@@ -7,9 +7,12 @@
   "engines": {
     "node": ">=22.5"
   },
+  "main": "electron/main.cjs",
   "scripts": {
     "dev": "node scripts/dev.mjs",
     "build": "node scripts/build-client.mjs",
+    "electron:dev": "cross-env ELECTRON_DEV=true electron .",
+    "electron:build": "node scripts/build-client.mjs && electron-builder --win",
     "start": "node --import tsx server/src/index.ts",
     "migrate": "node --import tsx server/src/migrate.ts",
     "seed:demo": "node --import tsx server/src/seed-demo.ts",
@@ -42,7 +45,38 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@types/selfsigned": "^2.0.4",
+    "cross-env": "^10.1.0",
+    "electron": "^45.4.1",
+    "electron-builder": "^26.18.0",
     "esbuild": "^0.25.0",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "wait-on": "^9.5.1"
+  },
+  "build": {
+    "appId": "com.a2z.billing",
+    "productName": "A2Z",
+    "copyright": "Copyright © 2026 A2Z",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "client/dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "electron/assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "A2Z"
+    }
   }
 }

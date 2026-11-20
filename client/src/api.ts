@@ -2975,9 +2975,10 @@ export const markDayClosingNotificationRead = (id: string) =>
     method: 'POST',
   });
 
-export const markAllDayClosingNotificationsRead = () =>
+export const markAllDayClosingNotificationsRead = (ids?: string[]) =>
   api<{ success: boolean }>('/api/day-closing/notifications/read-all', {
     method: 'POST',
+    body: ids && ids.length > 0 ? JSON.stringify({ ids }) : undefined,
   });
 
 export type SmartAuditSeverity = 'critical' | 'warning' | 'info';

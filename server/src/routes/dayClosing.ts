@@ -3614,7 +3614,7 @@ export function registerDayClosing(r: Router) {
          FROM shifts s
          LEFT JOIN users u ON u.id = s.user_id
          LEFT JOIN branches b ON (b.id = s.branch_id OR b.code = s.branch_id) AND b.tenant_id = s.tenant_id
-         LEFT JOIN day_closing_notifications n ON n.tenant_id = s.tenant_id AND n.type = 'shift_open' AND (n.metadata->>'shiftId' = s.id OR n.metadata->>'shiftNumber' = s.shift_number)
+         LEFT JOIN day_closing_notifications n ON n.tenant_id = s.tenant_id AND n.type = 'shift_open' AND (n.metadata->>'shiftId' = s.id OR n.metadata->>'shiftNumber' = s.shift_number::text OR n.id = 'notif_active_' || s.id)
          WHERE s.tenant_id = ? AND s.status = 'open' AND n.id IS NULL
          LIMIT 10`,
         [tenantId],
@@ -3678,7 +3678,7 @@ export function registerDayClosing(r: Router) {
          FROM shifts s
          LEFT JOIN users u ON u.id = s.user_id
          LEFT JOIN branches b ON (b.id = s.branch_id OR b.code = s.branch_id) AND b.tenant_id = s.tenant_id
-         LEFT JOIN day_closing_notifications n ON n.tenant_id = s.tenant_id AND n.type = 'shift_close' AND (n.metadata->>'shiftId' = s.id OR n.metadata->>'shiftNumber' = s.shift_number)
+         LEFT JOIN day_closing_notifications n ON n.tenant_id = s.tenant_id AND n.type = 'shift_close' AND (n.metadata->>'shiftId' = s.id OR n.metadata->>'shiftNumber' = s.shift_number::text OR n.id = 'notif_close_' || s.id)
          WHERE s.tenant_id = ? AND s.status = 'closed' AND n.id IS NULL
          ORDER BY s.closed_at DESC
          LIMIT 10`,
@@ -3859,15 +3859,36 @@ export function registerDayClosing(r: Router) {
     const userRole = String(ctx.user!.role || '').toUpperCase();
     const isCashier = userRole === 'CASHIER' || userRole === 'COUNTER';
 
+    const body = (ctx.body && typeof ctx.body === 'object' ? ctx.body : {}) as any;
+    const ids: string[] = Array.isArray(body.ids)
+      ? body.ids.filter((x: any) => typeof x === 'string' && x.trim().length > 0)
+      : [];
+
+    if (ids.length > 0) {
+      // Mark specific IDs as read (direct, reliable, and fast)
+      const placeholders = ids.map(() => '?').join(',');
+      await ctx.db.exec(
+        `UPDATE day_closing_notifications
+         SET is_read = TRUE, read_at = NOW()
+         WHERE tenant_id = ? AND id IN (${placeholders})`,
+        [tenantId, ...ids],
+      );
+      return { success: true };
+    }
+
     let sql = `UPDATE day_closing_notifications SET is_read = TRUE, read_at = NOW() WHERE tenant_id = ? AND (is_read = FALSE OR is_read IS NULL)`;
     const params: any[] = [tenantId];
 
     if (!scope.isSuperAdminAll && scope.branchId) {
-      sql += ' AND (branch_id = ? OR branch_id IN (SELECT id FROM branches WHERE id = ? OR code = ?))';
-      params.push(scope.branchId, scope.branchId, scope.branchId);
+      sql += ` AND (
+        branch_id = ?
+        OR branch_id IN (SELECT id FROM branches WHERE tenant_id = ? AND (id = ? OR UPPER(code) = UPPER(?)))
+        OR branch_id IN (SELECT code FROM branches WHERE tenant_id = ? AND (id = ? OR UPPER(code) = UPPER(?)))
+      )`;
+      params.push(scope.branchId, tenantId, scope.branchId, scope.branchId, tenantId, scope.branchId, scope.branchId);
     }
     if (isCashier) {
-      sql += ' AND cashier_id = ?';
+      sql += ' AND (cashier_id = ? OR cashier_id IS NULL)';
       params.push(ctx.user!.id);
     }
 

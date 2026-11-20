@@ -643,10 +643,21 @@ export function App() {
     | 'notifications'
   >(() => {
     try {
+      const savedTab = localStorage.getItem('app_active_tab') || sessionStorage.getItem('app_active_tab');
       const stored = localStorage.getItem('user') || sessionStorage.getItem('user');
+      let role = '';
       if (stored) {
         const u = JSON.parse(stored);
-        if (u?.role === 'cashier') return 'pos';
+        role = u?.role || '';
+      }
+      if (role === 'cashier') {
+        if (savedTab && CASHIER_ALLOWED_TABS.has(savedTab as any)) {
+          return savedTab as any;
+        }
+        return 'pos';
+      }
+      if (savedTab) {
+        return savedTab as any;
       }
     } catch { }
     return 'dashboard';
@@ -657,10 +668,15 @@ export function App() {
     (tabOrFn: any) => {
       setActiveTabRaw((prev: any) => {
         const next = typeof tabOrFn === 'function' ? tabOrFn(prev) : tabOrFn;
+        let resolved = next;
         if (user?.role === 'cashier' && !CASHIER_ALLOWED_TABS.has(next)) {
-          return 'pos';
+          resolved = 'pos';
         }
-        return next;
+        try {
+          localStorage.setItem('app_active_tab', resolved);
+          sessionStorage.setItem('app_active_tab', resolved);
+        } catch { }
+        return resolved;
       });
     },
     [user?.role]
@@ -678,6 +694,12 @@ export function App() {
     if (user?.role === 'cashier' && !CASHIER_ALLOWED_TABS.has(activeTabRaw)) {
       setActiveTabRaw('pos');
     }
+    try {
+      if (activeTabRaw) {
+        localStorage.setItem('app_active_tab', activeTabRaw);
+        sessionStorage.setItem('app_active_tab', activeTabRaw);
+      }
+    } catch { }
   }, [user?.role, activeTabRaw]);
 
   // Synchronize role themes (.theme-cashier / .theme-manager / .theme-super-admin) on document.body for session & portaled modals
@@ -967,19 +989,134 @@ export function App() {
   const [items, setItems] = useState<Item[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [categoriesList, setCategoriesList] = useState<Category[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
+  const [selectedCategory, setSelectedCategory] = useState<string>(() => {
+    try {
+      return localStorage.getItem('pos_selected_category') || 'ALL';
+    } catch {
+      return 'ALL';
+    }
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem('pos_selected_category', selectedCategory);
+    } catch { }
+  }, [selectedCategory]);
+
   const [searchQuery, setSearchQuery] = useState('');
-  const [cart, setCart] = useState<PosCartItem[]>([]);
+  const [cart, setCart] = useState<PosCartItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('pos_active_cart');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch { }
+    return [];
+  });
+
+  useEffect(() => {
+    try {
+      if (cart.length > 0) {
+        localStorage.setItem('pos_active_cart', JSON.stringify(cart));
+      } else {
+        localStorage.removeItem('pos_active_cart');
+      }
+    } catch { }
+  }, [cart]);
+
+  // Synchronize cart item data with fresh `items` list when loaded from backend
+  useEffect(() => {
+    if (items.length === 0 || cart.length === 0) return;
+    setCart((prev) => {
+      let changed = false;
+      const updated = prev.map((line) => {
+        const freshItem = items.find((i) => i.id === line.item.id);
+        if (freshItem && (freshItem.priceMinor !== line.item.priceMinor || freshItem.currentStockMilli !== line.item.currentStockMilli)) {
+          changed = true;
+          return { ...line, item: freshItem };
+        }
+        return line;
+      });
+      return changed ? updated : prev;
+    });
+  }, [items]);
+
   const [showReturnExchangeModal, setShowReturnExchangeModal] = useState<boolean>(false);
   const showReturnExchangeModalRef = useRef(showReturnExchangeModal);
   useEffect(() => {
     showReturnExchangeModalRef.current = showReturnExchangeModal;
   }, [showReturnExchangeModal]);
-  const [activeExchangeLines, setActiveExchangeLines] = useState<ReturnSelectedLine[]>([]);
-  const [activeExchangeOrigBill, setActiveExchangeOrigBill] = useState<string>('');
+  const [activeExchangeLines, setActiveExchangeLines] = useState<ReturnSelectedLine[]>(() => {
+    try {
+      const saved = localStorage.getItem('pos_active_exchange_lines');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch { }
+    return [];
+  });
+  useEffect(() => {
+    try {
+      if (activeExchangeLines.length > 0) {
+        localStorage.setItem('pos_active_exchange_lines', JSON.stringify(activeExchangeLines));
+      } else {
+        localStorage.removeItem('pos_active_exchange_lines');
+      }
+    } catch { }
+  }, [activeExchangeLines]);
+
+  const [activeExchangeOrigBill, setActiveExchangeOrigBill] = useState<string>(() => {
+    try {
+      return localStorage.getItem('pos_active_exchange_bill') || '';
+    } catch {
+      return '';
+    }
+  });
+  useEffect(() => {
+    try {
+      if (activeExchangeOrigBill) {
+        localStorage.setItem('pos_active_exchange_bill', activeExchangeOrigBill);
+      } else {
+        localStorage.removeItem('pos_active_exchange_bill');
+      }
+    } catch { }
+  }, [activeExchangeOrigBill]);
+
   const [parties, setParties] = useState<Party[]>([]);
-  const [selectedPartyId, setSelectedPartyId] = useState<string>('');
-  const [selectedPayMode, setSelectedPayMode] = useState<'cash' | 'upi' | 'card' | 'bank' | 'split'>('cash');
+  const [selectedPartyId, setSelectedPartyId] = useState<string>(() => {
+    try {
+      return localStorage.getItem('pos_draft_party_id') || '';
+    } catch {
+      return '';
+    }
+  });
+  useEffect(() => {
+    try {
+      if (selectedPartyId) {
+        localStorage.setItem('pos_draft_party_id', selectedPartyId);
+      } else {
+        localStorage.removeItem('pos_draft_party_id');
+      }
+    } catch { }
+  }, [selectedPartyId]);
+
+  const [selectedPayMode, setSelectedPayMode] = useState<'cash' | 'upi' | 'card' | 'bank' | 'split'>(() => {
+    try {
+      const saved = localStorage.getItem('pos_draft_pay_mode');
+      if (saved && ['cash', 'upi', 'card', 'bank', 'split'].includes(saved)) {
+        return saved as any;
+      }
+    } catch { }
+    return 'cash';
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem('pos_draft_pay_mode', selectedPayMode);
+    } catch { }
+  }, [selectedPayMode]);
   const [cashReceived, setCashReceived] = useState<string>('');
   const [splitMethod1, setSplitMethod1] = useState<'cash' | 'upi' | 'card'>('cash');
   const [splitAmount1, setSplitAmount1] = useState<string>('');
@@ -1172,7 +1309,11 @@ export function App() {
 
   const handleMarkAllNotificationsRead = async () => {
     try {
-      await markAllDayClosingNotificationsRead();
+      const unreadIds = shiftNotifications
+        .filter((n) => !n.isRead && !n.is_read)
+        .map((n) => n.id)
+        .filter(Boolean);
+      await markAllDayClosingNotificationsRead(unreadIds.length > 0 ? unreadIds : undefined);
       setShiftNotifications((prev) =>
         prev.map((n) => ({ ...n, is_read: true, isRead: true }))
       );
@@ -1363,13 +1504,63 @@ export function App() {
   }, [scannerNetworkInfo, scannerProtocol, customTunnelUrl, scannerSessionId, selectedCounter]);
 
   // Modern Image 2 POS State
-  const [customerSearch, setCustomerSearch] = useState('');
-  const [quickCustomerName, setQuickCustomerName] = useState('');
+  const [customerSearch, setCustomerSearch] = useState(() => {
+    try {
+      return localStorage.getItem('pos_draft_customer_search') || '';
+    } catch {
+      return '';
+    }
+  });
+  useEffect(() => {
+    try {
+      if (customerSearch) {
+        localStorage.setItem('pos_draft_customer_search', customerSearch);
+      } else {
+        localStorage.removeItem('pos_draft_customer_search');
+      }
+    } catch { }
+  }, [customerSearch]);
+
+  const [quickCustomerName, setQuickCustomerName] = useState(() => {
+    try {
+      return localStorage.getItem('pos_draft_customer_name') || '';
+    } catch {
+      return '';
+    }
+  });
+  useEffect(() => {
+    try {
+      if (quickCustomerName) {
+        localStorage.setItem('pos_draft_customer_name', quickCustomerName);
+      } else {
+        localStorage.removeItem('pos_draft_customer_name');
+      }
+    } catch { }
+  }, [quickCustomerName]);
+
   const [isQuickEnrolling, setIsQuickEnrolling] = useState(false);
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
   const [showCustomerPickerModal, setShowCustomerPickerModal] = useState(false);
   const [redeemPoints, setRedeemPoints] = useState(false);
-  const [appliedDiscountPercent, setAppliedDiscountPercent] = useState<number>(0);
+  const [appliedDiscountPercent, setAppliedDiscountPercent] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('pos_draft_discount');
+      if (saved) {
+        const num = Number(saved);
+        if (!isNaN(num) && num >= 0 && num <= 100) return num;
+      }
+    } catch { }
+    return 0;
+  });
+  useEffect(() => {
+    try {
+      if (appliedDiscountPercent > 0) {
+        localStorage.setItem('pos_draft_discount', String(appliedDiscountPercent));
+      } else {
+        localStorage.removeItem('pos_draft_discount');
+      }
+    } catch { }
+  }, [appliedDiscountPercent]);
   const [showDiscountPicker, setShowDiscountPicker] = useState(false);
   const [showPosOpenShiftModal, setShowPosOpenShiftModal] = useState(false);
   const [showCounterModal, setShowCounterModal] = useState<boolean>(false);
@@ -2175,13 +2366,26 @@ export function App() {
         setShop(res.shop);
         initSettingsForm(res.shop);
         loadMyBusinesses();
+        const savedTab = (() => {
+          try {
+            return localStorage.getItem('app_active_tab') || sessionStorage.getItem('app_active_tab');
+          } catch {
+            return null;
+          }
+        })();
         if (res.user?.role === 'cashier') {
-          setActiveTab('pos');
+          if (savedTab && CASHIER_ALLOWED_TABS.has(savedTab)) {
+            setActiveTab(savedTab as any);
+          } else {
+            setActiveTab('pos');
+          }
           try {
             if (!sessionStorage.getItem('pos_selected_counter_id') && !localStorage.getItem('pos_selected_counter_id')) {
               setShowCounterModal(true);
             }
           } catch { }
+        } else if (savedTab) {
+          setActiveTab(savedTab as any);
         }
         const urlParams = new URLSearchParams(window.location.search);
         const tabParam = urlParams.get('tab');
@@ -3116,6 +3320,12 @@ export function App() {
         setSelectedBranchScope(saved);
       }
       setCart([]);
+      setActiveExchangeLines([]);
+      setActiveExchangeOrigBill('');
+      setSelectedPartyId('');
+      setCustomerSearch('');
+      setQuickCustomerName('');
+      setAppliedDiscountPercent(0);
       setSelectedCategory('ALL');
       setShowBusinessDropdown(false);
       showToast(`Switched to ${res.shop.name} (${getBusinessLabel(res.shop.businessType)})`);
@@ -3176,7 +3386,27 @@ export function App() {
       localStorage.removeItem('selected_branch');
       sessionStorage.removeItem('sa_selected_branch');
       sessionStorage.removeItem('selected_branch');
+      localStorage.removeItem('pos_active_cart');
+      localStorage.removeItem('pos_active_exchange_lines');
+      localStorage.removeItem('pos_active_exchange_bill');
+      localStorage.removeItem('pos_draft_party_id');
+      localStorage.removeItem('pos_draft_customer_search');
+      localStorage.removeItem('pos_draft_customer_name');
+      localStorage.removeItem('pos_draft_discount');
+      localStorage.removeItem('pos_draft_pay_mode');
+      localStorage.removeItem('app_active_tab');
+      sessionStorage.removeItem('app_active_tab');
+      localStorage.removeItem('wholesale_active_cart');
+      localStorage.removeItem('wholesale_selected_customer_id');
+      localStorage.removeItem('wholesale_bill_discount');
     } catch { }
+    setCart([]);
+    setActiveExchangeLines([]);
+    setActiveExchangeOrigBill('');
+    setSelectedPartyId('');
+    setCustomerSearch('');
+    setQuickCustomerName('');
+    setAppliedDiscountPercent(0);
     setSelectedCounter('');
     setSelectedCounterId('');
     setActiveShiftNumber(null);
@@ -5058,7 +5288,10 @@ export function App() {
     setCart([]);
     setSelectedPartyId('');
     setCustomerSearch('');
+    setQuickCustomerName('');
     setAppliedDiscountPercent(0);
+    setActiveExchangeLines([]);
+    setActiveExchangeOrigBill('');
   };
 
   const triggerProceedPayment = () => {
@@ -8333,7 +8566,20 @@ export function App() {
                           <span className="bento-notif-unread-count-pill">{unreadShiftNotifCount} new</span>
                         )}
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div className="bento-notif-header-actions">
+                        {unreadShiftNotifCount > 0 && (
+                          <button
+                            type="button"
+                            className="bento-notif-mark-read-btn"
+                            onClick={handleMarkAllNotificationsRead}
+                            title="Mark all notifications as read"
+                          >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            <span>Mark all read</span>
+                          </button>
+                        )}
                         <button
                           type="button"
                           className="bento-notif-open-full-btn"
@@ -8342,32 +8588,9 @@ export function App() {
                             setActiveTab('notifications');
                           }}
                           title="Open dedicated full Notifications page"
-                          style={{
-                            background: '#eef2ff',
-                            border: '1px solid #c7d2fe',
-                            color: '#4f46e5',
-                            borderRadius: '6px',
-                            padding: '3px 8px',
-                            fontSize: '0.72rem',
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                          }}
                         >
                           <span>Full Page →</span>
                         </button>
-                        {unreadShiftNotifCount > 0 && (
-                          <button
-                            type="button"
-                            className="bento-notif-mark-read-btn"
-                            onClick={handleMarkAllNotificationsRead}
-                            title="Mark all notifications as read"
-                          >
-                            Mark all read
-                          </button>
-                        )}
                         <span className={`bento-notif-role-badge ${user?.role === 'cashier' ? 'cashier' : 'admin'}`}>
                           {user?.role === 'cashier' ? 'Cashier Station' : user?.role === 'manager' ? 'Store Manager' : 'Super Admin'}
                         </span>
@@ -9351,6 +9574,10 @@ export function App() {
                                   setCart([]);
                                   setActiveExchangeLines([]);
                                   setActiveExchangeOrigBill('');
+                                  setSelectedPartyId('');
+                                  setCustomerSearch('');
+                                  setQuickCustomerName('');
+                                  setAppliedDiscountPercent(0);
                                   setCashReceived('');
                                   setActiveQrAttempt(null);
                                   setUpiManualRef('');
@@ -9930,6 +10157,206 @@ export function App() {
                           )}
                         </div>
 
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ================= RIGHT / SIDE BENTO COLUMN: Barcode Scanner ================= */}
+                  <div className="bento-side-col">
+                    <div className="bento-card bento-scanner-card">
+                      <div className="bento-card-header">
+                        <div className="bento-header-label">
+                          <span className="bento-icon-circle purple">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                              <path d="M3 5v14M8 5v14M12 5v14M17 5v14M21 5v14" />
+                            </svg>
+                          </span>
+                          <div>
+                            <h3 className="bento-card-title">Barcode Scanner</h3>
+                            <span className="bento-card-subtitle">Instant SKU & Barcode Lookup</span>
+                          </div>
+                        </div>
+                        <span className={`bento-status-pill ${isPosCameraActive ? 'emerald' : isPhoneScannerConnected ? 'emerald' : 'green'}`}>
+                          <span className={`scanner-ready-dot ${isPosCameraActive ? 'pulsing' : ''}`}></span>
+                          {isPosCameraActive ? 'Live Camera' : isPhoneScannerConnected ? 'Phone Active' : 'Ready'}
+                        </span>
+                      </div>
+
+                      <div className="bento-scanner-body">
+                        {/* Live In-Place Camera Scanner Viewfinder */}
+                        {isPosCameraActive && (
+                          <div className={`pos-inline-camera-container ${cameraScanFlash ? 'scan-flash' : ''}`}>
+                            <div className="pos-inline-camera-header">
+                              <div className="pos-cam-header-left">
+                                <span className="pos-cam-dot live"></span>
+                                <span className="pos-cam-label">Camera Active</span>
+                              </div>
+                              <div className="pos-cam-header-actions">
+                                {posCameraDevices.length > 1 && (
+                                  <button
+                                    type="button"
+                                    className="pos-cam-ctrl-btn"
+                                    onClick={switchPosCamera}
+                                    title="Switch camera (front/back)"
+                                  >
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                      <path d="M20 10c0-4.418-3.582-8-8-8s-8 3.582-8 8c0 3.03 1.688 5.67 4.17 7.05M4 14c0 4.418 3.582 8 8 8s8-3.582 8-8c0-3.03-1.688-5.67-4.17-7.05" />
+                                      <polyline points="20 4 20 10 14 10" />
+                                      <polyline points="4 20 4 14 10 14" />
+                                    </svg>
+                                    <span>Switch</span>
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  className="pos-cam-close-btn"
+                                  onClick={stopPosCamera}
+                                  title="Close camera"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            </div>
+
+                            <div id="pos-inline-camera-view" className="pos-inline-camera-view" />
+
+                            {isPosCameraStarting && (
+                              <div className="pos-cam-loading">
+                                <div className="pos-cam-spinner"></div>
+                                <span>Starting camera stream...</span>
+                              </div>
+                            )}
+
+                            {posCameraError && (
+                              <div className="pos-cam-error-banner">
+                                <span>{posCameraError}</span>
+                                <button type="button" onClick={() => startPosCamera()} className="pos-cam-retry-btn">
+                                  Retry
+                                </button>
+                              </div>
+                            )}
+
+                            <div className="pos-inline-laser-beam"></div>
+                            <div className="pos-inline-scan-target">
+                              <span className="corner top-left"></span>
+                              <span className="corner top-right"></span>
+                              <span className="corner bottom-left"></span>
+                              <span className="corner bottom-right"></span>
+                            </div>
+                            <div className="pos-inline-hint">
+                              Hold product barcode in front of camera
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="scanner-input-container">
+                          <span className="scanner-laser-icon">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
+                              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                            </svg>
+                          </span>
+                          <input
+                            id="pos-product-search-input"
+                            type="text"
+                            className="bento-input scanner-input"
+                            placeholder="Scan barcode or enter product SKU..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && searchQuery.trim()) {
+                                e.preventDefault();
+                                handleBarcodeScanned(searchQuery.trim());
+                                setSearchQuery('');
+                              }
+                            }}
+                          />
+                          {searchQuery && (
+                            <button
+                              type="button"
+                              className="bento-input-clear-btn"
+                              onClick={() => setSearchQuery('')}
+                            >
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                              </svg>
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="scanner-action-row">
+                          <button
+                            type="button"
+                            className={`bento-trigger-scan-btn ${isPosCameraActive ? 'camera-active' : ''}`}
+                            onClick={isPosCameraActive ? stopPosCamera : () => startPosCamera()}
+                            title={isPosCameraActive ? 'Turn off camera stream' : 'Open live camera scanner in this card'}
+                          >
+                            {isPosCameraActive ? (
+                              <>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                  <line x1="1" y1="1" x2="23" y2="23"></line>
+                                  <path d="M21 21H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3m3-3h6l2 3h4a2 2 0 0 1 2 2v9.34"></path>
+                                  <circle cx="12" cy="13" r="4"></circle>
+                                </svg>
+                                <span>Stop Camera</span>
+                              </>
+                            ) : (
+                              <>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                  <circle cx="12" cy="13" r="4"></circle>
+                                </svg>
+                                <span>Open Camera</span>
+                              </>
+                            )}
+                          </button>
+
+                          <button
+                            type="button"
+                            className={`bento-mobile-scanner-btn ${isPhoneScannerConnected ? 'connected' : ''}`}
+                            onClick={() => setShowMobileScannerModal(true)}
+                            title="Use your phone camera as a wireless barcode scanner"
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
+                              <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                              <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                            </svg>
+                            <span>{isPhoneScannerConnected ? 'Phone Active ✓' : 'Phone as Scanner'}</span>
+                          </button>
+                        </div>
+
+                        {/* Find Product / No Barcode Button */}
+                        <button
+                          type="button"
+                          className="bento-find-product-btn"
+                          onClick={() => focusProductSearch()}
+                          title="Search catalog or add items without barcode (F2)"
+                        >
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                          </svg>
+                          <span>Find Product / No Barcode (F2)</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Bento Payment & Checkout Hub */}
+                    <div className="bento-card bento-checkout-panel-card">
+                      <div className="bento-card-header" style={{ paddingBottom: "0.4rem", marginBottom: "0.2rem" }}>
+                        <div className="bento-header-label">
+                          <span className="bento-icon-circle green">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
+                              <rect x="2" y="5" width="20" height="14" rx="2" />
+                              <line x1="2" y1="10" x2="22" y2="10" />
+                            </svg>
+                          </span>
+                          <div>
+                            <h3 className="bento-card-title">Customer & Payment Settlement</h3>
+                            <span className="bento-card-subtitle">Fast Counter Checkout</span>
+                          </div>
+                        </div>
+                      </div>
                         {/* Direct Inline Customer Entry Bento Box */}
                         {(() => {
                           const cleanDigits = customerSearch.replace(/\D/g, '');
@@ -11210,188 +11637,6 @@ export function App() {
                             </button>
                           </div>
                         </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* ================= RIGHT / SIDE BENTO COLUMN: Barcode Scanner ================= */}
-                  <div className="bento-side-col">
-                    <div className="bento-card bento-scanner-card">
-                      <div className="bento-card-header">
-                        <div className="bento-header-label">
-                          <span className="bento-icon-circle purple">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                              <path d="M3 5v14M8 5v14M12 5v14M17 5v14M21 5v14" />
-                            </svg>
-                          </span>
-                          <div>
-                            <h3 className="bento-card-title">Barcode Scanner</h3>
-                            <span className="bento-card-subtitle">Instant SKU & Barcode Lookup</span>
-                          </div>
-                        </div>
-                        <span className={`bento-status-pill ${isPosCameraActive ? 'emerald' : isPhoneScannerConnected ? 'emerald' : 'green'}`}>
-                          <span className={`scanner-ready-dot ${isPosCameraActive ? 'pulsing' : ''}`}></span>
-                          {isPosCameraActive ? 'Live Camera' : isPhoneScannerConnected ? 'Phone Active' : 'Ready'}
-                        </span>
-                      </div>
-
-                      <div className="bento-scanner-body">
-                        {/* Live In-Place Camera Scanner Viewfinder */}
-                        {isPosCameraActive && (
-                          <div className={`pos-inline-camera-container ${cameraScanFlash ? 'scan-flash' : ''}`}>
-                            <div className="pos-inline-camera-header">
-                              <div className="pos-cam-header-left">
-                                <span className="pos-cam-dot live"></span>
-                                <span className="pos-cam-label">Camera Active</span>
-                              </div>
-                              <div className="pos-cam-header-actions">
-                                {posCameraDevices.length > 1 && (
-                                  <button
-                                    type="button"
-                                    className="pos-cam-ctrl-btn"
-                                    onClick={switchPosCamera}
-                                    title="Switch camera (front/back)"
-                                  >
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                      <path d="M20 10c0-4.418-3.582-8-8-8s-8 3.582-8 8c0 3.03 1.688 5.67 4.17 7.05M4 14c0 4.418 3.582 8 8 8s8-3.582 8-8c0-3.03-1.688-5.67-4.17-7.05" />
-                                      <polyline points="20 4 20 10 14 10" />
-                                      <polyline points="4 20 4 14 10 14" />
-                                    </svg>
-                                    <span>Switch</span>
-                                  </button>
-                                )}
-                                <button
-                                  type="button"
-                                  className="pos-cam-close-btn"
-                                  onClick={stopPosCamera}
-                                  title="Close camera"
-                                >
-                                  ✕
-                                </button>
-                              </div>
-                            </div>
-
-                            <div id="pos-inline-camera-view" className="pos-inline-camera-view" />
-
-                            {isPosCameraStarting && (
-                              <div className="pos-cam-loading">
-                                <div className="pos-cam-spinner"></div>
-                                <span>Starting camera stream...</span>
-                              </div>
-                            )}
-
-                            {posCameraError && (
-                              <div className="pos-cam-error-banner">
-                                <span>{posCameraError}</span>
-                                <button type="button" onClick={() => startPosCamera()} className="pos-cam-retry-btn">
-                                  Retry
-                                </button>
-                              </div>
-                            )}
-
-                            <div className="pos-inline-laser-beam"></div>
-                            <div className="pos-inline-scan-target">
-                              <span className="corner top-left"></span>
-                              <span className="corner top-right"></span>
-                              <span className="corner bottom-left"></span>
-                              <span className="corner bottom-right"></span>
-                            </div>
-                            <div className="pos-inline-hint">
-                              Hold product barcode in front of camera
-                            </div>
-                          </div>
-                        )}
-
-                        <div className="scanner-input-container">
-                          <span className="scanner-laser-icon">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
-                              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-                            </svg>
-                          </span>
-                          <input
-                            id="pos-product-search-input"
-                            type="text"
-                            className="bento-input scanner-input"
-                            placeholder="Scan barcode or enter product SKU..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' && searchQuery.trim()) {
-                                e.preventDefault();
-                                handleBarcodeScanned(searchQuery.trim());
-                                setSearchQuery('');
-                              }
-                            }}
-                          />
-                          {searchQuery && (
-                            <button
-                              type="button"
-                              className="bento-input-clear-btn"
-                              onClick={() => setSearchQuery('')}
-                            >
-                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round">
-                                <line x1="18" y1="6" x2="6" y2="18"></line>
-                                <line x1="6" y1="6" x2="18" y2="18"></line>
-                              </svg>
-                            </button>
-                          )}
-                        </div>
-
-                        <div className="scanner-action-row">
-                          <button
-                            type="button"
-                            className={`bento-trigger-scan-btn ${isPosCameraActive ? 'camera-active' : ''}`}
-                            onClick={isPosCameraActive ? stopPosCamera : () => startPosCamera()}
-                            title={isPosCameraActive ? 'Turn off camera stream' : 'Open live camera scanner in this card'}
-                          >
-                            {isPosCameraActive ? (
-                              <>
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                  <line x1="1" y1="1" x2="23" y2="23"></line>
-                                  <path d="M21 21H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3m3-3h6l2 3h4a2 2 0 0 1 2 2v9.34"></path>
-                                  <circle cx="12" cy="13" r="4"></circle>
-                                </svg>
-                                <span>Stop Camera</span>
-                              </>
-                            ) : (
-                              <>
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                                  <circle cx="12" cy="13" r="4"></circle>
-                                </svg>
-                                <span>Open Camera</span>
-                              </>
-                            )}
-                          </button>
-
-                          <button
-                            type="button"
-                            className={`bento-mobile-scanner-btn ${isPhoneScannerConnected ? 'connected' : ''}`}
-                            onClick={() => setShowMobileScannerModal(true)}
-                            title="Use your phone camera as a wireless barcode scanner"
-                          >
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
-                              <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
-                              <line x1="12" y1="18" x2="12.01" y2="18"></line>
-                            </svg>
-                            <span>{isPhoneScannerConnected ? 'Phone Active ✓' : 'Phone as Scanner'}</span>
-                          </button>
-                        </div>
-
-                        {/* Find Product / No Barcode Button */}
-                        <button
-                          type="button"
-                          className="bento-find-product-btn"
-                          onClick={() => focusProductSearch()}
-                          title="Search catalog or add items without barcode (F2)"
-                        >
-                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                            <circle cx="11" cy="11" r="8"></circle>
-                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                          </svg>
-                          <span>Find Product / No Barcode (F2)</span>
-                        </button>
-                      </div>
                     </div>
 
                     {/* Bento Register & Counter Operations Hub */}
@@ -18581,11 +18826,11 @@ export function App() {
 
         {/* WIRELESS MOBILE SCANNER PAIRING MODAL */}
         {showMobileScannerModal && (
-          <div className="modal-overlay" onClick={() => setShowMobileScannerModal(false)}>
-            <div className="modal-content mobile-scanner-modal" onClick={(e) => e.stopPropagation()}>
+          <div className={`modal-overlay ${user?.role === 'cashier' ? 'theme-cashier' : ''}`} onClick={() => setShowMobileScannerModal(false)}>
+            <div className={`modal-content mobile-scanner-modal ${user?.role === 'cashier' ? 'theme-cashier' : ''}`} onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
                 <div className="modal-header-left">
-                  <span className="bento-icon-circle purple">
+                  <span className={`bento-icon-circle ${user?.role === 'cashier' ? 'emerald' : 'purple'}`}>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
                       <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
                       <line x1="12" y1="18" x2="12.01" y2="18" />
@@ -18644,12 +18889,31 @@ export function App() {
                               <span>Point Phone Camera Here</span>
                             </div>
                             <div style={{ marginTop: '0.35rem', textAlign: 'center', width: '100%' }}>
-                              <div style={{ fontSize: '0.7rem', color: '#4f46e5', fontWeight: 600, wordBreak: 'break-all', padding: '0.2rem 0.35rem', background: '#eef2ff', borderRadius: '4px', border: '1px solid #c7d2fe' }}>
+                              <div style={{
+                                fontSize: '0.7rem',
+                                color: 'var(--primary, #0F766E)',
+                                fontWeight: 600,
+                                wordBreak: 'break-all',
+                                padding: '0.2rem 0.35rem',
+                                background: 'var(--primary-soft, #E6F4F3)',
+                                borderRadius: '4px',
+                                border: '1px solid rgba(20, 184, 166, 0.4)',
+                              }}>
                                 {pairingUrl}
                               </div>
                               <button
                                 type="button"
-                                style={{ marginTop: '0.25rem', background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 700, padding: '0.15rem 0.5rem', cursor: 'pointer', color: '#334155' }}
+                                style={{
+                                  marginTop: '0.25rem',
+                                  background: user?.role === 'cashier' ? 'var(--surface, #FAF7F2)' : '#ffffff',
+                                  border: user?.role === 'cashier' ? '1px solid var(--border, #D0C7B8)' : '1px solid #cbd5e1',
+                                  borderRadius: '4px',
+                                  fontSize: '0.7rem',
+                                  fontWeight: 700,
+                                  padding: '0.15rem 0.5rem',
+                                  cursor: 'pointer',
+                                  color: user?.role === 'cashier' ? 'var(--sidebar, #0F2D2E)' : '#334155'
+                                }}
                                 onClick={() => {
                                   navigator.clipboard?.writeText(pairingUrl);
                                   showToast('📋 Link copied to clipboard!');
@@ -18671,10 +18935,14 @@ export function App() {
                           className={`proto-btn ${scannerProtocol === 'tunnel' && !customTunnelUrl ? 'active' : ''}`}
                           onClick={() => { setScannerProtocol('tunnel'); setCustomTunnelUrl(''); }}
                           style={{
-                            background: scannerProtocol === 'tunnel' ? 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)' : '#eef2ff',
-                            color: scannerProtocol === 'tunnel' ? '#ffffff' : '#4338ca',
+                            background: scannerProtocol === 'tunnel'
+                              ? (user?.role === 'cashier' ? 'linear-gradient(135deg, var(--sidebar, #0F2D2E) 0%, var(--primary, #0F766E) 100%)' : 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)')
+                              : (user?.role === 'cashier' ? 'var(--primary-soft, #E6F4F3)' : '#eef2ff'),
+                            color: scannerProtocol === 'tunnel'
+                              ? '#ffffff'
+                              : (user?.role === 'cashier' ? 'var(--primary, #0F766E)' : '#4338ca'),
                             fontWeight: 700,
-                            border: '1px solid #c7d2fe',
+                            border: user?.role === 'cashier' ? '1px solid rgba(20, 184, 166, 0.4)' : '1px solid #c7d2fe',
                             padding: '0.35rem 0.5rem',
                             borderRadius: '6px',
                             display: 'flex',
@@ -18753,7 +19021,7 @@ export function App() {
                         <div className="scanner-link-box">
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
                             <label className="scanner-link-label" style={{ margin: 0 }}>Direct Browser Link:</label>
-                            <span style={{ fontSize: '0.7rem', color: '#6366f1', cursor: 'pointer', fontWeight: 600 }} onClick={() => {
+                            <span style={{ fontSize: '0.7rem', color: 'var(--primary, #0F766E)', cursor: 'pointer', fontWeight: 700 }} onClick={() => {
                               const val = prompt('Optional: Paste public tunnel URL (e.g. from ngrok or localtunnel):', customTunnelUrl);
                               if (val !== null) setCustomTunnelUrl(val.trim());
                             }}>

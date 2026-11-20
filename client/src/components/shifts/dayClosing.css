@@ -2,7 +2,8 @@
    DAY CLOSING & CASH RECONCILIATION - 3D LUXURY BENTO DESIGN SYSTEM
    ========================================================================== */
 
-:root {
+:root,
+.day-closing-wrapper {
   --dc-bg: var(--bg, #E8E1D5);
   --dc-surface: var(--surface, #FAF7F2);
   --dc-surface-inner: var(--surface-inner, #F3ECE1);
@@ -14,6 +15,26 @@
   --dc-sidebar: var(--sidebar, #0F2D2E);
   --dc-text: var(--text, #1E293B);
   --dc-text-muted: var(--text-muted, #5C584E);
+}
+
+/* Explicit Cashier Palette Binding for Day Closing */
+div.app-container.theme-cashier .day-closing-wrapper,
+body.theme-cashier .day-closing-wrapper,
+.theme-cashier .day-closing-wrapper,
+div.app-container.theme-cashier,
+body.theme-cashier,
+.theme-cashier {
+  --dc-bg: #E8E1D5 !important;
+  --dc-surface: #FAF7F2 !important;
+  --dc-surface-inner: #F3ECE1 !important;
+  --dc-border: #D0C7B8 !important;
+  --dc-primary: #0F766E !important;
+  --dc-primary-hover: #115E59 !important;
+  --dc-primary-soft: #E6F4F3 !important;
+  --dc-ring: #14B8A6 !important;
+  --dc-sidebar: #0F2D2E !important;
+  --dc-text: #0F172A !important;
+  --dc-text-muted: #475569 !important;
 }
 
 .day-closing-wrapper {
@@ -1434,6 +1455,17 @@
   background: linear-gradient(135deg, rgba(168, 85, 247, 0.08) 0%, var(--dc-surface) 100%);
 }
 
+body.theme-cashier .tender-kpi-card.credit,
+.theme-cashier .tender-kpi-card.credit {
+  border-color: rgba(20, 184, 166, 0.4) !important;
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.08) 0%, var(--dc-surface) 100%) !important;
+}
+
+body.theme-cashier .tender-kpi-card.credit .tender-header,
+.theme-cashier .tender-kpi-card.credit .tender-header {
+  color: var(--dc-primary, #0F766E) !important;
+}
+
 .tender-header {
   display: flex;
   align-items: center;
@@ -1486,6 +1518,13 @@
 .detail-list-val.rose { color: #e11d48; }
 .detail-list-val.indigo { color: var(--dc-primary); }
 .detail-list-val.purple { color: var(--dc-primary); }
+
+body.theme-cashier .detail-list-val.indigo,
+.theme-cashier .detail-list-val.indigo,
+body.theme-cashier .detail-list-val.purple,
+.theme-cashier .detail-list-val.purple {
+  color: var(--dc-primary, #0F766E) !important;
+}
 
 .detail-notice-box {
   margin-top: 0.85rem;

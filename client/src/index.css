@@ -13806,13 +13806,59 @@ body.theme-super-admin .app-sidebar.icon-only .sidebar-action-row-btn.active:hov
 /* ================= 2. MAIN BENTO GRID ================= */
 .bento-pos-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.48fr) minmax(360px, 400px);
+  grid-template-columns: minmax(0, 1.35fr) minmax(380px, 460px);
   gap: 0.85rem;
   align-items: start;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
 }
+
+/* Dedicated Checkout & Payment Settlement Card in Right Column */
+.bento-checkout-panel-card {
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0.75rem 0.85rem;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  box-sizing: border-box;
+}
+
+.bento-checkout-panel-card .bento-billing-customer-box {
+  margin: 0 !important;
+  padding: 0.55rem 0.75rem !important;
+}
+
+.bento-checkout-panel-card .bento-payment-modes {
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 0.25rem !important;
+}
+
+.bento-checkout-panel-card .bento-pay-mode-btn {
+  padding: 0.35rem 0.2rem !important;
+  font-size: 0.72rem !important;
+}
+
+.bento-checkout-panel-card .bento-cash-tender-card,
+.bento-checkout-panel-card .bento-upi-tender-card,
+.bento-checkout-panel-card .bento-card-tender-card,
+.bento-checkout-panel-card .bento-split-tender-card {
+  margin: 0 !important;
+  padding: 0.55rem 0.75rem !important;
+}
+
+.bento-checkout-panel-card .bento-checkout-row {
+  margin: 0.35rem 0 0 0 !important;
+  padding: 0.5rem 0 0 0 !important;
+  position: static !important;
+  box-shadow: none !important;
+  border-top: 1.5px solid #e2e8f0 !important;
+  border-radius: 0 !important;
+}
+
 
 @media (max-width: 1100px) {
   .bento-pos-grid {
@@ -15864,7 +15910,7 @@ body.theme-super-admin .app-sidebar.icon-only .sidebar-action-row-btn.active:hov
 .bento-cart-rows-scroll {
   display: flex;
   flex-direction: column;
-  max-height: 220px;
+  max-height: clamp(280px, 48vh, 520px);
   overflow-y: auto;
   scroll-behavior: smooth;
   min-width: 0;
@@ -31256,7 +31302,7 @@ select.expense-input-control {
 }
 
 .bento-cart-rows-scroll {
-  max-height: clamp(180px, 32vh, 420px) !important;
+  max-height: clamp(240px, 46vh, 560px) !important;
   overflow-y: auto !important;
 }
 
@@ -32757,8 +32803,8 @@ select.expense-input-control {
   position: absolute;
   top: calc(100% + 10px);
   right: 0;
-  width: 390px;
-  max-width: calc(100vw - 24px);
+  width: 440px;
+  max-width: calc(100vw - 20px);
   background: #ffffff;
   border: 1px solid #E2E0EF;
   border-radius: 16px;
@@ -32774,15 +32820,26 @@ select.expense-input-control {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 13px 16px;
+  padding: 11px 14px;
   background: #FAFAFD;
   border-bottom: 1px solid #E2E0EF;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+.bento-notif-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  flex-wrap: nowrap;
 }
 
 .bento-notif-title-row {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .bento-notif-icon-bubble {
@@ -32793,21 +32850,26 @@ select.expense-input-control {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .bento-notif-title {
   font-size: 0.95rem;
   font-weight: 700;
   color: #1A1838;
+  white-space: nowrap;
 }
 
 .bento-notif-role-badge {
-  font-size: 0.72rem;
-  font-weight: 700;
-  padding: 3px 9px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 3px 8px;
   border-radius: 999px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1.2;
 }
 
 .bento-notif-role-badge.cashier {
@@ -33016,29 +33078,61 @@ select.expense-input-control {
 .bento-notif-unread-count-pill {
   font-size: 0.68rem;
   font-weight: 700;
-  padding: 1px 7px;
+  padding: 2px 7px;
   background: var(--primary-soft, #E6F4F3);
   color: var(--primary, #0F766E);
   border-radius: 999px;
   border: 1px solid rgba(20, 184, 166, 0.35);
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1.2;
 }
 
 .bento-notif-mark-read-btn {
-  background: none;
-  border: none;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
   font-size: 0.72rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--primary, #0F766E);
   cursor: pointer;
-  padding: 2px 6px;
-  border-radius: 4px;
+  padding: 4px 8px;
+  border-radius: 7px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1.2;
   transition: all 0.15s ease;
 }
 
 .bento-notif-mark-read-btn:hover {
   background: var(--primary-soft, #E6F4F3);
+  border-color: var(--primary, #0F766E);
   color: var(--primary-hover, #115E59);
-  text-decoration: underline;
+}
+
+.bento-notif-open-full-btn {
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+  color: #4f46e5;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 7px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1.2;
+  transition: all 0.15s ease;
+}
+
+.bento-notif-open-full-btn:hover {
+  background: #e0e7ff;
+  border-color: #818cf8;
 }
 
 .bento-notif-card.shift-open {

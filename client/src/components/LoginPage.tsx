@@ -228,6 +228,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     btnText: string;
     badge: string;
     securityTag: string;
+    loginQuote: string;
   }> = {
     super_admin: {
       key: 'super-admin',
@@ -241,6 +242,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       btnText: 'Log In as Super Admin',
       badge: 'HQ Super Admin',
       securityTag: 'HQ Executive Clearance',
+      loginQuote: 'Track enterprise growth, oversee branches, and analyze performance!',
     },
     store_manager: {
       key: 'store-manager',
@@ -254,6 +256,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       btnText: 'Log In as Store Manager',
       badge: 'Store Manager',
       securityTag: 'Branch Operations Clearance',
+      loginQuote: 'Manage daily store operations, track sales, and supervise shifts!',
     },
     cashier: {
       key: 'cashier',
@@ -267,14 +270,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       btnText: selectedRole === 'cashier2' ? 'Log In as Cashier 2 (Lakshmi)' : 'Log In as Cashier',
       badge: 'Cashier Station',
       securityTag: 'POS Register Terminal',
+      loginQuote: 'Start your shift and serve customers with fast, seamless billing!',
     },
   };
 
   const currentMeta = isCashier
     ? roleMeta.cashier
     : selectedRole === 'store_manager'
-    ? roleMeta.store_manager
-    : roleMeta.super_admin;
+      ? roleMeta.store_manager
+      : roleMeta.super_admin;
 
   return (
     <div className="modern-login-page">
@@ -285,12 +289,19 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         {(() => {
           const isSuperAdmin = currentMeta.key === 'super-admin';
           const isCashierRole = currentMeta.key === 'cashier';
-          const isHeroLayout = isSuperAdmin || isCashierRole;
+          const isStoreManager = currentMeta.key === 'store-manager';
+          const isHeroLayout = isSuperAdmin || isCashierRole || isStoreManager;
           const hasImage = Boolean(currentMeta.image && !failedImages[currentMeta.image]);
 
           if (isHeroLayout) {
+            const roleLayoutClass = isSuperAdmin
+              ? 'super-admin-layout'
+              : isCashierRole
+                ? 'cashier-layout'
+                : 'store-manager-layout';
+
             return (
-              <div className={`modern-login-left ${isSuperAdmin ? 'super-admin-layout' : 'cashier-layout'}`}>
+              <div className={`modern-login-left ${roleLayoutClass}`}>
                 <div className="modern-login-top-wordings">
                   <div className="modern-left-badge">
                     <RoleIcon role={currentMeta.key} size={15} />
@@ -343,64 +354,50 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         })()}
 
         {/* ------------------------------------------------------------------
-            RIGHT HALF: CLEAN MODERN LOGIN FORM (Matching Image 2 Reference)
+            RIGHT HALF: CLEAN MINIMALIST LOGIN FORM (Matching Reference Design)
             ------------------------------------------------------------------ */}
         <div className="modern-login-right">
-          <div className="modern-login-form-inner">
-            {/* Top Navigation Row */}
-            <div className="modern-login-top-row">
-              <div className="modern-brand-logo" onClick={onBackToHome} style={{ cursor: onBackToHome ? 'pointer' : 'default' }}>
-                <div className="modern-brand-icon">
-                  <LightningBoltIcon size={17} />
-                </div>
-                <div className="modern-brand-text-block">
-                  <span className="modern-brand-title">Adaptive Billing</span>
-                  <span className="modern-brand-badge">ENTERPRISE</span>
-                </div>
+          <div className="felix-login-container">
+            {/* Top Row: Brand Mark & Role Switcher */}
+            <div className="felix-top-nav">
+              <div className="felix-brand-mark" onClick={onBackToHome} title="Adaptive Billing">
+                <LightningBoltIcon size={38} className="felix-bolt-icon" />
               </div>
-            </div>
 
-            {/* Elevated Form Card */}
-            <div className="modern-form-card">
-              {/* 3 Role Selection Segmented Tabs with Icons */}
-              <div className="modern-role-tabs-strip">
+              {/* Minimal Pill Role Tabs */}
+              <div className="felix-role-tabs-strip">
                 <button
                   type="button"
-                  className={`modern-role-tab tab-super-admin ${selectedRole === 'super_admin' ? 'active' : ''}`}
+                  className={`felix-role-pill ${selectedRole === 'super_admin' ? 'active' : ''}`}
                   onClick={() => handleRoleTabChange('super_admin')}
                 >
-                  <CrownIcon size={15} className="role-tab-icon" />
+                  <CrownIcon size={13} />
                   <span>Super Admin</span>
                 </button>
-
                 <button
                   type="button"
-                  className={`modern-role-tab tab-store-manager ${selectedRole === 'store_manager' ? 'active' : ''}`}
+                  className={`felix-role-pill ${selectedRole === 'store_manager' ? 'active' : ''}`}
                   onClick={() => handleRoleTabChange('store_manager')}
                 >
-                  <StoreIcon size={15} className="role-tab-icon" />
+                  <StoreIcon size={13} />
                   <span>Store Manager</span>
                 </button>
-
                 <button
                   type="button"
-                  className={`modern-role-tab tab-cashier ${isCashier ? 'active' : ''}`}
+                  className={`felix-role-pill ${isCashier ? 'active' : ''}`}
                   onClick={() => handleRoleTabChange('cashier')}
                 >
-                  <CashierIcon size={15} className="role-tab-icon" />
+                  <CashierIcon size={13} />
                   <span>Cashier Counter</span>
                 </button>
               </div>
+            </div>
 
-              {/* Form Title & Clearance Pill */}
-              <div className="modern-form-heading-block">
-                <div className="modern-security-badge">
-                  <span className="security-pulse-dot" />
-                  <span>{currentMeta.securityTag}</span>
-                </div>
-                <h2 className="modern-form-title">{currentMeta.title}</h2>
-                <p className="modern-form-subtitle">{currentMeta.subtitle}</p>
-              </div>
+            {/* Title & Subtitle Matching Screenshot */}
+            <div className="felix-heading-block">
+              <h1 className="felix-title">Login</h1>
+              <p className="felix-subtitle">{currentMeta.loginQuote}</p>
+            </div>
 
             {error && (
               <div className="modern-error-banner" role="alert">
@@ -413,67 +410,53 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               </div>
             )}
 
-            {/* Main Login Form */}
-            <form onSubmit={handleSubmit} className="modern-auth-form">
-              <div className="modern-input-group">
-                <label className="modern-label" htmlFor="modern-login-email">
-                  <span className="modern-label-title">{currentMeta.inputLabel}</span>
-                  <span className="req-pill">Required</span>
+            {/* Main Form Matching Screenshot */}
+            <form onSubmit={handleSubmit} className="felix-auth-form">
+              <div className="felix-input-group">
+                <label className="felix-label" htmlFor="felix-email">
+                  Email*
                 </label>
-                <div className="modern-input-wrapper">
-                  <div className="modern-input-icon-slot">
-                    {selectedRole === 'super_admin' ? (
-                      <MailIcon size={17} />
-                    ) : (
-                      <UserIcon size={17} />
-                    )}
-                  </div>
-                  <input
-                    id="modern-login-email"
-                    type={selectedRole === 'super_admin' ? 'email' : 'text'}
-                    className="modern-input"
-                    required
-                    autoFocus
-                    placeholder={currentMeta.placeholder}
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    autoComplete={isCashier ? 'username' : 'email'}
-                  />
-                </div>
+                <input
+                  id="felix-email"
+                  type={selectedRole === 'super_admin' ? 'email' : 'text'}
+                  className="felix-input"
+                  required
+                  autoFocus
+                  placeholder="mail@website.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  autoComplete={isCashier ? 'username' : 'email'}
+                />
               </div>
 
-              <div className="modern-input-group">
-                <label className="modern-label" htmlFor="modern-login-password">
-                  <span className="modern-label-title">Password</span>
-                  <span className="req-pill">Required</span>
+              <div className="felix-input-group">
+                <label className="felix-label" htmlFor="felix-password">
+                  Password*
                 </label>
-                <div className="modern-input-wrapper">
-                  <div className="modern-input-icon-slot">
-                    <LockIcon size={17} />
-                  </div>
+                <div className="felix-input-relative">
                   <input
-                    id="modern-login-password"
+                    id="felix-password"
                     type={showPassword ? 'text' : 'password'}
-                    className="modern-input"
+                    className="felix-input"
                     required
-                    placeholder="Enter your security password"
+                    placeholder="Min. 8 character"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     autoComplete="current-password"
                   />
                   <button
                     type="button"
-                    className="modern-pwd-toggle"
+                    className="felix-pwd-toggle"
                     onClick={() => setShowPassword(!showPassword)}
                     title={showPassword ? 'Hide password' : 'Show password'}
                   >
                     {showPassword ? (
-                      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
+                      <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
                         <line x1="1" y1="1" x2="23" y2="23" />
                       </svg>
                     ) : (
-                      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
+                      <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
                         <circle cx="12" cy="12" r="3" />
                       </svg>
@@ -482,32 +465,32 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 </div>
               </div>
 
-              <div className="modern-options-row">
-                <label className="modern-checkbox-label">
+              <div className="felix-options-row">
+                <label className="felix-checkbox-label">
                   <input
                     type="checkbox"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
                   />
-                  <span>Remember my session</span>
+                  <span>Remember me</span>
                 </label>
 
                 <button
                   type="button"
-                  className="modern-forgot-link"
+                  className="felix-forgot-link"
                   onClick={() => {
                     setForgotIdentifier(email);
                     setForgotStatus(null);
                     setShowForgotModal(true);
                   }}
                 >
-                  Forgot password?
+                  Forget password?
                 </button>
               </div>
 
               <button
                 type="submit"
-                className="modern-btn-submit"
+                className="felix-btn-submit"
                 disabled={isLoading}
               >
                 {isLoading ? (
@@ -516,22 +499,17 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                       <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
                       <path d="M12 2a10 10 0 0 1 10 10" />
                     </svg>
-                    <span>Authenticating...</span>
+                    <span>Logging in...</span>
                   </span>
                 ) : (
-                  <>
-                    <span>{currentMeta.btnText}</span>
-                    <ArrowRightIcon size={17} className="btn-arrow-icon" />
-                  </>
+                  'Login'
                 )}
               </button>
             </form>
-          </div>
 
-            {/* Compliance Seal */}
-            <div className="modern-compliance-row">
-              <ShieldLockIcon size={13} />
-              <span>256-bit SSL Encrypted • Enterprise Multi-Branch Synchronization</span>
+            {/* Footer Copyright */}
+            <div className="felix-copyright">
+              ©2026 Atriowings All rights reserved.
             </div>
           </div>
         </div>

@@ -458,7 +458,11 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
 
   const handleMarkAllNotificationsRead = async () => {
     try {
-      await markAllDayClosingNotificationsRead();
+      const unreadIds = notifications
+        .filter(n => !n.isRead && !n.is_read)
+        .map(n => n.id)
+        .filter(Boolean);
+      await markAllDayClosingNotificationsRead(unreadIds.length > 0 ? unreadIds : undefined);
       setNotifications(prev => prev.map(n => ({ ...n, isRead: true, is_read: true })));
       setUnreadNotifCount(0);
     } catch {
@@ -2396,8 +2400,8 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                                 padding: '7px 14px',
                                 borderRadius: '8px',
                                 border: selectedCounterKeyFilter === 'ALL' ? '2px solid var(--dc-primary)' : '1px solid #cbd5e1',
-                                background: selectedCounterKeyFilter === 'ALL' ? '#eef2ff' : '#ffffff',
-                                color: selectedCounterKeyFilter === 'ALL' ? '#4338ca' : '#475569',
+                                background: selectedCounterKeyFilter === 'ALL' ? 'var(--dc-primary-soft, #E6F4F3)' : '#ffffff',
+                                color: selectedCounterKeyFilter === 'ALL' ? 'var(--dc-primary, #0F766E)' : '#475569',
                                 fontWeight: 700,
                                 fontSize: '0.82rem',
                                 cursor: 'pointer',
@@ -2411,8 +2415,8 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                               <span>All Counters (Total)</span>
                               <span style={{
                                 fontSize: '0.72rem',
-                                background: selectedCounterKeyFilter === 'ALL' ? '#c7d2fe' : '#f1f5f9',
-                                color: selectedCounterKeyFilter === 'ALL' ? '#312e81' : '#64748b',
+                                background: selectedCounterKeyFilter === 'ALL' ? 'rgba(20, 184, 166, 0.25)' : '#f1f5f9',
+                                color: selectedCounterKeyFilter === 'ALL' ? 'var(--dc-sidebar, #0F2D2E)' : '#64748b',
                                 padding: '2px 7px',
                                 borderRadius: '10px',
                                 fontWeight: 800,
@@ -2433,8 +2437,8 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                                     padding: '7px 14px',
                                     borderRadius: '8px',
                                     border: isSelected ? '2px solid var(--dc-primary)' : '1px solid #cbd5e1',
-                                    background: isSelected ? '#eef2ff' : '#ffffff',
-                                    color: isSelected ? '#4338ca' : '#475569',
+                                    background: isSelected ? 'var(--dc-primary-soft, #E6F4F3)' : '#ffffff',
+                                    color: isSelected ? 'var(--dc-primary, #0F766E)' : '#475569',
                                     fontWeight: 700,
                                     fontSize: '0.82rem',
                                     cursor: 'pointer',
@@ -2445,7 +2449,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                                   }}
                                 >
                                   <span>{c.counterName}</span>
-                                  <span style={{ fontSize: '0.7rem', color: isSelected ? '#4338ca' : '#64748b' }}>({c.counterCode})</span>
+                                  <span style={{ fontSize: '0.7rem', color: isSelected ? 'var(--dc-primary, #0F766E)' : '#64748b' }}>({c.counterCode})</span>
                                   {hasLiveShift && (
                                     <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#16a34a', display: 'inline-block' }} title="Shift Active" />
                                   )}
@@ -2469,13 +2473,13 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                             type="button"
                             onClick={() => setShowCounterAuditColumns((prev) => !prev)}
                             style={{
-                              background: showCounterAuditColumns ? '#eef2ff' : '#ffffff',
-                              border: `1px solid ${showCounterAuditColumns ? '#c7d2fe' : '#cbd5e1'}`,
+                              background: showCounterAuditColumns ? 'var(--dc-primary-soft, #E6F4F3)' : '#ffffff',
+                              border: `1px solid ${showCounterAuditColumns ? 'rgba(20, 184, 166, 0.4)' : '#cbd5e1'}`,
                               borderRadius: '8px',
                               padding: '6px 12px',
                               fontSize: '0.78rem',
                               fontWeight: 600,
-                              color: showCounterAuditColumns ? '#4338ca' : '#475569',
+                              color: showCounterAuditColumns ? 'var(--dc-primary, #0F766E)' : '#475569',
                               cursor: 'pointer',
                               display: 'flex',
                               alignItems: 'center',
@@ -2591,7 +2595,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                         <div className="day-closing-card" style={{ boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)' }}>
                           <div className="day-closing-card-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
                             <div className="day-closing-card-title-group" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                              <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#eef2ff', color: 'var(--dc-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'var(--dc-primary-soft, #E6F4F3)', color: 'var(--dc-primary, #0F766E)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                 <Building2Icon size={20} />
                               </div>
                               <div>
@@ -2599,7 +2603,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                                   <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: '#0f172a' }}>
                                     {targetCounter.counterName} ({targetCounter.counterCode}) — Cashier-wise Shift Sessions
                                   </h3>
-                                  <span style={{ fontSize: '0.72rem', background: '#e0e7ff', color: '#3730a3', border: '1px solid #c7d2fe', padding: '2px 8px', borderRadius: '6px', fontWeight: 700 }}>
+                                  <span style={{ fontSize: '0.72rem', background: 'var(--dc-primary-soft, #E6F4F3)', color: 'var(--dc-sidebar, #0F2D2E)', border: '1px solid rgba(20, 184, 166, 0.4)', padding: '2px 8px', borderRadius: '6px', fontWeight: 700 }}>
                                     {cashiers.length} Cashier{cashiers.length !== 1 ? 's' : ''} on Duty
                                   </span>
                                   <span style={{ fontSize: '0.72rem', background: '#f1f5f9', color: '#334155', border: '1px solid #cbd5e1', padding: '2px 8px', borderRadius: '6px', fontWeight: 700 }}>
@@ -2688,8 +2692,8 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                                   fontWeight: 700,
                                   borderRadius: '6px',
                                   border: selectedDetailCashierFilter === 'ALL' ? '1px solid var(--dc-primary)' : '1px solid #cbd5e1',
-                                  background: selectedDetailCashierFilter === 'ALL' ? '#eef2ff' : '#ffffff',
-                                  color: selectedDetailCashierFilter === 'ALL' ? '#4338ca' : '#475569',
+                                  background: selectedDetailCashierFilter === 'ALL' ? 'var(--dc-primary-soft, #E6F4F3)' : '#ffffff',
+                                  color: selectedDetailCashierFilter === 'ALL' ? 'var(--dc-primary, #0F766E)' : '#475569',
                                   cursor: 'pointer',
                                 }}
                               >
@@ -2709,8 +2713,8 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                                       fontWeight: 700,
                                       borderRadius: '6px',
                                       border: isSelected ? '1px solid var(--dc-primary)' : '1px solid #cbd5e1',
-                                      background: isSelected ? '#eef2ff' : '#ffffff',
-                                      color: isSelected ? '#4338ca' : '#475569',
+                                      background: isSelected ? 'var(--dc-primary-soft, #E6F4F3)' : '#ffffff',
+                                      color: isSelected ? 'var(--dc-primary, #0F766E)' : '#475569',
                                       cursor: 'pointer',
                                       display: 'flex',
                                       alignItems: 'center',
@@ -2766,8 +2770,8 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                                                     width: '26px',
                                                     height: '26px',
                                                     borderRadius: '50%',
-                                                    background: '#e0e7ff',
-                                                    color: '#4338ca',
+                                                    background: 'var(--dc-primary-soft, #E6F4F3)',
+                                                    color: 'var(--dc-primary, #0F766E)',
                                                     display: 'flex',
                                                     alignItems: 'center',
                                                     justifyContent: 'center',
@@ -2873,8 +2877,8 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                                                         width: '24px',
                                                         height: '24px',
                                                         borderRadius: '50%',
-                                                        background: '#e0e7ff',
-                                                        color: '#4338ca',
+                                                        background: 'var(--dc-primary-soft, #E6F4F3)',
+                                                        color: 'var(--dc-primary, #0F766E)',
                                                         display: 'flex',
                                                         alignItems: 'center',
                                                         justifyContent: 'center',
@@ -3042,8 +3046,8 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                                                 width: '28px',
                                                 height: '28px',
                                                 borderRadius: '50%',
-                                                background: '#e0e7ff',
-                                                color: '#4338ca',
+                                                background: 'var(--dc-primary-soft, #E6F4F3)',
+                                                color: 'var(--dc-primary, #0F766E)',
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 justifyContent: 'center',
@@ -3114,7 +3118,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                                               <div style={{ width: '48px', height: '6px', borderRadius: '3px', background: '#e2e8f0', overflow: 'hidden' }}>
                                                 <div style={{ width: `${Math.min(100, contributionPct)}%`, height: '100%', background: 'var(--dc-primary)' }} />
                                               </div>
-                                              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#4338ca' }}>
+                                              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--dc-primary, #0F766E)' }}>
                                                 {contributionPct}%
                                               </span>
                                             </div>
@@ -3234,7 +3238,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                                             EXCEPTION
                                           </span>
                                         ) : (
-                                          <span style={{ fontSize: '0.72rem', color: 'var(--dc-primary)', background: '#eef2ff', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>
+                                          <span style={{ fontSize: '0.72rem', color: 'var(--dc-primary, #0F766E)', background: 'var(--dc-primary-soft, #E6F4F3)', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>
                                             {c.counterCode}
                                           </span>
                                         )}
@@ -3321,9 +3325,9 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                                         type="button"
                                         onClick={() => setSelectedCounterKeyFilter(c.counterKey)}
                                         style={{
-                                          background: '#eef2ff',
-                                          border: '1px solid #c7d2fe',
-                                          color: '#4338ca',
+                                          background: 'var(--dc-primary-soft, #E6F4F3)',
+                                          border: '1px solid rgba(20, 184, 166, 0.4)',
+                                          color: 'var(--dc-primary, #0F766E)',
                                           borderRadius: '6px',
                                           padding: '4px 10px',
                                           fontSize: '0.75rem',
@@ -3601,7 +3605,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                     <span className="fin-kpi-label">Gross Profit</span>
                     <div className="fin-kpi-icon"><TrendingUpIcon size={14} /></div>
                   </div>
-                  <div className="fin-kpi-val" style={{ color: '#7e22ce' }}>{fmt(analyticsData.current.grossProfitMinor)}</div>
+                  <div className="fin-kpi-val" style={{ color: 'var(--dc-primary, #0F766E)' }}>{fmt(analyticsData.current.grossProfitMinor)}</div>
                   <span className="fin-kpi-sub">{((analyticsData.current.grossMarginPct || 0)).toFixed(1)}% Gross Margin</span>
                 </div>
 
@@ -4012,8 +4016,8 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                               fontSize: '0.725rem',
                               fontWeight: 800,
                               textTransform: 'uppercase',
-                              background: status === 'approved' || status === 'closed' ? '#eef2ff' : status === 'submitted' ? '#fffbeb' : '#fff1f2',
-                              color: status === 'approved' || status === 'closed' ? '#4338ca' : status === 'submitted' ? '#92400e' : '#be123c',
+                              background: status === 'approved' || status === 'closed' ? 'var(--dc-primary-soft, #E6F4F3)' : status === 'submitted' ? '#fffbeb' : '#fff1f2',
+                              color: status === 'approved' || status === 'closed' ? 'var(--dc-primary, #0F766E)' : status === 'submitted' ? '#92400e' : '#be123c',
                             }}>
                               {status}
                             </span>
@@ -4284,11 +4288,11 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                   width: '32px',
                   height: '32px',
                   borderRadius: '10px',
-                  background: '#EEF2FF',
+                  background: 'var(--dc-primary-soft, #E6F4F3)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: 'var(--dc-primary)',
+                  color: 'var(--dc-primary, #0F766E)',
                 }}>
                   <BellRingIcon size={18} />
                 </div>
@@ -4311,9 +4315,9 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                       onNavigateToNotifications();
                     }}
                     style={{
-                      background: '#EEF2FF',
-                      border: '1px solid #C7D2FE',
-                      color: 'var(--dc-primary)',
+                      background: 'var(--dc-primary-soft, #E6F4F3)',
+                      border: '1px solid rgba(20, 184, 166, 0.4)',
+                      color: 'var(--dc-primary, #0F766E)',
                       fontSize: '0.72rem',
                       fontWeight: 700,
                       padding: '4px 8px',
@@ -4459,8 +4463,8 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                           fontWeight: 700,
                           padding: '2px 8px',
                           borderRadius: '10px',
-                          background: isShiftOpen ? '#DCFCE7' : '#EEF2FF',
-                          color: isShiftOpen ? '#15803D' : '#4338CA',
+                          background: isShiftOpen ? '#DCFCE7' : 'var(--dc-primary-soft, #E6F4F3)',
+                          color: isShiftOpen ? '#15803D' : 'var(--dc-primary, #0F766E)',
                           whiteSpace: 'nowrap',
                         }}>
                           {isShiftOpen ? 'Drawer Open' : (meta.varianceText || 'Shift Closed')}

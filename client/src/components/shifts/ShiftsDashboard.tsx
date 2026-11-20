@@ -951,13 +951,15 @@ export const ShiftsDashboard: React.FC<ShiftsDashboardProps> = ({
       )}
 
       {/* MODALS - PORTALED DIRECTLY TO DOCUMENT.BODY TO ELIMINATE ANY CLIPPING OR WHITE BACKGROUND BORDER ARTIFACTS */}
-      <OpenShiftModal
-        isOpen={isOpenShiftModalOpen}
-        onClose={() => setIsOpenShiftModalOpen(false)}
-        onSuccess={handleOpenSuccess}
-        userName={user.name}
-        userRole={user.role}
-      />
+      {isOpenShiftModalOpen && (
+        <OpenShiftModal
+          isOpen={isOpenShiftModalOpen}
+          onClose={() => setIsOpenShiftModalOpen(false)}
+          onSuccess={handleOpenSuccess}
+          userName={user.name}
+          userRole={user.role}
+        />
+      )}
 
       {activeShift && (
         <CashMovementModal
