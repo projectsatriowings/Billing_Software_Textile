@@ -3,6 +3,8 @@ const path = require('node:path');
 const fs = require('node:fs');
 const http = require('node:http');
 
+const LIVE_PRODUCTION_URL = 'https://billing.atriowings.in/';
+
 let mainWindow = null;
 
 // Config file path in user data directory
@@ -20,7 +22,11 @@ function getSavedServerUrl() {
   } catch (err) {
     console.error('[A2Z Desktop] Error reading server config:', err);
   }
-  return process.env.APP_URL || `http://localhost:${process.env.PORT || 3001}`;
+  // In packaged desktop application, connect directly to the live production site
+  if (app.isPackaged) {
+    return process.env.APP_URL || LIVE_PRODUCTION_URL;
+  }
+  return process.env.APP_URL || (process.env.ELECTRON_DEV === 'true' ? `http://localhost:${process.env.PORT || 3001}` : LIVE_PRODUCTION_URL);
 }
 
 function saveServerUrl(url) {
@@ -162,7 +168,7 @@ function getFallbackHtml(currentUrl, errorMsg) {
     <p>Could not reach the server at <strong>${currentUrl}</strong>. If your server is hosted in the cloud or on another store PC, enter the server URL below.</p>
     
     <label class="label">Server Address (URL):</label>
-    <input id="serverUrl" class="input" type="text" value="${currentUrl}" placeholder="http://localhost:3001 or https://your-server.com" />
+    <input id="serverUrl" class="input" type="text" value="${currentUrl || 'https://billing.atriowings.in/'}" placeholder="https://billing.atriowings.in/" />
     
     <div class="actions">
       <button class="btn-primary" onclick="reconnect()">Save & Connect</button>
