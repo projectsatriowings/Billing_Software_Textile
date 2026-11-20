@@ -100,7 +100,6 @@ import type { Branch } from '../../shared/types.ts';
 import { TerminalManagementTab } from './components/terminal/TerminalManagementTab';
 import { UserManagementView } from './components/users/UserManagementView';
 import { BranchUserManagementView } from './components/users/BranchUserManagementView';
-import { PosCardCheckoutPanel } from './components/terminal/PosCardCheckoutPanel';
 import {
   CreditCardIcon,
   BanknoteIcon,
@@ -737,7 +736,16 @@ export function App() {
   }, [user?.role]);
 
   // Collapsible sidebar accordion sections
-  const isAccountsTabActive = ['invoices', 'purchases', 'payments', 'expenses', 'payables', 'reports'].includes(activeTab);
+  const isAccountsTabActive = [
+    'invoices',
+    'purchases',
+    'payments',
+    'expenses',
+    'payables',
+    'day-closing',
+    'return-reports',
+    'reports',
+  ].includes(activeTab);
   const isGstTabActive = [
     'gst-overview',
     'gst-sales-register',
@@ -2327,11 +2335,12 @@ export function App() {
   const TAB_TO_MODULE_MAP = useMemo<Record<string, string>>(() => ({
     dashboard: 'dashboard',
     pos: 'pos',
+    shifts: 'shifts',
     wholesale: 'wholesale',
     notifications: 'notifications',
     items: 'items',
     categories: 'categories',
-    inventory: 'inventory',
+    inventory: 'inventory.adjustment',
     'stock-transfer': 'inventory.transfers',
     'product-movement': 'inventory.reports',
     'sales-analysis': 'sales-analysis',
@@ -2339,26 +2348,27 @@ export function App() {
     customers: 'customers',
     suppliers: 'suppliers',
     accounts: 'accounts',
-    invoices: 'accounts.payments',
-    purchases: 'accounts.payments',
+    invoices: user?.role === 'cashier' ? 'recent-bills' : 'accounts.invoices',
+    'recent-bills': 'recent-bills',
+    purchases: 'accounts.purchases',
     payments: 'accounts.payments',
     payables: 'accounts.payments',
     receivables: 'accounts.payments',
     expenses: 'accounts.expenses',
-    'day-closing': 'pos',
-    'return-reports': 'pos',
+    'day-closing': user?.role === 'cashier' ? 'day-closing' : 'accounts.day_closing',
+    'return-reports': 'accounts.return_reports',
     gst: 'gst',
-    'gst-overview': 'gst',
+    'gst-overview': 'gst.overview',
     'gst-gstr1': 'gst.gstr1',
     'gst-sales-register': 'gst.gstr1',
-    'gst-itc-reconciliation': 'gst.hsn',
-    'gst-purchase-register': 'gst.hsn',
+    'gst-itc-reconciliation': 'gst.itc',
+    'gst-purchase-register': 'gst.itc',
     'gst-gstr3b': 'gst.gstr3b',
     'gst-import-export': 'gst',
     'gst-filing-history': 'gst',
     'user-management': 'user-management',
     settings: 'settings',
-  }), []);
+  }), [user?.role]);
 
   // Route guard: Redirect if user attempts to visit disabled module
   useEffect(() => {
@@ -8225,17 +8235,17 @@ export function App() {
               )}
 
               {/* 3. Cashier Shifts: ONLY for Cashier */}
-              {user?.role === 'cashier' && (
+              {user?.role === 'cashier' && isModuleVisible('shifts') && (
                 <button
                   type="button"
                   className={`sidebar-nav-item ${activeTab === 'shifts' ? 'active' : ''}`}
                   onClick={() => setActiveTab('shifts')}
-                  title="My Cashier Shift"
+                  title="My Cashier"
                 >
                   <span className="nav-icon">
                     <Clock size={20} strokeWidth={2.2} />
                   </span>
-                  <span className="nav-text">My Cashier Shift</span>
+                  <span className="nav-text">My Cashier</span>
                   {activeShiftNumber ? (
                     <span className="nav-shift-badge active" title={`Active Shift: ${activeShiftNumber}`}>
                       ● {activeShiftNumber}
@@ -8367,7 +8377,7 @@ export function App() {
                           <span className="nav-text">Stock Transfer</span>
                         </button>
                       )}
-                      {isModuleVisible('inventory.levels') && (
+                      {isModuleVisible('inventory.adjustment') && (
                         <button
                           type="button"
                           className={`sidebar-nav-item ${activeTab === 'inventory' ? 'active' : ''}`}
@@ -8445,32 +8455,36 @@ export function App() {
                 </button>
               )}
 
-              {/* Cashier Recent Bills */}
+              {/* Cashier Recent Bills & Day Closing */}
               {user?.role === 'cashier' && (
                 <>
-                  <button
-                    type="button"
-                    className={`sidebar-nav-item ${activeTab === 'invoices' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('invoices')}
-                    title="Recent Bills"
-                  >
-                    <span className="nav-icon">
-                      <Receipt size={20} strokeWidth={2.2} />
-                    </span>
-                    <span className="nav-text">Recent Bills</span>
-                  </button>
+                  {isModuleVisible('recent-bills') && (
+                    <button
+                      type="button"
+                      className={`sidebar-nav-item ${activeTab === 'invoices' ? 'active' : ''}`}
+                      onClick={() => setActiveTab('invoices')}
+                      title="Recent Bills"
+                    >
+                      <span className="nav-icon">
+                        <Receipt size={20} strokeWidth={2.2} />
+                      </span>
+                      <span className="nav-text">Recent Bills</span>
+                    </button>
+                  )}
 
-                  <button
-                    type="button"
-                    className={`sidebar-nav-item ${activeTab === 'day-closing' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('day-closing')}
-                    title="Day Closing & Register Reconciliation"
-                  >
-                    <span className="nav-icon">
-                      <Lock size={20} strokeWidth={2.2} />
-                    </span>
-                    <span className="nav-text">Day Closing</span>
-                  </button>
+                  {isModuleVisible('day-closing') && (
+                    <button
+                      type="button"
+                      className={`sidebar-nav-item ${activeTab === 'day-closing' ? 'active' : ''}`}
+                      onClick={() => setActiveTab('day-closing')}
+                      title="Day Closing & Register Reconciliation"
+                    >
+                      <span className="nav-icon">
+                        <Lock size={20} strokeWidth={2.2} />
+                      </span>
+                      <span className="nav-text">Day Closing</span>
+                    </button>
+                  )}
                 </>
               )}
 
@@ -8539,7 +8553,7 @@ export function App() {
 
                   {!isSidebarCollapsed && isAccountsOpen && (
                     <div className="sidebar-sub-items">
-                      {isModuleVisible('accounts.payments') && (
+                      {isModuleVisible('accounts.invoices') && (
                         <button
                           type="button"
                           className={`sidebar-nav-item ${activeTab === 'invoices' ? 'active' : ''}`}
@@ -8557,7 +8571,7 @@ export function App() {
                         </button>
                       )}
 
-                      {can(user?.role as any, 'purchases') && isModuleVisible('accounts.payments') && (
+                      {can(user?.role as any, 'purchases') && isModuleVisible('accounts.purchases') && (
                         <button
                           type="button"
                           className={`sidebar-nav-item ${activeTab === 'purchases' ? 'active' : ''}`}
@@ -8573,7 +8587,7 @@ export function App() {
                               <line x1="12" y1="15" x2="12" y2="3" />
                             </svg>
                           </span>
-                          <span className="nav-text">Purchases &amp; Inward</span>
+                          <span className="nav-text">Purchases &amp; Payables</span>
                           <span className="nav-count-badge">{purchases.length}</span>
                         </button>
                       )}
@@ -8611,33 +8625,37 @@ export function App() {
                         </button>
                       )}
 
-                      <button
-                        type="button"
-                        className={`sidebar-nav-item ${activeTab === 'day-closing' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('day-closing')}
-                      >
-                        <span className="nav-icon">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                          </svg>
-                        </span>
-                        <span className="nav-text">Day Closing</span>
-                      </button>
+                      {isModuleVisible('accounts.day_closing') && (
+                        <button
+                          type="button"
+                          className={`sidebar-nav-item ${activeTab === 'day-closing' ? 'active' : ''}`}
+                          onClick={() => setActiveTab('day-closing')}
+                        >
+                          <span className="nav-icon">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                            </svg>
+                          </span>
+                          <span className="nav-text">Day Closing</span>
+                        </button>
+                      )}
 
-                      <button
-                        type="button"
-                        className={`sidebar-nav-item ${activeTab === 'return-reports' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('return-reports')}
-                      >
-                        <span className="nav-icon">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
-                            <polyline points="17 6 23 6 23 12" />
-                          </svg>
-                        </span>
-                        <span className="nav-text">Returns &amp; Profit Reports</span>
-                      </button>
+                      {isModuleVisible('accounts.return_reports') && (
+                        <button
+                          type="button"
+                          className={`sidebar-nav-item ${activeTab === 'return-reports' ? 'active' : ''}`}
+                          onClick={() => setActiveTab('return-reports')}
+                        >
+                          <span className="nav-icon">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+                              <polyline points="17 6 23 6 23 12" />
+                            </svg>
+                          </span>
+                          <span className="nav-text">Returns &amp; Profit Report</span>
+                        </button>
+                      )}
                     </div>
                   )}
                 </>
@@ -8674,20 +8692,22 @@ export function App() {
 
                   {!isSidebarCollapsed && isGstOpen && (
                     <div className="sidebar-sub-items">
-                      <button
-                        type="button"
-                        className={`sidebar-nav-item ${activeTab === 'gst-overview' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('gst-overview')}
-                      >
-                        <span className="nav-icon">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                            <circle cx="12" cy="12" r="10" />
-                            <path d="m14 10-4 4" />
-                            <path d="M12 2v2M12 20v2M20 12h2M2 12h2" />
-                          </svg>
-                        </span>
-                        <span className="nav-text">GST Overview</span>
-                      </button>
+                      {isModuleVisible('gst.overview') && (
+                        <button
+                          type="button"
+                          className={`sidebar-nav-item ${activeTab === 'gst-overview' ? 'active' : ''}`}
+                          onClick={() => setActiveTab('gst-overview')}
+                        >
+                          <span className="nav-icon">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                              <circle cx="12" cy="12" r="10" />
+                              <path d="m14 10-4 4" />
+                              <path d="M12 2v2M12 20v2M20 12h2M2 12h2" />
+                            </svg>
+                          </span>
+                          <span className="nav-text">GST Overview</span>
+                        </button>
+                      )}
 
                       {isModuleVisible('gst.gstr1') && (
                         <button
@@ -8707,7 +8727,7 @@ export function App() {
                         </button>
                       )}
 
-                      {isModuleVisible('gst.hsn') && (
+                      {isModuleVisible('gst.itc') && (
                         <button
                           type="button"
                           className={`sidebar-nav-item ${activeTab === 'gst-itc-reconciliation' || activeTab === 'gst-purchase-register' ? 'active' : ''}`}
@@ -8722,7 +8742,7 @@ export function App() {
                               <path d="M3 7h18" />
                             </svg>
                           </span>
-                          <span className="nav-text">ITC Register &amp; 2B Recon</span>
+                          <span className="nav-text">ITC Register &amp; 2B Reconciliation</span>
                         </button>
                       )}
 
@@ -11912,17 +11932,146 @@ export function App() {
                         </div>
                       )}
 
-                      {/* CARD PAYMENT TERMINAL (INTEGRATED & STANDALONE EDC) */}
+                      {/* CARD PAYMENT (SWIPE / TAP / EDC MACHINE) */}
                       {selectedPayMode === 'card' && cart.length > 0 && (
-                        <PosCardCheckoutPanel
-                          branchId={branches[0]?.id || 'b_main'}
-                          payableMinor={finalPayableMinor}
-                          cashierName={user?.name}
-                          onPaymentSuccess={(details) => {
-                            setPaymentCardRef(details.reference);
+                        <div
+                          className="bento-cash-tender-card"
+                          style={{
+                            background: '#ffffff',
+                            border: '1.5px solid #d1fae5',
+                            borderRadius: '14px',
+                            padding: '1.1rem',
+                            marginTop: '0.85rem',
+                            boxShadow: '0 4px 14px rgba(16, 185, 129, 0.07)',
                           }}
-                          showToast={showToast}
-                        />
+                        >
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              marginBottom: '0.85rem',
+                              paddingBottom: '0.65rem',
+                              borderBottom: '1px solid #f1f5f9',
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                              <span
+                                style={{
+                                  width: '34px',
+                                  height: '34px',
+                                  borderRadius: '9px',
+                                  background: '#ecfdf5',
+                                  color: '#059669',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                }}
+                              >
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
+                                  <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+                                  <line x1="1" y1="10" x2="23" y2="10" />
+                                </svg>
+                              </span>
+                              <div>
+                                <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0f172a' }}>
+                                  Card Swipe / EDC Machine
+                                </div>
+                                <div style={{ fontSize: '0.74rem', color: '#64748b' }}>
+                                  External EDC Terminal (Pine Labs, Paytm, MSwipe, Bank POS)
+                                </div>
+                              </div>
+                            </div>
+                            <span
+                              style={{
+                                background: '#ecfdf5',
+                                color: '#047857',
+                                border: '1px solid #a7f3d0',
+                                padding: '3px 10px',
+                                borderRadius: '20px',
+                                fontSize: '0.75rem',
+                                fontWeight: 600,
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                              }}
+                            >
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8">
+                                <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                              Marked as Card
+                            </span>
+                          </div>
+
+                          <div
+                            style={{
+                              background: '#f8fafc',
+                              border: '1px solid #e2e8f0',
+                              borderRadius: '9px',
+                              padding: '0.8rem 1rem',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              gap: '12px',
+                              marginBottom: '0.8rem',
+                            }}
+                          >
+                            <div>
+                              <div style={{ fontSize: '0.76rem', color: '#64748b', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+                                Settle on Card Machine
+                              </div>
+                              <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', fontFamily: 'monospace' }}>
+                                {formatRupees(finalPayableMinor)}
+                              </div>
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: '#475569', textAlign: 'right', maxWidth: '210px', lineHeight: 1.35 }}>
+                              Swipe or tap customer card on EDC machine, then click <strong>Card Paid & Generate Bill</strong> below.
+                            </div>
+                          </div>
+
+                          {/* Optional Slip / Reference field */}
+                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <span style={{ fontSize: '0.75rem', color: '#64748b', whiteSpace: 'nowrap' }}>
+                              Slip / RRN (Optional):
+                            </span>
+                            <input
+                              type="text"
+                              placeholder="Machine Slip / Ref No (optional)"
+                              value={paymentCardRef}
+                              onChange={(e) => setPaymentCardRef(e.target.value)}
+                              style={{
+                                flex: 1,
+                                padding: '5px 10px',
+                                fontSize: '0.8rem',
+                                border: '1px solid #cbd5e1',
+                                borderRadius: '6px',
+                                background: '#ffffff',
+                                color: '#1e293b',
+                              }}
+                            />
+                            {paymentCardRef && (
+                              <button
+                                type="button"
+                                onClick={() => setPaymentCardRef('')}
+                                style={{
+                                  border: 'none',
+                                  background: 'transparent',
+                                  color: '#94a3b8',
+                                  cursor: 'pointer',
+                                  padding: '2px 4px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                }}
+                                title="Clear"
+                              >
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                  <line x1="18" y1="6" x2="6" y2="18" />
+                                  <line x1="6" y1="6" x2="18" y2="18" />
+                                </svg>
+                              </button>
+                            )}
+                          </div>
+                        </div>
                       )}
 
                       {/* SPLIT TENDER ASSISTANT CARD (MULTI-TENDER: HALF UPI / HALF CASH / CUSTOM) */}

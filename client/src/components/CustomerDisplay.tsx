@@ -185,7 +185,7 @@ export const CustomerDisplay: React.FC<CustomerDisplayProps> = ({ counterId = 'c
           }
         }
       };
-    } catch {}
+    } catch { }
 
     const onStorage = (e: StorageEvent) => {
       if (e.key === `cfd_state_${counterId}` && e.newValue) {
@@ -193,7 +193,7 @@ export const CustomerDisplay: React.FC<CustomerDisplayProps> = ({ counterId = 'c
           const parsed = JSON.parse(e.newValue);
           setState(parsed);
           setConnectionType('broadcast');
-        } catch {}
+        } catch { }
       }
     };
     window.addEventListener('storage', onStorage);
@@ -204,7 +204,7 @@ export const CustomerDisplay: React.FC<CustomerDisplayProps> = ({ counterId = 'c
         setState(JSON.parse(stored));
         setConnectionType('broadcast');
       }
-    } catch {}
+    } catch { }
 
     let lastVersion = 0;
     const fetchLatestState = async () => {
@@ -221,7 +221,7 @@ export const CustomerDisplay: React.FC<CustomerDisplayProps> = ({ counterId = 'c
             }
           }
         }
-      } catch {}
+      } catch { }
     };
 
     fetchLatestState();
@@ -235,7 +235,7 @@ export const CustomerDisplay: React.FC<CustomerDisplayProps> = ({ counterId = 'c
           counterId,
           deviceInfo: `${navigator.platform || ''} ${navigator.userAgent.slice(0, 40)}`,
         }),
-      }).catch(() => {});
+      }).catch(() => { });
     }, 4000);
 
     return () => {
@@ -254,12 +254,32 @@ export const CustomerDisplay: React.FC<CustomerDisplayProps> = ({ counterId = 'c
     }
   }, [state.items.length, lastScannedId]);
 
+  // Lock viewport scroll for fixed TV/Monitor screen
+  useEffect(() => {
+    const originalBodyOverflow = document.body.style.overflow;
+    const originalBodyHeight = document.body.style.height;
+    const originalHtmlOverflow = document.documentElement.style.overflow;
+    const originalHtmlHeight = document.documentElement.style.height;
+
+    document.body.style.overflow = 'hidden';
+    document.body.style.height = '100vh';
+    document.documentElement.style.overflow = 'hidden';
+    document.documentElement.style.height = '100vh';
+
+    return () => {
+      document.body.style.overflow = originalBodyOverflow;
+      document.body.style.height = originalBodyHeight;
+      document.documentElement.style.overflow = originalHtmlOverflow;
+      document.documentElement.style.height = originalHtmlHeight;
+    };
+  }, []);
+
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(() => {});
+      document.documentElement.requestFullscreen().catch(() => { });
       setIsFullscreen(true);
     } else {
-      document.exitFullscreen().catch(() => {});
+      document.exitFullscreen().catch(() => { });
       setIsFullscreen(false);
     }
   };
@@ -281,10 +301,10 @@ export const CustomerDisplay: React.FC<CustomerDisplayProps> = ({ counterId = 'c
   const upiQrSvg = useMemo(() => {
     if (isUpiMode && effectiveUpiAmountMinor > 0) {
       if (state.paymentDetails?.upiUrl) {
-        return qrSvg(state.paymentDetails.upiUrl, { size: 170, margin: 1 });
+        return qrSvg(state.paymentDetails.upiUrl, { size: 120, margin: 1 });
       }
       const upiString = `upi://pay?pa=${encodeURIComponent(effectiveUpiId)}&pn=${encodeURIComponent(state.shopName || 'Store')}&am=${(effectiveUpiAmountMinor / 100).toFixed(2)}&cu=INR&tn=${encodeURIComponent(`${hasSplitUpi ? 'Split payment' : 'Bill'} at ${state.shopName || 'Store'}`)}`;
-      return qrSvg(upiString, { size: 170, margin: 1 });
+      return qrSvg(upiString, { size: 120, margin: 1 });
     }
     return null;
   }, [isUpiMode, effectiveUpiAmountMinor, state.paymentDetails, effectiveUpiId, state.shopName, hasSplitUpi]);
@@ -786,6 +806,39 @@ export const CustomerDisplay: React.FC<CustomerDisplayProps> = ({ counterId = 'c
                     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
                   </svg>
                   <span>Multi-Tender POS Settlement</span>
+                </div>
+              </div>
+            ) : state.status === 'payment_card' ? (
+              /* CARD / EDC MACHINE PAYMENT */
+              <div className="cfd-upi-panel">
+                <span className="cfd-upi-badge" style={{ background: '#ecfdf5', color: '#047857', border: '1px solid #a7f3d0' }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+                    <line x1="1" y1="10" x2="23" y2="10" />
+                  </svg>
+                  <span>Card / EDC Payment</span>
+                </span>
+                <h4 className="cfd-upi-title">Please Tap or Swipe Card</h4>
+                <p className="cfd-upi-sub">Credit / Debit Card • NFC Tap & Pay • Chip & PIN</p>
+
+                <div style={{ margin: '0.8rem 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                  <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#ecfdf5', border: '2px solid #a7f3d0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#059669' }}>
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                      <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+                      <line x1="1" y1="10" x2="23" y2="10" />
+                    </svg>
+                  </div>
+                  <div className="cfd-upi-amount-pill cfd-num" style={{ background: '#ecfdf5', borderColor: '#a7f3d0', color: '#065f46' }}>
+                    <span>Amount:</span>
+                    <strong>{formatCurrency(state.totalMinor)}</strong>
+                  </div>
+                </div>
+
+                <div className="cfd-assurance-tag">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                  </svg>
+                  <span>100% Secure Bank EDC Settlement</span>
                 </div>
               </div>
             ) : (
