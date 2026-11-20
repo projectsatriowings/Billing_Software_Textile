@@ -185,7 +185,7 @@ export const CustomerDisplay: React.FC<CustomerDisplayProps> = ({ counterId = 'c
           }
         }
       };
-    } catch {}
+    } catch { }
 
     const onStorage = (e: StorageEvent) => {
       if (e.key === `cfd_state_${counterId}` && e.newValue) {
@@ -193,7 +193,7 @@ export const CustomerDisplay: React.FC<CustomerDisplayProps> = ({ counterId = 'c
           const parsed = JSON.parse(e.newValue);
           setState(parsed);
           setConnectionType('broadcast');
-        } catch {}
+        } catch { }
       }
     };
     window.addEventListener('storage', onStorage);
@@ -204,7 +204,7 @@ export const CustomerDisplay: React.FC<CustomerDisplayProps> = ({ counterId = 'c
         setState(JSON.parse(stored));
         setConnectionType('broadcast');
       }
-    } catch {}
+    } catch { }
 
     let lastVersion = 0;
     const fetchLatestState = async () => {
@@ -221,7 +221,7 @@ export const CustomerDisplay: React.FC<CustomerDisplayProps> = ({ counterId = 'c
             }
           }
         }
-      } catch {}
+      } catch { }
     };
 
     fetchLatestState();
@@ -235,7 +235,7 @@ export const CustomerDisplay: React.FC<CustomerDisplayProps> = ({ counterId = 'c
           counterId,
           deviceInfo: `${navigator.platform || ''} ${navigator.userAgent.slice(0, 40)}`,
         }),
-      }).catch(() => {});
+      }).catch(() => { });
     }, 4000);
 
     return () => {
@@ -254,12 +254,32 @@ export const CustomerDisplay: React.FC<CustomerDisplayProps> = ({ counterId = 'c
     }
   }, [state.items.length, lastScannedId]);
 
+  // Lock viewport scroll for fixed TV/Monitor screen
+  useEffect(() => {
+    const originalBodyOverflow = document.body.style.overflow;
+    const originalBodyHeight = document.body.style.height;
+    const originalHtmlOverflow = document.documentElement.style.overflow;
+    const originalHtmlHeight = document.documentElement.style.height;
+
+    document.body.style.overflow = 'hidden';
+    document.body.style.height = '100vh';
+    document.documentElement.style.overflow = 'hidden';
+    document.documentElement.style.height = '100vh';
+
+    return () => {
+      document.body.style.overflow = originalBodyOverflow;
+      document.body.style.height = originalBodyHeight;
+      document.documentElement.style.overflow = originalHtmlOverflow;
+      document.documentElement.style.height = originalHtmlHeight;
+    };
+  }, []);
+
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(() => {});
+      document.documentElement.requestFullscreen().catch(() => { });
       setIsFullscreen(true);
     } else {
-      document.exitFullscreen().catch(() => {});
+      document.exitFullscreen().catch(() => { });
       setIsFullscreen(false);
     }
   };
@@ -281,10 +301,10 @@ export const CustomerDisplay: React.FC<CustomerDisplayProps> = ({ counterId = 'c
   const upiQrSvg = useMemo(() => {
     if (isUpiMode && effectiveUpiAmountMinor > 0) {
       if (state.paymentDetails?.upiUrl) {
-        return qrSvg(state.paymentDetails.upiUrl, { size: 170, margin: 1 });
+        return qrSvg(state.paymentDetails.upiUrl, { size: 120, margin: 1 });
       }
       const upiString = `upi://pay?pa=${encodeURIComponent(effectiveUpiId)}&pn=${encodeURIComponent(state.shopName || 'Store')}&am=${(effectiveUpiAmountMinor / 100).toFixed(2)}&cu=INR&tn=${encodeURIComponent(`${hasSplitUpi ? 'Split payment' : 'Bill'} at ${state.shopName || 'Store'}`)}`;
-      return qrSvg(upiString, { size: 170, margin: 1 });
+      return qrSvg(upiString, { size: 120, margin: 1 });
     }
     return null;
   }, [isUpiMode, effectiveUpiAmountMinor, state.paymentDetails, effectiveUpiId, state.shopName, hasSplitUpi]);
