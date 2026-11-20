@@ -8296,6 +8296,22 @@ export function App() {
                     </div>
                   </div>
                 </div>
+
+                {/* Customer Screen Button in Top Bar right after Counter */}
+                <button
+                  type="button"
+                  className={`top-pos-cfd-btn ${isCfdConnected ? 'active' : ''}`}
+                  onClick={() => setShowCfdModal(true)}
+                  title="Open Customer-Facing Display (Secondary Monitor / Wireless Tablet)"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+                    <line x1="8" y1="21" x2="16" y2="21" />
+                    <line x1="12" y1="17" x2="12" y2="21" />
+                  </svg>
+                  <span>Customer Screen</span>
+                  {isCfdConnected && <span className="bento-cfd-dot" />}
+                </button>
               </div>
             ) : (displayTab === 'invoices' || activeTab === 'invoices') && user?.role === 'cashier' ? (
               <div className="top-invoices-header-left">
@@ -9311,161 +9327,6 @@ export function App() {
             {/* TAB 1: BENTO POS BILLING TERMINAL */}
             {displayTab === 'pos' && (
               <div className="bento-pos-root" key={`pos-${selectedBranchScope}`}>
-                {/* 1. TOP BENTO BAR: Store & Shift Status, Shortcuts, Alerts */}
-                <div className="bento-top-bar">
-                  <div className="bento-top-left">
-                    <div className="bento-pos-badge">
-                      <span className="bento-badge-icon" style={shop?.logoUrl ? { background: '#ffffff', padding: '2px' } : undefined}>
-                        {shop?.logoUrl ? (
-                          <img
-                            src={shop.logoUrl}
-                            alt={shop.name || 'Store Logo'}
-                            style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '4px' }}
-                          />
-                        ) : (
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-                          </svg>
-                        )}
-                      </span>
-                      <div>
-                        <div className="bento-badge-title">POS Billing Counter</div>
-                        <div className="bento-badge-sub">High-Speed Bento Billing Terminal</div>
-                      </div>
-                    </div>
-
-                    {/* Shift Indicator Pill */}
-                    {activeShiftNumber ? (
-                      <div className="bento-shift-pill open">
-                        <span className="bento-pulse-dot green"></span>
-                        <span>Register #{activeShiftNumber} Active</span>
-                      </div>
-                    ) : (
-                      <div className="bento-shift-pill closed" onClick={() => setShowPosOpenShiftModal(true)}>
-                        <span className="bento-pulse-dot amber"></span>
-                        <span>Register Closed • Click to Open Shift</span>
-                      </div>
-                    )}
-
-                    {/* POS Loyalty Program Status Pill */}
-                    {shopLoyaltyActive ? (
-                      <div
-                        className="bento-loyalty-pill active"
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          padding: '5px 12px',
-                          borderRadius: '20px',
-                          background: isSuperAdminUser ? '#F3EDF3' : 'linear-gradient(135deg, #fdf4ff 0%, #fae8ff 100%)',
-                          border: isSuperAdminUser ? '1.2px solid #D8CBD8' : '1.2px solid #d946ef',
-                          color: isSuperAdminUser ? '#49364A' : '#86198f',
-                          fontSize: '0.78rem',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                          boxShadow: isSuperAdminUser ? '0 1px 4px rgba(73, 54, 74, 0.15)' : '0 1px 4px rgba(217, 70, 239, 0.15)',
-                        }}
-                        onClick={() => setShowPosLoyaltyModal(true)}
-                        title={`Customer Loyalty Active: Earn ${shopPointsPer100} pts per ₹100 spent (1 pt = ${formatRupees(shopPointValMinor)}). Click to view or adjust scheme.`}
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="20 12 20 22 4 22 4 12"></polyline>
-                          <rect x="2" y="7" width="20" height="5"></rect>
-                          <line x1="12" y1="22" x2="12" y2="7"></line>
-                          <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path>
-                          <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path>
-                        </svg>
-                        <span>Loyalty: <strong>{shopPointsPer100} pts</strong> / ₹100</span>
-                        <span style={{ fontSize: '0.68rem', background: isSuperAdminUser ? '#49364A' : '#d946ef', color: '#fff', padding: '1px 6px', borderRadius: '10px' }}>Active</span>
-                      </div>
-                    ) : (
-                      <div
-                        className="bento-loyalty-pill paused"
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '5px',
-                          padding: '4px 10px',
-                          borderRadius: '20px',
-                          background: '#f8fafc',
-                          border: '1.2px dashed #cbd5e1',
-                          color: '#64748b',
-                          fontSize: '0.75rem',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                        }}
-                        onClick={() => setShowPosLoyaltyModal(true)}
-                        title="Customer Loyalty Rewards is paused. Click to enable and configure scheme."
-                      >
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                          <rect x="6" y="4" width="4" height="16" />
-                          <rect x="14" y="4" width="4" height="16" />
-                        </svg>
-                        <span>Loyalty Paused</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="bento-top-right">
-                    {/* Customer Display Button */}
-                    <button
-                      type="button"
-                      className={`bento-cfd-pill ${isCfdConnected ? 'active' : ''}`}
-                      onClick={() => setShowCfdModal(true)}
-                      title="Open Customer-Facing Display (Secondary Monitor / Wireless Tablet)"
-                    >
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-                        <line x1="8" y1="21" x2="16" y2="21"></line>
-                        <line x1="12" y1="17" x2="12" y2="21"></line>
-                      </svg>
-                      <span>Customer Screen</span>
-                      {isCfdConnected && <span className="bento-cfd-dot"></span>}
-                    </button>
-
-                    {/* Inventory Alert Trigger */}
-                    {totalStockAlerts > 0 && (
-                      user?.role === 'cashier' ? (
-                        <div
-                          className="bento-alert-pill bento-alert-pill-readonly"
-                          title={`${totalStockAlerts} items have floor stock warnings. Managed by Store Manager.`}
-                        >
-                          <span className="alert-ping">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
-                              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                              <line x1="12" y1="9" x2="12" y2="13"></line>
-                              <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                            </svg>
-                          </span>
-                          <span>{totalStockAlerts} Stock Alerts</span>
-                        </div>
-                      ) : (
-                        <button
-                          type="button"
-                          className="bento-alert-pill"
-                          onClick={() => setActiveTab('inventory')}
-                          title={`${totalStockAlerts} items have stock warnings`}
-                        >
-                          <span className="alert-ping">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
-                              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                              <line x1="12" y1="9" x2="12" y2="13"></line>
-                              <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                            </svg>
-                          </span>
-                          <span>{totalStockAlerts} Stock Alerts</span>
-                          <span className="alert-arrow">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                              <line x1="5" y1="12" x2="19" y2="12"></line>
-                              <polyline points="12 5 19 12 12 19"></polyline>
-                            </svg>
-                          </span>
-                        </button>
-                      )
-                    )}
-                  </div>
-                </div>
-
                 {/* Shift Closed Banner Warning */}
                 {!activeShiftNumber && (
                   <div className="bento-shift-warning-banner">

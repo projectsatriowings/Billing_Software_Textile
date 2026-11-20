@@ -4773,3 +4773,17 @@ body.theme-cashier .mobile-scanner-modal .btn-secondary:hover,
   border-color: var(--primary, #0F766E) !important;
   color: var(--primary, #0F766E) !important;
 }
+
+/* Top Bar Customer Screen Button Theme Overrides */
+div.app-container.theme-cashier .top-pos-cfd-btn,
+.theme-cashier .top-pos-cfd-btn {
+  background: var(--surface, #FAF7F2) !important;
+  border: 1.2px solid var(--border, #ded5c6) !important;
+  color: var(--sidebar, #0F766E) !important;
+}
+
+div.app-container.theme-cashier .top-pos-cfd-btn:hover,
+.theme-cashier .top-pos-cfd-btn:hover {
+  background: var(--primary-soft, #f4ede4) !important;
+  border-color: var(--primary, #0F766E) !important;
+}
