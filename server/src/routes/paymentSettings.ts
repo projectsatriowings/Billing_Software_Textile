@@ -146,48 +146,125 @@ export function registerPaymentSettings(r: Router) {
   r.put('/api/shop/payment-settings', requirePerm('settings'), async (ctx) => {
     const tenantId = ctx.user!.tenantId;
     const b = ctx.body ?? {};
+    const target = typeof b.target === 'string' ? b.target : null;
 
-    const upiEnabled = V.bool(b.upiEnabled, true);
-    const qrType = V.oneOf(b.qrType, 'QR type', ['static', 'dynamic'] as const, 'static');
-    const provider = V.oneOf(b.provider, 'Provider', ['manual', 'razorpay', 'paytm', 'phonepe'] as const, 'manual');
-    const staticUpiId = V.optStr(b.staticUpiId, 'Static UPI ID', 100);
-    const staticMerchantName = V.optStr(b.staticMerchantName, 'Merchant name', 80);
+    // Fetch existing settings first so partial updates don't wipe out unprovided fields
+    const existing = await ctx.db.one('SELECT * FROM shop_payment_settings WHERE tenant_id = ?', [tenantId]);
+
+    const upiEnabled = b.upiEnabled !== undefined
+      ? V.bool(b.upiEnabled, true)
+      : (existing ? Boolean(existing.upi_enabled ?? existing.upiEnabled) : true);
+
+    const qrType = b.qrType !== undefined
+      ? V.oneOf(b.qrType, 'QR type', ['static', 'dynamic'] as const, 'static')
+      : (existing ? (existing.qr_type || 'static') : 'static');
+
+    const provider = b.provider !== undefined
+      ? V.oneOf(b.provider, 'Provider', ['manual', 'razorpay', 'paytm', 'phonepe'] as const, 'manual')
+      : (existing ? (existing.provider || 'manual') : 'manual');
+
+    const staticUpiId = b.staticUpiId !== undefined
+      ? V.optStr(b.staticUpiId, 'Static UPI ID', 100)
+      : (existing?.static_upi_id ?? null);
+
+    const staticMerchantName = b.staticMerchantName !== undefined
+      ? V.optStr(b.staticMerchantName, 'Merchant name', 80)
+      : (existing?.static_merchant_name ?? null);
 
     // Razorpay Fields
-    const rzpEnabled = V.bool(b.rzpEnabled, false);
-    const rzpMode = V.oneOf(b.rzpMode, 'Razorpay mode', ['test', 'live'] as const, 'test');
-    const rzpKeyId = V.optStr(b.rzpKeyId, 'Key ID', 100);
+    const rzpEnabled = b.rzpEnabled !== undefined
+      ? V.bool(b.rzpEnabled, false)
+      : (existing ? Boolean(existing.rzp_enabled ?? existing.rzpEnabled) : false);
+
+    const rzpMode = b.rzpMode !== undefined
+      ? V.oneOf(b.rzpMode, 'Razorpay mode', ['test', 'live'] as const, 'test')
+      : (existing?.rzp_mode || 'test');
+
+    const rzpKeyId = b.rzpKeyId !== undefined
+      ? V.optStr(b.rzpKeyId, 'Key ID', 100)
+      : (existing?.rzp_key_id ?? null);
+
     const rzpKeySecret = V.optStr(b.rzpKeySecret, 'Key Secret', 200);
     const rzpWebhookSecret = V.optStr(b.rzpWebhookSecret, 'Webhook Secret', 200);
-    const rzpQrExpiryMinutes = V.int(b.rzpQrExpiryMinutes, 'Expiry minutes', { min: 1, max: 60 }) || 15;
+    const rzpQrExpiryMinutes = b.rzpQrExpiryMinutes !== undefined
+      ? (V.int(b.rzpQrExpiryMinutes, 'Expiry minutes', { min: 1, max: 60 }) || 15)
+      : (Number(existing?.rzp_qr_expiry_minutes) || 15);
 
     // Paytm Fields
-    const paytmEnabled = V.bool(b.paytmEnabled, false);
-    const paytmMode = V.oneOf(b.paytmMode, 'Paytm mode', ['test', 'live'] as const, 'test');
-    const paytmMid = V.optStr(b.paytmMid, 'Paytm MID', 100);
+    const paytmEnabled = b.paytmEnabled !== undefined
+      ? V.bool(b.paytmEnabled, false)
+      : (existing ? Boolean(existing.paytm_enabled ?? existing.paytmEnabled) : false);
+
+    const paytmMode = b.paytmMode !== undefined
+      ? V.oneOf(b.paytmMode, 'Paytm mode', ['test', 'live'] as const, 'test')
+      : (existing?.paytm_mode || 'test');
+
+    const paytmMid = b.paytmMid !== undefined
+      ? V.optStr(b.paytmMid, 'Paytm MID', 100)
+      : (existing?.paytm_mid ?? null);
+
     const paytmMerchantKey = V.optStr(b.paytmMerchantKey, 'Paytm Merchant Key', 200);
-    const paytmWebsite = V.optStr(b.paytmWebsite, 'Paytm Website', 50) || 'DEFAULT';
+    const paytmWebsite = b.paytmWebsite !== undefined
+      ? (V.optStr(b.paytmWebsite, 'Paytm Website', 50) || 'DEFAULT')
+      : (existing?.paytm_website || 'DEFAULT');
 
     // PhonePe Fields
-    const phonepeEnabled = V.bool(b.phonepeEnabled, false);
-    const phonepeMode = V.oneOf(b.phonepeMode, 'PhonePe mode', ['test', 'live'] as const, 'test');
-    const phonepeMid = V.optStr(b.phonepeMid, 'PhonePe MID', 100);
+    const phonepeEnabled = b.phonepeEnabled !== undefined
+      ? V.bool(b.phonepeEnabled, false)
+      : (existing ? Boolean(existing.phonepe_enabled ?? existing.phonepeEnabled) : false);
+
+    const phonepeMode = b.phonepeMode !== undefined
+      ? V.oneOf(b.phonepeMode, 'PhonePe mode', ['test', 'live'] as const, 'test')
+      : (existing?.phonepe_mode || 'test');
+
+    const phonepeMid = b.phonepeMid !== undefined
+      ? V.optStr(b.phonepeMid, 'PhonePe MID', 100)
+      : (existing?.phonepe_mid ?? null);
+
     const phonepeSaltKey = V.optStr(b.phonepeSaltKey, 'PhonePe Salt Key', 200);
-    const phonepeSaltIndex = V.optStr(b.phonepeSaltIndex, 'PhonePe Salt Index', 10) || '1';
+    const phonepeSaltIndex = b.phonepeSaltIndex !== undefined
+      ? (V.optStr(b.phonepeSaltIndex, 'PhonePe Salt Index', 10) || '1')
+      : (existing?.phonepe_salt_index || '1');
 
     // Bank Details Fields
-    const bankEnabled = V.bool(b.bankEnabled, false);
-    const bankAccountName = V.optStr(b.bankAccountName, 'Bank Account Name', 100);
-    const bankAccountNo = V.optStr(b.bankAccountNo, 'Bank Account Number', 50);
-    const bankIfsc = V.optStr(b.bankIfsc, 'Bank IFSC Code', 20);
-    const bankName = V.optStr(b.bankName, 'Bank Name', 100);
-    const bankBranch = V.optStr(b.bankBranch, 'Bank Branch', 100);
+    const bankEnabled = b.bankEnabled !== undefined
+      ? V.bool(b.bankEnabled, false)
+      : (existing ? Boolean(existing.bank_enabled ?? existing.bankEnabled) : false);
+
+    const bankAccountName = b.bankAccountName !== undefined
+      ? V.optStr(b.bankAccountName, 'Bank Account Name', 100)
+      : (existing?.bank_account_name ?? null);
+
+    const bankAccountNo = b.bankAccountNo !== undefined
+      ? V.optStr(b.bankAccountNo, 'Bank Account Number', 50)
+      : (existing?.bank_account_no ?? null);
+
+    const bankIfsc = b.bankIfsc !== undefined
+      ? V.optStr(b.bankIfsc, 'Bank IFSC Code', 20)
+      : (existing?.bank_ifsc ?? null);
+
+    const bankName = b.bankName !== undefined
+      ? V.optStr(b.bankName, 'Bank Name', 100)
+      : (existing?.bank_name ?? null);
+
+    const bankBranch = b.bankBranch !== undefined
+      ? V.optStr(b.bankBranch, 'Bank Branch', 100)
+      : (existing?.bank_branch ?? null);
 
     // Enabled methods list
     let methods: string[] = ['cash', 'upi', 'card', 'credit'];
     if (Array.isArray(b.enabledMethods)) {
       methods = b.enabledMethods.filter((m: string) => typeof m === 'string');
       if (!methods.includes('cash')) methods.unshift('cash'); // Cash always allowed
+    } else if (existing) {
+      const rawMethods = existing.enabledMethods || existing.enabled_methods;
+      if (Array.isArray(rawMethods)) {
+        methods = rawMethods.filter((m: string) => typeof m === 'string');
+      } else if (typeof rawMethods === 'string') {
+        try {
+          methods = JSON.parse(rawMethods).filter((m: string) => typeof m === 'string');
+        } catch {}
+      }
     }
     if (bankEnabled && !methods.includes('bank')) {
       methods.push('bank');
@@ -196,9 +273,6 @@ export function registerPaymentSettings(r: Router) {
     }
 
     const masterKey = env.jwtSecret || 'adaptive-billing-payment-master-secret-32-chars';
-
-    // Fetch existing settings
-    const existing = await ctx.db.one('SELECT * FROM shop_payment_settings WHERE tenant_id = ?', [tenantId]);
 
     // Handle Razorpay secrets
     let rzpKeySecretEncrypted = existing?.rzpKeySecretEncrypted || existing?.rzp_key_secret_encrypted || null;
@@ -222,52 +296,68 @@ export function registerPaymentSettings(r: Router) {
       phonepeSaltKeyEncrypted = encryptSecret(phonepeSaltKey.trim(), masterKey);
     }
 
-    let status: 'not_configured' | 'connected' | 'error' = 'not_configured';
-    let statusMessage: string | null = null;
+    let status: 'not_configured' | 'connected' | 'error' = (existing?.status as any) || 'not_configured';
+    let statusMessage: string | null = existing?.status_message || null;
 
-    // Validate provider credentials server-side before activating
-    if (rzpEnabled && rzpKeyId) {
-      const activeSecret = rzpKeySecret || (rzpKeySecretEncrypted ? decryptSecret(rzpKeySecretEncrypted, masterKey) : null);
-      if (activeSecret) {
-        const valRes = await validateRazorpayCredentials({ keyId: rzpKeyId, keySecret: activeSecret });
-        if (valRes.valid) {
-          status = 'connected';
-          statusMessage = `Razorpay verified (${rzpMode} mode)`;
+    // Validate provider credentials only when target matches or credentials explicitly changed
+    if (target === 'razorpay' || (!target && (b.rzpKeyId !== undefined || b.rzpKeySecret !== undefined || b.rzpEnabled !== undefined))) {
+      if (rzpEnabled && rzpKeyId) {
+        const activeSecret = rzpKeySecret || (rzpKeySecretEncrypted ? decryptSecret(rzpKeySecretEncrypted, masterKey) : null);
+        if (activeSecret) {
+          const valRes = await validateRazorpayCredentials({ keyId: rzpKeyId, keySecret: activeSecret });
+          if (valRes.valid) {
+            status = 'connected';
+            statusMessage = `Razorpay verified (${rzpMode} mode)`;
+          } else {
+            status = 'error';
+            statusMessage = valRes.error || 'Razorpay authentication failed';
+          }
         } else {
-          status = 'error';
-          statusMessage = valRes.error || 'Razorpay authentication failed';
+          status = 'not_configured';
+          statusMessage = 'Razorpay Key Secret is required';
         }
-      } else {
-        status = 'not_configured';
-        statusMessage = 'Razorpay Key Secret is required';
-      }
-    } else if (paytmEnabled && paytmMid) {
-      const activeKey = paytmMerchantKey || (paytmMerchantKeyEncrypted ? decryptSecret(paytmMerchantKeyEncrypted, masterKey) : null);
-      if (activeKey) {
-        const valRes = await validatePaytmCredentials({ mid: paytmMid, merchantKey: activeKey, mode: paytmMode });
-        if (valRes.valid) {
+      } else if (!rzpEnabled) {
+        if (upiEnabled && staticUpiId) {
           status = 'connected';
-          statusMessage = `Paytm verified (${paytmMode} mode)`;
+          statusMessage = 'Static UPI configured';
         } else {
-          status = 'error';
-          statusMessage = valRes.error || 'Paytm authentication failed';
+          status = 'not_configured';
+          statusMessage = null;
         }
       }
-    } else if (phonepeEnabled && phonepeMid) {
-      const activeSalt = phonepeSaltKey || (phonepeSaltKeyEncrypted ? decryptSecret(phonepeSaltKeyEncrypted, masterKey) : null);
-      if (activeSalt) {
-        const valRes = await validatePhonePeCredentials({ mid: phonepeMid, saltKey: activeSalt, saltIndex: phonepeSaltIndex, mode: phonepeMode });
-        if (valRes.valid) {
-          status = 'connected';
-          statusMessage = `PhonePe verified (${phonepeMode} mode)`;
-        } else {
-          status = 'error';
-          statusMessage = valRes.error || 'PhonePe authentication failed';
+    } else if (target === 'paytm' || (!target && (b.paytmMid !== undefined || b.paytmMerchantKey !== undefined))) {
+      if (paytmEnabled && paytmMid) {
+        const activeKey = paytmMerchantKey || (paytmMerchantKeyEncrypted ? decryptSecret(paytmMerchantKeyEncrypted, masterKey) : null);
+        if (activeKey) {
+          const valRes = await validatePaytmCredentials({ mid: paytmMid, merchantKey: activeKey, mode: paytmMode });
+          if (valRes.valid) {
+            status = 'connected';
+            statusMessage = `Paytm verified (${paytmMode} mode)`;
+          } else {
+            status = 'error';
+            statusMessage = valRes.error || 'Paytm authentication failed';
+          }
         }
       }
-    } else if (upiEnabled && staticUpiId) {
-      status = 'connected';
-      statusMessage = 'Static UPI configured';
+    } else if (target === 'phonepe' || (!target && (b.phonepeMid !== undefined || b.phonepeSaltKey !== undefined))) {
+      if (phonepeEnabled && phonepeMid) {
+        const activeSalt = phonepeSaltKey || (phonepeSaltKeyEncrypted ? decryptSecret(phonepeSaltKeyEncrypted, masterKey) : null);
+        if (activeSalt) {
+          const valRes = await validatePhonePeCredentials({ mid: phonepeMid, saltKey: activeSalt, saltIndex: phonepeSaltIndex, mode: phonepeMode });
+          if (valRes.valid) {
+            status = 'connected';
+            statusMessage = `PhonePe verified (${phonepeMode} mode)`;
+          } else {
+            status = 'error';
+            statusMessage = valRes.error || 'PhonePe authentication failed';
+          }
+        }
+      }
+    } else if (target === 'qr') {
+      if (upiEnabled && staticUpiId) {
+        status = 'connected';
+        statusMessage = 'Static UPI configured';
+      }
     }
 
     if (existing) {

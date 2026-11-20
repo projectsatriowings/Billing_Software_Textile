@@ -16,8 +16,16 @@ export interface AppModule {
   icon: string;
   route: string;
   isSettingsLocked?: boolean;
+  isCashierMandatory?: boolean;
   subModules?: AppSubModule[];
 }
+
+export const CASHIER_MANDATORY_MODULES = [
+  'pos',
+  'shifts',
+  'recent-bills',
+  'day-closing',
+] as const;
 
 export const APP_MODULES: AppModule[] = [
   {
@@ -33,6 +41,31 @@ export const APP_MODULES: AppModule[] = [
     description: 'High-speed retail checkout, barcode scanner & quick billing',
     icon: 'ShoppingCart',
     route: 'pos',
+    isCashierMandatory: true,
+  },
+  {
+    key: 'shifts',
+    name: 'My Cashier',
+    description: 'Cashier shift management, opening float & cash drawer closing',
+    icon: 'Clock',
+    route: 'shifts',
+    isCashierMandatory: true,
+  },
+  {
+    key: 'recent-bills',
+    name: 'Recent Bills',
+    description: 'Real-time counter receipts, transaction lookup & bill reprints',
+    icon: 'Receipt',
+    route: 'invoices',
+    isCashierMandatory: true,
+  },
+  {
+    key: 'day-closing',
+    name: 'Day Closing',
+    description: 'Daily cash register reconciliation, cash drawer counts & shift closing',
+    icon: 'Lock',
+    route: 'day-closing',
+    isCashierMandatory: true,
   },
   {
     key: 'wholesale',
@@ -67,26 +100,26 @@ export const APP_MODULES: AppModule[] = [
     name: 'Inventory Hub',
     description: 'Multi-branch stock balances, adjustments & automated replenishment',
     icon: 'Layers',
-    route: 'inventory',
+    route: 'stock-transfer',
     subModules: [
-      {
-        key: 'inventory.levels',
-        parentKey: 'inventory',
-        name: 'Stock Levels',
-        description: 'Real-time stock valuation, balances & physical discrepancy adjustment',
-        route: 'inventory',
-      },
       {
         key: 'inventory.transfers',
         parentKey: 'inventory',
-        name: 'Stock Transfers',
+        name: 'Stock Transfer',
         description: 'Inter-branch stock transfer requests, dispatch & receipt confirmation',
         route: 'stock-transfer',
       },
       {
+        key: 'inventory.adjustment',
+        parentKey: 'inventory',
+        name: 'Stock Adjustment',
+        description: 'Real-time stock valuation, balances & physical discrepancy adjustment',
+        route: 'inventory',
+      },
+      {
         key: 'inventory.reports',
         parentKey: 'inventory',
-        name: 'Purchase Orders',
+        name: 'Stock Report',
         description: 'Vendor reorder suggestions, stock movements & replenishment tracking',
         route: 'product-movement',
       },
@@ -128,6 +161,27 @@ export const APP_MODULES: AppModule[] = [
     route: 'invoices',
     subModules: [
       {
+        key: 'accounts.invoices',
+        parentKey: 'accounts',
+        name: 'Sales & Invoices',
+        description: 'Historical sales receipts, customer tax invoices & counter billing log',
+        route: 'invoices',
+      },
+      {
+        key: 'accounts.purchases',
+        parentKey: 'accounts',
+        name: 'Purchases & Payables',
+        description: 'Vendor purchase invoices, inward stock register & supplier balances',
+        route: 'purchases',
+      },
+      {
+        key: 'accounts.payments',
+        parentKey: 'accounts',
+        name: 'Payments & Payables',
+        description: 'Accounts receivable/payable, payment vouchers & customer credit dues',
+        route: 'payments',
+      },
+      {
         key: 'accounts.expenses',
         parentKey: 'accounts',
         name: 'Expenses',
@@ -135,11 +189,18 @@ export const APP_MODULES: AppModule[] = [
         route: 'expenses',
       },
       {
-        key: 'accounts.payments',
+        key: 'accounts.day_closing',
         parentKey: 'accounts',
-        name: 'Payments & Ledgers',
-        description: 'Accounts receivable/payable, payment vouchers & customer credit dues',
-        route: 'payments',
+        name: 'Day Closing',
+        description: 'Daily cash register reconciliation, cash drawer counts & shift closing',
+        route: 'day-closing',
+      },
+      {
+        key: 'accounts.return_reports',
+        parentKey: 'accounts',
+        name: 'Returns & Profit Report',
+        description: 'Sales return audit, credit notes log & net profit margin analytics',
+        route: 'return-reports',
       },
     ],
   },
@@ -151,25 +212,32 @@ export const APP_MODULES: AppModule[] = [
     route: 'gst-overview',
     subModules: [
       {
+        key: 'gst.overview',
+        parentKey: 'gst',
+        name: 'GST Overview',
+        description: 'Monthly tax liability dashboard, filing status & compliance checklist',
+        route: 'gst-overview',
+      },
+      {
         key: 'gst.gstr1',
         parentKey: 'gst',
-        name: 'GSTR-1',
+        name: 'GSTR-1 (Sales Register)',
         description: 'Outward supplies register, B2B invoices & B2C counter sales',
         route: 'gst-gstr1',
       },
       {
-        key: 'gst.gstr3b',
+        key: 'gst.itc',
         parentKey: 'gst',
-        name: 'GSTR-3B',
-        description: 'Monthly summary liabilities, reviewed eligible ITC & net tax payable',
-        route: 'gst-gstr3b',
+        name: 'ITC Register & 2B Reconciliation',
+        description: 'Inward supplies ITC matching, vendor filing verification & 2B reconciler',
+        route: 'gst-itc-reconciliation',
       },
       {
-        key: 'gst.hsn',
+        key: 'gst.gstr3b',
         parentKey: 'gst',
-        name: 'HSN Summary',
-        description: 'HSN code sales distribution, GSTR-2B ITC matching & statutory export',
-        route: 'gst-itc-reconciliation',
+        name: 'GSTR-3B Preparation',
+        description: 'Monthly summary liabilities, reviewed eligible ITC & net tax payable',
+        route: 'gst-gstr3b',
       },
     ],
   },
@@ -194,7 +262,7 @@ export const TOTAL_PARENT_MODULES = APP_MODULES.length; // 15
 export const TOTAL_SUB_MODULES = APP_MODULES.reduce(
   (acc, mod) => acc + (mod.subModules ? mod.subModules.length : 0),
   0
-); // 8
+); // 13
 
 export type ModuleAccessMap = Record<string, boolean>;
 export type RoleModuleAccessConfig = Record<'owner' | 'manager' | 'cashier', ModuleAccessMap>;
@@ -203,23 +271,34 @@ export const DEFAULT_ROLE_MODULE_ACCESS: RoleModuleAccessConfig = {
   owner: {
     dashboard: true,
     pos: true,
+    shifts: true,
+    'recent-bills': true,
+    'day-closing': true,
     wholesale: true,
     notifications: true,
     items: true,
     categories: true,
     inventory: true,
-    'inventory.levels': true,
     'inventory.transfers': true,
+    'inventory.adjustment': true,
     'inventory.reports': true,
+    'inventory.levels': true,
     'sales-analysis': true,
     promotions: true,
     customers: true,
     suppliers: true,
     accounts: true,
-    'accounts.expenses': true,
+    'accounts.invoices': true,
+    'accounts.purchases': true,
     'accounts.payments': true,
+    'accounts.expenses': true,
+    'accounts.day_closing': true,
+    'accounts.return_reports': true,
+    'accounts.sales_invoices': true,
     gst: true,
+    'gst.overview': true,
     'gst.gstr1': true,
+    'gst.itc': true,
     'gst.gstr3b': true,
     'gst.hsn': true,
     'user-management': true,
@@ -228,23 +307,34 @@ export const DEFAULT_ROLE_MODULE_ACCESS: RoleModuleAccessConfig = {
   manager: {
     dashboard: true,
     pos: true,
+    shifts: true,
+    'recent-bills': true,
+    'day-closing': true,
     wholesale: true,
     notifications: true,
     items: true,
     categories: true,
     inventory: true,
-    'inventory.levels': true,
     'inventory.transfers': true,
+    'inventory.adjustment': true,
     'inventory.reports': true,
+    'inventory.levels': true,
     'sales-analysis': true,
     promotions: true,
     customers: true,
     suppliers: true,
     accounts: true,
-    'accounts.expenses': true,
+    'accounts.invoices': true,
+    'accounts.purchases': true,
     'accounts.payments': true,
+    'accounts.expenses': true,
+    'accounts.day_closing': true,
+    'accounts.return_reports': true,
+    'accounts.sales_invoices': true,
     gst: true,
+    'gst.overview': true,
     'gst.gstr1': true,
+    'gst.itc': true,
     'gst.gstr3b': true,
     'gst.hsn': true,
     'user-management': true,
@@ -253,28 +343,54 @@ export const DEFAULT_ROLE_MODULE_ACCESS: RoleModuleAccessConfig = {
   cashier: {
     dashboard: false,
     pos: true,
+    shifts: true,
+    'recent-bills': true,
+    'day-closing': true,
     wholesale: false,
     notifications: true,
     items: false,
     categories: false,
     inventory: false,
-    'inventory.levels': false,
     'inventory.transfers': false,
+    'inventory.adjustment': false,
     'inventory.reports': false,
+    'inventory.levels': false,
     'sales-analysis': false,
     promotions: false,
     customers: false,
     suppliers: false,
     accounts: false,
-    'accounts.expenses': false,
+    'accounts.invoices': false,
+    'accounts.purchases': false,
     'accounts.payments': false,
+    'accounts.expenses': false,
+    'accounts.day_closing': false,
+    'accounts.return_reports': false,
+    'accounts.sales_invoices': false,
     gst: false,
+    'gst.overview': false,
     'gst.gstr1': false,
+    'gst.itc': false,
     'gst.gstr3b': false,
     'gst.hsn': false,
     'user-management': false,
     settings: false,
   },
+};
+
+const KEY_ALIASES: Record<string, string[]> = {
+  'inventory.adjustment': ['inventory.levels'],
+  'inventory.levels': ['inventory.adjustment'],
+  'accounts.invoices': ['recent-bills', 'accounts.sales_invoices', 'accounts.payments'],
+  'recent-bills': ['accounts.invoices', 'accounts.sales_invoices', 'invoices'],
+  'accounts.purchases': ['accounts.payments'],
+  'accounts.day_closing': ['day-closing', 'accounts'],
+  'day-closing': ['accounts.day_closing', 'accounts'],
+  'accounts.return_reports': ['accounts'],
+  'gst.overview': ['gst'],
+  'gst.itc': ['gst.hsn'],
+  'gst.hsn': ['gst.itc'],
+  shifts: ['pos'],
 };
 
 /**
@@ -295,6 +411,11 @@ export function isModuleEnabledForRole(
     return true;
   }
 
+  // Cashier mandatory modules are permanently locked on for Cashier
+  if (canonicalRole === 'cashier' && (CASHIER_MANDATORY_MODULES as readonly string[]).includes(moduleKey)) {
+    return true;
+  }
+
   // Check if sub-module: if so, verify parent module first
   if (moduleKey.includes('.')) {
     const parentKey = moduleKey.split('.')[0];
@@ -302,5 +423,15 @@ export function isModuleEnabledForRole(
     if (!parentEnabled) return false;
   }
 
-  return roleAccess[moduleKey] ?? DEFAULT_ROLE_MODULE_ACCESS[canonicalRole]?.[moduleKey] ?? true;
+  const rawVal = roleAccess[moduleKey];
+  if (rawVal !== undefined) return rawVal;
+
+  const aliases = KEY_ALIASES[moduleKey];
+  if (aliases) {
+    for (const alias of aliases) {
+      if (roleAccess[alias] !== undefined) return roleAccess[alias];
+    }
+  }
+
+  return DEFAULT_ROLE_MODULE_ACCESS[canonicalRole]?.[moduleKey] ?? true;
 }

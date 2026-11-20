@@ -6,6 +6,7 @@ import { audit } from '../audit.ts';
 import { requireDeveloperMode } from './developer.ts';
 import {
   DEFAULT_ROLE_MODULE_ACCESS,
+  CASHIER_MANDATORY_MODULES,
   type RoleModuleAccessConfig,
   type ModuleAccessMap,
 } from '../../../shared/modules.ts';
@@ -51,6 +52,11 @@ export async function getTenantModuleAccess(
   // Super Admin Settings is PERMANENTLY locked on
   result.owner.settings = true;
 
+  // Cashier mandatory modules are PERMANENTLY locked on
+  for (const modKey of CASHIER_MANDATORY_MODULES) {
+    result.cashier[modKey] = true;
+  }
+
   accessCache.set(tenantId, { config: result, timestamp: now });
   return result;
 }
@@ -70,6 +76,9 @@ export function requireModule(moduleKey: string): Handler {
 
     // Super Admin always has access to Settings
     if (isSuperAdmin && moduleKey === 'settings') return;
+
+    // Cashier always has access to mandatory modules
+    if (ctx.user.role === 'cashier' && (CASHIER_MANDATORY_MODULES as readonly string[]).includes(moduleKey)) return;
 
     const access = await getTenantModuleAccess(ctx.db, ctx.user.tenantId);
     const canonicalRole = (ctx.user.role === 'owner' || isSuperAdmin ? 'owner' : ctx.user.role) as 'owner' | 'manager' | 'cashier';
@@ -126,6 +135,18 @@ export function registerModuleManagement(r: Router, tokens: { secret: string }) 
       throw bad('Settings is mandatory for Super Admin and cannot be disabled.', 'SETTINGS_LOCKED');
     }
 
+    // Strict backend enforcement: Cashier mandatory modules are locked on
+    if (access.cashier) {
+      for (const modKey of CASHIER_MANDATORY_MODULES) {
+        if (access.cashier[modKey] === false) {
+          throw bad(
+            `Module "${modKey}" is mandatory for Cashier access and cannot be disabled.`,
+            'CASHIER_MODULE_LOCKED'
+          );
+        }
+      }
+    }
+
     const tenantId = user.tenantId;
     const roles: Array<'owner' | 'manager' | 'cashier'> = ['owner', 'manager', 'cashier'];
 
@@ -133,8 +154,11 @@ export function registerModuleManagement(r: Router, tokens: { secret: string }) 
       for (const role of roles) {
         const moduleMap: ModuleAccessMap = access[role] || {};
         for (const [moduleKey, enabled] of Object.entries(moduleMap)) {
-          // Double safeguard: Settings for Super Admin is always true
-          const effectiveEnabled = role === 'owner' && moduleKey === 'settings' ? true : Boolean(enabled);
+          // Double safeguard: Settings for Super Admin and Cashier mandatory modules are always true
+          const isCashierMandatory = role === 'cashier' && (CASHIER_MANDATORY_MODULES as readonly string[]).includes(moduleKey);
+          const effectiveEnabled = (role === 'owner' && moduleKey === 'settings') || isCashierMandatory
+            ? true
+            : Boolean(enabled);
 
           await tx.exec(
             `INSERT INTO role_module_access (id, tenant_id, role, module_key, enabled, updated_by, updated_at)
