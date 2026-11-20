@@ -9975,6 +9975,30 @@ export function App() {
                                     (≈ {formatRupees(Math.abs(netLoyaltyPointsToEarn) * shopPointValMinor)})
                                   </span>
                                 )}
+                                {selectedParty && (selectedParty.loyaltyPoints ?? 0) >= shopMinRedeem && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const next = !redeemPoints;
+                                      setRedeemPoints(next);
+                                      showToast(next ? `🪙 Points redeemed (-${formatRupees(potentialDiscountMinor)})!` : 'Points redemption removed');
+                                    }}
+                                    style={{
+                                      marginLeft: '4px',
+                                      padding: '2px 8px',
+                                      fontSize: '0.72rem',
+                                      fontWeight: 800,
+                                      borderRadius: '5px',
+                                      border: redeemPoints ? '1px solid #10b981' : '1px solid #d97706',
+                                      background: redeemPoints ? '#ecfdf5' : '#fef3c7',
+                                      color: redeemPoints ? '#047857' : '#92400e',
+                                      cursor: 'pointer',
+                                    }}
+                                    title={redeemPoints ? 'Cancel redemption' : `Redeem available points for ${formatRupees(potentialDiscountMinor)} discount`}
+                                  >
+                                    {redeemPoints ? '✓ Redeemed' : `Redeem (${selectedParty.loyaltyPoints} pts)`}
+                                  </button>
+                                )}
                               </div>
                             </div>
                           )}
@@ -10559,11 +10583,80 @@ export function App() {
                                 </div>
                               </div>
 
-                              {/* Recognized Customer Loyalty Details Footer */}
-                              {selectedParty && (
-                                <div style={{ marginTop: '0.4rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.74rem', color: '#15803d', fontWeight: 650 }}>
-                                  <span>Linked Member: <strong>{selectedParty.name}</strong></span>
-                                  <span>Available Loyalty Points: <strong>{selectedParty.loyaltyPoints ?? 0} pts</strong></span>
+                              {/* Recognized Customer Loyalty Details Footer & Redeem Points Option */}
+                              {selectedParty ? (
+                                <div style={{ marginTop: '0.45rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.74rem', color: '#15803d', fontWeight: 650 }}>
+                                    <span>Linked Member: <strong>{selectedParty.name}</strong></span>
+                                    <span>Available Points: <strong>{selectedParty.loyaltyPoints ?? 0} pts</strong> ({formatRupees((selectedParty.loyaltyPoints ?? 0) * shopPointValMinor)})</span>
+                                  </div>
+
+                                  {shopLoyaltyActive && (selectedParty.loyaltyPoints ?? 0) >= shopMinRedeem && (
+                                    <button
+                                      type="button"
+                                      className={`pos-redeem-points-btn ${redeemPoints ? 'redeeming' : ''}`}
+                                      onClick={() => {
+                                        const next = !redeemPoints;
+                                        setRedeemPoints(next);
+                                        if (next) {
+                                          showToast(`🪙 ${pointsActuallyRedeemed || maxRedeemablePoints} points redeemed (-${formatRupees(potentialDiscountMinor)})!`);
+                                        } else {
+                                          showToast('Points redemption removed');
+                                        }
+                                      }}
+                                      style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between',
+                                        padding: '0.42rem 0.65rem',
+                                        borderRadius: '8px',
+                                        border: redeemPoints ? '1.5px solid #10b981' : '1.5px solid #f59e0b',
+                                        background: redeemPoints ? '#ecfdf5' : '#fffbeb',
+                                        color: redeemPoints ? '#065f46' : '#92400e',
+                                        cursor: 'pointer',
+                                        width: '100%',
+                                        boxSizing: 'border-box',
+                                        transition: 'all 0.15s ease',
+                                      }}
+                                    >
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <span style={{ fontSize: '0.95rem' }}>{redeemPoints ? '✓' : '🪙'}</span>
+                                        <div style={{ textAlign: 'left' }}>
+                                          <div style={{ fontWeight: 800, fontSize: '0.78rem', lineHeight: 1.2 }}>
+                                            {redeemPoints ? `${pointsActuallyRedeemed || maxRedeemablePoints} Points Redeemed` : 'Redeem Loyalty Points'}
+                                          </div>
+                                          <div style={{ fontSize: '0.68rem', opacity: 0.9, fontWeight: 600 }}>
+                                            {redeemPoints
+                                              ? `Saving ${formatRupees(pointsDiscountMinor || potentialDiscountMinor)} on bill`
+                                              : `Use ${maxRedeemablePoints} pts to save ${formatRupees(potentialDiscountMinor)}`}
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <span
+                                        style={{
+                                          fontSize: '0.7rem',
+                                          fontWeight: 800,
+                                          padding: '2px 7px',
+                                          borderRadius: '5px',
+                                          background: redeemPoints ? '#fee2e2' : '#fef3c7',
+                                          color: redeemPoints ? '#dc2626' : '#b45309',
+                                        }}
+                                      >
+                                        {redeemPoints ? 'Cancel ✕' : `Save ${formatRupees(potentialDiscountMinor)}`}
+                                      </span>
+                                    </button>
+                                  )}
+
+                                  {shopLoyaltyActive && (selectedParty.loyaltyPoints ?? 0) > 0 && (selectedParty.loyaltyPoints ?? 0) < shopMinRedeem && (
+                                    <div style={{ fontSize: '0.7rem', color: '#b45309', background: '#fffbeb', border: '1px solid #fef3c7', padding: '0.25rem 0.5rem', borderRadius: '6px' }}>
+                                      ℹ️ Customer has {selectedParty.loyaltyPoints} pts (min. {shopMinRedeem} pts required to redeem)
+                                    </div>
+                                  )}
+                                </div>
+                              ) : (
+                                <div style={{ marginTop: '0.35rem', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.71rem', color: '#64748b' }}>
+                                  <span>🪙</span>
+                                  <span>Enter customer mobile to link member & redeem loyalty points</span>
                                 </div>
                               )}
                             </div>
