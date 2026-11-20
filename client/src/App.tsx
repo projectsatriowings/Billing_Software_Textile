@@ -11422,21 +11422,21 @@ export function App() {
 
                       {/* DYNAMIC OR STATIC UPI QR & CUSTOMER DISPLAY CARD */}
                       {selectedPayMode === 'upi' && cart.length > 0 && (
-                        <div className="bento-upi-tender-card">
-                          <div className="upi-tender-header">
-                            <div className="upi-tender-title">
-                              <span className="upi-icon-box">
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                        <div className="bento-upi-tender-card" style={{ width: '100%', minWidth: 0, boxSizing: 'border-box' }}>
+                          <div className="upi-tender-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.65rem', gap: '8px' }}>
+                            <div className="upi-tender-title" style={{ minWidth: 0, flex: 1, fontSize: '0.86rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span className="upi-icon-box" style={{ flexShrink: 0, width: '26px', height: '26px', borderRadius: '7px', background: '#3b82f6', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
                                   <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
                                 </svg>
                               </span>
-                              <span>
+                              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 800, color: '#1e3a8a' }}>
                                 {posPaymentConfig?.qrType === 'dynamic' && (posPaymentConfig?.rzpEnabled || posPaymentConfig?.paytmEnabled || posPaymentConfig?.phonepeEnabled)
-                                  ? `Dynamic UPI QR (${posPaymentConfig.provider === 'paytm' ? `Paytm ${posPaymentConfig.paytmMode === 'live' ? 'Live' : 'Test'}` : posPaymentConfig.provider === 'phonepe' ? `PhonePe ${posPaymentConfig.phonepeMode === 'live' ? 'Live' : 'Test'}` : `Razorpay ${posPaymentConfig.rzpMode === 'live' ? 'Live' : 'Test'}`})`
-                                  : 'Shop UPI QR (Manual Verification)'}
+                                  ? `Dynamic UPI QR (${posPaymentConfig.provider === 'paytm' ? 'Paytm' : posPaymentConfig.provider === 'phonepe' ? 'PhonePe' : 'Razorpay'})`
+                                  : 'Shop UPI QR (Direct Pay)'}
                               </span>
                             </div>
-                            <div className="upi-tender-status">
+                            <div className="upi-tender-status" style={{ flexShrink: 0 }}>
                               <button
                                 type="button"
                                 className={`upi-dual-screen-chip ${isCfdConnected ? 'live' : 'open'}`}
@@ -11446,15 +11446,16 @@ export function App() {
                                   showToast('🖥️ Customer Display opened! Drag to your 2nd monitor.');
                                 }}
                                 title="Click to launch customer display on 2nd monitor"
+                                style={{ padding: '0.2rem 0.55rem', fontSize: '0.7rem' }}
                               >
                                 <span className={`pulse-dot ${isCfdConnected ? 'active' : ''}`}></span>
                                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                                     <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
                                     <line x1="8" y1="21" x2="16" y2="21"></line>
                                     <line x1="12" y1="17" x2="12" y2="21"></line>
                                   </svg>
-                                  <span>{isCfdConnected ? 'Live on 2nd Monitor' : 'Launch on 2nd Monitor'}</span>
+                                  <span>{isCfdConnected ? '2nd Screen Live' : 'Launch 2nd Screen'}</span>
                                 </span>
                               </button>
                             </div>
@@ -11467,23 +11468,23 @@ export function App() {
                             </div>
                           ) : posPaymentConfig?.qrType === 'dynamic' && (posPaymentConfig?.rzpEnabled || posPaymentConfig?.paytmEnabled || posPaymentConfig?.phonepeEnabled) ? (
                             /* DYNAMIC QR FLOW */
-                            <div className="upi-tender-body">
+                            <div className="upi-tender-body" style={{ minWidth: 0, width: '100%', boxSizing: 'border-box' }}>
                               {!activeQrAttempt ? (
-                                <div style={{ width: '100%', padding: '1rem', textAlign: 'center' }}>
-                                  <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '0.75rem' }}>
-                                    Generate a single-use amount-locked Dynamic QR code for ₹{(finalPayableMinor / 100).toFixed(2)} via {posPaymentConfig.provider === 'paytm' ? 'Paytm' : posPaymentConfig.provider === 'phonepe' ? 'PhonePe' : 'Razorpay'}.
+                                <div style={{ width: '100%', padding: '0.75rem', textAlign: 'center', minWidth: 0, boxSizing: 'border-box' }}>
+                                  <p style={{ fontSize: '0.82rem', color: '#64748b', marginBottom: '0.65rem' }}>
+                                    Generate single-use amount-locked Dynamic QR code for <strong>₹{(finalPayableMinor / 100).toFixed(2)}</strong> via {posPaymentConfig.provider === 'paytm' ? 'Paytm' : posPaymentConfig.provider === 'phonepe' ? 'PhonePe' : 'Razorpay'}.
                                   </p>
                                   <button
                                     type="button"
                                     className="btn"
                                     style={{
-                                      padding: '9px 18px',
+                                      padding: '8px 14px',
                                       background: 'linear-gradient(135deg, #6d4aff 0%, #5b3ee0 100%)',
                                       color: '#ffffff',
                                       border: 'none',
                                       borderRadius: '8px',
                                       fontWeight: 700,
-                                      fontSize: '0.88rem',
+                                      fontSize: '0.82rem',
                                       cursor: 'pointer',
                                       boxShadow: '0 4px 12px rgba(109, 74, 255, 0.28)',
                                     }}
@@ -11497,41 +11498,45 @@ export function App() {
                                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
                                           <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
                                         </svg>
-                                        <span>Generate Dynamic QR ({posPaymentConfig.provider === 'paytm' ? 'Paytm' : posPaymentConfig.provider === 'phonepe' ? 'PhonePe' : 'Razorpay'} - ₹{(finalPayableMinor / 100).toFixed(2)})</span>
+                                        <span>Generate Dynamic QR (₹{(finalPayableMinor / 100).toFixed(2)})</span>
                                       </span>
                                     )}
                                   </button>
                                 </div>
                               ) : (
                                 <>
-                                  <div className="upi-qr-display-wrap">
+                                  <div className="upi-qr-display-wrap" style={{ flexShrink: 0, padding: '0.45rem', borderRadius: '10px' }}>
                                     {activeQrAttempt.qrImageUrl ? (
                                       <img
                                         src={activeQrAttempt.qrImageUrl}
                                         alt="Dynamic UPI QR"
-                                        style={{ width: 130, height: 130, objectFit: 'contain', background: '#fff', padding: '4px', borderRadius: '8px' }}
+                                        style={{ width: 105, height: 105, objectFit: 'contain', background: '#fff', padding: '2px', borderRadius: '6px' }}
                                       />
                                     ) : (
                                       <div
                                         className="upi-qr-code"
                                         dangerouslySetInnerHTML={{
-                                          __html: qrSvg(activeQrAttempt.qrPayload || '', { size: 130, margin: 1 }),
+                                          __html: qrSvg(activeQrAttempt.qrPayload || '', { size: 105, margin: 1 }),
                                         }}
                                       />
                                     )}
-                                    <span className="upi-qr-brand-label">GPay • PhonePe • Paytm</span>
+                                    <span className="upi-qr-brand-label" style={{ fontSize: '0.62rem', fontWeight: 700, color: '#64748b', marginTop: '3px' }}>
+                                      GPay • PhonePe • Paytm
+                                    </span>
                                   </div>
 
-                                  <div className="upi-tender-info">
-                                    <div className="upi-amount-row">
-                                      <span className="upi-label">Payable Amount:</span>
-                                      <strong className="upi-val">₹{(activeQrAttempt.amountMinor / 100).toFixed(2)}</strong>
+                                  <div className="upi-tender-info" style={{ flex: 1, minWidth: 0, boxSizing: 'border-box' }}>
+                                    <div className="upi-amount-row" style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', paddingBottom: '0.35rem', borderBottom: '1px dashed #cbd5e1' }}>
+                                      <span className="upi-label" style={{ fontSize: '0.74rem', color: '#475569', fontWeight: 600 }}>Payable Amount:</span>
+                                      <strong className="upi-val" style={{ fontSize: '1.15rem', fontWeight: 900, color: '#1d4ed8', fontFamily: 'monospace' }}>
+                                        ₹{(activeQrAttempt.amountMinor / 100).toFixed(2)}
+                                      </strong>
                                     </div>
 
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '4px 0' }}>
-                                      <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Status:</span>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', margin: '2px 0', flexWrap: 'wrap' }}>
+                                      <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Status:</span>
                                       {activeQrAttempt.status === 'paid' && (
-                                        <span style={{ background: '#dcfce7', color: '#166534', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                        <span style={{ background: '#dcfce7', color: '#166534', padding: '2px 8px', borderRadius: '12px', fontSize: '0.72rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#166534" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                             <polyline points="20 6 9 17 4 12"></polyline>
                                           </svg>
@@ -11539,7 +11544,7 @@ export function App() {
                                         </span>
                                       )}
                                       {activeQrAttempt.status === 'pending' && (
-                                        <span style={{ background: '#fef9c3', color: '#854d0e', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                        <span style={{ background: '#fef9c3', color: '#854d0e', padding: '2px 8px', borderRadius: '12px', fontSize: '0.72rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#854d0e" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                                             <circle cx="12" cy="12" r="10"></circle>
                                             <polyline points="12 6 12 12 16 14"></polyline>
@@ -11548,7 +11553,7 @@ export function App() {
                                         </span>
                                       )}
                                       {activeQrAttempt.status === 'expired' && (
-                                        <span style={{ background: '#fee2e2', color: '#991b1b', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                        <span style={{ background: '#fee2e2', color: '#991b1b', padding: '2px 8px', borderRadius: '12px', fontSize: '0.72rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#991b1b" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                                             <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
                                             <line x1="12" y1="9" x2="12" y2="13"></line>
@@ -11558,7 +11563,7 @@ export function App() {
                                         </span>
                                       )}
                                       {activeQrAttempt.status === 'failed' && (
-                                        <span style={{ background: '#fee2e2', color: '#991b1b', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                        <span style={{ background: '#fee2e2', color: '#991b1b', padding: '2px 8px', borderRadius: '12px', fontSize: '0.72rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#991b1b" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                                             <circle cx="12" cy="12" r="10"></circle>
                                             <line x1="15" y1="9" x2="9" y2="15"></line>
@@ -11570,19 +11575,19 @@ export function App() {
                                     </div>
 
                                     {activeQrAttempt.expiresAt && (
-                                      <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                                      <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
                                         Expires: {new Date(activeQrAttempt.expiresAt).toLocaleTimeString()}
                                       </div>
                                     )}
 
-                                    <div style={{ display: 'flex', gap: '6px', marginTop: '6px' }}>
+                                    <div style={{ display: 'flex', gap: '6px', marginTop: '4px', flexWrap: 'wrap' }}>
                                       <button
                                         type="button"
                                         disabled={isVerifyingQr}
                                         onClick={handleVerifyDynamicQr}
                                         style={{
-                                          padding: '5px 12px',
-                                          fontSize: '0.78rem',
+                                          padding: '4px 10px',
+                                          fontSize: '0.75rem',
                                           fontWeight: 600,
                                           background: 'var(--primary)',
                                           color: '#fff',
@@ -11595,7 +11600,7 @@ export function App() {
                                           'Checking...'
                                         ) : (
                                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                                               <polyline points="23 4 23 10 17 10"></polyline>
                                               <polyline points="1 20 1 14 7 14"></polyline>
                                               <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
@@ -11610,8 +11615,8 @@ export function App() {
                                           disabled={isGeneratingQr}
                                           onClick={handleGenerateDynamicQr}
                                           style={{
-                                            padding: '5px 12px',
-                                            fontSize: '0.78rem',
+                                            padding: '4px 10px',
+                                            fontSize: '0.75rem',
                                             fontWeight: 600,
                                             background: 'linear-gradient(135deg, #6d4aff 0%, #5b3ee0 100%)',
                                             color: '#fff',
@@ -11621,7 +11626,7 @@ export function App() {
                                           }}
                                         >
                                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
                                               <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
                                             </svg>
                                             <span>New QR</span>
@@ -11634,83 +11639,177 @@ export function App() {
                               )}
                             </div>
                           ) : (
-                            /* STATIC QR FLOW (With explicit manual verification notice) */
-                            <div className="upi-tender-body">
-                              <div className="upi-qr-display-wrap">
-                                <div
-                                  className="upi-qr-code"
-                                  dangerouslySetInnerHTML={{
-                                    __html: qrSvg(
-                                      `upi://pay?pa=${encodeURIComponent(posPaymentConfig?.staticUpiId?.trim() || shop?.upiId?.trim() || (shop?.phone ? `${shop.phone.replace(/\D/g, '').slice(-10)}@upi` : 'merchant@okaxis'))}&pn=${encodeURIComponent(posPaymentConfig?.staticMerchantName?.trim() || shop?.name || 'Retail Store')}&am=${(finalPayableMinor / 100).toFixed(2)}&cu=INR&tn=${encodeURIComponent(`Bill at ${posPaymentConfig?.staticMerchantName?.trim() || shop?.name || 'Retail Store'}`)}`,
-                                      { size: 130, margin: 1 }
-                                    ),
-                                  }}
-                                />
-                                <span className="upi-qr-brand-label">GPay • PhonePe • Paytm</span>
+                            /* STATIC QR FLOW (Clean, Zero Overflow Layout) */
+                            <div className="upi-static-flow-container" style={{ width: '100%', minWidth: 0, boxSizing: 'border-box' }}>
+                              {/* TOP ROW: Payable Amount and Shop VPA */}
+                              <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                background: '#ffffff',
+                                border: '1px solid #dbeafe',
+                                borderRadius: '10px',
+                                padding: '0.45rem 0.75rem',
+                                marginBottom: '0.55rem',
+                                minWidth: 0,
+                                boxSizing: 'border-box',
+                                gap: '8px',
+                              }}>
+                                <div style={{ minWidth: 0, flex: 1 }}>
+                                  <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 600, display: 'block', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
+                                    Payable Amount
+                                  </span>
+                                  <strong style={{ fontSize: '1.2rem', color: '#1d4ed8', fontWeight: 800, fontFamily: 'monospace', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                    ₹{(finalPayableMinor / 100).toFixed(2)}
+                                  </strong>
+                                </div>
+                                <div style={{ textAlign: 'right', minWidth: 0, flexShrink: 1 }}>
+                                  <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'block' }}>Shop UPI VPA</span>
+                                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', maxWidth: '100%' }}>
+                                    <span
+                                      className="upi-vpa-code"
+                                      title={posPaymentConfig?.staticUpiId?.trim() || shop?.upiId?.trim() || (shop?.phone ? `${shop.phone.replace(/\D/g, '').slice(-10)}@upi` : 'merchant@okaxis')}
+                                      style={{
+                                        maxWidth: '125px',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        whiteSpace: 'nowrap',
+                                        display: 'inline-block',
+                                        fontSize: '0.74rem',
+                                        padding: '1px 5px',
+                                        borderRadius: '4px',
+                                        background: '#f1f5f9',
+                                        color: '#0f172a',
+                                        fontWeight: 600,
+                                      }}
+                                    >
+                                      {posPaymentConfig?.staticUpiId?.trim() || shop?.upiId?.trim() || (shop?.phone ? `${shop.phone.replace(/\D/g, '').slice(-10)}@upi` : 'merchant@okaxis')}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      className="upi-edit-vpa-btn"
+                                      onClick={async () => {
+                                        const current = posPaymentConfig?.staticUpiId || shop?.upiId || '';
+                                        const input = window.prompt('Enter your Shop UPI ID / VPA (e.g. yourstore@okaxis, 9876543210@paytm):', current);
+                                        if (input !== null && shop) {
+                                          try {
+                                            const updated = await api<Shop>('/api/shop', {
+                                              method: 'PUT',
+                                              body: JSON.stringify({ ...shop, upiId: input.trim() || null }),
+                                            });
+                                            setShop(updated);
+                                            showToast(`✅ Shop UPI ID updated to ${input.trim() || 'default'}`);
+                                          } catch (e: any) {
+                                            alert(e.message || 'Failed to update UPI ID');
+                                          }
+                                        }
+                                      }}
+                                      title="Edit Shop UPI VPA"
+                                      style={{ padding: '2px 5px', fontSize: '0.68rem', fontWeight: 600 }}
+                                    >
+                                      Edit
+                                    </button>
+                                  </div>
+                                </div>
                               </div>
 
-                              <div className="upi-tender-info">
-                                <div className="upi-amount-row">
-                                  <span className="upi-label">Payable Amount:</span>
-                                  <strong className="upi-val">₹{(finalPayableMinor / 100).toFixed(2)}</strong>
+                              {/* MIDDLE ROW: Compact QR Code + Instructions */}
+                              <div className="upi-tender-body" style={{ display: 'flex', gap: '0.65rem', alignItems: 'center', minWidth: 0, width: '100%', boxSizing: 'border-box' }}>
+                                <div className="upi-qr-display-wrap" style={{ flexShrink: 0, padding: '0.45rem', borderRadius: '10px', background: '#ffffff', border: '1px solid #cbd5e1' }}>
+                                  <div
+                                    className="upi-qr-code"
+                                    dangerouslySetInnerHTML={{
+                                      __html: qrSvg(
+                                        `upi://pay?pa=${encodeURIComponent(posPaymentConfig?.staticUpiId?.trim() || shop?.upiId?.trim() || (shop?.phone ? `${shop.phone.replace(/\D/g, '').slice(-10)}@upi` : 'merchant@okaxis'))}&pn=${encodeURIComponent(posPaymentConfig?.staticMerchantName?.trim() || shop?.name || 'Retail Store')}&am=${(finalPayableMinor / 100).toFixed(2)}&cu=INR&tn=${encodeURIComponent(`Bill at ${posPaymentConfig?.staticMerchantName?.trim() || shop?.name || 'Retail Store'}`)}`,
+                                        { size: 105, margin: 1 }
+                                      ),
+                                    }}
+                                  />
+                                  <span className="upi-qr-brand-label" style={{ fontSize: '0.62rem', fontWeight: 700, color: '#64748b', marginTop: '3px' }}>
+                                    GPay • PhonePe • Paytm
+                                  </span>
                                 </div>
 
-                                <div className="upi-vpa-row">
-                                  <span className="upi-vpa-label">Shop VPA:</span>
-                                  <span className="upi-vpa-code">{posPaymentConfig?.staticUpiId?.trim() || shop?.upiId?.trim() || (shop?.phone ? `${shop.phone.replace(/\D/g, '').slice(-10)}@upi` : 'merchant@okaxis')}</span>
+                                <div className="upi-tender-info" style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '0.4rem', boxSizing: 'border-box' }}>
+                                  <div style={{ fontSize: '0.78rem', color: '#1e3a8a', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
+                                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                                    </svg>
+                                    <span>Scan to Pay Instantly</span>
+                                  </div>
+
+                                  <div style={{
+                                    background: '#fffbeb',
+                                    border: '1px solid #fef3c7',
+                                    borderRadius: '8px',
+                                    padding: '5px 7px',
+                                    fontSize: '0.71rem',
+                                    color: '#92400e',
+                                    lineHeight: 1.35,
+                                    boxSizing: 'border-box',
+                                    width: '100%',
+                                    wordBreak: 'break-word',
+                                  }}>
+                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontWeight: 700 }}>
+                                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#b45309" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                                        <line x1="12" y1="9" x2="12" y2="13"></line>
+                                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                                      </svg>
+                                      <span>Verify in App:</span>
+                                    </span> Check payment in your UPI/Bank app before generating bill.
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* BOTTOM ROW: Full-Width UTR / Ref Input */}
+                              <div style={{
+                                marginTop: '0.55rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                width: '100%',
+                                minWidth: 0,
+                                boxSizing: 'border-box',
+                              }}>
+                                <span style={{ fontSize: '0.73rem', color: '#64748b', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                                  UTR / Ref:
+                                </span>
+                                <input
+                                  type="text"
+                                  placeholder="12-digit UTR from bank app (optional)"
+                                  value={upiManualRef}
+                                  onChange={(e) => setUpiManualRef(e.target.value)}
+                                  style={{
+                                    flex: 1,
+                                    minWidth: 0,
+                                    width: '100%',
+                                    padding: '5px 8px',
+                                    fontSize: '0.78rem',
+                                    border: '1px solid #cbd5e1',
+                                    borderRadius: '6px',
+                                    background: '#ffffff',
+                                    color: '#0f172a',
+                                    boxSizing: 'border-box',
+                                  }}
+                                />
+                                {upiManualRef && (
                                   <button
                                     type="button"
-                                    className="upi-edit-vpa-btn"
-                                    onClick={async () => {
-                                      const current = posPaymentConfig?.staticUpiId || shop?.upiId || '';
-                                      const input = window.prompt('Enter your Shop UPI ID / VPA (e.g. yourstore@okaxis, 9876543210@paytm):', current);
-                                      if (input !== null && shop) {
-                                        try {
-                                          const updated = await api<Shop>('/api/shop', {
-                                            method: 'PUT',
-                                            body: JSON.stringify({ ...shop, upiId: input.trim() || null }),
-                                          });
-                                          setShop(updated);
-                                          showToast(`✅ Shop UPI ID updated to ${input.trim() || 'default'}`);
-                                        } catch (e: any) {
-                                          alert(e.message || 'Failed to update UPI ID');
-                                        }
-                                      }
+                                    onClick={() => setUpiManualRef('')}
+                                    style={{
+                                      border: 'none',
+                                      background: 'transparent',
+                                      color: '#94a3b8',
+                                      cursor: 'pointer',
+                                      padding: '2px 4px',
+                                      fontSize: '0.75rem',
                                     }}
-                                    title="Edit Shop UPI VPA"
+                                    title="Clear"
                                   >
-                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                      </svg>
-                                      <span>Edit VPA</span>
-                                    </span>
+                                    ✕
                                   </button>
-                                </div>
-
-                                {/* Strict safety rule: Manual verification notice */}
-                                <div style={{ background: '#fffbeb', border: '1px solid #fef3c7', borderRadius: '6px', padding: '6px 8px', marginTop: '6px', fontSize: '0.74rem', color: '#92400e', lineHeight: 1.3 }}>
-                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#b45309" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: '-1px' }}>
-                                      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                                      <line x1="12" y1="9" x2="12" y2="13"></line>
-                                      <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                                    </svg>
-                                    <strong>Manual Verification:</strong>
-                                  </span> Verify receipt in your UPI/Bank app. Do not mark paid based solely on customer screenshots.
-                                </div>
-
-                                <div style={{ marginTop: '6px', display: 'flex', gap: '6px', alignItems: 'center' }}>
-                                  <span style={{ fontSize: '0.75rem', color: '#64748b', whiteSpace: 'nowrap' }}>UTR / Ref:</span>
-                                  <input
-                                    type="text"
-                                    placeholder="12-digit UTR (optional)"
-                                    value={upiManualRef}
-                                    onChange={(e) => setUpiManualRef(e.target.value)}
-                                    style={{ flex: 1, padding: '3px 6px', fontSize: '0.75rem', border: '1px solid #cbd5e1', borderRadius: '4px' }}
-                                  />
-                                </div>
+                                )}
                               </div>
                             </div>
                           )}
