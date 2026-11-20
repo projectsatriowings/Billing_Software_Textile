@@ -63,8 +63,9 @@
 }
 
 .top-branch-icon {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
+  color: #5B4FE9;
   flex-shrink: 0;
 }
 

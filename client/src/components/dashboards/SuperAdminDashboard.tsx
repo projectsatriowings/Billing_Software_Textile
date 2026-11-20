@@ -368,13 +368,13 @@ export function SuperAdminDashboard({
       {/* Top Banner / Role Identifier */}
       <div
         style={{
-          background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 45%, #0f172a 100%)',
+          background: 'linear-gradient(135deg, #1F1620 0%, #352638 45%, #49364A 100%)',
           borderRadius: '16px',
           padding: '1.75rem 2rem',
           color: '#ffffff',
           position: 'relative',
           overflow: 'hidden',
-          boxShadow: '0 12px 30px -5px rgba(30, 27, 75, 0.35)',
+          boxShadow: '0 12px 30px -5px rgba(73, 54, 74, 0.35)',
           border: '1px solid rgba(255, 255, 255, 0.12)',
         }}
       >
@@ -383,9 +383,9 @@ export function SuperAdminDashboard({
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
               <span
                 style={{
-                  background: 'rgba(109, 74, 255, 0.25)',
-                  color: '#c4b5fd',
-                  border: '1px solid rgba(167, 139, 250, 0.4)',
+                  background: 'rgba(73, 54, 74, 0.35)',
+                  color: '#E9DFE9',
+                  border: '1px solid #D8CBD8',
                   padding: '3px 12px',
                   borderRadius: '999px',
                   fontSize: '0.75rem',
@@ -436,7 +436,7 @@ export function SuperAdminDashboard({
               type="button"
               onClick={() => setActiveSubTab('branches')}
               style={{
-                background: '#4f46e5',
+                background: '#49364A',
                 color: '#ffffff',
                 border: 'none',
                 borderRadius: '8px',
@@ -486,9 +486,9 @@ export function SuperAdminDashboard({
               fontWeight: 700,
               cursor: 'pointer',
               border: 'none',
-              background: activeSubTab === 'overview' && !selectedBranchId ? '#6d4aff' : 'transparent',
+              background: activeSubTab === 'overview' && !selectedBranchId ? '#49364A' : 'transparent',
               color: activeSubTab === 'overview' && !selectedBranchId ? '#ffffff' : '#cbd5e1',
-              boxShadow: activeSubTab === 'overview' && !selectedBranchId ? '0 4px 12px rgba(109, 74, 255, 0.4)' : 'none',
+              boxShadow: activeSubTab === 'overview' && !selectedBranchId ? '0 4px 12px rgba(73, 54, 74, 0.4)' : 'none',
               transition: 'all 0.15s ease',
             }}
           >
@@ -504,9 +504,9 @@ export function SuperAdminDashboard({
               fontWeight: 700,
               cursor: 'pointer',
               border: 'none',
-              background: activeSubTab === 'branches' ? '#6d4aff' : 'transparent',
+              background: activeSubTab === 'branches' ? '#49364A' : 'transparent',
               color: activeSubTab === 'branches' ? '#ffffff' : '#cbd5e1',
-              boxShadow: activeSubTab === 'branches' ? '0 4px 12px rgba(109, 74, 255, 0.4)' : 'none',
+              boxShadow: activeSubTab === 'branches' ? '0 4px 12px rgba(73, 54, 74, 0.4)' : 'none',
               transition: 'all 0.15s ease',
             }}
           >
@@ -522,9 +522,9 @@ export function SuperAdminDashboard({
               fontWeight: 700,
               cursor: 'pointer',
               border: 'none',
-              background: activeSubTab === 'staff' ? '#6d4aff' : 'transparent',
+              background: activeSubTab === 'staff' ? '#49364A' : 'transparent',
               color: activeSubTab === 'staff' ? '#ffffff' : '#cbd5e1',
-              boxShadow: activeSubTab === 'staff' ? '0 4px 12px rgba(109, 74, 255, 0.4)' : 'none',
+              boxShadow: activeSubTab === 'staff' ? '0 4px 12px rgba(73, 54, 74, 0.4)' : 'none',
               transition: 'all 0.15s ease',
             }}
           >
@@ -561,12 +561,12 @@ export function SuperAdminDashboard({
             {/* 3. Multi-Branch Operations */}
             <div style={{ background: '#ffffff', borderRadius: '14px', padding: '1.25rem', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
               <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Branches & Counters</div>
-              <div style={{ fontSize: '1.75rem', fontWeight: 900, color: '#4338ca', margin: '0.5rem 0' }}>
+              <div style={{ fontSize: '1.75rem', fontWeight: 900, color: '#49364A', margin: '0.5rem 0' }}>
                 {activeBranches} <span style={{ fontSize: '0.9rem', fontWeight: 500, color: '#64748b' }}>/ {totalBranches} Active</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#64748b', borderTop: '1px solid #f1f5f9', paddingTop: '0.5rem' }}>
                 <span>Total Counters: {totalCounters}</span>
-                <span style={{ color: '#4f46e5', fontWeight: 700, cursor: 'pointer' }} onClick={() => setActiveSubTab('branches')}>
+                <span style={{ color: '#49364A', fontWeight: 700, cursor: 'pointer' }} onClick={() => setActiveSubTab('branches')}>
                   Manage Branches ➔
                 </span>
               </div>
@@ -620,7 +620,7 @@ export function SuperAdminDashboard({
                 type="button"
                 onClick={() => setShowAddBranchModal(true)}
                 style={{
-                  background: '#6d4aff',
+                  background: '#49364A',
                   color: '#ffffff',
                   border: 'none',
                   borderRadius: '10px',
@@ -631,7 +631,7 @@ export function SuperAdminDashboard({
                   display: 'flex',
                   alignItems: 'center',
                   gap: '6px',
-                  boxShadow: '0 4px 12px rgba(109, 74, 255, 0.3)',
+                  boxShadow: '0 4px 12px rgba(73, 54, 74, 0.3)',
                 }}
               >
                 <span>➕</span> Add Branch
@@ -694,7 +694,7 @@ export function SuperAdminDashboard({
                             style={{
                               background: 'transparent',
                               border: 'none',
-                              color: '#6d4aff',
+                              color: '#49364A',
                               fontSize: '0.8rem',
                               fontWeight: 700,
                               cursor: 'pointer',
@@ -730,7 +730,7 @@ export function SuperAdminDashboard({
                 <button
                   type="button"
                   onClick={() => onNavigate?.('inventory')}
-                  style={{ background: 'none', border: 'none', color: '#6d4aff', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer' }}
+                  style={{ background: 'none', border: 'none', color: '#49364A', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer' }}
                 >
                   View Inventory Hub ➔
                 </button>
@@ -756,11 +756,11 @@ export function SuperAdminDashboard({
 
       {/* Selected Branch Detail Modal / Inspector */}
       {selectedBranchId && branchSummary && (
-        <div style={{ background: '#ffffff', borderRadius: '16px', padding: '1.5rem 2rem', border: '1px solid #c7d2fe', boxShadow: '0 10px 25px rgba(0,0,0,0.06)' }}>
+        <div style={{ background: '#ffffff', borderRadius: '16px', padding: '1.5rem 2rem', border: '1px solid #D8CBD8', boxShadow: '0 10px 25px rgba(0,0,0,0.06)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '1rem', borderBottom: '1px solid #e2e8f0' }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                <span style={{ padding: '3px 8px', background: '#e0e7ff', color: '#3730a3', fontFamily: 'monospace', fontWeight: 800, fontSize: '0.8rem', borderRadius: '6px' }}>
+                <span style={{ padding: '3px 8px', background: '#F3EDF3', color: '#49364A', fontFamily: 'monospace', fontWeight: 800, fontSize: '0.8rem', borderRadius: '6px' }}>
                   {branchSummary.branch.code}
                 </span>
                 <h2 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 800, color: '#0f172a' }}>{branchSummary.branch.name}</h2>
@@ -797,7 +797,7 @@ export function SuperAdminDashboard({
 
             <div style={{ background: '#f8fafc', borderRadius: '12px', padding: '1rem', border: '1px solid #e2e8f0' }}>
               <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Active Cashier Shifts</div>
-              <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#4338ca', marginTop: '4px' }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#49364A', marginTop: '4px' }}>
                 {branchSummary.activeShiftsCount} Active
               </div>
               <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>{branchSummary.pendingReviewShiftsCount} shifts awaiting review</div>
@@ -809,7 +809,7 @@ export function SuperAdminDashboard({
             <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Configured Counters</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
               {branchSummary.branch.counters.map((c) => (
-                <span key={c} style={{ padding: '4px 10px', background: '#eef2ff', color: '#4338ca', border: '1px solid #c7d2fe', fontFamily: 'monospace', fontSize: '0.75rem', fontWeight: 700, borderRadius: '6px' }}>
+                <span key={c} style={{ padding: '4px 10px', background: '#F3EDF3', color: '#49364A', border: '1px solid #D8CBD8', fontFamily: 'monospace', fontSize: '0.75rem', fontWeight: 700, borderRadius: '6px' }}>
                   🖥️ {c}
                 </span>
               ))}
@@ -826,7 +826,7 @@ export function SuperAdminDashboard({
                     <div style={{ fontWeight: 700, color: '#0f172a' }}>{s.name}</div>
                     <div style={{ color: '#64748b' }}>{s.email}</div>
                     <div style={{ marginTop: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ textTransform: 'uppercase', fontWeight: 700, color: '#6d4aff' }}>{s.role}</span>
+                      <span style={{ textTransform: 'uppercase', fontWeight: 700, color: '#49364A' }}>{s.role}</span>
                       <span style={{ color: '#94a3b8', fontFamily: 'monospace' }}>{s.counter || 'General'}</span>
                     </div>
                   </div>
@@ -851,7 +851,7 @@ export function SuperAdminDashboard({
               type="button"
               onClick={() => setShowAddBranchModal(true)}
               style={{
-                background: '#6d4aff',
+                background: '#49364A',
                 color: '#ffffff',
                 border: 'none',
                 borderRadius: '8px',
@@ -925,7 +925,7 @@ export function SuperAdminDashboard({
                 <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid #e2e8f0', fontSize: '0.75rem', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: '0.5rem' }}>
                   <div>
                     <span style={{ fontWeight: 600, color: '#64748b' }}>Store Manager:</span>{' '}
-                    {b.managerName ? <span style={{ fontWeight: 700, color: '#4338ca' }}>{b.managerName}</span> : <span style={{ color: '#94a3b8' }}>Unassigned</span>}
+                    {b.managerName ? <span style={{ fontWeight: 700, color: '#49364A' }}>{b.managerName}</span> : <span style={{ color: '#94a3b8' }}>Unassigned</span>}
                   </div>
                   <div style={{ fontFamily: 'monospace', color: '#475569' }}>
                     <span style={{ fontWeight: 600 }}>Counters:</span> {b.counters.join(', ')}
@@ -949,7 +949,7 @@ export function SuperAdminDashboard({
               type="button"
               onClick={() => setShowAddStaffModal(true)}
               style={{
-                background: '#6d4aff',
+                background: '#49364A',
                 color: '#ffffff',
                 border: 'none',
                 borderRadius: '8px',
@@ -960,7 +960,7 @@ export function SuperAdminDashboard({
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
-                boxShadow: '0 4px 12px rgba(109, 74, 255, 0.3)',
+                boxShadow: '0 4px 12px rgba(73, 54, 74, 0.3)',
               }}
             >
               <span>👤</span> Add Staff Member
@@ -1128,13 +1128,13 @@ export function SuperAdminDashboard({
             {/* Modal Header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '0.75rem', borderBottom: '1px solid #f1f5f9' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: '#ede9fe', color: '#6d4aff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem' }}>
+                <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: '#F3EDF3', color: '#49364A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem' }}>
                   ✏️
                 </div>
                 <div>
                   <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: '#0f172a' }}>Edit Branch & Counters</h3>
                   <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>
-                    Editing branch <strong style={{ color: '#4338ca' }}>{editingBranch.name}</strong> ({editingBranch.code})
+                    Editing branch <strong style={{ color: '#49364A' }}>{editingBranch.name}</strong> ({editingBranch.code})
                   </div>
                 </div>
               </div>
@@ -1306,7 +1306,7 @@ export function SuperAdminDashboard({
                               fontFamily: 'monospace',
                               fontWeight: 700,
                               fontSize: '0.8rem',
-                              border: '1px solid #6d4aff',
+                              border: '1px solid #49364A',
                               borderRadius: '6px',
                               outline: 'none',
                             }}
@@ -1335,7 +1335,7 @@ export function SuperAdminDashboard({
                             <span style={{ fontSize: '0.9rem' }}>🖥️</span>
                             <span style={{ fontFamily: 'monospace', fontWeight: 800, color: '#1e293b' }}>{cnt}</span>
                             {idx === 0 && (
-                              <span style={{ fontSize: '0.65rem', background: '#ede9fe', color: '#6d4aff', padding: '1px 6px', borderRadius: '4px', fontWeight: 700 }}>
+                              <span style={{ fontSize: '0.65rem', background: '#F3EDF3', color: '#49364A', padding: '1px 6px', borderRadius: '4px', fontWeight: 700 }}>
                                 Primary
                               </span>
                             )}
@@ -1402,7 +1402,7 @@ export function SuperAdminDashboard({
                     onClick={handleAddCounterToEdit}
                     style={{
                       padding: '0.5rem 1rem',
-                      background: '#4f46e5',
+                      background: '#49364A',
                       color: '#ffffff',
                       border: 'none',
                       borderRadius: '8px',
@@ -1432,14 +1432,14 @@ export function SuperAdminDashboard({
                   disabled={isSavingBranch}
                   style={{
                     padding: '0.6rem 1.35rem',
-                    background: '#6d4aff',
+                    background: '#49364A',
                     border: 'none',
                     borderRadius: '8px',
                     fontSize: '0.85rem',
                     fontWeight: 700,
                     color: '#ffffff',
                     cursor: isSavingBranch ? 'not-allowed' : 'pointer',
-                    boxShadow: '0 4px 12px rgba(109, 74, 255, 0.3)',
+                    boxShadow: '0 4px 12px rgba(73, 54, 74, 0.3)',
                     opacity: isSavingBranch ? 0.75 : 1,
                     display: 'flex',
                     alignItems: 'center',
@@ -1585,7 +1585,7 @@ export function SuperAdminDashboard({
                 <button
                   type="submit"
                   disabled={isSubmittingBranch}
-                  style={{ padding: '0.6rem 1.25rem', background: '#6d4aff', border: 'none', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 700, color: '#ffffff', cursor: 'pointer', boxShadow: '0 4px 12px rgba(109, 74, 255, 0.3)' }}
+                  style={{ padding: '0.6rem 1.25rem', background: '#49364A', border: 'none', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 700, color: '#ffffff', cursor: 'pointer', boxShadow: '0 4px 12px rgba(73, 54, 74, 0.3)' }}
                 >
                   {isSubmittingBranch ? 'Creating...' : 'Create Branch Node'}
                 </button>
@@ -1729,7 +1729,7 @@ export function SuperAdminDashboard({
                 <button
                   type="submit"
                   disabled={isSubmittingStaff}
-                  style={{ padding: '0.6rem 1.25rem', background: '#6d4aff', border: 'none', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 700, color: '#ffffff', cursor: 'pointer', boxShadow: '0 4px 12px rgba(109, 74, 255, 0.3)' }}
+                  style={{ padding: '0.6rem 1.25rem', background: '#49364A', border: 'none', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 700, color: '#ffffff', cursor: 'pointer', boxShadow: '0 4px 12px rgba(73, 54, 74, 0.3)' }}
                 >
                   {isSubmittingStaff ? 'Saving...' : 'Add Staff Member'}
                 </button>

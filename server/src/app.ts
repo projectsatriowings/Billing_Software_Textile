@@ -40,6 +40,7 @@ import { registerDayClosing } from './routes/dayClosing.ts';
 import { registerReturnReports } from './routes/returnReports.ts';
 import { registerSupplierInvoices } from './routes/supplierInvoices.ts';
 import { registerWholesaleCustomers } from './routes/wholesaleCustomers.ts';
+import { registerModuleManagement } from './routes/moduleManagement.ts';
 
 /** Every module adds one `registerXxx(r)` line here. Nothing else in the server needs to change. */
 export function buildRouter(tokens: { secret: string; ttlSeconds: number }): Router {
@@ -82,6 +83,7 @@ export function buildRouter(tokens: { secret: string; ttlSeconds: number }): Rou
   registerReturnReports(r);
   registerSupplierInvoices(r);
   registerWholesaleCustomers(r);
+  registerModuleManagement(r);
   return r;
 }
 

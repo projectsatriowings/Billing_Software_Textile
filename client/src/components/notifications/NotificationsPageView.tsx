@@ -136,8 +136,12 @@ export const NotificationsPageView: React.FC<NotificationsPageViewProps> = ({
     return found ? `${found.name} (${found.code})` : selectedBranch;
   }, [selectedBranch, branches]);
 
+  const isSuperAdmin = Boolean(
+    user && (user.role === 'owner' || user.role === 'admin' || String(user.role).toUpperCase() === 'SUPER_ADMIN')
+  );
+
   return (
-    <div className="notif-page-wrapper">
+    <div className={`notif-page-wrapper ${isSuperAdmin ? 'theme-super-admin' : ''}`}>
       {/* 1. Header Card */}
       <div className="notif-page-header-card bento-card-3d">
         <div className="notif-header-left">

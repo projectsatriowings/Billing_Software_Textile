@@ -86,6 +86,13 @@ import { StrictIsolationBanner } from './components/StrictIsolationBanner';
 import { InventoryDashboard } from './components/inventory/InventoryDashboard';
 import { ProductMovementAnalysisView } from './components/inventory/ProductMovementAnalysisView';
 import { StockTransferView } from './components/inventory/StockTransferView';
+import { ModuleManagementView } from './components/settings/ModuleManagementView';
+import {
+  DEFAULT_ROLE_MODULE_ACCESS,
+  isModuleEnabledForRole,
+  type RoleModuleAccessConfig,
+} from '../../shared/modules.ts';
+import { fetchModuleAccess } from './api.ts';
 import type { Branch } from '../../shared/types.ts';
 import { TerminalManagementTab } from './components/terminal/TerminalManagementTab';
 import { UserManagementView } from './components/users/UserManagementView';
@@ -695,8 +702,12 @@ export function App() {
     } catch { }
   }, [user?.role, activeTabRaw]);
 
-  // Synchronize role themes (.theme-cashier / .theme-manager) on document.body for session & portaled modals
+  // Synchronize role themes (.theme-cashier / .theme-manager / .theme-super-admin) on document.body for session & portaled modals
   useEffect(() => {
+    const isSuperAdmin = Boolean(
+      user && (user.role === 'owner' || user.role === 'admin' || String(user.role).toUpperCase() === 'SUPER_ADMIN')
+    );
+
     if (user?.role === 'cashier') {
       document.body.classList.add('theme-cashier');
     } else {
@@ -709,9 +720,16 @@ export function App() {
       document.body.classList.remove('theme-manager');
     }
 
+    if (isSuperAdmin) {
+      document.body.classList.add('theme-super-admin');
+    } else {
+      document.body.classList.remove('theme-super-admin');
+    }
+
     return () => {
       document.body.classList.remove('theme-cashier');
       document.body.classList.remove('theme-manager');
+      document.body.classList.remove('theme-super-admin');
     };
   }, [user?.role]);
 
@@ -1155,6 +1173,43 @@ export function App() {
   const isSuperAdminUser = Boolean(
     user && (user.role === 'owner' || user.role === 'admin' || String(user.role).toUpperCase() === 'SUPER_ADMIN')
   );
+
+  const [moduleAccessConfig, setModuleAccessConfig] = useState<RoleModuleAccessConfig>(() => ({
+    ...DEFAULT_ROLE_MODULE_ACCESS,
+  }));
+  const [activeSettingsTab, setActiveSettingsTab] = useState<string>('General');
+
+  const currentUserRoleKey = useMemo<'owner' | 'manager' | 'cashier'>(() => {
+    const r = String(user?.role || '').toLowerCase();
+    if (r === 'owner' || r === 'admin' || r === 'super_admin') return 'owner';
+    if (r === 'manager' || r === 'store_manager') return 'manager';
+    return 'cashier';
+  }, [user?.role]);
+
+  const isModuleVisible = useCallback(
+    (moduleKey: string) => {
+      return isModuleEnabledForRole(moduleAccessConfig, currentUserRoleKey, moduleKey);
+    },
+    [moduleAccessConfig, currentUserRoleKey]
+  );
+
+  useEffect(() => {
+    let active = true;
+    if (user) {
+      fetchModuleAccess()
+        .then((res) => {
+          if (active && res?.access) {
+            setModuleAccessConfig(res.access);
+          }
+        })
+        .catch((err) => {
+          console.warn('[App] Could not fetch module access config:', err);
+        });
+    }
+    return () => {
+      active = false;
+    };
+  }, [user]);
 
   const [selectedBranchScope, setSelectedBranchScope] = useState<string>(() => {
     return getActiveBranchScope();
@@ -2157,6 +2212,73 @@ export function App() {
       dismissToast(id);
     }, duration);
   }, [dismissToast]);
+
+  const TAB_TO_MODULE_MAP = useMemo<Record<string, string>>(() => ({
+    dashboard: 'dashboard',
+    pos: 'pos',
+    wholesale: 'wholesale',
+    notifications: 'notifications',
+    items: 'items',
+    categories: 'categories',
+    inventory: 'inventory',
+    'stock-transfer': 'inventory.transfers',
+    'product-movement': 'inventory.reports',
+    'sales-analysis': 'sales-analysis',
+    promotions: 'promotions',
+    customers: 'customers',
+    suppliers: 'suppliers',
+    accounts: 'accounts',
+    invoices: 'accounts.payments',
+    purchases: 'accounts.payments',
+    payments: 'accounts.payments',
+    payables: 'accounts.payments',
+    receivables: 'accounts.payments',
+    expenses: 'accounts.expenses',
+    'day-closing': 'pos',
+    'return-reports': 'pos',
+    gst: 'gst',
+    'gst-overview': 'gst',
+    'gst-gstr1': 'gst.gstr1',
+    'gst-sales-register': 'gst.gstr1',
+    'gst-itc-reconciliation': 'gst.hsn',
+    'gst-purchase-register': 'gst.hsn',
+    'gst-gstr3b': 'gst.gstr3b',
+    'gst-import-export': 'gst',
+    'gst-filing-history': 'gst',
+    'user-management': 'user-management',
+    settings: 'settings',
+  }), []);
+
+  // Route guard: Redirect if user attempts to visit disabled module
+  useEffect(() => {
+    if (!user) return;
+    const requiredModule = TAB_TO_MODULE_MAP[activeTab];
+    if (requiredModule && !isModuleVisible(requiredModule)) {
+      const candidateTabs = [
+        'pos',
+        'dashboard',
+        'notifications',
+        'items',
+        'wholesale',
+        'inventory',
+        'sales-analysis',
+        'promotions',
+        'customers',
+        'suppliers',
+        'invoices',
+        'gst-overview',
+        'settings',
+      ];
+      const firstAllowed =
+        candidateTabs.find((t) => {
+          const m = TAB_TO_MODULE_MAP[t];
+          return m ? isModuleVisible(m) : true;
+        }) || 'pos';
+
+      showToast("You don't have access to this module", 'error');
+      setActiveTab(firstAllowed as any);
+    }
+  }, [activeTab, isModuleVisible, user, TAB_TO_MODULE_MAP, showToast]);
 
   // Fetch available demo businesses (sandbox preview only)
   const loadDemoBusinesses = async () => {
@@ -7152,7 +7274,7 @@ export function App() {
       branches={branches}
       onGlobalBranchChange={handleGlobalBranchChange}
     >
-      <div className={`app-container ${user?.role === 'cashier' ? 'theme-cashier' : ''} ${(user?.role === 'manager' || user?.role === 'store_manager') ? 'theme-manager' : ''}`}>
+      <div className={`app-container ${user?.role === 'cashier' ? 'theme-cashier' : ''} ${(user?.role === 'manager' || user?.role === 'store_manager') ? 'theme-manager' : ''} ${isSuperAdminUser ? 'theme-super-admin' : ''}`}>
         {/* Enterprise Custom Toast Notifications */}
         {toasts.length > 0 && (
           <div className="enterprise-toast-container" aria-live="polite">
@@ -7453,7 +7575,7 @@ export function App() {
             {/* Navigation Links - Strictly Tailored per Role */}
             <nav className="sidebar-nav">
               {/* 1. Dashboard Tab - Strictly hidden for Cashier */}
-              {user.role !== 'cashier' && (
+              {user.role !== 'cashier' && isModuleVisible('dashboard') && (
                 <button
                   type="button"
                   className={`sidebar-nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
@@ -7470,20 +7592,22 @@ export function App() {
               )}
 
               {/* 2. POS Counter - Available to Cashier, Store Manager, and Super Admin */}
-              <button
-                type="button"
-                className={`sidebar-nav-item ${activeTab === 'pos' ? 'active' : ''}`}
-                onClick={() => setActiveTab('pos')}
-                title="POS Counter (F1)"
-              >
-                <span className="nav-icon">
-                  <ShoppingCart size={20} strokeWidth={2.2} />
-                </span>
-                <span className="nav-text">POS Counter</span>
-              </button>
+              {isModuleVisible('pos') && (
+                <button
+                  type="button"
+                  className={`sidebar-nav-item ${activeTab === 'pos' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('pos')}
+                  title="POS Counter (F1)"
+                >
+                  <span className="nav-icon">
+                    <ShoppingCart size={20} strokeWidth={2.2} />
+                  </span>
+                  <span className="nav-text">POS Counter</span>
+                </button>
+              )}
 
               {/* 2b. Wholesale Billing (Traditional A4 Tax Invoices) - STRICTLY ADMIN ONLY */}
-              {user?.role !== 'cashier' && (
+              {user?.role !== 'cashier' && isModuleVisible('wholesale') && (
                 <button
                   type="button"
                   className={`sidebar-nav-item ${activeTab === 'wholesale' ? 'active' : ''}`}
@@ -7522,30 +7646,32 @@ export function App() {
               )}
 
               {/* 3b. Notifications & Shift Alerts: Available to All Roles */}
-              <button
-                type="button"
-                className={`sidebar-nav-item ${activeTab === 'notifications' ? 'active' : ''} ${unreadShiftNotifCount > 0 ? 'has-badge' : ''}`}
-                onClick={() => setActiveTab('notifications')}
-                title={`Notifications & Shift Alerts (${unreadShiftNotifCount > 0 ? `${unreadShiftNotifCount} unread` : `${shiftNotifications.length} alerts`})`}
-              >
-                <span className="nav-icon">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-                  </svg>
-                </span>
-                <span className="nav-text">Notifications</span>
-                <span className="nav-right-slot">
-                  {unreadShiftNotifCount > 0 ? (
-                    <span className="nav-count-badge notif-alert-badge" style={{ background: 'var(--primary, #0F766E)', color: '#ffffff', fontWeight: 800 }}>
-                      {unreadShiftNotifCount}
-                    </span>
-                  ) : shiftNotifications.length > 0 ? (
-                    <span className="nav-count-badge">{shiftNotifications.length}</span>
-                  ) : null}
-                </span>
-              </button>
-              {user.role !== 'cashier' && (
+              {isModuleVisible('notifications') && (
+                <button
+                  type="button"
+                  className={`sidebar-nav-item ${activeTab === 'notifications' ? 'active' : ''} ${unreadShiftNotifCount > 0 ? 'has-badge' : ''}`}
+                  onClick={() => setActiveTab('notifications')}
+                  title={`Notifications & Shift Alerts (${unreadShiftNotifCount > 0 ? `${unreadShiftNotifCount} unread` : `${shiftNotifications.length} alerts`})`}
+                >
+                  <span className="nav-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                      <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                    </svg>
+                  </span>
+                  <span className="nav-text">Notifications</span>
+                  <span className="nav-right-slot">
+                    {unreadShiftNotifCount > 0 ? (
+                      <span className="nav-count-badge notif-alert-badge" style={{ background: 'var(--primary, #0F766E)', color: '#ffffff', fontWeight: 800 }}>
+                        {unreadShiftNotifCount}
+                      </span>
+                    ) : shiftNotifications.length > 0 ? (
+                      <span className="nav-count-badge">{shiftNotifications.length}</span>
+                    ) : null}
+                  </span>
+                </button>
+              )}
+              {user.role !== 'cashier' && isModuleVisible('items') && (
                 <button
                   type="button"
                   className={`sidebar-nav-item ${activeTab === 'items' ? 'active' : ''} ${items.length > 0 ? 'has-badge' : ''}`}
@@ -7563,7 +7689,7 @@ export function App() {
               )}
 
               {/* 4b. Categories: Dedicated Module */}
-              {user.role !== 'cashier' && (
+              {user.role !== 'cashier' && isModuleVisible('categories') && (
                 <button
                   type="button"
                   className={`sidebar-nav-item ${activeTab === 'categories' ? 'active' : ''} ${categoriesList.length > 0 ? 'has-badge' : ''}`}
@@ -7581,7 +7707,7 @@ export function App() {
               )}
 
               {/* 5. Inventory Hub with Submenu: Only for Store Manager and Super Admin */}
-              {user.role !== 'cashier' && (
+              {user.role !== 'cashier' && isModuleVisible('inventory') && (
                 <div
                   ref={inventoryDropdownRef}
                   className={`sidebar-nav-group ${isInventorySubmenuVisible ? 'dropdown-open' : ''}`}
@@ -7626,6 +7752,7 @@ export function App() {
 
                   {!isSidebarCollapsed && isInventorySubmenuVisible && (
                     <div className="sidebar-submenu-list" role="menu">
+                      {isModuleVisible('inventory.transfers') && (
                       <button
                         type="button"
                         role="menuitem"
@@ -7646,6 +7773,8 @@ export function App() {
                         </span>
                         <span className="submenu-text">Stock Transfer</span>
                       </button>
+                      )}
+                      {isModuleVisible('inventory.levels') && (
                       <button
                         type="button"
                         role="menuitem"
@@ -7671,6 +7800,8 @@ export function App() {
                         </span>
                         <span className="submenu-text">Stock Adjustment</span>
                       </button>
+                      )}
+                      {isModuleVisible('inventory.reports') && (
                       <button
                         type="button"
                         role="menuitem"
@@ -7689,13 +7820,14 @@ export function App() {
                         </span>
                         <span className="submenu-text">Stock Report</span>
                       </button>
+                      )}
                     </div>
                   )}
                 </div>
               )}
 
               {/* Sales Analysis: For Store Manager and Super Admin */}
-              {user.role !== 'cashier' && (
+              {user.role !== 'cashier' && isModuleVisible('sales-analysis') && (
                 <button
                   type="button"
                   className={`sidebar-nav-item ${activeTab === 'sales-analysis' ? 'active' : ''}`}
@@ -7710,7 +7842,7 @@ export function App() {
               )}
 
               {/* Discounts & Promotions: For Store Manager and Super Admin */}
-              {user.role !== 'cashier' && (
+              {user.role !== 'cashier' && isModuleVisible('promotions') && (
                 <button
                   type="button"
                   className={`sidebar-nav-item ${activeTab === 'promotions' ? 'active' : ''}`}
@@ -7754,7 +7886,7 @@ export function App() {
               )}
 
               {/* 7. Customers: Only for Store Manager and Super Admin */}
-              {user.role !== 'cashier' && (
+              {user.role !== 'cashier' && isModuleVisible('customers') && (
                 <button
                   type="button"
                   className={`sidebar-nav-item ${activeTab === 'customers' ? 'active' : ''} ${parties.filter((p) => (p.type === 'customer' || !p.type) && p.customerType !== 'wholesale').length > 0 ? 'has-badge' : ''}`}
@@ -7772,7 +7904,7 @@ export function App() {
               )}
 
               {/* 8. Suppliers: Only for Store Manager and Super Admin */}
-              {user.role !== 'cashier' && (
+              {user.role !== 'cashier' && isModuleVisible('suppliers') && (
                 <button
                   type="button"
                   className={`sidebar-nav-item ${activeTab === 'suppliers' ? 'active' : ''} ${parties.filter((p) => p.type === 'supplier').length > 0 ? 'has-badge' : ''}`}
@@ -7790,7 +7922,7 @@ export function App() {
               )}
 
               {/* ACCOUNTS & FINANCE - Matching upper section nav items */}
-              {user.role !== 'cashier' && (
+              {user.role !== 'cashier' && isModuleVisible('accounts') && (
                 <>
                   <button
                     type="button"
@@ -7819,6 +7951,7 @@ export function App() {
 
                   {!isSidebarCollapsed && isAccountsOpen && (
                     <div className="sidebar-sub-items">
+                      {isModuleVisible('accounts.payments') && (
                       <button
                         type="button"
                         className={`sidebar-nav-item ${activeTab === 'invoices' ? 'active' : ''}`}
@@ -7834,8 +7967,9 @@ export function App() {
                         </span>
                         <span className="nav-text">Sales &amp; Invoices</span>
                       </button>
+                      )}
 
-                      {can(user?.role as any, 'purchases') && (
+                      {can(user?.role as any, 'purchases') && isModuleVisible('accounts.payments') && (
                         <button
                           type="button"
                           className={`sidebar-nav-item ${activeTab === 'purchases' ? 'active' : ''}`}
@@ -7856,6 +7990,7 @@ export function App() {
                         </button>
                       )}
 
+                      {isModuleVisible('accounts.payments') && (
                       <button
                         type="button"
                         className={`sidebar-nav-item ${activeTab === 'payments' || activeTab === 'payables' ? 'active' : ''}`}
@@ -7869,7 +8004,9 @@ export function App() {
                         </span>
                         <span className="nav-text">Payments &amp; Payables</span>
                       </button>
+                      )}
 
+                      {isModuleVisible('accounts.expenses') && (
                       <button
                         type="button"
                         className={`sidebar-nav-item ${activeTab === 'expenses' ? 'active' : ''}`}
@@ -7884,6 +8021,7 @@ export function App() {
                         </span>
                         <span className="nav-text">Expenses</span>
                       </button>
+                      )}
 
                       <button
                         type="button"
@@ -7918,7 +8056,7 @@ export function App() {
               )}
 
               {/* GST FILING - Matching upper section nav items */}
-              {user.role !== 'cashier' && (
+              {user.role !== 'cashier' && isModuleVisible('gst') && (
                 <>
                   <button
                     type="button"
@@ -7964,6 +8102,7 @@ export function App() {
                         <span className="nav-text">GST Overview</span>
                       </button>
 
+                      {isModuleVisible('gst.gstr1') && (
                       <button
                         type="button"
                         className={`sidebar-nav-item ${activeTab === 'gst-gstr1' || activeTab === 'gst-sales-register' ? 'active' : ''}`}
@@ -7979,7 +8118,9 @@ export function App() {
                         </span>
                         <span className="nav-text">GSTR-1 (Sales Register)</span>
                       </button>
+                      )}
 
+                      {isModuleVisible('gst.hsn') && (
                       <button
                         type="button"
                         className={`sidebar-nav-item ${activeTab === 'gst-itc-reconciliation' || activeTab === 'gst-purchase-register' ? 'active' : ''}`}
@@ -7996,7 +8137,9 @@ export function App() {
                         </span>
                         <span className="nav-text">ITC Register &amp; 2B Recon</span>
                       </button>
+                      )}
 
+                      {isModuleVisible('gst.gstr3b') && (
                       <button
                         type="button"
                         className={`sidebar-nav-item ${activeTab === 'gst-gstr3b' ? 'active' : ''}`}
@@ -8011,6 +8154,7 @@ export function App() {
                         </span>
                         <span className="nav-text">GSTR-3B Preparation</span>
                       </button>
+                      )}
                     </div>
                   )}
                 </>
@@ -8038,7 +8182,7 @@ export function App() {
               {(() => {
                 const rUpper = String(user?.role || '').toUpperCase();
                 const canAccessUm = rUpper === 'OWNER' || rUpper === 'SUPER_ADMIN' || rUpper === 'MANAGER' || rUpper === 'STORE_MANAGER';
-                if (!canAccessUm) return null;
+                if (!canAccessUm || !isModuleVisible('user-management')) return null;
                 return (
                   <button
                     type="button"
@@ -8061,12 +8205,13 @@ export function App() {
                   </button>
                 );
               })()}
-              {user.role !== 'cashier' && (
+              {user.role !== 'cashier' && isModuleVisible('settings') && (
                 <button
                   type="button"
                   className={`sidebar-action-row-btn ${activeTab === 'settings' ? 'active' : ''}`}
                   onClick={() => {
                     setActiveTab('settings');
+                    setActiveSettingsTab('Module Management');
                     try {
                       if (window.location.pathname === '/user-management') {
                         window.history.pushState({}, '', '/');
@@ -9212,13 +9357,13 @@ export function App() {
                           gap: '6px',
                           padding: '5px 12px',
                           borderRadius: '20px',
-                          background: 'linear-gradient(135deg, #fdf4ff 0%, #fae8ff 100%)',
-                          border: '1.2px solid #d946ef',
-                          color: '#86198f',
+                          background: isSuperAdminUser ? '#F3EDF3' : 'linear-gradient(135deg, #fdf4ff 0%, #fae8ff 100%)',
+                          border: isSuperAdminUser ? '1.2px solid #D8CBD8' : '1.2px solid #d946ef',
+                          color: isSuperAdminUser ? '#49364A' : '#86198f',
                           fontSize: '0.78rem',
                           fontWeight: 700,
                           cursor: 'pointer',
-                          boxShadow: '0 1px 4px rgba(217, 70, 239, 0.15)',
+                          boxShadow: isSuperAdminUser ? '0 1px 4px rgba(73, 54, 74, 0.15)' : '0 1px 4px rgba(217, 70, 239, 0.15)',
                         }}
                         onClick={() => setShowPosLoyaltyModal(true)}
                         title={`Customer Loyalty Active: Earn ${shopPointsPer100} pts per ₹100 spent (1 pt = ${formatRupees(shopPointValMinor)}). Click to view or adjust scheme.`}
@@ -9231,7 +9376,7 @@ export function App() {
                           <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path>
                         </svg>
                         <span>Loyalty: <strong>{shopPointsPer100} pts</strong> / ₹100</span>
-                        <span style={{ fontSize: '0.68rem', background: '#d946ef', color: '#fff', padding: '1px 6px', borderRadius: '10px' }}>Active</span>
+                        <span style={{ fontSize: '0.68rem', background: isSuperAdminUser ? '#49364A' : '#d946ef', color: '#fff', padding: '1px 6px', borderRadius: '10px' }}>Active</span>
                       </div>
                     ) : (
                       <div
@@ -9378,9 +9523,9 @@ export function App() {
                             type="button"
                             className="bento-exchange-btn"
                             style={{
-                              background: user?.role === 'cashier' ? 'var(--primary)' : '#4f46e5',
+                              background: user?.role === 'cashier' ? 'var(--primary)' : isSuperAdminUser ? '#49364A' : '#4f46e5',
                               color: '#ffffff',
-                              border: user?.role === 'cashier' ? '1px solid var(--primary-hover)' : '1px solid #4338ca',
+                              border: user?.role === 'cashier' ? '1px solid var(--primary-hover)' : isSuperAdminUser ? '1px solid #352638' : '1px solid #4338ca',
                               padding: '0.36rem 0.75rem',
                               borderRadius: '8px',
                               fontSize: '0.8rem',
@@ -9389,7 +9534,7 @@ export function App() {
                               alignItems: 'center',
                               gap: '6px',
                               cursor: 'pointer',
-                              boxShadow: user?.role === 'cashier' ? '0 2px 4px rgba(15, 118, 110, 0.25)' : '0 2px 4px rgba(79, 70, 229, 0.2)',
+                              boxShadow: user?.role === 'cashier' ? '0 2px 4px rgba(15, 118, 110, 0.25)' : isSuperAdminUser ? '0 2px 4px rgba(73, 54, 74, 0.25)' : '0 2px 4px rgba(79, 70, 229, 0.2)',
                             }}
                             onClick={() => setShowReturnExchangeModal(true)}
                             title="Scan bill barcode or search by phone to return/exchange items (F3)"
@@ -9566,7 +9711,7 @@ export function App() {
                         {cart.length === 0 ? (
                           <div className="bento-empty-cart">
                             <div className="bento-empty-icon-wrap">
-                              <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke={user?.role === 'cashier' ? 'var(--primary)' : '#6366f1'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                              <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke={user?.role === 'cashier' ? 'var(--primary)' : isSuperAdminUser ? '#49364A' : '#6366f1'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                                 <circle cx="9" cy="21" r="1"></circle>
                                 <circle cx="20" cy="21" r="1"></circle>
                                 <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
@@ -10143,7 +10288,7 @@ export function App() {
                                       fontWeight: 700,
                                       padding: '2px 8px',
                                       cursor: 'pointer',
-                                      color: user?.role === 'cashier' ? 'var(--primary)' : '#4338ca',
+                                      color: user?.role === 'cashier' ? 'var(--primary)' : isSuperAdminUser ? '#49364A' : '#4338ca',
                                       display: 'inline-flex',
                                       alignItems: 'center',
                                       gap: '4px',
@@ -11878,8 +12023,8 @@ export function App() {
 
                 {/* ================= PRODUCT CATALOG FLYOUT DRAWER (NON-BARCODED & SEARCHABLE ITEMS) ================= */}
                 {showProductCatalogDrawer && createPortal(
-                  <div className={`bento-catalog-drawer-overlay ${user?.role === 'cashier' ? 'theme-cashier' : (user?.role === 'manager' || user?.role === 'store_manager') ? 'theme-manager' : ''}`} onClick={() => setShowProductCatalogDrawer(false)}>
-                    <div className={`bento-catalog-drawer ${user?.role === 'cashier' ? 'theme-cashier' : (user?.role === 'manager' || user?.role === 'store_manager') ? 'theme-manager' : ''}`} onClick={(e) => e.stopPropagation()}>
+                  <div className={`bento-catalog-drawer-overlay ${user?.role === 'cashier' ? 'theme-cashier' : (user?.role === 'manager' || user?.role === 'store_manager') ? 'theme-manager' : isSuperAdminUser ? 'theme-super-admin' : ''}`} onClick={() => setShowProductCatalogDrawer(false)}>
+                    <div className={`bento-catalog-drawer ${user?.role === 'cashier' ? 'theme-cashier' : (user?.role === 'manager' || user?.role === 'store_manager') ? 'theme-manager' : isSuperAdminUser ? 'theme-super-admin' : ''}`} onClick={(e) => e.stopPropagation()}>
                       {/* Drawer Header */}
                       <div className="bento-drawer-header">
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
@@ -12629,7 +12774,7 @@ export function App() {
                                   }}
                                   title={branches.find(b => b.id === i.branchId || b.code === i.branchId)?.name || i.branchName || 'Main Central Branch'}
                                 >
-                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={isSuperAdminUser ? '#49364A' : '#6366f1'} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                                     <path d="M3 21h18" />
                                     <path d="M5 21V7l8-4v18" />
                                     <path d="M19 21V11l-6-4" />
@@ -12648,7 +12793,7 @@ export function App() {
                               </td>
                               <td className="mono col-nowrap" style={{ color: '#334155', fontWeight: 500 }}>{i.sku || '—'}</td>
                               <td className="mono col-nowrap" style={{ color: '#334155', fontWeight: 500 }}>{i.hsn || '—'}</td>
-                              <td className="mono col-nowrap" style={{ fontWeight: 700, color: '#6d4aff' }}>{formatRupees(i.priceMinor)}</td>
+                              <td className="mono col-nowrap" style={{ fontWeight: 700, color: isSuperAdminUser ? '#49364A' : '#6d4aff' }}>{formatRupees(i.priceMinor)}</td>
                               {can(user?.role as any, 'purchases') && (
                                 <td className="mono col-nowrap" style={{ color: '#334155', fontWeight: 600 }}>{i.costMinor ? formatRupees(i.costMinor) : '—'}</td>
                               )}
@@ -14673,8 +14818,51 @@ export function App() {
 
             {/* TAB 6: SETTINGS & BUSINESS CONFIGURATION PACKS */}
             {user?.role !== 'cashier' && displayTab === 'settings' && (
-              <div>
-                {/* Section 1: Business Profile Editor */}
+              <div className="settings-page-wrapper">
+                {/* Single Horizontal Tab Navigation Bar: ONLY TWO TABS (General & Module Management) */}
+                <div
+                  className="mm-settings-tabs settings-nav-tabs-bar"
+                  style={{
+                    marginBottom: '1.5rem',
+                    background: '#FFFFFF',
+                    padding: '0 1.25rem',
+                    borderRadius: '12px',
+                    border: '1px solid #ECE7EC',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.02)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '1.75rem',
+                  }}
+                >
+                  <button
+                    type="button"
+                    className={`mm-tab-item ${activeSettingsTab === 'General' ? 'active' : ''}`}
+                    onClick={() => setActiveSettingsTab('General')}
+                  >
+                    General
+                  </button>
+                  {isSuperAdminUser && (
+                    <button
+                      type="button"
+                      className={`mm-tab-item ${activeSettingsTab === 'Module Management' ? 'active' : ''}`}
+                      onClick={() => setActiveSettingsTab('Module Management')}
+                    >
+                      Module Management
+                    </button>
+                  )}
+                </div>
+
+                {/* Content below the tabs */}
+                {isSuperAdminUser && activeSettingsTab === 'Module Management' ? (
+                  <ModuleManagementView
+                    onModuleAccessUpdated={(newCfg) => setModuleAccessConfig(newCfg)}
+                    onNavigateTab={(tab) => setActiveTab(tab as any)}
+                    onSelectSettingsTab={(tab) => setActiveSettingsTab(tab)}
+                    showToast={(msg, type) => showToast(msg, type)}
+                  />
+                ) : (
+                  <div>
+                    {/* Section 1: Business Profile Editor */}
                 <div className="card settings-section">
                   <div className="card-title">
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.65rem' }}>
@@ -16724,6 +16912,8 @@ export function App() {
 
                 {/* Strict Multi-Tenant Data Isolation Banner (Settings Tab Only) */}
                 <StrictIsolationBanner />
+                  </div>
+                )}
               </div>
             )}
 
@@ -17539,9 +17729,9 @@ export function App() {
 
         {/* Master Data: Item Form Modal (Add & Edit) */}
         {showItemModal && (
-          <div className={`modal-overlay ${user?.role === 'cashier' ? 'theme-cashier' : (user?.role === 'manager' || user?.role === 'store_manager') ? 'theme-manager' : ''}`} onClick={() => setShowItemModal(false)}>
+          <div className={`modal-overlay ${user?.role === 'cashier' ? 'theme-cashier' : (user?.role === 'manager' || user?.role === 'store_manager') ? 'theme-manager' : isSuperAdminUser ? 'theme-super-admin' : ''}`} onClick={() => setShowItemModal(false)}>
             <div
-              className={`modal-content product-edit-rectangle-modal ${user?.role === 'cashier' ? 'theme-cashier' : (user?.role === 'manager' || user?.role === 'store_manager') ? 'theme-manager' : ''}`}
+              className={`modal-content product-edit-rectangle-modal ${user?.role === 'cashier' ? 'theme-cashier' : (user?.role === 'manager' || user?.role === 'store_manager') ? 'theme-manager' : isSuperAdminUser ? 'theme-super-admin' : ''}`}
               style={{
                 maxWidth: '960px',
                 width: '94vw',

@@ -44,13 +44,14 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
 
   const isDanger = variant === 'danger';
   const isWarning = variant === 'warning';
+  const isSuperAdmin = typeof document !== 'undefined' && document.body.classList.contains('theme-super-admin');
 
-  const iconBg = isDanger ? '#fee2e2' : isWarning ? '#fef3c7' : '#e0e7ff';
-  const iconBorder = isDanger ? '#fca5a5' : isWarning ? '#fcd34d' : '#c7d2fe';
-  const iconColor = isDanger ? '#dc2626' : isWarning ? '#d97706' : '#4f46e5';
+  const iconBg = isDanger ? '#fee2e2' : isWarning ? '#fef3c7' : isSuperAdmin ? '#F3EDF3' : '#e0e7ff';
+  const iconBorder = isDanger ? '#fca5a5' : isWarning ? '#fcd34d' : isSuperAdmin ? '#D8CBD8' : '#c7d2fe';
+  const iconColor = isDanger ? '#dc2626' : isWarning ? '#d97706' : isSuperAdmin ? '#49364A' : '#4f46e5';
 
-  const confirmBg = isDanger ? '#dc2626' : isWarning ? '#d97706' : '#4f46e5';
-  const confirmHoverBg = isDanger ? '#b91c1c' : isWarning ? '#b45309' : '#4338ca';
+  const confirmBg = isDanger ? '#dc2626' : isWarning ? '#d97706' : isSuperAdmin ? '#49364A' : '#4f46e5';
+  const confirmHoverBg = isDanger ? '#b91c1c' : isWarning ? '#b45309' : isSuperAdmin ? '#604B61' : '#4338ca';
 
   return (
     <div

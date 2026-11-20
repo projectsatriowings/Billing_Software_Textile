@@ -3269,6 +3269,16 @@ export const deleteWholesaleCustomer = (id: string) =>
     method: 'DELETE',
   });
 
+export const fetchModuleAccess = () =>
+  api<{ success: boolean; access: import('../../shared/modules.ts').RoleModuleAccessConfig }>('/api/module-access');
+
+export const saveModuleAccess = (access: import('../../shared/modules.ts').RoleModuleAccessConfig) =>
+  api<{ success: boolean; message: string; access: import('../../shared/modules.ts').RoleModuleAccessConfig }>('/api/module-access', {
+    method: 'PUT',
+    body: JSON.stringify({ access }),
+  });
+
+
 
 
 

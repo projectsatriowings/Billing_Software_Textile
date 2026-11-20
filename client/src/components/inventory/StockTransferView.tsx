@@ -172,6 +172,7 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
   const isSuperAdmin = Boolean(
     user && (user.role === 'owner' || user.role === 'admin' || String(user.role).toUpperCase() === 'SUPER_ADMIN')
   );
+  const isStoreManager = Boolean(user && (user.role === 'manager' || user.role === 'store_manager'));
 
   // Stable active branch key (primitive string) to avoid re-renders on object changes
   const activeBranchKey = useMemo(() => {
@@ -943,9 +944,25 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                     width: '32px',
                     height: '32px',
                     borderRadius: '50%',
-                    background: isDone ? '#16a34a' : isActive ? '#6366f1' : '#f1f5f9',
+                    background: isDone
+                      ? '#16a34a'
+                      : isActive
+                      ? isStoreManager
+                        ? '#653B4B'
+                        : isSuperAdmin
+                        ? '#49364A'
+                        : '#6366f1'
+                      : '#f1f5f9',
                     color: isDone || isActive ? '#ffffff' : '#64748b',
-                    border: isActive ? '2px solid #818cf8' : isDone ? 'none' : '1px solid #cbd5e1',
+                    border: isActive
+                      ? isStoreManager
+                        ? '2px solid #8C5E70'
+                        : isSuperAdmin
+                        ? '2px solid #604B61'
+                        : '2px solid #818cf8'
+                      : isDone
+                      ? 'none'
+                      : '1px solid #cbd5e1',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -1337,12 +1354,17 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                               return (
                                 <button
                                   type="button"
+                                  className="stock-transfer-btn-dispatch"
                                   onClick={() => {
                                     handleViewTransferDetails(trf.id);
                                     setShowDispatchModal(true);
                                   }}
                                   style={{
-                                    background: 'linear-gradient(135deg, #4f46e5 0%, #4338ca 100%)',
+                                    background: isStoreManager
+                                      ? 'linear-gradient(135deg, #7A475B 0%, #653B4B 100%)'
+                                      : isSuperAdmin
+                                      ? '#49364A'
+                                      : 'linear-gradient(135deg, #4f46e5 0%, #4338ca 100%)',
                                     color: '#ffffff',
                                     border: 'none',
                                     padding: '0.35rem 0.75rem',
@@ -1350,7 +1372,11 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                                     fontSize: '0.8rem',
                                     fontWeight: 700,
                                     cursor: 'pointer',
-                                    boxShadow: '0 2px 6px rgba(79, 70, 229, 0.3)',
+                                    boxShadow: isStoreManager
+                                      ? '0 2px 6px rgba(101, 59, 75, 0.3)'
+                                      : isSuperAdmin
+                                      ? '0 2px 6px rgba(73, 54, 74, 0.35)'
+                                      : '0 2px 6px rgba(79, 70, 229, 0.3)',
                                     display: 'inline-flex',
                                     alignItems: 'center',
                                     gap: '4px',
@@ -1449,9 +1475,21 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                       type="button"
                       onClick={() => setCurrentPage(pageNum)}
                       style={{
-                        background: isActive ? '#6366f1' : '#ffffff',
+                        background: isActive
+                          ? isStoreManager
+                            ? '#653B4B'
+                            : isSuperAdmin
+                            ? '#49364A'
+                            : '#6366f1'
+                          : '#ffffff',
                         color: isActive ? '#ffffff' : '#334155',
-                        border: isActive ? '1px solid #6366f1' : '1px solid #cbd5e1',
+                        border: isActive
+                          ? isStoreManager
+                            ? '1px solid #653B4B'
+                            : isSuperAdmin
+                            ? '1px solid #49364A'
+                            : '1px solid #6366f1'
+                          : '1px solid #cbd5e1',
                         borderRadius: '6px',
                         padding: '0.3rem 0.65rem',
                         fontWeight: isActive ? 700 : 500,
@@ -1678,7 +1716,7 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
               className="btn btn-primary"
               onClick={handleStep1Next}
               style={{
-                background: '#6366f1',
+                background: isStoreManager ? '#653B4B' : isSuperAdmin ? '#49364A' : '#6366f1',
                 color: '#ffffff',
                 border: 'none',
                 padding: '0.7rem 1.75rem',
@@ -1689,7 +1727,11 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                 alignItems: 'center',
                 gap: '0.5rem',
                 cursor: 'pointer',
-                boxShadow: '0 4px 12px rgba(99, 102, 241, 0.25)',
+                boxShadow: isStoreManager
+                  ? '0 4px 12px rgba(101, 59, 75, 0.25)'
+                  : isSuperAdmin
+                  ? '0 4px 12px rgba(73, 54, 74, 0.25)'
+                  : '0 4px 12px rgba(99, 102, 241, 0.25)',
               }}
             >
               Next: Add Products →
@@ -1739,8 +1781,9 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
             <div
               style={{
                 fontSize: '0.85rem',
-                background: '#ede9fe',
-                color: '#5b21b6',
+                background: isStoreManager ? '#F5EBEF' : isSuperAdmin ? '#F3EDF3' : '#ede9fe',
+                color: isStoreManager ? '#653B4B' : isSuperAdmin ? '#49364A' : '#5b21b6',
+                border: isStoreManager ? '1px solid #E4D5DC' : isSuperAdmin ? '1px solid #D8CBD8' : 'none',
                 padding: '0.4rem 0.85rem',
                 borderRadius: '8px',
                 fontWeight: 600,
@@ -1943,7 +1986,14 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                             Stock: {stock} {p.unit}
                           </span>
                           {isAlreadyAdded && (
-                            <div style={{ fontSize: '0.72rem', color: '#6366f1', marginTop: '2px' }}>
+                            <div
+                              style={{
+                                fontSize: '0.72rem',
+                                color: isStoreManager ? '#653B4B' : isSuperAdmin ? '#49364A' : '#6366f1',
+                                marginTop: '2px',
+                                fontWeight: 600,
+                              }}
+                            >
                               ✓ Added
                             </div>
                           )}
@@ -2033,11 +2083,11 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                                 width: '36px',
                                 height: '36px',
                                 borderRadius: '8px',
-                                background: '#f1f5f9',
+                                background: isStoreManager ? '#F5EBEF' : isSuperAdmin ? '#F3EDF3' : '#f1f5f9',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                color: '#6366f1',
+                                color: isStoreManager ? '#653B4B' : isSuperAdmin ? '#49364A' : '#6366f1',
                               }}
                             >
                               <PackageIcon size={18} />
@@ -2119,7 +2169,7 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
             }}
           >
             <div style={{ fontWeight: 700, color: '#334155', fontSize: '0.92rem' }}>
-              Total Items: <span style={{ color: '#6366f1' }}>{wizardLines.length}</span>
+              Total Items: <span style={{ color: isStoreManager ? '#653B4B' : isSuperAdmin ? '#49364A' : '#6366f1' }}>{wizardLines.length}</span>
             </div>
 
             <div style={{ display: 'flex', gap: '0.75rem' }}>
@@ -2144,7 +2194,13 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                 disabled={wizardLines.length === 0}
                 onClick={handleStep2Next}
                 style={{
-                  background: wizardLines.length === 0 ? '#94a3b8' : '#6366f1',
+                  background: wizardLines.length === 0
+                    ? '#94a3b8'
+                    : isStoreManager
+                    ? '#653B4B'
+                    : isSuperAdmin
+                    ? '#49364A'
+                    : '#6366f1',
                   color: '#ffffff',
                   border: 'none',
                   borderRadius: '10px',
@@ -2154,6 +2210,13 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                   alignItems: 'center',
                   gap: '0.5rem',
                   cursor: wizardLines.length === 0 ? 'not-allowed' : 'pointer',
+                  boxShadow: wizardLines.length === 0
+                    ? 'none'
+                    : isStoreManager
+                    ? '0 4px 12px rgba(101, 59, 75, 0.25)'
+                    : isSuperAdmin
+                    ? '0 4px 12px rgba(73, 54, 74, 0.25)'
+                    : '0 4px 12px rgba(99, 102, 241, 0.25)',
                 }}
               >
                 Next: Review →
@@ -2359,14 +2422,26 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
               disabled={submittingCreate}
               onClick={handleConfirmTransfer}
               style={{
-                background: submittingCreate ? '#94a3b8' : '#6366f1',
+                background: submittingCreate
+                  ? '#94a3b8'
+                  : isStoreManager
+                  ? '#653B4B'
+                  : isSuperAdmin
+                  ? '#49364A'
+                  : '#6366f1',
                 color: '#ffffff',
                 border: 'none',
                 borderRadius: '8px',
                 padding: '0.65rem 1.75rem',
                 fontWeight: 700,
                 cursor: submittingCreate ? 'not-allowed' : 'pointer',
-                boxShadow: '0 4px 12px rgba(99, 102, 241, 0.25)',
+                boxShadow: submittingCreate
+                  ? 'none'
+                  : isStoreManager
+                  ? '0 4px 12px rgba(101, 59, 75, 0.25)'
+                  : isSuperAdmin
+                  ? '0 4px 12px rgba(73, 54, 74, 0.25)'
+                  : '0 4px 12px rgba(99, 102, 241, 0.25)',
               }}
             >
               {submittingCreate ? 'Saving Transfer...' : 'Confirm Transfer'}
@@ -2435,12 +2510,20 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                       width: '42px',
                       height: '42px',
                       borderRadius: '12px',
-                      background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                      background: isStoreManager
+                        ? 'linear-gradient(135deg, #7A475B 0%, #653B4B 100%)'
+                        : isSuperAdmin
+                        ? 'linear-gradient(135deg, #604B61 0%, #49364A 100%)'
+                        : 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
                       color: '#ffffff',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      boxShadow: '0 4px 12px rgba(99, 102, 241, 0.25)',
+                      boxShadow: isStoreManager
+                        ? '0 4px 12px rgba(101, 59, 75, 0.25)'
+                        : isSuperAdmin
+                        ? '0 4px 12px rgba(73, 54, 74, 0.25)'
+                        : '0 4px 12px rgba(99, 102, 241, 0.25)',
                       flexShrink: 0,
                     }}
                   >
@@ -2461,13 +2544,17 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                       </h2>
                       <span
                         style={{
-                          background: '#f1f5f9',
-                          color: '#4338ca',
+                          background: isStoreManager ? '#F5EBEF' : isSuperAdmin ? '#F3EDF3' : '#f1f5f9',
+                          color: isStoreManager ? '#653B4B' : isSuperAdmin ? '#49364A' : '#4338ca',
                           fontWeight: 700,
                           fontSize: '0.88rem',
                           padding: '2px 8px',
                           borderRadius: '6px',
-                          border: '1px solid #e0e7ff',
+                          border: isStoreManager
+                            ? '1px solid #E4D5DC'
+                            : isSuperAdmin
+                            ? '1px solid #D8CBD8'
+                            : '1px solid #e0e7ff',
                         }}
                       >
                         {detailedTransfer.transferNumber}
@@ -2556,10 +2643,15 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                     {canDispatch && (
                       <button
                         type="button"
+                        className="stock-transfer-btn-details-dispatch"
                         onClick={() => setShowDispatchModal(true)}
                         disabled={submittingDispatch}
                         style={{
-                          background: 'linear-gradient(135deg, #4f46e5 0%, #3730a3 100%)',
+                          background: isStoreManager
+                            ? 'linear-gradient(135deg, #7A475B 0%, #653B4B 100%)'
+                            : isSuperAdmin
+                            ? '#49364A'
+                            : 'linear-gradient(135deg, #4f46e5 0%, #3730a3 100%)',
                           color: '#ffffff',
                           border: 'none',
                           padding: '0.65rem 1.45rem',
@@ -2570,7 +2662,11 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                           alignItems: 'center',
                           gap: '0.55rem',
                           cursor: submittingDispatch ? 'not-allowed' : 'pointer',
-                          boxShadow: '0 4px 14px rgba(79, 70, 229, 0.45)',
+                          boxShadow: isStoreManager
+                            ? '0 4px 14px rgba(101, 59, 75, 0.45)'
+                            : isSuperAdmin
+                            ? '0 4px 14px rgba(73, 54, 74, 0.45)'
+                            : '0 4px 14px rgba(79, 70, 229, 0.45)',
                           transition: 'all 0.15s ease',
                         }}
                       >
@@ -2696,8 +2792,8 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                     width: '42px',
                     height: '42px',
                     borderRadius: '10px',
-                    background: '#e0e7ff',
-                    color: '#4338ca',
+                    background: isStoreManager ? '#F5EBEF' : isSuperAdmin ? '#F3EDF3' : '#e0e7ff',
+                    color: isStoreManager ? '#653B4B' : isSuperAdmin ? '#49364A' : '#4338ca',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -3181,7 +3277,7 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                           <div>
                             <div style={{ fontWeight: 700, color: '#1e293b' }}>
                               {log.action.replace('stock_transfer.', '').toUpperCase()} by{' '}
-                              <span style={{ color: '#6366f1' }}>{log.user_name || 'User'}</span>
+                              <span style={{ color: isStoreManager ? '#653B4B' : isSuperAdmin ? '#49364A' : '#6366f1' }}>{log.user_name || 'User'}</span>
                             </div>
                             <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '2px' }}>
                               {new Date(log.created_at).toLocaleString('en-IN')}
@@ -3732,12 +3828,20 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                     width: '42px',
                     height: '42px',
                     borderRadius: '12px',
-                    background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                    background: isStoreManager
+                      ? 'linear-gradient(135deg, #7A475B 0%, #653B4B 100%)'
+                      : isSuperAdmin
+                      ? 'linear-gradient(135deg, #604B61 0%, #49364A 100%)'
+                      : 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
                     color: '#ffffff',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    boxShadow: '0 4px 10px rgba(99, 102, 241, 0.25)',
+                    boxShadow: isStoreManager
+                      ? '0 4px 10px rgba(101, 59, 75, 0.25)'
+                      : isSuperAdmin
+                      ? '0 4px 10px rgba(73, 54, 74, 0.25)'
+                      : '0 4px 10px rgba(99, 102, 241, 0.25)',
                     flexShrink: 0,
                   }}
                 >
@@ -3793,7 +3897,7 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                 <span style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.9rem' }}>
                   {detailedTransfer.fromBranchName || detailedTransfer.fromBranch}
                 </span>
-                <span style={{ color: '#6366f1', fontWeight: 700 }}>➔</span>
+                <span style={{ color: isStoreManager ? '#653B4B' : isSuperAdmin ? '#49364A' : '#6366f1', fontWeight: 700 }}>➔</span>
                 <span style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.9rem' }}>
                   {detailedTransfer.toBranchName || detailedTransfer.toBranch}
                 </span>
@@ -3862,10 +3966,15 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
               </button>
               <button
                 type="button"
+                className="stock-transfer-btn-confirm-dispatch"
                 disabled={submittingDispatch}
                 onClick={handleConfirmDispatch}
                 style={{
-                  background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                  background: isStoreManager
+                    ? 'linear-gradient(135deg, #7A475B 0%, #653B4B 100%)'
+                    : isSuperAdmin
+                    ? '#49364A'
+                    : 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
                   color: '#ffffff',
                   border: 'none',
                   padding: '0.6rem 1.4rem',
@@ -3876,7 +3985,11 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                   alignItems: 'center',
                   gap: '0.45rem',
                   cursor: submittingDispatch ? 'not-allowed' : 'pointer',
-                  boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)',
+                  boxShadow: isStoreManager
+                    ? '0 4px 12px rgba(101, 59, 75, 0.3)'
+                    : isSuperAdmin
+                    ? '0 4px 12px rgba(73, 54, 74, 0.35)'
+                    : '0 4px 12px rgba(99, 102, 241, 0.3)',
                   transition: 'all 0.15s ease',
                   opacity: submittingDispatch ? 0.7 : 1,
                 }}

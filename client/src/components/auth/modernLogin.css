@@ -1,7 +1,7 @@
 /* ==========================================================================
    MODERN FULL-SCREEN SPLIT LOGIN DESIGN (Matching Image 2 Reference)
    Role-Adaptive Themes:
-   - Super Admin: Purple / Indigo (#5B4DF5, #4838E6, #EEF0FE)
+   - Super Admin: Deep Plum (#49364A, #382939, #F5EFF5)
    - Store Manager: Deep Burgundy (#653B4B, #502D3A, #FAF4F6)
    - Cashier Counter: Deep Emerald Teal (#0F766E, #115E59, #E6F4F3)
    ========================================================================== */
@@ -38,13 +38,13 @@
 /* Role-Specific Tokens */
 .modern-login-card.role-super-admin {
   --role-primary: #49364A;
-  --role-primary-hover: #382939;
-  --role-primary-soft: #F5F1F5;
-  --role-ring: #755777;
+  --role-primary-hover: #382839;
+  --role-primary-soft: #F5EFF5;
+  --role-ring: #7E5F80;
   --role-ring-soft: rgba(73, 54, 74, 0.14);
   --role-shadow: rgba(73, 54, 74, 0.35);
-  --role-border: #D2C4D4;
-  --role-banner-bg: linear-gradient(145deg, #49364A 0%, #241A25 100%);
+  --role-border: #D8CCD9;
+  --role-banner-bg: linear-gradient(145deg, #49364A 0%, #221824 100%);
 }
 
 .modern-login-card.role-store-manager {

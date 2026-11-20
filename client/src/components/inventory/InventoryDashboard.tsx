@@ -1,5 +1,5 @@
 import { handleProductImageError } from '../../imageUtils';
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 
 import type { Item, Party, Role, InventoryDashboardStats, InventoryInsights, Category } from '../../api.ts';
 import {
@@ -92,26 +92,147 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
 }) => {
   const [activeSubTab, setActiveSubTab] = useState<'overview' | 'ledger' | 'counts' | 'replenish' | 'insights'>(initialTab);
 
+  const isSuperAdmin = userRole === 'owner' || String(userRole).toUpperCase() === 'SUPER_ADMIN';
+  const isOwnerOrManager = can(userRole, 'stock.adjust');
+  const isAuthorizedForCost = ['owner', 'manager', 'accountant'].includes(userRole || '') || isSuperAdmin;
+
+  const itemsRef = useRef<Item[]>(items || []);
+  useEffect(() => {
+    itemsRef.current = items || [];
+  }, [items]);
+
   const getBranchLabel = (branchId?: string | null, branchName?: string | null) => {
     if (!branchId && !branchName) return 'Main Store';
     const found = branches.find((b) => b.id === branchId || b.code === branchId);
     return found?.name || branchName || branchId || 'Main Store';
   };
-  const [stats, setStats] = useState<InventoryDashboardStats | null>(null);
-  const [statsLoading, setStatsLoading] = useState<boolean>(true);
-  const [insights, setInsights] = useState<InventoryInsights | null>(null);
-  const [insightsLoading, setInsightsLoading] = useState<boolean>(false);
 
-  // Items table state
-  const [tableItems, setTableItems] = useState<Item[]>([]);
-  const [totalItems, setTotalItems] = useState<number>(0);
-  const [itemsLoading, setItemsLoading] = useState<boolean>(true);
+  // Helper to scope items to active branch
+  const getBranchScopedItems = useCallback((rawItems: Item[]) => {
+    if (!rawItems || rawItems.length === 0) return [];
+    if (!selectedBranch || selectedBranch.toLowerCase() === 'all') {
+      return rawItems.filter((it) => it.active !== false);
+    }
+    const matchBr = branches.find(
+      (b) => b.id === selectedBranch || (b.code && b.code.toUpperCase() === selectedBranch.toUpperCase())
+    );
+    const targetId = matchBr?.id;
+    const targetCode = matchBr?.code?.toUpperCase();
+
+    return rawItems.filter((it) => {
+      if (it.active === false) return false;
+      if (!it.branchId) return true;
+      if (targetId && it.branchId === targetId) return true;
+      if (targetCode && (it as any).branchCode && (it as any).branchCode.toUpperCase() === targetCode) return true;
+      if (it.branchId === selectedBranch) return true;
+      return false;
+    });
+  }, [branches, selectedBranch]);
+
+  // Filters and pagination state
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sortField, setSortField] = useState<string>('name_asc');
   const [page, setPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(15);
+
+  // Helper to filter and sort items locally as immediate fallback
+  const getLocalFilteredItems = useCallback((rawItems: Item[]) => {
+    let result = getBranchScopedItems(rawItems);
+
+    if (categoryFilter && categoryFilter !== 'ALL') {
+      result = result.filter((it) => it.category === categoryFilter);
+    }
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      result = result.filter(
+        (it) =>
+          it.name?.toLowerCase().includes(q) ||
+          it.sku?.toLowerCase().includes(q) ||
+          it.barcode?.toLowerCase().includes(q)
+      );
+    }
+
+    if (statusFilter && statusFilter !== 'all') {
+      result = result.filter((it) => {
+        const stockMilli = it.currentStockMilli ?? ((it as any).stock ? Number((it as any).stock) * 1000 : 0);
+        const reorderMilli = it.reorderMilli ?? 0;
+        if (statusFilter === 'in_stock') {
+          return stockMilli > 0 && (reorderMilli === 0 || stockMilli > reorderMilli);
+        } else if (statusFilter === 'low_stock') {
+          return stockMilli > 0 && reorderMilli > 0 && stockMilli <= reorderMilli;
+        } else if (statusFilter === 'out_of_stock') {
+          return stockMilli <= 0;
+        } else if (statusFilter === 'zero_stock') {
+          return stockMilli === 0;
+        } else if (statusFilter === 'negative_stock') {
+          return stockMilli < 0;
+        } else if (statusFilter === 'unconfigured') {
+          return reorderMilli === 0;
+        }
+        return true;
+      });
+    }
+
+    result.sort((a, b) => {
+      if (sortField === 'name_desc') return (b.name || '').localeCompare(a.name || '');
+      if (sortField === 'stock_asc') return (a.currentStockMilli ?? 0) - (b.currentStockMilli ?? 0);
+      if (sortField === 'stock_desc') return (b.currentStockMilli ?? 0) - (a.currentStockMilli ?? 0);
+      return (a.name || '').localeCompare(b.name || '');
+    });
+
+    return result;
+  }, [getBranchScopedItems, categoryFilter, searchQuery, statusFilter, sortField]);
+
+  // Compute immediate initial stats if items are already loaded
+  const initialScoped = useMemo(() => {
+    return getBranchScopedItems(items || []);
+  }, [getBranchScopedItems, items]);
+
+  const [stats, setStats] = useState<InventoryDashboardStats | null>(() => {
+    if (initialScoped.length > 0) {
+      const summary = calculateInventorySummary(initialScoped);
+      return {
+        totalActiveProducts: summary.totalActive,
+        inStockCount: summary.inStockCount,
+        lowStockCount: summary.lowStockCount,
+        outOfStockCount: summary.outOfStockCount,
+        zeroStockCount: summary.zeroStockCount,
+        negativeStockCount: summary.negativeStockCount,
+        unconfiguredCount: summary.unconfiguredCount,
+        distinctCategoryCount: summary.distinctCategoryCount,
+        totalStockValueMinor: isAuthorizedForCost ? summary.totalStockValueMinor : null,
+        categoryBreakdown: [],
+        recentMovements: [],
+        replenishmentNeeded: [],
+      };
+    }
+    return null;
+  });
+  const [statsLoading, setStatsLoading] = useState<boolean>(() => initialScoped.length === 0);
+
+  const [insights, setInsights] = useState<InventoryInsights | null>(null);
+  const [insightsLoading, setInsightsLoading] = useState<boolean>(false);
+
+  // Items table state - initialized immediately with memory items if available
+  const [tableItems, setTableItems] = useState<Item[]>(() => {
+    if (initialScoped.length > 0) {
+      return initialScoped.slice(0, 15);
+    }
+    return [];
+  });
+  const [totalItems, setTotalItems] = useState<number>(() => initialScoped.length);
+  const [itemsLoading, setItemsLoading] = useState<boolean>(() => initialScoped.length === 0);
+
+  // Fallback function to populate table from local catalog items if API fails or times out
+  const fallbackToLocalItems = useCallback(() => {
+    const local = getLocalFilteredItems(itemsRef.current || []);
+    const paged = local.slice((page - 1) * pageSize, page * pageSize);
+    setTableItems(paged);
+    setTotalItems(local.length);
+  }, [getLocalFilteredItems, page, pageSize]);
 
   // Modals state
   const [adjustmentTargetItem, setAdjustmentTargetItem] = useState<Item | null>(null);
@@ -122,38 +243,97 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
 
   const [selectedLedgerItemId, setSelectedLedgerItemId] = useState<string | undefined>(undefined);
 
-  const isOwnerOrManager = can(userRole, 'stock.adjust');
-  const isAuthorizedForCost = ['owner', 'manager', 'accountant'].includes(userRole || '') || String(userRole).toUpperCase() === 'SUPER_ADMIN';
+  // Request sequencing to prevent racing updates from overwriting newer branch selections
+  const statsReqSeq = useRef<number>(0);
+  const itemsReqSeq = useRef<number>(0);
 
-  // Load dashboard stats
+  // Load dashboard stats from server - never blank out existing data with skeletons
   const loadDashboardStats = useCallback(async () => {
-    setStatsLoading(true);
+    const seq = ++statsReqSeq.current;
+    setStats((prev) => {
+      if (!prev) setStatsLoading(true);
+      return prev;
+    });
+
+    const timer = setTimeout(() => {
+      if (statsReqSeq.current === seq) {
+        if (itemsRef.current && itemsRef.current.length > 0) {
+          const scoped = getBranchScopedItems(itemsRef.current);
+          const fallback = calculateInventorySummary(scoped);
+          setStats((prev) => prev || {
+            totalActiveProducts: fallback.totalActive,
+            inStockCount: fallback.inStockCount,
+            lowStockCount: fallback.lowStockCount,
+            outOfStockCount: fallback.outOfStockCount,
+            zeroStockCount: fallback.zeroStockCount,
+            negativeStockCount: fallback.negativeStockCount,
+            unconfiguredCount: fallback.unconfiguredCount,
+            distinctCategoryCount: fallback.distinctCategoryCount,
+            totalStockValueMinor: isAuthorizedForCost ? fallback.totalStockValueMinor : null,
+            categoryBreakdown: [],
+            recentMovements: [],
+            replenishmentNeeded: [],
+          });
+        }
+        setStatsLoading(false);
+      }
+    }, 2500);
+
     try {
       const res = await fetchInventoryDashboard(selectedBranch);
-      setStats(res.stats);
+      if (statsReqSeq.current === seq) {
+        clearTimeout(timer);
+        if (res && res.stats) {
+          setStats(res.stats);
+        } else if (itemsRef.current && itemsRef.current.length > 0) {
+          const scoped = getBranchScopedItems(itemsRef.current);
+          const fallback = calculateInventorySummary(scoped);
+          setStats({
+            totalActiveProducts: fallback.totalActive,
+            inStockCount: fallback.inStockCount,
+            lowStockCount: fallback.lowStockCount,
+            outOfStockCount: fallback.outOfStockCount,
+            zeroStockCount: fallback.zeroStockCount,
+            negativeStockCount: fallback.negativeStockCount,
+            unconfiguredCount: fallback.unconfiguredCount,
+            distinctCategoryCount: fallback.distinctCategoryCount,
+            totalStockValueMinor: isAuthorizedForCost ? fallback.totalStockValueMinor : null,
+            categoryBreakdown: [],
+            recentMovements: [],
+            replenishmentNeeded: [],
+          });
+        }
+      }
     } catch (err) {
       console.error('Failed to load inventory stats:', err);
-      if (items && items.length > 0) {
-        const fallback = calculateInventorySummary(items);
-        setStats({
-          totalActiveProducts: fallback.totalActive,
-          inStockCount: fallback.inStockCount,
-          lowStockCount: fallback.lowStockCount,
-          outOfStockCount: fallback.outOfStockCount,
-          zeroStockCount: fallback.zeroStockCount,
-          negativeStockCount: fallback.negativeStockCount,
-          unconfiguredCount: fallback.unconfiguredCount,
-          distinctCategoryCount: fallback.distinctCategoryCount,
-          totalStockValueMinor: isAuthorizedForCost ? fallback.totalStockValueMinor : null,
-          categoryBreakdown: [],
-          recentMovements: [],
-          replenishmentNeeded: [],
-        });
+      if (statsReqSeq.current === seq) {
+        clearTimeout(timer);
+        if (itemsRef.current && itemsRef.current.length > 0) {
+          const scoped = getBranchScopedItems(itemsRef.current);
+          const fallback = calculateInventorySummary(scoped);
+          setStats({
+            totalActiveProducts: fallback.totalActive,
+            inStockCount: fallback.inStockCount,
+            lowStockCount: fallback.lowStockCount,
+            outOfStockCount: fallback.outOfStockCount,
+            zeroStockCount: fallback.zeroStockCount,
+            negativeStockCount: fallback.negativeStockCount,
+            unconfiguredCount: fallback.unconfiguredCount,
+            distinctCategoryCount: fallback.distinctCategoryCount,
+            totalStockValueMinor: isAuthorizedForCost ? fallback.totalStockValueMinor : null,
+            categoryBreakdown: [],
+            recentMovements: [],
+            replenishmentNeeded: [],
+          });
+        }
       }
     } finally {
-      setStatsLoading(false);
+      if (statsReqSeq.current === seq) {
+        clearTimeout(timer);
+        setStatsLoading(false);
+      }
     }
-  }, [selectedBranch, items, isAuthorizedForCost]);
+  }, [selectedBranch, isAuthorizedForCost, getBranchScopedItems]);
 
   // Load Phase 3 insights
   const loadInsights = useCallback(async () => {
@@ -168,9 +348,21 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
     }
   }, []);
 
-  // Load items table
+  // Load items table with watchdog timeout - never blank out existing table items
   const loadTableItems = useCallback(async () => {
-    setItemsLoading(true);
+    const seq = ++itemsReqSeq.current;
+    setTableItems((prev) => {
+      if (prev.length === 0) setItemsLoading(true);
+      return prev;
+    });
+
+    const timer = setTimeout(() => {
+      if (itemsReqSeq.current === seq) {
+        fallbackToLocalItems();
+        setItemsLoading(false);
+      }
+    }, 2500);
+
     try {
       const res = await fetchInventoryItems({
         q: searchQuery.trim() || undefined,
@@ -182,25 +374,52 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
         offset: (page - 1) * pageSize,
         branch: selectedBranch,
       });
-      setTableItems(res.items || []);
-      setTotalItems(res.total || 0);
+
+      if (itemsReqSeq.current === seq) {
+        clearTimeout(timer);
+        if (res && Array.isArray(res.items)) {
+          setTableItems(res.items);
+          setTotalItems(res.total ?? res.items.length);
+        } else {
+          fallbackToLocalItems();
+        }
+      }
     } catch (err) {
       console.error('Failed to load inventory items:', err);
+      if (itemsReqSeq.current === seq) {
+        clearTimeout(timer);
+        fallbackToLocalItems();
+      }
     } finally {
-      setItemsLoading(false);
+      if (itemsReqSeq.current === seq) {
+        clearTimeout(timer);
+        setItemsLoading(false);
+      }
     }
-  }, [searchQuery, categoryFilter, statusFilter, sortField, selectedBranch, page, pageSize]);
+  }, [searchQuery, categoryFilter, statusFilter, sortField, selectedBranch, page, pageSize, fallbackToLocalItems]);
 
-  // Load dashboard high-level KPI stats on mount or when active branch changes
+  // 1. Initial mount and branch change: load stats & items
   useEffect(() => {
     loadDashboardStats();
     loadTableItems();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedBranch]);
+
+  // 2. Filters / search / pagination change: reload items
+  useEffect(() => {
+    loadTableItems();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery, categoryFilter, statusFilter, sortField, page, pageSize]);
+
+  // 3. Sub-tab insights change
+  useEffect(() => {
     if (activeSubTab === 'insights') {
       loadInsights();
     }
-  }, [selectedBranch, loadDashboardStats, loadTableItems, loadInsights, activeSubTab]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSubTab]);
 
-  // Listen to global branch switching and billing events
+  // 4. Global branch switching and billing events
   useEffect(() => {
     const handleBranchChanged = () => {
       loadDashboardStats();
@@ -219,15 +438,49 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
       window.removeEventListener('branch_scope_changed', handleBranchChanged);
       window.removeEventListener('bill_completed', handleBillCompleted);
     };
-  }, [loadDashboardStats, loadTableItems, loadInsights, activeSubTab]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSubTab]);
 
-  // When products are added, imported, edited, or deleted in the catalog, refresh stats and table
+  // 5. When items catalog prop updates from App.tsx, keep itemsRef in sync and populate if empty
   useEffect(() => {
-    loadDashboardStats();
-    if (activeSubTab === 'overview') {
-      loadTableItems();
+    itemsRef.current = items || [];
+    if (items) {
+      if (items.length > 0) {
+        setTableItems((prev) => {
+          if (prev.length === 0) {
+            const local = getLocalFilteredItems(items);
+            return local.slice((page - 1) * pageSize, page * pageSize);
+          }
+          return prev;
+        });
+        setTotalItems((prev) => (prev === 0 ? getLocalFilteredItems(items).length : prev));
+        setStats((prev) => {
+          if (!prev) {
+            const scoped = getBranchScopedItems(items);
+            const summary = calculateInventorySummary(scoped);
+            return {
+              totalActiveProducts: summary.totalActive,
+              inStockCount: summary.inStockCount,
+              lowStockCount: summary.lowStockCount,
+              outOfStockCount: summary.outOfStockCount,
+              zeroStockCount: summary.zeroStockCount,
+              negativeStockCount: summary.negativeStockCount,
+              unconfiguredCount: summary.unconfiguredCount,
+              distinctCategoryCount: summary.distinctCategoryCount,
+              totalStockValueMinor: isAuthorizedForCost ? summary.totalStockValueMinor : null,
+              categoryBreakdown: [],
+              recentMovements: [],
+              replenishmentNeeded: [],
+            };
+          }
+          return prev;
+        });
+      }
+      setItemsLoading(false);
+      setStatsLoading(false);
     }
-  }, [items, loadDashboardStats, loadTableItems, activeSubTab]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items, selectedBranch, page, pageSize, isAuthorizedForCost]);
 
   const handleRefreshAll = () => {
     loadDashboardStats();
@@ -803,7 +1056,7 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
               {isOwnerOrManager && (
                 <button
                   type="button"
-                  className="cat-btn-primary"
+                  className={`cat-btn-primary btn-stock-adjustment ${isSuperAdmin ? 'btn-stock-adjust-deep-plum' : ''}`}
                   onClick={() => {
                     setAdjustmentTargetItem(null);
                     setShowAdjustmentModal(true);
@@ -815,20 +1068,44 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
                     fontSize: '13px',
                     fontWeight: 600,
                     padding: '0 16px',
-                    background: '#5B4CF5',
+                    background: isSuperAdmin ? '#49364A' : '#5B4CF5',
                     color: '#FFFFFF',
-                    border: 'none',
+                    border: isSuperAdmin ? '1px solid #352638' : 'none',
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '6px',
                     whiteSpace: 'nowrap',
                     cursor: 'pointer',
+                    boxShadow: isSuperAdmin ? '0 2px 6px rgba(73, 54, 74, 0.25)' : 'none',
+                    transition: 'all 0.15s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (isSuperAdmin) {
+                      e.currentTarget.style.background = '#604B61';
+                      e.currentTarget.style.borderColor = '#49364A';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (isSuperAdmin) {
+                      e.currentTarget.style.background = '#49364A';
+                      e.currentTarget.style.borderColor = '#352638';
+                    }
+                  }}
+                  onMouseDown={(e) => {
+                    if (isSuperAdmin) {
+                      e.currentTarget.style.background = '#352638';
+                    }
+                  }}
+                  onMouseUp={(e) => {
+                    if (isSuperAdmin) {
+                      e.currentTarget.style.background = '#604B61';
+                    }
                   }}
                 >
-                  <SlidersIcon size={14} /> Stock Adjustment
+                  <SlidersIcon size={14} style={{ color: '#FFFFFF' }} /> Stock Adjustment
                 </button>
               )}
-              {isOwnerOrManager && onOpenSupplierInvoiceConverter && (
+              {isOwnerOrManager && onOpenSupplierInvoiceConverter && !isSuperAdmin && (
                 <button
                   type="button"
                   className="cat-btn-secondary"
@@ -916,7 +1193,7 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
 
           {/* Items Table */}
           <div className="ledger-table-wrap">
-            {itemsLoading ? (
+            {itemsLoading && tableItems.length === 0 ? (
               <div className="table-loading-spinner">
                 <div className="spinner"></div>
                 <p>Loading inventory balances...</p>
@@ -1034,7 +1311,7 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
                             }}
                             title={getBranchLabel(item.branchId, (item as any).branchName)}
                           >
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={isSuperAdmin ? "#49364A" : "#6366f1"} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                               <path d="M3 21h18" />
                               <path d="M5 21V7l8-4v18" />
                               <path d="M19 21V11l-6-4" />
@@ -1364,7 +1641,7 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
                             }}
                             title={getBranchLabel(r.branchId, (r as any).branchName)}
                           >
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={isSuperAdmin ? "#49364A" : "#6366f1"} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                               <path d="M3 21h18" />
                               <path d="M5 21V7l8-4v18" />
                               <path d="M19 21V11l-6-4" />
@@ -1696,7 +1973,7 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
               <div className="insights-panel-card">
                 <div className="insights-panel-header">
                   <h3>
-                    <BarChart3Icon size={18} style={{ color: "#6366f1", display: "inline", marginRight: "6px", verticalAlign: "middle" }} />Physical Count Audit Accuracy & Shrinkage Analytics
+                    <BarChart3Icon size={18} style={{ color: isSuperAdmin ? "#49364A" : "#6366f1", display: "inline", marginRight: "6px", verticalAlign: "middle" }} />Physical Count Audit Accuracy & Shrinkage Analytics
                   </h3>
                   <span className="badge-live-sync">Audit Trail History</span>
                 </div>
