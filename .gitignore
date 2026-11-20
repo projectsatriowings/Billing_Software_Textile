@@ -21,4 +21,5 @@ release/
 dist-electron/
 win-unpacked/
 *.exe
+*.pdf
 
