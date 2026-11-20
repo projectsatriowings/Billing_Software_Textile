@@ -833,6 +833,71 @@
   color: var(--sidebar, #0F2D2E);
 }
 
+/* Split Payment Tender Styling */
+.cfd-split-upi-badge {
+  background: var(--primary-soft, #E6F4F3);
+  color: var(--primary, #0F766E);
+  border: 1.5px solid rgba(20, 184, 166, 0.45);
+}
+
+.cfd-split-tenders-box {
+  width: 100%;
+  max-width: 290px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1.5px solid var(--border, #D0C7B8);
+  border-radius: 12px;
+  padding: 0.65rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.cfd-split-tender-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  color: var(--sidebar, #0F2D2E);
+}
+
+.cfd-split-tender-line.highlight-upi {
+  padding-bottom: 0.4rem;
+  border-bottom: 1px dashed var(--border, #D0C7B8);
+}
+
+.cfd-tender-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 700;
+}
+
+.cfd-tender-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.cfd-tender-dot.upi-dot {
+  background: #0F766E;
+  box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.3);
+}
+
+.cfd-tender-dot.other-dot {
+  background: #D97706;
+}
+
+.cfd-tender-val {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: var(--sidebar, #0F2D2E);
+}
+
+.cfd-split-tender-line.highlight-upi .cfd-tender-val {
+  color: var(--primary, #0F766E);
+}
+
 /* B) COMPLETED INVOICE STATE */
 .cfd-completed-panel {
   display: flex;

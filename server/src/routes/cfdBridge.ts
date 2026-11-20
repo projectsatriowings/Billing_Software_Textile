@@ -20,6 +20,18 @@ export interface CFDCategorySummary {
   totalMinor: number;
 }
 
+export interface CFDSplitDetails {
+  isSplit: boolean;
+  method1: string;
+  amount1Minor: number;
+  method2: string;
+  amount2Minor: number;
+  hasUpi: boolean;
+  upiAmountMinor: number;
+  otherMethod?: string;
+  otherAmountMinor?: number;
+}
+
 export interface CFDPaymentDetails {
   method: string;
   amountMinor: number;
@@ -49,9 +61,10 @@ export interface CFDState {
   taxMinor: number;
   totalMinor: number;
   savingsMinor: number;
-  status: 'idle' | 'billing' | 'payment_upi' | 'payment_cash' | 'payment_card' | 'completed';
+  status: 'idle' | 'billing' | 'payment_upi' | 'payment_cash' | 'payment_card' | 'payment_bank' | 'payment_split' | 'completed';
   selectedPayMode?: string;
   paymentDetails?: CFDPaymentDetails;
+  splitDetails?: CFDSplitDetails;
   updatedAt: number;
 }
 

@@ -4265,9 +4265,9 @@ export function App() {
   const splitCashShortMinor = Math.max(0, splitAllocatedCashMinor - splitCashGivenMinor);
 
   const handleSplitFiftyFifty = () => {
-    const totalRupees = Math.round(finalPayableMinor / 100);
-    const half1 = Math.floor(totalRupees / 2);
-    const half2 = totalRupees - half1;
+    const totalRupees = +(finalPayableMinor / 100).toFixed(2);
+    const half1 = +(totalRupees / 2).toFixed(2);
+    const half2 = +(totalRupees - half1).toFixed(2);
     setSplitMethod1('cash');
     setSplitMethod2('upi');
     setSplitAmount1(half1.toString());
@@ -4309,6 +4309,10 @@ export function App() {
   useEffect(() => {
     if (selectedPayMode === 'split' && cart.length > 0) {
       const totalRupees = finalPayableMinor / 100;
+      if (!splitAmount1 && !splitAmount2) {
+        handleSplitFiftyFifty();
+        return;
+      }
       if (lastSplitEditedRef.current === 1 && splitAmount1.trim() !== '') {
         const num1 = parseFloat(splitAmount1);
         if (!isNaN(num1)) {
@@ -4358,21 +4362,43 @@ export function App() {
       bChannel = new BroadcastChannel(`cfd_${counterId}`);
     } catch { }
 
+    const isUpiInSplit1 = splitMethod1 === 'upi';
+    const isUpiInSplit2 = splitMethod2 === 'upi';
+    const hasUpiInSplit = isUpiInSplit1 || isUpiInSplit2;
+
+    let splitUpiMinor = 0;
+    if (hasUpiInSplit) {
+      if (isUpiInSplit1 && isUpiInSplit2) {
+        splitUpiMinor = (split1Minor + split2Minor) > 0 ? (split1Minor + split2Minor) : finalPayableMinor;
+      } else if (isUpiInSplit1) {
+        splitUpiMinor = split1Minor > 0 ? split1Minor : (split2Minor > 0 ? Math.max(0, finalPayableMinor - split2Minor) : finalPayableMinor);
+      } else {
+        splitUpiMinor = split2Minor > 0 ? split2Minor : (split1Minor > 0 ? Math.max(0, finalPayableMinor - split1Minor) : finalPayableMinor);
+      }
+    }
+
+    const otherSplitMethod = isUpiInSplit1 ? splitMethod2 : (isUpiInSplit2 ? splitMethod1 : undefined);
+    const otherSplitMinor = isUpiInSplit1
+      ? (split2Minor > 0 ? split2Minor : Math.max(0, finalPayableMinor - splitUpiMinor))
+      : (split1Minor > 0 ? split1Minor : Math.max(0, finalPayableMinor - splitUpiMinor));
+
     // Determine status
-    let status: 'idle' | 'billing' | 'payment_upi' | 'payment_cash' | 'payment_card' | 'payment_bank' | 'completed' = 'idle';
+    let status: 'idle' | 'billing' | 'payment_upi' | 'payment_cash' | 'payment_card' | 'payment_bank' | 'payment_split' | 'completed' = 'idle';
     if (checkoutSuccess) {
       status = 'completed';
     } else if (cart.length > 0) {
       if (selectedPayMode === 'upi') status = 'payment_upi';
+      else if (selectedPayMode === 'split') status = hasUpiInSplit ? 'payment_upi' : 'payment_split';
       else if (selectedPayMode === 'cash') status = 'payment_cash';
       else if (selectedPayMode === 'card') status = 'payment_card';
       else if (selectedPayMode === 'bank') status = 'payment_bank';
       else status = 'billing';
     }
 
+    const effectivePayableUpiMinor = (selectedPayMode === 'split' && hasUpiInSplit) ? splitUpiMinor : finalPayableMinor;
     const effectiveUpiId = shop?.upiId?.trim() || (shop?.phone ? `${shop.phone.replace(/\D/g, '').slice(-10)}@upi` : 'merchant@okaxis');
-    const upiUrl = finalPayableMinor > 0
-      ? `upi://pay?pa=${encodeURIComponent(effectiveUpiId)}&pn=${encodeURIComponent(shop?.name || 'Store')}&am=${(finalPayableMinor / 100).toFixed(2)}&cu=INR&tn=${encodeURIComponent(`Bill at ${shop?.name || 'Store'}`)}`
+    const upiUrl = effectivePayableUpiMinor > 0
+      ? `upi://pay?pa=${encodeURIComponent(effectiveUpiId)}&pn=${encodeURIComponent(shop?.name || 'Store')}&am=${(effectivePayableUpiMinor / 100).toFixed(2)}&cu=INR&tn=${encodeURIComponent(`${selectedPayMode === 'split' ? 'Split payment' : 'Bill'} at ${shop?.name || 'Store'}`)}`
       : undefined;
 
     const activeCustomer = parties.find((p) => p.id === selectedPartyId);
@@ -4416,14 +4442,25 @@ export function App() {
       savingsMinor: totalMrpSavingsMinor,
       selectedPayMode,
       status,
+      splitDetails: selectedPayMode === 'split' ? {
+        isSplit: true,
+        method1: splitMethod1,
+        amount1Minor: split1Minor,
+        method2: splitMethod2,
+        amount2Minor: split2Minor,
+        hasUpi: hasUpiInSplit,
+        upiAmountMinor: splitUpiMinor,
+        otherMethod: otherSplitMethod,
+        otherAmountMinor: otherSplitMinor,
+      } : undefined,
       paymentDetails: status === 'completed' && checkoutSuccess ? {
         method: checkoutSuccess.payments?.[0]?.method || selectedPayMode || 'cash',
         amountMinor: checkoutSuccess.totalMinor || finalPayableMinor,
         changeDueMinor: checkoutSuccess.tender?.changeReturnedMinor || changeDueMinor || 0,
         invoiceNumber: checkoutSuccess.number || '',
       } : {
-        method: selectedPayMode || 'upi',
-        amountMinor: finalPayableMinor,
+        method: (selectedPayMode === 'split' && hasUpiInSplit) ? 'upi' : (selectedPayMode || 'upi'),
+        amountMinor: (selectedPayMode === 'split' && hasUpiInSplit) ? splitUpiMinor : finalPayableMinor,
         upiUrl,
       },
       updatedAt: Date.now(),
@@ -4480,6 +4517,12 @@ export function App() {
     shop,
     user,
     selectedPayMode,
+    splitMethod1,
+    splitAmount1,
+    splitMethod2,
+    splitAmount2,
+    split1Minor,
+    split2Minor,
     changeDueMinor,
     checkoutSuccess,
   ]);
@@ -4601,8 +4644,12 @@ export function App() {
       : (curIdx <= 0 ? modes.length - 1 : curIdx - 1);
     const nextMode = modes[nextIdx];
     setSelectedPayMode(nextMode);
-    if (nextMode === 'split' && !splitAmount1 && !splitAmount2) {
-      handleSplitFiftyFifty();
+    if (nextMode === 'split') {
+      if (!splitAmount1 && !splitAmount2) {
+        handleSplitFiftyFifty();
+      } else if (parseFloat(splitAmount1 || '0') + parseFloat(splitAmount2 || '0') !== +(finalPayableMinor / 100).toFixed(2)) {
+        handleSplitFiftyFifty();
+      }
     }
     const labels: Record<string, string> = {
       cash: 'Payment: Cash',
@@ -10740,8 +10787,12 @@ export function App() {
                               onClick={() => {
                                 if (disabled) return;
                                 setSelectedPayMode(id as any);
-                                if (id === 'split' && !splitAmount1 && !splitAmount2) {
-                                  handleSplitFiftyFifty();
+                                if (id === 'split') {
+                                  if (!splitAmount1 && !splitAmount2) {
+                                    handleSplitFiftyFifty();
+                                  } else if (parseFloat(splitAmount1 || '0') + parseFloat(splitAmount2 || '0') !== +(finalPayableMinor / 100).toFixed(2)) {
+                                    handleSplitFiftyFifty();
+                                  }
                                 }
                               }}
                             >
