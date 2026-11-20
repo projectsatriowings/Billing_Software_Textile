@@ -873,10 +873,10 @@ export interface SupplierLedger {
   paymentHistory: SupplierPaymentRecord[];
 }
 
-export const fetchInventoryDashboard = (paramsOrBranchId?: string | { branch?: string }) => {
+export const fetchInventoryDashboard = (paramsOrBranchId?: string | { branch?: string }, signal?: AbortSignal) => {
   const branch = typeof paramsOrBranchId === 'string' ? paramsOrBranchId : paramsOrBranchId?.branch;
   const queryStr = branch && branch !== 'all' ? `?branch=${encodeURIComponent(branch)}` : '';
-  return api<{ stats: import('../../shared/types.ts').InventoryDashboardStats }>(`/api/inventory/dashboard${queryStr}`);
+  return api<{ stats: import('../../shared/types.ts').InventoryDashboardStats }>(`/api/inventory/dashboard${queryStr}`, { signal });
 };
 
 export const fetchInventoryItems = (params: {
@@ -888,7 +888,7 @@ export const fetchInventoryItems = (params: {
   limit?: number;
   offset?: number;
   branch?: string;
-} = {}) => {
+} = {}, signal?: AbortSignal) => {
   const sp = new URLSearchParams();
   if (params.q) sp.set('q', params.q);
   if (params.category && params.category !== 'ALL') sp.set('category', params.category);
@@ -899,7 +899,7 @@ export const fetchInventoryItems = (params: {
   if (params.offset) sp.set('offset', String(params.offset));
   if (params.branch) sp.set('branch', params.branch);
   const queryStr = sp.toString() ? `?${sp.toString()}` : '';
-  return api<{ items: Item[]; total: number; limit: number; offset: number }>(`/api/inventory/items${queryStr}`);
+  return api<{ items: Item[]; total: number; limit: number; offset: number }>(`/api/inventory/items${queryStr}`, { signal });
 };
 
 export const fetchStockLedger = (params: {
@@ -910,7 +910,7 @@ export const fetchStockLedger = (params: {
   q?: string;
   limit?: number;
   offset?: number;
-} = {}) => {
+} = {}, signal?: AbortSignal) => {
   const sp = new URLSearchParams();
   if (params.itemId) sp.set('itemId', params.itemId);
   if (params.kind && params.kind !== 'ALL') sp.set('kind', params.kind);
@@ -920,7 +920,7 @@ export const fetchStockLedger = (params: {
   if (params.limit) sp.set('limit', String(params.limit));
   if (params.offset) sp.set('offset', String(params.offset));
   const queryStr = sp.toString() ? `?${sp.toString()}` : '';
-  return api<{ moves: import('../../shared/types.ts').StockMove[]; total: number; limit: number; offset: number }>(`/api/inventory/ledger${queryStr}`);
+  return api<{ moves: import('../../shared/types.ts').StockMove[]; total: number; limit: number; offset: number }>(`/api/inventory/ledger${queryStr}`, { signal });
 };
 
 export const adjustStock = (data: {
@@ -936,8 +936,8 @@ export const adjustStock = (data: {
     body: JSON.stringify(data),
   });
 
-export const fetchStockCounts = () =>
-  api<{ counts: import('../../shared/types.ts').StockCount[] }>('/api/inventory/counts');
+export const fetchStockCounts = (signal?: AbortSignal) =>
+  api<{ counts: import('../../shared/types.ts').StockCount[] }>('/api/inventory/counts', { signal });
 
 export const startStockCount = (data: { name: string; category?: string; notes?: string }) =>
   api<{ ok: boolean; count: import('../../shared/types.ts').StockCount }>('/api/inventory/counts', {
@@ -973,8 +973,8 @@ export const updateItemReorder = (
     body: JSON.stringify(data),
   });
 
-export const fetchInventoryInsights = () =>
-  api<{ insights: import('../../shared/types.ts').InventoryInsights }>('/api/inventory/insights');
+export const fetchInventoryInsights = (signal?: AbortSignal) =>
+  api<{ insights: import('../../shared/types.ts').InventoryInsights }>('/api/inventory/insights', { signal });
 
 export const fetchProductMovementAnalysis = (params: {
   range?: string;

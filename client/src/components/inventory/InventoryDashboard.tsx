@@ -22,6 +22,11 @@ import { StockLedgerView } from './StockLedgerView.tsx';
 import { StockAdjustmentModal } from './StockAdjustmentModal.tsx';
 import { PhysicalStockCountView } from './PhysicalStockCountView.tsx';
 import { ReorderConfigModal } from './ReorderConfigModal.tsx';
+import { Skeleton } from '../common/Skeleton.tsx';
+import { TableSkeleton, type TableSkeletonColumn } from '../common/TableSkeleton.tsx';
+import { CardSkeleton } from '../common/CardSkeleton.tsx';
+import { ChartSkeleton } from '../common/ChartSkeleton.tsx';
+import { useDelayedLoading } from '../../hooks/useDelayedLoading.ts';
 import {
   TagIcon,
   SlidersIcon,
@@ -211,20 +216,188 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
     }
     return null;
   });
-  const [statsLoading, setStatsLoading] = useState<boolean>(() => initialScoped.length === 0);
+  const [statsLoading, setStatsLoading] = useState<boolean>(true);
 
   const [insights, setInsights] = useState<InventoryInsights | null>(null);
   const [insightsLoading, setInsightsLoading] = useState<boolean>(false);
 
-  // Items table state - initialized immediately with memory items if available
-  const [tableItems, setTableItems] = useState<Item[]>(() => {
-    if (initialScoped.length > 0) {
-      return initialScoped.slice(0, 15);
-    }
-    return [];
+  // Items table state
+  const [tableItems, setTableItems] = useState<Item[]>([]);
+  const [totalItems, setTotalItems] = useState<number>(0);
+  const [itemsLoading, setItemsLoading] = useState<boolean>(true);
+
+  // Tab-specific caching & cancellation
+  const tabCacheRef = useRef<{
+    overview: boolean;
+    ledger: boolean;
+    counts: boolean;
+    replenish: boolean;
+    insights: boolean;
+  }>({
+    overview: false,
+    ledger: false,
+    counts: false,
+    replenish: false,
+    insights: false,
   });
-  const [totalItems, setTotalItems] = useState<number>(() => initialScoped.length);
-  const [itemsLoading, setItemsLoading] = useState<boolean>(() => initialScoped.length === 0);
+
+  const tabAbortControllerRef = useRef<AbortController | null>(null);
+
+  const [overviewError, setOverviewError] = useState<string | null>(null);
+  const [replenishError, setReplenishError] = useState<string | null>(null);
+  const [insightsError, setInsightsError] = useState<string | null>(null);
+
+  // Debounce search query by 300ms to preserve focus and reduce network pressure
+  const [debouncedSearch, setDebouncedSearch] = useState<string>('');
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
+
+  // Delayed loading states (300ms wait, 400ms minDuration, 8000ms slow threshold)
+  const {
+    showSkeleton: showOverviewDelayed,
+    isSlow: isOverviewSlow,
+    cancelSlow: cancelOverviewSlow,
+  } = useDelayedLoading(itemsLoading && !tabCacheRef.current.overview, 300, 400, 8000);
+
+  // Show skeleton immediately on first load/tab switch before cached; otherwise delayed
+  const showOverviewSkeleton = (itemsLoading && !tabCacheRef.current.overview) || showOverviewDelayed;
+  const isOverviewRefreshing = itemsLoading && tabCacheRef.current.overview;
+
+  const {
+    showSkeleton: showReplenishDelayed,
+    isSlow: isReplenishSlow,
+    cancelSlow: cancelReplenishSlow,
+  } = useDelayedLoading(statsLoading && !tabCacheRef.current.replenish, 300, 400, 8000);
+
+  const showReplenishSkeleton = (statsLoading && !tabCacheRef.current.replenish) || showReplenishDelayed;
+  const isReplenishRefreshing = statsLoading && tabCacheRef.current.replenish;
+
+  const {
+    showSkeleton: showInsightsDelayed,
+    isSlow: isInsightsSlow,
+    cancelSlow: cancelInsightsSlow,
+  } = useDelayedLoading(insightsLoading && !tabCacheRef.current.insights, 300, 400, 8000);
+
+  const showInsightsSkeleton = (insightsLoading && !tabCacheRef.current.insights) || showInsightsDelayed;
+  const isInsightsRefreshing = insightsLoading && tabCacheRef.current.insights;
+
+  const handleSwitchTab = (tab: 'overview' | 'ledger' | 'counts' | 'replenish' | 'insights') => {
+    if (tabAbortControllerRef.current) {
+      tabAbortControllerRef.current.abort();
+    }
+    tabAbortControllerRef.current = new AbortController();
+    setActiveSubTab(tab);
+
+    if (tab === 'overview') {
+      loadTableItems();
+    } else if (tab === 'replenish') {
+      loadDashboardStats();
+    } else if (tab === 'insights') {
+      loadInsights();
+    }
+  };
+
+  const overviewSkeletonColumns: TableSkeletonColumn[] = [
+    {
+      header: 'Image',
+      width: '64px',
+      minWidth: '64px',
+      align: 'center',
+      renderSkeleton: () => (
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <Skeleton width={48} height={48} radius={8} />
+        </div>
+      ),
+    },
+    {
+      header: 'Product & Identifiers',
+      minWidth: '170px',
+      renderSkeleton: () => (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+          <Skeleton width={180} height={14} radius={4} />
+          <Skeleton width={220} height={11} radius={4} />
+        </div>
+      ),
+    },
+    {
+      header: 'Branch',
+      minWidth: '130px',
+      renderSkeleton: () => <Skeleton width={160} height={32} radius={6} />,
+    },
+    {
+      header: 'Category',
+      minWidth: '140px',
+      renderSkeleton: () => <Skeleton width={130} height={28} radius={9999} />,
+    },
+    {
+      header: 'Current Stock',
+      minWidth: '100px',
+      align: 'right',
+      renderSkeleton: () => (
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Skeleton width={60} height={12} radius={4} />
+        </div>
+      ),
+    },
+    {
+      header: 'Status',
+      minWidth: '110px',
+      renderSkeleton: () => <Skeleton width={90} height={28} radius={9999} />,
+    },
+    {
+      header: 'Reorder Level',
+      minWidth: '95px',
+      align: 'right',
+      renderSkeleton: () => (
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Skeleton width={60} height={12} radius={4} />
+        </div>
+      ),
+    },
+    ...(isAuthorizedForCost
+      ? [
+          {
+            header: 'Unit Cost',
+            minWidth: '85px',
+            align: 'right' as const,
+            renderSkeleton: () => (
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <Skeleton width={75} height={12} radius={4} />
+              </div>
+            ),
+          },
+          {
+            header: 'Total Value',
+            minWidth: '95px',
+            align: 'right' as const,
+            renderSkeleton: () => (
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <Skeleton width={85} height={12} radius={4} />
+              </div>
+            ),
+          },
+        ]
+      : []),
+    {
+      header: 'Supplier',
+      minWidth: '160px',
+      renderSkeleton: () => <Skeleton width={100} height={12} radius={4} />,
+    },
+    {
+      header: 'Actions',
+      minWidth: '120px',
+      align: 'right',
+      renderSkeleton: () => (
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Skeleton width={80} height={30} radius={6} />
+        </div>
+      ),
+    },
+  ];
 
   // Fallback function to populate table from local catalog items if API fails or times out
   const fallbackToLocalItems = useCallback(() => {
@@ -250,10 +423,7 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
   // Load dashboard stats from server - never blank out existing data with skeletons
   const loadDashboardStats = useCallback(async () => {
     const seq = ++statsReqSeq.current;
-    setStats((prev) => {
-      if (!prev) setStatsLoading(true);
-      return prev;
-    });
+    setStatsLoading(true);
 
     const timer = setTimeout(() => {
       if (statsReqSeq.current === seq) {
@@ -280,11 +450,13 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
     }, 2500);
 
     try {
-      const res = await fetchInventoryDashboard(selectedBranch);
+      const res = await fetchInventoryDashboard(selectedBranch, tabAbortControllerRef.current?.signal);
       if (statsReqSeq.current === seq) {
         clearTimeout(timer);
         if (res && res.stats) {
           setStats(res.stats);
+          tabCacheRef.current.replenish = true;
+          setReplenishError(null);
         } else if (itemsRef.current && itemsRef.current.length > 0) {
           const scoped = getBranchScopedItems(itemsRef.current);
           const fallback = calculateInventorySummary(scoped);
@@ -302,12 +474,15 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
             recentMovements: [],
             replenishmentNeeded: [],
           });
+          tabCacheRef.current.replenish = true;
         }
       }
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.name === 'AbortError') return;
       console.error('Failed to load inventory stats:', err);
       if (statsReqSeq.current === seq) {
         clearTimeout(timer);
+        setReplenishError(err?.message || 'Failed to load replenishment suggestions');
         if (itemsRef.current && itemsRef.current.length > 0) {
           const scoped = getBranchScopedItems(itemsRef.current);
           const fallback = calculateInventorySummary(scoped);
@@ -338,11 +513,15 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
   // Load Phase 3 insights
   const loadInsights = useCallback(async () => {
     setInsightsLoading(true);
+    setInsightsError(null);
     try {
-      const res = await fetchInventoryInsights();
+      const res = await fetchInventoryInsights(tabAbortControllerRef.current?.signal);
       setInsights(res.insights);
-    } catch (err) {
+      tabCacheRef.current.insights = true;
+    } catch (err: any) {
+      if (err?.name === 'AbortError') return;
       console.error('Failed to load inventory insights:', err);
+      setInsightsError(err?.message || 'Failed to load inventory intelligence.');
     } finally {
       setInsightsLoading(false);
     }
@@ -351,10 +530,8 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
   // Load items table with watchdog timeout - never blank out existing table items
   const loadTableItems = useCallback(async () => {
     const seq = ++itemsReqSeq.current;
-    setTableItems((prev) => {
-      if (prev.length === 0) setItemsLoading(true);
-      return prev;
-    });
+    setItemsLoading(true);
+    setOverviewError(null);
 
     const timer = setTimeout(() => {
       if (itemsReqSeq.current === seq) {
@@ -364,31 +541,40 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
     }, 2500);
 
     try {
-      const res = await fetchInventoryItems({
-        q: searchQuery.trim() || undefined,
-        category: categoryFilter !== 'ALL' ? categoryFilter : undefined,
-        status: statusFilter !== 'all' ? statusFilter : undefined,
-        sort: sortField,
-        branchId: selectedBranch,
-        limit: pageSize,
-        offset: (page - 1) * pageSize,
-        branch: selectedBranch,
-      });
+      const res = await fetchInventoryItems(
+        {
+          q: debouncedSearch.trim() || undefined,
+          category: categoryFilter !== 'ALL' ? categoryFilter : undefined,
+          status: statusFilter !== 'all' ? statusFilter : undefined,
+          sort: sortField,
+          branchId: selectedBranch,
+          limit: pageSize,
+          offset: (page - 1) * pageSize,
+          branch: selectedBranch,
+        },
+        tabAbortControllerRef.current?.signal
+      );
 
       if (itemsReqSeq.current === seq) {
         clearTimeout(timer);
         if (res && Array.isArray(res.items)) {
           setTableItems(res.items);
           setTotalItems(res.total ?? res.items.length);
+          tabCacheRef.current.overview = true;
         } else {
           fallbackToLocalItems();
+          tabCacheRef.current.overview = true;
         }
       }
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.name === 'AbortError') return;
       console.error('Failed to load inventory items:', err);
       if (itemsReqSeq.current === seq) {
         clearTimeout(timer);
         fallbackToLocalItems();
+        if (tableItems.length === 0) {
+          setOverviewError(err?.message || 'Failed to load stock items');
+        }
       }
     } finally {
       if (itemsReqSeq.current === seq) {
@@ -396,7 +582,7 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
         setItemsLoading(false);
       }
     }
-  }, [searchQuery, categoryFilter, statusFilter, sortField, selectedBranch, page, pageSize, fallbackToLocalItems]);
+  }, [debouncedSearch, categoryFilter, statusFilter, sortField, selectedBranch, page, pageSize, fallbackToLocalItems]);
 
   // 1. Initial mount and branch change: load stats & items
   useEffect(() => {
@@ -409,7 +595,7 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
   useEffect(() => {
     loadTableItems();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchQuery, categoryFilter, statusFilter, sortField, page, pageSize]);
+  }, [debouncedSearch, categoryFilter, statusFilter, sortField, page, pageSize]);
 
   // 3. Sub-tab insights change
   useEffect(() => {
@@ -968,7 +1154,7 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
           type="button"
           className={`inv-tab-btn ${activeSubTab === 'overview' ? 'active' : ''}`}
           onClick={() => {
-            setActiveSubTab('overview');
+            handleSwitchTab('overview');
             setStatusFilter('all');
           }}
         >
@@ -980,7 +1166,7 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
           className={`inv-tab-btn ${activeSubTab === 'ledger' ? 'active' : ''}`}
           onClick={() => {
             setSelectedLedgerItemId(undefined);
-            setActiveSubTab('ledger');
+            handleSwitchTab('ledger');
           }}
         >
           <FileTextIcon size={16} />
@@ -989,7 +1175,7 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
         <button
           type="button"
           className={`inv-tab-btn ${activeSubTab === 'counts' ? 'active' : ''}`}
-          onClick={() => setActiveSubTab('counts')}
+          onClick={() => handleSwitchTab('counts')}
         >
           <ClipboardCheckIcon size={16} />
           <span>Physical Stock Counts</span>
@@ -997,26 +1183,30 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
         <button
           type="button"
           className={`inv-tab-btn ${activeSubTab === 'replenish' ? 'active' : ''}`}
-          onClick={() => setActiveSubTab('replenish')}
+          onClick={() => handleSwitchTab('replenish')}
         >
           <BellRingIcon size={16} />
           <span>Replenishment Suggestions</span>
-          {stats && stats.replenishmentNeeded.length > 0 && (
+          {statsLoading && !stats ? (
+            <Skeleton width={20} height={20} circle className="tab-badge-skeleton" />
+          ) : stats && stats.replenishmentNeeded.length > 0 ? (
             <span className="tab-count-badge red blinking-badge-red">{stats.replenishmentNeeded.length}</span>
-          )}
+          ) : null}
         </button>
         <button
           type="button"
           className={`inv-tab-btn ${activeSubTab === 'insights' ? 'active' : ''}`}
-          onClick={() => setActiveSubTab('insights')}
+          onClick={() => handleSwitchTab('insights')}
         >
           <ZapIcon size={16} />
           <span>Insights & Risk Intelligence</span>
-          {insights && ((insights.stockoutRisks?.length || 0) + (insights.batchWarnings?.length || 0) > 0) && (
+          {insightsLoading && !insights ? (
+            <Skeleton width={20} height={20} circle className="tab-badge-skeleton" />
+          ) : insights && ((insights.stockoutRisks?.length || 0) + (insights.batchWarnings?.length || 0) > 0) ? (
             <span className="tab-count-badge amber">
               {(insights.stockoutRisks?.length || 0) + (insights.batchWarnings?.length || 0)}
             </span>
-          )}
+          ) : null}
         </button>
       </div>
 
@@ -1032,6 +1222,7 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
                 className="inv-search-input"
                 placeholder="Search products by name, SKU, or barcode..."
                 value={searchQuery}
+                disabled={showOverviewSkeleton}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
                   setPage(1);
@@ -1041,6 +1232,7 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
                 <button
                   type="button"
                   className="clear-search-btn"
+                  disabled={showOverviewSkeleton}
                   onClick={() => {
                     setSearchQuery('');
                     setPage(1);
@@ -1057,6 +1249,7 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
                 <button
                   type="button"
                   className={`cat-btn-primary btn-stock-adjustment ${isSuperAdmin ? 'btn-stock-adjust-deep-plum' : ''}`}
+                  disabled={showOverviewSkeleton}
                   onClick={() => {
                     setAdjustmentTargetItem(null);
                     setShowAdjustmentModal(true);
@@ -1075,29 +1268,30 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
                     alignItems: 'center',
                     gap: '6px',
                     whiteSpace: 'nowrap',
-                    cursor: 'pointer',
+                    cursor: showOverviewSkeleton ? 'not-allowed' : 'pointer',
                     boxShadow: isSuperAdmin ? '0 2px 6px rgba(73, 54, 74, 0.25)' : 'none',
                     transition: 'all 0.15s ease',
+                    opacity: showOverviewSkeleton ? 0.65 : 1,
                   }}
                   onMouseEnter={(e) => {
-                    if (isSuperAdmin) {
+                    if (isSuperAdmin && !showOverviewSkeleton) {
                       e.currentTarget.style.background = '#604B61';
                       e.currentTarget.style.borderColor = '#49364A';
                     }
                   }}
                   onMouseLeave={(e) => {
-                    if (isSuperAdmin) {
+                    if (isSuperAdmin && !showOverviewSkeleton) {
                       e.currentTarget.style.background = '#49364A';
                       e.currentTarget.style.borderColor = '#352638';
                     }
                   }}
                   onMouseDown={(e) => {
-                    if (isSuperAdmin) {
+                    if (isSuperAdmin && !showOverviewSkeleton) {
                       e.currentTarget.style.background = '#352638';
                     }
                   }}
                   onMouseUp={(e) => {
-                    if (isSuperAdmin) {
+                    if (isSuperAdmin && !showOverviewSkeleton) {
                       e.currentTarget.style.background = '#604B61';
                     }
                   }}
@@ -1109,6 +1303,7 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
                 <button
                   type="button"
                   className="cat-btn-secondary"
+                  disabled={showOverviewSkeleton}
                   onClick={onOpenSupplierInvoiceConverter}
                   title="Convert Supplier Invoice PDF/Image into Excel for Import"
                   style={{
@@ -1124,7 +1319,8 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
                     alignItems: 'center',
                     gap: '6px',
                     whiteSpace: 'nowrap',
-                    cursor: 'pointer',
+                    cursor: showOverviewSkeleton ? 'not-allowed' : 'pointer',
+                    opacity: showOverviewSkeleton ? 0.65 : 1,
                   }}
                 >
                   <FileTextIcon size={14} /> Convert Invoice to Excel
@@ -1134,6 +1330,7 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
               <select
                 className="inv-select"
                 value={categoryFilter}
+                disabled={showOverviewSkeleton}
                 onChange={(e) => {
                   setCategoryFilter(e.target.value);
                   setPage(1);
@@ -1159,6 +1356,7 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
               <select
                 className="inv-select"
                 value={statusFilter}
+                disabled={showOverviewSkeleton}
                 onChange={(e) => {
                   setStatusFilter(e.target.value);
                   setPage(1);
@@ -1177,6 +1375,7 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
               <select
                 className="inv-select"
                 value={sortField}
+                disabled={showOverviewSkeleton}
                 onChange={(e) => {
                   setSortField(e.target.value);
                   setPage(1);
@@ -1191,12 +1390,38 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
             </div>
           </div>
 
+          {/* Refresh Indeterminate Progress Bar */}
+          {isOverviewRefreshing && (
+            <div className="refresh-progress-bar-wrap">
+              <div className="progress-line" />
+            </div>
+          )}
+
           {/* Items Table */}
           <div className="ledger-table-wrap">
-            {itemsLoading && tableItems.length === 0 ? (
-              <div className="table-loading-spinner">
-                <div className="spinner"></div>
-                <p>Loading inventory balances...</p>
+            {showOverviewSkeleton ? (
+              <TableSkeleton
+                columns={overviewSkeletonColumns}
+                rowCount={8}
+                rowHeight={64}
+                isSlow={isOverviewSlow}
+                onCancel={() => {
+                  if (tabAbortControllerRef.current) tabAbortControllerRef.current.abort();
+                  setItemsLoading(false);
+                  cancelOverviewSlow();
+                }}
+                loadingText="Loading stock items..."
+              />
+            ) : overviewError ? (
+              <div className="inline-error-card-state">
+                <div className="error-icon-box">
+                  <AlertTriangleIcon size={24} />
+                </div>
+                <h4>Couldn't load stock items</h4>
+                <p>{overviewError}</p>
+                <button type="button" className="error-retry-btn" onClick={loadTableItems}>
+                  Retry Loading
+                </button>
               </div>
             ) : tableItems.length === 0 ? (
               <div className="table-empty-state">
@@ -1236,7 +1461,7 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
                 )}
               </div>
             ) : (
-              <table className="inventory-data-table">
+              <table className={`inventory-data-table ${isOverviewRefreshing ? 'table-refreshing-dim' : 'skeleton-fade-in'}`}>
                 <thead>
                   <tr>
                     <th style={{ width: '64px', minWidth: '64px', textAlign: 'center' }}>Image</th>
@@ -1461,8 +1686,50 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
                       </tr>
                     );
                   })}
+                  {isOverviewRefreshing && (
+                    <>
+                      {Array.from({ length: 3 }).map((_, rIdx) => (
+                        <tr
+                          key={`more-skel-${rIdx}`}
+                          className="table-skeleton-row"
+                          style={{
+                            height: 64,
+                            opacity: rIdx === 2 ? 0.5 : 0.85,
+                          }}
+                        >
+                          {overviewSkeletonColumns.map((col, cIdx) => (
+                            <td
+                              key={`more-skel-${rIdx}-${cIdx}`}
+                              style={{
+                                width: col.width,
+                                minWidth: col.minWidth,
+                                textAlign: col.align || 'left',
+                                padding: '0.65rem 0.85rem',
+                              }}
+                            >
+                              {col.renderSkeleton ? (
+                                col.renderSkeleton(rIdx)
+                              ) : (
+                                <Skeleton
+                                  width={`${Math.floor(65 + ((rIdx * 19 + cIdx * 13) % 30))}%`}
+                                  height={14}
+                                  radius={4}
+                                />
+                              )}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </>
+                  )}
                 </tbody>
               </table>
+            )}
+            {isOverviewRefreshing && tableItems.length > 0 && (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '10px 0', color: '#64748b', fontSize: '13px' }}>
+                <div className="slow-load-spinner" style={{ width: 14, height: 14, borderTopColor: '#3B1E36', borderColor: '#E2E8F0' }} />
+                <span>Loading 25 more…</span>
+              </div>
             )}
           </div>
 
@@ -1549,14 +1816,52 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
             </div>
           </div>
 
-          {!stats || stats.replenishmentNeeded.length === 0 ? (
+          {isReplenishRefreshing && (
+            <div className="refresh-progress-bar-wrap">
+              <div className="progress-line" />
+            </div>
+          )}
+
+          {replenishError ? (
+            <div className="inline-error-card-state" style={{ marginTop: '1rem' }}>
+              <div className="error-icon-box">
+                <AlertTriangleIcon size={24} />
+              </div>
+              <h4>Couldn't load replenishment recommendations</h4>
+              <p>{replenishError}</p>
+              <button
+                type="button"
+                className="error-retry-btn"
+                onClick={() => loadDashboardStats()}
+              >
+                Retry Loading
+              </button>
+            </div>
+          ) : showReplenishSkeleton ? (
+            <div aria-busy="true" style={{ marginTop: '1rem' }}>
+              <div className="visually-hidden" aria-live="polite">Loading replenishment suggestions…</div>
+              {isReplenishSlow && (
+                <div className="slow-load-strip">
+                  <div className="slow-load-strip-content">
+                    <div className="slow-load-spinner" />
+                    <span>This is taking longer than usual...</span>
+                  </div>
+                  <button type="button" className="slow-load-cancel-btn" onClick={cancelReplenishSlow}>
+                    Cancel
+                  </button>
+                </div>
+              )}
+              <CardSkeleton variant="replenish" count={4} className={isReplenishSlow ? 'slow-load-fade-mask' : ''} />
+            </div>
+          ) : !stats || stats.replenishmentNeeded.length === 0 ? (
             <div className="table-empty-state">
               <CheckCircleIcon size={36} style={{ color: "#10b981", marginBottom: "0.5rem" }} />
               <h3>All Products Sufficiently Stocked</h3>
               <p>No products have currently dropped to or below their configured reorder levels.</p>
             </div>
           ) : (
-            <div className="ledger-table-wrap">
+            <div className={`ledger-table-wrap ${isReplenishRefreshing ? 'table-refreshing-dim' : 'skeleton-fade-in'}`}>
+              <div className="visually-hidden" aria-live="polite">Replenishment suggestions loaded</div>
               <table className="inventory-data-table replenishment-table">
                 <thead>
                   <tr>
@@ -1715,22 +2020,70 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
       {/* SUB-VIEW 5: Insights & Risk Intelligence (Phase 3) */}
       {activeSubTab === 'insights' && (
         <div className="inv-subview-content">
-          {insightsLoading ? (
-            <div className="table-loading-spinner">
-              <div className="spinner"></div>
-              <p>Checking stock alerts, sales rates, and inventory status...</p>
+          {isInsightsRefreshing && (
+            <div className="refresh-progress-bar-wrap">
+              <div className="progress-line" />
+            </div>
+          )}
+
+          {insightsError ? (
+            <div className="inline-error-card-state" style={{ marginTop: '1rem' }}>
+              <div className="error-icon-box">
+                <AlertTriangleIcon size={24} />
+              </div>
+              <h4>Unable to Load Insights</h4>
+              <p>{insightsError}</p>
+              <button type="button" className="error-retry-btn" onClick={() => loadInsights()}>
+                Retry Analysis
+              </button>
+            </div>
+          ) : showInsightsSkeleton ? (
+            <div className={`insights-skeleton-wrapper ${isInsightsSlow ? 'slow-load-fade-mask' : ''}`} aria-busy="true" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginTop: '1rem' }}>
+              <div className="visually-hidden" aria-live="polite">Loading inventory intelligence and risk alerts…</div>
+              {isInsightsSlow && (
+                <div className="slow-load-strip">
+                  <div className="slow-load-strip-content">
+                    <div className="slow-load-spinner" />
+                    <span>This is taking longer than usual...</span>
+                  </div>
+                  <button type="button" className="slow-load-cancel-btn" onClick={cancelInsightsSlow}>
+                    Cancel
+                  </button>
+                </div>
+              )}
+              {/* KPI row: 4 cards */}
+              <CardSkeleton variant="kpi" count={4} />
+
+              {/* Large chart card: full width, 280px tall */}
+              <ChartSkeleton type="bar" height={280} titleWidth={220} barsCount={8} />
+
+              {/* Two half-width chart cards: 220px tall */}
+              <div className="insights-grid">
+                <ChartSkeleton type="line" height={220} titleWidth={180} barsCount={6} />
+                <ChartSkeleton type="donut" height={220} titleWidth={160} />
+              </div>
+
+              {/* Risk alerts list: 3 rows */}
+              <div className="insights-panel-card" style={{ padding: '1.25rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                  <Skeleton width={180} height={16} radius={4} />
+                  <Skeleton width={80} height={20} radius={9999} />
+                </div>
+                <CardSkeleton variant="risk_alert" count={3} />
+              </div>
             </div>
           ) : !insights ? (
             <div className="table-empty-state">
               <AlertTriangleIcon size={40} style={{ color: "#f59e0b", marginBottom: "0.5rem" }} />
               <h3>Unable to Load Insights</h3>
               <p>An error occurred while computing inventory intelligence.</p>
-              <button type="button" className="btn-primary" onClick={loadInsights} style={{ marginTop: '0.75rem' }}>
+              <button type="button" className="btn-primary" onClick={() => loadInsights()} style={{ marginTop: '0.75rem' }}>
                 Retry Analysis
               </button>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <div className={`insights-content-loaded ${isInsightsRefreshing ? 'table-refreshing-dim' : 'skeleton-fade-in'}`} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              <div className="visually-hidden" aria-live="polite">Inventory intelligence loaded</div>
               {/* Row 1: Stock Alert & Days Remaining + Slow Moving Dead Stock */}
               <div className="insights-grid">
                 {/* 1. Stock Alert & Days Remaining */}

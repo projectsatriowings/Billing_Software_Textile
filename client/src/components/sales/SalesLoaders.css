@@ -1,0 +1,807 @@
+/* ==========================================================================
+   CONTENT-SHAPED SALES ANALYSIS LOADERS & DEEP PLUM THEME
+   Plum-tint placeholders (#EADFE8), bars (#E2D2DF), borders (#EEE7EC)
+   Deep Plum Theme (#3B1E36)
+   ========================================================================== */
+
+/* ── 1. PULSE BAR ── */
+.sales-pulse-bar {
+  display: inline-block;
+  vertical-align: middle;
+  background-color: #EADFE8;
+  border-radius: 6px;
+  box-sizing: border-box;
+  animation: salesPulse 1.6s ease-in-out infinite;
+}
+
+.sales-pulse-bar.circle {
+  border-radius: 50% !important;
+}
+
+@keyframes salesPulse {
+  0%, 100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* ── 2. CARDS CONTAINER & SECTION CARD ── */
+.sales-kpi-4-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.15rem;
+  margin-top: 1.15rem;
+}
+
+@media (max-width: 1100px) {
+  .sales-kpi-4-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .sales-kpi-4-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sales-row-2fr-1fr {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.15rem;
+  margin-top: 1.15rem;
+}
+
+@media (max-width: 1024px) {
+  .sales-row-2fr-1fr {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sales-section-card {
+  background: #ffffff;
+  border: 1px solid #EEE7EC;
+  border-radius: 16px;
+  padding: 1.35rem 1.5rem;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 1px 3px rgba(59, 30, 54, 0.03);
+  animation: salesCardFadeUp 400ms ease-out forwards;
+}
+
+.sales-kpi-card-wrapper {
+  background: #ffffff;
+  border: 1px solid #EEE7EC;
+  border-radius: 16px;
+  padding: 1.25rem 1.35rem;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 1px 3px rgba(59, 30, 54, 0.03);
+  animation: salesCardFadeUp 400ms ease-out forwards;
+}
+
+@keyframes salesCardFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── 3. REFRESH STATE (2PX INDETERMINATE PLUM PROGRESS BAR) ── */
+.card-refresh-progress-wrap {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: #F3EDF1;
+  overflow: hidden;
+  z-index: 10;
+}
+
+.card-refresh-progress-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 35%;
+  background-color: #3B1E36;
+  border-radius: 2px;
+  animation: salesIndeterminate 1.3s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes salesIndeterminate {
+  0% {
+    left: -35%;
+    width: 35%;
+  }
+  50% {
+    left: 40%;
+    width: 45%;
+  }
+  100% {
+    left: 100%;
+    width: 35%;
+  }
+}
+
+.is-refreshing-dim {
+  opacity: 0.5 !important;
+  pointer-events: none !important;
+  transition: opacity 200ms ease;
+}
+
+.section-card-content-fade {
+  animation: salesCrossFade 200ms ease-out forwards;
+}
+
+.section-card-placeholder-fade {
+  animation: salesCrossFade 200ms ease-out forwards;
+}
+
+@keyframes salesCrossFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ── 4. REAL SECTION CARD HEADERS ── */
+.sales-section-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.section-card-real-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #3B1E36;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.section-card-real-subtitle {
+  font-size: 12px;
+  color: #7C6878;
+  margin: 2px 0 0 0;
+}
+
+.sales-section-card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── 5. KPI CARD SPECIFICS ── */
+.kpi-loader-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.kpi-real-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #5B4A58;
+}
+
+.kpi-loader-trend-row {
+  margin-bottom: 0.75rem;
+}
+
+.kpi-loader-bottom-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+/* ── 6. EQUALIZER CHART (SALES TREND) ── */
+.sales-equalizer-chart-wrap {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.equalizer-header-sub {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-bottom: 0.75rem;
+}
+
+.equalizer-chart-area {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding-bottom: 6px;
+}
+
+.equalizer-bars-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px;
+  height: calc(100% - 10px);
+  width: 100%;
+  padding: 0 4px;
+}
+
+.equalizer-bar-col {
+  flex: 1;
+  max-width: 28px;
+  background-color: #E2D2DF;
+  border-radius: 4px 4px 0 0;
+  transform-origin: bottom;
+  animation: salesEqualizerWave 1.2s ease-in-out infinite;
+}
+
+@keyframes salesEqualizerWave {
+  0%, 100% {
+    transform: scaleY(0.55);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+.equalizer-dashed-baseline {
+  width: 100%;
+  height: 1px;
+  border-bottom: 1.5px dashed #DDD2DC;
+  margin-top: 4px;
+}
+
+/* ── 6b. SPLINE AREA LOADER (REVENUE BREAKDOWN) ── */
+.sales-spline-loader-wrap {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.spline-loader-header-sub {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-bottom: 0.75rem;
+}
+
+.spline-loader-chart-area {
+  position: relative;
+  width: 100%;
+}
+
+.spline-loader-path-area {
+  animation: salesPulse 2s ease-in-out infinite;
+}
+
+.spline-loader-path-area2 {
+  animation: salesPulse 2s ease-in-out infinite 0.3s;
+}
+
+.spline-dashed-baseline {
+  width: 100%;
+  height: 1px;
+  border-bottom: 1.5px dashed #DDD2DC;
+  margin-top: 4px;
+}
+
+.sales-section-card.is-borderless-loaded {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+/* ── 7. DONUT LOADER (PAYMENT MODES) ── */
+.sales-donut-loader-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  padding: 0.5rem 0;
+}
+
+.donut-ring-stage {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.donut-spinning-segment {
+  transform-origin: center;
+  animation: salesDonutSpin 1.4s linear infinite;
+}
+
+@keyframes salesDonutSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.donut-modes-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px 18px;
+  width: 100%;
+  max-width: 290px;
+}
+
+.donut-mode-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.donut-mode-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #5B4A58;
+}
+
+/* ── 8. HEATMAP LOADER (PEAK HOURS) ── */
+.sales-heatmap-loader-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 0.25rem 0;
+}
+
+.heatmap-loader-header-hours {
+  display: grid;
+  grid-template-columns: 38px repeat(12, 22px);
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.heatmap-loader-day-spacer {
+  width: 38px;
+}
+
+.heatmap-loader-hour-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: #8C7087;
+  text-align: center;
+}
+
+.heatmap-loader-grid-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.heatmap-loader-row {
+  display: grid;
+  grid-template-columns: 38px repeat(12, 22px);
+  gap: 6px;
+  align-items: center;
+}
+
+.heatmap-loader-day-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #5B4A58;
+}
+
+.heatmap-loader-cells-row {
+  display: contents;
+}
+
+.heatmap-loader-cell {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  background-color: #EADFE8;
+  animation: salesHeatmapWave 1.8s ease-in-out infinite;
+}
+
+@keyframes salesHeatmapWave {
+  0%, 100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* ── 9. TOP CASHIERS LOADER ── */
+.sales-cashiers-loader-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.cashier-loader-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.cashier-loader-center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.cashier-loader-track {
+  width: 100%;
+  height: 6px;
+  background-color: #F3EDF1;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.cashier-loader-bar {
+  height: 100%;
+  background-color: #E2D2DF;
+  border-radius: 9999px;
+  animation: salesPulse 1.6s ease-in-out infinite;
+}
+
+/* ── 10. INLINE SECTION ERROR CARD ── */
+.section-card-inline-error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 1rem 1.15rem;
+  background: #FFF1F2;
+  border: 1px solid #FECDD3;
+  border-radius: 10px;
+  color: #9F1239;
+  font-size: 13px;
+  font-weight: 600;
+  margin: auto 0;
+}
+
+.section-retry-btn {
+  background: #3B1E36;
+  color: #ffffff;
+  border: none;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: auto;
+  transition: background 0.15s ease;
+}
+
+.section-retry-btn:hover {
+  background: #502A49;
+}
+
+/* ── 11. HEADER SYNCING PILL WITH 3 PULSING DOTS ── */
+.badge-syncing-pulse {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(124, 58, 237, 0.08);
+  color: #7C3AED;
+  border: 1px solid rgba(124, 58, 237, 0.22);
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  letter-spacing: 0.2px;
+}
+
+.syncing-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 3.5px;
+}
+
+.syncing-dots .dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: #7C3AED;
+  display: inline-block;
+  animation: salesSyncDotPulse 1.2s infinite ease-in-out;
+}
+
+.syncing-dots .dot-1 {
+  animation-delay: 0s;
+}
+
+.syncing-dots .dot-2 {
+  animation-delay: 0.2s;
+}
+
+.syncing-dots .dot-3 {
+  animation-delay: 0.4s;
+}
+
+@keyframes salesSyncDotPulse {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+/* ── 12. PREFERS-REDUCED-MOTION ── */
+@media (prefers-reduced-motion: reduce) {
+  .sales-section-card,
+  .sales-kpi-card-wrapper,
+  .sales-pulse-bar,
+  .equalizer-bar-col,
+  .donut-spinning-segment,
+  .heatmap-loader-cell,
+  .cashier-loader-bar,
+  .syncing-dots .dot,
+  .card-refresh-progress-bar {
+    animation: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+  }
+}
+
+/* ── 13. REAL LOADED CONTENT ALIGNMENTS (ZERO LAYOUT SHIFT) ── */
+.kpi-real-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+}
+
+.kpi-real-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.kpi-real-header .kpi-real-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #5B4A58;
+}
+
+.kpi-real-trend-row {
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.kpi-trend-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 9999px;
+}
+
+.kpi-trend-badge.positive {
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+}
+
+.kpi-trend-badge.negative {
+  background: rgba(239, 68, 68, 0.1);
+  color: #DC2626;
+}
+
+.kpi-trend-badge.neutral {
+  background: #F3EDF1;
+  color: #5B4A58;
+}
+
+.kpi-trend-subtext {
+  font-size: 0.72rem;
+  color: #7C6878;
+}
+
+.kpi-real-bottom-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.kpi-real-value {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #3B1E36;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+/* Payment Modes Real Loaded */
+.payment-modes-real-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  padding: 0.5rem 0;
+}
+
+.payment-modes-donut-box {
+  position: relative;
+  width: 168px;
+  height: 168px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.payment-modes-center-text {
+  position: absolute;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+}
+
+.payment-modes-center-total {
+  font-size: 14px;
+  font-weight: 800;
+  color: #3B1E36;
+}
+
+.payment-modes-center-sub {
+  font-size: 10px;
+  color: #7C6878;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.payment-modes-real-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px 18px;
+  width: 100%;
+  max-width: 290px;
+}
+
+.payment-mode-real-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.payment-mode-real-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.payment-mode-real-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.payment-mode-real-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: #5B4A58;
+}
+
+.payment-mode-real-val {
+  font-size: 12px;
+  font-weight: 700;
+  color: #3B1E36;
+}
+
+/* Top Cashiers Real Loaded */
+.cashier-real-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.cashier-real-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.cashier-real-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #F3EDF1;
+  color: #3B1E36;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid #EEE7EC;
+}
+
+.cashier-real-center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.cashier-real-name-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.cashier-real-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: #3B1E36;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cashier-real-counter {
+  font-size: 10px;
+  color: #7C6878;
+}
+
+.cashier-real-track {
+  width: 100%;
+  height: 6px;
+  background-color: #F3EDF1;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.cashier-real-bar {
+  height: 100%;
+  background-color: #3B1E36;
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+}
+
+.cashier-real-amount {
+  font-size: 12px;
+  font-weight: 700;
+  color: #3B1E36;
+  white-space: nowrap;
+}
+

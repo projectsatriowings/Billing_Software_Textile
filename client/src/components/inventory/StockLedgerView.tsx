@@ -1,7 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { StockMove, StockMoveKind, Item } from '../../api.ts';
 import { fetchStockLedger } from '../../api.ts';
-import { LockIcon, FileTextIcon, XIcon, UserIcon } from './InventoryIcons.tsx';
+import { LockIcon, FileTextIcon, XIcon, UserIcon, AlertTriangleIcon } from './InventoryIcons.tsx';
+import { TableSkeleton, type TableSkeletonColumn } from '../common/TableSkeleton.tsx';
+import { Skeleton } from '../common/Skeleton.tsx';
+import { useDelayedLoading } from '../../hooks/useDelayedLoading.ts';
 
 interface StockLedgerViewProps {
   initialItemId?: string;
@@ -17,38 +20,91 @@ export const StockLedgerView: React.FC<StockLedgerViewProps> = ({
   const [moves, setMoves] = useState<StockMove[]>([]);
   const [total, setTotal] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
   const [selectedItemId, setSelectedItemId] = useState<string>(initialItemId || '');
   const [kindFilter, setKindFilter] = useState<string>('ALL');
   const [fromDate, setFromDate] = useState<string>('');
   const [toDate, setToDate] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [debouncedSearch, setDebouncedSearch] = useState<string>('');
   const [page, setPage] = useState<number>(1);
   const pageSize = 25;
 
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Debounce search query by 300ms to preserve input focus
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
+
+  // Delayed loading hook: 300ms delay, 400ms minDuration, 8000ms slow threshold
+  const { showSkeleton: showDelayed, isSlow, cancelSlow } = useDelayedLoading(
+    loading && !hasLoadedOnce,
+    300,
+    400,
+    8000
+  );
+
+  const showSkeleton = (loading && !hasLoadedOnce) || showDelayed;
+
+  const isRefreshing = loading && hasLoadedOnce;
+
   const loadLedger = useCallback(async () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     setLoading(true);
+    setError(null);
+
     try {
-      const res = await fetchStockLedger({
-        itemId: selectedItemId || undefined,
-        kind: kindFilter !== 'ALL' ? kindFilter : undefined,
-        from: fromDate || undefined,
-        to: toDate || undefined,
-        q: searchQuery.trim() || undefined,
-        limit: pageSize,
-        offset: (page - 1) * pageSize,
-      });
+      const res = await fetchStockLedger(
+        {
+          itemId: selectedItemId || undefined,
+          kind: kindFilter !== 'ALL' ? kindFilter : undefined,
+          from: fromDate || undefined,
+          to: toDate || undefined,
+          q: debouncedSearch.trim() || undefined,
+          limit: pageSize,
+          offset: (page - 1) * pageSize,
+        },
+        controller.signal
+      );
       setMoves(res.moves || []);
       setTotal(res.total || 0);
-    } catch (err) {
+      setHasLoadedOnce(true);
+    } catch (err: any) {
+      if (err?.name === 'AbortError') return;
       console.error('Failed to load stock ledger:', err);
+      setError(err?.message || 'Failed to load stock movement ledger.');
     } finally {
       setLoading(false);
     }
-  }, [selectedItemId, kindFilter, fromDate, toDate, searchQuery, page]);
+  }, [selectedItemId, kindFilter, fromDate, toDate, debouncedSearch, page]);
 
   useEffect(() => {
     loadLedger();
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, [loadLedger]);
+
+  const handleCancelSlow = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    setLoading(false);
+    cancelSlow();
+  };
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
@@ -84,6 +140,87 @@ export const StockLedgerView: React.FC<StockLedgerViewProps> = ({
     }
   };
 
+  // Define 10 skeleton columns matching exact real ledger columns
+  const ledgerSkeletonColumns: TableSkeletonColumn[] = [
+    {
+      header: 'Date & Time',
+      renderSkeleton: () => (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <Skeleton width={90} height={12} radius={3} />
+          <Skeleton width={60} height={10} radius={3} />
+        </div>
+      ),
+    },
+    {
+      header: 'Product & Identifiers',
+      renderSkeleton: () => (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <Skeleton width={160} height={14} radius={4} />
+          <Skeleton width={110} height={11} radius={4} />
+        </div>
+      ),
+    },
+    {
+      header: 'Type',
+      renderSkeleton: () => <Skeleton width={80} height={24} radius={9999} />,
+    },
+    {
+      header: 'Reference Doc',
+      renderSkeleton: () => <Skeleton width={100} height={12} radius={4} />,
+    },
+    {
+      header: 'In (+)',
+      align: 'right',
+      renderSkeleton: () => (
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Skeleton width={50} height={12} radius={4} />
+        </div>
+      ),
+    },
+    {
+      header: 'Out (-)',
+      align: 'right',
+      renderSkeleton: () => (
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Skeleton width={50} height={12} radius={4} />
+        </div>
+      ),
+    },
+    {
+      header: 'Prev Balance',
+      align: 'right',
+      renderSkeleton: () => (
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Skeleton width={60} height={12} radius={4} />
+        </div>
+      ),
+    },
+    {
+      header: 'New Balance',
+      align: 'right',
+      renderSkeleton: () => (
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Skeleton width={60} height={12} radius={4} />
+        </div>
+      ),
+    },
+    {
+      header: 'Operator',
+      width: '150px',
+      renderSkeleton: () => (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <Skeleton width={24} height={24} circle />
+          <Skeleton width={80} height={12} radius={4} />
+        </div>
+      ),
+    },
+    {
+      header: 'Reason / Notes',
+      width: '150px',
+      renderSkeleton: () => <Skeleton width={120} height={12} radius={4} />,
+    },
+  ];
+
   return (
     <div className="stock-ledger-container">
       {/* Filters Bar */}
@@ -98,6 +235,7 @@ export const StockLedgerView: React.FC<StockLedgerViewProps> = ({
                 className="filter-input"
                 placeholder="Search by product, SKU, barcode, document #..."
                 value={searchQuery}
+                disabled={showSkeleton}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
                   setPage(1);
@@ -112,6 +250,7 @@ export const StockLedgerView: React.FC<StockLedgerViewProps> = ({
                     setPage(1);
                   }}
                   title="Clear search"
+                  disabled={showSkeleton}
                   style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                 >
                   <XIcon size={13} />
@@ -126,6 +265,7 @@ export const StockLedgerView: React.FC<StockLedgerViewProps> = ({
             <select
               className="filter-select"
               value={selectedItemId}
+              disabled={showSkeleton}
               onChange={(e) => {
                 setSelectedItemId(e.target.value);
                 setPage(1);
@@ -148,6 +288,7 @@ export const StockLedgerView: React.FC<StockLedgerViewProps> = ({
             <select
               className="filter-select"
               value={kindFilter}
+              disabled={showSkeleton}
               onChange={(e) => {
                 setKindFilter(e.target.value);
                 setPage(1);
@@ -170,6 +311,7 @@ export const StockLedgerView: React.FC<StockLedgerViewProps> = ({
               type="date"
               className="filter-input"
               value={fromDate}
+              disabled={showSkeleton}
               onChange={(e) => {
                 setFromDate(e.target.value);
                 setPage(1);
@@ -184,6 +326,7 @@ export const StockLedgerView: React.FC<StockLedgerViewProps> = ({
               type="date"
               className="filter-input"
               value={toDate}
+              disabled={showSkeleton}
               onChange={(e) => {
                 setToDate(e.target.value);
                 setPage(1);
@@ -197,6 +340,7 @@ export const StockLedgerView: React.FC<StockLedgerViewProps> = ({
               <button
                 type="button"
                 className="btn-reset-filters"
+                disabled={showSkeleton}
                 onClick={() => {
                   setSelectedItemId('');
                   setKindFilter('ALL');
@@ -224,21 +368,43 @@ export const StockLedgerView: React.FC<StockLedgerViewProps> = ({
         </span>
       </div>
 
-      {/* Ledger Table */}
+      {/* Refresh Indeterminate Progress Bar */}
+      {isRefreshing && (
+        <div className="refresh-progress-bar-wrap">
+          <div className="progress-line" />
+        </div>
+      )}
+
+      {/* Main Table / Skeletons / States */}
       <div className="ledger-table-wrap">
-        {loading ? (
-          <div className="table-loading-spinner">
-            <div className="spinner"></div>
-            <p>Loading chronological stock ledger...</p>
+        {showSkeleton ? (
+          <TableSkeleton
+            columns={ledgerSkeletonColumns}
+            rowCount={10}
+            rowHeight={56}
+            isSlow={isSlow}
+            onCancel={handleCancelSlow}
+            loadingText="Loading chronological stock ledger..."
+          />
+        ) : error ? (
+          <div className="inline-error-card-state">
+            <div className="error-icon-box">
+              <AlertTriangleIcon size={24} />
+            </div>
+            <h4>Couldn't load stock ledger</h4>
+            <p>{error}</p>
+            <button type="button" className="error-retry-btn" onClick={loadLedger}>
+              Retry Loading
+            </button>
           </div>
-        ) : moves.length === 0 ? (
+        ) : !loading && moves.length === 0 ? (
           <div className="table-empty-state">
             <FileTextIcon size={44} style={{ color: 'var(--text-dim)', marginBottom: '0.75rem' }} />
             <h3>No Stock Movements Found</h3>
             <p>No transactions match your current filters. Try resetting the filters above.</p>
           </div>
         ) : (
-          <table className="inventory-data-table ledger-table">
+          <table className={`inventory-data-table ledger-table ${isRefreshing ? 'table-refreshing-dim' : 'skeleton-fade-in'}`}>
             <thead>
               <tr>
                 <th>Date & Time</th>
@@ -333,7 +499,7 @@ export const StockLedgerView: React.FC<StockLedgerViewProps> = ({
       </div>
 
       {/* Pagination Bar */}
-      {total > pageSize && (
+      {total > pageSize && !showSkeleton && !error && (
         <div className="pagination-bar">
           <div className="pagination-info">
             Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, total)} of {total} movements
@@ -342,7 +508,7 @@ export const StockLedgerView: React.FC<StockLedgerViewProps> = ({
             <button
               type="button"
               className="page-btn"
-              disabled={page <= 1}
+              disabled={page <= 1 || isRefreshing}
               onClick={() => setPage((p) => Math.max(1, p - 1))}
             >
               Previous
@@ -353,7 +519,7 @@ export const StockLedgerView: React.FC<StockLedgerViewProps> = ({
             <button
               type="button"
               className="page-btn"
-              disabled={page >= totalPages}
+              disabled={page >= totalPages || isRefreshing}
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             >
               Next

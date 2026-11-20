@@ -84,6 +84,13 @@ body.theme-super-admin .sidebar-brand-icon {
   color: #FFFFFF !important;
 }
 
+.theme-super-admin .sales-module-brand-icon,
+body.theme-super-admin .sales-module-brand-icon {
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #3B1E36 !important;
+}
+
 .theme-super-admin .sidebar-user-avatar,
 body.theme-super-admin .sidebar-user-avatar,
 .theme-super-admin .sidebar-user-card .sidebar-user-avatar,
@@ -217,8 +224,8 @@ body.theme-super-admin .top-branch-selector-pill .top-branch-icon,
 body.theme-super-admin svg.top-branch-icon,
 .theme-super-admin .branch-switcher-store-icon,
 body.theme-super-admin .branch-switcher-store-icon {
-  color: #49364A !important;
-  stroke: #49364A !important;
+  color: #3B1E36 !important;
+  stroke: #3B1E36 !important;
 }
 
 /* Hover State */
@@ -228,8 +235,8 @@ body.theme-super-admin .top-branch-selector-pill:hover .top-branch-icon,
 body.theme-super-admin .top-branch-icon:hover,
 .theme-super-admin .branch-switcher-trigger:hover .branch-switcher-store-icon,
 body.theme-super-admin .branch-switcher-trigger:hover .branch-switcher-store-icon {
-  color: #49364A !important;
-  stroke: #49364A !important;
+  color: #3B1E36 !important;
+  stroke: #3B1E36 !important;
 }
 
 /* Focus State */
@@ -241,13 +248,13 @@ body.theme-super-admin .top-branch-icon:focus,
 body.theme-super-admin .top-branch-select:focus,
 .theme-super-admin .branch-switcher-trigger:focus .branch-switcher-store-icon,
 body.theme-super-admin .branch-switcher-trigger:focus .branch-switcher-store-icon {
-  color: #49364A !important;
-  stroke: #49364A !important;
+  color: #3B1E36 !important;
+  stroke: #3B1E36 !important;
 }
 
 .theme-super-admin .top-branch-select:focus,
 body.theme-super-admin .top-branch-select:focus {
-  outline: 2px solid #49364A !important;
+  outline: 2px solid #3B1E36 !important;
   outline-offset: 2px !important;
 }
 
@@ -260,8 +267,8 @@ body.theme-super-admin .top-branch-icon:active,
 body.theme-super-admin .branch-switcher-trigger:active .branch-switcher-store-icon,
 .theme-super-admin .branch-switcher-trigger.is-open .branch-switcher-store-icon,
 body.theme-super-admin .branch-switcher-trigger.is-open .branch-switcher-store-icon {
-  color: #49364A !important;
-  stroke: #49364A !important;
+  color: #3B1E36 !important;
+  stroke: #3B1E36 !important;
 }
 
 /* --------------------------------------------------------------------------
