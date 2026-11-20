@@ -25291,28 +25291,28 @@ select.expense-input-control {
 }
 
 .sales-module-brand-icon {
-  width: 46px;
-  height: 46px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, #6366f1 0%, #7c3aed 50%, #9333ea 100%);
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff;
-  box-shadow: 0 8px 20px -4px rgba(99, 102, 241, 0.38);
+  color: #3B1E36;
+  box-shadow: none;
   flex-shrink: 0;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.2s ease;
 }
 
 .sales-module-brand-icon:hover {
   transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 12px 24px -4px rgba(99, 102, 241, 0.48);
+  box-shadow: none;
 }
 
 .sales-module-title {
   font-size: 1.55rem;
   font-weight: 800;
-  color: #0f172a;
+  color: #3B1E36;
   letter-spacing: -0.025em;
   margin: 0;
   line-height: 1.2;
@@ -25397,17 +25397,18 @@ select.expense-input-control {
   font-size: 0.82rem;
   font-weight: 600;
   border-radius: 9px;
-  background: linear-gradient(135deg, #6366f1 0%, #7c3aed 100%);
+  background: #3B1E36;
   color: #ffffff;
   border: none;
-  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+  box-shadow: 0 4px 12px rgba(59, 30, 54, 0.25);
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .sales-schedule-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(99, 102, 241, 0.45);
+  background: #502A49;
+  box-shadow: 0 6px 16px rgba(59, 30, 54, 0.35);
 }
 
 .sales-header-subtitle {
@@ -29795,6 +29796,11 @@ select.expense-input-control {
   color: #2563eb;
 }
 
+.bulk-template-icon-squircle.purple {
+  background: #ede9fe;
+  color: #4f46e5;
+}
+
 .bulk-template-info {
   display: flex;
   flex-direction: column;
@@ -29832,8 +29838,12 @@ select.expense-input-control {
 
 .bulk-template-tile:hover .bulk-template-download-btn {
   background: var(--primary);
-  color: #ffffff;
+  color: #ffffff !important;
   border-color: var(--primary);
+}
+
+.bulk-template-tile:hover .bulk-template-download-btn svg {
+  stroke: #ffffff !important;
 }
 
 .bulk-columns-spec-grid {
@@ -32107,6 +32117,7 @@ select.expense-input-control {
 .cat-bento-progress-fill {
   height: 100%;
   border-radius: 99px;
+  background-color: #3B1E36 !important;
   transition: width 0.35s ease;
 }
 
@@ -32207,6 +32218,7 @@ select.expense-input-control {
 .cat-lead-fill {
   height: 100%;
   border-radius: 99px;
+  background-color: #3B1E36 !important;
   transition: width 0.35s ease;
 }
 

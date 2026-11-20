@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { StockCount, StockCountLine, Role, Category } from '../../api.ts';
 import {
   fetchStockCounts,
@@ -20,6 +20,10 @@ import {
   CheckIcon,
   SparklesIcon,
 } from './InventoryIcons.tsx';
+import { TableSkeleton, type TableSkeletonColumn } from '../common/TableSkeleton.tsx';
+import { CardSkeleton } from '../common/CardSkeleton.tsx';
+import { Skeleton } from '../common/Skeleton.tsx';
+import { useDelayedLoading } from '../../hooks/useDelayedLoading.ts';
 
 interface PhysicalStockCountViewProps {
   categories: string[];
@@ -38,6 +42,79 @@ export const PhysicalStockCountView: React.FC<PhysicalStockCountViewProps> = ({
 }) => {
   const [counts, setCounts] = useState<StockCount[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  const { showSkeleton: showDelayed, isSlow, cancelSlow } = useDelayedLoading(
+    loading && !hasLoadedOnce,
+    300,
+    400,
+    8000
+  );
+
+  const showSkeleton = (loading && !hasLoadedOnce) || showDelayed;
+
+  const isRefreshing = loading && hasLoadedOnce;
+
+  const countSessionsSkeletonColumns: TableSkeletonColumn[] = [
+    {
+      header: 'Session Number',
+      renderSkeleton: () => <Skeleton width={80} height={14} radius={4} />,
+    },
+    {
+      header: 'Session Name',
+      renderSkeleton: () => (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <Skeleton width={140} height={14} radius={4} />
+          <Skeleton width={90} height={10} radius={3} />
+        </div>
+      ),
+    },
+    {
+      header: 'Scope / Category',
+      renderSkeleton: () => <Skeleton width={110} height={26} radius={9999} />,
+    },
+    {
+      header: 'Status',
+      renderSkeleton: () => <Skeleton width={80} height={24} radius={9999} />,
+    },
+    {
+      header: 'Items Audited',
+      renderSkeleton: () => (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <Skeleton width={90} height={12} radius={3} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Skeleton width={120} height={8} radius={4} />
+            <Skeleton width={32} height={10} radius={3} />
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: 'Discrepancies',
+      renderSkeleton: () => <Skeleton width={70} height={12} radius={4} />,
+    },
+    {
+      header: 'Created By',
+      renderSkeleton: () => <Skeleton width={80} height={12} radius={4} />,
+    },
+    {
+      header: 'Date',
+      renderSkeleton: () => <Skeleton width={90} height={12} radius={4} />,
+    },
+    {
+      header: 'Actions',
+      align: 'right',
+      renderSkeleton: () => (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px' }}>
+          <Skeleton width={32} height={32} radius={6} />
+          <Skeleton width={32} height={32} radius={6} />
+        </div>
+      ),
+    },
+  ];
+
   const [activeCountId, setActiveCountId] = useState<string | null>(null);
   const [activeCount, setActiveCount] = useState<StockCount | null>(null);
   const [activeLines, setActiveLines] = useState<StockCountLine[]>([]);
@@ -68,12 +145,22 @@ export const PhysicalStockCountView: React.FC<PhysicalStockCountViewProps> = ({
   const isAuthorized = can(userRole, 'stock.adjust');
 
   const loadCountsList = useCallback(async () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     setLoading(true);
+    setError(null);
     try {
-      const res = await fetchStockCounts();
+      const res = await fetchStockCounts(controller.signal);
       setCounts(res.counts || []);
-    } catch (err) {
+      setHasLoadedOnce(true);
+    } catch (err: any) {
+      if (err?.name === 'AbortError') return;
       console.error('Failed to load stock count sessions:', err);
+      setError(err?.message || 'Failed to load stock count sessions.');
     } finally {
       setLoading(false);
     }
@@ -81,6 +168,11 @@ export const PhysicalStockCountView: React.FC<PhysicalStockCountViewProps> = ({
 
   useEffect(() => {
     loadCountsList();
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, [loadCountsList]);
 
   // Load single count details
@@ -326,12 +418,72 @@ export const PhysicalStockCountView: React.FC<PhysicalStockCountViewProps> = ({
             )}
           </div>
 
-          {loading ? (
-            <div className="table-loading-spinner">
-              <div className="spinner"></div>
-              <p>Loading count sessions...</p>
+          {/* Top Summary Stat Cards */}
+          {showSkeleton ? (
+            <CardSkeleton variant="stat" count={4} />
+          ) : (
+            <div className={`stat-cards-skeleton-grid ${isRefreshing ? 'table-refreshing-dim' : 'skeleton-fade-in'}`}>
+              <div className="stat-card-skeleton-item">
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600 }}>Total Count Sessions</span>
+                <span style={{ fontSize: '1.45rem', fontWeight: 800, color: 'var(--text-main)', lineHeight: 1 }}>{counts.length}</span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>Audits registered in store</span>
+              </div>
+              <div className="stat-card-skeleton-item">
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600 }}>In Progress Sessions</span>
+                <span style={{ fontSize: '1.45rem', fontWeight: 800, color: '#f59e0b', lineHeight: 1 }}>
+                  {counts.filter((c) => c.status === 'in_progress').length}
+                </span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>Active counts being audited</span>
+              </div>
+              <div className="stat-card-skeleton-item">
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600 }}>Completed Reconciliations</span>
+                <span style={{ fontSize: '1.45rem', fontWeight: 800, color: '#10b981', lineHeight: 1 }}>
+                  {counts.filter((c) => c.status === 'completed').length}
+                </span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>Finalized with ledger adjustments</span>
+              </div>
+              <div className="stat-card-skeleton-item">
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600 }}>Discrepancies Detected</span>
+                <span style={{ fontSize: '1.45rem', fontWeight: 800, color: '#ef4444', lineHeight: 1 }}>
+                  {counts.reduce((sum, c) => sum + (c.discrepancyCount || 0), 0)}
+                </span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>Physical vs system variances</span>
+              </div>
             </div>
-          ) : counts.length === 0 ? (
+          )}
+
+          {/* Refresh Progress Bar */}
+          {isRefreshing && (
+            <div className="refresh-progress-bar-wrap">
+              <div className="progress-line" />
+            </div>
+          )}
+
+          {showSkeleton ? (
+            <TableSkeleton
+              columns={countSessionsSkeletonColumns}
+              rowCount={6}
+              rowHeight={58}
+              isSlow={isSlow}
+              onCancel={() => {
+                if (abortControllerRef.current) abortControllerRef.current.abort();
+                setLoading(false);
+                cancelSlow();
+              }}
+              loadingText="Loading physical count sessions..."
+            />
+          ) : error ? (
+            <div className="inline-error-card-state">
+              <div className="error-icon-box">
+                <AlertTriangleIcon size={24} />
+              </div>
+              <h4>Couldn't load physical stock count sessions</h4>
+              <p>{error}</p>
+              <button type="button" className="error-retry-btn" onClick={loadCountsList}>
+                Retry Loading
+              </button>
+            </div>
+          ) : !loading && counts.length === 0 ? (
             <div className="table-empty-state">
               <ClipboardCheckIcon size={44} style={{ color: 'var(--text-dim)', marginBottom: '0.75rem' }} />
               <h3>No Physical Count Sessions Found</h3>
@@ -349,7 +501,7 @@ export const PhysicalStockCountView: React.FC<PhysicalStockCountViewProps> = ({
             </div>
           ) : (
             <div className="ledger-table-wrap">
-              <table className="inventory-data-table count-sessions-table">
+              <table className={`inventory-data-table count-sessions-table ${isRefreshing ? 'table-refreshing-dim' : 'skeleton-fade-in'}`}>
                 <thead>
                   <tr>
                     <th>Session Number</th>
@@ -378,15 +530,14 @@ export const PhysicalStockCountView: React.FC<PhysicalStockCountViewProps> = ({
                       </td>
                       <td>
                         <span
-                          className={`status-pill ${
-                            c.status === 'completed' ? 'green' : c.status === 'in_progress' ? 'amber' : 'gray'
-                          }`}
+                          className={`status-pill ${c.status === 'completed' ? 'green' : c.status === 'in_progress' ? 'amber' : 'gray'
+                            }`}
                         >
                           {c.status === 'in_progress'
                             ? 'In Progress'
                             : c.status === 'completed'
-                            ? 'Completed'
-                            : 'Cancelled'}
+                              ? 'Completed'
+                              : 'Cancelled'}
                         </span>
                       </td>
                       <td>
@@ -397,9 +548,8 @@ export const PhysicalStockCountView: React.FC<PhysicalStockCountViewProps> = ({
                           <div
                             className="progress-fill"
                             style={{
-                              width: `${
-                                c.totalItemsCount ? Math.min(100, Math.round((c.countedItemsCount! / c.totalItemsCount) * 100)) : 0
-                              }%`,
+                              width: `${c.totalItemsCount ? Math.min(100, Math.round((c.countedItemsCount! / c.totalItemsCount) * 100)) : 0
+                                }%`,
                             }}
                           ></div>
                         </div>
@@ -450,19 +600,18 @@ export const PhysicalStockCountView: React.FC<PhysicalStockCountViewProps> = ({
                 <span className="sheet-id-badge mono">{activeCount?.countNumber}</span>
                 <h2 className="sheet-title">{activeCount?.name}</h2>
                 <span
-                  className={`status-pill ${
-                    activeCount?.status === 'completed'
-                      ? 'green'
-                      : activeCount?.status === 'in_progress'
+                  className={`status-pill ${activeCount?.status === 'completed'
+                    ? 'green'
+                    : activeCount?.status === 'in_progress'
                       ? 'amber'
                       : 'gray'
-                  }`}
+                    }`}
                 >
                   {activeCount?.status === 'in_progress'
                     ? 'In Progress (Draft)'
                     : activeCount?.status === 'completed'
-                    ? 'Completed & Reconciled'
-                    : 'Cancelled'}
+                      ? 'Completed & Reconciled'
+                      : 'Cancelled'}
                 </span>
               </div>
               <div className="sheet-meta-info">
@@ -749,17 +898,17 @@ export const PhysicalStockCountView: React.FC<PhysicalStockCountViewProps> = ({
                   <option value="ALL">All Tracked Products in Store</option>
                   {categoriesList && categoriesList.length > 0
                     ? categoriesList
-                        .filter((c) => c.active)
-                        .map((c) => (
-                          <option key={c.id} value={c.name}>
-                            {c.parentName ? `${c.parentName} → ${c.name}` : c.name}
-                          </option>
-                        ))
-                    : categories.map((c) => (
-                        <option key={c} value={c}>
-                          Category: {c}
+                      .filter((c) => c.active)
+                      .map((c) => (
+                        <option key={c.id} value={c.name}>
+                          {c.parentName ? `${c.parentName} → ${c.name}` : c.name}
                         </option>
-                      ))}
+                      ))
+                    : categories.map((c) => (
+                      <option key={c} value={c}>
+                        Category: {c}
+                      </option>
+                    ))}
                 </select>
                 <span className="field-helper">You can audit your entire catalog or limit this audit to a specific category.</span>
               </div>

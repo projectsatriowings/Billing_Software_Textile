@@ -1,32 +1,47 @@
 /* ==========================================================================
    SHARED BRANCH SELECTOR COMPONENT STYLES
-   Executive, vibrant, and theme-adaptive dropdown selector
+   Clean, minimal, professional executive Deep Plum (#3B1E36) theme
    ========================================================================== */
 
-/* Outer Card Pill */
+:root {
+  --branch-plum-primary: #3B1E36;
+  --branch-plum-hover: #2E152A;
+  --branch-plum-subtle: #FAF8F9;
+  --branch-plum-badge: #F4EFF2;
+  --branch-plum-border: #E8E2E6;
+  --branch-plum-border-hover: #D4C5D0;
+  --branch-plum-focus-ring: rgba(59, 30, 54, 0.25);
+  --branch-plum-muted: #7B6876;
+}
+
+/* Outer Card Container / Pill */
 .top-branch-selector-pill {
   position: relative;
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  height: 44px;
-  min-height: 44px;
-  max-height: 44px;
-  padding: 0 8px 0 10px;
+  height: 42px;
+  min-height: 42px;
+  max-height: 42px;
+  padding: 0 10px 0 12px;
   background: #ffffff;
-  border: 1.5px solid #E0E7FF;
+  border: 1px solid #E8E2E6;
   border-radius: 12px;
   box-sizing: border-box;
-  font-size: 14px;
-  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  font-size: 13.5px;
+  box-shadow: 0 1px 3px rgba(59, 30, 54, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
   flex-shrink: 0;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
 }
 
-.top-branch-selector-pill:hover,
+.top-branch-selector-pill:hover {
+  border-color: #D4C5D0;
+  box-shadow: 0 2px 8px rgba(59, 30, 54, 0.06), 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
 .top-branch-selector-pill.is-dropdown-open {
-  border-color: #C7D2FE;
-  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.12), 0 1px 3px rgba(0, 0, 0, 0.04);
+  border-color: #3B1E36;
+  box-shadow: 0 3px 12px rgba(59, 30, 54, 0.08);
 }
 
 /* Hidden native select for form accessibility / testing */
@@ -42,38 +57,45 @@
   pointer-events: none !important;
 }
 
-/* Icon Tile Squircle */
+/* Branch Icon (Clean, no background, box or shadow) */
 .top-branch-icon-tile {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
-  color: #ffffff;
-  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.32);
+  width: auto;
+  height: auto;
+  background: transparent !important;
+  background-color: transparent !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  color: #3B1E36 !important;
+  padding: 0;
+  margin: 0;
   flex-shrink: 0;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: none;
 }
 
 .top-branch-selector-pill:hover .top-branch-icon-tile {
-  transform: scale(1.04);
-  box-shadow: 0 3px 8px rgba(79, 70, 229, 0.42);
+  transform: none;
+  box-shadow: none !important;
 }
 
 .top-branch-icon {
   width: 18px;
   height: 18px;
-  color: #5B4FE9;
+  color: #3B1E36 !important;
+  stroke: #3B1E36 !important;
+  display: block;
   flex-shrink: 0;
 }
 
 /* "Branch" Label */
 .top-branch-label {
+  display: inline-flex;
+  align-items: center;
   font-size: 13.5px;
-  font-weight: 700;
-  color: #312E81;
+  font-weight: 600;
+  color: #3B1E36 !important;
   white-space: nowrap;
   cursor: pointer;
   margin: 0;
@@ -96,61 +118,64 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  height: 33px;
-  padding: 0 12px 0 12px;
-  background: linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 100%);
-  border: 1.5px solid #C4B5FD;
-  border-radius: 9px;
+  height: 32px;
+  padding: 0 10px 0 12px;
+  background: #FAF8F9;
+  border: 1px solid #E8E2E6;
+  border-radius: 8px;
   font-family: inherit;
-  font-size: 13.5px;
-  font-weight: 600;
-  color: #4338CA;
+  font-size: 13px;
+  font-weight: 500;
+  color: #3B1E36 !important;
   cursor: pointer;
   outline: none;
-  max-width: 280px;
+  max-width: 270px;
   box-sizing: border-box;
-  box-shadow: 0 1px 3px rgba(99, 102, 241, 0.08);
-  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 2px rgba(59, 30, 54, 0.03);
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
   text-align: left;
 }
 
 .top-branch-select-trigger:hover {
-  background: linear-gradient(135deg, #EDE9FE 0%, #E0E7FF 100%);
-  border-color: #818CF8;
-  color: #3730A3;
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.18);
-  transform: translateY(-0.5px);
+  background: #F4EEF2;
+  border-color: #D4C5D0;
+  color: #3B1E36 !important;
+  box-shadow: 0 1px 4px rgba(59, 30, 54, 0.06);
 }
 
-.top-branch-select-trigger:focus-visible {
-  outline: 2px solid #6366F1;
+.top-branch-select-trigger:focus-visible,
+.top-branch-selector-pill.is-dropdown-open .top-branch-select-trigger {
+  outline: 2px solid #3B1E36 !important;
   outline-offset: 1px;
+  border-color: #3B1E36 !important;
 }
 
 .top-branch-trigger-text {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 200px;
+  max-width: 190px;
+  color: #3B1E36 !important;
+  font-weight: 500;
 }
 
 .top-branch-trigger-badge {
   font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  background: #DDD6FE;
-  color: #3730A3;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  background: #F0E8ED;
+  color: #3B1E36 !important;
   padding: 2px 6px;
-  border-radius: 5px;
+  border-radius: 4px;
   flex-shrink: 0;
   text-transform: uppercase;
 }
 
-/* Animated Chevron */
+/* Dropdown Arrow / Chevron */
 .top-branch-chevron {
-  color: #6366F1;
+  color: #3B1E36 !important;
   flex-shrink: 0;
-  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   pointer-events: none;
 }
 
@@ -158,27 +183,31 @@
   transform: rotate(180deg);
 }
 
-/* Branch Count Pill */
+/* Branch Count Badge */
 .top-branch-count-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-size: 12px;
-  font-weight: 700;
-  color: #4338CA;
-  background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%);
-  border: 1px solid #C7D2FE;
-  padding: 4px 10px;
+  font-weight: 500;
+  color: #3B1E36 !important;
+  background: #F8F6F7;
+  border: 1px solid #E8E2E6;
+  padding: 0 10px;
+  height: 26px;
   border-radius: 9999px;
   white-space: nowrap;
-  line-height: 1.2;
+  line-height: 1;
   flex-shrink: 0;
   cursor: pointer;
   user-select: none;
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
 .top-branch-count-pill:hover {
-  background: #E0E7FF;
-  border-color: #A5B4FC;
-  transform: translateY(-0.5px);
+  background: #F0E9EE;
+  border-color: #D4C5D0;
+  color: #3B1E36 !important;
 }
 
 /* ==========================================================================
@@ -186,17 +215,17 @@
    ========================================================================== */
 .top-branch-popover-menu {
   position: absolute;
-  top: calc(100% + 8px);
+  top: calc(100% + 6px);
   left: 0;
-  min-width: 310px;
-  max-width: 380px;
+  min-width: 300px;
+  max-width: 360px;
   background: #ffffff;
-  border: 1.5px solid #E0E7FF;
-  border-radius: 14px;
-  box-shadow: 0 20px 40px -4px rgba(15, 23, 42, 0.18), 0 8px 16px -2px rgba(99, 102, 241, 0.12);
-  padding: 8px;
+  border: 1px solid #E8E2E6;
+  border-radius: 12px;
+  box-shadow: 0 12px 28px -4px rgba(59, 30, 54, 0.12), 0 4px 10px -2px rgba(0, 0, 0, 0.04);
+  padding: 6px;
   z-index: 10000;
-  animation: topBranchPopoverEnter 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: topBranchPopoverEnter 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   transform-origin: top left;
   box-sizing: border-box;
 }
@@ -204,7 +233,7 @@
 @keyframes topBranchPopoverEnter {
   from {
     opacity: 0;
-    transform: translateY(-6px) scale(0.98);
+    transform: translateY(-4px) scale(0.98);
   }
   to {
     opacity: 1;
@@ -217,15 +246,15 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 6px 10px 8px 10px;
-  border-bottom: 1px solid #F1F5F9;
-  margin-bottom: 6px;
+  padding: 6px 8px 8px 8px;
+  border-bottom: 1px solid #F3EDF1;
+  margin-bottom: 4px;
 }
 
 .top-branch-menu-title {
   font-size: 10.5px;
   font-weight: 700;
-  color: #64748B;
+  color: #7B6876;
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -236,9 +265,9 @@
   gap: 5px;
   font-size: 11px;
   font-weight: 600;
-  color: #10B981;
+  color: #059669;
   background: #ECFDF5;
-  padding: 2px 8px;
+  padding: 2px 7px;
   border-radius: 9999px;
   border: 1px solid #A7F3D0;
 }
@@ -267,15 +296,15 @@
 .top-branch-menu-list {
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  max-height: 360px;
+  gap: 2px;
+  max-height: 340px;
   overflow-y: auto;
   overscroll-behavior: contain;
 }
 
 .top-branch-menu-divider {
   height: 1px;
-  background: #F1F5F9;
+  background: #F3EDF1;
   margin: 4px 6px;
 }
 
@@ -284,53 +313,53 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 9px 12px;
-  border-radius: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
   cursor: pointer;
   background: transparent;
   border: 1px solid transparent;
-  transition: all 0.15s ease;
+  transition: all 0.14s ease;
   user-select: none;
   outline: none;
 }
 
 .top-branch-menu-item:hover,
 .top-branch-menu-item.highlighted {
-  background: linear-gradient(90deg, #F8FAFC 0%, #EEF2FF 100%);
-  border-color: #E0E7FF;
-  transform: translateX(2px);
+  background: #FAF6F8;
+  border-color: #EFE6EC;
 }
 
 .top-branch-menu-item.active {
-  background: linear-gradient(90deg, #EEF2FF 0%, #EDE9FE 100%);
-  border-color: #C4B5FD;
+  background: #F6EEF3;
+  border-color: #E2D3DC;
 }
 
 .top-branch-item-icon-tile {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
   flex-shrink: 0;
-  transition: all 0.15s ease;
+  background: #F5EEF3;
+  color: #3B1E36;
+  transition: all 0.14s ease;
 }
 
 .top-branch-item-icon-tile.all-icon {
-  background: #EEF2FF;
-  color: #4F46E5;
+  background: #F5EEF3;
+  color: #3B1E36;
 }
 
 .top-branch-item-icon-tile.store-icon {
-  background: #F1F5F9;
-  color: #475569;
+  background: #F5EEF3;
+  color: #3B1E36;
 }
 
 .top-branch-menu-item.active .top-branch-item-icon-tile {
-  background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
+  background: #3B1E36;
   color: #ffffff;
-  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.3);
 }
 
 .top-branch-item-content {
@@ -349,35 +378,35 @@
 }
 
 .top-branch-item-name {
-  font-size: 13.5px;
-  font-weight: 600;
-  color: #1E293B;
+  font-size: 13px;
+  font-weight: 500;
+  color: #261523;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .top-branch-menu-item.active .top-branch-item-name {
-  color: #312E81;
-  font-weight: 700;
+  color: #3B1E36;
+  font-weight: 600;
 }
 
 .top-branch-item-sub {
   font-size: 11.5px;
-  color: #64748B;
+  color: #7B6876;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .top-branch-menu-item.active .top-branch-item-sub {
-  color: #4338CA;
+  color: #55344F;
 }
 
 .top-branch-badge-pill {
   font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.03em;
+  font-weight: 600;
+  letter-spacing: 0.02em;
   padding: 2px 6px;
   border-radius: 4px;
   flex-shrink: 0;
@@ -385,148 +414,153 @@
 }
 
 .top-branch-badge-pill.overall {
-  background: #EDE9FE;
-  color: #4338CA;
-  border: 1px solid #C4B5FD;
+  background: #F0E6EC;
+  color: #3B1E36;
+  border: 1px solid #DFCED8;
 }
 
 .top-branch-badge-pill.branch-code {
-  background: #F1F5F9;
-  color: #475569;
-  border: 1px solid #E2E8F0;
+  background: #F4EFF2;
+  color: #574150;
+  border: 1px solid #E2D8DF;
 }
 
 .top-branch-menu-item.active .top-branch-badge-pill.branch-code {
-  background: #DDD6FE;
-  color: #3730A3;
-  border-color: #C4B5FD;
+  background: #E8DCE4;
+  color: #3B1E36;
+  border-color: #CBB9C4;
 }
 
 .top-branch-item-check {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
-  background: #EDE9FE;
-  color: #4F46E5;
+  background: #EFE6EC;
+  color: #3B1E36;
   flex-shrink: 0;
-  box-shadow: 0 1px 3px rgba(79, 70, 229, 0.15);
 }
 
 /* ==========================================================================
-   STORE MANAGER THEME OVERRIDES (.theme-manager / body.theme-manager)
-   Deep Burgundy (#653B4B) Palette
+   THEME CONSISTENCY OVERRIDES
+   Ensures Deep Plum (#3B1E36) remains uniform across all theme variants
    ========================================================================== */
 .theme-manager .top-branch-selector-pill,
 body.theme-manager .top-branch-selector-pill {
-  border-color: #EBDCE2;
+  border-color: #E8E2E6;
 }
 
 .theme-manager .top-branch-selector-pill:hover,
 .theme-manager .top-branch-selector-pill.is-dropdown-open,
 body.theme-manager .top-branch-selector-pill:hover,
 body.theme-manager .top-branch-selector-pill.is-dropdown-open {
-  border-color: #D9C8D0;
-  box-shadow: 0 4px 14px rgba(101, 59, 75, 0.12), 0 1px 3px rgba(0, 0, 0, 0.04);
+  border-color: #3B1E36;
+  box-shadow: 0 3px 12px rgba(59, 30, 54, 0.08);
 }
 
 .theme-manager .top-branch-icon-tile,
 body.theme-manager .top-branch-icon-tile {
-  background: linear-gradient(135deg, #7A475B 0%, #653B4B 100%);
-  box-shadow: 0 2px 6px rgba(101, 59, 75, 0.32);
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #3B1E36 !important;
+}
+
+.theme-manager .top-branch-icon,
+body.theme-manager .top-branch-icon {
+  color: #3B1E36 !important;
+  stroke: #3B1E36 !important;
 }
 
 .theme-manager .top-branch-label,
 body.theme-manager .top-branch-label {
-  color: #653B4B;
+  color: #3B1E36 !important;
 }
 
 .theme-manager .top-branch-select-trigger,
 body.theme-manager .top-branch-select-trigger {
-  background: linear-gradient(135deg, #FAF4F6 0%, #F5ECF0 100%);
-  border-color: #D9C8D0;
-  color: #653B4B;
-  box-shadow: 0 1px 3px rgba(101, 59, 75, 0.08);
+  background: #FAF8F9;
+  border-color: #E8E2E6;
+  color: #3B1E36 !important;
 }
 
 .theme-manager .top-branch-select-trigger:hover,
 body.theme-manager .top-branch-select-trigger:hover {
-  background: #EBDCE2;
-  border-color: #653B4B;
-  color: #522E3B;
-  box-shadow: 0 2px 8px rgba(101, 59, 75, 0.18);
+  background: #F4EEF2;
+  border-color: #D4C5D0;
+  color: #3B1E36 !important;
 }
 
 .theme-manager .top-branch-trigger-badge,
 body.theme-manager .top-branch-trigger-badge {
-  background: #EBDCE2;
-  color: #653B4B;
+  background: #F0E8ED;
+  color: #3B1E36 !important;
 }
 
 .theme-manager .top-branch-chevron,
 body.theme-manager .top-branch-chevron {
-  color: #653B4B;
+  color: #3B1E36 !important;
 }
 
 .theme-manager .top-branch-count-pill,
 body.theme-manager .top-branch-count-pill {
-  color: #653B4B;
-  background: #F5ECF0;
-  border-color: #D9C8D0;
+  color: #3B1E36 !important;
+  background: #F8F6F7;
+  border-color: #E8E2E6;
 }
 
 .theme-manager .top-branch-count-pill:hover,
 body.theme-manager .top-branch-count-pill:hover {
-  background: #EBDCE2;
-  border-color: #653B4B;
+  background: #F0E9EE;
+  border-color: #D4C5D0;
+  color: #3B1E36 !important;
 }
 
 .theme-manager .top-branch-popover-menu,
 body.theme-manager .top-branch-popover-menu {
-  border-color: #EBDCE2;
-  box-shadow: 0 20px 40px -4px rgba(15, 23, 42, 0.18), 0 8px 16px -2px rgba(101, 59, 75, 0.12);
+  border-color: #E8E2E6;
+  box-shadow: 0 12px 28px -4px rgba(59, 30, 54, 0.12), 0 4px 10px -2px rgba(0, 0, 0, 0.04);
 }
 
 .theme-manager .top-branch-menu-item:hover,
 .theme-manager .top-branch-menu-item.highlighted,
 body.theme-manager .top-branch-menu-item:hover,
 body.theme-manager .top-branch-menu-item.highlighted {
-  background: linear-gradient(90deg, #FDFBFC 0%, #FAF4F6 100%);
-  border-color: #EBDCE2;
+  background: #FAF6F8;
+  border-color: #EFE6EC;
 }
 
 .theme-manager .top-branch-menu-item.active,
 body.theme-manager .top-branch-menu-item.active {
-  background: linear-gradient(90deg, #FAF4F6 0%, #F5ECF0 100%);
-  border-color: #D9C8D0;
+  background: #F6EEF3;
+  border-color: #E2D3DC;
 }
 
 .theme-manager .top-branch-menu-item.active .top-branch-item-icon-tile,
 body.theme-manager .top-branch-menu-item.active .top-branch-item-icon-tile {
-  background: linear-gradient(135deg, #7A475B 0%, #653B4B 100%);
-  box-shadow: 0 2px 6px rgba(101, 59, 75, 0.3);
+  background: #3B1E36;
+  color: #ffffff;
 }
 
 .theme-manager .top-branch-menu-item.active .top-branch-item-name,
 body.theme-manager .top-branch-menu-item.active .top-branch-item-name,
 .theme-manager .top-branch-menu-item.active .top-branch-item-sub,
 body.theme-manager .top-branch-menu-item.active .top-branch-item-sub {
-  color: #653B4B;
+  color: #3B1E36;
 }
 
 .theme-manager .top-branch-badge-pill.overall,
 body.theme-manager .top-branch-badge-pill.overall {
-  background: #F5ECF0;
-  color: #653B4B;
-  border-color: #D9C8D0;
+  background: #F0E6EC;
+  color: #3B1E36;
+  border-color: #DFCED8;
 }
 
 .theme-manager .top-branch-item-check,
 body.theme-manager .top-branch-item-check {
-  background: #F5ECF0;
-  color: #653B4B;
+  background: #EFE6EC;
+  color: #3B1E36;
 }
 
 /* ==========================================================================
@@ -536,6 +570,8 @@ body.theme-manager .top-branch-item-check {
   .top-branch-selector-pill {
     width: 100%;
     justify-content: space-between;
+    gap: 8px;
+    padding: 0 8px 0 10px;
   }
 
   .top-branch-select-wrapper {
@@ -546,6 +582,10 @@ body.theme-manager .top-branch-item-check {
   .top-branch-select-trigger {
     width: 100%;
     max-width: none !important;
+  }
+
+  .top-branch-trigger-text {
+    max-width: 140px;
   }
 
   .top-branch-popover-menu {

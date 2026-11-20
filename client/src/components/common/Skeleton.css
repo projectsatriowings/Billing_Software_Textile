@@ -1,0 +1,407 @@
+/* ==========================================================================
+   REUSABLE SKELETON & LOADING SYSTEM STYLES
+   Executive, clean, minimal design matching Deep Plum (#3B1E36) Theme
+   ========================================================================== */
+
+/* ── 1. BASE SKELETON ── */
+.ui-skeleton {
+  position: relative;
+  overflow: hidden;
+  background-color: #ECECEA;
+  border-radius: 6px;
+  display: inline-block;
+  vertical-align: middle;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.ui-skeleton.circle {
+  border-radius: 50% !important;
+}
+
+.ui-skeleton::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.7) 50%,
+    transparent 100%
+  );
+  animation: skeletonShimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes skeletonShimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* ── 2. FADE-IN TRANSITION ── */
+.skeleton-fade-in {
+  animation: skeletonFadeIn 250ms ease-out forwards;
+}
+
+@keyframes skeletonFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── 3. REFRESH INDETERMINATE PROGRESS BAR ── */
+.refresh-progress-bar-wrap {
+  width: 100%;
+  height: 2px;
+  background-color: #F3EDF1;
+  overflow: hidden;
+  position: relative;
+  margin: 0;
+  z-index: 5;
+}
+
+.refresh-progress-bar-wrap .progress-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 35%;
+  background-color: #3B1E36;
+  border-radius: 2px;
+  animation: indeterminateBar 1.3s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes indeterminateBar {
+  0% {
+    left: -35%;
+    width: 35%;
+  }
+  50% {
+    left: 40%;
+    width: 45%;
+  }
+  100% {
+    left: 100%;
+    width: 35%;
+  }
+}
+
+.table-refreshing-dim {
+  opacity: 0.55 !important;
+  pointer-events: none !important;
+  transition: opacity 0.2s ease;
+}
+
+/* ── 4. SLOW LOAD INFO STRIP ── */
+.slow-load-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  margin-bottom: 12px;
+  background: #FFFBEB;
+  border: 1px solid #FDE68A;
+  border-radius: 8px;
+  color: #92400E;
+  font-size: 13px;
+  font-weight: 500;
+  animation: skeletonFadeIn 250ms ease-out;
+}
+
+.slow-load-strip-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.slow-load-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #FCD34D;
+  border-top-color: #92400E;
+  border-radius: 50%;
+  animation: spinSlow 0.8s linear infinite;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+@keyframes spinSlow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.slow-load-cancel-btn {
+  background: transparent;
+  border: 1px solid #D97706;
+  color: #92400E;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.slow-load-cancel-btn:hover {
+  background: #FEF3C7;
+}
+
+.slow-load-fade-mask {
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 45%, rgba(0, 0, 0, 0.15) 100%);
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 45%, rgba(0, 0, 0, 0.15) 100%);
+}
+
+/* ── 5. TAB COUNT BADGE SKELETON ── */
+.tab-badge-skeleton {
+  width: 20px;
+  height: 20px;
+  border-radius: 50% !important;
+  display: inline-flex;
+  vertical-align: middle;
+  margin-left: 4px;
+}
+
+/* ── 6. STAT CARDS SKELETON (PHYSICAL COUNT & KPIS) ── */
+.stat-cards-skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.stat-card-skeleton-item {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.15rem 1.25rem;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+/* ── 7. REPLENISHMENT CARDS SKELETON ── */
+.replenish-cards-skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.replenish-card-skeleton-item {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.2rem;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.replenish-card-skeleton-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.replenish-card-skeleton-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding: 10px;
+  background: #F8FAFC;
+  border-radius: 8px;
+  border: 1px solid #E2E8F0;
+}
+
+.replenish-card-skeleton-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px dashed #E2E8F0;
+}
+
+/* ── 8. CHART SKELETONS (INSIGHTS) ── */
+.chart-skeleton-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.chart-skeleton-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.chart-skeleton-area-bars {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  gap: 12px;
+  padding: 1rem 0.5rem 0.5rem 0.5rem;
+  min-height: 180px;
+}
+
+.chart-skeleton-bar-col {
+  flex: 1;
+  max-width: 38px;
+  background-color: #ECECEA;
+  border-radius: 6px 6px 0 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.chart-skeleton-area-donut {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 180px;
+}
+
+.chart-skeleton-donut-ring {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  border: 38px solid #ECECEA;
+  box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+}
+
+.chart-skeleton-donut-ring::after {
+  content: '';
+  position: absolute;
+  top: -38px;
+  left: -38px;
+  right: -38px;
+  bottom: -38px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.7) 50%,
+    transparent 100%
+  );
+  animation: skeletonShimmer 1.4s ease-in-out infinite;
+}
+
+/* ── 9. RISK ALERTS LIST SKELETON ── */
+.risk-alerts-skeleton-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.risk-alert-skeleton-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0.85rem 1rem;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+}
+
+/* ── 10. LOADING MORE FOOTER ── */
+.table-loading-more-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  color: #64748B;
+  font-size: 13px;
+  font-weight: 500;
+  background: #F8FAFC;
+  border-top: 1px solid #E2E8F0;
+}
+
+/* ── 11. INLINE ERROR STATE IN CARD ── */
+.inline-error-card-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  gap: 0.75rem;
+}
+
+.inline-error-card-state .error-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #FEE2E2;
+  color: #DC2626;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.inline-error-card-state h4 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0F172A;
+  margin: 0;
+}
+
+.inline-error-card-state p {
+  font-size: 13px;
+  color: #64748B;
+  margin: 0;
+  max-width: 380px;
+}
+
+.inline-error-card-state .error-retry-btn {
+  margin-top: 4px;
+  background: #3B1E36;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 7px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.inline-error-card-state .error-retry-btn:hover {
+  opacity: 0.9;
+}
+
+/* ── 12. REDUCED MOTION PREFERENCES ── */
+@media (prefers-reduced-motion: reduce) {
+  .ui-skeleton::after,
+  .chart-skeleton-donut-ring::after,
+  .refresh-progress-bar-wrap .progress-line {
+    animation: none !important;
+    display: none !important;
+  }
+  .skeleton-fade-in {
+    animation: none !important;
+  }
+}

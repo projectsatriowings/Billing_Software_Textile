@@ -7,6 +7,18 @@ import type {
 } from '../../api.ts';
 import { fetchSalesAnalysis, scheduleDailySalesReportEmail, fetchScheduledDailySalesReportEmail } from '../../api.ts';
 import { AnimatedCounter } from '../common/AnimatedCounter.tsx';
+import {
+  PulseBar,
+  EqualizerChart,
+  SplineChartLoader,
+  DonutLoader,
+  HeatmapLoader,
+  SectionCard,
+  KPICard,
+  PaymentModesReal,
+} from './SalesLoaders.tsx';
+import './SalesLoaders.css';
+import { useDelayedLoading } from '../../hooks/useDelayedLoading.ts';
 
 interface SalesAnalysisViewProps {
   userRole?: string;
@@ -237,7 +249,7 @@ function addDaysYMD(ymd: string, days: number): string {
    ========================================================================== */
 
 const AnalyticsHeaderIcon = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3B1E36" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
     <line x1="18" y1="20" x2="18" y2="10" />
     <line x1="12" y1="20" x2="12" y2="4" />
     <line x1="6" y1="20" x2="6" y2="14" />
@@ -454,14 +466,7 @@ const BookKhataIcon = () => (
   </svg>
 );
 
-const CrownUserIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-    <circle cx="9" cy="7" r="4" />
-    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-  </svg>
-);
+
 
 const SparklesInsightIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -528,13 +533,7 @@ const AreaSplineIcon = () => (
   </svg>
 );
 
-const PackageSalesIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-    <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
-    <line x1="12" y1="22.08" x2="12" y2="12" />
-  </svg>
-);
+
 
 const CategoryDonutIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -734,7 +733,7 @@ const BeadedDotMatrixBarChart: React.FC<{
                       cx={cx}
                       cy={cy}
                       r={isHovered && isActive ? dotRadius * 1.15 : dotRadius}
-                      fill={isActive ? (isHovered ? '#0f766e' : '#14b8a6') : '#e2e8f0'}
+                      fill={isActive ? (isHovered ? '#2D1429' : '#3B1E36') : '#e2e8f0'}
                       opacity={isActive ? 0.95 : 0.45}
                       style={{
                         animationDelay: `${cIdx * 35 + dIdx * 25}ms`,
@@ -770,7 +769,7 @@ const BeadedDotMatrixBarChart: React.FC<{
           >
             <div className="tooltip-date-header">{formatDMMMYYYY(hoveredPt.date)}</div>
             <div className="tooltip-val-row">
-              <span className="tooltip-dot" style={{ background: '#14b8a6' }} />
+              <span className="tooltip-dot" style={{ background: '#3B1E36' }} />
               <span className="tooltip-metric-label">Sales:</span>
               <strong className="mono">{formatRupees(hoveredPt.salesMinor)}</strong>
             </div>
@@ -891,12 +890,12 @@ const DualSplineAreaChart: React.FC<{
         >
           <defs>
             <linearGradient id="inspireSalesArea" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#0284c7" stopOpacity="0.22" />
-              <stop offset="100%" stopColor="#0284c7" stopOpacity="0.0" />
+              <stop offset="0%" stopColor="#3B1E36" stopOpacity="0.22" />
+              <stop offset="100%" stopColor="#3B1E36" stopOpacity="0.0" />
             </linearGradient>
             <linearGradient id="inspireProfitArea" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#0d9488" stopOpacity="0.25" />
-              <stop offset="100%" stopColor="#0d9488" stopOpacity="0.0" />
+              <stop offset="0%" stopColor="#604B61" stopOpacity="0.25" />
+              <stop offset="100%" stopColor="#604B61" stopOpacity="0.0" />
             </linearGradient>
           </defs>
 
@@ -949,7 +948,7 @@ const DualSplineAreaChart: React.FC<{
               className="inspire-spline-line sales-line"
               d={salesPath}
               fill="none"
-              stroke="#0284c7"
+              stroke="#3B1E36"
               strokeWidth="2.4"
               strokeLinecap="round"
               pathLength="100"
@@ -961,7 +960,7 @@ const DualSplineAreaChart: React.FC<{
               className="inspire-spline-line profit-line"
               d={profitPath}
               fill="none"
-              stroke="#0d9488"
+              stroke="#604B61"
               strokeWidth="2.4"
               strokeLinecap="round"
               pathLength="100"
@@ -1013,7 +1012,7 @@ const DualSplineAreaChart: React.FC<{
                 cx={pointsSales[hoveredIdx].x}
                 cy={pointsSales[hoveredIdx].y}
                 r="5"
-                fill="#0284c7"
+                fill="#3B1E36"
                 stroke="#ffffff"
                 strokeWidth="2.5"
               />
@@ -1021,7 +1020,7 @@ const DualSplineAreaChart: React.FC<{
                 cx={pointsProfit[hoveredIdx].x}
                 cy={pointsProfit[hoveredIdx].y}
                 r="5"
-                fill="#0d9488"
+                fill="#604B61"
                 stroke="#ffffff"
                 strokeWidth="2.5"
               />
@@ -1040,12 +1039,12 @@ const DualSplineAreaChart: React.FC<{
           >
             <div className="tooltip-date-header">{formatDMMMYYYY(hoveredPt.date)}</div>
             <div className="tooltip-legend-row">
-              <span className="tooltip-dot" style={{ background: '#0284c7' }} />
+              <span className="tooltip-dot" style={{ background: '#3B1E36' }} />
               <span className="tooltip-metric-label">Net Sales</span>
               <span className="tooltip-metric-val mono">{formatRupees(hoveredPt.salesMinor)}</span>
             </div>
             <div className="tooltip-legend-row">
-              <span className="tooltip-dot" style={{ background: '#0d9488' }} />
+              <span className="tooltip-dot" style={{ background: '#604B61' }} />
               <span className="tooltip-metric-label">Gross Profit</span>
               <span className="tooltip-metric-val mono">{formatRupees(hoveredPt.grossProfitMinor)}</span>
             </div>
@@ -1056,82 +1055,34 @@ const DualSplineAreaChart: React.FC<{
   );
 };
 
-/** Inspirational Product Sales Breakdown 3-Column Card */
-const ProductSalesBreakdownCard: React.FC<{
-  productBreakdown: any;
-}> = ({ productBreakdown }) => {
-  const groups = [
-    productBreakdown.byRevenue,
-    productBreakdown.byVolume,
-    productBreakdown.byProfit,
-  ];
 
-  return (
-    <div className="inspire-chart-card">
-      <div className="inspire-card-header">
-        <div className="inspire-header-title-box">
-          <div className="inspire-header-icon theme-blue">
-            <PackageSalesIcon />
-          </div>
-          <div>
-            <h3 className="inspire-card-title">Product Sales</h3>
-          </div>
-        </div>
-        <div className="inspire-header-actions">
-          <button type="button" className="inspire-more-btn" title="More options">
-            <MoreDotsIcon />
-          </button>
-        </div>
-      </div>
 
-      <div className="inspire-product-cols-grid">
-        {groups.map((grp: any, gIdx: number) => {
-          const isVol = gIdx === 1;
-          const isProf = gIdx === 2;
-          const isPositive = (grp.trendPct ?? 0) >= 0;
+const COLORFUL_CATEGORY_PALETTE = [
+  '#6366F1', // Indigo / Purple
+  '#10B981', // Emerald Green
+  '#F59E0B', // Amber
+  '#3B82F6', // Royal Blue
+  '#EC4899', // Rose Pink
+  '#06B6D4', // Cyan
+  '#8B5CF6', // Violet
+  '#F97316', // Orange
+  '#64748B', // Slate / Others
+];
 
-          return (
-            <div key={gIdx} className="inspire-product-subcard">
-              <div className="product-subcard-header">
-                <div className="product-subcard-metric mono">
-                  {grp.totalMetric}
-                  <span className="metric-sub">{isVol ? '' : 'Sales'}</span>
-                </div>
-                <span className={`product-subcard-trend ${isPositive ? 'positive' : 'negative'}`}>
-                  {isPositive ? '↗' : '↘'} {Math.abs(grp.trendPct ?? 15)}%
-                </span>
-              </div>
-
-              <table className="product-subcard-table">
-                <thead>
-                  <tr>
-                    <th>Product Name</th>
-                    <th>{isVol ? 'Units Sold' : isProf ? 'Net Margin' : 'Sales Vol'}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(grp.items || []).slice(0, 5).map((item: any, iIdx: number) => (
-                    <tr key={iIdx}>
-                      <td className="product-name-cell" title={item.name}>
-                        {item.name}
-                      </td>
-                      <td className="product-stat-cell mono">
-                        {isVol
-                          ? `${item.unitsSold}+`
-                          : isProf
-                            ? formatRupees(item.profitMinor || Math.round(item.revenueMinor * 0.25))
-                            : formatRupees(item.revenueMinor)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
+const getCategoryColor = (cat: { color?: string; category?: string }, idx: number): string => {
+  if (
+    cat.color &&
+    !cat.color.startsWith('#3B') &&
+    !cat.color.startsWith('#4E') &&
+    !cat.color.startsWith('#633') &&
+    !cat.color.startsWith('#7B4') &&
+    !cat.color.startsWith('#945') &&
+    !cat.color.startsWith('#AD7') &&
+    !cat.color.startsWith('#C48')
+  ) {
+    return cat.color;
+  }
+  return COLORFUL_CATEGORY_PALETTE[idx % COLORFUL_CATEGORY_PALETTE.length];
 };
 
 /** Inspirational Segmented Donut Chart & Category Legend */
@@ -1217,18 +1168,20 @@ const CategorySalesDonutCard: React.FC<{
           <svg viewBox="0 0 190 190" className="donut-svg-canvas">
             {arcs.map((arc) => {
               const isHovered = hoveredIdx === arc.idx;
+              const color = getCategoryColor(arc, arc.idx);
               return (
                 <path
                   key={`arc-${donutAnimKey}-${arc.idx}`}
                   className="inspire-donut-slice"
                   d={arc.pathD}
-                  fill={arc.color}
-                  opacity={hoveredIdx === null || isHovered ? 1 : 0.65}
+                  fill={color}
+                  opacity={hoveredIdx === null || isHovered ? 1 : 0.45}
                   style={{
                     transformOrigin: '95px 95px',
                     transform: isHovered ? 'scale(1.05)' : 'scale(1)',
                     transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                     animationDelay: `${arc.idx * 75}ms`,
+                    cursor: 'pointer',
                   }}
                   onMouseEnter={() => setHoveredIdx(arc.idx)}
                   onMouseLeave={() => setHoveredIdx(null)}
@@ -1257,7 +1210,7 @@ const CategorySalesDonutCard: React.FC<{
             })}
           </svg>
 
-          {/* Central Total KPI with Count-up animation */}
+          {/* Central Total KPI with Count-up animation or Hovered Category Info */}
           <div
             className="donut-center-overlay"
             style={{
@@ -1270,37 +1223,89 @@ const CategorySalesDonutCard: React.FC<{
               width: '90px',
             }}
           >
-            <div style={{ fontSize: '0.64rem', fontWeight: 700, color: '#64748b', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-              TOTAL
-            </div>
-            <div style={{ fontSize: '0.86rem', fontWeight: 800, color: '#0f172a', marginTop: '1px' }} className="mono">
-              <AnimatedCounter
-                value={totalCatSalesMinor}
-                formatter={(v) => formatRupees(v)}
-                triggerKey={totalCatSalesMinor}
-              />
-            </div>
+            {hoveredIdx !== null && arcs[hoveredIdx] ? (
+              <>
+                <div
+                  style={{
+                    fontSize: '0.62rem',
+                    fontWeight: 700,
+                    color: getCategoryColor(arcs[hoveredIdx], hoveredIdx),
+                    letterSpacing: '0.04em',
+                    textTransform: 'uppercase',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}
+                  title={arcs[hoveredIdx].category}
+                >
+                  {arcs[hoveredIdx].category}
+                </div>
+                <div
+                  style={{
+                    fontSize: '0.86rem',
+                    fontWeight: 800,
+                    color: '#0f172a',
+                    marginTop: '1px',
+                  }}
+                  className="mono"
+                >
+                  {formatRupees(arcs[hoveredIdx].netSalesMinor)}
+                </div>
+                <div style={{ fontSize: '0.65rem', fontWeight: 700, color: '#64748b' }}>
+                  {arcs[hoveredIdx].share}%
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{ fontSize: '0.64rem', fontWeight: 700, color: '#64748b', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                  TOTAL
+                </div>
+                <div style={{ fontSize: '0.86rem', fontWeight: 800, color: '#0f172a', marginTop: '1px' }} className="mono">
+                  <AnimatedCounter
+                    value={totalCatSalesMinor}
+                    formatter={(v) => formatRupees(v)}
+                    triggerKey={totalCatSalesMinor}
+                  />
+                </div>
+              </>
+            )}
           </div>
         </div>
 
         <div className="donut-legend-list">
-          {(categories || []).slice(0, 4).map((cat, idx) => (
-            <div
-              key={idx}
-              className="donut-legend-item"
-              onMouseEnter={() => setHoveredIdx(idx)}
-              onMouseLeave={() => setHoveredIdx(null)}
-            >
-              <span className="donut-legend-bar" style={{ background: cat.color }} />
-              <div className="donut-legend-info">
-                <span className="donut-legend-name">{cat.category}</span>
-                <span className="donut-legend-val mono">
-                  {formatRupees(cat.netSalesMinor)}
-                  <span className="val-sub">sales</span>
-                </span>
+          {(categories || []).slice(0, 5).map((cat, idx) => {
+            const color = getCategoryColor(cat, idx);
+            const isHovered = hoveredIdx === idx;
+            return (
+              <div
+                key={idx}
+                className="donut-legend-item"
+                style={{
+                  cursor: 'pointer',
+                  opacity: hoveredIdx !== null && !isHovered ? 0.5 : 1,
+                  transform: isHovered ? 'translateX(2px)' : 'none',
+                  transition: 'opacity 0.2s ease, transform 0.2s ease',
+                }}
+                onMouseEnter={() => setHoveredIdx(idx)}
+                onMouseLeave={() => setHoveredIdx(null)}
+              >
+                <span
+                  className="donut-legend-bar"
+                  style={{
+                    background: color,
+                    boxShadow: `0 0 0 2px ${color}33`,
+                  }}
+                />
+                <div className="donut-legend-info">
+                  <span className="donut-legend-name">{cat.category}</span>
+                  <span className="donut-legend-val mono">
+                    {formatRupees(cat.netSalesMinor)}
+                    <span className="val-sub">sales ({cat.sharePct}%)</span>
+                  </span>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
@@ -1473,7 +1478,7 @@ function renderInsightIcon(iconStr: string, theme?: string) {
   }
   if (iconStr === '💳' || iconStr.includes('credit') || iconStr.includes('khata') || theme === 'purple') {
     return (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3B1E36" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
         <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
         <line x1="1" y1="10" x2="23" y2="10" />
       </svg>
@@ -1562,7 +1567,7 @@ export const SalesAnalysisView: React.FC<SalesAnalysisViewProps> = ({
           setScheduleEmail(res.email);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, [selectedBranch]);
 
   // Modern category view toggle ('bento' | 'leaderboard')
@@ -1573,6 +1578,12 @@ export const SalesAnalysisView: React.FC<SalesAnalysisViewProps> = ({
   const [data, setData] = useState<SalesAnalysisData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState<boolean>(false);
+
+  // Content-shaped delayed loading: wait 300ms before showing placeholders; once shown keep at least 400ms
+  const { showSkeleton: showDelayedPlaceholders } = useDelayedLoading(loading && !hasLoadedOnce, 300, 400, 8000);
+  const showPlaceholders = (!hasLoadedOnce && loading) || showDelayedPlaceholders;
+  const isRefreshing = loading && hasLoadedOnce;
 
   // Calculate from & to dates based on preset
   const { fromYMD, toYMD } = useMemo(() => {
@@ -1652,6 +1663,7 @@ export const SalesAnalysisView: React.FC<SalesAnalysisViewProps> = ({
         branch: selectedBranch && selectedBranch.toLowerCase() !== 'all' ? selectedBranch : undefined,
       });
       setData(res);
+      setHasLoadedOnce(true);
     } catch (err: any) {
       console.error('Failed to load sales analysis:', err);
       setError(err?.message || 'Failed to fetch sales analytics');
@@ -2109,39 +2121,7 @@ export const SalesAnalysisView: React.FC<SalesAnalysisViewProps> = ({
     };
   }, [hoveredPoint, svgWidth, svgHeight]);
 
-  const productBreakdown = useMemo(() => {
-    if (data?.topProducts) return data.topProducts;
 
-    const catNames = (data?.categories || []).map((c) => c.category);
-    const sampleItems = [
-      { name: catNames[0] ? `${catNames[0]} Premium Pack` : 'Basmati Rice (5kg)', category: catNames[0] || 'Grocery', unitsSold: 213, revenueMinor: 4825000, profitMinor: 1420000 },
-      { name: catNames[1] ? `${catNames[1]} Special` : 'Sunflower Oil (1L)', category: catNames[1] || 'Grocery', unitsSold: 182, revenueMinor: 3820000, profitMinor: 950000 },
-      { name: catNames[2] ? `${catNames[2]} Standard` : 'Toor Dal Premium', category: catNames[2] || 'Staples', unitsSold: 142, revenueMinor: 2450000, profitMinor: 720000 },
-      { name: 'Aashirvaad Whole Wheat Atta', category: 'Flour', unitsSold: 138, revenueMinor: 1980000, profitMinor: 580000 },
-      { name: 'Refined Sugar Grade A', category: 'Staples', unitsSold: 85, revenueMinor: 1240000, profitMinor: 360000 },
-    ];
-
-    return {
-      byRevenue: {
-        groupTitle: 'Top by Revenue',
-        totalMetric: formatRupees(sampleItems.reduce((acc, i) => acc + i.revenueMinor, 0)),
-        trendPct: data?.comparison?.diff?.netSalesChangePct || 24,
-        items: sampleItems,
-      },
-      byVolume: {
-        groupTitle: 'High Volume / Units Sold',
-        totalMetric: `${sampleItems.reduce((acc, i) => acc + i.unitsSold, 0).toLocaleString('en-IN')} Units`,
-        trendPct: data?.comparison?.diff?.billsCountChangePct || 16,
-        items: sampleItems.map((i, idx) => ({ ...i, unitsSold: Math.round(i.unitsSold * (1.5 - idx * 0.15)) })),
-      },
-      byProfit: {
-        groupTitle: 'High Margin / Net Profit',
-        totalMetric: formatRupees(sampleItems.reduce((acc, i) => acc + (i.profitMinor || 0), 0)),
-        trendPct: data?.comparison?.diff?.grossProfitChangePct || 28,
-        items: sampleItems.map((i, idx) => ({ ...i, unitsSold: Math.round(i.unitsSold * 0.8) })),
-      },
-    };
-  }, [data?.topProducts, data?.categories, data?.comparison]);
 
   return (
     <div className="sales-analysis-container">
@@ -2149,16 +2129,27 @@ export const SalesAnalysisView: React.FC<SalesAnalysisViewProps> = ({
       <div className="card sales-header-card">
         <div className="sales-header-top">
           <div className="sales-header-title-row">
-            <div className="sales-module-brand-icon">
+            <div className="sales-module-brand-icon" style={{ background: 'transparent', boxShadow: 'none', color: '#3B1E36' }}>
               <AnalyticsHeaderIcon />
             </div>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
                 <h1 className="sales-module-title">Sales Analysis</h1>
-                <span className="badge-live-pulse" title="Live transactions synced directly from cashier registers">
-                  <span className="pulse-dot-green"></span>
-                  <span>Live from billing</span>
-                </span>
+                {loading ? (
+                  <span className="badge-syncing-pulse" role="status" aria-live="polite" title="Syncing transactions from cashier registers">
+                    <span className="syncing-dots" aria-hidden="true">
+                      <span className="dot dot-1" />
+                      <span className="dot dot-2" />
+                      <span className="dot dot-3" />
+                    </span>
+                    <span>Syncing with billing</span>
+                  </span>
+                ) : (
+                  <span className="badge-live-pulse" title="Live transactions synced directly from cashier registers">
+                    <span className="pulse-dot-green"></span>
+                    <span>Live from billing</span>
+                  </span>
+                )}
               </div>
               <div className="sales-header-subtitle">
                 Sales, profit, payment modes, peak hours, customers and cashiers · completed bills only, returns and cancelled bills handled per your business rules
@@ -2195,7 +2186,7 @@ export const SalesAnalysisView: React.FC<SalesAnalysisViewProps> = ({
       </div>
 
       {/* ERROR STATE */}
-      {error && (
+      {error && !data && (
         <div className="card sales-error-card">
           <div className="error-icon-box">
             <AlertTriangleIcon />
@@ -2210,49 +2201,41 @@ export const SalesAnalysisView: React.FC<SalesAnalysisViewProps> = ({
         </div>
       )}
 
-      {/* LOADING SKELETON */}
-      {loading && !data && (
-        <div className="sales-loading-skeleton">
-          <div className="kpi-grid-6">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="sales-kpi-card skeleton-card">
-                <div className="skeleton-line" style={{ width: '40%', height: '12px' }}></div>
-                <div className="skeleton-line" style={{ width: '70%', height: '24px', margin: '12px 0' }}></div>
-                <div className="skeleton-line" style={{ width: '50%', height: '12px' }}></div>
-              </div>
-            ))}
-          </div>
-          <div className="card" style={{ height: '320px', marginTop: '1.25rem', opacity: 0.6 }}></div>
-        </div>
-      )}
-
-      {/* MAIN CONTENT WHEN LOADED */}
-      {data && (
-        <>
-          {/* 3. INSPIRATIONAL 4 EXECUTIVE KPI CARDS WITH MICRO SPARK BARS */}
-          <div className="sales-inspire-kpi-grid">
-            {/* Card 1: Total Revenue / Income */}
-            <div className="inspire-kpi-card">
-              <div>
-                <div className="inspire-kpi-top">
-                  <div className="inspire-kpi-icon-pill theme-teal">
-                    <NetSalesIcon />
-                  </div>
-                  <span className="inspire-kpi-title">Total Income</span>
+      {/* 2. ROW 1: 4 KPI CARDS (ZERO LAYOUT SHIFT) */}
+      <div className="sales-kpi-4-grid">
+        {/* Card 1: Net Sales */}
+        <KPICard
+          label="Net sales"
+          icon={<NetSalesIcon />}
+          loading={showPlaceholders}
+          isRefreshing={isRefreshing}
+          error={error && !data ? error : null}
+          onRetry={loadAnalysis}
+          cardIndex={0}
+          valueWidth="68%"
+        >
+          {data && (
+            <div className="kpi-real-content">
+              <div className="kpi-real-header">
+                <span className="kpi-real-label">Net sales</span>
+                <div className="inspire-kpi-icon-pill" style={{ background: 'rgba(59, 30, 54, 0.08)', color: '#3B1E36' }}>
+                  <NetSalesIcon />
                 </div>
-                <div className={`inspire-kpi-trend ${data.comparison?.diff ? (data.comparison.diff.netSalesChangePct >= 0 ? 'positive' : 'negative') : 'neutral'}`}>
+              </div>
+              <div className="kpi-real-trend-row">
+                <span className={`kpi-trend-badge ${data.comparison?.diff ? (data.comparison.diff.netSalesChangePct >= 0 ? 'positive' : 'negative') : 'neutral'}`}>
                   {data.comparison?.diff ? (
                     <>
                       <span>{data.comparison.diff.netSalesChangePct >= 0 ? '↗' : '↘'} {Math.abs(data.comparison.diff.netSalesChangePct)}%</span>
-                      <span>Compared to last {data.comparison.periodLabel || 'period'}</span>
                     </>
                   ) : (
-                    <span>↗ Real-time Revenue</span>
+                    <span>↗ Real-time</span>
                   )}
-                </div>
+                </span>
+                <span className="kpi-trend-subtext">vs last {data.comparison?.periodLabel || 'period'}</span>
               </div>
-              <div className="inspire-kpi-bottom-row">
-                <span className="inspire-kpi-val mono">
+              <div className="kpi-real-bottom-row">
+                <span className="kpi-real-value mono">
                   <AnimatedCounter
                     value={data.summary.netSalesMinor}
                     formatter={(val) => formatRupees(val)}
@@ -2261,33 +2244,46 @@ export const SalesAnalysisView: React.FC<SalesAnalysisViewProps> = ({
                 </span>
                 <MicroSparkBars
                   values={data.series.map((s) => s.salesMinor)}
-                  color="#0f766e"
+                  color="#3B1E36"
                 />
               </div>
             </div>
+          )}
+        </KPICard>
 
-            {/* Card 2: Profit */}
-            <div className="inspire-kpi-card">
-              <div>
-                <div className="inspire-kpi-top">
-                  <div className="inspire-kpi-icon-pill theme-emerald">
-                    <GrossProfitIcon />
-                  </div>
-                  <span className="inspire-kpi-title">Profit</span>
+        {/* Card 2: Gross Profit */}
+        <KPICard
+          label="Gross profit"
+          icon={<GrossProfitIcon />}
+          loading={showPlaceholders}
+          isRefreshing={isRefreshing}
+          error={error && !data ? error : null}
+          onRetry={loadAnalysis}
+          cardIndex={1}
+          valueWidth="55%"
+        >
+          {data && (
+            <div className="kpi-real-content">
+              <div className="kpi-real-header">
+                <span className="kpi-real-label">Gross profit</span>
+                <div className="inspire-kpi-icon-pill" style={{ background: 'rgba(73, 54, 74, 0.08)', color: '#49364A' }}>
+                  <GrossProfitIcon />
                 </div>
-                <div className={`inspire-kpi-trend ${data.comparison?.diff ? (data.comparison.diff.grossProfitChangePct >= 0 ? 'positive' : 'negative') : 'neutral'}`}>
+              </div>
+              <div className="kpi-real-trend-row">
+                <span className={`kpi-trend-badge ${data.comparison?.diff ? (data.comparison.diff.grossProfitChangePct >= 0 ? 'positive' : 'negative') : 'neutral'}`}>
                   {data.comparison?.diff ? (
                     <>
                       <span>{data.comparison.diff.grossProfitChangePct >= 0 ? '↗' : '↘'} {Math.abs(data.comparison.diff.grossProfitChangePct)}%</span>
-                      <span>Compared to last {data.comparison.periodLabel || 'period'}</span>
                     </>
                   ) : (
-                    <span>↗ {data.summary.marginPct}% Gross Margin</span>
+                    <span>↗ {data.summary.marginPct}% Margin</span>
                   )}
-                </div>
+                </span>
+                <span className="kpi-trend-subtext">vs last {data.comparison?.periodLabel || 'period'}</span>
               </div>
-              <div className="inspire-kpi-bottom-row">
-                <span className="inspire-kpi-val mono">
+              <div className="kpi-real-bottom-row">
+                <span className="kpi-real-value mono">
                   <AnimatedCounter
                     value={data.summary.grossProfitMinor}
                     formatter={(val) => formatRupees(val)}
@@ -2296,33 +2292,46 @@ export const SalesAnalysisView: React.FC<SalesAnalysisViewProps> = ({
                 </span>
                 <MicroSparkBars
                   values={data.series.map((s) => s.grossProfitMinor)}
-                  color="#10b981"
+                  color="#49364A"
                 />
               </div>
             </div>
+          )}
+        </KPICard>
 
-            {/* Card 3: Pending Orders / Invoices */}
-            <div className="inspire-kpi-card">
-              <div>
-                <div className="inspire-kpi-top">
-                  <div className="inspire-kpi-icon-pill theme-blue">
-                    <BillsReceiptIcon />
-                  </div>
-                  <span className="inspire-kpi-title">Pending Orders</span>
+        {/* Card 3: Bills */}
+        <KPICard
+          label="Bills"
+          icon={<BillsReceiptIcon />}
+          loading={showPlaceholders}
+          isRefreshing={isRefreshing}
+          error={error && !data ? error : null}
+          onRetry={loadAnalysis}
+          cardIndex={2}
+          valueWidth="42%"
+        >
+          {data && (
+            <div className="kpi-real-content">
+              <div className="kpi-real-header">
+                <span className="kpi-real-label">Bills</span>
+                <div className="inspire-kpi-icon-pill" style={{ background: 'rgba(91, 74, 88, 0.08)', color: '#5B4A58' }}>
+                  <BillsReceiptIcon />
                 </div>
-                <div className={`inspire-kpi-trend ${data.comparison?.diff ? (data.comparison.diff.billsCountChangePct >= 0 ? 'positive' : 'negative') : 'neutral'}`}>
+              </div>
+              <div className="kpi-real-trend-row">
+                <span className={`kpi-trend-badge ${data.comparison?.diff ? (data.comparison.diff.billsCountChangePct >= 0 ? 'positive' : 'negative') : 'neutral'}`}>
                   {data.comparison?.diff ? (
                     <>
                       <span>{data.comparison.diff.billsCountChangePct >= 0 ? '↗' : '↘'} {Math.abs(data.comparison.diff.billsCountChangePct)}%</span>
-                      <span>Compared to last {data.comparison.periodLabel || 'period'}</span>
                     </>
                   ) : (
-                    <span>• {data.summary.avgBillsPerDay} bills / day</span>
+                    <span>• {data.summary.avgBillsPerDay} / day</span>
                   )}
-                </div>
+                </span>
+                <span className="kpi-trend-subtext">vs last {data.comparison?.periodLabel || 'period'}</span>
               </div>
-              <div className="inspire-kpi-bottom-row">
-                <span className="inspire-kpi-val mono">
+              <div className="kpi-real-bottom-row">
+                <span className="kpi-real-value mono">
                   <AnimatedCounter
                     value={data.summary.billsCount}
                     suffix="+"
@@ -2331,55 +2340,77 @@ export const SalesAnalysisView: React.FC<SalesAnalysisViewProps> = ({
                 </span>
                 <MicroSparkBars
                   values={data.series.map((s) => s.billsCount)}
-                  color="#0284c7"
+                  color="#5B4A58"
                 />
               </div>
             </div>
+          )}
+        </KPICard>
 
-            {/* Card 4: Conversion Rate / Ticket Size */}
-            <div className="inspire-kpi-card">
-              <div>
-                <div className="inspire-kpi-top">
-                  <div className="inspire-kpi-icon-pill theme-violet">
-                    <AvgBillIcon />
-                  </div>
-                  <span className="inspire-kpi-title">Conversion Rate</span>
+        {/* Card 4: Avg Bill Value */}
+        <KPICard
+          label="Avg bill value"
+          icon={<AvgBillIcon />}
+          loading={showPlaceholders}
+          isRefreshing={isRefreshing}
+          error={error && !data ? error : null}
+          onRetry={loadAnalysis}
+          cardIndex={3}
+          valueWidth="60%"
+        >
+          {data && (
+            <div className="kpi-real-content">
+              <div className="kpi-real-header">
+                <span className="kpi-real-label">Avg bill value</span>
+                <div className="inspire-kpi-icon-pill" style={{ background: 'rgba(109, 67, 102, 0.08)', color: '#6D4366' }}>
+                  <AvgBillIcon />
                 </div>
-                <div className={`inspire-kpi-trend ${data.comparison?.diff ? (data.comparison.diff.avgBillChangePct >= 0 ? 'positive' : 'negative') : 'neutral'}`}>
+              </div>
+              <div className="kpi-real-trend-row">
+                <span className={`kpi-trend-badge ${data.comparison?.diff ? (data.comparison.diff.avgBillChangePct >= 0 ? 'positive' : 'negative') : 'neutral'}`}>
                   {data.comparison?.diff ? (
                     <>
                       <span>{data.comparison.diff.avgBillChangePct >= 0 ? '↗' : '↘'} {Math.abs(data.comparison.diff.avgBillChangePct)}%</span>
-                      <span>Compared to last {data.comparison.periodLabel || 'period'}</span>
                     </>
                   ) : (
-                    <span>• {formatRupees(data.summary.avgBillValueMinor)} / ticket</span>
+                    <span>• ticket size</span>
                   )}
-                </div>
+                </span>
+                <span className="kpi-trend-subtext">vs last {data.comparison?.periodLabel || 'period'}</span>
               </div>
-              <div className="inspire-kpi-bottom-row">
-                <span className="inspire-kpi-val mono">
-                  {data.comparison?.diff ? (
-                    <AnimatedCounter
-                      value={Math.min(99.4, Math.max(3.2, 4.38 + data.comparison.diff.avgBillChangePct * 0.05))}
-                      decimals={2}
-                      suffix="%"
-                      triggerKey={data.comparison.diff.avgBillChangePct}
-                    />
-                  ) : (
-                    '4.38%'
-                  )}
+              <div className="kpi-real-bottom-row">
+                <span className="kpi-real-value mono">
+                  <AnimatedCounter
+                    value={data.summary.avgBillValueMinor}
+                    formatter={(val) => formatRupees(val)}
+                    triggerKey={data.summary.avgBillValueMinor}
+                  />
                 </span>
                 <MicroSparkBars
                   values={data.series.map((s) => s.avgBillMinor || 10)}
-                  color="#6366f1"
+                  color="#6D4366"
                 />
               </div>
             </div>
-          </div>
+          )}
+        </KPICard>
+      </div>
 
-          {/* 4. MIDDLE VISUAL GRID (50% / 50%) */}
-          <div className="sales-inspire-middle-grid">
-            {/* Chart 1: Beaded Dot-Matrix Bar Chart */}
+      {/* 3. ROW 2 (50% / 50%): REVENUE OVER TIME & REVENUE BREAKDOWN */}
+      <div className="sales-inspire-middle-grid" style={{ marginTop: '1.15rem' }}>
+        <SectionCard
+          title="Revenue Over Time"
+          subtitle="Daily sales performance & volume"
+          loading={showPlaceholders}
+          isRefreshing={isRefreshing}
+          error={error && !data ? error : null}
+          onRetry={loadAnalysis}
+          cardIndex={4}
+          placeholder={<EqualizerChart bars={14} height={240} />}
+          hideHeaderWhenLoaded={true}
+          borderlessWhenLoaded={true}
+        >
+          {data && (
             <BeadedDotMatrixBarChart
               series={data.series}
               metricKey="salesMinor"
@@ -2387,29 +2418,137 @@ export const SalesAnalysisView: React.FC<SalesAnalysisViewProps> = ({
               trendText={data.comparison?.diff ? `${Math.abs(data.comparison.diff.netSalesChangePct)}% ${data.comparison.diff.netSalesChangePct >= 0 ? 'Increased' : 'Decreased'} vs last month` : `${data.series.length} data points`}
               isTrendPositive={(data.comparison?.diff?.netSalesChangePct ?? 1) >= 0}
             />
+          )}
+        </SectionCard>
 
-            {/* Chart 2: Dual Spline Curve Area Chart */}
+        <SectionCard
+          title="Revenue Breakdown"
+          subtitle="Sales and gross profit curve"
+          loading={showPlaceholders}
+          isRefreshing={isRefreshing}
+          error={error && !data ? error : null}
+          onRetry={loadAnalysis}
+          cardIndex={5}
+          placeholder={<SplineChartLoader height={240} />}
+          hideHeaderWhenLoaded={true}
+          borderlessWhenLoaded={true}
+        >
+          {data && (
             <DualSplineAreaChart
               series={data.series}
               totalValueFormatted={formatRupees(data.summary.grossProfitMinor)}
               trendText={data.comparison?.diff ? `${Math.abs(data.comparison.diff.grossProfitChangePct)}% ${data.comparison.diff.grossProfitChangePct >= 0 ? 'Increased' : 'Decreased'} vs last month` : `${data.summary.marginPct}% margin`}
               isTrendPositive={(data.comparison?.diff?.grossProfitChangePct ?? 1) >= 0}
             />
-          </div>
+          )}
+        </SectionCard>
+      </div>
 
-          {/* 4b. BOTTOM VISUAL GRID (PRODUCT BREAKDOWN & CATEGORY DONUT) */}
-          <div className="sales-inspire-bottom-grid">
-            {/* Card 3: 3-Column Product Sales Breakdown */}
-            <ProductSalesBreakdownCard productBreakdown={productBreakdown} />
+      {/* 4. ROW 3 (2fr / 1fr): PEAK HOURS & PAYMENT MODES */}
+      <div className="sales-row-2fr-1fr">
+        <SectionCard
+          title="Peak hours"
+          subtitle="Busiest store hours & days"
+          loading={showPlaceholders}
+          isRefreshing={isRefreshing}
+          error={error && !data ? error : null}
+          onRetry={loadAnalysis}
+          cardIndex={6}
+          placeholder={<HeatmapLoader rows={7} cols={12} />}
+        >
+          {data && (
+            <div className="heatmap-container" style={{ width: '100%', overflowX: 'auto' }}>
+              {/* Hour Headers */}
+              <div className="heatmap-hours-row">
+                <div className="heatmap-weekday-spacer"></div>
+                {['8a', '9a', '10a', '11a', '12p', '1p', '2p', '3p', '4p', '5p', '6p', '7p'].map((hr, idx) => (
+                  <div key={idx} className="heatmap-hour-header" style={{ color: '#7C6878', fontSize: '10px', fontWeight: 600 }}>
+                    {hr}
+                  </div>
+                ))}
+              </div>
 
-            {/* Card 4: Segmented Donut Chart & Category Legend */}
-            <CategorySalesDonutCard
-              categories={data.categories}
-              totalCatSalesMinor={data.summary.netSalesMinor}
+              {/* Weekday Rows (Mon .. Sun) */}
+              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((dayName, rowIdx) => {
+                const rowCells = data.heatmap.matrix.filter((c) => c.weekdayName === dayName);
+
+                return (
+                  <div key={rowIdx} className="heatmap-row" style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                    <div className="heatmap-row-label" style={{ width: '38px', fontSize: '11px', fontWeight: 600, color: '#5B4A58' }}>
+                      {dayName}
+                    </div>
+                    <div className="heatmap-cells-track" style={{ display: 'flex', gap: '6px' }}>
+                      {rowCells.slice(0, 12).map((cell, cIdx) => {
+                        const intensity =
+                          data.heatmap.maxCellSalesMinor > 0
+                            ? Math.min(1, Math.max(0.08, cell.salesMinor / data.heatmap.maxCellSalesMinor))
+                            : 0.08;
+                        const bgAlpha = cell.salesMinor > 0 ? 0.15 + intensity * 0.8 : 0.08;
+
+                        return (
+                          <div
+                            key={cIdx}
+                            className="heatmap-cell"
+                            style={{
+                              width: '22px',
+                              height: '22px',
+                              borderRadius: '4px',
+                              backgroundColor: `rgba(59, 30, 54, ${bgAlpha.toFixed(2)})`,
+                              cursor: 'pointer',
+                              transition: 'transform 0.15s ease',
+                            }}
+                            title={`${dayName} ${cell.hour}:00 - ${formatRupees(cell.salesMinor)} (${cell.billsCount} bills)`}
+                          />
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Heatmap Legend */}
+              <div className="heatmap-footer-legend" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '12px' }}>
+                <span className="legend-label" style={{ fontSize: '11px', color: '#7C6878' }}>Low</span>
+                <div className="heatmap-legend-bar" style={{ width: '80px', height: '6px', borderRadius: '3px', background: 'linear-gradient(to right, rgba(59, 30, 54, 0.1), rgba(59, 30, 54, 0.95))' }} />
+                <span className="legend-label" style={{ fontSize: '11px', color: '#7C6878' }}>High</span>
+                <span className="legend-dot" style={{ color: '#DDD2DC' }}>•</span>
+                <span className="legend-peak-text" style={{ fontSize: '12px', color: '#3B1E36', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span className="peak-flame-icon" style={{ color: '#3B1E36' }}>
+                    <FlamePeakIcon />
+                  </span>
+                  <span>Peak: <strong>{data.heatmap.peakSlot}</strong></span>
+                </span>
+              </div>
+            </div>
+          )}
+        </SectionCard>
+
+        <SectionCard
+          title="Payment modes"
+          subtitle="Share of net sales"
+          loading={showPlaceholders}
+          isRefreshing={isRefreshing}
+          error={error && !data ? error : null}
+          onRetry={loadAnalysis}
+          cardIndex={7}
+          placeholder={<DonutLoader size={168} thickness={26} />}
+        >
+          {data && (
+            <PaymentModesReal
+              modes={data.payments.modes}
+              totalMinor={data.summary.netSalesMinor}
+              formatRupeesFn={formatRupees}
             />
-          </div>
+          )}
+        </SectionCard>
+      </div>
 
-          {/* 5. PANELS BELOW CHART (2-COLUMN GRID) */}
+
+
+      {/* MAIN CONTENT WHEN LOADED */}
+      {data && (
+        <>
+          {/* 6. PANELS BELOW CHART (2-COLUMN GRID) */}
           <div className="sales-panels-grid">
             {/* LEFT COLUMN */}
             <div className="sales-panels-col">
@@ -2622,213 +2761,17 @@ export const SalesAnalysisView: React.FC<SalesAnalysisViewProps> = ({
                   <div className="panel-empty-text">No category sales recorded in this period.</div>
                 )}
               </div>
-
-              {/* Panel: Busiest Days & Hours Heatmap */}
-              <div className="card sales-panel-card">
-                <div className="panel-card-header">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
-                    <div className="panel-header-icon-box">
-                      <ClockHeatmapIcon />
-                    </div>
-                    <div>
-                      <h3 className="panel-title">Busiest Days &amp; Hours</h3>
-                      <div className="panel-subtitle">Average sales by weekday and hour</div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="heatmap-container">
-                  {/* Hour Headers */}
-                  <div className="heatmap-hours-row">
-                    <div className="heatmap-weekday-spacer"></div>
-                    {['8a', '10a', '12p', '2p', '4p', '6p', '8p'].map((hr, idx) => (
-                      <div key={idx} className="heatmap-hour-header">
-                        {hr}
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Weekday Rows (Mon .. Sun) */}
-                  {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((dayName, rowIdx) => {
-                    const rowCells = data.heatmap.matrix.filter((c) => c.weekdayName === dayName);
-
-                    return (
-                      <div key={rowIdx} className="heatmap-row">
-                        <div className="heatmap-row-label">{dayName}</div>
-                        <div className="heatmap-cells-track">
-                          {rowCells.map((cell, cIdx) => {
-                            const intensity =
-                              data.heatmap.maxCellSalesMinor > 0
-                                ? Math.min(1, Math.max(0.08, cell.salesMinor / data.heatmap.maxCellSalesMinor))
-                                : 0.08;
-                            const bgAlpha = cell.salesMinor > 0 ? 0.15 + intensity * 0.8 : 0.08;
-
-                            return (
-                              <div
-                                key={cIdx}
-                                className="heatmap-cell"
-                                style={{
-                                  backgroundColor: `rgba(109, 74, 255, ${bgAlpha.toFixed(2)})`,
-                                }}
-                                title={`${cell.weekdayName} ${cell.hourLabel}: ${cell.billsCount} bills, ${formatRupees(cell.salesMinor)}`}
-                              ></div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })}
-
-                  {/* Heatmap Legend */}
-                  <div className="heatmap-footer-legend">
-                    <span className="legend-label">Low</span>
-                    <div className="heatmap-legend-bar"></div>
-                    <span className="legend-label">High</span>
-                    <span className="legend-dot">•</span>
-                    <span className="legend-peak-text">
-                      <span className="peak-flame-icon">
-                        <FlamePeakIcon />
-                      </span>
-                      <span>Peak: <strong>{data.heatmap.peakSlot}</strong></span>
-                    </span>
-                  </div>
-                </div>
-              </div>
             </div>
 
             {/* RIGHT COLUMN */}
             <div className="sales-panels-col">
-              {/* Panel: Payment Modes */}
-              <div className="card sales-panel-card">
-                <div className="panel-card-header">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
-                    <div className="panel-header-icon-box">
-                      <WalletPaymentIcon />
-                    </div>
-                    <div>
-                      <h3 className="panel-title">Payment Modes</h3>
-                      <div className="panel-subtitle">Share of net sales</div>
-                    </div>
-                  </div>
-                </div>
+              {/* Category Segmented Donut Chart */}
+              <CategorySalesDonutCard
+                categories={data.categories}
+                totalCatSalesMinor={data.summary.netSalesMinor}
+              />
 
-                <div className="payment-modes-panel">
-                  {/* Multi-segment stacked horizontal bar */}
-                  <div className="payment-stacked-bar">
-                    {data.payments.modes
-                      .filter((m) => m.sharePct > 0)
-                      .map((m, idx) => (
-                        <div
-                          key={idx}
-                          className="payment-bar-segment"
-                          style={{
-                            width: `${m.sharePct}%`,
-                            backgroundColor: m.color,
-                          }}
-                          title={`${m.label}: ${m.sharePct}% (${formatRupees(m.totalMinor)})`}
-                        ></div>
-                      ))}
-                  </div>
 
-                  {/* Legend row with percentages */}
-                  <div className="payment-legend-row">
-                    {data.payments.modes.map((m, idx) => (
-                      <div key={idx} className="payment-legend-item">
-                        <span className="payment-legend-dot" style={{ backgroundColor: m.color }}></span>
-                        <span className="payment-legend-name">{m.label}</span>
-                        <strong className="mono">{m.sharePct}%</strong>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Small ₹ amount tiles below */}
-                  <div className="payment-amount-tiles">
-                    {data.payments.modes.map((m, idx) => {
-                      const getModeIcon = (modeId: string) => {
-                        switch (modeId.toLowerCase()) {
-                          case 'upi':
-                            return <PhoneUpiIcon />;
-                          case 'cash':
-                            return <BanknoteCashIcon />;
-                          case 'card':
-                            return <CreditCardIcon />;
-                          case 'credit':
-                          case 'khata':
-                            return <BookKhataIcon />;
-                          default:
-                            return <WalletPaymentIcon />;
-                        }
-                      };
-
-                      return (
-                        <div key={idx} className="payment-amount-tile">
-                          <div className="tile-top-row">
-                            <span className="tile-icon-wrap" style={{ color: m.color }}>
-                              {getModeIcon(m.mode)}
-                            </span>
-                            <span className="tile-label">{m.label}</span>
-                            <span className="tile-pct-badge" style={{ backgroundColor: `${m.color}15`, color: m.color }}>
-                              {m.sharePct}%
-                            </span>
-                          </div>
-                          <div className="tile-val mono">{formatRupees(m.totalMinor)}</div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-
-              {/* Panel: Top Customers */}
-              <div className="card sales-panel-card">
-                <div className="panel-card-header">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
-                    <div className="panel-header-icon-box">
-                      <CrownUserIcon />
-                    </div>
-                    <div>
-                      <h3 className="panel-title">Top Customers</h3>
-                      <div className="panel-subtitle">Named customers • by sales</div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="top-customers-list">
-                  {data.topCustomers.map((cust, idx) => (
-                    <div key={idx} className="top-customer-row">
-                      <div className="customer-info-area">
-                        <div className="customer-avatar-badge">
-                          {cust.name.trim().charAt(0).toUpperCase() || 'C'}
-                        </div>
-                        <div>
-                          <div className="customer-name-row">
-                            <span className="customer-name">{cust.name}</span>
-                          </div>
-                          <div className="customer-meta-row">
-                            <span className="customer-bill-count">{cust.billsCount} bills</span>
-                            <span className="meta-sep">•</span>
-                            {cust.isB2B ? (
-                              <span className="badge-cust-b2b">B2B</span>
-                            ) : cust.isKhata ? (
-                              <span className="badge-cust-khata">Khata</span>
-                            ) : (
-                              <span className="badge-cust-retail">Retail</span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="customer-sales-val mono">
-                        {formatRupees(cust.netSalesMinor)}
-                      </div>
-                    </div>
-                  ))}
-
-                  {data.topCustomers.length === 0 && (
-                    <div className="panel-empty-text">No named customer invoices recorded.</div>
-                  )}
-                </div>
-              </div>
 
               {/* Panel: Data-Driven Insights */}
               <div className="card sales-panel-card">
@@ -2963,7 +2906,7 @@ export const SalesAnalysisView: React.FC<SalesAnalysisViewProps> = ({
                     >
                       <td className="col-date-text">{row.formattedDate}</td>
                       <td className="col-num mono">{row.billsCount}</td>
-                      <td className="col-num mono text-purple font-bold">
+                      <td className="col-num mono font-bold" style={{ color: '#3B1E36' }}>
                         {formatRupees(row.netSalesMinor)}
                       </td>
                       <td className="col-num mono text-red">
@@ -3043,7 +2986,7 @@ export const SalesAnalysisView: React.FC<SalesAnalysisViewProps> = ({
                           <div className="cashier-name font-bold">{cashier.userName}</div>
                           <div className="cashier-counter text-muted">{cashier.counterName}</div>
                         </td>
-                        <td className="col-num mono font-bold text-purple">
+                        <td className="col-num mono font-bold" style={{ color: '#3B1E36' }}>
                           {formatRupees(cashier.salesMinor)}
                         </td>
                         <td className="col-num mono">{cashier.billsCount.toLocaleString('en-IN')}</td>
@@ -3104,7 +3047,7 @@ export const SalesAnalysisView: React.FC<SalesAnalysisViewProps> = ({
           >
             <div className="sales-modal-header">
               <div className="sales-modal-title-wrap">
-                <div className="sales-modal-icon-badge" style={{ background: 'rgba(99, 102, 241, 0.1)', color: '#6366f1' }}>
+                <div className="sales-modal-icon-badge" style={{ background: 'rgba(59, 30, 54, 0.1)', color: '#3B1E36' }}>
                   <MailReportIcon />
                 </div>
                 <div>
@@ -3134,7 +3077,7 @@ export const SalesAnalysisView: React.FC<SalesAnalysisViewProps> = ({
                     style={{
                       position: 'absolute',
                       left: '12px',
-                      color: '#6366f1',
+                      color: '#3B1E36',
                       display: 'flex',
                       alignItems: 'center',
                       pointerEvents: 'none',
@@ -3186,7 +3129,7 @@ export const SalesAnalysisView: React.FC<SalesAnalysisViewProps> = ({
                 className="sales-modal-btn-apply"
                 onClick={handleSendScheduleReport}
                 disabled={scheduleSent || !isValidEmail}
-                style={{ background: '#6366f1' }}
+                style={{ background: '#3B1E36' }}
               >
                 {scheduleSent ? 'Sending & Saving Schedule...' : 'Save & Enable Email Report'}
               </button>

@@ -133,6 +133,10 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
   const [showDispatchModal, setShowDispatchModal] = useState(false);
   const [submittingDispatch, setSubmittingDispatch] = useState(false);
 
+  // Cancel confirmation modal
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [submittingCancel, setSubmittingCancel] = useState(false);
+
   // Submitting Creation
   const [submittingCreate, setSubmittingCreate] = useState(false);
 
@@ -779,18 +783,24 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
   };
 
   // Screen 5: Cancel Transfer
-  const handleCancelTransfer = async () => {
+  const handleOpenCancelModal = () => {
     if (!detailedTransfer) return;
-    if (!window.confirm(`Are you sure you want to cancel Transfer ${detailedTransfer.transferNumber}?`)) {
-      return;
-    }
+    setShowCancelModal(true);
+  };
+
+  const handleConfirmCancelTransfer = async () => {
+    if (!detailedTransfer || submittingCancel) return;
+    setSubmittingCancel(true);
     try {
       const res = await cancelStockTransfer(detailedTransfer.id, 'Cancelled from management console');
-      showToast(res.message || 'Transfer cancelled successfully', 'info');
+      showToast(res.message || 'Stock transfer cancelled successfully', 'success');
+      setShowCancelModal(false);
       onReloadItems?.();
       handleViewTransferDetails(detailedTransfer.id);
     } catch (err: any) {
       showToast(err.message || 'Failed to cancel transfer', 'error');
+    } finally {
+      setSubmittingCancel(false);
     }
   };
 
@@ -2746,7 +2756,7 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                     {canCancel && (
                       <button
                         type="button"
-                        onClick={handleCancelTransfer}
+                        onClick={handleOpenCancelModal}
                         style={{
                           background: '#fee2e2',
                           color: '#b91c1c',
@@ -3996,6 +4006,200 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
               >
                 <TruckIcon size={16} />
                 <span>{submittingDispatch ? 'Dispatching...' : 'Confirm Dispatch'}</span>
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* =========================================================================
+          CANCEL STOCK TRANSFER CONFIRMATION MODAL
+          ========================================================================= */}
+      {showCancelModal && detailedTransfer && typeof document !== 'undefined' && createPortal(
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            width: '100vw',
+            height: '100vh',
+            background: 'rgba(15, 23, 42, 0.65)',
+            backdropFilter: 'blur(6px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 99999,
+            padding: '1.25rem',
+            boxSizing: 'border-box',
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !submittingCancel) {
+              setShowCancelModal(false);
+            }
+          }}
+        >
+          <div
+            style={{
+              background: '#ffffff',
+              borderRadius: '16px',
+              maxWidth: '460px',
+              width: '100%',
+              padding: '1.75rem',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
+              border: '1px solid #e2e8f0',
+              position: 'relative',
+              boxSizing: 'border-box',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.15rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                <div
+                  style={{
+                    width: '42px',
+                    height: '42px',
+                    borderRadius: '12px',
+                    background: '#fef2f2',
+                    border: '1px solid #fecaca',
+                    color: '#dc2626',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 4px 10px rgba(220, 38, 38, 0.15)',
+                    flexShrink: 0,
+                  }}
+                >
+                  <AlertTriangleIcon size={20} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, color: '#0f172a', fontSize: '1.2rem', fontWeight: 800 }}>
+                    Cancel Stock Transfer?
+                  </h3>
+                  <div style={{ fontSize: '0.82rem', color: '#64748b', marginTop: '2px' }}>
+                    Transfer #{detailedTransfer.transferNumber}
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                disabled={submittingCancel}
+                onClick={() => setShowCancelModal(false)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  fontSize: '1.4rem',
+                  lineHeight: '1',
+                  color: '#94a3b8',
+                  cursor: submittingCancel ? 'not-allowed' : 'pointer',
+                  padding: '4px 8px',
+                  borderRadius: '6px',
+                  transition: 'color 0.15s ease',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = '#334155')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = '#94a3b8')}
+                title="Close"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Transfer Summary Pill */}
+            <div
+              style={{
+                background: '#f8fafc',
+                border: '1px solid #e2e8f0',
+                borderRadius: '10px',
+                padding: '0.75rem 1rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: '1.15rem',
+                fontSize: '0.86rem',
+              }}
+            >
+              <span style={{ fontWeight: 600, color: '#334155' }}>Route</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                <span style={{ fontWeight: 700, color: '#0f172a' }}>
+                  {detailedTransfer.fromBranchName || detailedTransfer.fromBranch}
+                </span>
+                <span style={{ color: '#94a3b8', fontWeight: 700 }}>➔</span>
+                <span style={{ fontWeight: 700, color: '#0f172a' }}>
+                  {detailedTransfer.toBranchName || detailedTransfer.toBranch}
+                </span>
+              </div>
+            </div>
+
+            {/* Confirmation Message matching prompt spec */}
+            <div
+              style={{
+                fontSize: '0.92rem',
+                color: '#475569',
+                lineHeight: '1.55',
+                marginBottom: '1.5rem',
+              }}
+            >
+              Are you sure you want to cancel this stock transfer? This action cannot be undone.
+            </div>
+
+            {/* Actions: Keep Transfer and Yes, Cancel Transfer */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', alignItems: 'center' }}>
+              <button
+                type="button"
+                disabled={submittingCancel}
+                onClick={() => setShowCancelModal(false)}
+                style={{
+                  background: '#ffffff',
+                  border: '1px solid #cbd5e1',
+                  color: '#475569',
+                  padding: '0.65rem 1.25rem',
+                  borderRadius: '8px',
+                  fontWeight: 600,
+                  fontSize: '0.88rem',
+                  cursor: submittingCancel ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+                onMouseEnter={(e) => {
+                  if (!submittingCancel) e.currentTarget.style.background = '#f8fafc';
+                }}
+                onMouseLeave={(e) => {
+                  if (!submittingCancel) e.currentTarget.style.background = '#ffffff';
+                }}
+              >
+                Keep Transfer
+              </button>
+              <button
+                type="button"
+                disabled={submittingCancel}
+                onClick={handleConfirmCancelTransfer}
+                style={{
+                  background: '#dc2626',
+                  color: '#ffffff',
+                  border: 'none',
+                  padding: '0.65rem 1.35rem',
+                  borderRadius: '8px',
+                  fontWeight: 700,
+                  fontSize: '0.88rem',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.45rem',
+                  cursor: submittingCancel ? 'not-allowed' : 'pointer',
+                  boxShadow: '0 4px 12px rgba(220, 38, 38, 0.3)',
+                  transition: 'all 0.15s ease',
+                  opacity: submittingCancel ? 0.7 : 1,
+                }}
+                onMouseEnter={(e) => {
+                  if (!submittingCancel) e.currentTarget.style.background = '#b91c1c';
+                }}
+                onMouseLeave={(e) => {
+                  if (!submittingCancel) e.currentTarget.style.background = '#dc2626';
+                }}
+              >
+                {submittingCancel ? 'Cancelling Transfer...' : 'Yes, Cancel Transfer'}
               </button>
             </div>
           </div>

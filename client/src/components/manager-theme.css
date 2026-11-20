@@ -1099,12 +1099,17 @@ body.theme-manager .sidebar-user-avatar,
 }
 
 /* Top Icon Tiles across Specific Views */
+body.theme-manager .sales-module-brand-icon,
+.theme-manager .sales-module-brand-icon {
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #3B1E36 !important;
+}
+
 body.theme-manager .top-stock-transfer-icon-tile,
 .theme-manager .top-stock-transfer-icon-tile,
 body.theme-manager .expense-modal-icon-badge,
 .theme-manager .expense-modal-icon-badge,
-body.theme-manager .sales-module-brand-icon,
-.theme-manager .sales-module-brand-icon,
 body.theme-manager .gst-ca-bundle-icon,
 .theme-manager .gst-ca-bundle-icon,
 body.theme-manager .modal-icon-badge.purple,
