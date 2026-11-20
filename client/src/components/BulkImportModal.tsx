@@ -121,7 +121,7 @@ const SparklesIcon = ({ size = 16, color = 'currentColor' }: { size?: number; co
   </svg>
 );
 
-const RefreshCwIcon = ({ size = 12, color = '#4f46e5', spinning = false }: { size?: number; color?: string; spinning?: boolean }) => (
+const RefreshCwIcon = ({ size = 12, color = 'var(--primary)', spinning = false }: { size?: number; color?: string; spinning?: boolean }) => (
   <svg
     width={size}
     height={size}
@@ -2228,11 +2228,11 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
                   width: 42,
                   height: 42,
                   borderRadius: '10px',
-                  background: 'linear-gradient(135deg, #6d4aff 0%, #4f46e5 100%)',
+                  background: 'var(--primary, #3B1E36)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow: '0 4px 12px rgba(109, 74, 255, 0.25)',
+                  boxShadow: '0 4px 12px var(--primary-glow, rgba(59, 30, 54, 0.25))',
                   color: '#ffffff',
                   flexShrink: 0,
                 }}
@@ -2392,8 +2392,8 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
               }
             }
             .bulk-table-input:focus {
-              border-color: #6366f1 !important;
-              box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.18) !important;
+              border-color: var(--primary, #3B1E36) !important;
+              box-shadow: 0 0 0 2px var(--primary-glow, rgba(59, 30, 54, 0.18)) !important;
               outline: none !important;
             }
           `}</style>
@@ -2439,9 +2439,14 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
                       onClick={onOpenSupplierInvoiceConverter}
                       className="bulk-method-pill"
                       title="Upload PDF, JPG, or PNG supplier invoices to extract products"
-                      style={{ background: '#f5f3ff', border: '1px solid #ddd6fe', color: '#4f46e5', fontWeight: 600 }}
+                      style={{
+                        background: 'var(--primary-soft, #f5f3ff)',
+                        border: '1px solid var(--border, #ddd6fe)',
+                        color: 'var(--primary)',
+                        fontWeight: 600,
+                      }}
                     >
-                      <FileSpreadsheetIcon size={16} color="#4f46e5" />
+                      <FileSpreadsheetIcon size={16} color="var(--primary)" />
                       <span>Convert Supplier Invoice to Excel</span>
                     </button>
                   )}
@@ -2460,7 +2465,7 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
                       className={`bulk-bento-hero-dropzone ${isDragging ? 'dragging' : ''}`}
                     >
                       <div className="bulk-drop-icon-squircle">
-                        <UploadCloudIcon size={26} color="#4f46e5" />
+                        <UploadCloudIcon size={26} color="var(--primary)" />
                       </div>
 
                       <div className="bulk-bento-hero-title">
@@ -2574,15 +2579,15 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
                               title="Upload a supplier invoice in PDF, JPG, or PNG to convert to Excel import template"
                               style={{
                                 gridColumn: '1 / -1',
-                                background: 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)',
-                                border: '1.5px dashed #a5b4fc',
+                                background: 'var(--primary-soft, #f5f3ff)',
+                                border: '1.5px dashed var(--border, #a5b4fc)',
                               }}
                             >
                               <div className="bulk-template-icon-squircle purple">
-                                <FileSpreadsheetIcon size={16} color="#4f46e5" />
+                                <FileSpreadsheetIcon size={16} color="var(--primary)" />
                               </div>
                               <div className="bulk-template-info">
-                                <span className="bulk-template-name" style={{ color: '#3730a3', fontWeight: 700 }}>
+                                <span className="bulk-template-name" style={{ color: 'var(--primary)', fontWeight: 700 }}>
                                   Convert Supplier Invoice to Excel
                                 </span>
                                 <span className="bulk-template-sub">
@@ -2627,7 +2632,7 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
                             </div>
                             <span className="bulk-bento-card-title">Simplified 8-Column Format</span>
                           </div>
-                          <span style={{ fontSize: '0.65rem', fontWeight: 700, padding: '0.1rem 0.45rem', borderRadius: '4px', background: '#f5f3ff', color: 'var(--primary)', border: '1px solid #ede9fe' }}>
+                          <span style={{ fontSize: '0.65rem', fontWeight: 700, padding: '0.1rem 0.45rem', borderRadius: '4px', background: 'var(--primary-soft, #f5f3ff)', color: 'var(--primary)', border: '1px solid var(--border-light, #ede9fe)' }}>
                             Smart Auto-Fill
                           </span>
                         </div>
@@ -2649,7 +2654,7 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
                         </div>
 
                         <div className="bulk-bento-ai-footer">
-                          <SparklesIcon size={14} color="#6d4aff" />
+                          <SparklesIcon size={14} color="var(--primary)" />
                           <span>Detects existing items and restocks shelf quantity without duplicate products.</span>
                         </div>
                       </div>
@@ -2742,7 +2747,7 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
                       </div>
 
                       <div className="bulk-bento-ai-footer">
-                        <SparklesIcon size={14} color="#6d4aff" />
+                        <SparklesIcon size={14} color="var(--primary)" />
                         <span>Tab-separated rows from clipboard are automatically parsed into individual product fields.</span>
                       </div>
                     </div>
@@ -2816,7 +2821,7 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
                       </div>
 
                       <div className="bulk-bento-ai-footer">
-                        <SparklesIcon size={14} color="#6d4aff" />
+                        <SparklesIcon size={14} color="var(--primary)" />
                         <span>Ready to add up to 500 items in a single transaction.</span>
                       </div>
                     </div>
@@ -3125,7 +3130,7 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
                           <div style={{ maxHeight: '200px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '2px' }}>
                             {loadingSuppliers ? (
                               <div style={{ padding: '0.75rem', textAlign: 'center', fontSize: '0.78rem', color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}>
-                                <RefreshCwIcon size={13} color="#6366f1" spinning />
+                                <RefreshCwIcon size={13} color="var(--primary)" spinning />
                                 <span>Loading suppliers...</span>
                               </div>
                             ) : filteredSuppliers.length === 0 ? (
@@ -3236,11 +3241,11 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
                           borderRadius: '6px',
                           cursor: selectedRowIds.size === 0 ? 'not-allowed' : 'pointer',
                           whiteSpace: 'nowrap',
-                          background: selectedRowIds.size > 0 ? '#4f46e5' : '#f1f5f9',
+                          background: selectedRowIds.size > 0 ? 'var(--primary)' : '#f1f5f9',
                           color: selectedRowIds.size > 0 ? '#ffffff' : '#94a3b8',
-                          border: selectedRowIds.size > 0 ? '1px solid #4338ca' : '1px solid #cbd5e1',
+                          border: selectedRowIds.size > 0 ? '1px solid var(--primary)' : '1px solid #cbd5e1',
                           transition: 'all 0.15s ease',
-                          boxShadow: selectedRowIds.size > 0 ? '0 1px 3px rgba(79, 70, 229, 0.25)' : 'none',
+                          boxShadow: selectedRowIds.size > 0 ? '0 1px 3px var(--primary-glow, rgba(59, 30, 54, 0.25))' : 'none',
                         }}
                         title={
                           selectedRowIds.size === 0
@@ -3255,8 +3260,8 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
                         style={{
                           fontSize: '0.74rem',
                           fontWeight: 700,
-                          color: selectedRowIds.size > 0 ? '#4f46e5' : '#94a3b8',
-                          background: selectedRowIds.size > 0 ? '#eef2ff' : '#f1f5f9',
+                          color: selectedRowIds.size > 0 ? 'var(--primary)' : '#94a3b8',
+                          background: selectedRowIds.size > 0 ? 'var(--primary-soft, #eef2ff)' : '#f1f5f9',
                           padding: '2px 7px',
                           borderRadius: '10px',
                           whiteSpace: 'nowrap',
@@ -3353,7 +3358,7 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
                         padding: '0.45rem 1.05rem',
                         borderRadius: '20px',
                         border: 'none',
-                        background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                        background: 'var(--primary)',
                         color: '#ffffff',
                         fontWeight: 700,
                         fontSize: '0.82rem',
@@ -3663,9 +3668,9 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
                                         transition: 'all 0.15s ease',
                                       }}
                                       onMouseEnter={(e) => {
-                                        e.currentTarget.style.borderColor = '#6366f1';
-                                        e.currentTarget.style.color = '#6366f1';
-                                        e.currentTarget.style.background = '#eef2ff';
+                                        e.currentTarget.style.borderColor = 'var(--primary)';
+                                        e.currentTarget.style.color = 'var(--primary)';
+                                        e.currentTarget.style.background = 'var(--primary-soft, #eef2ff)';
                                       }}
                                       onMouseLeave={(e) => {
                                         e.currentTarget.style.borderColor = '#cbd5e1';
@@ -3919,7 +3924,7 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
                                               transition: 'all 0.15s ease',
                                             }}
                                           >
-                                            <RefreshCwIcon size={12} color="#4f46e5" />
+                                            <RefreshCwIcon size={12} color="var(--primary)" />
                                           </button>
                                         )}
                                       </div>
@@ -4159,9 +4164,9 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
                                               type="button"
                                               onClick={() => chooseCreateNewProduct(row._id)}
                                               style={{
-                                                background: isNewChosen ? '#4f46e5' : '#ffffff',
-                                                color: isNewChosen ? '#ffffff' : '#4338ca',
-                                                border: isNewChosen ? '1.5px solid #4338ca' : '1.5px solid #c7d2fe',
+                                                background: isNewChosen ? 'var(--primary)' : '#ffffff',
+                                                color: isNewChosen ? '#ffffff' : 'var(--primary)',
+                                                border: isNewChosen ? '1.5px solid var(--primary)' : '1.5px solid var(--border)',
                                                 padding: '0.3rem 0.75rem',
                                                 borderRadius: '6px',
                                                 fontSize: '0.76rem',
@@ -4234,14 +4239,14 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
                                             onClick={() => createAsNewProduct(row._id)}
                                             style={{
                                               background: '#ffffff',
-                                              border: '1.5px solid #6366f1',
+                                              border: '1.5px solid var(--primary)',
                                               borderRadius: '6px',
-                                              color: '#4338ca',
+                                              color: 'var(--primary)',
                                               padding: '0.35rem 0.85rem',
                                               fontSize: '0.78rem',
                                               fontWeight: 700,
                                               cursor: 'pointer',
-                                              boxShadow: '0 1px 3px rgba(99, 102, 241, 0.15)',
+                                              boxShadow: '0 1px 3px var(--primary-glow, rgba(59, 30, 54, 0.15))',
                                               display: 'inline-flex',
                                               alignItems: 'center',
                                               gap: '0.35rem',
@@ -4479,14 +4484,14 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
                       width: '36px',
                       height: '36px',
                       borderRadius: '10px',
-                      background: 'rgba(99, 102, 241, 0.1)',
+                      background: 'var(--primary-soft, rgba(59, 30, 54, 0.1))',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       flexShrink: 0,
                     }}
                   >
-                    <LayersIcon size={18} color="#6366f1" />
+                    <LayersIcon size={18} color="var(--primary)" />
                   </div>
                   <div>
                     <div style={{ fontWeight: 700, fontSize: '1.15rem', color: 'var(--text-main)' }}>
@@ -4500,17 +4505,17 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '0.75rem' }}>
                   <div style={{ ...statCardStyle, background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
-                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#eef2ff', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.4rem' }}>
-                      <LayersIcon size={16} color="#6366f1" />
+                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'var(--primary-soft, #eef2ff)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.4rem' }}>
+                      <LayersIcon size={16} color="var(--primary)" />
                     </div>
                     <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--primary)' }}>{rawRows.length}</div>
                     <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Total Input Rows</div>
                   </div>
                   <div style={{ ...statCardStyle, background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
-                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#e0e7ff', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.4rem' }}>
-                      <SparklesIcon size={16} color="#4338ca" />
+                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'var(--primary-soft, #e0e7ff)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.4rem' }}>
+                      <SparklesIcon size={16} color="var(--primary)" />
                     </div>
-                    <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#4338ca' }}>{newRows.length}</div>
+                    <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--primary)' }}>{newRows.length}</div>
                     <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>New Products to Create</div>
                   </div>
                   <div style={{ ...statCardStyle, background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
@@ -4543,12 +4548,12 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
                 {/* Explanatory notes */}
                 <div style={{ background: '#f8f7ff', border: '1px solid var(--border)', borderRadius: '12px', padding: '1.25rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontWeight: 700, fontSize: '0.9rem', marginBottom: '0.65rem', color: 'var(--text-main)' }}>
-                    <CheckCircleIcon size={16} color="#4f46e5" />
+                    <CheckCircleIcon size={16} color="var(--primary)" />
                     <span>Execution Details &amp; Safeguards</span>
                   </div>
                   <ul style={{ margin: 0, paddingLeft: '1.25rem', fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.8 }}>
                     <li>
-                      All <strong style={{ color: '#4f46e5' }}>{eligibleRows.length} imported product rows</strong> and inward stock movements will be linked to supplier <strong style={{ color: '#b45309' }}>{selectedSupplier?.name}</strong>.
+                      All <strong style={{ color: 'var(--primary)' }}>{eligibleRows.length} imported product rows</strong> and inward stock movements will be linked to supplier <strong style={{ color: '#b45309' }}>{selectedSupplier?.name}</strong>.
                     </li>
                     <li>
                       <strong style={{ color: '#16a34a' }}>{restockRows.length} existing products</strong> will have incoming quantities added to current available inventory without duplicating products or modifying their existing barcodes.
@@ -4795,7 +4800,7 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
                       transition: 'all 0.15s ease',
                     }}
                   >
-                    <FileSpreadsheetIcon size={14} color="#4f46e5" />
+                    <FileSpreadsheetIcon size={14} color="var(--primary)" />
                     <span>Download Complete Summary Report (CSV)</span>
                   </button>
                 </div>
@@ -4919,7 +4924,7 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
                     }}
                     disabled={eligibleRows.length === 0 || !selectedSupplierId}
                     style={{
-                      background: eligibleRows.length > 0 && selectedSupplierId ? 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)' : '#cbd5e1',
+                      background: eligibleRows.length > 0 && selectedSupplierId ? 'var(--primary)' : '#cbd5e1',
                       color: '#ffffff',
                       border: 'none',
                       borderRadius: '10px',
@@ -4927,7 +4932,7 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
                       fontWeight: 700,
                       fontSize: '0.9rem',
                       cursor: eligibleRows.length > 0 && selectedSupplierId ? 'pointer' : 'not-allowed',
-                      boxShadow: eligibleRows.length > 0 && selectedSupplierId ? '0 4px 14px rgba(99, 102, 241, 0.35)' : 'none',
+                      boxShadow: eligibleRows.length > 0 && selectedSupplierId ? '0 4px 14px var(--primary-glow, rgba(59, 30, 54, 0.25))' : 'none',
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '0.5rem',
@@ -5006,7 +5011,7 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
                   id="bulk-import-done-btn"
                   onClick={() => { onImportDone(); onClose(); }}
                   style={{
-                    background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                    background: 'var(--primary)',
                     color: '#ffffff',
                     border: 'none',
                     borderRadius: '10px',
@@ -5014,7 +5019,7 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
                     fontWeight: 700,
                     fontSize: '0.9rem',
                     cursor: 'pointer',
-                    boxShadow: '0 4px 14px rgba(99, 102, 241, 0.35)',
+                    boxShadow: '0 4px 14px var(--primary-glow, rgba(59, 30, 54, 0.25))',
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '0.45rem',
@@ -5095,7 +5100,7 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: '#6366f1',
+                    color: 'var(--primary)',
                     flexShrink: 0,
                   }}
                 >
@@ -5201,7 +5206,7 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
                       alignItems: 'center',
                       justifyContent: 'center',
                       fontWeight: 700,
-                      color: '#4f46e5',
+                      color: 'var(--primary)',
                       fontSize: '0.82rem',
                     }}
                   >
@@ -5221,12 +5226,12 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
                     gap: '0.45rem',
                     padding: '0.55rem 1rem',
                     borderRadius: '8px',
-                    background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                    background: 'var(--primary)',
                     color: '#ffffff',
                     fontSize: '0.82rem',
                     fontWeight: 600,
                     cursor: 'pointer',
-                    boxShadow: '0 1px 3px rgba(99, 102, 241, 0.3)',
+                    boxShadow: '0 1px 3px var(--primary-glow, rgba(59, 30, 54, 0.25))',
                     transition: 'all 0.15s ease',
                   }}
                 >
