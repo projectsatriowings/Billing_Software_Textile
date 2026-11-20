@@ -21,6 +21,18 @@ export interface CFDCategorySummary {
   totalMinor: number;
 }
 
+export interface CFDSplitDetails {
+  isSplit: boolean;
+  method1: string;
+  amount1Minor: number;
+  method2: string;
+  amount2Minor: number;
+  hasUpi: boolean;
+  upiAmountMinor: number;
+  otherMethod?: string;
+  otherAmountMinor?: number;
+}
+
 export interface CFDPaymentDetails {
   method: string;
   amountMinor: number;
@@ -50,9 +62,10 @@ export interface CFDState {
   taxMinor: number;
   totalMinor: number;
   savingsMinor: number;
-  status: 'idle' | 'billing' | 'payment_upi' | 'payment_cash' | 'payment_card' | 'completed';
+  status: 'idle' | 'billing' | 'payment_upi' | 'payment_cash' | 'payment_card' | 'payment_bank' | 'payment_split' | 'completed';
   selectedPayMode?: string;
   paymentDetails?: CFDPaymentDetails;
+  splitDetails?: CFDSplitDetails;
   updatedAt: number;
 }
 
@@ -252,19 +265,29 @@ export const CustomerDisplay: React.FC<CustomerDisplayProps> = ({ counterId = 'c
   };
 
   const isCartEmpty = !state.items || state.items.length === 0;
-  const isUpiMode = state.status === 'payment_upi' || state.selectedPayMode === 'upi' || state.paymentDetails?.method === 'upi';
+  const isSplitMode = state.selectedPayMode === 'split' || Boolean(state.splitDetails?.isSplit);
+  const hasSplitUpi = isSplitMode && Boolean(
+    state.splitDetails?.hasUpi ||
+    (state.splitDetails?.upiAmountMinor !== undefined && state.splitDetails.upiAmountMinor > 0) ||
+    state.paymentDetails?.upiUrl
+  );
+  const isUpiMode = state.status === 'payment_upi' || state.selectedPayMode === 'upi' || state.paymentDetails?.method === 'upi' || hasSplitUpi;
   const effectiveUpiId = state.upiId?.trim() || 'merchant@okaxis';
 
+  const effectiveUpiAmountMinor = hasSplitUpi
+    ? (state.splitDetails?.upiAmountMinor || state.paymentDetails?.amountMinor || state.totalMinor)
+    : (state.paymentDetails?.amountMinor || state.totalMinor);
+
   const upiQrSvg = useMemo(() => {
-    if (isUpiMode && state.totalMinor > 0) {
+    if (isUpiMode && effectiveUpiAmountMinor > 0) {
       if (state.paymentDetails?.upiUrl) {
         return qrSvg(state.paymentDetails.upiUrl, { size: 170, margin: 1 });
       }
-      const upiString = `upi://pay?pa=${encodeURIComponent(effectiveUpiId)}&pn=${encodeURIComponent(state.shopName || 'Store')}&am=${(state.totalMinor / 100).toFixed(2)}&cu=INR&tn=${encodeURIComponent(`Bill at ${state.shopName || 'Store'}`)}`;
+      const upiString = `upi://pay?pa=${encodeURIComponent(effectiveUpiId)}&pn=${encodeURIComponent(state.shopName || 'Store')}&am=${(effectiveUpiAmountMinor / 100).toFixed(2)}&cu=INR&tn=${encodeURIComponent(`${hasSplitUpi ? 'Split payment' : 'Bill'} at ${state.shopName || 'Store'}`)}`;
       return qrSvg(upiString, { size: 170, margin: 1 });
     }
     return null;
-  }, [isUpiMode, state.paymentDetails, effectiveUpiId, state.totalMinor, state.shopName]);
+  }, [isUpiMode, effectiveUpiAmountMinor, state.paymentDetails, effectiveUpiId, state.shopName, hasSplitUpi]);
 
   const totalUnits = state.totalUnits || state.items.reduce((acc, it) => acc + it.qty, 0);
   const totalMrp = state.totalMrpMinor || state.items.reduce((acc, it) => acc + (it.mrpMinor || it.priceMinor) * it.qty, 0);
@@ -674,26 +697,95 @@ export const CustomerDisplay: React.FC<CustomerDisplayProps> = ({ counterId = 'c
                 )}
               </div>
             ) : isUpiMode && upiQrSvg ? (
-              /* DYNAMIC UPI QR SCANNER (ACTIVE PAYMENT) */
+              /* DYNAMIC UPI QR SCANNER (ACTIVE PAYMENT - SINGLE OR SPLIT) */
               <div className="cfd-upi-panel">
-                <span className="cfd-upi-badge">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-                  </svg>
-                  <span>Instant UPI QR</span>
+                <span className={`cfd-upi-badge ${hasSplitUpi ? 'cfd-split-upi-badge' : ''}`}>
+                  {hasSplitUpi ? (
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="18" cy="18" r="3" />
+                      <circle cx="6" cy="6" r="3" />
+                      <path d="M13 6h3a2 2 0 0 1 2 2v7" />
+                      <line x1="6" y1="9" x2="6" y2="21" />
+                    </svg>
+                  ) : (
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                    </svg>
+                  )}
+                  <span>{hasSplitUpi ? 'Split Tender • Instant UPI QR' : 'Instant UPI QR'}</span>
                 </span>
-                <h4 className="cfd-upi-title">Scan to Pay with Any UPI App</h4>
-                <p className="cfd-upi-sub">Google Pay • PhonePe • Paytm • BHIM • CRED</p>
+                <h4 className="cfd-upi-title">
+                  {hasSplitUpi ? `Scan to Pay UPI Portion: ${formatCurrency(effectiveUpiAmountMinor)}` : 'Scan to Pay with Any UPI App'}
+                </h4>
+                <p className="cfd-upi-sub">Google Pay • PhonePe • Paytm • BHIM • Any UPI App</p>
 
                 <div className="cfd-qr-box" dangerouslySetInnerHTML={{ __html: upiQrSvg }} />
 
-                <div className="cfd-upi-amount-pill cfd-num">
-                  <span>Pay Exact:</span>
-                  <strong>{formatCurrency(state.totalMinor)}</strong>
-                </div>
+                {hasSplitUpi && state.splitDetails ? (
+                  <div className="cfd-split-tenders-box">
+                    <div className="cfd-split-tender-line highlight-upi">
+                      <span className="cfd-tender-name">
+                        <span className="cfd-tender-dot upi-dot"></span>
+                        <span>UPI Payment (This QR)</span>
+                      </span>
+                      <strong className="cfd-tender-val cfd-num">
+                        {formatCurrency(effectiveUpiAmountMinor)}
+                      </strong>
+                    </div>
+                    {Boolean(state.splitDetails.otherAmountMinor && state.splitDetails.otherAmountMinor > 0) && (
+                      <div className="cfd-split-tender-line">
+                        <span className="cfd-tender-name">
+                          <span className="cfd-tender-dot other-dot"></span>
+                          <span>{(state.splitDetails.otherMethod || 'Cash').toUpperCase()} Tender</span>
+                        </span>
+                        <strong className="cfd-tender-val cfd-num">
+                          {formatCurrency(state.splitDetails.otherAmountMinor || 0)}
+                        </strong>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="cfd-upi-amount-pill cfd-num">
+                    <span>Pay Exact:</span>
+                    <strong>{formatCurrency(state.totalMinor)}</strong>
+                  </div>
+                )}
 
                 <div className="cfd-vpa-pill">
                   UPI ID: <strong>{effectiveUpiId}</strong>
+                </div>
+              </div>
+            ) : isSplitMode && state.splitDetails ? (
+              /* SPLIT PAYMENT WITHOUT UPI (e.g. CASH + CARD) */
+              <div className="cfd-upi-panel">
+                <span className="cfd-upi-badge cfd-split-upi-badge">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="18" cy="18" r="3" />
+                    <circle cx="6" cy="6" r="3" />
+                    <path d="M13 6h3a2 2 0 0 1 2 2v7" />
+                    <line x1="6" y1="9" x2="6" y2="21" />
+                  </svg>
+                  <span>Split Tender Active</span>
+                </span>
+                <h4 className="cfd-upi-title">Split Payment Settlement</h4>
+                <p className="cfd-upi-sub">Please settle with cashier using Cash & Card</p>
+
+                <div className="cfd-split-tenders-box" style={{ width: '100%', maxWidth: '280px', margin: '0.4rem 0' }}>
+                  <div className="cfd-split-tender-line">
+                    <span className="cfd-tender-name">{state.splitDetails.method1.toUpperCase()}</span>
+                    <strong className="cfd-tender-val cfd-num">{formatCurrency(state.splitDetails.amount1Minor || 0)}</strong>
+                  </div>
+                  <div className="cfd-split-tender-line">
+                    <span className="cfd-tender-name">{state.splitDetails.method2.toUpperCase()}</span>
+                    <strong className="cfd-tender-val cfd-num">{formatCurrency(state.splitDetails.amount2Minor || 0)}</strong>
+                  </div>
+                </div>
+
+                <div className="cfd-assurance-tag">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                  </svg>
+                  <span>Multi-Tender POS Settlement</span>
                 </div>
               </div>
             ) : (

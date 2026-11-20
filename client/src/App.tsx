@@ -1151,6 +1151,12 @@ export function App() {
   const [payBankName, setPayBankName] = useState('');
   const [payBankBranch, setPayBankBranch] = useState('');
   const [isSavingPaySettings, setIsSavingPaySettings] = useState(false);
+  const [isSavingMethods, setIsSavingMethods] = useState(false);
+  const [isSavingRzp, setIsSavingRzp] = useState(false);
+  const [isSavingPaytm, setIsSavingPaytm] = useState(false);
+  const [isSavingPhonePe, setIsSavingPhonePe] = useState(false);
+  const [isSavingQr, setIsSavingQr] = useState(false);
+  const [isSavingBank, setIsSavingBank] = useState(false);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [paySettingsStatusMsg, setPaySettingsStatusMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [activeQrAttempt, setActiveQrAttempt] = useState<PaymentAttempt | null>(null);
@@ -4363,9 +4369,9 @@ export function App() {
   const splitCashShortMinor = Math.max(0, splitAllocatedCashMinor - splitCashGivenMinor);
 
   const handleSplitFiftyFifty = () => {
-    const totalRupees = Math.round(finalPayableMinor / 100);
-    const half1 = Math.floor(totalRupees / 2);
-    const half2 = totalRupees - half1;
+    const totalRupees = +(finalPayableMinor / 100).toFixed(2);
+    const half1 = +(totalRupees / 2).toFixed(2);
+    const half2 = +(totalRupees - half1).toFixed(2);
     setSplitMethod1('cash');
     setSplitMethod2('upi');
     setSplitAmount1(half1.toString());
@@ -4407,6 +4413,10 @@ export function App() {
   useEffect(() => {
     if (selectedPayMode === 'split' && cart.length > 0) {
       const totalRupees = finalPayableMinor / 100;
+      if (!splitAmount1 && !splitAmount2) {
+        handleSplitFiftyFifty();
+        return;
+      }
       if (lastSplitEditedRef.current === 1 && splitAmount1.trim() !== '') {
         const num1 = parseFloat(splitAmount1);
         if (!isNaN(num1)) {
@@ -4456,21 +4466,43 @@ export function App() {
       bChannel = new BroadcastChannel(`cfd_${counterId}`);
     } catch { }
 
+    const isUpiInSplit1 = splitMethod1 === 'upi';
+    const isUpiInSplit2 = splitMethod2 === 'upi';
+    const hasUpiInSplit = isUpiInSplit1 || isUpiInSplit2;
+
+    let splitUpiMinor = 0;
+    if (hasUpiInSplit) {
+      if (isUpiInSplit1 && isUpiInSplit2) {
+        splitUpiMinor = (split1Minor + split2Minor) > 0 ? (split1Minor + split2Minor) : finalPayableMinor;
+      } else if (isUpiInSplit1) {
+        splitUpiMinor = split1Minor > 0 ? split1Minor : (split2Minor > 0 ? Math.max(0, finalPayableMinor - split2Minor) : finalPayableMinor);
+      } else {
+        splitUpiMinor = split2Minor > 0 ? split2Minor : (split1Minor > 0 ? Math.max(0, finalPayableMinor - split1Minor) : finalPayableMinor);
+      }
+    }
+
+    const otherSplitMethod = isUpiInSplit1 ? splitMethod2 : (isUpiInSplit2 ? splitMethod1 : undefined);
+    const otherSplitMinor = isUpiInSplit1
+      ? (split2Minor > 0 ? split2Minor : Math.max(0, finalPayableMinor - splitUpiMinor))
+      : (split1Minor > 0 ? split1Minor : Math.max(0, finalPayableMinor - splitUpiMinor));
+
     // Determine status
-    let status: 'idle' | 'billing' | 'payment_upi' | 'payment_cash' | 'payment_card' | 'payment_bank' | 'completed' = 'idle';
+    let status: 'idle' | 'billing' | 'payment_upi' | 'payment_cash' | 'payment_card' | 'payment_bank' | 'payment_split' | 'completed' = 'idle';
     if (checkoutSuccess) {
       status = 'completed';
     } else if (cart.length > 0) {
       if (selectedPayMode === 'upi') status = 'payment_upi';
+      else if (selectedPayMode === 'split') status = hasUpiInSplit ? 'payment_upi' : 'payment_split';
       else if (selectedPayMode === 'cash') status = 'payment_cash';
       else if (selectedPayMode === 'card') status = 'payment_card';
       else if (selectedPayMode === 'bank') status = 'payment_bank';
       else status = 'billing';
     }
 
+    const effectivePayableUpiMinor = (selectedPayMode === 'split' && hasUpiInSplit) ? splitUpiMinor : finalPayableMinor;
     const effectiveUpiId = shop?.upiId?.trim() || (shop?.phone ? `${shop.phone.replace(/\D/g, '').slice(-10)}@upi` : 'merchant@okaxis');
-    const upiUrl = finalPayableMinor > 0
-      ? `upi://pay?pa=${encodeURIComponent(effectiveUpiId)}&pn=${encodeURIComponent(shop?.name || 'Store')}&am=${(finalPayableMinor / 100).toFixed(2)}&cu=INR&tn=${encodeURIComponent(`Bill at ${shop?.name || 'Store'}`)}`
+    const upiUrl = effectivePayableUpiMinor > 0
+      ? `upi://pay?pa=${encodeURIComponent(effectiveUpiId)}&pn=${encodeURIComponent(shop?.name || 'Store')}&am=${(effectivePayableUpiMinor / 100).toFixed(2)}&cu=INR&tn=${encodeURIComponent(`${selectedPayMode === 'split' ? 'Split payment' : 'Bill'} at ${shop?.name || 'Store'}`)}`
       : undefined;
 
     const activeCustomer = parties.find((p) => p.id === selectedPartyId);
@@ -4514,14 +4546,25 @@ export function App() {
       savingsMinor: totalMrpSavingsMinor,
       selectedPayMode,
       status,
+      splitDetails: selectedPayMode === 'split' ? {
+        isSplit: true,
+        method1: splitMethod1,
+        amount1Minor: split1Minor,
+        method2: splitMethod2,
+        amount2Minor: split2Minor,
+        hasUpi: hasUpiInSplit,
+        upiAmountMinor: splitUpiMinor,
+        otherMethod: otherSplitMethod,
+        otherAmountMinor: otherSplitMinor,
+      } : undefined,
       paymentDetails: status === 'completed' && checkoutSuccess ? {
         method: checkoutSuccess.payments?.[0]?.method || selectedPayMode || 'cash',
         amountMinor: checkoutSuccess.totalMinor || finalPayableMinor,
         changeDueMinor: checkoutSuccess.tender?.changeReturnedMinor || changeDueMinor || 0,
         invoiceNumber: checkoutSuccess.number || '',
       } : {
-        method: selectedPayMode || 'upi',
-        amountMinor: finalPayableMinor,
+        method: (selectedPayMode === 'split' && hasUpiInSplit) ? 'upi' : (selectedPayMode || 'upi'),
+        amountMinor: (selectedPayMode === 'split' && hasUpiInSplit) ? splitUpiMinor : finalPayableMinor,
         upiUrl,
       },
       updatedAt: Date.now(),
@@ -4578,6 +4621,12 @@ export function App() {
     shop,
     user,
     selectedPayMode,
+    splitMethod1,
+    splitAmount1,
+    splitMethod2,
+    splitAmount2,
+    split1Minor,
+    split2Minor,
     changeDueMinor,
     checkoutSuccess,
   ]);
@@ -4699,8 +4748,12 @@ export function App() {
       : (curIdx <= 0 ? modes.length - 1 : curIdx - 1);
     const nextMode = modes[nextIdx];
     setSelectedPayMode(nextMode);
-    if (nextMode === 'split' && !splitAmount1 && !splitAmount2) {
-      handleSplitFiftyFifty();
+    if (nextMode === 'split') {
+      if (!splitAmount1 && !splitAmount2) {
+        handleSplitFiftyFifty();
+      } else if (parseFloat(splitAmount1 || '0') + parseFloat(splitAmount2 || '0') !== +(finalPayableMinor / 100).toFixed(2)) {
+        handleSplitFiftyFifty();
+      }
     }
     const labels: Record<string, string> = {
       cash: 'Payment: Cash',
@@ -4852,46 +4905,57 @@ export function App() {
     }
   };
 
-  const handleSavePaymentSettings = async (e?: React.FormEvent) => {
+  const handleSavePaymentSettings = async (
+    e?: React.FormEvent,
+    customOverrides?: Partial<PublicPaymentSettings>,
+    silent: boolean = false
+  ) => {
     if (e) e.preventDefault();
     if (!user || user.role === 'cashier') {
       showToast('Only Owner or Store Manager can modify payment settings', 'error');
       return;
     }
     setIsSavingPaySettings(true);
-    setPaySettingsStatusMsg(null);
+    if (!silent) setPaySettingsStatusMsg(null);
     try {
+      const bankActive = customOverrides?.bankEnabled !== undefined ? customOverrides.bankEnabled : payBankEnabled;
+      const methodsActive = customOverrides?.enabledMethods !== undefined ? customOverrides.enabledMethods : payMethodsEnabled;
+      const rzpActive = customOverrides?.rzpEnabled !== undefined ? customOverrides.rzpEnabled : payRzpEnabled;
+      const upiActive = customOverrides?.upiEnabled !== undefined ? customOverrides.upiEnabled : methodsActive.includes('upi');
+
       const updated = await updatePaymentSettings({
-        upiEnabled: payUpiEnabled,
-        qrType: payQrType,
-        provider: payQrType === 'dynamic' ? payProvider : (payRzpEnabled ? 'razorpay' : payPaytmEnabled ? 'paytm' : 'manual'),
-        staticUpiId: payStaticUpiId.trim() || null,
-        staticMerchantName: payStaticMerchantName.trim() || null,
-        rzpEnabled: payRzpEnabled,
-        rzpMode: payRzpMode,
-        rzpKeyId: payRzpKeyId.trim() || null,
+        upiEnabled: upiActive,
+        qrType: customOverrides?.qrType !== undefined ? customOverrides.qrType : payQrType,
+        provider: customOverrides?.provider !== undefined
+          ? customOverrides.provider
+          : (payQrType === 'dynamic' ? payProvider : (rzpActive ? 'razorpay' : payPaytmEnabled ? 'paytm' : 'manual')),
+        staticUpiId: ((customOverrides?.staticUpiId !== undefined ? customOverrides.staticUpiId : payStaticUpiId) || '').trim() || null,
+        staticMerchantName: ((customOverrides?.staticMerchantName !== undefined ? customOverrides.staticMerchantName : payStaticMerchantName) || '').trim() || null,
+        rzpEnabled: rzpActive,
+        rzpMode: customOverrides?.rzpMode !== undefined ? customOverrides.rzpMode : payRzpMode,
+        rzpKeyId: ((customOverrides?.rzpKeyId !== undefined ? customOverrides.rzpKeyId : payRzpKeyId) || '').trim() || null,
         rzpKeySecret: payRzpKeySecret.trim() ? payRzpKeySecret.trim() : undefined,
         rzpWebhookSecret: payRzpWebhookSecret.trim() ? payRzpWebhookSecret.trim() : undefined,
         rzpQrExpiryMinutes: Number(payRzpExpiryMinutes) || 15,
-        paytmEnabled: payPaytmEnabled,
-        paytmMode: payPaytmMode,
-        paytmMid: payPaytmMid.trim() || null,
+        paytmEnabled: customOverrides?.paytmEnabled !== undefined ? customOverrides.paytmEnabled : payPaytmEnabled,
+        paytmMode: customOverrides?.paytmMode !== undefined ? customOverrides.paytmMode : payPaytmMode,
+        paytmMid: ((customOverrides?.paytmMid !== undefined ? customOverrides.paytmMid : payPaytmMid) || '').trim() || null,
         paytmMerchantKey: payPaytmMerchantKey.trim() ? payPaytmMerchantKey.trim() : undefined,
         paytmWebsite: payPaytmWebsite.trim() || (payPaytmMode === 'live' ? 'DEFAULT' : 'WEBSTAGING'),
-        phonepeEnabled: payPhonePeEnabled,
-        phonepeMode: payPhonePeMode,
-        phonepeMid: payPhonePeMid.trim() || null,
+        phonepeEnabled: customOverrides?.phonepeEnabled !== undefined ? customOverrides.phonepeEnabled : payPhonePeEnabled,
+        phonepeMode: customOverrides?.phonepeMode !== undefined ? customOverrides.phonepeMode : payPhonePeMode,
+        phonepeMid: ((customOverrides?.phonepeMid !== undefined ? customOverrides.phonepeMid : payPhonePeMid) || '').trim() || null,
         phonepeSaltKey: payPhonePeSaltKey.trim() ? payPhonePeSaltKey.trim() : undefined,
         phonepeSaltIndex: payPhonePeSaltIndex.trim() || '1',
-        bankEnabled: payBankEnabled,
-        bankAccountName: payBankAccountName.trim() || null,
-        bankAccountNo: payBankAccountNo.trim() || null,
-        bankIfsc: payBankIfsc.trim() || null,
-        bankName: payBankName.trim() || null,
-        bankBranch: payBankBranch.trim() || null,
-        enabledMethods: payBankEnabled
-          ? Array.from(new Set([...payMethodsEnabled, 'bank']))
-          : payMethodsEnabled.filter((m) => m !== 'bank'),
+        bankEnabled: bankActive,
+        bankAccountName: ((customOverrides?.bankAccountName !== undefined ? customOverrides.bankAccountName : payBankAccountName) || '').trim() || null,
+        bankAccountNo: ((customOverrides?.bankAccountNo !== undefined ? customOverrides.bankAccountNo : payBankAccountNo) || '').trim() || null,
+        bankIfsc: ((customOverrides?.bankIfsc !== undefined ? customOverrides.bankIfsc : payBankIfsc) || '').trim() || null,
+        bankName: ((customOverrides?.bankName !== undefined ? customOverrides.bankName : payBankName) || '').trim() || null,
+        bankBranch: ((customOverrides?.bankBranch !== undefined ? customOverrides.bankBranch : payBankBranch) || '').trim() || null,
+        enabledMethods: bankActive
+          ? Array.from(new Set([...methodsActive, 'bank']))
+          : methodsActive.filter((m) => m !== 'bank'),
       });
 
       setPosPaymentConfig(updated);
@@ -4903,19 +4967,353 @@ export function App() {
       setPayRzpWebhookSecret('');
       setPayPaytmMerchantKey('');
       setPayPhonePeSaltKey('');
-      setPaySettingsStatusMsg({
-        type: 'success',
-        text: `Payment settings saved successfully! Status: ${updated.status === 'connected' ? 'Connected' : updated.status === 'error' ? 'Validation Error' : 'Configured'}`
-      });
-      showToast(`Payment settings saved (${updated.status})`);
+      if (!silent) {
+        setPaySettingsStatusMsg({
+          type: 'success',
+          text: `Payment settings saved successfully! Status: ${updated.status === 'connected' ? 'Connected' : updated.status === 'error' ? 'Validation Error' : 'Configured'}`
+        });
+        showToast(`Payment settings saved (${updated.status})`);
+      } else {
+        showToast('Payment settings saved');
+      }
     } catch (err: any) {
-      setPaySettingsStatusMsg({
-        type: 'error',
-        text: err.message || 'Failed to update payment settings',
-      });
+      if (!silent) {
+        setPaySettingsStatusMsg({
+          type: 'error',
+          text: err.message || 'Failed to update payment settings',
+        });
+      }
       showToast(err.message || 'Failed to save payment settings', 'error');
     } finally {
       setIsSavingPaySettings(false);
+    }
+  };
+
+  const handleSavePaymentMethods = async (
+    customMethods?: string[],
+    customBank?: boolean,
+    silent: boolean = false
+  ) => {
+    if (!user || user.role === 'cashier') {
+      showToast('Only Owner or Store Manager can modify payment methods', 'error');
+      return;
+    }
+    setIsSavingMethods(true);
+    try {
+      const methodsActive = customMethods !== undefined ? customMethods : payMethodsEnabled;
+      const bankActive = customBank !== undefined ? customBank : payBankEnabled;
+      const upiActive = methodsActive.includes('upi');
+
+      const updated = await updatePaymentSettings({
+        target: 'methods',
+        enabledMethods: bankActive
+          ? Array.from(new Set([...methodsActive, 'bank']))
+          : methodsActive.filter((m) => m !== 'bank'),
+        bankEnabled: bankActive,
+        upiEnabled: upiActive,
+      });
+
+      setPosPaymentConfig(updated);
+      if (!silent) {
+        showToast('Payment methods saved successfully');
+      }
+    } catch (err: any) {
+      showToast(err.message || 'Failed to save payment methods', 'error');
+    } finally {
+      setIsSavingMethods(false);
+    }
+  };
+
+  const handleTogglePaymentMethod = async (methodId: string) => {
+    if (!user || user.role === 'cashier') {
+      showToast('Only Owner or Store Manager can modify payment methods', 'error');
+      return;
+    }
+    if (methodId === 'cash') return; // Cash cannot be disabled
+
+    let nextBank = payBankEnabled;
+    let nextMethods = [...payMethodsEnabled];
+
+    if (methodId === 'bank') {
+      nextBank = !payBankEnabled;
+      setPayBankEnabled(nextBank);
+      if (nextBank) {
+        nextMethods = Array.from(new Set([...nextMethods, 'bank']));
+      } else {
+        nextMethods = nextMethods.filter((m) => m !== 'bank');
+      }
+    } else {
+      const isChecked = payMethodsEnabled.includes(methodId);
+      if (isChecked) {
+        nextMethods = nextMethods.filter((m) => m !== methodId);
+      } else {
+        nextMethods = Array.from(new Set([...nextMethods, methodId]));
+      }
+    }
+    setPayMethodsEnabled(nextMethods);
+
+    // Auto-save immediately to database so state persists across page refreshes!
+    await handleSavePaymentMethods(nextMethods, nextBank, true);
+  };
+
+  const handleToggleRazorpay = async () => {
+    if (!user || user.role === 'cashier') {
+      showToast('Only Owner or Store Manager can modify payment settings', 'error');
+      return;
+    }
+    const nextRzp = !payRzpEnabled;
+    setPayRzpEnabled(nextRzp);
+    setIsSavingRzp(true);
+    try {
+      const updated = await updatePaymentSettings({
+        target: 'razorpay',
+        rzpEnabled: nextRzp,
+        rzpMode: payRzpMode,
+        rzpKeyId: payRzpKeyId.trim() || null,
+        provider: nextRzp ? 'razorpay' : 'manual',
+      });
+      setPosPaymentConfig(updated);
+      showToast(nextRzp ? 'Razorpay enabled' : 'Razorpay disabled');
+    } catch (err: any) {
+      showToast(err.message || 'Failed to update Razorpay toggle', 'error');
+    } finally {
+      setIsSavingRzp(false);
+    }
+  };
+
+  const handleSaveRazorpaySettings = async () => {
+    if (!user || user.role === 'cashier') {
+      showToast('Only Owner or Store Manager can modify payment settings', 'error');
+      return;
+    }
+    setIsSavingRzp(true);
+    setPaySettingsStatusMsg(null);
+    try {
+      const updated = await updatePaymentSettings({
+        target: 'razorpay',
+        rzpEnabled: payRzpEnabled,
+        rzpMode: payRzpMode,
+        rzpKeyId: payRzpKeyId.trim() || null,
+        rzpKeySecret: payRzpKeySecret.trim() ? payRzpKeySecret.trim() : undefined,
+        rzpWebhookSecret: payRzpWebhookSecret.trim() ? payRzpWebhookSecret.trim() : undefined,
+        rzpQrExpiryMinutes: Number(payRzpExpiryMinutes) || 15,
+        provider: payRzpEnabled ? 'razorpay' : (payPaytmEnabled ? 'paytm' : 'manual'),
+      });
+
+      setPosPaymentConfig(updated);
+      setPayRzpKeySecret('');
+      setPayRzpWebhookSecret('');
+      if (updated.status === 'connected') {
+        showToast('Razorpay settings saved and connected!');
+        setPaySettingsStatusMsg({ type: 'success', text: 'Razorpay connected successfully!' });
+      } else if (updated.status === 'error') {
+        showToast(updated.statusMessage || 'Razorpay validation failed', 'error');
+        setPaySettingsStatusMsg({ type: 'error', text: updated.statusMessage || 'Razorpay validation failed' });
+      } else {
+        showToast('Razorpay settings saved');
+      }
+    } catch (err: any) {
+      showToast(err.message || 'Failed to save Razorpay settings', 'error');
+      setPaySettingsStatusMsg({ type: 'error', text: err.message || 'Failed to save Razorpay settings' });
+    } finally {
+      setIsSavingRzp(false);
+    }
+  };
+
+  const handleToggleBankTransfer = async () => {
+    if (!user || user.role === 'cashier') {
+      showToast('Only Owner or Store Manager can modify payment settings', 'error');
+      return;
+    }
+    const nextBank = !payBankEnabled;
+    setPayBankEnabled(nextBank);
+    const nextMethods = nextBank
+      ? Array.from(new Set([...payMethodsEnabled, 'bank']))
+      : payMethodsEnabled.filter((m) => m !== 'bank');
+    setPayMethodsEnabled(nextMethods);
+    await handleSavePaymentMethods(nextMethods, nextBank, true);
+  };
+
+  const handleSaveBankSettings = async () => {
+    if (!user || user.role === 'cashier') {
+      showToast('Only Owner or Store Manager can modify payment settings', 'error');
+      return;
+    }
+    setIsSavingBank(true);
+    try {
+      const updated = await updatePaymentSettings({
+        target: 'bank',
+        bankEnabled: payBankEnabled,
+        bankAccountName: payBankAccountName.trim() || null,
+        bankAccountNo: payBankAccountNo.trim() || null,
+        bankIfsc: payBankIfsc.trim() || null,
+        bankName: payBankName.trim() || null,
+        bankBranch: payBankBranch.trim() || null,
+        enabledMethods: payBankEnabled
+          ? Array.from(new Set([...payMethodsEnabled, 'bank']))
+          : payMethodsEnabled.filter((m) => m !== 'bank'),
+      });
+      setPosPaymentConfig(updated);
+      showToast('Bank settings saved successfully');
+    } catch (err: any) {
+      showToast(err.message || 'Failed to save bank settings', 'error');
+    } finally {
+      setIsSavingBank(false);
+    }
+  };
+
+  const handleToggleUpi = async () => {
+    if (!user || user.role === 'cashier') {
+      showToast('Only Owner or Store Manager can modify payment settings', 'error');
+      return;
+    }
+    const nextUpi = !payUpiEnabled;
+    setPayUpiEnabled(nextUpi);
+    const nextMethods = nextUpi
+      ? Array.from(new Set([...payMethodsEnabled, 'upi']))
+      : payMethodsEnabled.filter((m) => m !== 'upi');
+    setPayMethodsEnabled(nextMethods);
+    await handleSavePaymentMethods(nextMethods, payBankEnabled, true);
+  };
+
+  const handleSaveQrSettings = async () => {
+    if (!user || user.role === 'cashier') {
+      showToast('Only Owner or Store Manager can modify payment settings', 'error');
+      return;
+    }
+    setIsSavingQr(true);
+    try {
+      const updated = await updatePaymentSettings({
+        target: 'qr',
+        upiEnabled: payUpiEnabled,
+        qrType: payQrType,
+        provider: payQrType === 'dynamic' ? payProvider : 'manual',
+        staticUpiId: payStaticUpiId.trim() || null,
+        staticMerchantName: payStaticMerchantName.trim() || null,
+      });
+      setPosPaymentConfig(updated);
+      if (updated.staticUpiId && shop) {
+        setShop((prev) => prev ? { ...prev, upiId: updated.staticUpiId || prev.upiId } : null);
+      }
+      showToast('UPI QR settings saved successfully');
+    } catch (err: any) {
+      showToast(err.message || 'Failed to save QR settings', 'error');
+    } finally {
+      setIsSavingQr(false);
+    }
+  };
+
+  const handleTogglePaytm = async () => {
+    if (!user || user.role === 'cashier') {
+      showToast('Only Owner or Store Manager can modify payment settings', 'error');
+      return;
+    }
+    const nextPaytm = !payPaytmEnabled;
+    setPayPaytmEnabled(nextPaytm);
+    setIsSavingPaytm(true);
+    try {
+      const updated = await updatePaymentSettings({
+        target: 'paytm',
+        paytmEnabled: nextPaytm,
+        paytmMode: payPaytmMode,
+        paytmMid: payPaytmMid.trim() || null,
+        provider: nextPaytm ? 'paytm' : 'manual',
+      });
+      setPosPaymentConfig(updated);
+      showToast(nextPaytm ? 'Paytm enabled' : 'Paytm disabled');
+    } catch (err: any) {
+      showToast(err.message || 'Failed to update Paytm toggle', 'error');
+    } finally {
+      setIsSavingPaytm(false);
+    }
+  };
+
+  const handleSavePaytmSettings = async () => {
+    if (!user || user.role === 'cashier') {
+      showToast('Only Owner or Store Manager can modify payment settings', 'error');
+      return;
+    }
+    setIsSavingPaytm(true);
+    try {
+      const updated = await updatePaymentSettings({
+        target: 'paytm',
+        paytmEnabled: payPaytmEnabled,
+        paytmMode: payPaytmMode,
+        paytmMid: payPaytmMid.trim() || null,
+        paytmMerchantKey: payPaytmMerchantKey.trim() ? payPaytmMerchantKey.trim() : undefined,
+        paytmWebsite: payPaytmWebsite.trim() || (payPaytmMode === 'live' ? 'DEFAULT' : 'WEBSTAGING'),
+        provider: payPaytmEnabled ? 'paytm' : 'manual',
+      });
+      setPosPaymentConfig(updated);
+      setPayPaytmMerchantKey('');
+      if (updated.status === 'connected') {
+        showToast('Paytm settings saved and verified!');
+      } else if (updated.status === 'error') {
+        showToast(updated.statusMessage || 'Paytm validation failed', 'error');
+      } else {
+        showToast('Paytm settings saved');
+      }
+    } catch (err: any) {
+      showToast(err.message || 'Failed to save Paytm settings', 'error');
+    } finally {
+      setIsSavingPaytm(false);
+    }
+  };
+
+  const handleTogglePhonePe = async () => {
+    if (!user || user.role === 'cashier') {
+      showToast('Only Owner or Store Manager can modify payment settings', 'error');
+      return;
+    }
+    const nextPhonePe = !payPhonePeEnabled;
+    setPayPhonePeEnabled(nextPhonePe);
+    setIsSavingPhonePe(true);
+    try {
+      const updated = await updatePaymentSettings({
+        target: 'phonepe',
+        phonepeEnabled: nextPhonePe,
+        phonepeMode: payPhonePeMode,
+        phonepeMid: payPhonePeMid.trim() || null,
+        provider: nextPhonePe ? 'phonepe' : 'manual',
+      });
+      setPosPaymentConfig(updated);
+      showToast(nextPhonePe ? 'PhonePe enabled' : 'PhonePe disabled');
+    } catch (err: any) {
+      showToast(err.message || 'Failed to update PhonePe toggle', 'error');
+    } finally {
+      setIsSavingPhonePe(false);
+    }
+  };
+
+  const handleSavePhonePeSettings = async () => {
+    if (!user || user.role === 'cashier') {
+      showToast('Only Owner or Store Manager can modify payment settings', 'error');
+      return;
+    }
+    setIsSavingPhonePe(true);
+    try {
+      const updated = await updatePaymentSettings({
+        target: 'phonepe',
+        phonepeEnabled: payPhonePeEnabled,
+        phonepeMode: payPhonePeMode,
+        phonepeMid: payPhonePeMid.trim() || null,
+        phonepeSaltKey: payPhonePeSaltKey.trim() ? payPhonePeSaltKey.trim() : undefined,
+        phonepeSaltIndex: payPhonePeSaltIndex.trim() || '1',
+        provider: payPhonePeEnabled ? 'phonepe' : 'manual',
+      });
+      setPosPaymentConfig(updated);
+      setPayPhonePeSaltKey('');
+      if (updated.status === 'connected') {
+        showToast('PhonePe settings saved and verified!');
+      } else if (updated.status === 'error') {
+        showToast(updated.statusMessage || 'PhonePe validation failed', 'error');
+      } else {
+        showToast('PhonePe settings saved');
+      }
+    } catch (err: any) {
+      showToast(err.message || 'Failed to save PhonePe settings', 'error');
+    } finally {
+      setIsSavingPhonePe(false);
     }
   };
 
@@ -10904,8 +11302,12 @@ export function App() {
                             onClick={() => {
                               if (disabled) return;
                               setSelectedPayMode(id as any);
-                              if (id === 'split' && !splitAmount1 && !splitAmount2) {
-                                handleSplitFiftyFifty();
+                              if (id === 'split') {
+                                if (!splitAmount1 && !splitAmount2) {
+                                  handleSplitFiftyFifty();
+                                } else if (parseFloat(splitAmount1 || '0') + parseFloat(splitAmount2 || '0') !== +(finalPayableMinor / 100).toFixed(2)) {
+                                  handleSplitFiftyFifty();
+                                }
                               }
                             }}
                           >
@@ -15569,27 +15971,37 @@ export function App() {
                                     <ToggleSwitch
                                       checked={isChecked}
                                       disabled={item.id === 'cash' || user?.role === 'cashier'}
-                                      onChange={() => {
-                                        if (item.id === 'bank') {
-                                          const next = !payBankEnabled;
-                                          setPayBankEnabled(next);
-                                          if (next) {
-                                            setPayMethodsEnabled([...payMethodsEnabled, 'bank']);
-                                          } else {
-                                            setPayMethodsEnabled(payMethodsEnabled.filter((m) => m !== 'bank'));
-                                          }
-                                        } else {
-                                          if (isChecked) {
-                                            setPayMethodsEnabled(payMethodsEnabled.filter((m) => m !== item.id));
-                                          } else {
-                                            setPayMethodsEnabled([...payMethodsEnabled, item.id]);
-                                          }
-                                        }
-                                      }}
+                                      onChange={() => handleTogglePaymentMethod(item.id)}
                                     />
                                   </div>
                                 );
                               })}
+                            </div>
+
+                            <div style={{ marginTop: '1.15rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem', padding: '0.75rem 1rem', background: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                              <span style={{ fontSize: '0.8rem', color: '#059669', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                                <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
+                                Auto-saves on toggle & persists across refresh
+                              </span>
+                              <button
+                                type="button"
+                                className="btn btn-primary"
+                                style={{
+                                  padding: '0.45rem 1.15rem',
+                                  fontSize: '0.82rem',
+                                  fontWeight: 700,
+                                  background: 'var(--primary)',
+                                  color: '#ffffff',
+                                  border: 'none',
+                                  borderRadius: '7px',
+                                  cursor: 'pointer',
+                                  boxShadow: '0 2px 6px rgba(109, 74, 255, 0.2)',
+                                }}
+                                disabled={isSavingMethods || user?.role === 'cashier'}
+                                onClick={() => handleSavePaymentMethods()}
+                              >
+                                {isSavingMethods ? 'Saving...' : 'Save Payment Methods'}
+                              </button>
                             </div>
                           </div>
 
@@ -15613,7 +16025,7 @@ export function App() {
                               <ToggleSwitch
                                 checked={payRzpEnabled}
                                 disabled={user?.role === 'cashier'}
-                                onChange={() => setPayRzpEnabled(!payRzpEnabled)}
+                                onChange={handleToggleRazorpay}
                               />
                             </div>
 
@@ -15732,10 +16144,10 @@ export function App() {
                                   cursor: 'pointer',
                                   marginTop: '0.5rem',
                                 }}
-                                disabled={isSavingPaySettings || user?.role === 'cashier'}
-                                onClick={() => handleSavePaymentSettings()}
+                                disabled={isSavingRzp || user?.role === 'cashier'}
+                                onClick={() => handleSaveRazorpaySettings()}
                               >
-                                {isSavingPaySettings ? 'Saving...' : 'Save Settings'}
+                                {isSavingRzp ? 'Saving...' : 'Save Settings'}
                               </button>
                             </div>
                           </div>
@@ -15766,7 +16178,7 @@ export function App() {
                               <ToggleSwitch
                                 checked={payRzpEnabled}
                                 disabled={user?.role === 'cashier'}
-                                onChange={() => setPayRzpEnabled(!payRzpEnabled)}
+                                onChange={handleToggleRazorpay}
                               />
                             </div>
                           </div>
@@ -15935,10 +16347,10 @@ export function App() {
                                   boxShadow: '0 4px 14px rgba(109, 74, 255, 0.3)',
                                   cursor: 'pointer'
                                 }}
-                                disabled={isSavingPaySettings || user?.role === 'cashier'}
-                                onClick={() => handleSavePaymentSettings()}
+                                disabled={isSavingRzp || user?.role === 'cashier'}
+                                onClick={() => handleSaveRazorpaySettings()}
                               >
-                                {isSavingPaySettings ? 'Validating & Saving...' : 'Update Keys'}
+                                {isSavingRzp ? 'Validating & Saving...' : 'Update Keys'}
                               </button>
                               <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: '8px' }}>
                                 Changes will be effective immediately for this shop only. Keys are validated server-side before activation.
@@ -15972,7 +16384,7 @@ export function App() {
                               <ToggleSwitch
                                 checked={payPaytmEnabled}
                                 disabled={user?.role === 'cashier'}
-                                onChange={() => setPayPaytmEnabled(!payPaytmEnabled)}
+                                onChange={handleTogglePaytm}
                               />
                             </div>
                           </div>
@@ -16129,10 +16541,10 @@ export function App() {
                                   boxShadow: '0 4px 14px rgba(109, 74, 255, 0.3)',
                                   cursor: 'pointer'
                                 }}
-                                disabled={isSavingPaySettings || user?.role === 'cashier'}
-                                onClick={() => handleSavePaymentSettings()}
+                                disabled={isSavingPaytm || user?.role === 'cashier'}
+                                onClick={() => handleSavePaytmSettings()}
                               >
-                                {isSavingPaySettings ? 'Validating & Saving...' : 'Update Paytm Keys'}
+                                {isSavingPaytm ? 'Validating & Saving...' : 'Update Paytm Keys'}
                               </button>
                               <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: '8px' }}>
                                 Credentials are encrypted at rest with AES-256-GCM and validated before activation.
@@ -16166,7 +16578,7 @@ export function App() {
                               <ToggleSwitch
                                 checked={payPhonePeEnabled}
                                 disabled={user?.role === 'cashier'}
-                                onChange={() => setPayPhonePeEnabled(!payPhonePeEnabled)}
+                                onChange={handleTogglePhonePe}
                               />
                             </div>
                           </div>
@@ -16317,10 +16729,10 @@ export function App() {
                                   boxShadow: '0 4px 14px rgba(109, 74, 255, 0.3)',
                                   cursor: 'pointer'
                                 }}
-                                disabled={isSavingPaySettings || user?.role === 'cashier'}
-                                onClick={() => handleSavePaymentSettings()}
+                                disabled={isSavingPhonePe || user?.role === 'cashier'}
+                                onClick={() => handleSavePhonePeSettings()}
                               >
-                                {isSavingPaySettings ? 'Validating & Saving...' : 'Update PhonePe Keys'}
+                                {isSavingPhonePe ? 'Validating & Saving...' : 'Update PhonePe Keys'}
                               </button>
                               <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: '8px' }}>
                                 Salt keys are encrypted at rest with AES-256-GCM and validated before activation.
@@ -16353,7 +16765,7 @@ export function App() {
                               <ToggleSwitch
                                 checked={payUpiEnabled}
                                 disabled={user?.role === 'cashier'}
-                                onChange={() => setPayUpiEnabled(!payUpiEnabled)}
+                                onChange={handleToggleUpi}
                               />
                             </div>
 
@@ -16514,10 +16926,10 @@ export function App() {
                                   boxShadow: '0 4px 14px rgba(109, 74, 255, 0.3)',
                                   cursor: 'pointer'
                                 }}
-                                disabled={isSavingPaySettings || user?.role === 'cashier'}
-                                onClick={() => handleSavePaymentSettings()}
+                                disabled={isSavingQr || user?.role === 'cashier'}
+                                onClick={() => handleSaveQrSettings()}
                               >
-                                {isSavingPaySettings ? 'Saving...' : 'Save QR Settings'}
+                                {isSavingQr ? 'Saving...' : 'Save QR Settings'}
                               </button>
                             </div>
                           </div>
@@ -16590,15 +17002,7 @@ export function App() {
                               <ToggleSwitch
                                 checked={payBankEnabled}
                                 disabled={user?.role === 'cashier'}
-                                onChange={() => {
-                                  const next = !payBankEnabled;
-                                  setPayBankEnabled(next);
-                                  if (next) {
-                                    setPayMethodsEnabled([...payMethodsEnabled, 'bank']);
-                                  } else {
-                                    setPayMethodsEnabled(payMethodsEnabled.filter((m) => m !== 'bank'));
-                                  }
-                                }}
+                                onChange={handleToggleBankTransfer}
                               />
                             </div>
 
@@ -16698,10 +17102,10 @@ export function App() {
                                     boxShadow: '0 4px 14px rgba(109, 74, 255, 0.3)',
                                     cursor: 'pointer'
                                   }}
-                                  disabled={isSavingPaySettings || user?.role === 'cashier'}
-                                  onClick={() => handleSavePaymentSettings()}
+                                  disabled={isSavingBank || user?.role === 'cashier'}
+                                  onClick={() => handleSaveBankSettings()}
                                 >
-                                  {isSavingPaySettings ? 'Saving...' : 'Save Bank Settings'}
+                                  {isSavingBank ? 'Saving...' : 'Save Bank Settings'}
                                 </button>
                               </div>
                             </div>
