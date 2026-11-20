@@ -228,98 +228,7 @@
   outline-offset: 2px;
 }
 
-/* 4. Three Summary Cards Grid */
-.mm-summary-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1.25rem;
-  margin-bottom: 1.75rem;
-}
-
-@media (max-width: 960px) {
-  .mm-summary-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.mm-summary-card {
-  background: #FFFFFF;
-  border: 1px solid #ECE7EC;
-  border-radius: 16px;
-  padding: 1.25rem 1.4rem;
-  box-shadow: 0 2px 8px rgba(73, 54, 74, 0.04);
-  transition: all 0.2s ease;
-}
-
-.mm-summary-card:hover {
-  border-color: #D8CAD8;
-  box-shadow: 0 6px 18px rgba(73, 54, 74, 0.08);
-}
-
-.mm-summary-header {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 0.9rem;
-}
-
-.mm-role-tile {
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  background: #F2EDF2;
-  color: #49364A;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.mm-summary-role-name {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: #1F1A20;
-}
-
-.mm-summary-sub {
-  font-size: 0.75rem;
-  color: #6B6670;
-  margin-top: 1px;
-}
-
-.mm-summary-count {
-  font-size: 1.6rem;
-  font-weight: 800;
-  color: #49364A;
-  letter-spacing: -0.02em;
-  margin-bottom: 0.65rem;
-}
-
-.mm-progress-track {
-  width: 100%;
-  height: 6px;
-  background: #EAE3EA;
-  border-radius: 9999px;
-  overflow: hidden;
-  margin-bottom: 0.65rem;
-}
-
-.mm-progress-fill {
-  height: 100%;
-  background: #49364A;
-  border-radius: 9999px;
-  transition: width 0.3s ease;
-}
-
-.mm-summary-note {
-  font-size: 0.78rem;
-  color: #6B6670;
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-/* 5. Module Access Configuration Card */
+/* Module Access Configuration Card */
 .mm-config-card {
   background: #FFFFFF;
   border: 1px solid #ECE7EC;
@@ -676,9 +585,15 @@
   color: #6B6670;
 }
 
-/* Super Admin Settings Lock */
+/* Super Admin Settings Lock & Cashier Mandatory Modules Lock */
 .mm-switch-track.locked-admin {
   background: #49364A !important;
+  cursor: not-allowed;
+  opacity: 0.95;
+}
+
+.mm-switch-track.locked-cashier {
+  background: #0F766E !important;
   cursor: not-allowed;
   opacity: 0.95;
 }
@@ -687,11 +602,19 @@
   color: #49364A;
 }
 
+.mm-switch-knob.locked.locked-cashier {
+  color: #0F766E;
+}
+
 .mm-switch-label.locked {
   color: #49364A;
   display: inline-flex;
   align-items: center;
   gap: 4px;
+}
+
+.mm-switch-label.locked.locked-cashier {
+  color: #0F766E;
 }
 
 .mm-lock-helper {
