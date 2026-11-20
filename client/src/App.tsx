@@ -737,7 +737,16 @@ export function App() {
   }, [user?.role]);
 
   // Collapsible sidebar accordion sections
-  const isAccountsTabActive = ['invoices', 'purchases', 'payments', 'expenses', 'payables', 'reports'].includes(activeTab);
+  const isAccountsTabActive = [
+    'invoices',
+    'purchases',
+    'payments',
+    'expenses',
+    'payables',
+    'day-closing',
+    'return-reports',
+    'reports',
+  ].includes(activeTab);
   const isGstTabActive = [
     'gst-overview',
     'gst-sales-register',
@@ -2300,11 +2309,12 @@ export function App() {
   const TAB_TO_MODULE_MAP = useMemo<Record<string, string>>(() => ({
     dashboard: 'dashboard',
     pos: 'pos',
+    shifts: 'shifts',
     wholesale: 'wholesale',
     notifications: 'notifications',
     items: 'items',
     categories: 'categories',
-    inventory: 'inventory',
+    inventory: 'inventory.adjustment',
     'stock-transfer': 'inventory.transfers',
     'product-movement': 'inventory.reports',
     'sales-analysis': 'sales-analysis',
@@ -2312,26 +2322,27 @@ export function App() {
     customers: 'customers',
     suppliers: 'suppliers',
     accounts: 'accounts',
-    invoices: 'accounts.payments',
-    purchases: 'accounts.payments',
+    invoices: user?.role === 'cashier' ? 'recent-bills' : 'accounts.invoices',
+    'recent-bills': 'recent-bills',
+    purchases: 'accounts.purchases',
     payments: 'accounts.payments',
     payables: 'accounts.payments',
     receivables: 'accounts.payments',
     expenses: 'accounts.expenses',
-    'day-closing': 'pos',
-    'return-reports': 'pos',
+    'day-closing': user?.role === 'cashier' ? 'day-closing' : 'accounts.day_closing',
+    'return-reports': 'accounts.return_reports',
     gst: 'gst',
-    'gst-overview': 'gst',
+    'gst-overview': 'gst.overview',
     'gst-gstr1': 'gst.gstr1',
     'gst-sales-register': 'gst.gstr1',
-    'gst-itc-reconciliation': 'gst.hsn',
-    'gst-purchase-register': 'gst.hsn',
+    'gst-itc-reconciliation': 'gst.itc',
+    'gst-purchase-register': 'gst.itc',
     'gst-gstr3b': 'gst.gstr3b',
     'gst-import-export': 'gst',
     'gst-filing-history': 'gst',
     'user-management': 'user-management',
     settings: 'settings',
-  }), []);
+  }), [user?.role]);
 
   // Route guard: Redirect if user attempts to visit disabled module
   useEffect(() => {
@@ -7768,17 +7779,17 @@ export function App() {
               )}
 
               {/* 3. Cashier Shifts: ONLY for Cashier */}
-              {user?.role === 'cashier' && (
+              {user?.role === 'cashier' && isModuleVisible('shifts') && (
                 <button
                   type="button"
                   className={`sidebar-nav-item ${activeTab === 'shifts' ? 'active' : ''}`}
                   onClick={() => setActiveTab('shifts')}
-                  title="My Cashier Shift"
+                  title="My Cashier"
                 >
                   <span className="nav-icon">
                     <Clock size={20} strokeWidth={2.2} />
                   </span>
-                  <span className="nav-text">My Cashier Shift</span>
+                  <span className="nav-text">My Cashier</span>
                   {activeShiftNumber ? (
                     <span className="nav-shift-badge active" title={`Active Shift: ${activeShiftNumber}`}>
                       ● {activeShiftNumber}
@@ -7910,7 +7921,7 @@ export function App() {
                           <span className="nav-text">Stock Transfer</span>
                         </button>
                       )}
-                      {isModuleVisible('inventory.levels') && (
+                      {isModuleVisible('inventory.adjustment') && (
                         <button
                           type="button"
                           className={`sidebar-nav-item ${activeTab === 'inventory' ? 'active' : ''}`}
@@ -7988,32 +7999,36 @@ export function App() {
                 </button>
               )}
 
-              {/* Cashier Recent Bills */}
+              {/* Cashier Recent Bills & Day Closing */}
               {user?.role === 'cashier' && (
                 <>
-                  <button
-                    type="button"
-                    className={`sidebar-nav-item ${activeTab === 'invoices' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('invoices')}
-                    title="Recent Bills"
-                  >
-                    <span className="nav-icon">
-                      <Receipt size={20} strokeWidth={2.2} />
-                    </span>
-                    <span className="nav-text">Recent Bills</span>
-                  </button>
+                  {isModuleVisible('recent-bills') && (
+                    <button
+                      type="button"
+                      className={`sidebar-nav-item ${activeTab === 'invoices' ? 'active' : ''}`}
+                      onClick={() => setActiveTab('invoices')}
+                      title="Recent Bills"
+                    >
+                      <span className="nav-icon">
+                        <Receipt size={20} strokeWidth={2.2} />
+                      </span>
+                      <span className="nav-text">Recent Bills</span>
+                    </button>
+                  )}
 
-                  <button
-                    type="button"
-                    className={`sidebar-nav-item ${activeTab === 'day-closing' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('day-closing')}
-                    title="Day Closing & Register Reconciliation"
-                  >
-                    <span className="nav-icon">
-                      <Lock size={20} strokeWidth={2.2} />
-                    </span>
-                    <span className="nav-text">Day Closing</span>
-                  </button>
+                  {isModuleVisible('day-closing') && (
+                    <button
+                      type="button"
+                      className={`sidebar-nav-item ${activeTab === 'day-closing' ? 'active' : ''}`}
+                      onClick={() => setActiveTab('day-closing')}
+                      title="Day Closing & Register Reconciliation"
+                    >
+                      <span className="nav-icon">
+                        <Lock size={20} strokeWidth={2.2} />
+                      </span>
+                      <span className="nav-text">Day Closing</span>
+                    </button>
+                  )}
                 </>
               )}
 
@@ -8082,7 +8097,7 @@ export function App() {
 
                   {!isSidebarCollapsed && isAccountsOpen && (
                     <div className="sidebar-sub-items">
-                      {isModuleVisible('accounts.payments') && (
+                      {isModuleVisible('accounts.invoices') && (
                         <button
                           type="button"
                           className={`sidebar-nav-item ${activeTab === 'invoices' ? 'active' : ''}`}
@@ -8100,7 +8115,7 @@ export function App() {
                         </button>
                       )}
 
-                      {can(user?.role as any, 'purchases') && isModuleVisible('accounts.payments') && (
+                      {can(user?.role as any, 'purchases') && isModuleVisible('accounts.purchases') && (
                         <button
                           type="button"
                           className={`sidebar-nav-item ${activeTab === 'purchases' ? 'active' : ''}`}
@@ -8116,7 +8131,7 @@ export function App() {
                               <line x1="12" y1="15" x2="12" y2="3" />
                             </svg>
                           </span>
-                          <span className="nav-text">Purchases &amp; Inward</span>
+                          <span className="nav-text">Purchases &amp; Payables</span>
                           <span className="nav-count-badge">{purchases.length}</span>
                         </button>
                       )}
@@ -8154,33 +8169,37 @@ export function App() {
                         </button>
                       )}
 
-                      <button
-                        type="button"
-                        className={`sidebar-nav-item ${activeTab === 'day-closing' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('day-closing')}
-                      >
-                        <span className="nav-icon">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                          </svg>
-                        </span>
-                        <span className="nav-text">Day Closing</span>
-                      </button>
+                      {isModuleVisible('accounts.day_closing') && (
+                        <button
+                          type="button"
+                          className={`sidebar-nav-item ${activeTab === 'day-closing' ? 'active' : ''}`}
+                          onClick={() => setActiveTab('day-closing')}
+                        >
+                          <span className="nav-icon">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                            </svg>
+                          </span>
+                          <span className="nav-text">Day Closing</span>
+                        </button>
+                      )}
 
-                      <button
-                        type="button"
-                        className={`sidebar-nav-item ${activeTab === 'return-reports' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('return-reports')}
-                      >
-                        <span className="nav-icon">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
-                            <polyline points="17 6 23 6 23 12" />
-                          </svg>
-                        </span>
-                        <span className="nav-text">Returns &amp; Profit Reports</span>
-                      </button>
+                      {isModuleVisible('accounts.return_reports') && (
+                        <button
+                          type="button"
+                          className={`sidebar-nav-item ${activeTab === 'return-reports' ? 'active' : ''}`}
+                          onClick={() => setActiveTab('return-reports')}
+                        >
+                          <span className="nav-icon">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+                              <polyline points="17 6 23 6 23 12" />
+                            </svg>
+                          </span>
+                          <span className="nav-text">Returns &amp; Profit Report</span>
+                        </button>
+                      )}
                     </div>
                   )}
                 </>
@@ -8217,20 +8236,22 @@ export function App() {
 
                   {!isSidebarCollapsed && isGstOpen && (
                     <div className="sidebar-sub-items">
-                      <button
-                        type="button"
-                        className={`sidebar-nav-item ${activeTab === 'gst-overview' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('gst-overview')}
-                      >
-                        <span className="nav-icon">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                            <circle cx="12" cy="12" r="10" />
-                            <path d="m14 10-4 4" />
-                            <path d="M12 2v2M12 20v2M20 12h2M2 12h2" />
-                          </svg>
-                        </span>
-                        <span className="nav-text">GST Overview</span>
-                      </button>
+                      {isModuleVisible('gst.overview') && (
+                        <button
+                          type="button"
+                          className={`sidebar-nav-item ${activeTab === 'gst-overview' ? 'active' : ''}`}
+                          onClick={() => setActiveTab('gst-overview')}
+                        >
+                          <span className="nav-icon">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                              <circle cx="12" cy="12" r="10" />
+                              <path d="m14 10-4 4" />
+                              <path d="M12 2v2M12 20v2M20 12h2M2 12h2" />
+                            </svg>
+                          </span>
+                          <span className="nav-text">GST Overview</span>
+                        </button>
+                      )}
 
                       {isModuleVisible('gst.gstr1') && (
                         <button
@@ -8250,7 +8271,7 @@ export function App() {
                         </button>
                       )}
 
-                      {isModuleVisible('gst.hsn') && (
+                      {isModuleVisible('gst.itc') && (
                         <button
                           type="button"
                           className={`sidebar-nav-item ${activeTab === 'gst-itc-reconciliation' || activeTab === 'gst-purchase-register' ? 'active' : ''}`}
@@ -8265,7 +8286,7 @@ export function App() {
                               <path d="M3 7h18" />
                             </svg>
                           </span>
-                          <span className="nav-text">ITC Register &amp; 2B Recon</span>
+                          <span className="nav-text">ITC Register &amp; 2B Reconciliation</span>
                         </button>
                       )}
 
