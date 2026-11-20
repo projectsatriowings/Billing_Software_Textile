@@ -159,7 +159,7 @@ export const BranchSelector: React.FC<BranchSelectorProps> = ({
         ))}
       </select>
 
-      {/* a) Building icon tile with gradient squircle */}
+      {/* a) Branch / building icon (clean, no box or background) */}
       <div className="top-branch-icon-tile" aria-hidden="true">
         <svg
           width="18"

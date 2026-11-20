@@ -2589,8 +2589,29 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
                                   Scan PDF, JPG, or PNG invoice
                                 </span>
                               </div>
-                              <div className="bulk-template-download-btn" style={{ color: '#4f46e5' }}>
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                              <div
+                                className="bulk-template-download-btn"
+                                style={{
+                                  background: 'var(--primary, #3B1E36)',
+                                  borderColor: 'var(--primary, #3B1E36)',
+                                  color: '#ffffff',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                }}
+                              >
+                                <svg
+                                  width="15"
+                                  height="15"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="#ffffff"
+                                  strokeWidth="2.8"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <polyline points="9 18 15 12 9 6"></polyline>
+                                </svg>
                               </div>
                             </div>
                           )}
