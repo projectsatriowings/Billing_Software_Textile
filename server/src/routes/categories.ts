@@ -40,7 +40,7 @@ export function registerCategories(r: Router) {
     if (!includeInactive) {
       sql += ' AND c.active = true';
     }
-    sql += ' ORDER BY COALESCE(p.name, c.name) ASC, c.parent_id NULLS FIRST, c.name ASC';
+    sql += ' ORDER BY COALESCE(p.name, c.name) ASC, c.parent_id NULLS FIRST, c.name ASC, c.id ASC';
 
     let rows = await ctx.db.query(sql, params);
 
@@ -51,7 +51,12 @@ export function registerCategories(r: Router) {
         [tenantId, scope.branchId],
       );
       if (distinctItemCats.length > 0) {
-        const existingNames = new Set(rows.map((r: any) => (r.name || '').trim().toLowerCase()));
+        // Query ALL existing categories in branch (both active and inactive) so deactivated categories are not re-inserted as active
+        const allBranchCats = await ctx.db.query<{ name: string }>(
+          'SELECT name FROM categories WHERE tenant_id = ? AND (branch_id = ? OR branch_id IS NULL)',
+          [tenantId, scope.branchId],
+        );
+        const existingNames = new Set(allBranchCats.map((r: any) => (r.name || '').trim().toLowerCase()));
         let insertedNew = false;
         for (const itemCat of distinctItemCats) {
           const catName = itemCat.category.trim();
@@ -244,10 +249,12 @@ export function registerCategories(r: Router) {
     const b = ctx.body ?? {};
     const tenantId = ctx.user!.tenantId;
     const scope = await resolveBranchScope(ctx);
+    const user = ctx.user!;
+    const isSuperAdmin = user.role === 'owner' || String(user.role).toUpperCase() === 'SUPER_ADMIN';
     let checkSql = 'SELECT * FROM categories WHERE id = ? AND tenant_id = ?';
     const checkParams: unknown[] = [ctx.params.id, tenantId];
-    if (!scope.isSuperAdminAll && scope.branchId) {
-      checkSql += ' AND branch_id = ?';
+    if (!isSuperAdmin && !scope.isSuperAdminAll && scope.branchId) {
+      checkSql += ' AND (branch_id = ? OR branch_id IS NULL)';
       checkParams.push(scope.branchId);
     }
     const cat = await ctx.db.one(checkSql, checkParams);
@@ -297,7 +304,7 @@ export function registerCategories(r: Router) {
     await ctx.db.tx(async (q) => {
       await q.exec(
         `UPDATE categories
-         SET name = ?, description = ?, parent_id = ?, active = ?, updated_at = now()
+         SET name = ?, description = ?, parent_id = ?, active = ?
          WHERE id = ? AND tenant_id = ?`,
         [name, description, parentId, active, cat.id, tenantId],
       );
@@ -332,6 +339,7 @@ export function registerCategories(r: Router) {
         parentId: updated.parentId ?? updated.parent_id ?? null,
         parentName: updated.parentName ?? updated.parent_name ?? null,
         createdAt: updated.createdAt ?? updated.created_at,
+        itemCount: cat.itemCount ?? cat.item_count ?? 0,
       },
     };
   });
@@ -343,7 +351,7 @@ export function registerCategories(r: Router) {
     let checkSql = 'SELECT id, name, branch_id FROM categories WHERE id = ? AND tenant_id = ?';
     const checkParams: unknown[] = [ctx.params.id, tenantId];
     if (!scope.isSuperAdminAll && scope.branchId) {
-      checkSql += ' AND branch_id = ?';
+      checkSql += ' AND (branch_id = ? OR branch_id IS NULL)';
       checkParams.push(scope.branchId);
     }
     const cat = await ctx.db.one<{ id: string; name: string; branchId?: string; branch_id?: string }>(checkSql, checkParams);

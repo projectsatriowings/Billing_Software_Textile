@@ -103,10 +103,19 @@ body.theme-super-admin .app-sidebar.icon-only .sidebar-user-avatar {
 }
 
 .theme-super-admin .sidebar-nav-item.active,
-body.theme-super-admin .sidebar-nav-item.active {
+body.theme-super-admin .sidebar-nav-item.active,
+.theme-super-admin .sidebar-nav-item.has-active-child,
+body.theme-super-admin .sidebar-nav-item.has-active-child {
   background: #49364A !important;
   border-color: rgba(255, 255, 255, 0.22) !important;
   box-shadow: 0 2px 8px rgba(73, 54, 74, 0.45) !important;
+  color: #FFFFFF !important;
+}
+
+.theme-super-admin .sidebar-nav-item.open-highlight,
+body.theme-super-admin .sidebar-nav-item.open-highlight {
+  background: rgba(73, 54, 74, 0.35) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
   color: #FFFFFF !important;
 }
 

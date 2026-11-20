@@ -6,7 +6,8 @@ export interface ConfirmModalProps {
   message: React.ReactNode;
   confirmText?: string;
   cancelText?: string;
-  variant?: 'danger' | 'warning' | 'info';
+  variant?: 'danger' | 'warning' | 'info' | 'error';
+  showCancel?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -18,6 +19,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   confirmText = 'Confirm',
   cancelText = 'Cancel',
   variant = 'warning',
+  showCancel = true,
   onConfirm,
   onCancel,
 }) => {
@@ -44,14 +46,15 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
 
   const isDanger = variant === 'danger';
   const isWarning = variant === 'warning';
+  const isError = variant === 'error';
   const isSuperAdmin = typeof document !== 'undefined' && document.body.classList.contains('theme-super-admin');
 
-  const iconBg = isDanger ? '#fee2e2' : isWarning ? '#fef3c7' : isSuperAdmin ? '#F3EDF3' : '#e0e7ff';
-  const iconBorder = isDanger ? '#fca5a5' : isWarning ? '#fcd34d' : isSuperAdmin ? '#D8CBD8' : '#c7d2fe';
-  const iconColor = isDanger ? '#dc2626' : isWarning ? '#d97706' : isSuperAdmin ? '#49364A' : '#4f46e5';
+  const iconBg = (isDanger || isError) ? '#fee2e2' : isWarning ? '#fef3c7' : isSuperAdmin ? '#F3EDF3' : '#e0e7ff';
+  const iconBorder = (isDanger || isError) ? '#fca5a5' : isWarning ? '#fcd34d' : isSuperAdmin ? '#D8CBD8' : '#c7d2fe';
+  const iconColor = (isDanger || isError) ? '#dc2626' : isWarning ? '#d97706' : isSuperAdmin ? '#49364A' : '#4f46e5';
 
-  const confirmBg = isDanger ? '#dc2626' : isWarning ? '#d97706' : isSuperAdmin ? '#49364A' : '#4f46e5';
-  const confirmHoverBg = isDanger ? '#b91c1c' : isWarning ? '#b45309' : isSuperAdmin ? '#604B61' : '#4338ca';
+  const confirmBg = (isDanger || isError) ? '#dc2626' : isWarning ? '#d97706' : isSuperAdmin ? '#49364A' : '#4f46e5';
+  const confirmHoverBg = (isDanger || isError) ? '#b91c1c' : isWarning ? '#b45309' : isSuperAdmin ? '#604B61' : '#4338ca';
 
   return (
     <div
@@ -105,7 +108,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
             boxShadow: `0 4px 12px ${iconBg}`,
           }}
         >
-          {isDanger ? (
+          {(isDanger || isError) ? (
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke={iconColor} strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10" />
               <line x1="15" y1="9" x2="9" y2="15" />
@@ -161,33 +164,36 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
             justifyContent: 'center',
           }}
         >
-          <button
-            type="button"
-            onClick={onCancel}
-            style={{
-              flex: 1,
-              padding: '0.7rem 1.15rem',
-              borderRadius: '12px',
-              border: '1.5px solid #cbd5e1',
-              background: '#f8fafc',
-              color: '#334155',
-              fontSize: '0.88rem',
-              fontWeight: 700,
-              cursor: 'pointer',
-              transition: 'all 0.15s ease',
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = '#e2e8f0')}
-            onMouseLeave={(e) => (e.currentTarget.style.background = '#f8fafc')}
-          >
-            {cancelText}
-          </button>
+          {showCancel && Boolean(cancelText) && (
+            <button
+              type="button"
+              onClick={onCancel}
+              style={{
+                flex: 1,
+                padding: '0.7rem 1.15rem',
+                borderRadius: '12px',
+                border: '1.5px solid #cbd5e1',
+                background: '#f8fafc',
+                color: '#334155',
+                fontSize: '0.88rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = '#e2e8f0')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = '#f8fafc')}
+            >
+              {cancelText}
+            </button>
+          )}
           <button
             ref={confirmBtnRef}
             type="button"
             onClick={onConfirm}
             style={{
-              flex: 1,
-              padding: '0.7rem 1.15rem',
+              flex: showCancel && Boolean(cancelText) ? 1 : 'none',
+              minWidth: showCancel && Boolean(cancelText) ? undefined : '130px',
+              padding: '0.7rem 1.6rem',
               borderRadius: '12px',
               border: 'none',
               background: confirmBg,
@@ -195,7 +201,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
               fontSize: '0.88rem',
               fontWeight: 750,
               cursor: 'pointer',
-              boxShadow: `0 4px 12px ${isDanger ? 'rgba(220, 38, 38, 0.25)' : 'rgba(79, 70, 229, 0.25)'}`,
+              boxShadow: `0 4px 12px ${isDanger || isError ? 'rgba(220, 38, 38, 0.25)' : 'rgba(79, 70, 229, 0.25)'}`,
               transition: 'all 0.15s ease',
             }}
             onMouseEnter={(e) => (e.currentTarget.style.background = confirmHoverBg)}

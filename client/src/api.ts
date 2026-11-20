@@ -15,6 +15,31 @@ export const clearToken = () => {
   localStorage.removeItem('token');
 };
 
+// Developer Mode Token Management (strictly session-based, never persisted in localStorage)
+export const getDeveloperToken = (): string | null => {
+  try {
+    return sessionStorage.getItem('developer_access_token');
+  } catch {
+    return null;
+  }
+};
+
+export const setDeveloperToken = (token: string | null) => {
+  try {
+    if (token) {
+      sessionStorage.setItem('developer_access_token', token);
+    } else {
+      sessionStorage.removeItem('developer_access_token');
+    }
+  } catch {
+    // ignore
+  }
+};
+
+export const clearDeveloperToken = () => {
+  setDeveloperToken(null);
+};
+
 export function withAuthToken(url: string): string {
   const token = getToken();
   if (!token) return url;
@@ -88,6 +113,10 @@ export async function api<T = any>(path: string, options: RequestInit = {}): Pro
   if (selectedBranch && selectedBranch.toLowerCase() !== 'all') {
     headers['x-branch-id'] = selectedBranch;
   }
+  const devToken = getDeveloperToken();
+  if (devToken) {
+    headers['x-developer-token'] = devToken;
+  }
 
   const res = await fetch(path, {
     ...options,
@@ -103,6 +132,11 @@ export async function api<T = any>(path: string, options: RequestInit = {}): Pro
 
   if (res.status === 403 && (data?.code === 'PASSWORD_CHANGE_REQUIRED' || data?.error?.code === 'PASSWORD_CHANGE_REQUIRED')) {
     window.dispatchEvent(new CustomEvent('password_change_required'));
+  }
+
+  if (res.status === 403 && (data?.code === 'DEVELOPER_TOKEN_EXPIRED' || data?.error?.code === 'DEVELOPER_TOKEN_EXPIRED' || data?.code === 'DEVELOPER_MODE_REQUIRED')) {
+    clearDeveloperToken();
+    window.dispatchEvent(new CustomEvent('developer_mode_locked'));
   }
 
   if (!res.ok) {
@@ -3277,6 +3311,45 @@ export const saveModuleAccess = (access: import('../../shared/modules.ts').RoleM
     method: 'PUT',
     body: JSON.stringify({ access }),
   });
+
+// Developer Mode API helpers
+export async function unlockDeveloperMode(passcode: string): Promise<{ success: boolean; developerToken: string; expiresInSeconds: number }> {
+  const res = await api<{ success: boolean; message: string; developerToken: string; expiresInSeconds: number }>('/api/developer/unlock', {
+    method: 'POST',
+    body: JSON.stringify({ passcode }),
+  });
+  if (res && res.developerToken) {
+    setDeveloperToken(res.developerToken);
+    window.dispatchEvent(new CustomEvent('developer_mode_unlocked', { detail: { token: res.developerToken } }));
+  }
+  return res;
+}
+
+export async function lockDeveloperMode(): Promise<void> {
+  try {
+    await api('/api/developer/lock', { method: 'POST' });
+  } catch {
+    // ignore
+  } finally {
+    clearDeveloperToken();
+    window.dispatchEvent(new CustomEvent('developer_mode_locked'));
+  }
+}
+
+export async function checkDeveloperStatus(): Promise<boolean> {
+  const token = getDeveloperToken();
+  if (!token) return false;
+  try {
+    const res = await api<{ active: boolean }>('/api/developer/status');
+    if (!res.active) {
+      clearDeveloperToken();
+    }
+    return Boolean(res.active);
+  } catch {
+    return false;
+  }
+}
+
 
 
 
