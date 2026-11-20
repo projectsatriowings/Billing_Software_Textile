@@ -1387,6 +1387,27 @@ body:is(.theme-cashier, .theme-manager) .bento-checkout-row,
   border-top: 1px solid var(--border) !important;
 }
 
+div.app-container:is(.theme-cashier, .theme-manager) .bento-checkout-panel-card .bento-checkout-row,
+body:is(.theme-cashier, .theme-manager) .bento-checkout-panel-card .bento-checkout-row,
+:is(.theme-cashier, .theme-manager) .bento-checkout-panel-card .bento-checkout-row {
+  background: transparent !important;
+  border-top: 1.5px solid var(--border) !important;
+  box-shadow: none !important;
+}
+
+div.app-container:is(.theme-cashier, .theme-manager) .bento-checkout-panel-card .bento-grand-total,
+body:is(.theme-cashier, .theme-manager) .bento-checkout-panel-card .bento-grand-total,
+:is(.theme-cashier, .theme-manager) .bento-checkout-panel-card .bento-grand-total {
+  background: var(--primary-soft, #f4ede4) !important;
+  border: 1px solid var(--border, #ded5c6) !important;
+}
+
+div.app-container:is(.theme-cashier, .theme-manager) .bento-checkout-panel-card .grand-total-val,
+body:is(.theme-cashier, .theme-manager) .bento-checkout-panel-card .grand-total-val,
+:is(.theme-cashier, .theme-manager) .bento-checkout-panel-card .grand-total-val {
+  color: var(--sidebar, #0F766E) !important;
+}
+
 div.app-container:is(.theme-cashier, .theme-manager) .grand-total-label,
 body:is(.theme-cashier, .theme-manager) .grand-total-label,
 :is(.theme-cashier, .theme-manager) .grand-total-label {

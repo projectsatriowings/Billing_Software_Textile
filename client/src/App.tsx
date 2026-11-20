@@ -10419,7 +10419,7 @@ export function App() {
                                       padding: '2px 7px',
                                       borderRadius: '6px',
                                       background: isPhoneValid ? '#dcfce7' : cleanDigits.length > 0 ? '#fef3c7' : '#fee2e2',
-                                      color: isPhoneValid ? '#15803d' : cleanDigits.length > 0 ? '#b45309' : '#b91c1c',
+                                      color: isPhoneValid ? '#15803d' : cleanDigits.length > 0 ? '#b45309' : '#b91c1c', whiteSpace: 'nowrap',
                                       display: 'inline-flex',
                                       alignItems: 'center',
                                       gap: '3px',
@@ -10505,7 +10505,7 @@ export function App() {
                               </div>
 
                               {/* Direct Inline Inputs: Mobile Number and Customer Name */}
-                              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '0.5rem' }}>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', width: '100%' }}>
                                 {/* 1. Customer Mobile Input with Prefix and Suggestions */}
                                 <div style={{ position: 'relative' }}>
                                   <div style={{ display: 'flex', alignItems: 'stretch' }}>
