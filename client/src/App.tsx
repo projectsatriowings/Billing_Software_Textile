@@ -1118,8 +1118,23 @@ export function App() {
   const [posPaymentConfig, setPosPaymentConfig] = useState<PublicPaymentSettings | null>(null);
   // Payments & Integrations Settings State
   const [paySettingsSubTab, setPaySettingsSubTab] = useState<'methods' | 'razorpay' | 'paytm' | 'phonepe' | 'qr' | 'bank' | 'terminal'>('methods');
-  const [payMethodsEnabled, setPayMethodsEnabled] = useState<string[]>(['cash', 'upi', 'card', 'bank', 'credit']);
-  const [payUpiEnabled, setPayUpiEnabled] = useState(true);
+  const [payMethodsEnabled, setPayMethodsEnabled] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('pos_enabled_methods');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return ['cash', 'upi', 'card', 'credit'];
+  });
+  const [payUpiEnabled, setPayUpiEnabled] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('pos_upi_enabled');
+      if (saved !== null) return saved === 'true';
+    } catch {}
+    return true;
+  });
   const [payQrType, setPayQrType] = useState<'static' | 'dynamic'>('static');
   const [payProvider, setPayProvider] = useState<'manual' | 'razorpay' | 'paytm' | 'phonepe'>('razorpay');
   const [payStaticUpiId, setPayStaticUpiId] = useState('');
@@ -1143,7 +1158,13 @@ export function App() {
   const [payPhonePeSaltKey, setPayPhonePeSaltKey] = useState('');
   const [payPhonePeSaltIndex, setPayPhonePeSaltIndex] = useState('1');
   const [showPhonePeSecret, setShowPhonePeSecret] = useState(false);
-  const [payBankEnabled, setPayBankEnabled] = useState(false);
+  const [payBankEnabled, setPayBankEnabled] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('pos_bank_enabled');
+      if (saved !== null) return saved === 'true';
+    } catch {}
+    return false;
+  });
   const [payBankAccountName, setPayBankAccountName] = useState('');
   const [payBankAccountNo, setPayBankAccountNo] = useState('');
   const [payBankIfsc, setPayBankIfsc] = useState('');
@@ -4824,9 +4845,16 @@ export function App() {
         setPayBankIfsc(cfg.bankIfsc || '');
         setPayBankName(cfg.bankName || '');
         setPayBankBranch(cfg.bankBranch || '');
-        if (cfg.enabledMethods && cfg.enabledMethods.length > 0) {
+        if (cfg.enabledMethods && Array.isArray(cfg.enabledMethods) && cfg.enabledMethods.length > 0) {
           setPayMethodsEnabled(cfg.enabledMethods);
+          try {
+            localStorage.setItem('pos_enabled_methods', JSON.stringify(cfg.enabledMethods));
+          } catch {}
         }
+        try {
+          localStorage.setItem('pos_bank_enabled', String(Boolean(cfg.bankEnabled)));
+          localStorage.setItem('pos_upi_enabled', String(Boolean(cfg.upiEnabled)));
+        } catch {}
         if (cfg.upiEnabled === false && selectedPayMode === 'upi') {
           setSelectedPayMode('cash');
         }
@@ -4997,29 +5025,50 @@ export function App() {
       showToast('Only Owner or Store Manager can modify payment methods', 'error');
       return;
     }
-    setIsSavingMethods(true);
+    if (!silent) {
+      setIsSavingMethods(true);
+    }
     try {
       const methodsActive = customMethods !== undefined ? customMethods : payMethodsEnabled;
       const bankActive = customBank !== undefined ? customBank : payBankEnabled;
       const upiActive = methodsActive.includes('upi');
 
+      const methodsPayload = bankActive
+        ? Array.from(new Set([...methodsActive, 'bank']))
+        : methodsActive.filter((m) => m !== 'bank');
+
+      // Instantly cache in localStorage so any page refresh is instantaneous (0 delay)
+      try {
+        localStorage.setItem('pos_enabled_methods', JSON.stringify(methodsPayload));
+        localStorage.setItem('pos_bank_enabled', String(bankActive));
+        localStorage.setItem('pos_upi_enabled', String(upiActive));
+      } catch {}
+
       const updated = await updatePaymentSettings({
         target: 'methods',
-        enabledMethods: bankActive
-          ? Array.from(new Set([...methodsActive, 'bank']))
-          : methodsActive.filter((m) => m !== 'bank'),
+        enabledMethods: methodsPayload,
         bankEnabled: bankActive,
         upiEnabled: upiActive,
       });
 
       setPosPaymentConfig(updated);
+      if (updated.enabledMethods && Array.isArray(updated.enabledMethods)) {
+        setPayMethodsEnabled(updated.enabledMethods);
+      }
+      setPayBankEnabled(Boolean(updated.bankEnabled));
+      setPayUpiEnabled(Boolean(updated.upiEnabled));
+
       if (!silent) {
         showToast('Payment methods saved successfully');
       }
     } catch (err: any) {
-      showToast(err.message || 'Failed to save payment methods', 'error');
+      if (!silent) {
+        showToast(err.message || 'Failed to save payment methods', 'error');
+      }
     } finally {
-      setIsSavingMethods(false);
+      if (!silent) {
+        setIsSavingMethods(false);
+      }
     }
   };
 
@@ -5048,10 +5097,20 @@ export function App() {
       } else {
         nextMethods = Array.from(new Set([...nextMethods, methodId]));
       }
+      if (methodId === 'upi') {
+        setPayUpiEnabled(nextMethods.includes('upi'));
+      }
     }
     setPayMethodsEnabled(nextMethods);
 
-    // Auto-save immediately to database so state persists across page refreshes!
+    // Save to localStorage immediately so browser refresh never reverts
+    try {
+      localStorage.setItem('pos_enabled_methods', JSON.stringify(nextMethods));
+      localStorage.setItem('pos_bank_enabled', String(nextBank));
+      localStorage.setItem('pos_upi_enabled', String(nextMethods.includes('upi')));
+    } catch {}
+
+    // Auto-save silently in background without locking the button
     await handleSavePaymentMethods(nextMethods, nextBank, true);
   };
 
@@ -16214,20 +16273,31 @@ export function App() {
                                 type="button"
                                 className="btn btn-primary"
                                 style={{
-                                  padding: '0.45rem 1.15rem',
-                                  fontSize: '0.82rem',
+                                  padding: '0.48rem 1.25rem',
+                                  fontSize: '0.84rem',
                                   fontWeight: 700,
                                   background: 'var(--primary)',
                                   color: '#ffffff',
                                   border: 'none',
-                                  borderRadius: '7px',
-                                  cursor: 'pointer',
-                                  boxShadow: '0 2px 6px rgba(109, 74, 255, 0.2)',
+                                  borderRadius: '8px',
+                                  cursor: isSavingMethods ? 'not-allowed' : 'pointer',
+                                  boxShadow: '0 2px 6px rgba(109, 74, 255, 0.25)',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '6px',
+                                  transition: 'all 0.15s ease',
                                 }}
                                 disabled={isSavingMethods || user?.role === 'cashier'}
                                 onClick={() => handleSavePaymentMethods()}
                               >
-                                {isSavingMethods ? 'Saving...' : 'Save Payment Methods'}
+                                {isSavingMethods ? (
+                                  <>
+                                    <span style={{ width: '12px', height: '12px', borderRadius: '50%', border: '2px solid #ffffff', borderTopColor: 'transparent', display: 'inline-block', animation: 'spin 0.6s linear infinite' }} />
+                                    <span>Saving...</span>
+                                  </>
+                                ) : (
+                                  <span>Save Payment Methods</span>
+                                )}
                               </button>
                             </div>
                           </div>
