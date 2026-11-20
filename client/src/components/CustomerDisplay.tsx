@@ -808,6 +808,39 @@ export const CustomerDisplay: React.FC<CustomerDisplayProps> = ({ counterId = 'c
                   <span>Multi-Tender POS Settlement</span>
                 </div>
               </div>
+            ) : state.status === 'payment_card' ? (
+              /* CARD / EDC MACHINE PAYMENT */
+              <div className="cfd-upi-panel">
+                <span className="cfd-upi-badge" style={{ background: '#ecfdf5', color: '#047857', border: '1px solid #a7f3d0' }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+                    <line x1="1" y1="10" x2="23" y2="10" />
+                  </svg>
+                  <span>Card / EDC Payment</span>
+                </span>
+                <h4 className="cfd-upi-title">Please Tap or Swipe Card</h4>
+                <p className="cfd-upi-sub">Credit / Debit Card • NFC Tap & Pay • Chip & PIN</p>
+
+                <div style={{ margin: '0.8rem 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                  <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#ecfdf5', border: '2px solid #a7f3d0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#059669' }}>
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                      <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+                      <line x1="1" y1="10" x2="23" y2="10" />
+                    </svg>
+                  </div>
+                  <div className="cfd-upi-amount-pill cfd-num" style={{ background: '#ecfdf5', borderColor: '#a7f3d0', color: '#065f46' }}>
+                    <span>Amount:</span>
+                    <strong>{formatCurrency(state.totalMinor)}</strong>
+                  </div>
+                </div>
+
+                <div className="cfd-assurance-tag">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                  </svg>
+                  <span>100% Secure Bank EDC Settlement</span>
+                </div>
+              </div>
             ) : (
               /* SCANNING / CASH / IDLE LOYALTY HUB */
               <div className="cfd-loyalty-hub">

@@ -100,7 +100,6 @@ import type { Branch } from '../../shared/types.ts';
 import { TerminalManagementTab } from './components/terminal/TerminalManagementTab';
 import { UserManagementView } from './components/users/UserManagementView';
 import { BranchUserManagementView } from './components/users/BranchUserManagementView';
-import { PosCardCheckoutPanel } from './components/terminal/PosCardCheckoutPanel';
 import {
   CreditCardIcon,
   BanknoteIcon,
@@ -11874,17 +11873,146 @@ export function App() {
                         </div>
                       )}
 
-                      {/* CARD PAYMENT TERMINAL (INTEGRATED & STANDALONE EDC) */}
+                      {/* CARD PAYMENT (SWIPE / TAP / EDC MACHINE) */}
                       {selectedPayMode === 'card' && cart.length > 0 && (
-                        <PosCardCheckoutPanel
-                          branchId={branches[0]?.id || 'b_main'}
-                          payableMinor={finalPayableMinor}
-                          cashierName={user?.name}
-                          onPaymentSuccess={(details) => {
-                            setPaymentCardRef(details.reference);
+                        <div
+                          className="bento-cash-tender-card"
+                          style={{
+                            background: '#ffffff',
+                            border: '1.5px solid #d1fae5',
+                            borderRadius: '14px',
+                            padding: '1.1rem',
+                            marginTop: '0.85rem',
+                            boxShadow: '0 4px 14px rgba(16, 185, 129, 0.07)',
                           }}
-                          showToast={showToast}
-                        />
+                        >
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              marginBottom: '0.85rem',
+                              paddingBottom: '0.65rem',
+                              borderBottom: '1px solid #f1f5f9',
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                              <span
+                                style={{
+                                  width: '34px',
+                                  height: '34px',
+                                  borderRadius: '9px',
+                                  background: '#ecfdf5',
+                                  color: '#059669',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                }}
+                              >
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
+                                  <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+                                  <line x1="1" y1="10" x2="23" y2="10" />
+                                </svg>
+                              </span>
+                              <div>
+                                <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0f172a' }}>
+                                  Card Swipe / EDC Machine
+                                </div>
+                                <div style={{ fontSize: '0.74rem', color: '#64748b' }}>
+                                  External EDC Terminal (Pine Labs, Paytm, MSwipe, Bank POS)
+                                </div>
+                              </div>
+                            </div>
+                            <span
+                              style={{
+                                background: '#ecfdf5',
+                                color: '#047857',
+                                border: '1px solid #a7f3d0',
+                                padding: '3px 10px',
+                                borderRadius: '20px',
+                                fontSize: '0.75rem',
+                                fontWeight: 600,
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                              }}
+                            >
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8">
+                                <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                              Marked as Card
+                            </span>
+                          </div>
+
+                          <div
+                            style={{
+                              background: '#f8fafc',
+                              border: '1px solid #e2e8f0',
+                              borderRadius: '9px',
+                              padding: '0.8rem 1rem',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              gap: '12px',
+                              marginBottom: '0.8rem',
+                            }}
+                          >
+                            <div>
+                              <div style={{ fontSize: '0.76rem', color: '#64748b', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+                                Settle on Card Machine
+                              </div>
+                              <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', fontFamily: 'monospace' }}>
+                                {formatRupees(finalPayableMinor)}
+                              </div>
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: '#475569', textAlign: 'right', maxWidth: '210px', lineHeight: 1.35 }}>
+                              Swipe or tap customer card on EDC machine, then click <strong>Card Paid & Generate Bill</strong> below.
+                            </div>
+                          </div>
+
+                          {/* Optional Slip / Reference field */}
+                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <span style={{ fontSize: '0.75rem', color: '#64748b', whiteSpace: 'nowrap' }}>
+                              Slip / RRN (Optional):
+                            </span>
+                            <input
+                              type="text"
+                              placeholder="Machine Slip / Ref No (optional)"
+                              value={paymentCardRef}
+                              onChange={(e) => setPaymentCardRef(e.target.value)}
+                              style={{
+                                flex: 1,
+                                padding: '5px 10px',
+                                fontSize: '0.8rem',
+                                border: '1px solid #cbd5e1',
+                                borderRadius: '6px',
+                                background: '#ffffff',
+                                color: '#1e293b',
+                              }}
+                            />
+                            {paymentCardRef && (
+                              <button
+                                type="button"
+                                onClick={() => setPaymentCardRef('')}
+                                style={{
+                                  border: 'none',
+                                  background: 'transparent',
+                                  color: '#94a3b8',
+                                  cursor: 'pointer',
+                                  padding: '2px 4px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                }}
+                                title="Clear"
+                              >
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                  <line x1="18" y1="6" x2="6" y2="18" />
+                                  <line x1="6" y1="6" x2="18" y2="18" />
+                                </svg>
+                              </button>
+                            )}
+                          </div>
+                        </div>
                       )}
 
                       {/* SPLIT TENDER ASSISTANT CARD (MULTI-TENDER: HALF UPI / HALF CASH / CUSTOM) */}
