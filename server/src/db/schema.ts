@@ -2075,4 +2075,10 @@ export const MIGRATIONS: Migration[] = [
       "CREATE INDEX IF NOT EXISTS role_module_access_tenant_idx ON role_module_access (tenant_id, role)",
     ],
   },
+  {
+    version: 76,
+    statements: [
+      `ALTER TABLE categories ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT now()`,
+    ],
+  },
 ];

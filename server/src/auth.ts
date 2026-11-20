@@ -4,12 +4,12 @@ import { passwordStamp, verifyToken } from './security.ts';
 import { getTenantModuleAccess } from './routes/moduleManagement.ts';
 import { isModuleEnabledForRole } from '../../shared/modules.ts';
 
-export const PERM_TO_MODULE: Partial<Record<Perm, string>> = {
+export const PERM_TO_MODULE: Partial<Record<Perm, string | string[]>> = {
   sell: 'pos',
   returns: 'pos',
-  'items.view': 'items',
+  'items.view': ['items', 'pos', 'wholesale', 'inventory'],
   'items.write': 'items',
-  'stock.view': 'inventory',
+  'stock.view': ['inventory', 'pos', 'wholesale'],
   'stock.adjust': 'inventory.levels',
   'stock.transfer': 'inventory.transfers',
   purchases: 'accounts',
@@ -20,10 +20,10 @@ export const PERM_TO_MODULE: Partial<Record<Perm, string>> = {
   'expenses.void': 'accounts.expenses',
   'gst.view': 'gst',
   'gst.manage': 'gst',
-  'promotions.view': 'promotions',
+  'promotions.view': ['promotions', 'pos', 'wholesale'],
   'promotions.write': 'promotions',
   'promotions.reports': 'promotions',
-  'promotions.apply': 'promotions',
+  'promotions.apply': ['promotions', 'pos', 'wholesale'],
   users: 'user-management',
   settings: 'settings',
   'config.edit': 'settings',
@@ -92,13 +92,16 @@ export const requirePerm = (perm: Perm): Handler => async (ctx) => {
   }
 
   // Check dynamic role module access enforcement
-  const targetModule = PERM_TO_MODULE[perm];
-  if (targetModule && ctx.user.role !== 'owner' && String(ctx.user.role).toUpperCase() !== 'SUPER_ADMIN') {
+  const target = PERM_TO_MODULE[perm];
+  if (target && ctx.user.role !== 'owner' && String(ctx.user.role).toUpperCase() !== 'SUPER_ADMIN') {
+    const userRole = ctx.user.role;
     const access = await getTenantModuleAccess(ctx.db, ctx.user.tenantId);
-    if (!isModuleEnabledForRole(access, ctx.user.role, targetModule)) {
+    const targetModules = Array.isArray(target) ? target : [target];
+    const isAllowed = targetModules.some((mod) => isModuleEnabledForRole(access, userRole, mod));
+    if (!isAllowed) {
       throw forbidden('This module has been disabled by your administrator.', 'MODULE_DISABLED', {
         needs: perm,
-        module: targetModule,
+        module: targetModules[0],
       });
     }
   }

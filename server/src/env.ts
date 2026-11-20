@@ -52,6 +52,7 @@ export const env = {
   databaseUrl: process.env.DATABASE_URL ?? '',
   jwtSecret,
   jwtTtlSeconds: Number(process.env.JWT_TTL_SECONDS ?? 60 * 60 * 24 * 7),
+  developerPasscode: process.env.DEVELOPER_PASSCODE || 'dev@superadmin',
   /** Public base URL used in WhatsApp links. Falls back to the request host. */
   publicUrl: (process.env.PUBLIC_URL ?? '').replace(/\/$/, ''),
   staticDir: process.env.STATIC_DIR ?? 'client/dist',
