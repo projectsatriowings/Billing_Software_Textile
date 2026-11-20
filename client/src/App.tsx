@@ -8426,6 +8426,22 @@ export function App() {
                     </div>
                   </div>
                 </div>
+
+                {/* Customer Screen Button in Top Bar right after Counter */}
+                <button
+                  type="button"
+                  className={`top-pos-cfd-btn ${isCfdConnected ? 'active' : ''}`}
+                  onClick={() => setShowCfdModal(true)}
+                  title="Open Customer-Facing Display (Secondary Monitor / Wireless Tablet)"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+                    <line x1="8" y1="21" x2="16" y2="21" />
+                    <line x1="12" y1="17" x2="12" y2="21" />
+                  </svg>
+                  <span>Customer Screen</span>
+                  {isCfdConnected && <span className="bento-cfd-dot" />}
+                </button>
               </div>
             ) : (displayTab === 'invoices' || activeTab === 'invoices') && user?.role === 'cashier' ? (
               <div className="top-invoices-header-left">
@@ -9453,161 +9469,6 @@ export function App() {
             {/* TAB 1: BENTO POS BILLING TERMINAL */}
             {displayTab === 'pos' && (
               <div className="bento-pos-root" key={`pos-${selectedBranchScope}`}>
-                {/* 1. TOP BENTO BAR: Store & Shift Status, Shortcuts, Alerts */}
-                <div className="bento-top-bar">
-                  <div className="bento-top-left">
-                    <div className="bento-pos-badge">
-                      <span className="bento-badge-icon" style={shop?.logoUrl ? { background: '#ffffff', padding: '2px' } : undefined}>
-                        {shop?.logoUrl ? (
-                          <img
-                            src={shop.logoUrl}
-                            alt={shop.name || 'Store Logo'}
-                            style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '4px' }}
-                          />
-                        ) : (
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-                          </svg>
-                        )}
-                      </span>
-                      <div>
-                        <div className="bento-badge-title">POS Billing Counter</div>
-                        <div className="bento-badge-sub">High-Speed Bento Billing Terminal</div>
-                      </div>
-                    </div>
-
-                    {/* Shift Indicator Pill */}
-                    {activeShiftNumber ? (
-                      <div className="bento-shift-pill open">
-                        <span className="bento-pulse-dot green"></span>
-                        <span>Register #{activeShiftNumber} Active</span>
-                      </div>
-                    ) : (
-                      <div className="bento-shift-pill closed" onClick={() => setShowPosOpenShiftModal(true)}>
-                        <span className="bento-pulse-dot amber"></span>
-                        <span>Register Closed • Click to Open Shift</span>
-                      </div>
-                    )}
-
-                    {/* POS Loyalty Program Status Pill */}
-                    {shopLoyaltyActive ? (
-                      <div
-                        className="bento-loyalty-pill active"
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          padding: '5px 12px',
-                          borderRadius: '20px',
-                          background: isSuperAdminUser ? '#F3EDF3' : 'linear-gradient(135deg, #fdf4ff 0%, #fae8ff 100%)',
-                          border: isSuperAdminUser ? '1.2px solid #D8CBD8' : '1.2px solid #d946ef',
-                          color: isSuperAdminUser ? '#49364A' : '#86198f',
-                          fontSize: '0.78rem',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                          boxShadow: isSuperAdminUser ? '0 1px 4px rgba(73, 54, 74, 0.15)' : '0 1px 4px rgba(217, 70, 239, 0.15)',
-                        }}
-                        onClick={() => setShowPosLoyaltyModal(true)}
-                        title={`Customer Loyalty Active: Earn ${shopPointsPer100} pts per ₹100 spent (1 pt = ${formatRupees(shopPointValMinor)}). Click to view or adjust scheme.`}
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="20 12 20 22 4 22 4 12"></polyline>
-                          <rect x="2" y="7" width="20" height="5"></rect>
-                          <line x1="12" y1="22" x2="12" y2="7"></line>
-                          <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path>
-                          <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path>
-                        </svg>
-                        <span>Loyalty: <strong>{shopPointsPer100} pts</strong> / ₹100</span>
-                        <span style={{ fontSize: '0.68rem', background: isSuperAdminUser ? '#49364A' : '#d946ef', color: '#fff', padding: '1px 6px', borderRadius: '10px' }}>Active</span>
-                      </div>
-                    ) : (
-                      <div
-                        className="bento-loyalty-pill paused"
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '5px',
-                          padding: '4px 10px',
-                          borderRadius: '20px',
-                          background: '#f8fafc',
-                          border: '1.2px dashed #cbd5e1',
-                          color: '#64748b',
-                          fontSize: '0.75rem',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                        }}
-                        onClick={() => setShowPosLoyaltyModal(true)}
-                        title="Customer Loyalty Rewards is paused. Click to enable and configure scheme."
-                      >
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                          <rect x="6" y="4" width="4" height="16" />
-                          <rect x="14" y="4" width="4" height="16" />
-                        </svg>
-                        <span>Loyalty Paused</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="bento-top-right">
-                    {/* Customer Display Button */}
-                    <button
-                      type="button"
-                      className={`bento-cfd-pill ${isCfdConnected ? 'active' : ''}`}
-                      onClick={() => setShowCfdModal(true)}
-                      title="Open Customer-Facing Display (Secondary Monitor / Wireless Tablet)"
-                    >
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-                        <line x1="8" y1="21" x2="16" y2="21"></line>
-                        <line x1="12" y1="17" x2="12" y2="21"></line>
-                      </svg>
-                      <span>Customer Screen</span>
-                      {isCfdConnected && <span className="bento-cfd-dot"></span>}
-                    </button>
-
-                    {/* Inventory Alert Trigger */}
-                    {totalStockAlerts > 0 && (
-                      user?.role === 'cashier' ? (
-                        <div
-                          className="bento-alert-pill bento-alert-pill-readonly"
-                          title={`${totalStockAlerts} items have floor stock warnings. Managed by Store Manager.`}
-                        >
-                          <span className="alert-ping">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
-                              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                              <line x1="12" y1="9" x2="12" y2="13"></line>
-                              <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                            </svg>
-                          </span>
-                          <span>{totalStockAlerts} Stock Alerts</span>
-                        </div>
-                      ) : (
-                        <button
-                          type="button"
-                          className="bento-alert-pill"
-                          onClick={() => setActiveTab('inventory')}
-                          title={`${totalStockAlerts} items have stock warnings`}
-                        >
-                          <span className="alert-ping">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
-                              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                              <line x1="12" y1="9" x2="12" y2="13"></line>
-                              <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                            </svg>
-                          </span>
-                          <span>{totalStockAlerts} Stock Alerts</span>
-                          <span className="alert-arrow">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                              <line x1="5" y1="12" x2="19" y2="12"></line>
-                              <polyline points="12 5 19 12 12 19"></polyline>
-                            </svg>
-                          </span>
-                        </button>
-                      )
-                    )}
-                  </div>
-                </div>
-
                 {/* Shift Closed Banner Warning */}
                 {!activeShiftNumber && (
                   <div className="bento-shift-warning-banner">
@@ -10100,32 +9961,6 @@ export function App() {
 
                       {/* 4. OVERALL TOTAL & CONSOLIDATED GST SUMMARY */}
                       <div className="bento-cart-footer">
-                        {/* Discount Quick Selector Pills */}
-                        <div className="bento-discount-bar">
-                          <span className="discount-label">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px', verticalAlign: '-1px' }}>
-                              <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
-                              <line x1="7" y1="7" x2="7.01" y2="7"></line>
-                            </svg>
-                            Bill Discount:
-                          </span>
-                          <div className="bento-discount-pills">
-                            {[0, 5, 10, 15, 20].map((pct) => (
-                              <button
-                                key={pct}
-                                type="button"
-                                className={`bento-disc-pill ${appliedDiscountPercent === pct ? 'active' : ''}`}
-                                onClick={() => {
-                                  setAppliedDiscountPercent(pct);
-                                  showToast(pct > 0 ? `${pct}% bill discount applied!` : 'Discount cleared');
-                                }}
-                              >
-                                {pct === 0 ? '0%' : `${pct}%`}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
                         {/* Overall Summary Breakdown */}
                         <div className="bento-summary-box">
                           <div className="bento-summary-row">
@@ -10233,6 +10068,17 @@ export function App() {
                             </div>
                           )}
 
+                          {/* CONSOLIDATED OVERALL GST WITH TAX BREAKDOWN */}
+                          <div className="bento-summary-row tax-row">
+                            <div className="tax-label-group">
+                              <span className="summary-label">{isExchangeActive ? 'New Items GST Tax' : 'Consolidated GST Tax'}</span>
+                              <span className="tax-sub-breakdown">
+                                (CGST: {formatRupees(cartCgstMinor)} + SGST: {formatRupees(cartSgstMinor)})
+                              </span>
+                            </div>
+                            <span className="summary-val mono tax-val">{formatRupees(cartTaxMinor)}</span>
+                          </div>
+
                           {/* LOYALTY POINTS EARNED / ADJUSTED ON BILL */}
                           {shopLoyaltyActive && cart.length > 0 && (
                             <div
@@ -10271,20 +10117,33 @@ export function App() {
                                     (≈ {formatRupees(Math.abs(netLoyaltyPointsToEarn) * shopPointValMinor)})
                                   </span>
                                 )}
+                                {selectedParty && (selectedParty.loyaltyPoints ?? 0) >= shopMinRedeem && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const next = !redeemPoints;
+                                      setRedeemPoints(next);
+                                      showToast(next ? `🪙 Points redeemed (-${formatRupees(potentialDiscountMinor)})!` : 'Points redemption removed');
+                                    }}
+                                    style={{
+                                      marginLeft: '4px',
+                                      padding: '2px 8px',
+                                      fontSize: '0.72rem',
+                                      fontWeight: 800,
+                                      borderRadius: '5px',
+                                      border: redeemPoints ? '1px solid #10b981' : '1px solid #d97706',
+                                      background: redeemPoints ? '#ecfdf5' : '#fef3c7',
+                                      color: redeemPoints ? '#047857' : '#92400e',
+                                      cursor: 'pointer',
+                                    }}
+                                    title={redeemPoints ? 'Cancel redemption' : `Redeem available points for ${formatRupees(potentialDiscountMinor)} discount`}
+                                  >
+                                    {redeemPoints ? '✓ Redeemed' : `Redeem (${selectedParty.loyaltyPoints} pts)`}
+                                  </button>
+                                )}
                               </div>
                             </div>
                           )}
-
-                          {/* CONSOLIDATED OVERALL GST WITH TAX BREAKDOWN */}
-                          <div className="bento-summary-row tax-row">
-                            <div className="tax-label-group">
-                              <span className="summary-label">{isExchangeActive ? 'New Items GST Tax' : 'Consolidated GST Tax'}</span>
-                              <span className="tax-sub-breakdown">
-                                (CGST: {formatRupees(cartCgstMinor)} + SGST: {formatRupees(cartSgstMinor)})
-                              </span>
-                            </div>
-                            <span className="summary-val mono tax-val">{formatRupees(cartTaxMinor)}</span>
-                          </div>
 
                           {/* Overall Customer Savings Celebration */}
                           {totalMrpSavingsMinor > 0 && (
@@ -10487,14 +10346,14 @@ export function App() {
                     <div className="bento-card bento-checkout-panel-card">
                       <div className="bento-card-header" style={{ paddingBottom: "0.4rem", marginBottom: "0.2rem" }}>
                         <div className="bento-header-label">
-                          <span className="bento-icon-circle green">
+                          <span className="bento-icon-circle emerald">
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
                               <rect x="2" y="5" width="20" height="14" rx="2" />
                               <line x1="2" y1="10" x2="22" y2="10" />
                             </svg>
                           </span>
                           <div>
-                            <h3 className="bento-card-title">Customer & Payment Settlement</h3>
+                            <h3 className="bento-card-title">Payment & Settlement</h3>
                             <span className="bento-card-subtitle">Fast Counter Checkout</span>
                           </div>
                         </div>
@@ -10605,6 +10464,7 @@ export function App() {
                                       padding: '2px 7px',
                                       cursor: 'pointer',
                                       color: '#64748b',
+                                      whiteSpace: 'nowrap',
                                       display: 'inline-flex',
                                       alignItems: 'center',
                                       gap: '3px',
@@ -10866,11 +10726,80 @@ export function App() {
                               </div>
                             </div>
 
-                            {/* Recognized Customer Loyalty Details Footer */}
-                            {selectedParty && (
-                              <div style={{ marginTop: '0.4rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.74rem', color: '#15803d', fontWeight: 650 }}>
-                                <span>Linked Member: <strong>{selectedParty.name}</strong></span>
-                                <span>Available Loyalty Points: <strong>{selectedParty.loyaltyPoints ?? 0} pts</strong></span>
+                            {/* Recognized Customer Loyalty Details Footer & Redeem Points Option */}
+                            {selectedParty ? (
+                              <div style={{ marginTop: '0.45rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.74rem', color: '#15803d', fontWeight: 650 }}>
+                                  <span>Linked Member: <strong>{selectedParty.name}</strong></span>
+                                  <span>Available Points: <strong>{selectedParty.loyaltyPoints ?? 0} pts</strong> ({formatRupees((selectedParty.loyaltyPoints ?? 0) * shopPointValMinor)})</span>
+                                </div>
+
+                                {shopLoyaltyActive && (selectedParty.loyaltyPoints ?? 0) >= shopMinRedeem && (
+                                  <button
+                                    type="button"
+                                    className={`pos-redeem-points-btn ${redeemPoints ? 'redeeming' : ''}`}
+                                    onClick={() => {
+                                      const next = !redeemPoints;
+                                      setRedeemPoints(next);
+                                      if (next) {
+                                        showToast(`🪙 ${pointsActuallyRedeemed || maxRedeemablePoints} points redeemed (-${formatRupees(potentialDiscountMinor)})!`);
+                                      } else {
+                                        showToast('Points redemption removed');
+                                      }
+                                    }}
+                                    style={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'space-between',
+                                      padding: '0.42rem 0.65rem',
+                                      borderRadius: '8px',
+                                      border: redeemPoints ? '1.5px solid #10b981' : '1.5px solid #f59e0b',
+                                      background: redeemPoints ? '#ecfdf5' : '#fffbeb',
+                                      color: redeemPoints ? '#065f46' : '#92400e',
+                                      cursor: 'pointer',
+                                      width: '100%',
+                                      boxSizing: 'border-box',
+                                      transition: 'all 0.15s ease',
+                                    }}
+                                  >
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                      <span style={{ fontSize: '0.95rem' }}>{redeemPoints ? '✓' : '🪙'}</span>
+                                      <div style={{ textAlign: 'left' }}>
+                                        <div style={{ fontWeight: 800, fontSize: '0.78rem', lineHeight: 1.2 }}>
+                                          {redeemPoints ? `${pointsActuallyRedeemed || maxRedeemablePoints} Points Redeemed` : 'Redeem Loyalty Points'}
+                                        </div>
+                                        <div style={{ fontSize: '0.68rem', opacity: 0.9, fontWeight: 600 }}>
+                                          {redeemPoints
+                                            ? `Saving ${formatRupees(pointsDiscountMinor || potentialDiscountMinor)} on bill`
+                                            : `Use ${maxRedeemablePoints} pts to save ${formatRupees(potentialDiscountMinor)}`}
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <span
+                                      style={{
+                                        fontSize: '0.7rem',
+                                        fontWeight: 800,
+                                        padding: '2px 7px',
+                                        borderRadius: '5px',
+                                        background: redeemPoints ? '#fee2e2' : '#fef3c7',
+                                        color: redeemPoints ? '#dc2626' : '#b45309',
+                                      }}
+                                    >
+                                      {redeemPoints ? 'Cancel ✕' : `Save ${formatRupees(potentialDiscountMinor)}`}
+                                    </span>
+                                  </button>
+                                )}
+
+                                {shopLoyaltyActive && (selectedParty.loyaltyPoints ?? 0) > 0 && (selectedParty.loyaltyPoints ?? 0) < shopMinRedeem && (
+                                  <div style={{ fontSize: '0.7rem', color: '#b45309', background: '#fffbeb', border: '1px solid #fef3c7', padding: '0.25rem 0.5rem', borderRadius: '6px' }}>
+                                    ℹ️ Customer has {selectedParty.loyaltyPoints} pts (min. {shopMinRedeem} pts required to redeem)
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <div style={{ marginTop: '0.35rem', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.71rem', color: '#64748b' }}>
+                                <span>🪙</span>
+                                <span>Enter customer mobile to link member & redeem loyalty points</span>
                               </div>
                             )}
                           </div>
@@ -11776,177 +11705,6 @@ export function App() {
                                 </span>
                               </>
                             )}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Bento Register & Counter Operations Hub */}
-                    <div className="bento-card bento-register-card">
-                      <div className="bento-card-header">
-                        <div className="bento-header-label">
-                          <span className="bento-icon-circle purple">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-                              <line x1="8" y1="21" x2="16" y2="21"></line>
-                              <line x1="12" y1="17" x2="12" y2="21"></line>
-                            </svg>
-                          </span>
-                          <div>
-                            <h3 className="bento-card-title">Register #1 • Live Synced</h3>
-                            <span className="bento-card-subtitle">{user?.name || 'Cashier'} • Neon DB</span>
-                          </div>
-                        </div>
-                        <span className="bento-status-pill green">
-                          <span className="scanner-ready-dot"></span>
-                          Live
-                        </span>
-                      </div>
-
-                      <div className="bento-register-body">
-                        {/* Bento Hero: Register Sales & Counter Invoices */}
-                        <div className="bento-hero-metric">
-                          <div className="bento-hero-cell">
-                            <span className="bento-cell-label">Today's Register Sales</span>
-                            <span className="bento-cell-val mono">
-                              {formatRupees(
-                                invoices
-                                  .filter((i) => new Date(i.createdAt).toDateString() === new Date().toDateString())
-                                  .reduce((sum, inv) => sum + (inv.kind === 'credit_note' ? -inv.totalMinor : inv.totalMinor), 0)
-                              )}
-                            </span>
-                          </div>
-                          <div className="bento-hero-sep"></div>
-                          <div className="bento-hero-cell">
-                            <span className="bento-cell-label">Counter Bills</span>
-                            <span className="bento-cell-val mono">
-                              {invoices.filter((i) => new Date(i.createdAt).toDateString() === new Date().toDateString()).length}{' '}
-                              <span className="bento-cell-unit">bills</span>
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Bento Action Grid (2 columns x 3 rows) */}
-                        <div className="bento-action-grid">
-                          {/* 1. Hold Order */}
-                          <button
-                            type="button"
-                            className="bento-action-tile"
-                            onClick={handleHoldOrder}
-                            title="Hold current cart or recall last held order"
-                          >
-                            <div className="bento-tile-icon">
-                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                                <rect x="6" y="4" width="4" height="16"></rect>
-                                <rect x="14" y="4" width="4" height="16"></rect>
-                              </svg>
-                            </div>
-                            <div className="bento-tile-texts">
-                              <span className="bento-tile-heading">{cart.length > 0 ? 'Hold Cart' : (heldOrders.length > 0 ? 'Recall Cart' : 'Hold Cart')}</span>
-                              <span className="bento-tile-caption">Park active sale</span>
-                            </div>
-                            {heldOrders.length > 0 && <span className="bento-badge-pill">{heldOrders.length}</span>}
-                          </button>
-
-                          {/* 2. Parked Orders Drawer */}
-                          <button
-                            type="button"
-                            className="bento-action-tile"
-                            onClick={() => setShowHeldOrdersModal(true)}
-                            title="View all currently held parked orders"
-                          >
-                            <div className="bento-tile-icon">
-                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                <polyline points="14 2 14 8 20 8"></polyline>
-                                <line x1="16" y1="13" x2="8" y2="13"></line>
-                                <line x1="16" y1="17" x2="8" y2="17"></line>
-                              </svg>
-                            </div>
-                            <div className="bento-tile-texts">
-                              <span className="bento-tile-heading">Parked Orders</span>
-                              <span className="bento-tile-caption">{heldOrders.length > 0 ? `${heldOrders.length} waiting` : 'No held carts'}</span>
-                            </div>
-                            {heldOrders.length > 0 && <span className="bento-badge-pill">{heldOrders.length}</span>}
-                          </button>
-
-                          {/* 3. Custom Item Charge */}
-                          <button
-                            type="button"
-                            className="bento-action-tile"
-                            onClick={() => setShowCustomItemModal(true)}
-                            title="Add open item custom charge (Carry bag, delivery, etc.)"
-                          >
-                            <div className="bento-tile-icon">
-                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
-                                <line x1="12" y1="5" x2="12" y2="19"></line>
-                                <line x1="5" y1="12" x2="19" y2="12"></line>
-                              </svg>
-                            </div>
-                            <div className="bento-tile-texts">
-                              <span className="bento-tile-heading">Custom Item</span>
-                              <span className="bento-tile-caption">Carry bag, delivery</span>
-                            </div>
-                          </button>
-
-                          {/* 4. Reprint Last Receipt */}
-                          <button
-                            type="button"
-                            className="bento-action-tile"
-                            onClick={handleReprintLastBill}
-                            disabled={!invoices || invoices.length === 0}
-                            title="Reprint the most recently issued thermal invoice"
-                          >
-                            <div className="bento-tile-icon">
-                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                                <polyline points="6 9 6 2 18 2 18 9"></polyline>
-                                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-                                <rect x="6" y="14" width="12" height="8"></rect>
-                              </svg>
-                            </div>
-                            <div className="bento-tile-texts">
-                              <span className="bento-tile-heading">Reprint Last</span>
-                              <span className="bento-tile-caption">{invoices && invoices.length > 0 ? 'Print receipt copy' : 'No bills yet'}</span>
-                            </div>
-                          </button>
-
-                          {/* 5. Bill Discount */}
-                          <button
-                            type="button"
-                            className="bento-action-tile"
-                            onClick={() => setShowDiscountPicker(true)}
-                            title="Apply bill percentage or flat rupee discount"
-                          >
-                            <div className="bento-tile-icon">
-                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                                <line x1="19" y1="5" x2="5" y2="19"></line>
-                                <circle cx="6.5" cy="6.5" r="2.5"></circle>
-                                <circle cx="17.5" cy="17.5" r="2.5"></circle>
-                              </svg>
-                            </div>
-                            <div className="bento-tile-texts">
-                              <span className="bento-tile-heading">Bill Discount</span>
-                              <span className="bento-tile-caption">{appliedDiscountPercent > 0 ? `${appliedDiscountPercent}% active` : 'Special discount'}</span>
-                            </div>
-                          </button>
-
-                          {/* 6. Phone Wireless Scanner */}
-                          <button
-                            type="button"
-                            className={`bento-action-tile ${isPhoneScannerConnected ? 'active-scanner' : ''}`}
-                            onClick={() => setShowMobileScannerModal(true)}
-                            title="Connect mobile phone as a wireless barcode scanner"
-                          >
-                            <div className="bento-tile-icon">
-                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                                <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
-                                <line x1="12" y1="18" x2="12.01" y2="18"></line>
-                              </svg>
-                            </div>
-                            <div className="bento-tile-texts">
-                              <span className="bento-tile-heading">Mobile Gun</span>
-                              <span className="bento-tile-caption">{isPhoneScannerConnected ? 'Phone active ✓' : 'Scan via phone'}</span>
-                            </div>
                           </button>
                         </div>
                       </div>
