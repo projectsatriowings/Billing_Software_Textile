@@ -232,7 +232,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   }> = {
     super_admin: {
       key: 'super-admin',
-      image: '/images/admin.png',
+      image: '/images/admin.png?v=20261120_v4',
       title: 'Super Admin Portal',
       subtitle: 'Enterprise headquarters: consolidated sales, multi-branch network & governance.',
       heroTitle: 'Consolidated Enterprise Control.',
@@ -246,7 +246,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     },
     store_manager: {
       key: 'store-manager',
-      image: '/images/manager.png',
+      image: '/images/manager.png?v=20261120_v4',
       title: 'Store Manager Portal',
       subtitle: 'Branch operations: register closing approvals, cash float audits & staff supervision.',
       heroTitle: 'Keep In Touch With Your Store.',
@@ -260,7 +260,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     },
     cashier: {
       key: 'cashier',
-      image: '/images/cashier.png',
+      image: '/images/cashier.png?v=20261120_v4',
       title: 'Cashier Billing Counter',
       subtitle: 'High-speed retail checkout, cash drawer shift balancing & rapid barcode billing.',
       heroTitle: 'High-Speed Cashier POS.',
