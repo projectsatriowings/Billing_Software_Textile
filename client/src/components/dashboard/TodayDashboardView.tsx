@@ -1815,155 +1815,149 @@ export const TodayDashboardView: React.FC<TodayDashboardViewProps> = ({
         </div>
       </section>
 
-      {/* 5. TODAY'S WHOLESALE SALES ANALYSIS (B2B WHOLESALE SECTION) */}
-      <section className="today-wholesale-section">
-        <div className="wholesale-section-header">
+      {/* 5. TODAY'S WHOLESALE SALES OVERVIEW (B2B WHOLESALE SECTION) */}
+      <div className="today-wholesale-section" style={{ marginTop: '1.25rem', marginBottom: '0.65rem' }}>
+        <div className="wholesale-section-header" style={{ marginBottom: '0.4rem' }}>
           <div className="wholesale-title-group">
-            <div className="wholesale-title-icon-box">
-              <TruckIcon size={20} />
-            </div>
-            <div>
-              <h2 className="wholesale-section-title">
-                Today's Wholesale Sales Analysis
-                <span className="wholesale-badge-pill">B2B Wholesale</span>
-              </h2>
-              <p className="wholesale-section-subtitle">
-                B2B Tax Invoices, bulk order dispatches & trade receivables (strictly isolated from Retail POS)
-              </p>
-            </div>
+            <h2 className="wholesale-section-title">
+              Today's Wholesale Sales Overview – B2B Wholesale
+            </h2>
+          </div>
+          <span className="wholesale-section-subtitle">
+            B2B Tax Invoices, bulk order dispatches & trade receivables (strictly isolated from Retail POS)
+          </span>
+        </div>
+      </div>
+
+      {/* 6 WHOLESALE KPI CARDS */}
+      <section className="today-kpi-grid">
+        {/* WS CARD 1: TOTAL WHOLESALE SALES (Highlighted Plum Card) */}
+        <div className="today-kpi-card purple-highlight">
+          <div className="kpi-card-header">
+            <span className="kpi-label" title="TOTAL WHOLESALE SALES">TOTAL WHOLESALE SALES</span>
+            <span className="kpi-icon-badge purple">
+              <TrendingUpIcon size={15} style={{ color: "#ffffff" }} />
+            </span>
+          </div>
+          <div className="kpi-value-row">
+            <span className="kpi-value mono">
+              <AnimatedCounter value={wholesale.totalSalesMinor} isRupees={true} animKey={chartAnimKey} />
+            </span>
+          </div>
+          <div className="kpi-footer-row">
+            {wholesale.salesChangePct !== null ? (
+              <span className={`kpi-change-pill ${wholesale.salesChangePct >= 0 ? 'pos' : 'neg'}`}>
+                <span className="kpi-pill-arrow">{wholesale.salesChangePct >= 0 ? '▲' : '▼'}</span>
+                <span className="kpi-pill-pct">{Math.abs(wholesale.salesChangePct).toFixed(1)}%</span>
+                <span className="kpi-pill-ref">vs yesterday</span>
+              </span>
+            ) : (
+              <span className="kpi-change-pill neutral">No wholesale yesterday</span>
+            )}
           </div>
         </div>
 
-        {/* 6 WHOLESALE KPI CARDS */}
-        <div className="today-kpi-grid">
-          {/* WS CARD 1: TOTAL WHOLESALE SALES */}
-          <div className="today-kpi-card">
-            <div className="kpi-card-header">
-              <span className="kpi-label">TOTAL WHOLESALE SALES</span>
-              <span className="kpi-icon-badge neutral">
-                <TrendingUpIcon size={16} />
-              </span>
-            </div>
-            <div className="kpi-value-row">
-              <span className="kpi-value mono">
-                <AnimatedCounter value={wholesale.totalSalesMinor} isRupees={true} animKey={chartAnimKey} />
-              </span>
-            </div>
-            <div className="kpi-footer-row">
-              {wholesale.salesChangePct !== null ? (
-                <span className={`kpi-change-pill ${wholesale.salesChangePct >= 0 ? 'pos' : 'neg'}`}>
-                  <span className="kpi-pill-arrow">{wholesale.salesChangePct >= 0 ? '▲' : '▼'}</span>
-                  <span className="kpi-pill-pct">{Math.abs(wholesale.salesChangePct).toFixed(1)}%</span>
-                  <span className="kpi-pill-ref">vs yesterday</span>
-                </span>
-              ) : (
-                <span className="kpi-change-pill neutral">No wholesale yesterday</span>
-              )}
-            </div>
+        {/* WS CARD 2: NUMBER OF WHOLESALE INVOICES */}
+        <div className="today-kpi-card">
+          <div className="kpi-card-header">
+            <span className="kpi-label" title="WHOLESALE INVOICES">WHOLESALE INVOICES</span>
+            <span className="kpi-icon-badge blue">
+              <ReceiptIcon size={16} style={{ color: "#2563eb" }} />
+            </span>
           </div>
-
-          {/* WS CARD 2: NUMBER OF WHOLESALE INVOICES */}
-          <div className="today-kpi-card">
-            <div className="kpi-card-header">
-              <span className="kpi-label">WHOLESALE INVOICES</span>
-              <span className="kpi-icon-badge neutral">
-                <ReceiptIcon size={16} />
-              </span>
-            </div>
-            <div className="kpi-value-row">
-              <span className="kpi-value mono">
-                <AnimatedCounter value={wholesale.invoicesCount} isRupees={false} animKey={chartAnimKey} />
-              </span>
-            </div>
-            <div className="kpi-footer-row">
-              <span className="kpi-meta-text">
-                {wholesale.invoicesCount === 1 ? '1 B2B invoice issued' : `${wholesale.invoicesCount} B2B invoices issued`}
-              </span>
-            </div>
+          <div className="kpi-value-row">
+            <span className="kpi-value mono">
+              <AnimatedCounter value={wholesale.invoicesCount} isRupees={false} animKey={chartAnimKey} />
+            </span>
           </div>
-
-          {/* WS CARD 3: TOTAL WHOLESALE ITEMS / QUANTITY SOLD */}
-          <div className="today-kpi-card">
-            <div className="kpi-card-header">
-              <span className="kpi-label">ITEMS / QTY SOLD</span>
-              <span className="kpi-icon-badge neutral">
-                <PackageIcon size={16} />
-              </span>
-            </div>
-            <div className="kpi-value-row">
-              <span className="kpi-value mono">
-                <AnimatedCounter
-                  value={wholesale.totalUnitsSold}
-                  isRupees={false}
-                  decimals={wholesale.totalUnitsSold % 1 !== 0 ? 1 : 0}
-                  animKey={chartAnimKey}
-                />
-              </span>
-            </div>
-            <div className="kpi-footer-row">
-              <span className="kpi-meta-text">
-                units across {wholesale.distinctProductsCount} distinct {wholesale.distinctProductsCount === 1 ? 'product' : 'products'}
-              </span>
-            </div>
+          <div className="kpi-footer-row">
+            <span className="kpi-change-text neutral">
+              {wholesale.invoicesCount === 1 ? '1 B2B invoice issued' : `${wholesale.invoicesCount} B2B invoices issued`}
+            </span>
           </div>
+        </div>
 
-          {/* WS CARD 4: WHOLESALE TAXABLE AMOUNT */}
-          <div className="today-kpi-card">
-            <div className="kpi-card-header">
-              <span className="kpi-label">TAXABLE AMOUNT</span>
-              <span className="kpi-icon-badge neutral">
-                <TagIcon size={16} />
-              </span>
-            </div>
-            <div className="kpi-value-row">
-              <span className="kpi-value mono">
-                <AnimatedCounter value={wholesale.taxableMinor} isRupees={true} animKey={chartAnimKey} />
-              </span>
-            </div>
-            <div className="kpi-footer-row">
-              <span className="kpi-meta-text">Pre-tax B2B order value</span>
-            </div>
+        {/* WS CARD 3: TOTAL WHOLESALE ITEMS / QUANTITY SOLD */}
+        <div className="today-kpi-card">
+          <div className="kpi-card-header">
+            <span className="kpi-label" title="ITEMS / QTY SOLD">ITEMS / QTY SOLD</span>
+            <span className="kpi-icon-badge brown">
+              <PackageIcon size={16} style={{ color: "#d97706" }} />
+            </span>
           </div>
-
-          {/* WS CARD 5: WHOLESALE GST COLLECTED */}
-          <div className="today-kpi-card">
-            <div className="kpi-card-header">
-              <span className="kpi-label">GST COLLECTED</span>
-              <span className="kpi-icon-badge neutral">
-                <ShieldCheckIcon size={16} />
-              </span>
-            </div>
-            <div className="kpi-value-row">
-              <span className="kpi-value mono">
-                <AnimatedCounter value={wholesale.totalGstMinor} isRupees={true} animKey={chartAnimKey} />
-              </span>
-            </div>
-            <div className="kpi-footer-row">
-              <span className="kpi-meta-text">
-                CGST {formatRupees(wholesale.cgstMinor)} · SGST {formatRupees(wholesale.sgstMinor)}
-                {wholesale.igstMinor > 0 && ` · IGST ${formatRupees(wholesale.igstMinor)}`}
-              </span>
-            </div>
+          <div className="kpi-value-row">
+            <span className="kpi-value mono">
+              <AnimatedCounter
+                value={wholesale.totalUnitsSold}
+                isRupees={false}
+                decimals={wholesale.totalUnitsSold % 1 !== 0 ? 1 : 0}
+                animKey={chartAnimKey}
+              />
+            </span>
           </div>
+          <div className="kpi-footer-row">
+            <span className="kpi-meta-text">
+              units across {wholesale.distinctProductsCount} distinct {wholesale.distinctProductsCount === 1 ? 'product' : 'products'}
+            </span>
+          </div>
+        </div>
 
-          {/* WS CARD 6: WHOLESALE OUTSTANDING / CREDIT AMOUNT */}
-          <div className="today-kpi-card">
-            <div className="kpi-card-header">
-              <span className="kpi-label">OUTSTANDING CREDIT</span>
-              <span className="kpi-icon-badge neutral">
-                <AlertTriangleIcon size={16} />
-              </span>
-            </div>
-            <div className="kpi-value-row">
-              <span className="kpi-value mono">
-                <AnimatedCounter value={wholesale.outstandingCreditMinor} isRupees={true} animKey={chartAnimKey} />
-              </span>
-            </div>
-            <div className="kpi-footer-row">
-              <span className="kpi-meta-text">
-                Paid: {formatRupees(wholesale.paidMinor)} · Trade receivables
-              </span>
-            </div>
+        {/* WS CARD 4: WHOLESALE TAXABLE AMOUNT */}
+        <div className="today-kpi-card">
+          <div className="kpi-card-header">
+            <span className="kpi-label" title="TAXABLE AMOUNT">TAXABLE AMOUNT</span>
+            <span className="kpi-icon-badge green">
+              <TagIcon size={16} style={{ color: "#059669" }} />
+            </span>
+          </div>
+          <div className="kpi-value-row">
+            <span className="kpi-value mono">
+              <AnimatedCounter value={wholesale.taxableMinor} isRupees={true} animKey={chartAnimKey} />
+            </span>
+          </div>
+          <div className="kpi-footer-row">
+            <span className="kpi-meta-text">Pre-tax B2B order value</span>
+          </div>
+        </div>
+
+        {/* WS CARD 5: WHOLESALE GST COLLECTED */}
+        <div className="today-kpi-card">
+          <div className="kpi-card-header">
+            <span className="kpi-label" title="GST COLLECTED">GST COLLECTED</span>
+            <span className="kpi-icon-badge green">
+              <ShieldCheckIcon size={16} style={{ color: "#059669" }} />
+            </span>
+          </div>
+          <div className="kpi-value-row">
+            <span className="kpi-value mono">
+              <AnimatedCounter value={wholesale.totalGstMinor} isRupees={true} animKey={chartAnimKey} />
+            </span>
+          </div>
+          <div className="kpi-footer-row">
+            <span className="kpi-meta-text">
+              CGST {formatRupees(wholesale.cgstMinor)} · SGST {formatRupees(wholesale.sgstMinor)}
+              {wholesale.igstMinor > 0 && ` · IGST ${formatRupees(wholesale.igstMinor)}`}
+            </span>
+          </div>
+        </div>
+
+        {/* WS CARD 6: WHOLESALE OUTSTANDING / CREDIT AMOUNT */}
+        <div className="today-kpi-card">
+          <div className="kpi-card-header">
+            <span className="kpi-label" title="OUTSTANDING CREDIT">OUTSTANDING CREDIT</span>
+            <span className="kpi-icon-badge red">
+              <AlertTriangleIcon size={16} style={{ color: "#ef4444" }} />
+            </span>
+          </div>
+          <div className="kpi-value-row">
+            <span className={`kpi-value mono ${wholesale.outstandingCreditMinor > 0 ? 'text-danger' : ''}`}>
+              <AnimatedCounter value={wholesale.outstandingCreditMinor} isRupees={true} animKey={chartAnimKey} />
+            </span>
+          </div>
+          <div className="kpi-footer-row">
+            <span className="kpi-meta-text">
+              Paid: {formatRupees(wholesale.paidMinor)} · Trade receivables
+            </span>
           </div>
         </div>
       </section>

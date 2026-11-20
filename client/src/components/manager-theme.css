@@ -49,10 +49,16 @@ body.theme-manager,
   border: 1px solid rgba(232, 214, 222, 0.3) !important;
 }
 
-.theme-manager .sidebar-nav-item.active {
+.theme-manager .sidebar-nav-item.active,
+.theme-manager .sidebar-nav-item.has-active-child {
   background: #653B4B !important;
   border-color: rgba(255, 255, 255, 0.22) !important;
   box-shadow: 0 2px 8px rgba(101, 59, 75, 0.4) !important;
+}
+
+.theme-manager .sidebar-nav-item.open-highlight {
+  background: rgba(101, 59, 75, 0.35) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
 }
 
 .theme-manager .sidebar-nav-item.active .nav-count-badge {
