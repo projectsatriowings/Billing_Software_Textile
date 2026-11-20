@@ -9926,6 +9926,17 @@ export function App() {
                             </div>
                           )}
 
+                          {/* CONSOLIDATED OVERALL GST WITH TAX BREAKDOWN */}
+                          <div className="bento-summary-row tax-row">
+                            <div className="tax-label-group">
+                              <span className="summary-label">{isExchangeActive ? 'New Items GST Tax' : 'Consolidated GST Tax'}</span>
+                              <span className="tax-sub-breakdown">
+                                (CGST: {formatRupees(cartCgstMinor)} + SGST: {formatRupees(cartSgstMinor)})
+                              </span>
+                            </div>
+                            <span className="summary-val mono tax-val">{formatRupees(cartTaxMinor)}</span>
+                          </div>
+
                           {/* LOYALTY POINTS EARNED / ADJUSTED ON BILL */}
                           {shopLoyaltyActive && cart.length > 0 && (
                             <div
@@ -9967,17 +9978,6 @@ export function App() {
                               </div>
                             </div>
                           )}
-
-                          {/* CONSOLIDATED OVERALL GST WITH TAX BREAKDOWN */}
-                          <div className="bento-summary-row tax-row">
-                            <div className="tax-label-group">
-                              <span className="summary-label">{isExchangeActive ? 'New Items GST Tax' : 'Consolidated GST Tax'}</span>
-                              <span className="tax-sub-breakdown">
-                                (CGST: {formatRupees(cartCgstMinor)} + SGST: {formatRupees(cartSgstMinor)})
-                              </span>
-                            </div>
-                            <span className="summary-val mono tax-val">{formatRupees(cartTaxMinor)}</span>
-                          </div>
 
                           {/* Overall Customer Savings Celebration */}
                           {totalMrpSavingsMinor > 0 && (
