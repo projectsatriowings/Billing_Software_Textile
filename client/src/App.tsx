@@ -594,7 +594,7 @@ export const getBusinessLabel = (type?: string) => {
   }
 };
 
-export const CASHIER_ALLOWED_TABS = new Set<string>(['pos', 'shifts', 'invoices', 'day-closing', 'notifications']);
+export const CASHIER_ALLOWED_TABS = new Set<string>(['pos', 'shifts', 'invoices', 'day-closing']);
 
 export interface PosCartItem {
   item: Item;
@@ -1319,7 +1319,7 @@ export function App() {
   const [unreadShiftNotifCount, setUnreadShiftNotifCount] = useState<number>(0);
 
   const loadNotifications = useCallback(async () => {
-    if (!user) return;
+    if (!user || user.role === 'cashier') return;
     try {
       const activeBranch = selectedBranchScope && selectedBranchScope.toLowerCase() !== 'all' ? selectedBranchScope : undefined;
       const res = await fetchDayClosingNotifications({ branchId: activeBranch });
@@ -1333,7 +1333,7 @@ export function App() {
   }, [user, selectedBranchScope]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || user.role === 'cashier') return;
     loadNotifications();
     const interval = setInterval(loadNotifications, 15000);
     const onShiftEvent = () => loadNotifications();
@@ -2350,9 +2350,9 @@ export function App() {
     settings: 'settings',
   }), [user?.role]);
 
-  // Route guard: Redirect if user attempts to visit disabled module
+  // Route guard: Redirect if user attempts to visit disabled module (Cashier has independent navigation)
   useEffect(() => {
-    if (!user) return;
+    if (!user || user.role === 'cashier') return;
     const requiredModule = TAB_TO_MODULE_MAP[activeTab];
     if (requiredModule && !isModuleVisible(requiredModule)) {
       const candidateTabs = [
@@ -8147,19 +8147,17 @@ export function App() {
               )}
 
               {/* 2. POS Counter - Available to Cashier, Store Manager, and Super Admin */}
-              {isModuleVisible('pos') && (
-                <button
-                  type="button"
-                  className={`sidebar-nav-item ${activeTab === 'pos' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('pos')}
-                  title="POS Counter (F1)"
-                >
-                  <span className="nav-icon">
-                    <ShoppingCart size={20} strokeWidth={2.2} />
-                  </span>
-                  <span className="nav-text">POS Counter</span>
-                </button>
-              )}
+              <button
+                type="button"
+                className={`sidebar-nav-item ${activeTab === 'pos' ? 'active' : ''}`}
+                onClick={() => setActiveTab('pos')}
+                title="POS Counter (F1)"
+              >
+                <span className="nav-icon">
+                  <ShoppingCart size={20} strokeWidth={2.2} />
+                </span>
+                <span className="nav-text">POS Counter</span>
+              </button>
 
               {/* 2b. Wholesale Billing (Traditional A4 Tax Invoices) - STRICTLY ADMIN ONLY */}
               {user?.role !== 'cashier' && isModuleVisible('wholesale') && (
@@ -8177,7 +8175,7 @@ export function App() {
               )}
 
               {/* 3. Cashier Shifts: ONLY for Cashier */}
-              {user?.role === 'cashier' && isModuleVisible('shifts') && (
+              {user?.role === 'cashier' && (
                 <button
                   type="button"
                   className={`sidebar-nav-item ${activeTab === 'shifts' ? 'active' : ''}`}
@@ -8200,8 +8198,8 @@ export function App() {
                 </button>
               )}
 
-              {/* 3b. Notifications & Shift Alerts: Available to All Roles */}
-              {isModuleVisible('notifications') && (
+              {/* 3b. Notifications & Shift Alerts: Strictly Super Admin & Store Manager */}
+              {user.role !== 'cashier' && isModuleVisible('notifications') && (
                 <button
                   type="button"
                   className={`sidebar-nav-item ${activeTab === 'notifications' ? 'active' : ''} ${unreadShiftNotifCount > 0 ? 'has-badge' : ''}`}
@@ -8400,33 +8398,29 @@ export function App() {
               {/* Cashier Recent Bills & Day Closing */}
               {user?.role === 'cashier' && (
                 <>
-                  {isModuleVisible('recent-bills') && (
-                    <button
-                      type="button"
-                      className={`sidebar-nav-item ${activeTab === 'invoices' ? 'active' : ''}`}
-                      onClick={() => setActiveTab('invoices')}
-                      title="Recent Bills"
-                    >
-                      <span className="nav-icon">
-                        <Receipt size={20} strokeWidth={2.2} />
-                      </span>
-                      <span className="nav-text">Recent Bills</span>
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    className={`sidebar-nav-item ${activeTab === 'invoices' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('invoices')}
+                    title="Recent Bills"
+                  >
+                    <span className="nav-icon">
+                      <Receipt size={20} strokeWidth={2.2} />
+                    </span>
+                    <span className="nav-text">Recent Bills</span>
+                  </button>
 
-                  {isModuleVisible('day-closing') && (
-                    <button
-                      type="button"
-                      className={`sidebar-nav-item ${activeTab === 'day-closing' ? 'active' : ''}`}
-                      onClick={() => setActiveTab('day-closing')}
-                      title="Day Closing & Register Reconciliation"
-                    >
-                      <span className="nav-icon">
-                        <Lock size={20} strokeWidth={2.2} />
-                      </span>
-                      <span className="nav-text">Day Closing</span>
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    className={`sidebar-nav-item ${activeTab === 'day-closing' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('day-closing')}
+                    title="Day Closing & Register Reconciliation"
+                  >
+                    <span className="nav-icon">
+                      <Lock size={20} strokeWidth={2.2} />
+                    </span>
+                    <span className="nav-text">Day Closing</span>
+                  </button>
                 </>
               )}
 
@@ -9081,7 +9075,8 @@ export function App() {
                 }}
                 showToast={(msg, type) => showToast(msg, type)}
               />
-              <div className="top-notif-wrapper" ref={notifPopoverRef}>
+              {user?.role !== 'cashier' && (
+                <div className="top-notif-wrapper" ref={notifPopoverRef}>
                 <button
                   type="button"
                   className={`top-notification-btn ${showTopNotifPopover ? 'active' : ''}`}
@@ -9742,6 +9737,7 @@ export function App() {
                   </div>
                 )}
               </div>
+              )}
               <div
                 className={`top-user-chip ${user?.role === 'cashier' ? 'readonly' : ''}`}
                 onClick={() => {
@@ -14255,13 +14251,13 @@ export function App() {
                   shop={shop}
                   selectedBranch={selectedBranchScope}
                   branches={branches}
-                  onNavigateToNotifications={() => setActiveTab('notifications')}
+                  onNavigateToNotifications={user?.role !== 'cashier' ? () => setActiveTab('notifications') : undefined}
                 />
               </div>
             )}
 
-            {/* TAB: NOTIFICATIONS & SHIFT ALERTS (DEDICATED FULL PAGE) */}
-            {(activeTab === 'notifications' || displayTab === 'notifications') && (
+            {/* TAB: NOTIFICATIONS & SHIFT ALERTS (DEDICATED FULL PAGE - STRICTLY ADMIN & STORE MANAGER) */}
+            {user?.role !== 'cashier' && (activeTab === 'notifications' || displayTab === 'notifications') && (
               <div className="tab-content-wrapper" key={`notifications-${selectedBranchScope}`}>
                 <NotificationsPageView
                   user={user}
