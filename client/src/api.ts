@@ -1894,7 +1894,13 @@ export interface PaymentAttempt {
 export const getPaymentSettings = () =>
   api<PublicPaymentSettings>('/api/shop/payment-settings');
 
-export const updatePaymentSettings = (settings: Partial<PublicPaymentSettings> & { rzpKeySecret?: string; rzpWebhookSecret?: string; paytmMerchantKey?: string; phonepeSaltKey?: string }) =>
+export const updatePaymentSettings = (settings: Partial<PublicPaymentSettings> & {
+  target?: string;
+  rzpKeySecret?: string;
+  rzpWebhookSecret?: string;
+  paytmMerchantKey?: string;
+  phonepeSaltKey?: string;
+}) =>
   api<PublicPaymentSettings>('/api/shop/payment-settings', {
     method: 'PUT',
     body: JSON.stringify(settings),
