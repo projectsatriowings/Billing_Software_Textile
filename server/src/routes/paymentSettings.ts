@@ -105,6 +105,8 @@ export function registerPaymentSettings(r: Router) {
     const bankEnabled = Boolean(row.bankEnabled ?? row.bank_enabled ?? false);
     if (bankEnabled && !methods.includes('bank')) {
       methods.push('bank');
+    } else if (!bankEnabled && methods.includes('bank')) {
+      methods = methods.filter((m) => m !== 'bank');
     }
 
     return {
