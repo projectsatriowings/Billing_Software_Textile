@@ -10157,6 +10157,206 @@ export function App() {
                           )}
                         </div>
 
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ================= RIGHT / SIDE BENTO COLUMN: Barcode Scanner ================= */}
+                  <div className="bento-side-col">
+                    <div className="bento-card bento-scanner-card">
+                      <div className="bento-card-header">
+                        <div className="bento-header-label">
+                          <span className="bento-icon-circle purple">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                              <path d="M3 5v14M8 5v14M12 5v14M17 5v14M21 5v14" />
+                            </svg>
+                          </span>
+                          <div>
+                            <h3 className="bento-card-title">Barcode Scanner</h3>
+                            <span className="bento-card-subtitle">Instant SKU & Barcode Lookup</span>
+                          </div>
+                        </div>
+                        <span className={`bento-status-pill ${isPosCameraActive ? 'emerald' : isPhoneScannerConnected ? 'emerald' : 'green'}`}>
+                          <span className={`scanner-ready-dot ${isPosCameraActive ? 'pulsing' : ''}`}></span>
+                          {isPosCameraActive ? 'Live Camera' : isPhoneScannerConnected ? 'Phone Active' : 'Ready'}
+                        </span>
+                      </div>
+
+                      <div className="bento-scanner-body">
+                        {/* Live In-Place Camera Scanner Viewfinder */}
+                        {isPosCameraActive && (
+                          <div className={`pos-inline-camera-container ${cameraScanFlash ? 'scan-flash' : ''}`}>
+                            <div className="pos-inline-camera-header">
+                              <div className="pos-cam-header-left">
+                                <span className="pos-cam-dot live"></span>
+                                <span className="pos-cam-label">Camera Active</span>
+                              </div>
+                              <div className="pos-cam-header-actions">
+                                {posCameraDevices.length > 1 && (
+                                  <button
+                                    type="button"
+                                    className="pos-cam-ctrl-btn"
+                                    onClick={switchPosCamera}
+                                    title="Switch camera (front/back)"
+                                  >
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                      <path d="M20 10c0-4.418-3.582-8-8-8s-8 3.582-8 8c0 3.03 1.688 5.67 4.17 7.05M4 14c0 4.418 3.582 8 8 8s8-3.582 8-8c0-3.03-1.688-5.67-4.17-7.05" />
+                                      <polyline points="20 4 20 10 14 10" />
+                                      <polyline points="4 20 4 14 10 14" />
+                                    </svg>
+                                    <span>Switch</span>
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  className="pos-cam-close-btn"
+                                  onClick={stopPosCamera}
+                                  title="Close camera"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            </div>
+
+                            <div id="pos-inline-camera-view" className="pos-inline-camera-view" />
+
+                            {isPosCameraStarting && (
+                              <div className="pos-cam-loading">
+                                <div className="pos-cam-spinner"></div>
+                                <span>Starting camera stream...</span>
+                              </div>
+                            )}
+
+                            {posCameraError && (
+                              <div className="pos-cam-error-banner">
+                                <span>{posCameraError}</span>
+                                <button type="button" onClick={() => startPosCamera()} className="pos-cam-retry-btn">
+                                  Retry
+                                </button>
+                              </div>
+                            )}
+
+                            <div className="pos-inline-laser-beam"></div>
+                            <div className="pos-inline-scan-target">
+                              <span className="corner top-left"></span>
+                              <span className="corner top-right"></span>
+                              <span className="corner bottom-left"></span>
+                              <span className="corner bottom-right"></span>
+                            </div>
+                            <div className="pos-inline-hint">
+                              Hold product barcode in front of camera
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="scanner-input-container">
+                          <span className="scanner-laser-icon">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
+                              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                            </svg>
+                          </span>
+                          <input
+                            id="pos-product-search-input"
+                            type="text"
+                            className="bento-input scanner-input"
+                            placeholder="Scan barcode or enter product SKU..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && searchQuery.trim()) {
+                                e.preventDefault();
+                                handleBarcodeScanned(searchQuery.trim());
+                                setSearchQuery('');
+                              }
+                            }}
+                          />
+                          {searchQuery && (
+                            <button
+                              type="button"
+                              className="bento-input-clear-btn"
+                              onClick={() => setSearchQuery('')}
+                            >
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                              </svg>
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="scanner-action-row">
+                          <button
+                            type="button"
+                            className={`bento-trigger-scan-btn ${isPosCameraActive ? 'camera-active' : ''}`}
+                            onClick={isPosCameraActive ? stopPosCamera : () => startPosCamera()}
+                            title={isPosCameraActive ? 'Turn off camera stream' : 'Open live camera scanner in this card'}
+                          >
+                            {isPosCameraActive ? (
+                              <>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                  <line x1="1" y1="1" x2="23" y2="23"></line>
+                                  <path d="M21 21H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3m3-3h6l2 3h4a2 2 0 0 1 2 2v9.34"></path>
+                                  <circle cx="12" cy="13" r="4"></circle>
+                                </svg>
+                                <span>Stop Camera</span>
+                              </>
+                            ) : (
+                              <>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                  <circle cx="12" cy="13" r="4"></circle>
+                                </svg>
+                                <span>Open Camera</span>
+                              </>
+                            )}
+                          </button>
+
+                          <button
+                            type="button"
+                            className={`bento-mobile-scanner-btn ${isPhoneScannerConnected ? 'connected' : ''}`}
+                            onClick={() => setShowMobileScannerModal(true)}
+                            title="Use your phone camera as a wireless barcode scanner"
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
+                              <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                              <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                            </svg>
+                            <span>{isPhoneScannerConnected ? 'Phone Active ✓' : 'Phone as Scanner'}</span>
+                          </button>
+                        </div>
+
+                        {/* Find Product / No Barcode Button */}
+                        <button
+                          type="button"
+                          className="bento-find-product-btn"
+                          onClick={() => focusProductSearch()}
+                          title="Search catalog or add items without barcode (F2)"
+                        >
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                          </svg>
+                          <span>Find Product / No Barcode (F2)</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Bento Payment & Checkout Hub */}
+                    <div className="bento-card bento-checkout-panel-card">
+                      <div className="bento-card-header" style={{ paddingBottom: "0.4rem", marginBottom: "0.2rem" }}>
+                        <div className="bento-header-label">
+                          <span className="bento-icon-circle green">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
+                              <rect x="2" y="5" width="20" height="14" rx="2" />
+                              <line x1="2" y1="10" x2="22" y2="10" />
+                            </svg>
+                          </span>
+                          <div>
+                            <h3 className="bento-card-title">Customer & Payment Settlement</h3>
+                            <span className="bento-card-subtitle">Fast Counter Checkout</span>
+                          </div>
+                        </div>
+                      </div>
                         {/* Direct Inline Customer Entry Bento Box */}
                         {(() => {
                           const cleanDigits = customerSearch.replace(/\D/g, '');
@@ -11437,188 +11637,6 @@ export function App() {
                             </button>
                           </div>
                         </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* ================= RIGHT / SIDE BENTO COLUMN: Barcode Scanner ================= */}
-                  <div className="bento-side-col">
-                    <div className="bento-card bento-scanner-card">
-                      <div className="bento-card-header">
-                        <div className="bento-header-label">
-                          <span className="bento-icon-circle purple">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                              <path d="M3 5v14M8 5v14M12 5v14M17 5v14M21 5v14" />
-                            </svg>
-                          </span>
-                          <div>
-                            <h3 className="bento-card-title">Barcode Scanner</h3>
-                            <span className="bento-card-subtitle">Instant SKU & Barcode Lookup</span>
-                          </div>
-                        </div>
-                        <span className={`bento-status-pill ${isPosCameraActive ? 'emerald' : isPhoneScannerConnected ? 'emerald' : 'green'}`}>
-                          <span className={`scanner-ready-dot ${isPosCameraActive ? 'pulsing' : ''}`}></span>
-                          {isPosCameraActive ? 'Live Camera' : isPhoneScannerConnected ? 'Phone Active' : 'Ready'}
-                        </span>
-                      </div>
-
-                      <div className="bento-scanner-body">
-                        {/* Live In-Place Camera Scanner Viewfinder */}
-                        {isPosCameraActive && (
-                          <div className={`pos-inline-camera-container ${cameraScanFlash ? 'scan-flash' : ''}`}>
-                            <div className="pos-inline-camera-header">
-                              <div className="pos-cam-header-left">
-                                <span className="pos-cam-dot live"></span>
-                                <span className="pos-cam-label">Camera Active</span>
-                              </div>
-                              <div className="pos-cam-header-actions">
-                                {posCameraDevices.length > 1 && (
-                                  <button
-                                    type="button"
-                                    className="pos-cam-ctrl-btn"
-                                    onClick={switchPosCamera}
-                                    title="Switch camera (front/back)"
-                                  >
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                      <path d="M20 10c0-4.418-3.582-8-8-8s-8 3.582-8 8c0 3.03 1.688 5.67 4.17 7.05M4 14c0 4.418 3.582 8 8 8s8-3.582 8-8c0-3.03-1.688-5.67-4.17-7.05" />
-                                      <polyline points="20 4 20 10 14 10" />
-                                      <polyline points="4 20 4 14 10 14" />
-                                    </svg>
-                                    <span>Switch</span>
-                                  </button>
-                                )}
-                                <button
-                                  type="button"
-                                  className="pos-cam-close-btn"
-                                  onClick={stopPosCamera}
-                                  title="Close camera"
-                                >
-                                  ✕
-                                </button>
-                              </div>
-                            </div>
-
-                            <div id="pos-inline-camera-view" className="pos-inline-camera-view" />
-
-                            {isPosCameraStarting && (
-                              <div className="pos-cam-loading">
-                                <div className="pos-cam-spinner"></div>
-                                <span>Starting camera stream...</span>
-                              </div>
-                            )}
-
-                            {posCameraError && (
-                              <div className="pos-cam-error-banner">
-                                <span>{posCameraError}</span>
-                                <button type="button" onClick={() => startPosCamera()} className="pos-cam-retry-btn">
-                                  Retry
-                                </button>
-                              </div>
-                            )}
-
-                            <div className="pos-inline-laser-beam"></div>
-                            <div className="pos-inline-scan-target">
-                              <span className="corner top-left"></span>
-                              <span className="corner top-right"></span>
-                              <span className="corner bottom-left"></span>
-                              <span className="corner bottom-right"></span>
-                            </div>
-                            <div className="pos-inline-hint">
-                              Hold product barcode in front of camera
-                            </div>
-                          </div>
-                        )}
-
-                        <div className="scanner-input-container">
-                          <span className="scanner-laser-icon">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
-                              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-                            </svg>
-                          </span>
-                          <input
-                            id="pos-product-search-input"
-                            type="text"
-                            className="bento-input scanner-input"
-                            placeholder="Scan barcode or enter product SKU..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' && searchQuery.trim()) {
-                                e.preventDefault();
-                                handleBarcodeScanned(searchQuery.trim());
-                                setSearchQuery('');
-                              }
-                            }}
-                          />
-                          {searchQuery && (
-                            <button
-                              type="button"
-                              className="bento-input-clear-btn"
-                              onClick={() => setSearchQuery('')}
-                            >
-                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round">
-                                <line x1="18" y1="6" x2="6" y2="18"></line>
-                                <line x1="6" y1="6" x2="18" y2="18"></line>
-                              </svg>
-                            </button>
-                          )}
-                        </div>
-
-                        <div className="scanner-action-row">
-                          <button
-                            type="button"
-                            className={`bento-trigger-scan-btn ${isPosCameraActive ? 'camera-active' : ''}`}
-                            onClick={isPosCameraActive ? stopPosCamera : () => startPosCamera()}
-                            title={isPosCameraActive ? 'Turn off camera stream' : 'Open live camera scanner in this card'}
-                          >
-                            {isPosCameraActive ? (
-                              <>
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                  <line x1="1" y1="1" x2="23" y2="23"></line>
-                                  <path d="M21 21H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3m3-3h6l2 3h4a2 2 0 0 1 2 2v9.34"></path>
-                                  <circle cx="12" cy="13" r="4"></circle>
-                                </svg>
-                                <span>Stop Camera</span>
-                              </>
-                            ) : (
-                              <>
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                                  <circle cx="12" cy="13" r="4"></circle>
-                                </svg>
-                                <span>Open Camera</span>
-                              </>
-                            )}
-                          </button>
-
-                          <button
-                            type="button"
-                            className={`bento-mobile-scanner-btn ${isPhoneScannerConnected ? 'connected' : ''}`}
-                            onClick={() => setShowMobileScannerModal(true)}
-                            title="Use your phone camera as a wireless barcode scanner"
-                          >
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
-                              <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
-                              <line x1="12" y1="18" x2="12.01" y2="18"></line>
-                            </svg>
-                            <span>{isPhoneScannerConnected ? 'Phone Active ✓' : 'Phone as Scanner'}</span>
-                          </button>
-                        </div>
-
-                        {/* Find Product / No Barcode Button */}
-                        <button
-                          type="button"
-                          className="bento-find-product-btn"
-                          onClick={() => focusProductSearch()}
-                          title="Search catalog or add items without barcode (F2)"
-                        >
-                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                            <circle cx="11" cy="11" r="8"></circle>
-                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                          </svg>
-                          <span>Find Product / No Barcode (F2)</span>
-                        </button>
-                      </div>
                     </div>
 
                     {/* Bento Register & Counter Operations Hub */}
