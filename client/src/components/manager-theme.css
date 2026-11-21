@@ -1589,3 +1589,34 @@ body.theme-manager .gstr1-count-chip,
   border-color: #D9C8D0 !important;
   box-shadow: 0 1px 3px rgba(101, 59, 75, 0.08) !important;
 }
+
+/* --- Purchase Management --- */
+body.theme-manager .kpi-card,
+.theme-manager .kpi-card {
+  border: 1.5px solid #D9C8D0 !important;
+  background: #FAF6F8 !important;
+  box-shadow: 0 4px 18px -2px rgba(101, 59, 75, 0.05) !important;
+}
+
+body.theme-manager .kpi-card:hover,
+.theme-manager .kpi-card:hover {
+  border-color: #653B4B !important;
+  box-shadow: 0 8px 24px -4px rgba(101, 59, 75, 0.12) !important;
+}
+
+body.theme-manager .kpi-card .kpi-icon,
+.theme-manager .kpi-card .kpi-icon {
+  background: #F5ECF0 !important;
+  color: #653B4B !important;
+  border: 1px solid #D9C8D0 !important;
+}
+
+body.theme-manager .kpi-card .kpi-val,
+.theme-manager .kpi-card .kpi-val {
+  color: #2D1822 !important;
+}
+
+body.theme-manager .kpi-card .kpi-label,
+.theme-manager .kpi-card .kpi-label {
+  color: #64555E !important;
+}
