@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { api, setToken, type User, type Shop } from '../api';
 import './auth/modernLogin.css';
 
@@ -140,6 +140,52 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   const [forgotIdentifier, setForgotIdentifier] = useState('');
   const [forgotStatus, setForgotStatus] = useState<{ message: string; isError?: boolean } | null>(null);
   const [isSendingReset, setIsSendingReset] = useState(false);
+
+  // PWA Desktop App Installation
+  const [installPrompt, setInstallPrompt] = useState<any>(null);
+  const [isInstalled, setIsInstalled] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return (
+      window.matchMedia('(display-mode: standalone)').matches ||
+      (window.navigator as any).standalone === true ||
+      Boolean((window as any).electronAPI)
+    );
+  });
+
+  useEffect(() => {
+    const handler = (e: any) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    const installedHandler = () => {
+      setIsInstalled(true);
+      setInstallPrompt(null);
+    };
+    window.addEventListener('appinstalled', installedHandler);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handler);
+      window.removeEventListener('appinstalled', installedHandler);
+    };
+  }, []);
+
+  const handleInstallApp = async () => {
+    if (installPrompt) {
+      installPrompt.prompt();
+      const choice = await installPrompt.userChoice;
+      if (choice && choice.outcome === 'accepted') {
+        setIsInstalled(true);
+        setInstallPrompt(null);
+      }
+    } else {
+      alert(
+        "To install A2Z as a Desktop App on your PC:\n\n" +
+        "1. In Chrome or Edge, look at the URL address bar at the top.\n" +
+        "2. Click the 'Install App' icon (or click Menu ⋮ → 'Install A2Z Billing').\n" +
+        "3. Click 'Install' — A2Z will be added directly to your Desktop and Start Menu with zero Windows warnings!"
+      );
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -506,6 +552,49 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 )}
               </button>
             </form>
+
+            {!isInstalled && (
+              <button
+                type="button"
+                onClick={handleInstallApp}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.55rem',
+                  width: '100%',
+                  padding: '0.68rem 1rem',
+                  borderRadius: '12px',
+                  background: '#F0FDFA',
+                  border: '1.5px solid #99F6E4',
+                  color: '#0F766E',
+                  fontWeight: 700,
+                  fontSize: '0.84rem',
+                  cursor: 'pointer',
+                  marginTop: '0.85rem',
+                  boxShadow: '0 2px 6px rgba(15, 118, 110, 0.08)',
+                  transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                  fontFamily: 'inherit',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#CCFBF1';
+                  e.currentTarget.style.borderColor = '#5EEAD4';
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = '#F0FDFA';
+                  e.currentTarget.style.borderColor = '#99F6E4';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
+              >
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+                  <line x1="8" y1="21" x2="16" y2="21" />
+                  <line x1="12" y1="17" x2="12" y2="21" />
+                </svg>
+                <span>Install A2Z Desktop App</span>
+              </button>
+            )}
 
             {/* Footer Copyright */}
             <div className="felix-copyright">

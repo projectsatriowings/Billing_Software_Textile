@@ -223,7 +223,7 @@ export const Gstr3bView: React.FC<Gstr3bViewProps> = ({ onNavigate }) => {
 
       {loading ? (
         <div className="flex h-56 flex-col items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white p-8 text-sm text-slate-500 shadow-sm">
-          <SpinnerIcon className="h-8 w-8 text-indigo-600 animate-spin" />
+          <SpinnerIcon className="h-8 w-8 animate-spin" style={{ color: '#653B4B' }} />
           <div className="font-semibold text-slate-700">Computing GSTR-3B table summaries for {periodLabel}...</div>
           <div className="text-xs text-slate-400">Balancing Table 3.1 outward liabilities with Table 4 eligible input credit</div>
         </div>
@@ -239,7 +239,7 @@ export const Gstr3bView: React.FC<Gstr3bViewProps> = ({ onNavigate }) => {
             <div className="gstr3b-hero-layout">
               <div className="gstr3b-hero-left">
                 <div className="gstr3b-hero-badge">
-                  <GstBuildingIcon className="h-3.5 w-3.5 text-indigo-200" />
+                  <GstBuildingIcon className="h-3.5 w-3.5" style={{ color: '#F9F5F7' }} />
                   <span>ESTIMATED NET TAX PAYABLE (AFTER ELIGIBLE ITC)</span>
                 </div>
                 <div className="gstr3b-hero-amount">
@@ -463,7 +463,7 @@ export const Gstr3bView: React.FC<Gstr3bViewProps> = ({ onNavigate }) => {
           <div className="gstr3b-table-card">
             <div className="gstr3b-table-header">
               <div className="gstr3b-table-title-group">
-                <span className="gstr3b-table-badge" style={{ background: '#312e81' }}>Table 5</span>
+                <span className="gstr3b-table-badge" style={{ background: 'linear-gradient(135deg, #7A475B 0%, #653B4B 100%)' }}>Table 5</span>
                 <div>
                   <h2 className="gstr3b-table-title">
                     5. Payment of Tax (Net Tax Payable)
@@ -482,7 +482,7 @@ export const Gstr3bView: React.FC<Gstr3bViewProps> = ({ onNavigate }) => {
                     <th style={{ width: '40%' }}>Description</th>
                     <th className="num">Tax Payable (Output)</th>
                     <th className="num">Paid Through ITC</th>
-                    <th className="num" style={{ background: '#f5f3ff', color: '#4338ca' }}>
+                    <th className="num" style={{ background: '#F5ECF0', color: '#522E3C', borderBottom: '2px solid #D9C8D0' }}>
                       Tax Paid in Cash (Net)
                     </th>
                   </tr>
@@ -530,7 +530,7 @@ export const Gstr3bView: React.FC<Gstr3bViewProps> = ({ onNavigate }) => {
                           gstr3b.table4EligibleItc.netItcAvailable.sgstMinor
                       )}
                     </td>
-                    <td className="num cash-paid-cell" style={{ fontSize: '1rem', color: '#312e81' }}>
+                    <td className="num cash-paid-cell" style={{ fontSize: '1rem', color: '#653B4B', fontWeight: 800 }}>
                       {fmtMoney(gstr3b.netTaxPayable.totalMinor)}
                     </td>
                   </tr>

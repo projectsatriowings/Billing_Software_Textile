@@ -59,10 +59,12 @@
     "directories": {
       "output": "release"
     },
+    "asar": true,
     "files": [
       "client/dist/**/*",
       "electron/**/*",
-      "package.json"
+      "package.json",
+      "!node_modules/**/*"
     ],
     "win": {
       "target": [

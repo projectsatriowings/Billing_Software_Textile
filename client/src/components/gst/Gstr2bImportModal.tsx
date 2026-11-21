@@ -212,7 +212,7 @@ export const Gstr2bImportModal: React.FC<Gstr2bImportModalProps> = ({
                     value={gstin}
                     onChange={(e) => setGstin(e.target.value.toUpperCase())}
                     placeholder="e.g. 33AAAAA0000A1Z5"
-                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-mono uppercase focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                    className="w-full rounded-lg border border-[#D9C8D0] bg-white px-3 py-2 text-sm font-mono uppercase focus:border-[#653B4B] focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                   />
                 </div>
                 <div>
@@ -223,7 +223,7 @@ export const Gstr2bImportModal: React.FC<Gstr2bImportModalProps> = ({
                     type="month"
                     value={returnPeriod}
                     onChange={(e) => setReturnPeriod(e.target.value)}
-                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                    className="w-full rounded-lg border border-[#D9C8D0] bg-white px-3 py-2 text-sm focus:border-[#653B4B] focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                   />
                 </div>
               </div>
@@ -232,7 +232,7 @@ export const Gstr2bImportModal: React.FC<Gstr2bImportModalProps> = ({
                 <label className="mb-1 block text-xs font-semibold text-slate-700 dark:text-slate-300">
                   Select Statement File (GSTR-2B JSON / CSV)
                 </label>
-                <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 p-6 text-center hover:border-indigo-500 dark:border-slate-700">
+                <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-[#D9C8D0] p-6 text-center hover:border-[#653B4B] dark:border-slate-700">
                   <input
                     type="file"
                     accept=".json,.csv"
@@ -242,7 +242,8 @@ export const Gstr2bImportModal: React.FC<Gstr2bImportModalProps> = ({
                   />
                   <label
                     htmlFor="gstr2b-file-upload"
-                    className="cursor-pointer font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
+                    className="cursor-pointer font-medium hover:underline"
+                    style={{ color: '#653B4B' }}
                   >
                     {file ? file.name : 'Click to select GSTR-2B JSON or CSV file'}
                   </label>
@@ -263,7 +264,7 @@ export const Gstr2bImportModal: React.FC<Gstr2bImportModalProps> = ({
                 <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-800/40">
                   <div className="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300">
                     <span>Parsed Content Preview</span>
-                    <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">
+                    <span className="rounded-full px-2 py-0.5" style={{ background: '#F5ECF0', color: '#653B4B' }}>
                       {parsedPreview.recordCount} items detected
                     </span>
                   </div>
@@ -290,7 +291,8 @@ export const Gstr2bImportModal: React.FC<Gstr2bImportModalProps> = ({
             <button
               onClick={() => handleImport(false)}
               disabled={!parsedPreview || isSubmitting}
-              className="rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 disabled:opacity-50"
+              className="rounded-lg px-5 py-2 text-sm font-semibold text-white shadow-sm transition-all disabled:opacity-50"
+              style={{ background: 'linear-gradient(135deg, #7A475B 0%, #653B4B 100%)' }}
             >
               {isSubmitting ? 'Importing & Reconciling...' : 'Confirm & Reconcile'}
             </button>

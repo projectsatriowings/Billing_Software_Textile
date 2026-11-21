@@ -20892,14 +20892,14 @@ select.expense-input-control {
   transform: none;
 }
 
-/* Main Net Position Hero Card */
+/* Main Net Position Hero Card - Deep Burgundy Palette */
 .gst-hero-liability {
   position: relative;
   overflow: hidden;
   border-radius: 20px;
-  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 45%, #312e81 100%);
-  border: 1px solid rgba(167, 139, 250, 0.25);
-  box-shadow: 0 20px 40px -10px rgba(30, 27, 75, 0.35);
+  background: linear-gradient(135deg, #1A0B12 0%, #2D1822 40%, #4A2433 75%, #653B4B 100%);
+  border: 1px solid rgba(232, 214, 222, 0.28);
+  box-shadow: 0 20px 40px -10px rgba(45, 24, 34, 0.45);
   padding: 1.75rem 2rem;
   color: #ffffff;
 }
@@ -20912,7 +20912,7 @@ select.expense-input-control {
   width: 500px;
   height: 500px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(109, 74, 255, 0.18) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(101, 59, 75, 0.22) 0%, transparent 70%);
   pointer-events: none;
 }
 
@@ -20943,14 +20943,14 @@ select.expense-input-control {
   align-items: center;
   gap: 0.45rem;
   width: fit-content;
-  background: rgba(167, 139, 250, 0.18);
-  border: 1px solid rgba(167, 139, 250, 0.35);
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.22);
   padding: 0.3rem 0.75rem;
   border-radius: 9999px;
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.08em;
-  color: #e0e7ff;
+  color: #F9F5F7;
   text-transform: uppercase;
 }
 
@@ -20958,8 +20958,8 @@ select.expense-input-control {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #a78bfa;
-  box-shadow: 0 0 8px #a78bfa;
+  background: #E8D6DE;
+  box-shadow: 0 0 8px #E8D6DE;
 }
 
 .gst-hero-amount {
@@ -21001,7 +21001,7 @@ select.expense-input-control {
 
 .gst-formula-op {
   font-weight: 800;
-  color: #a78bfa;
+  color: #E8D6DE;
   font-size: 0.95rem;
 }
 
@@ -21016,7 +21016,7 @@ select.expense-input-control {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  background: linear-gradient(135deg, #6d4aff 0%, #4f46e5 100%);
+  background: linear-gradient(135deg, #7A475B 0%, #653B4B 100%);
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: #ffffff;
   font-size: 0.85rem;
@@ -21024,14 +21024,14 @@ select.expense-input-control {
   padding: 0.75rem 1.25rem;
   border-radius: 12px;
   cursor: pointer;
-  box-shadow: 0 8px 20px rgba(109, 74, 255, 0.4);
+  box-shadow: 0 8px 20px rgba(101, 59, 75, 0.35);
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .gst-hero-btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 26px rgba(109, 74, 255, 0.5);
-  background: linear-gradient(135deg, #7c5cff 0%, #5850ec 100%);
+  box-shadow: 0 12px 26px rgba(101, 59, 75, 0.45);
+  background: linear-gradient(135deg, #653B4B 0%, #522E3C 100%);
 }
 
 .gst-hero-btn-secondary {
@@ -21065,13 +21065,13 @@ select.expense-input-control {
 
 .gst-kpi-card {
   background: #ffffff;
-  border: 1.5px solid #e2e8f0;
+  border: 1.5px solid #D9C8D0;
   border-radius: 14px;
   padding: 1.15rem 1.25rem;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  box-shadow: 0 2px 6px -2px rgba(49, 46, 129, 0.05);
+  box-shadow: 0 2px 6px -2px rgba(101, 59, 75, 0.05);
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   overflow: hidden;
@@ -21079,8 +21079,8 @@ select.expense-input-control {
 
 .gst-kpi-card:hover {
   transform: translateY(-3px);
-  border-color: #cbd5e1;
-  box-shadow: 0 10px 24px -6px rgba(49, 46, 129, 0.12);
+  border-color: #653B4B;
+  box-shadow: 0 10px 24px -6px rgba(101, 59, 75, 0.12);
 }
 
 .gst-kpi-card-top {
@@ -21143,17 +21143,17 @@ select.expense-input-control {
 
 /* Distinct Card Variants */
 .gst-kpi-card.output-gst {
-  border-color: #e0e7ff;
-  background: linear-gradient(180deg, #faf5ff 0%, #ffffff 100%);
+  border-color: #D9C8D0;
+  background: linear-gradient(180deg, #FAF6F8 0%, #ffffff 100%);
 }
 
 .gst-kpi-card.output-gst .gst-kpi-val {
-  color: #4f46e5;
+  color: #653B4B;
 }
 
 .gst-kpi-card.output-gst .gst-kpi-num-badge {
-  background: #e0e7ff;
-  color: #4338ca;
+  background: #F5ECF0;
+  color: #653B4B;
 }
 
 .gst-kpi-card.expense-gst {
@@ -21243,9 +21243,9 @@ select.expense-input-control {
 }
 
 .gst-status-badge.in-progress {
-  background: #e0e7ff;
-  color: #3730a3;
-  border: 1px solid #c7d2fe;
+  background: #F5ECF0;
+  color: #653B4B;
+  border: 1px solid #D9C8D0;
 }
 
 .gst-status-dot {
@@ -21255,13 +21255,13 @@ select.expense-input-control {
   background: currentColor;
 }
 
-/* Recommended GST Compliance Journey */
+/* Recommended GST Compliance Journey - Deep Burgundy Accents */
 .gst-journey-card {
   background: #ffffff;
-  border: 1.5px solid #e2e8f0;
+  border: 1.5px solid #D9C8D0;
   border-radius: 16px;
   padding: 1.5rem;
-  box-shadow: 0 4px 12px -2px rgba(49, 46, 129, 0.05);
+  box-shadow: 0 4px 12px -2px rgba(101, 59, 75, 0.05);
 }
 
 .gst-journey-header {
@@ -21274,7 +21274,7 @@ select.expense-input-control {
 .gst-journey-title {
   font-size: 1.05rem;
   font-weight: 800;
-  color: #1e1b4b;
+  color: #1A0F14;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -21283,7 +21283,7 @@ select.expense-input-control {
 
 .gst-journey-subtitle {
   font-size: 0.78rem;
-  color: #64748b;
+  color: #64555E;
   margin: 0;
 }
 
@@ -21294,8 +21294,8 @@ select.expense-input-control {
 }
 
 .gst-journey-step {
-  background: #f8faff;
-  border: 1.5px solid #e2e8f0;
+  background: #FAF6F8;
+  border: 1.5px solid #D9C8D0;
   border-radius: 14px;
   padding: 1.25rem;
   display: flex;
@@ -21308,9 +21308,9 @@ select.expense-input-control {
 
 .gst-journey-step:hover {
   background: #ffffff;
-  border-color: #a78bfa;
+  border-color: #653B4B;
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px -4px rgba(109, 74, 255, 0.12);
+  box-shadow: 0 8px 20px -4px rgba(101, 59, 75, 0.15);
 }
 
 .gst-journey-step-top {
@@ -21325,7 +21325,7 @@ select.expense-input-control {
   gap: 0.35rem;
   font-size: 0.72rem;
   font-weight: 800;
-  color: #6d4aff;
+  color: #653B4B;
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -21333,13 +21333,13 @@ select.expense-input-control {
 .gst-journey-step-title {
   font-size: 0.95rem;
   font-weight: 800;
-  color: #0f172a;
+  color: #1A0F14;
   margin: 0;
 }
 
 .gst-journey-step-desc {
   font-size: 0.78rem;
-  color: #64748b;
+  color: #64555E;
   line-height: 1.45;
   margin: 0;
 }
@@ -21349,8 +21349,8 @@ select.expense-input-control {
   align-items: center;
   gap: 0.4rem;
   background: #ffffff;
-  border: 1.5px solid #c7d2fe;
-  color: #4f46e5;
+  border: 1.5px solid #D9C8D0;
+  color: #653B4B;
   font-size: 0.78rem;
   font-weight: 800;
   padding: 0.55rem 0.95rem;
@@ -21361,8 +21361,8 @@ select.expense-input-control {
 }
 
 .gst-journey-action-btn:hover {
-  background: #4f46e5;
-  border-color: #4f46e5;
+  background: #653B4B;
+  border-color: #653B4B;
   color: #ffffff;
   gap: 0.6rem;
 }
@@ -21462,14 +21462,14 @@ select.expense-input-control {
   transform: translateY(-1px);
 }
 
-/* GSTR-3B Hero Net Tax Payable Card */
+/* GSTR-3B Hero Net Tax Payable Card - Deep Burgundy Palette */
 .gstr3b-hero-card {
   position: relative;
   overflow: hidden;
   border-radius: 20px;
-  background: linear-gradient(135deg, #090d16 0%, #1e1b4b 50%, #312e81 100%);
-  border: 1px solid rgba(167, 139, 250, 0.25);
-  box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.4);
+  background: linear-gradient(135deg, #1A0B12 0%, #2D1822 40%, #4A2433 75%, #653B4B 100%);
+  border: 1px solid rgba(232, 214, 222, 0.28);
+  box-shadow: 0 20px 40px -10px rgba(45, 24, 34, 0.45);
   padding: 1.75rem 2rem;
   color: #ffffff;
 }
@@ -21501,14 +21501,14 @@ select.expense-input-control {
   align-items: center;
   gap: 0.45rem;
   width: fit-content;
-  background: rgba(167, 139, 250, 0.2);
-  border: 1px solid rgba(167, 139, 250, 0.35);
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.22);
   padding: 0.3rem 0.75rem;
   border-radius: 9999px;
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.08em;
-  color: #c7d2fe;
+  color: #F9F5F7;
   text-transform: uppercase;
 }
 
@@ -21570,8 +21570,8 @@ select.expense-input-control {
 }
 
 .gstr3b-tax-split-item {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(232, 214, 222, 0.22);
   backdrop-filter: blur(8px);
   border-radius: 12px;
   padding: 0.75rem 1rem;
@@ -21583,7 +21583,7 @@ select.expense-input-control {
 .gstr3b-tax-split-label {
   font-size: 0.7rem;
   font-weight: 700;
-  color: #cbd5e1;
+  color: #F9F5F7;
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -21595,19 +21595,19 @@ select.expense-input-control {
   color: #ffffff;
 }
 
-/* Accredited Statutory Tables */
+/* Accredited Statutory Tables - Deep Burgundy Accents */
 .gstr3b-table-card {
   background: #ffffff;
-  border: 1.5px solid #e2e8f0;
+  border: 1.5px solid #D9C8D0;
   border-radius: 16px;
-  box-shadow: 0 4px 16px -2px rgba(49, 46, 129, 0.06);
+  box-shadow: 0 4px 16px -2px rgba(101, 59, 75, 0.08);
   overflow: hidden;
   margin-bottom: 1.5rem;
 }
 
 .gstr3b-table-header {
-  background: linear-gradient(180deg, #f8faff 0%, #f1f5f9 100%);
-  border-bottom: 1.5px solid #e2e8f0;
+  background: linear-gradient(180deg, #FAF6F8 0%, #F5ECF0 100%);
+  border-bottom: 1.5px solid #D9C8D0;
   padding: 1rem 1.5rem;
   display: flex;
   flex-direction: column;
@@ -21629,7 +21629,7 @@ select.expense-input-control {
 }
 
 .gstr3b-table-badge {
-  background: #6d4aff;
+  background: linear-gradient(135deg, #7A475B 0%, #653B4B 100%);
   color: #ffffff;
   font-size: 0.72rem;
   font-weight: 800;
@@ -21637,18 +21637,19 @@ select.expense-input-control {
   border-radius: 8px;
   letter-spacing: 0.02em;
   white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(101, 59, 75, 0.25);
 }
 
 .gstr3b-table-title {
   font-size: 1rem;
   font-weight: 800;
-  color: #0f172a;
+  color: #1A0F14;
   margin: 0;
 }
 
 .gstr3b-table-note {
   font-size: 0.76rem;
-  color: #64748b;
+  color: #64555E;
   margin: 0;
 }
 
@@ -21665,14 +21666,14 @@ select.expense-input-control {
 }
 
 .gstr3b-stat-table th {
-  background: #f8fafc;
+  background: #FAF6F8;
   color: #475569;
   font-size: 0.74rem;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   padding: 0.75rem 1rem;
-  border-bottom: 2px solid #e2e8f0;
+  border-bottom: 2px solid #D9C8D0;
   white-space: nowrap;
 }
 
@@ -21690,20 +21691,75 @@ select.expense-input-control {
 }
 
 .gstr3b-stat-table tbody tr:hover td {
-  background: #f8faff;
+  background: #FAF6F8;
 }
 
 /* Distinct Table Rows */
 .gstr3b-stat-table tr.section-header td {
-  background: #f5f3ff;
-  color: #4338ca;
+  background: #F5ECF0;
+  color: #522E3C;
   font-weight: 800;
   font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  border-top: 1.5px solid #e0e7ff;
-  border-bottom: 1.5px solid #e0e7ff;
+  border-top: 1.5px solid #D9C8D0;
+  border-bottom: 1.5px solid #D9C8D0;
   padding: 0.55rem 1rem;
+}
+
+/* Scoped GSTR-3B Header Controls & Buttons */
+.gstr3b-view-wrapper .gstr3b-header-card {
+  border: 1.5px solid #D9C8D0;
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(101, 59, 75, 0.05);
+}
+
+.gstr3b-view-wrapper .gst-period-picker-group {
+  background: #FAF6F8;
+  border: 1.5px solid #D9C8D0;
+}
+
+.gstr3b-view-wrapper .gst-period-label {
+  color: #653B4B;
+  font-weight: 800;
+}
+
+.gstr3b-view-wrapper .gst-period-nav-btn:hover {
+  background: #F5ECF0;
+  color: #653B4B;
+}
+
+.gstr3b-view-wrapper .gst-period-input {
+  color: #2D1822;
+  font-weight: 800;
+}
+
+.gstr3b-view-wrapper .gst-pill-btn {
+  border: 1.5px solid #D9C8D0;
+  color: #522E3C;
+  background: #ffffff;
+}
+
+.gstr3b-view-wrapper .gst-pill-btn:hover {
+  background: #FAF6F8;
+  border-color: #653B4B;
+  color: #653B4B;
+}
+
+.gstr3b-view-wrapper .gst-pill-btn:hover svg {
+  color: #653B4B !important;
+}
+
+.gstr3b-view-wrapper .gst-pill-btn.primary {
+  background: linear-gradient(135deg, #7A475B 0%, #653B4B 100%);
+  border-color: transparent;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(101, 59, 75, 0.25);
+}
+
+.gstr3b-view-wrapper .gst-pill-btn.primary:hover {
+  background: linear-gradient(135deg, #653B4B 0%, #522E3C 100%);
+  box-shadow: 0 6px 16px rgba(101, 59, 75, 0.35);
 }
 
 .gstr3b-stat-table tr.section-header.danger td {
@@ -22392,8 +22448,8 @@ select.expense-input-control {
 }
 
 .gstr3b-stat-table td.cash-paid-cell {
-  background: #faf5ff;
-  color: #4338ca;
+  background: #FAF6F8;
+  color: #653B4B;
   font-weight: 800;
   font-size: 0.9rem;
 }

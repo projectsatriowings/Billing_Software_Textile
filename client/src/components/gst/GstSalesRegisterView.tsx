@@ -411,12 +411,12 @@ export const GstSalesRegisterView: React.FC<GstSalesRegisterViewProps> = ({ onNa
             <div className="mt-1 text-xs text-slate-400">Before Tax</div>
           </div>
 
-          <div className="rounded-xl border border-indigo-200 bg-indigo-50/50 p-4 shadow-sm dark:border-indigo-800/40 dark:bg-indigo-950/20">
-            <div className="text-xs font-medium text-indigo-700 dark:text-indigo-300">Total Output GST</div>
-            <div className="mt-1 text-2xl font-bold text-indigo-600 dark:text-indigo-400">
+          <div className="rounded-xl border border-[#D9C8D0] bg-[#FAF6F8] p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div className="text-xs font-medium" style={{ color: '#653B4B' }}>Total Output GST</div>
+            <div className="mt-1 text-2xl font-bold" style={{ color: '#653B4B' }}>
               ₹{(data.summary.totalGstMinor / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
             </div>
-            <div className="mt-1 text-xs text-indigo-600/80">CGST + SGST + IGST</div>
+            <div className="mt-1 text-xs text-slate-500">CGST + SGST + IGST</div>
           </div>
 
           <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -498,7 +498,7 @@ export const GstSalesRegisterView: React.FC<GstSalesRegisterViewProps> = ({ onNa
                       <td className="p-3">
                         <span
                           className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${isB2B
-                            ? 'bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300'
+                            ? 'bg-[#F5ECF0] text-[#522E3C] border border-[#D9C8D0]'
                             : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300'
                             }`}
                         >

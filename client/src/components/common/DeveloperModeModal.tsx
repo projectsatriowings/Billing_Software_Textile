@@ -65,7 +65,7 @@ export const DeveloperModeModal: React.FC<DeveloperModeModalProps> = ({
       const res = await unlockDeveloperMode(passcode.trim());
       if (res && res.success) {
         if (showToast) {
-          showToast('Developer Mode unlocked! Advanced module settings enabled.', 'success');
+          showToast('Developer Mode unlocked! Payment gateways & module settings enabled.', 'success');
         }
         setPasscode('');
         if (onSuccess) onSuccess();
@@ -112,7 +112,7 @@ export const DeveloperModeModal: React.FC<DeveloperModeModalProps> = ({
             <span className="dev-modal-title-pill">Admin</span>
           </h2>
           <p className="dev-modal-subtitle">
-            Advanced System Configuration & Module Management
+            Advanced System Configuration, Payment Gateways & Module Management
           </p>
         </div>
 

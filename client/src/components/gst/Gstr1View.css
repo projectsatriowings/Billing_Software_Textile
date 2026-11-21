@@ -1,0 +1,715 @@
+/* ==========================================================================
+   GSTR-1 OUTWARD SUPPLIES - BENTO STYLE LAYOUT DESIGN
+   Features: 3D Layered Shadows, Tactile Squircle Icons, Hover Elevations,
+   Glassmorphic Header Controls, and Modular Responsive Bento Grids.
+   ========================================================================== */
+
+.gstr1-bento-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: 100%;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #0f172a;
+  box-sizing: border-box;
+}
+
+/* ── 1. TOP CONTROL BAR (ELEVATED 3D BENTO STRIP) ── */
+.gstr1-control-bar {
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 18px;
+  padding: 0.95rem 1.35rem;
+  box-shadow: 0 4px 18px -2px rgba(15, 23, 42, 0.04), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.gstr1-control-bar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #0f766e 0%, #14b8a6 50%, #653B4B 100%);
+}
+
+.gstr1-control-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.gstr1-action-btn-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.95rem;
+  border-radius: 12px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #0f766e;
+  background: #f0fdfa;
+  border: 1px solid #ccfbf1;
+  box-shadow: 0 1px 3px rgba(15, 118, 110, 0.08);
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  font-family: inherit;
+}
+
+.gstr1-action-btn-outline:hover {
+  background: #ccfbf1;
+  color: #115e59;
+  border-color: #99f6e4;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.18);
+}
+
+.gstr1-action-btn-outline:active {
+  transform: translateY(0);
+}
+
+.gstr1-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.32rem 0.75rem;
+  border-radius: 9999px;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #065f46;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.gstr1-pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+  animation: gstr1Pulse 2s infinite;
+}
+
+@keyframes gstr1Pulse {
+  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+  70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.gstr1-control-right {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+
+.gstr1-period-picker-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 0.35rem 0.75rem;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  transition: all 0.2s ease;
+}
+
+.gstr1-period-picker-wrap:focus-within {
+  border-color: #0f766e;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
+  background: #ffffff;
+}
+
+.gstr1-period-label {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.gstr1-month-input {
+  border: none;
+  background: transparent;
+  color: #0f172a;
+  font-size: 0.84rem;
+  font-weight: 600;
+  font-family: inherit;
+  outline: none;
+  cursor: pointer;
+}
+
+.gstr1-export-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.55rem 1.15rem;
+  border-radius: 12px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #ffffff;
+  background: linear-gradient(135deg, #0f766e 0%, #0d9488 100%);
+  border: 1px solid #0f766e;
+  box-shadow: 0 3px 12px rgba(15, 118, 110, 0.28), 0 1px 3px rgba(15, 118, 110, 0.15);
+  cursor: pointer;
+  transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+  font-family: inherit;
+}
+
+.gstr1-export-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(15, 118, 110, 0.38), 0 2px 5px rgba(15, 118, 110, 0.2);
+  background: linear-gradient(135deg, #115e59 0%, #0f766e 100%);
+}
+
+.gstr1-export-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.gstr1-export-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ── 2. EXECUTIVE BENTO KPI OVERVIEW (4-CARD BALANCED GRID) ── */
+.gstr1-kpi-bento-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  width: 100%;
+}
+
+@media (max-width: 1080px) {
+  .gstr1-kpi-bento-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .gstr1-kpi-bento-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.gstr1-kpi-tile {
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.85);
+  border-radius: 20px;
+  padding: 1.25rem 1.35rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03), 0 8px 24px -4px rgba(15, 23, 42, 0.05);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.28s ease;
+  cursor: default;
+}
+
+/* 3D Hover Lift & Ambient Glow */
+.gstr1-kpi-tile:hover {
+  transform: translateY(-4px);
+  border-color: rgba(15, 118, 110, 0.3);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05), 0 16px 32px -6px rgba(15, 23, 42, 0.1);
+}
+
+.gstr1-kpi-tile::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: transparent;
+  transition: background 0.2s ease;
+}
+
+/* Individual Color Accents for Bento Tiles */
+.gstr1-kpi-tile.tile-turnover::after { background: linear-gradient(90deg, #0f766e, #14b8a6); }
+.gstr1-kpi-tile.tile-turnover:hover { box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04), 0 18px 36px -6px rgba(15, 118, 110, 0.18); }
+
+.gstr1-kpi-tile.tile-b2b::after { background: linear-gradient(90deg, #7A475B, #653B4B); }
+.gstr1-kpi-tile.tile-b2b:hover { box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04), 0 18px 36px -6px rgba(101, 59, 75, 0.18); }
+
+.gstr1-kpi-tile.tile-b2c::after { background: linear-gradient(90deg, #0284c7, #38bdf8); }
+.gstr1-kpi-tile.tile-b2c:hover { box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04), 0 18px 36px -6px rgba(2, 132, 199, 0.18); }
+
+.gstr1-kpi-tile.tile-tax::after { background: linear-gradient(90deg, #653B4B, #522E3C); }
+.gstr1-kpi-tile.tile-tax:hover { box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04), 0 18px 36px -6px rgba(101, 59, 75, 0.18); }
+
+.gstr1-kpi-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.9rem;
+}
+
+.gstr1-kpi-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.gstr1-kpi-tile:hover .gstr1-kpi-icon-box {
+  transform: scale(1.08) rotate(-2deg);
+}
+
+.icon-box-emerald {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  color: #0f766e;
+  border-color: #bbf7d0;
+}
+
+.icon-box-indigo {
+  background: linear-gradient(135deg, #FAF6F8 0%, #F5ECF0 100%);
+  color: #653B4B;
+  border-color: #D9C8D0;
+}
+
+.icon-box-sky {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  color: #0284c7;
+  border-color: #bae6fd;
+}
+
+.icon-box-purple {
+  background: linear-gradient(135deg, #FAF6F8 0%, #F5ECF0 100%);
+  color: #522E3C;
+  border-color: #D9C8D0;
+}
+
+.gstr1-kpi-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.22rem 0.55rem;
+  border-radius: 9999px;
+  background: #f8fafc;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+.gstr1-kpi-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.35rem;
+}
+
+.gstr1-kpi-val {
+  font-size: 1.55rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  font-family: inherit;
+}
+
+.gstr1-kpi-footer {
+  margin-top: 0.85rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid #f1f5f9;
+  font-size: 0.74rem;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.gstr1-tax-chips {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+
+.gstr1-tax-chip {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.15rem 0.45rem;
+  border-radius: 6px;
+  background: #f1f5f9;
+  color: #475569;
+}
+
+/* ── 3. MAIN BENTO SECTION CONTAINERS (TABLE 4 & TABLE 7) ── */
+.gstr1-bento-card {
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 22px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03), 0 10px 28px -5px rgba(15, 23, 42, 0.06);
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.28s ease;
+}
+
+.gstr1-bento-card:hover {
+  border-color: rgba(15, 118, 110, 0.25);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04), 0 16px 36px -6px rgba(15, 23, 42, 0.09);
+}
+
+.gstr1-bento-header {
+  padding: 1.2rem 1.6rem;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%);
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.gstr1-bento-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.gstr1-section-icon-box {
+  width: 42px;
+  height: 42px;
+  border-radius: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.05);
+}
+
+.gstr1-bento-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.015em;
+  margin: 0;
+}
+
+.gstr1-bento-subtitle {
+  font-size: 0.76rem;
+  color: #64748b;
+  margin: 0.2rem 0 0 0;
+  font-weight: 500;
+}
+
+.gstr1-bento-header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+
+.gstr1-search-input-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.gstr1-search-icon {
+  position: absolute;
+  left: 0.75rem;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.gstr1-search-input {
+  padding: 0.42rem 0.75rem 0.42rem 2.2rem;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #0f172a;
+  font-size: 0.8rem;
+  font-family: inherit;
+  outline: none;
+  width: 220px;
+  transition: all 0.2s ease;
+}
+
+.gstr1-search-input:focus {
+  background: #ffffff;
+  border-color: #0f766e;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
+  width: 260px;
+}
+
+.gstr1-count-chip {
+  background: #f0fdfa;
+  color: #0f766e;
+  border: 1px solid #ccfbf1;
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 0.35rem 0.8rem;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  box-shadow: 0 1px 3px rgba(15, 118, 110, 0.08);
+}
+
+/* ── 4. TABLE 4 STYLING WITH 3D DEPTH & HOVER HIGHLIGHT ── */
+.gstr1-table-scroll {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.gstr1-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  text-align: left;
+  font-size: 0.8rem;
+}
+
+.gstr1-table th {
+  padding: 0.75rem 1.15rem;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+.gstr1-table td {
+  padding: 0.85rem 1.15rem;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+  transition: background 0.15s ease, transform 0.15s ease;
+  white-space: nowrap;
+}
+
+.gstr1-table tbody tr {
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.gstr1-table tbody tr:hover {
+  background: #f0fdfa;
+}
+
+.gstr1-table tbody tr:hover td {
+  color: #0f172a;
+}
+
+.gstr1-inv-pill {
+  display: inline-flex;
+  align-items: center;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-weight: 700;
+  color: #0f766e;
+  background: #ccfbf1;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  border: 1px solid #99f6e4;
+  font-size: 0.78rem;
+}
+
+.gstr1-gstin-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-weight: 600;
+  color: #475569;
+  background: #f1f5f9;
+  padding: 0.18rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.76rem;
+  letter-spacing: 0.02em;
+}
+
+.gstr1-table tfoot td {
+  padding: 0.95rem 1.15rem;
+  background: #f8fafc;
+  color: #0f172a;
+  font-weight: 800;
+  border-top: 2px solid #e2e8f0;
+  border-bottom: none;
+}
+
+/* ── 5. TABLE 7 B2C 4-TILE BENTO GRID WITH 3D HOVER SHADOWS ── */
+.gstr1-b2c-bento-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.15rem;
+  padding: 1.4rem 1.6rem;
+  background: #ffffff;
+}
+
+@media (max-width: 1080px) {
+  .gstr1-b2c-bento-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .gstr1-b2c-bento-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.gstr1-b2c-card {
+  border-radius: 18px;
+  padding: 1.25rem 1.35rem;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.02), 0 6px 18px -3px rgba(15, 23, 42, 0.04);
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.28s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 3D Bento Hover Effect */
+.gstr1-b2c-card:hover {
+  transform: translateY(-4px) scale(1.01);
+}
+
+.gstr1-b2c-card.card-amber {
+  background: linear-gradient(145deg, #ffffff 0%, #fffdfa 60%, #fffbeb 100%);
+  border-color: #fef3c7;
+}
+.gstr1-b2c-card.card-amber:hover {
+  border-color: #fde68a;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.08), 0 18px 36px -6px rgba(245, 158, 11, 0.22);
+}
+
+.gstr1-b2c-card.card-teal {
+  background: linear-gradient(145deg, #ffffff 0%, #fafdfd 60%, #f0fdfa 100%);
+  border-color: #ccfbf1;
+}
+.gstr1-b2c-card.card-teal:hover {
+  border-color: #99f6e4;
+  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.08), 0 18px 36px -6px rgba(15, 118, 110, 0.22);
+}
+
+.gstr1-b2c-card.card-indigo {
+  background: linear-gradient(145deg, #ffffff 0%, #FAF6F8 60%, #F5ECF0 100%);
+  border-color: #D9C8D0;
+}
+.gstr1-b2c-card.card-indigo:hover {
+  border-color: #653B4B;
+  box-shadow: 0 4px 12px rgba(101, 59, 75, 0.08), 0 18px 36px -6px rgba(101, 59, 75, 0.22);
+}
+
+.gstr1-b2c-card.card-purple {
+  background: linear-gradient(145deg, #ffffff 0%, #FAF6F8 60%, #F5ECF0 100%);
+  border-color: #D9C8D0;
+}
+.gstr1-b2c-card.card-purple:hover {
+  border-color: #522E3C;
+  box-shadow: 0 4px 12px rgba(101, 59, 75, 0.08), 0 18px 36px -6px rgba(101, 59, 75, 0.22);
+}
+
+.gstr1-b2c-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.95rem;
+}
+
+.gstr1-b2c-icon-badge {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.gstr1-b2c-card:hover .gstr1-b2c-icon-badge {
+  transform: scale(1.1) rotate(-3deg);
+}
+
+.badge-amber {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.badge-teal {
+  background: #ccfbf1;
+  color: #0f766e;
+}
+
+.badge-indigo {
+  background: #F5ECF0;
+  color: #653B4B;
+}
+
+.badge-purple {
+  background: #F5ECF0;
+  color: #522E3C;
+}
+
+.gstr1-b2c-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.35rem;
+}
+
+.gstr1-b2c-val {
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+}
+
+.gstr1-b2c-desc {
+  margin-top: 0.65rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid rgba(226, 232, 240, 0.6);
+  font-size: 0.72rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* ── 6. EMPTY STATE & SPINNERS ── */
+.gstr1-empty-state {
+  padding: 3rem 1.5rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+}
+
+.gstr1-empty-icon-box {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: #f8fafc;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.85rem;
+  border: 1px solid #e2e8f0;
+}
