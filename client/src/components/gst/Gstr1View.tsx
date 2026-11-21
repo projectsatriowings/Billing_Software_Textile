@@ -1,6 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { fetchGstSalesRegister, downloadFile } from '../../api.ts';
-import { DownloadIcon, SpinnerIcon, AlertTriangleIcon } from './GstIcons.tsx';
+import {
+  TrendingUp,
+  Building2,
+  ShoppingBag,
+  Scale,
+  Search,
+  FileSpreadsheet,
+  Download,
+  Calendar,
+  AlertTriangle,
+  Receipt,
+  FileText,
+  CheckCircle2,
+  Sparkles,
+} from 'lucide-react';
+import { SpinnerIcon } from './GstIcons.tsx';
+import './Gstr1View.css';
 
 interface Gstr1ViewProps {
   onNavigate?: (tab: string, meta?: any) => void;
@@ -12,6 +28,7 @@ export const Gstr1View: React.FC<Gstr1ViewProps> = ({ onNavigate }) => {
   const [exporting, setExporting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [salesData, setSalesData] = useState<any>(null);
+  const [b2bSearch, setB2bSearch] = useState<string>('');
 
   useEffect(() => {
     const load = async () => {
@@ -29,41 +46,85 @@ export const Gstr1View: React.FC<Gstr1ViewProps> = ({ onNavigate }) => {
     load();
   }, [period]);
 
-  const b2bInvoices = (salesData?.invoices || []).filter((inv: any) => Boolean(inv.customerGstin));
-  const b2cInvoices = (salesData?.invoices || []).filter((inv: any) => !inv.customerGstin);
+  const b2bInvoices = useMemo(
+    () => (salesData?.invoices || []).filter((inv: any) => Boolean(inv.customerGstin)),
+    [salesData]
+  );
+  const b2cInvoices = useMemo(
+    () => (salesData?.invoices || []).filter((inv: any) => !inv.customerGstin),
+    [salesData]
+  );
 
+  // Filtered B2B based on live search
+  const filteredB2bInvoices = useMemo(() => {
+    if (!b2bSearch.trim()) return b2bInvoices;
+    const q = b2bSearch.toLowerCase().trim();
+    return b2bInvoices.filter(
+      (inv: any) =>
+        (inv.invoiceNumber || '').toLowerCase().includes(q) ||
+        (inv.customerName || '').toLowerCase().includes(q) ||
+        (inv.customerGstin || '').toLowerCase().includes(q)
+    );
+  }, [b2bInvoices, b2bSearch]);
+
+  // B2B Aggregates
   const b2bTaxable = b2bInvoices.reduce((acc: number, inv: any) => acc + (inv.taxableMinor || 0), 0);
   const b2bCgst = b2bInvoices.reduce((acc: number, inv: any) => acc + (inv.cgstMinor || 0), 0);
   const b2bSgst = b2bInvoices.reduce((acc: number, inv: any) => acc + (inv.sgstMinor || 0), 0);
   const b2bIgst = b2bInvoices.reduce((acc: number, inv: any) => acc + (inv.igstMinor || 0), 0);
+  const b2bTotal = b2bInvoices.reduce((acc: number, inv: any) => acc + (inv.totalMinor || 0), 0);
 
+  // B2C Aggregates
   const b2cTaxable = b2cInvoices.reduce((acc: number, inv: any) => acc + (inv.taxableMinor || 0), 0);
   const b2cCgst = b2cInvoices.reduce((acc: number, inv: any) => acc + (inv.cgstMinor || 0), 0);
   const b2cSgst = b2cInvoices.reduce((acc: number, inv: any) => acc + (inv.sgstMinor || 0), 0);
   const b2cIgst = b2cInvoices.reduce((acc: number, inv: any) => acc + (inv.igstMinor || 0), 0);
+  const b2cTotal = b2cInvoices.reduce((acc: number, inv: any) => acc + (inv.totalMinor || 0), 0);
+
+  // Grand Totals
+  const grandTaxable = b2bTaxable + b2cTaxable;
+  const grandCgst = b2bCgst + b2cCgst;
+  const grandSgst = b2bSgst + b2cSgst;
+  const grandIgst = b2bIgst + b2cIgst;
+  const grandTax = grandCgst + grandSgst + grandIgst;
+  const totalBillsCount = b2bInvoices.length + b2cInvoices.length;
+
+  const formatRupees = (minor: number) => {
+    return '₹' + (minor / 100).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
 
   return (
-    <div className="space-y-6">
-      {/* Filter & Export Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        {onNavigate && (
-          <button
-            type="button"
-            onClick={() => onNavigate('gst-sales-register')}
-            className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-indigo-700 shadow-sm hover:bg-indigo-50 dark:border-slate-700 dark:bg-slate-800 dark:text-indigo-400"
-            title="Open invoice-by-invoice detailed outward register"
-          >
-            📋 Itemized Sales Register
-          </button>
-        )}
-        <div className="flex flex-wrap items-center gap-3 ml-auto">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Return Period:</span>
+    <div className="gstr1-bento-container">
+      {/* ── 1. TOP CONTROL BAR ── */}
+      <div className="gstr1-control-bar">
+        <div className="gstr1-control-left">
+          {onNavigate && (
+            <button
+              type="button"
+              onClick={() => onNavigate('gst-sales-register')}
+              className="gstr1-action-btn-outline"
+              title="Open invoice-by-invoice detailed outward register"
+            >
+              <FileSpreadsheet size={16} />
+              <span>Itemized Sales Register</span>
+            </button>
+          )}
+
+          <div className="gstr1-status-pill">
+            <span className="gstr1-pulse-dot" />
+            <span>GSTR-1 Outward Filing</span>
+          </div>
+        </div>
+
+        <div className="gstr1-control-right">
+          <div className="gstr1-period-picker-wrap">
+            <Calendar size={15} className="text-slate-500" />
+            <span className="gstr1-period-label">Return Period:</span>
             <input
               type="month"
               value={period}
               onChange={(e) => setPeriod(e.target.value)}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+              className="gstr1-month-input"
             />
           </div>
 
@@ -83,86 +144,246 @@ export const Gstr1View: React.FC<Gstr1ViewProps> = ({ onNavigate }) => {
               }
             }}
             disabled={exporting}
-            className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+            className="gstr1-export-btn"
           >
-            <span className="inline-flex items-center">{exporting ? <SpinnerIcon size={15} /> : <DownloadIcon size={15} />}</span> {exporting ? 'Exporting...' : 'Download GSTR-1 CSV'}
+            {exporting ? <SpinnerIcon size={16} /> : <Download size={16} />}
+            <span>{exporting ? 'Generating CSV...' : 'Download GSTR-1 CSV'}</span>
           </button>
         </div>
       </div>
 
       {loading ? (
-        <div className="flex h-48 items-center justify-center gap-2 text-sm text-slate-500">
-          <SpinnerIcon size={18} /> Loading GSTR-1 worksheets...
+        <div className="gstr1-bento-card gstr1-empty-state">
+          <div className="gstr1-empty-icon-box">
+            <SpinnerIcon size={24} />
+          </div>
+          <div className="text-sm font-bold text-slate-800">Loading GSTR-1 Return Worksheets...</div>
+          <div className="text-xs text-slate-500 mt-1">Aggregating Table 4 (B2B) and Table 7 (B2C) sales for {period}</div>
         </div>
       ) : error ? (
-        <div className="flex items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 p-6 text-center text-sm font-semibold text-rose-700">
-          <AlertTriangleIcon size={16} /> <span>{error}</span>
+        <div className="gstr1-bento-card p-6 flex items-center gap-3 border-rose-200 bg-rose-50/60 text-rose-800">
+          <AlertTriangle size={24} className="text-rose-600 flex-shrink-0" />
+          <div>
+            <div className="text-sm font-bold">Failed to load GSTR-1 worksheets</div>
+            <div className="text-xs text-rose-600 mt-0.5">{error}</div>
+          </div>
         </div>
       ) : (
-        <div className="space-y-6">
-          {/* Section 4: B2B Invoices */}
-          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-6 py-3.5 dark:border-slate-800 dark:bg-slate-800/60">
+        <>
+          {/* ── 2. EXECUTIVE BENTO KPI OVERVIEW (4 TILES) ── */}
+          <div className="gstr1-kpi-bento-grid">
+            {/* Bento Tile 1: Total Taxable Turnover */}
+            <div className="gstr1-kpi-tile tile-turnover">
               <div>
-                <h1 className="text-sm font-bold text-slate-900 dark:text-white">
-                  Table 4: B2B Invoices (Supplies to Registered Persons)
-                </h1>
-                <p className="text-xs text-slate-500">Invoices containing valid recipient GSTIN</p>
+                <div className="gstr1-kpi-top">
+                  <div className="gstr1-kpi-icon-box icon-box-emerald">
+                    <TrendingUp size={22} />
+                  </div>
+                  <span className="gstr1-kpi-badge font-mono">Table 4 + 7</span>
+                </div>
+                <div className="gstr1-kpi-label">Total Taxable Turnover</div>
+                <div className="gstr1-kpi-val text-emerald-800 font-mono">
+                  {formatRupees(grandTaxable)}
+                </div>
               </div>
-              <div className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
-                {b2bInvoices.length} Invoices · Taxable: ₹{(b2bTaxable / 100).toFixed(2)}
+              <div className="gstr1-kpi-footer">
+                <span>{totalBillsCount} total invoices / bills</span>
+                <span className="font-semibold text-emerald-700">Gross: {formatRupees(grandTaxable + grandTax)}</span>
+              </div>
+            </div>
+
+            {/* Bento Tile 2: Table 4 B2B Commercial Invoices */}
+            <div className="gstr1-kpi-tile tile-b2b">
+              <div>
+                <div className="gstr1-kpi-top">
+                  <div className="gstr1-kpi-icon-box icon-box-indigo">
+                    <Building2 size={22} />
+                  </div>
+                  <span className="gstr1-kpi-badge font-mono">Table 4</span>
+                </div>
+                <div className="gstr1-kpi-label">B2B Registered Invoices</div>
+                <div className="gstr1-kpi-val text-indigo-700 font-mono">
+                  {formatRupees(b2bTaxable)}
+                </div>
+              </div>
+              <div className="gstr1-kpi-footer">
+                <span>{b2bInvoices.length} Registered Buyers (GSTIN)</span>
+                <span className="font-semibold text-indigo-600">Tax: {formatRupees(b2bCgst + b2bSgst + b2bIgst)}</span>
+              </div>
+            </div>
+
+            {/* Bento Tile 3: Table 7 B2C Retail Sales */}
+            <div className="gstr1-kpi-tile tile-b2c">
+              <div>
+                <div className="gstr1-kpi-top">
+                  <div className="gstr1-kpi-icon-box icon-box-sky">
+                    <ShoppingBag size={22} />
+                  </div>
+                  <span className="gstr1-kpi-badge font-mono">Table 7</span>
+                </div>
+                <div className="gstr1-kpi-label">B2C Retail Consumer Sales</div>
+                <div className="gstr1-kpi-val text-sky-800 font-mono">
+                  {formatRupees(b2cTaxable)}
+                </div>
+              </div>
+              <div className="gstr1-kpi-footer">
+                <span>{b2cInvoices.length} Counter Sales</span>
+                <span className="font-semibold text-sky-700">Tax: {formatRupees(b2cCgst + b2cSgst + b2cIgst)}</span>
+              </div>
+            </div>
+
+            {/* Bento Tile 4: Total Tax Liability */}
+            <div className="gstr1-kpi-tile tile-tax">
+              <div>
+                <div className="gstr1-kpi-top">
+                  <div className="gstr1-kpi-icon-box icon-box-purple">
+                    <Scale size={22} />
+                  </div>
+                  <span className="gstr1-kpi-badge font-mono">Total Tax</span>
+                </div>
+                <div className="gstr1-kpi-label">Total GST Output Liability</div>
+                <div className="gstr1-kpi-val text-purple-700 font-mono">
+                  {formatRupees(grandTax)}
+                </div>
+              </div>
+              <div className="gstr1-tax-chips">
+                <span className="gstr1-tax-chip">CGST: {formatRupees(grandCgst)}</span>
+                <span className="gstr1-tax-chip">SGST: {formatRupees(grandSgst)}</span>
+                {grandIgst > 0 && <span className="gstr1-tax-chip">IGST: {formatRupees(grandIgst)}</span>}
+              </div>
+            </div>
+          </div>
+
+          {/* ── 3. TABLE 4: B2B INVOICES BENTO CARD ── */}
+          <div className="gstr1-bento-card">
+            <div className="gstr1-bento-header">
+              <div className="gstr1-bento-header-left">
+                <div className="gstr1-section-icon-box icon-box-indigo">
+                  <Building2 size={20} />
+                </div>
+                <div>
+                  <h2 className="gstr1-bento-title">Table 4: B2B Invoices (Supplies to Registered Persons)</h2>
+                  <p className="gstr1-bento-subtitle">Invoices containing valid recipient GSTIN for GSTR-1 e-filing</p>
+                </div>
+              </div>
+
+              <div className="gstr1-bento-header-right">
+                <div className="gstr1-search-input-wrap">
+                  <Search size={14} className="gstr1-search-icon" />
+                  <input
+                    type="text"
+                    value={b2bSearch}
+                    onChange={(e) => setB2bSearch(e.target.value)}
+                    placeholder="Search invoice, customer, GSTIN..."
+                    className="gstr1-search-input"
+                  />
+                </div>
+
+                <div className="gstr1-count-chip">
+                  <span>{b2bInvoices.length} Invoices</span>
+                  <span>·</span>
+                  <span className="font-mono">Taxable: {formatRupees(b2bTaxable)}</span>
+                </div>
               </div>
             </div>
 
             {b2bInvoices.length === 0 ? (
-              <div className="p-6 text-center text-xs text-slate-500">
-                No B2B invoices recorded in this period.
+              <div className="gstr1-empty-state">
+                <div className="gstr1-empty-icon-box">
+                  <FileText size={24} />
+                </div>
+                <div className="text-sm font-semibold text-slate-700">No B2B Invoices in this Period</div>
+                <div className="text-xs text-slate-400 mt-1">Invoices issued to registered business customers with GSTIN will appear here.</div>
+              </div>
+            ) : filteredB2bInvoices.length === 0 ? (
+              <div className="gstr1-empty-state">
+                <div className="gstr1-empty-icon-box">
+                  <Search size={24} />
+                </div>
+                <div className="text-sm font-semibold text-slate-700">No Invoices Match "{b2bSearch}"</div>
+                <button
+                  type="button"
+                  onClick={() => setB2bSearch('')}
+                  className="mt-2 text-xs font-bold text-teal-700 hover:underline"
+                >
+                  Clear search filter
+                </button>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs font-mono">
-                  <thead className="border-b border-slate-200 bg-slate-100/50 font-sans font-semibold text-slate-600 dark:border-slate-800 dark:bg-slate-800/40 dark:text-slate-300">
+              <div className="gstr1-table-scroll">
+                <table className="gstr1-table">
+                  <thead>
                     <tr>
-                      <th className="py-2.5 px-4">Invoice #</th>
-                      <th className="py-2.5 px-4">Date</th>
-                      <th className="py-2.5 px-4 font-sans">Customer</th>
-                      <th className="py-2.5 px-4">GSTIN</th>
-                      <th className="py-2.5 px-4 text-right">Taxable Value</th>
-                      <th className="py-2.5 px-4 text-right">CGST</th>
-                      <th className="py-2.5 px-4 text-right">SGST</th>
-                      <th className="py-2.5 px-4 text-right">IGST</th>
-                      <th className="py-2.5 px-4 text-right font-bold">Total</th>
+                      <th>Invoice #</th>
+                      <th>Date</th>
+                      <th>Customer Name</th>
+                      <th>Recipient GSTIN</th>
+                      <th style={{ textAlign: 'right' }}>Taxable Value</th>
+                      <th style={{ textAlign: 'right' }}>CGST</th>
+                      <th style={{ textAlign: 'right' }}>SGST</th>
+                      <th style={{ textAlign: 'right' }}>IGST</th>
+                      <th style={{ textAlign: 'right', fontWeight: 800 }}>Invoice Total</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
-                    {b2bInvoices.map((inv: any) => (
-                      <tr key={inv.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40">
-                        <td className="py-2.5 px-4 font-semibold text-indigo-600 dark:text-indigo-400">
-                          {inv.invoiceNumber}
+                  <tbody>
+                    {filteredB2bInvoices.map((inv: any) => (
+                      <tr key={inv.id || inv.invoiceNumber}>
+                        <td>
+                          <span className="gstr1-inv-pill">{inv.invoiceNumber}</span>
                         </td>
-                        <td className="py-2.5 px-4 text-slate-500">{inv.invoiceDate}</td>
-                        <td className="py-2.5 px-4 font-sans font-medium text-slate-900 dark:text-slate-100">
-                          {inv.customerName}
+                        <td className="font-mono text-slate-500">{inv.invoiceDate}</td>
+                        <td className="font-semibold text-slate-800">{inv.customerName || '—'}</td>
+                        <td>
+                          <span className="gstr1-gstin-code">{inv.customerGstin}</span>
                         </td>
-                        <td className="py-2.5 px-4 text-slate-700 dark:text-slate-300">{inv.customerGstin}</td>
-                        <td className="py-2.5 px-4 text-right">₹{(inv.taxableMinor / 100).toFixed(2)}</td>
-                        <td className="py-2.5 px-4 text-right">₹{(inv.cgstMinor / 100).toFixed(2)}</td>
-                        <td className="py-2.5 px-4 text-right">₹{(inv.sgstMinor / 100).toFixed(2)}</td>
-                        <td className="py-2.5 px-4 text-right">₹{(inv.igstMinor / 100).toFixed(2)}</td>
-                        <td className="py-2.5 px-4 text-right font-bold text-slate-900 dark:text-white">
-                          ₹{(inv.totalMinor / 100).toFixed(2)}
+                        <td style={{ textAlign: 'right', fontFamily: 'monospace' }}>
+                          {formatRupees(inv.taxableMinor || 0)}
+                        </td>
+                        <td style={{ textAlign: 'right', fontFamily: 'monospace', color: '#4f46e5' }}>
+                          {formatRupees(inv.cgstMinor || 0)}
+                        </td>
+                        <td style={{ textAlign: 'right', fontFamily: 'monospace', color: '#4f46e5' }}>
+                          {formatRupees(inv.sgstMinor || 0)}
+                        </td>
+                        <td style={{ textAlign: 'right', fontFamily: 'monospace' }}>
+                          {formatRupees(inv.igstMinor || 0)}
+                        </td>
+                        <td style={{ textAlign: 'right', fontFamily: 'monospace', fontWeight: 800, color: '#0f172a' }}>
+                          {formatRupees(inv.totalMinor || 0)}
                         </td>
                       </tr>
                     ))}
                   </tbody>
-                  <tfoot className="border-t border-slate-200 bg-slate-50 font-bold dark:border-slate-800 dark:bg-slate-800/60">
+                  <tfoot>
                     <tr>
-                      <td colSpan={4} className="py-2.5 px-4 font-sans">Total B2B</td>
-                      <td className="py-2.5 px-4 text-right">₹{(b2bTaxable / 100).toFixed(2)}</td>
-                      <td className="py-2.5 px-4 text-right">₹{(b2bCgst / 100).toFixed(2)}</td>
-                      <td className="py-2.5 px-4 text-right">₹{(b2bSgst / 100).toFixed(2)}</td>
-                      <td className="py-2.5 px-4 text-right">₹{(b2bIgst / 100).toFixed(2)}</td>
-                      <td className="py-2.5 px-4 text-right">₹{((b2bTaxable + b2bCgst + b2bSgst + b2bIgst) / 100).toFixed(2)}</td>
+                      <td colSpan={4}>
+                        Total B2B ({filteredB2bInvoices.length} invoices)
+                      </td>
+                      <td style={{ textAlign: 'right', fontFamily: 'monospace' }}>
+                        {formatRupees(
+                          filteredB2bInvoices.reduce((acc: number, i: any) => acc + (i.taxableMinor || 0), 0)
+                        )}
+                      </td>
+                      <td style={{ textAlign: 'right', fontFamily: 'monospace', color: '#4f46e5' }}>
+                        {formatRupees(
+                          filteredB2bInvoices.reduce((acc: number, i: any) => acc + (i.cgstMinor || 0), 0)
+                        )}
+                      </td>
+                      <td style={{ textAlign: 'right', fontFamily: 'monospace', color: '#4f46e5' }}>
+                        {formatRupees(
+                          filteredB2bInvoices.reduce((acc: number, i: any) => acc + (i.sgstMinor || 0), 0)
+                        )}
+                      </td>
+                      <td style={{ textAlign: 'right', fontFamily: 'monospace' }}>
+                        {formatRupees(
+                          filteredB2bInvoices.reduce((acc: number, i: any) => acc + (i.igstMinor || 0), 0)
+                        )}
+                      </td>
+                      <td style={{ textAlign: 'right', fontFamily: 'monospace', fontWeight: 800 }}>
+                        {formatRupees(
+                          filteredB2bInvoices.reduce((acc: number, i: any) => acc + (i.totalMinor || 0), 0)
+                        )}
+                      </td>
                     </tr>
                   </tfoot>
                 </table>
@@ -170,48 +391,115 @@ export const Gstr1View: React.FC<Gstr1ViewProps> = ({ onNavigate }) => {
             )}
           </div>
 
-          {/* Table 7: B2C (Others) Summary */}
-          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <div className="border-b border-slate-200 bg-slate-50 px-6 py-3.5 dark:border-slate-800 dark:bg-slate-800/60">
-              <h2 className="text-sm font-bold text-slate-900 dark:text-white">
-                Table 7: B2C (Others) — Supplies to Unregistered Consumers
-              </h2>
-              <p className="text-xs text-slate-500">Consolidated counter/retail retail sales</p>
+          {/* ── 4. TABLE 7: B2C (OTHERS) BENTO CARD & 4-TILE BENTO GRID ── */}
+          <div className="gstr1-bento-card">
+            <div className="gstr1-bento-header">
+              <div className="gstr1-bento-header-left">
+                <div className="gstr1-section-icon-box icon-box-sky">
+                  <Receipt size={20} />
+                </div>
+                <div>
+                  <h2 className="gstr1-bento-title">Table 7: B2C (Others) — Supplies to Unregistered Consumers</h2>
+                  <p className="gstr1-bento-subtitle">Consolidated retail counter transactions without customer GSTIN</p>
+                </div>
+              </div>
+
+              <div className="gstr1-bento-header-right">
+                <span className="gstr1-count-chip">
+                  <Sparkles size={13} />
+                  <span>Consolidated Counter Sales</span>
+                </span>
+              </div>
             </div>
-            <div className="p-6">
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-                  gap: '1rem',
-                }}
-              >
-                <div className="rounded-lg bg-slate-50 p-4 dark:bg-slate-800/50">
-                  <div className="text-xs text-slate-500">B2C Bills Count</div>
-                  <div className="mt-1 text-xl font-bold text-slate-900 dark:text-white">{b2cInvoices.length}</div>
-                </div>
-                <div className="rounded-lg bg-slate-50 p-4 dark:bg-slate-800/50">
-                  <div className="text-xs text-slate-500">Taxable Value</div>
-                  <div className="mt-1 text-xl font-bold font-mono text-slate-900 dark:text-white">
-                    ₹{(b2cTaxable / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+
+            {/* 4-Tile Bento Grid with 3D depth and hover effects */}
+            <div className="gstr1-b2c-bento-grid">
+              {/* Tile 1: Bills Count */}
+              <div className="gstr1-b2c-card card-amber">
+                <div>
+                  <div className="gstr1-b2c-card-header">
+                    <div className="gstr1-b2c-icon-badge badge-amber">
+                      <Receipt size={20} />
+                    </div>
+                    <span className="text-xs font-mono font-bold text-amber-700 bg-amber-100/70 px-2 py-0.5 rounded-full">
+                      Counter Bills
+                    </span>
+                  </div>
+                  <div className="gstr1-b2c-label">B2C Bills Count</div>
+                  <div className="gstr1-b2c-val text-amber-900 font-mono">
+                    {b2cInvoices.length}
                   </div>
                 </div>
-                <div className="rounded-lg bg-slate-50 p-4 dark:bg-slate-800/50">
-                  <div className="text-xs text-slate-500">Central Tax (CGST)</div>
-                  <div className="mt-1 text-xl font-bold font-mono text-indigo-600 dark:text-indigo-400">
-                    ₹{(b2cCgst / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                <div className="gstr1-b2c-desc">
+                  Consolidated retail transactions across all POS registers
+                </div>
+              </div>
+
+              {/* Tile 2: Taxable Value */}
+              <div className="gstr1-b2c-card card-teal">
+                <div>
+                  <div className="gstr1-b2c-card-header">
+                    <div className="gstr1-b2c-icon-badge badge-teal">
+                      <TrendingUp size={20} />
+                    </div>
+                    <span className="text-xs font-mono font-bold text-teal-700 bg-teal-100/70 px-2 py-0.5 rounded-full">
+                      Net Taxable
+                    </span>
+                  </div>
+                  <div className="gstr1-b2c-label">Taxable Value</div>
+                  <div className="gstr1-b2c-val text-teal-900 font-mono">
+                    {formatRupees(b2cTaxable)}
                   </div>
                 </div>
-                <div className="rounded-lg bg-slate-50 p-4 dark:bg-slate-800/50">
-                  <div className="text-xs text-slate-500">State/UT Tax (SGST)</div>
-                  <div className="mt-1 text-xl font-bold font-mono text-indigo-600 dark:text-indigo-400">
-                    ₹{(b2cSgst / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                <div className="gstr1-b2c-desc">
+                  Net taxable turnover from retail counter billing
+                </div>
+              </div>
+
+              {/* Tile 3: Central Tax (CGST) */}
+              <div className="gstr1-b2c-card card-indigo">
+                <div>
+                  <div className="gstr1-b2c-card-header">
+                    <div className="gstr1-b2c-icon-badge badge-indigo">
+                      <Scale size={20} />
+                    </div>
+                    <span className="text-xs font-mono font-bold text-indigo-700 bg-indigo-100/70 px-2 py-0.5 rounded-full">
+                      Central (50%)
+                    </span>
                   </div>
+                  <div className="gstr1-b2c-label">Central Tax (CGST)</div>
+                  <div className="gstr1-b2c-val text-indigo-700 font-mono">
+                    {formatRupees(b2cCgst)}
+                  </div>
+                </div>
+                <div className="gstr1-b2c-desc">
+                  Intra-state central tax component collected on consumer sales
+                </div>
+              </div>
+
+              {/* Tile 4: State/UT Tax (SGST) */}
+              <div className="gstr1-b2c-card card-purple">
+                <div>
+                  <div className="gstr1-b2c-card-header">
+                    <div className="gstr1-b2c-icon-badge badge-purple">
+                      <Scale size={20} />
+                    </div>
+                    <span className="text-xs font-mono font-bold text-purple-700 bg-purple-100/70 px-2 py-0.5 rounded-full">
+                      State / UT (50%)
+                    </span>
+                  </div>
+                  <div className="gstr1-b2c-label">State / UT Tax (SGST)</div>
+                  <div className="gstr1-b2c-val text-purple-700 font-mono">
+                    {formatRupees(b2cSgst)}
+                  </div>
+                </div>
+                <div className="gstr1-b2c-desc">
+                  Intra-state state tax component collected on consumer sales
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );
