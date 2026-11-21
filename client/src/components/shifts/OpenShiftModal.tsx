@@ -47,7 +47,9 @@ export const OpenShiftModal: React.FC<OpenShiftModalProps> = ({
   });
 
   const [counter, setCounter] = useState<string>(() => {
-    if (defaultCounter) {
+    if (userRole === 'owner') return 'ADMIN-POS';
+    if (userRole === 'manager') return `${(defaultLocation || 'MAIN').toUpperCase()}-MGR`;
+    if (defaultCounter && !defaultCounter.toUpperCase().includes('ADMIN') && !defaultCounter.toUpperCase().includes('MGR')) {
       const m = defaultCounter.trim().match(/^counter[_\-\s]*(\d+)$/i);
       return m ? `COUNTER-${m[1]}` : defaultCounter.trim();
     }
@@ -134,9 +136,19 @@ export const OpenShiftModal: React.FC<OpenShiftModalProps> = ({
     }) || null;
   };
 
-  // Auto-switch away from occupied counter
+  // Auto-switch away from occupied or restricted counter
   useEffect(() => {
     if (!isOpen || !branchCounters.length) return;
+    if (userRole === 'cashier') {
+      const isRestricted = counter.toUpperCase().includes('ADMIN') || counter.toUpperCase().includes('MGR');
+      if (isRestricted || !branchCounters.some(c => c.code === counter || c.name === counter)) {
+        const firstAvailable = branchCounters.find(c => !getOccupantForCounter(c.code, c.id)) || branchCounters[0];
+        if (firstAvailable) {
+          setCounter(firstAvailable.code);
+        }
+        return;
+      }
+    }
     const curObj = branchCounters.find(c => c.code === counter || c.name === counter);
     const occ = curObj ? getOccupantForCounter(curObj.code, curObj.id) : null;
     if (occ) {
@@ -145,7 +157,7 @@ export const OpenShiftModal: React.FC<OpenShiftModalProps> = ({
         setCounter(firstAvailable.code);
       }
     }
-  }, [isOpen, branchCounters, occupiedList, counter]);
+  }, [isOpen, branchCounters, occupiedList, counter, userRole]);
 
   const parsedRupees = parseFloat(openingRupees) || 0;
   const openingCashMinor = Math.round(parsedRupees * 100);

@@ -620,6 +620,11 @@ export function registerShifts(r: Router) {
     const userRows = await ctx.db.query<any>(userSql, userParams);
 
     const occupiedMap = new Map<string, any>();
+    const isRestrictedForCashier = (code?: string, name?: string) => {
+      const cd = (code || '').toUpperCase();
+      const nm = (name || '').toLowerCase();
+      return cd === 'ADMIN-POS' || cd.endsWith('-MGR') || cd.includes('MGR') || nm.includes('admin counter') || nm.includes('manager counter');
+    };
 
     for (const r of shiftRows) {
       const uId = r.userId ?? r.user_id;
@@ -627,6 +632,11 @@ export function registerShifts(r: Router) {
       const cCode = r.resolvedCounterCode ?? r.counter;
       const cId = r.resolvedCounterId ?? r.counterId ?? r.counter_id;
       const cName = r.resolvedCounterName ?? r.counterNameSnapshot ?? r.counter_name_snapshot ?? cCode;
+
+      if (ctx.user?.role === 'cashier' && isRestrictedForCashier(cCode, cName)) {
+        continue;
+      }
+
       const isCur = Boolean(uId && currentUserId && String(uId) === String(currentUserId));
       const info = {
         shiftId: r.shiftId ?? r.shift_id,
@@ -652,6 +662,11 @@ export function registerShifts(r: Router) {
       const cCode = u.resolvedCounterCode ?? u.counter;
       const cId = u.resolvedCounterId ?? u.counterId ?? u.counter_id;
       const cName = u.resolvedCounterName ?? cCode;
+
+      if (ctx.user?.role === 'cashier' && isRestrictedForCashier(cCode, cName)) {
+        continue;
+      }
+
       const isCur = Boolean(uId && currentUserId && String(uId) === String(currentUserId));
       const info = {
         shiftId: null,

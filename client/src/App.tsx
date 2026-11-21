@@ -1582,14 +1582,22 @@ export function App() {
   // Billing Counter State
   const [selectedCounter, setSelectedCounter] = useState<string>(() => {
     try {
-      return sessionStorage.getItem('pos_selected_counter') || localStorage.getItem('pos_selected_counter') || '';
+      const saved = sessionStorage.getItem('pos_selected_counter') || localStorage.getItem('pos_selected_counter') || '';
+      if (saved.toUpperCase().includes('ADMIN') || saved.toUpperCase().includes('MGR')) {
+        return '';
+      }
+      return saved;
     } catch {
       return '';
     }
   });
   const [selectedCounterId, setSelectedCounterId] = useState<string>(() => {
     try {
-      return sessionStorage.getItem('pos_selected_counter_id') || localStorage.getItem('pos_selected_counter_id') || '';
+      const saved = sessionStorage.getItem('pos_selected_counter_id') || localStorage.getItem('pos_selected_counter_id') || '';
+      if (saved.toUpperCase().includes('ADMIN') || saved.toUpperCase().includes('MGR')) {
+        return '';
+      }
+      return saved;
     } catch {
       return '';
     }
@@ -1797,20 +1805,45 @@ export function App() {
       (c: any) => c.code !== 'ADMIN-POS' && !c.code.includes('MGR') && !c.name.toLowerCase().includes('admin') && !c.name.toLowerCase().includes('manager')
     );
 
-    if (selectedCounterId) {
-      const match = cashierCounters.find((c: any) => c.id === selectedCounterId);
+    // If current selectedCounter or selectedCounterId is contaminated with Admin or Manager counters, purge immediately
+    const isDirtyAdminOrMgr =
+      selectedCounter.toUpperCase().includes('ADMIN') ||
+      selectedCounter.toUpperCase().includes('MGR') ||
+      selectedCounterId.toUpperCase().includes('ADMIN') ||
+      selectedCounterId.toUpperCase().includes('MGR');
+
+    if (isDirtyAdminOrMgr) {
+      try {
+        sessionStorage.removeItem('pos_selected_counter_id');
+        sessionStorage.removeItem('pos_selected_counter');
+        sessionStorage.removeItem('pos_selected_counter_name');
+        localStorage.removeItem('pos_selected_counter_id');
+        localStorage.removeItem('pos_selected_counter');
+        localStorage.removeItem('pos_selected_counter_name');
+      } catch { }
+    }
+
+    const curId = isDirtyAdminOrMgr ? '' : selectedCounterId;
+    const curCode = isDirtyAdminOrMgr ? '' : selectedCounter;
+
+    if (curId) {
+      const match = cashierCounters.find((c: any) => c.id === curId);
       if (!match) {
-        // Counter ID does not belong to active branch cashier stations -> reset
-        setSelectedCounterId('');
-        setSelectedCounter('');
-        try {
-          sessionStorage.removeItem('pos_selected_counter_id');
-          sessionStorage.removeItem('pos_selected_counter');
-          sessionStorage.removeItem('pos_selected_counter_name');
-          localStorage.removeItem('pos_selected_counter_id');
-          localStorage.removeItem('pos_selected_counter');
-          localStorage.removeItem('pos_selected_counter_name');
-        } catch { }
+        // Counter ID does not belong to active branch cashier stations -> fallback to default
+        const defaultCounter = cashierCounters[0];
+        if (defaultCounter) {
+          setSelectedCounterId(defaultCounter.id);
+          setSelectedCounter(defaultCounter.code);
+          try {
+            sessionStorage.setItem('pos_selected_counter_id', defaultCounter.id);
+            sessionStorage.setItem('pos_selected_counter', defaultCounter.code);
+            localStorage.setItem('pos_selected_counter_id', defaultCounter.id);
+            localStorage.setItem('pos_selected_counter', defaultCounter.code);
+          } catch { }
+        } else {
+          setSelectedCounterId('');
+          setSelectedCounter('');
+        }
         setShowCounterModal(true);
       } else {
         if (match.code !== selectedCounter) {
@@ -1833,8 +1866,8 @@ export function App() {
           }
         });
       }
-    } else if (selectedCounter) {
-      const match = cashierCounters.find((c: any) => c.code.toUpperCase() === selectedCounter.toUpperCase() || c.name.toLowerCase() === selectedCounter.toLowerCase());
+    } else if (curCode) {
+      const match = cashierCounters.find((c: any) => c.code.toUpperCase() === curCode.toUpperCase() || c.name.toLowerCase() === curCode.toLowerCase());
       if (match) {
         setSelectedCounterId(match.id);
         setSelectedCounter(match.code);
@@ -1856,11 +1889,34 @@ export function App() {
           }
         });
       } else {
-        setSelectedCounterId('');
-        setSelectedCounter('');
+        const defaultCounter = cashierCounters[0];
+        if (defaultCounter) {
+          setSelectedCounterId(defaultCounter.id);
+          setSelectedCounter(defaultCounter.code);
+          try {
+            sessionStorage.setItem('pos_selected_counter_id', defaultCounter.id);
+            sessionStorage.setItem('pos_selected_counter', defaultCounter.code);
+            localStorage.setItem('pos_selected_counter_id', defaultCounter.id);
+            localStorage.setItem('pos_selected_counter', defaultCounter.code);
+          } catch { }
+        } else {
+          setSelectedCounterId('');
+          setSelectedCounter('');
+        }
         setShowCounterModal(true);
       }
     } else {
+      const defaultCounter = cashierCounters[0];
+      if (defaultCounter) {
+        setSelectedCounterId(defaultCounter.id);
+        setSelectedCounter(defaultCounter.code);
+        try {
+          sessionStorage.setItem('pos_selected_counter_id', defaultCounter.id);
+          sessionStorage.setItem('pos_selected_counter', defaultCounter.code);
+          localStorage.setItem('pos_selected_counter_id', defaultCounter.id);
+          localStorage.setItem('pos_selected_counter', defaultCounter.code);
+        } catch { }
+      }
       setShowCounterModal(true);
     }
   }, [activeBranch, selectedCounterId, selectedCounter, user?.role, currentBranchCode]);
@@ -2943,7 +2999,28 @@ export function App() {
   const checkActiveShift = async () => {
     try {
       const res = await api<{ ok: boolean; activeShift: any }>('/api/shifts/active');
-      setActiveShiftNumber(res.activeShift ? (res.activeShift.shiftNumber || 'ACTIVE') : null);
+      if (res.activeShift) {
+        setActiveShiftNumber(res.activeShift.shiftNumber || 'ACTIVE');
+        if (user?.role === 'cashier' && res.activeShift.counter) {
+          const shiftCounter = String(res.activeShift.counter).trim();
+          const shiftCounterId = res.activeShift.counterId ? String(res.activeShift.counterId).trim() : '';
+          const isRestricted = shiftCounter.toUpperCase().includes('ADMIN') || shiftCounter.toUpperCase().includes('MGR');
+          if (!isRestricted) {
+            setSelectedCounter(shiftCounter);
+            if (shiftCounterId) setSelectedCounterId(shiftCounterId);
+            try {
+              sessionStorage.setItem('pos_selected_counter', shiftCounter);
+              localStorage.setItem('pos_selected_counter', shiftCounter);
+              if (shiftCounterId) {
+                sessionStorage.setItem('pos_selected_counter_id', shiftCounterId);
+                localStorage.setItem('pos_selected_counter_id', shiftCounterId);
+              }
+            } catch { }
+          }
+        }
+      } else {
+        setActiveShiftNumber(null);
+      }
     } catch {
       setActiveShiftNumber(null);
     }
@@ -8097,8 +8174,12 @@ export function App() {
       badgeVal = `Manager Counter (${currentBranchCode})`;
       badgeTag = currentBranchCode;
     } else {
-      const match = activeBranch?.counterDetails?.find(c => c.code === selectedCounter || c.name === selectedCounter);
+      const sanitized = selectedCounter && !selectedCounter.toUpperCase().includes('ADMIN') && !selectedCounter.toUpperCase().includes('MGR')
+        ? selectedCounter
+        : (activeBranch?.counters?.find(c => !c.toUpperCase().includes('ADMIN') && !c.toUpperCase().includes('MGR')) || 'MAIN-C01');
+      const match = activeBranch?.counterDetails?.find(c => c.code === sanitized || c.name === sanitized);
       if (match) badgeVal = `${match.name} (${match.code})`;
+      else badgeVal = sanitized === 'MAIN-C01' ? 'Counter 1 (MAIN-C01)' : sanitized;
       badgeTag = activeShiftNumber ? 'Locked' : (selectedCounter ? 'Station' : 'Select');
     }
 
@@ -20060,46 +20141,63 @@ export function App() {
         )}
 
         {/* CASHIER COUNTER SELECTION MODAL */}
-        {showCounterModal && user && user.role === 'cashier' && (
-          <SelectCounterModal
-            isOpen={showCounterModal}
-            onClose={() => setShowCounterModal(false)}
-            onSelectCounter={(counterCode, counterName, counterId) => {
-              setSelectedCounter(counterCode);
-              if (counterId) setSelectedCounterId(counterId);
-              try {
-                sessionStorage.setItem('pos_selected_counter', counterCode);
-                localStorage.setItem('pos_selected_counter', counterCode);
-                if (counterId) {
-                  sessionStorage.setItem('pos_selected_counter_id', counterId);
-                  localStorage.setItem('pos_selected_counter_id', counterId);
-                }
-                if (counterName) {
-                  sessionStorage.setItem('pos_selected_counter_name', counterName);
-                  localStorage.setItem('pos_selected_counter_name', counterName);
-                }
-              } catch { }
-              showToast(`Billing Counter set to ${counterName || counterCode} (${counterCode})`);
-              selectActiveShiftCounter({
-                counterId,
-                counter: counterCode,
-                branchId: activeBranch?.id || user?.branchId || undefined,
-              }).catch((err: any) => {
-                showToast(err?.message || 'Failed to link counter to active shift', 'error');
-              });
-            }}
-            currentCounter={selectedCounter || activeBranch?.counters?.[0] || 'MAIN-C01'}
-            currentCounterId={selectedCounterId}
-            branchName={currentBranchName}
-            branchCode={currentBranchCode}
-            branchId={activeBranch?.id || user?.branchId || undefined}
-            cashierName={user.name || 'Cashier'}
-            availableCounters={activeBranch?.counters}
-            counterDetails={activeBranch?.counterDetails}
-            canClose={Boolean(selectedCounter)}
-            isLocked={Boolean(activeShiftNumber)}
-          />
-        )}
+        {showCounterModal && user && user.role === 'cashier' && (() => {
+          const cashierAvailableCounters = (activeBranch?.counters || []).filter(
+            (c: string) => !c.toUpperCase().includes('ADMIN') && !c.toUpperCase().includes('MGR')
+          );
+          const cashierCounterDetails = (activeBranch?.counterDetails || []).filter(
+            (c: any) =>
+              c.code !== 'ADMIN-POS' &&
+              !c.code.includes('MGR') &&
+              !c.name?.toLowerCase().includes('admin') &&
+              !c.name?.toLowerCase().includes('manager')
+          );
+          const sanitizedCurrentCounter =
+            selectedCounter && !selectedCounter.toUpperCase().includes('ADMIN') && !selectedCounter.toUpperCase().includes('MGR')
+              ? selectedCounter
+              : (cashierAvailableCounters[0] || 'MAIN-C01');
+
+          return (
+            <SelectCounterModal
+              isOpen={showCounterModal}
+              onClose={() => setShowCounterModal(false)}
+              onSelectCounter={(counterCode, counterName, counterId) => {
+                setSelectedCounter(counterCode);
+                if (counterId) setSelectedCounterId(counterId);
+                try {
+                  sessionStorage.setItem('pos_selected_counter', counterCode);
+                  localStorage.setItem('pos_selected_counter', counterCode);
+                  if (counterId) {
+                    sessionStorage.setItem('pos_selected_counter_id', counterId);
+                    localStorage.setItem('pos_selected_counter_id', counterId);
+                  }
+                  if (counterName) {
+                    sessionStorage.setItem('pos_selected_counter_name', counterName);
+                    localStorage.setItem('pos_selected_counter_name', counterName);
+                  }
+                } catch { }
+                showToast(`Billing Counter set to ${counterName || counterCode} (${counterCode})`);
+                selectActiveShiftCounter({
+                  counterId,
+                  counter: counterCode,
+                  branchId: activeBranch?.id || user?.branchId || undefined,
+                }).catch((err: any) => {
+                  showToast(err?.message || 'Failed to link counter to active shift', 'error');
+                });
+              }}
+              currentCounter={sanitizedCurrentCounter}
+              currentCounterId={selectedCounterId}
+              branchName={currentBranchName}
+              branchCode={currentBranchCode}
+              branchId={activeBranch?.id || user?.branchId || undefined}
+              cashierName={user.name || 'Cashier'}
+              availableCounters={cashierAvailableCounters}
+              counterDetails={cashierCounterDetails}
+              canClose={Boolean(sanitizedCurrentCounter)}
+              isLocked={Boolean(activeShiftNumber)}
+            />
+          );
+        })()}
 
         {/* CASHIER LOGOUT ACTIVE SHIFT CONFIRMATION MODAL */}
         {showLogoutShiftModal && (
