@@ -8241,17 +8241,19 @@ export function App() {
               )}
 
               {/* 2. POS Counter - Available to Cashier, Store Manager, and Super Admin */}
-              <button
-                type="button"
-                className={`sidebar-nav-item ${activeTab === 'pos' ? 'active' : ''}`}
-                onClick={() => setActiveTab('pos')}
-                title="POS Counter (F1)"
-              >
-                <span className="nav-icon">
-                  <ShoppingCart size={20} strokeWidth={2.2} />
-                </span>
-                <span className="nav-text">POS Counter</span>
-              </button>
+              {(user.role === 'cashier' || isModuleVisible('pos')) && (
+                <button
+                  type="button"
+                  className={`sidebar-nav-item ${activeTab === 'pos' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('pos')}
+                  title="POS Counter (F1)"
+                >
+                  <span className="nav-icon">
+                    <ShoppingCart size={20} strokeWidth={2.2} />
+                  </span>
+                  <span className="nav-text">POS Counter</span>
+                </button>
+              )}
 
               {/* 2b. Wholesale Billing (Traditional A4 Tax Invoices) - STRICTLY ADMIN ONLY */}
               {user?.role !== 'cashier' && isModuleVisible('wholesale') && (
