@@ -202,13 +202,13 @@ export const Gstr1View: React.FC<Gstr1ViewProps> = ({ onNavigate }) => {
                   <span className="gstr1-kpi-badge font-mono">Table 4</span>
                 </div>
                 <div className="gstr1-kpi-label">B2B Registered Invoices</div>
-                <div className="gstr1-kpi-val text-indigo-700 font-mono">
+                <div className="gstr1-kpi-val font-mono" style={{ color: '#653B4B' }}>
                   {formatRupees(b2bTaxable)}
                 </div>
               </div>
               <div className="gstr1-kpi-footer">
                 <span>{b2bInvoices.length} Registered Buyers (GSTIN)</span>
-                <span className="font-semibold text-indigo-600">Tax: {formatRupees(b2bCgst + b2bSgst + b2bIgst)}</span>
+                <span className="font-semibold" style={{ color: '#653B4B' }}>Tax: {formatRupees(b2bCgst + b2bSgst + b2bIgst)}</span>
               </div>
             </div>
 
@@ -242,7 +242,7 @@ export const Gstr1View: React.FC<Gstr1ViewProps> = ({ onNavigate }) => {
                   <span className="gstr1-kpi-badge font-mono">Total Tax</span>
                 </div>
                 <div className="gstr1-kpi-label">Total GST Output Liability</div>
-                <div className="gstr1-kpi-val text-purple-700 font-mono">
+                <div className="gstr1-kpi-val font-mono" style={{ color: '#522E3C' }}>
                   {formatRupees(grandTax)}
                 </div>
               </div>
@@ -339,10 +339,10 @@ export const Gstr1View: React.FC<Gstr1ViewProps> = ({ onNavigate }) => {
                         <td style={{ textAlign: 'right', fontFamily: 'monospace' }}>
                           {formatRupees(inv.taxableMinor || 0)}
                         </td>
-                        <td style={{ textAlign: 'right', fontFamily: 'monospace', color: '#4f46e5' }}>
+                        <td style={{ textAlign: 'right', fontFamily: 'monospace', color: '#653B4B' }}>
                           {formatRupees(inv.cgstMinor || 0)}
                         </td>
-                        <td style={{ textAlign: 'right', fontFamily: 'monospace', color: '#4f46e5' }}>
+                        <td style={{ textAlign: 'right', fontFamily: 'monospace', color: '#653B4B' }}>
                           {formatRupees(inv.sgstMinor || 0)}
                         </td>
                         <td style={{ textAlign: 'right', fontFamily: 'monospace' }}>
@@ -364,12 +364,12 @@ export const Gstr1View: React.FC<Gstr1ViewProps> = ({ onNavigate }) => {
                           filteredB2bInvoices.reduce((acc: number, i: any) => acc + (i.taxableMinor || 0), 0)
                         )}
                       </td>
-                      <td style={{ textAlign: 'right', fontFamily: 'monospace', color: '#4f46e5' }}>
+                      <td style={{ textAlign: 'right', fontFamily: 'monospace', color: '#653B4B' }}>
                         {formatRupees(
                           filteredB2bInvoices.reduce((acc: number, i: any) => acc + (i.cgstMinor || 0), 0)
                         )}
                       </td>
-                      <td style={{ textAlign: 'right', fontFamily: 'monospace', color: '#4f46e5' }}>
+                      <td style={{ textAlign: 'right', fontFamily: 'monospace', color: '#653B4B' }}>
                         {formatRupees(
                           filteredB2bInvoices.reduce((acc: number, i: any) => acc + (i.sgstMinor || 0), 0)
                         )}
@@ -463,12 +463,12 @@ export const Gstr1View: React.FC<Gstr1ViewProps> = ({ onNavigate }) => {
                     <div className="gstr1-b2c-icon-badge badge-indigo">
                       <Scale size={20} />
                     </div>
-                    <span className="text-xs font-mono font-bold text-indigo-700 bg-indigo-100/70 px-2 py-0.5 rounded-full">
+                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full" style={{ color: '#653B4B', background: '#F5ECF0' }}>
                       Central (50%)
                     </span>
                   </div>
                   <div className="gstr1-b2c-label">Central Tax (CGST)</div>
-                  <div className="gstr1-b2c-val text-indigo-700 font-mono">
+                  <div className="gstr1-b2c-val font-mono" style={{ color: '#653B4B' }}>
                     {formatRupees(b2cCgst)}
                   </div>
                 </div>
@@ -484,12 +484,12 @@ export const Gstr1View: React.FC<Gstr1ViewProps> = ({ onNavigate }) => {
                     <div className="gstr1-b2c-icon-badge badge-purple">
                       <Scale size={20} />
                     </div>
-                    <span className="text-xs font-mono font-bold text-purple-700 bg-purple-100/70 px-2 py-0.5 rounded-full">
+                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full" style={{ color: '#522E3C', background: '#F5ECF0' }}>
                       State / UT (50%)
                     </span>
                   </div>
                   <div className="gstr1-b2c-label">State / UT Tax (SGST)</div>
-                  <div className="gstr1-b2c-val text-purple-700 font-mono">
+                  <div className="gstr1-b2c-val font-mono" style={{ color: '#522E3C' }}>
                     {formatRupees(b2cSgst)}
                   </div>
                 </div>

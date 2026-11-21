@@ -38,7 +38,7 @@
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, #0f766e 0%, #14b8a6 50%, #6366f1 100%);
+  background: linear-gradient(90deg, #0f766e 0%, #14b8a6 50%, #653B4B 100%);
 }
 
 .gstr1-control-left {
@@ -239,14 +239,14 @@
 .gstr1-kpi-tile.tile-turnover::after { background: linear-gradient(90deg, #0f766e, #14b8a6); }
 .gstr1-kpi-tile.tile-turnover:hover { box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04), 0 18px 36px -6px rgba(15, 118, 110, 0.18); }
 
-.gstr1-kpi-tile.tile-b2b::after { background: linear-gradient(90deg, #6366f1, #818cf8); }
-.gstr1-kpi-tile.tile-b2b:hover { box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04), 0 18px 36px -6px rgba(99, 102, 241, 0.18); }
+.gstr1-kpi-tile.tile-b2b::after { background: linear-gradient(90deg, #7A475B, #653B4B); }
+.gstr1-kpi-tile.tile-b2b:hover { box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04), 0 18px 36px -6px rgba(101, 59, 75, 0.18); }
 
 .gstr1-kpi-tile.tile-b2c::after { background: linear-gradient(90deg, #0284c7, #38bdf8); }
 .gstr1-kpi-tile.tile-b2c:hover { box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04), 0 18px 36px -6px rgba(2, 132, 199, 0.18); }
 
-.gstr1-kpi-tile.tile-tax::after { background: linear-gradient(90deg, #8b5cf6, #a855f7); }
-.gstr1-kpi-tile.tile-tax:hover { box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04), 0 18px 36px -6px rgba(139, 92, 246, 0.18); }
+.gstr1-kpi-tile.tile-tax::after { background: linear-gradient(90deg, #653B4B, #522E3C); }
+.gstr1-kpi-tile.tile-tax:hover { box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04), 0 18px 36px -6px rgba(101, 59, 75, 0.18); }
 
 .gstr1-kpi-top {
   display: flex;
@@ -279,9 +279,9 @@
 }
 
 .icon-box-indigo {
-  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
-  color: #4f46e5;
-  border-color: #c7d2fe;
+  background: linear-gradient(135deg, #FAF6F8 0%, #F5ECF0 100%);
+  color: #653B4B;
+  border-color: #D9C8D0;
 }
 
 .icon-box-sky {
@@ -291,9 +291,9 @@
 }
 
 .icon-box-purple {
-  background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
-  color: #7c3aed;
-  border-color: #e9d5ff;
+  background: linear-gradient(135deg, #FAF6F8 0%, #F5ECF0 100%);
+  color: #522E3C;
+  border-color: #D9C8D0;
 }
 
 .gstr1-kpi-badge {
@@ -604,21 +604,21 @@
 }
 
 .gstr1-b2c-card.card-indigo {
-  background: linear-gradient(145deg, #ffffff 0%, #fafaff 60%, #eef2ff 100%);
-  border-color: #e0e7ff;
+  background: linear-gradient(145deg, #ffffff 0%, #FAF6F8 60%, #F5ECF0 100%);
+  border-color: #D9C8D0;
 }
 .gstr1-b2c-card.card-indigo:hover {
-  border-color: #c7d2fe;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.08), 0 18px 36px -6px rgba(99, 102, 241, 0.22);
+  border-color: #653B4B;
+  box-shadow: 0 4px 12px rgba(101, 59, 75, 0.08), 0 18px 36px -6px rgba(101, 59, 75, 0.22);
 }
 
 .gstr1-b2c-card.card-purple {
-  background: linear-gradient(145deg, #ffffff 0%, #faf8ff 60%, #f5f3ff 100%);
-  border-color: #ede9fe;
+  background: linear-gradient(145deg, #ffffff 0%, #FAF6F8 60%, #F5ECF0 100%);
+  border-color: #D9C8D0;
 }
 .gstr1-b2c-card.card-purple:hover {
-  border-color: #ddd6fe;
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.08), 0 18px 36px -6px rgba(139, 92, 246, 0.22);
+  border-color: #522E3C;
+  box-shadow: 0 4px 12px rgba(101, 59, 75, 0.08), 0 18px 36px -6px rgba(101, 59, 75, 0.22);
 }
 
 .gstr1-b2c-card-header {
@@ -655,13 +655,13 @@
 }
 
 .badge-indigo {
-  background: #e0e7ff;
-  color: #4f46e5;
+  background: #F5ECF0;
+  color: #653B4B;
 }
 
 .badge-purple {
-  background: #ede9fe;
-  color: #7c3aed;
+  background: #F5ECF0;
+  color: #522E3C;
 }
 
 .gstr1-b2c-label {

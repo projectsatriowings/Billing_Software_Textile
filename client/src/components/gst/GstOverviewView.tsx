@@ -73,7 +73,7 @@ export function GstOverviewView({ tenantGstin = '', onNavigateTab }: GstOverview
       <div className="gst-header-card">
         <div className="gst-header-left">
           <h2 className="gst-header-title flex items-center gap-2">
-            <span className="flex items-center text-indigo-600"><GstBuildingIcon size={22} /></span>
+            <span className="flex items-center" style={{ color: '#653B4B' }}><GstBuildingIcon size={22} /></span>
             <span>GST Compliance &amp; Return Summary</span>
             {(() => {
               const br = localStorage.getItem('sa_selected_branch') || 'all';
@@ -161,7 +161,7 @@ export function GstOverviewView({ tenantGstin = '', onNavigateTab }: GstOverview
 
       {loading ? (
         <div className="flex h-56 flex-col items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white p-8 text-sm text-slate-500 shadow-sm">
-          <SpinnerIcon size={32} className="text-indigo-600" />
+          <SpinnerIcon size={32} style={{ color: '#653B4B' }} />
           <div className="font-semibold text-slate-700">Aggregating live GST metrics for {periodLabel}...</div>
           <div className="text-xs text-slate-400">Computing outward invoices, purchase registers &amp; verified ITC ledger</div>
         </div>
@@ -190,7 +190,7 @@ export function GstOverviewView({ tenantGstin = '', onNavigateTab }: GstOverview
                     <strong>{fmtMoney(metrics.reviewedEligibleItcMinor)}</strong>
                   </div>
                   <span className="gst-formula-op">=</span>
-                  <div className="gst-formula-chip" style={{ background: 'rgba(167, 139, 250, 0.25)', borderColor: 'rgba(167, 139, 250, 0.4)' }}>
+                  <div className="gst-formula-chip" style={{ background: 'rgba(255, 255, 255, 0.16)', borderColor: 'rgba(232, 214, 222, 0.35)' }}>
                     <span>Net Cash:</span>
                     <strong>{fmtMoney(metrics.estimatedNetGstLiabilityMinor)}</strong>
                   </div>
@@ -389,7 +389,7 @@ export function GstOverviewView({ tenantGstin = '', onNavigateTab }: GstOverview
           <div className="gst-journey-card">
             <div className="gst-journey-header">
               <h3 className="gst-journey-title flex items-center gap-2">
-                <span className="text-indigo-600"><CompassIcon size={20} /></span>
+                <span style={{ color: '#653B4B' }}><CompassIcon size={20} /></span>
                 <span>Recommended GST Compliance Journey</span>
               </h3>
               <p className="gst-journey-subtitle">
