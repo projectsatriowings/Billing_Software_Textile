@@ -5,6 +5,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Adaptive Billing — Retail, Supermarket & Wholesale POS</title>
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#0f766e" />
   <link id="app-favicon" rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <link id="app-apple-touch-icon" rel="apple-touch-icon" href="/favicon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -51,6 +53,13 @@
     </div>
   </div>
   <script type="module" src="/bundle.js?v=32"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
+      });
+    }
+  </script>
 </body>
 
 </html>
