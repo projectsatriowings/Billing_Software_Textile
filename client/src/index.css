@@ -33148,7 +33148,7 @@ select.expense-input-control {
   padding: 6px 10px;
   font-size: 0.76rem;
   font-weight: 700;
-  color: #4F46E5;
+  color: var(--primary, #0F766E);
   background: #F8FAFC;
   border: 1px solid #E2E8F0;
   border-radius: 8px;
@@ -33157,20 +33157,20 @@ select.expense-input-control {
 }
 
 .bento-notif-action-btn:hover {
-  background: #EEF2FF;
-  border-color: #C7D2FE;
-  color: #4338CA;
+  background: var(--primary-soft, #E6F4F3);
+  border-color: var(--primary, #0F766E);
+  color: var(--primary-hover, #115E59);
   transform: translateY(-1px);
 }
 
 .bento-notif-action-btn.primary {
-  background: #4F46E5;
-  border-color: #4338CA;
+  background: var(--primary, #0F766E);
+  border-color: var(--primary-hover, #115E59);
   color: #FFFFFF;
 }
 
 .bento-notif-action-btn.primary:hover {
-  background: #4338CA;
+  background: var(--primary-hover, #115E59);
   color: #FFFFFF;
 }
 
@@ -33222,9 +33222,9 @@ select.expense-input-control {
 }
 
 .bento-notif-open-full-btn {
-  background: #eef2ff;
-  border: 1px solid #c7d2fe;
-  color: #4f46e5;
+  background: var(--primary-soft, #E6F4F3);
+  border: 1px solid rgba(20, 184, 166, 0.4);
+  color: var(--primary, #0F766E);
   font-size: 0.72rem;
   font-weight: 700;
   cursor: pointer;
@@ -33240,8 +33240,9 @@ select.expense-input-control {
 }
 
 .bento-notif-open-full-btn:hover {
-  background: #e0e7ff;
-  border-color: #818cf8;
+  background: var(--primary, #0F766E);
+  color: #ffffff;
+  border-color: var(--primary, #0F766E);
 }
 
 .bento-notif-card.shift-open {
