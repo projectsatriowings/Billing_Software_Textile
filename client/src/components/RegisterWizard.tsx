@@ -195,6 +195,12 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({
       });
 
       setToken(res.token);
+      try {
+        localStorage.setItem('user', JSON.stringify(res.user));
+        localStorage.setItem('shop', JSON.stringify(res.shop));
+        sessionStorage.setItem('user', JSON.stringify(res.user));
+        sessionStorage.setItem('shop', JSON.stringify(res.shop));
+      } catch { }
       onSuccess(res);
     } catch (err: any) {
       setError(err.message || 'Registration failed. Please check your information.');
