@@ -35535,6 +35535,16 @@ select.expense-input-control {
   background: linear-gradient(135deg, #ffffff 0%, #faf8ff 100%);
 }
 
+.top-pos-counter-badge.locked {
+  cursor: default !important;
+  background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+  border-color: #bbf7d0;
+}
+
+.top-pos-counter-badge.locked:hover {
+  border-color: #86efac;
+}
+
 .top-pos-badge-icon {
   width: 32px;
   height: 32px;

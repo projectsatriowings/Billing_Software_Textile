@@ -8865,10 +8865,22 @@ export function App() {
                 </div>
 
                 <div
-                  className="top-pos-bento-badge top-pos-counter-badge locked"
-                  title="Billing counter station (Click to change or view stations)"
-                  onClick={() => setShowCounterModal(true)}
-                  style={{ cursor: 'pointer' }}
+                  className={`top-pos-bento-badge top-pos-counter-badge ${selectedCounter ? 'locked' : ''}`}
+                  title={
+                    selectedCounter
+                      ? `Billing counter station locked (${selectedCounter}). Once assigned, station cannot be changed while in active use.`
+                      : 'Select billing counter station'
+                  }
+                  onClick={() => {
+                    if (selectedCounter) {
+                      const match = activeBranch?.counterDetails?.find(c => c.code === selectedCounter || c.name === selectedCounter);
+                      const label = match ? `${match.name} (${match.code})` : selectedCounter;
+                      showToast(`Billing counter is locked to ${label}. Stations cannot be changed while in active use. Close shift or log out to reassign.`, 'info');
+                    } else {
+                      setShowCounterModal(true);
+                    }
+                  }}
+                  style={{ cursor: selectedCounter ? 'default' : 'pointer' }}
                 >
                   <div className="top-pos-badge-icon counter">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -8887,13 +8899,19 @@ export function App() {
                           return selectedCounter || activeBranch?.counters?.[0] || 'Counter 1';
                         })()}
                       </span>
-                      <span className="top-pos-lock-tag" title="Counter is locked for this logged-in session">
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                        </svg>
-                        <span>Locked</span>
-                      </span>
+                      {selectedCounter ? (
+                        <span className="top-pos-lock-tag" title="Counter station is locked for this terminal while in active use">
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                          </svg>
+                          <span>Locked</span>
+                        </span>
+                      ) : (
+                        <span className="top-pos-code-tag" style={{ color: '#0d9488', background: '#ccfbf1', borderColor: '#99f6e4' }}>
+                          Select
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -8940,10 +8958,22 @@ export function App() {
                   </div>
                 </div>
                 <div
-                  className="top-pos-bento-badge top-pos-counter-badge locked"
-                  title="Billing counter station (Click to change or view stations)"
-                  onClick={() => setShowCounterModal(true)}
-                  style={{ cursor: 'pointer' }}
+                  className={`top-pos-bento-badge top-pos-counter-badge ${selectedCounter ? 'locked' : ''}`}
+                  title={
+                    selectedCounter
+                      ? `Billing counter station locked (${selectedCounter}). Once assigned, station cannot be changed while in active use.`
+                      : 'Select billing counter station'
+                  }
+                  onClick={() => {
+                    if (selectedCounter) {
+                      const match = activeBranch?.counterDetails?.find(c => c.code === selectedCounter || c.name === selectedCounter);
+                      const label = match ? `${match.name} (${match.code})` : selectedCounter;
+                      showToast(`Billing counter is locked to ${label}. Stations cannot be changed while in active use. Close shift or log out to reassign.`, 'info');
+                    } else {
+                      setShowCounterModal(true);
+                    }
+                  }}
+                  style={{ cursor: selectedCounter ? 'default' : 'pointer' }}
                 >
                   <div className="top-pos-badge-icon counter">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -8962,13 +8992,19 @@ export function App() {
                           return selectedCounter || activeBranch?.counters?.[0] || 'Counter 1';
                         })()}
                       </span>
-                      <span className="top-pos-lock-tag" title="Counter is locked for this logged-in session">
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                        </svg>
-                        <span>Locked</span>
-                      </span>
+                      {selectedCounter ? (
+                        <span className="top-pos-lock-tag" title="Counter station is locked for this terminal while in active use">
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                          </svg>
+                          <span>Locked</span>
+                        </span>
+                      ) : (
+                        <span className="top-pos-code-tag" style={{ color: '#0d9488', background: '#ccfbf1', borderColor: '#99f6e4' }}>
+                          Select
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -8999,10 +9035,22 @@ export function App() {
                   </div>
                 </div>
                 <div
-                  className="top-pos-bento-badge top-pos-counter-badge locked"
-                  title="Billing counter station (Click to change or view stations)"
-                  onClick={() => setShowCounterModal(true)}
-                  style={{ cursor: 'pointer' }}
+                  className={`top-pos-bento-badge top-pos-counter-badge ${selectedCounter ? 'locked' : ''}`}
+                  title={
+                    selectedCounter
+                      ? `Billing counter station locked (${selectedCounter}). Once assigned, station cannot be changed while in active use.`
+                      : 'Select billing counter station'
+                  }
+                  onClick={() => {
+                    if (selectedCounter) {
+                      const match = activeBranch?.counterDetails?.find(c => c.code === selectedCounter || c.name === selectedCounter);
+                      const label = match ? `${match.name} (${match.code})` : selectedCounter;
+                      showToast(`Billing counter is locked to ${label}. Stations cannot be changed while in active use. Close shift or log out to reassign.`, 'info');
+                    } else {
+                      setShowCounterModal(true);
+                    }
+                  }}
+                  style={{ cursor: selectedCounter ? 'default' : 'pointer' }}
                 >
                   <div className="top-pos-badge-icon counter">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -9021,13 +9069,19 @@ export function App() {
                           return selectedCounter || activeBranch?.counters?.[0] || 'Counter 1';
                         })()}
                       </span>
-                      <span className="top-pos-lock-tag" title="Counter is locked for this logged-in session">
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                        </svg>
-                        <span>Locked</span>
-                      </span>
+                      {selectedCounter ? (
+                        <span className="top-pos-lock-tag" title="Counter station is locked for this terminal while in active use">
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                          </svg>
+                          <span>Locked</span>
+                        </span>
+                      ) : (
+                        <span className="top-pos-code-tag" style={{ color: '#0d9488', background: '#ccfbf1', borderColor: '#99f6e4' }}>
+                          Select
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -19902,6 +19956,7 @@ export function App() {
             availableCounters={activeBranch?.counters}
             counterDetails={activeBranch?.counterDetails}
             canClose={Boolean(selectedCounter)}
+            isLocked={Boolean(selectedCounter)}
           />
         )}
 
