@@ -28,6 +28,13 @@ export const APP_MODULES: AppModule[] = [
     route: 'dashboard',
   },
   {
+    key: 'pos',
+    name: 'POS Counter',
+    description: 'High-speed retail checkout, barcode scanner & quick billing',
+    icon: 'ShoppingCart',
+    route: 'pos',
+  },
+  {
     key: 'wholesale',
     name: 'Wholesale Billing',
     description: 'B2B tax invoices, bulk wholesale orders & settlement terms',
@@ -230,6 +237,7 @@ export type RoleModuleAccessConfig = Record<'owner' | 'manager' | 'cashier', Mod
 export const DEFAULT_ROLE_MODULE_ACCESS: RoleModuleAccessConfig = {
   owner: {
     dashboard: true,
+    pos: true,
     wholesale: true,
     notifications: true,
     items: true,
@@ -262,6 +270,7 @@ export const DEFAULT_ROLE_MODULE_ACCESS: RoleModuleAccessConfig = {
   },
   manager: {
     dashboard: true,
+    pos: true,
     wholesale: true,
     notifications: true,
     items: true,
