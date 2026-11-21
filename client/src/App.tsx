@@ -607,8 +607,22 @@ export interface PosCartItem {
 }
 
 export function App() {
-  const [user, setUser] = useState<User | null>(null);
-  const [shop, setShop] = useState<Shop | null>(null);
+  const [user, setUser] = useState<User | null>(() => {
+    try {
+      const stored = localStorage.getItem('user') || sessionStorage.getItem('user');
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [shop, setShop] = useState<Shop | null>(() => {
+    try {
+      const stored = localStorage.getItem('shop') || sessionStorage.getItem('shop');
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
   const [activeTabRaw, setActiveTabRaw] = useState<
     | 'dashboard'
     | 'pos'
@@ -828,10 +842,65 @@ export function App() {
     }
   }, [currentHeaderTitle, activeTab, shop?.name]);
   const [activeShiftNumber, setActiveShiftNumber] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(() => {
+    try {
+      const token = getToken();
+      const storedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
+      if (token && storedUser) return false;
+      if (!token) return false;
+    } catch { }
+    return true;
+  });
 
   // View routing: 'landing' | 'login' | 'register' | 'selector' | 'dashboard' | 'change-password' | 'reset-password'
-  const [view, setView] = useState<'landing' | 'login' | 'register' | 'selector' | 'dashboard' | 'change-password' | 'reset-password'>('login');
+  const [view, setView] = useState<'landing' | 'login' | 'register' | 'selector' | 'dashboard' | 'change-password' | 'reset-password'>(() => {
+    try {
+      const token = getToken();
+      const hash = (typeof window !== 'undefined' ? window.location.hash.replace('#', '') : '');
+      if (hash === 'register') return 'register';
+      if (hash === 'reset-password') return 'reset-password';
+      if (hash === 'landing') return 'landing';
+      if (token) return 'dashboard';
+    } catch { }
+    return 'login';
+  });
+
+  const persistAuthUserShop = (u: User | null, s: Shop | null) => {
+    try {
+      if (u) {
+        localStorage.setItem('user', JSON.stringify(u));
+        sessionStorage.setItem('user', JSON.stringify(u));
+      } else {
+        localStorage.removeItem('user');
+        sessionStorage.removeItem('user');
+      }
+      if (s) {
+        localStorage.setItem('shop', JSON.stringify(s));
+        sessionStorage.setItem('shop', JSON.stringify(s));
+      } else {
+        localStorage.removeItem('shop');
+        sessionStorage.removeItem('shop');
+      }
+    } catch { }
+  };
+
+  useEffect(() => {
+    if (shop) {
+      try {
+        localStorage.setItem('shop', JSON.stringify(shop));
+        sessionStorage.setItem('shop', JSON.stringify(shop));
+      } catch { }
+    }
+  }, [shop]);
+
+  useEffect(() => {
+    if (user) {
+      try {
+        localStorage.setItem('user', JSON.stringify(user));
+        sessionStorage.setItem('user', JSON.stringify(user));
+      } catch { }
+    }
+  }, [user]);
   const [regSelectedBusinessType, setRegSelectedBusinessType] = useState<string>('grocery');
   const [changePasswordData, setChangePasswordData] = useState<{ changeToken: string; tempPassword?: string; identifier?: string } | null>(null);
   const [resetPasswordToken, setResetPasswordToken] = useState<string>('');
@@ -2427,6 +2496,7 @@ export function App() {
     const handleLocationChange = () => {
       const hash = window.location.hash.replace('#', '');
       const path = window.location.pathname;
+      const hasAuth = !!getToken();
       if (hash === 'landing') {
         try { sessionStorage.removeItem('app_entered'); } catch { }
         setView('landing');
@@ -2435,12 +2505,26 @@ export function App() {
         setView('dashboard');
         setActiveTab('user-management');
       } else if (hash === 'cashier-login' || hash.startsWith('login')) {
-        setView('login');
+        if (hasAuth) {
+          setView('dashboard');
+          try { window.location.hash = 'dashboard'; } catch { }
+        } else {
+          setView('login');
+        }
       } else if (hash === 'dashboard') {
         try { sessionStorage.setItem('app_entered', 'true'); } catch { }
         setView('dashboard');
       } else if (['login', 'register', 'selector'].includes(hash)) {
-        setView(hash.split('?')[0] as any);
+        if (hash === 'login') {
+          if (hasAuth) {
+            setView('dashboard');
+            try { window.location.hash = 'dashboard'; } catch { }
+          } else {
+            setView('login');
+          }
+        } else {
+          setView(hash.split('?')[0] as any);
+        }
       } else if (hash === 'stock-transfer' || path === '/stock-transfer') {
         try { sessionStorage.setItem('app_entered', 'true'); } catch { }
         setView('dashboard');
@@ -2452,7 +2536,7 @@ export function App() {
         setActiveTab('product-movement');
         setShowInventoryDropdown(true);
       } else if (!hash) {
-        if (getToken()) {
+        if (hasAuth) {
           setView('dashboard');
         } else {
           setView('login');
@@ -2477,6 +2561,8 @@ export function App() {
         setLoading(false);
         if (currentHash === 'register') {
           setView('register');
+        } else if (currentHash === 'landing') {
+          setView('landing');
         } else {
           setView('login');
         }
@@ -2486,6 +2572,11 @@ export function App() {
         const res = await api<{ user: User; shop: Shop }>('/api/auth/me');
         setUser(res.user);
         setShop(res.shop);
+        persistAuthUserShop(res.user, res.shop);
+        try {
+          sessionStorage.setItem('app_entered', 'true');
+          localStorage.setItem('app_entered', 'true');
+        } catch { }
         initSettingsForm(res.shop);
         loadMyBusinesses();
         const savedTab = (() => {
@@ -2525,17 +2616,9 @@ export function App() {
           window.location.pathname === '/product-analysis' ||
           window.location.pathname === '/product-movement';
 
-        // Check if user has explicitly entered the dashboard in this browser session
-        const hasEnteredAppSession = (() => {
-          try {
-            return sessionStorage.getItem('app_entered') === 'true';
-          } catch {
-            return false;
-          }
-        })();
-
         if (currentHash === 'login' || currentHash === 'cashier-login' || currentHash.startsWith('login')) {
-          setView('login');
+          setView('dashboard');
+          try { window.location.hash = 'dashboard'; } catch { }
         } else if (currentHash === 'register') {
           setView('register');
         } else if (currentHash === 'landing') {
@@ -2564,9 +2647,25 @@ export function App() {
         } else {
           setView('dashboard');
         }
-      } catch {
-        clearToken();
-        setView('login');
+      } catch (err: any) {
+        const status = err?.status || err?.statusCode;
+        const msg = String(err?.message || '').toLowerCase();
+        if (status === 401 || status === 403 || msg.includes('unauthorized') || msg.includes('invalid token') || msg.includes('jwt expired')) {
+          clearToken();
+          persistAuthUserShop(null, null);
+          setUser(null);
+          setShop(null);
+          setView('login');
+        } else {
+          const storedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
+          if (storedUser) {
+            setView('dashboard');
+          } else {
+            clearToken();
+            persistAuthUserShop(null, null);
+            setView('login');
+          }
+        }
       } finally {
         setLoading(false);
       }
@@ -3430,6 +3529,7 @@ export function App() {
       setToken(res.token);
       setUser(res.user);
       setShop(res.shop);
+      persistAuthUserShop(res.user, res.shop);
       const isUserSuperAdmin = res.user.role === 'owner' || String(res.user.role).toUpperCase() === 'SUPER_ADMIN';
       if (!isUserSuperAdmin) {
         const enforced = res.user.branchId || (res.user as any).branch_id || res.user.assignedLocation || 'MAIN';
@@ -3471,6 +3571,8 @@ export function App() {
       setToken(res.token);
       setUser(res.user);
       setShop(res.shop);
+      persistAuthUserShop(res.user, res.shop);
+      navigateTo('dashboard');
       if (res.user.role === 'cashier') {
         setActiveTab('pos');
         setShowCounterModal(true);
@@ -3500,7 +3602,10 @@ export function App() {
       });
     } catch { /* ignore */ }
     clearToken();
+    persistAuthUserShop(null, null);
     try {
+      localStorage.removeItem('app_entered');
+      sessionStorage.removeItem('app_entered');
       sessionStorage.removeItem('pos_selected_counter');
       localStorage.removeItem('pos_selected_counter');
       sessionStorage.removeItem('pos_selected_counter_id');
@@ -7715,6 +7820,11 @@ export function App() {
         onSuccess={(data) => {
           setUser(data.user);
           setShop(data.shop);
+          persistAuthUserShop(data.user, data.shop);
+          try {
+            sessionStorage.setItem('app_entered', 'true');
+            localStorage.setItem('app_entered', 'true');
+          } catch { }
           loadDemoBusinesses();
           if (data.user.role === 'cashier') {
             setActiveTab('pos');
@@ -7789,6 +7899,11 @@ export function App() {
         onSuccess={(data) => {
           setUser(data.user);
           setShop(data.shop);
+          persistAuthUserShop(data.user, data.shop);
+          try {
+            sessionStorage.setItem('app_entered', 'true');
+            localStorage.setItem('app_entered', 'true');
+          } catch { }
           loadMyBusinesses();
           navigateTo('dashboard');
           showToast(`Business ${data.shop.name} registered successfully!`);
@@ -7850,6 +7965,11 @@ export function App() {
         onSuccess={(data) => {
           setUser(data.user);
           setShop(data.shop);
+          persistAuthUserShop(data.user, data.shop);
+          try {
+            sessionStorage.setItem('app_entered', 'true');
+            localStorage.setItem('app_entered', 'true');
+          } catch { }
           loadDemoBusinesses();
           if (data.user.role === 'cashier') {
             setActiveTab('pos');
