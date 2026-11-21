@@ -994,7 +994,7 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
               </div>
             </div>
 
-            {isCustomMode && (
+            {isCustomMode && !isLocked && (
               <div style={{ marginTop: '0.85rem', paddingTop: '0.85rem', borderTop: '1px solid var(--border, #D0C7B8)' }}>
                 <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center' }}>
                   <input
