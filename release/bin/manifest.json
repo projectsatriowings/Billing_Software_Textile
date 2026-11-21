@@ -1,0 +1,41 @@
+{
+  "version": "0.1.0",
+  "exe": {
+    "fileName": "A2Z Setup 0.1.0.exe",
+    "totalSize": 128589894,
+    "sha256": "90b5d69d2d08874f1018c22e1c887746396d4a3d46353a35794de9dc2ba546ca",
+    "parts": [
+      {
+        "name": "a2z-setup.part1",
+        "size": 62914560
+      },
+      {
+        "name": "a2z-setup.part2",
+        "size": 62914560
+      },
+      {
+        "name": "a2z-setup.part3",
+        "size": 2760774
+      }
+    ]
+  },
+  "zip": {
+    "fileName": "A2Z-Billing-Windows-Setup.zip",
+    "totalSize": 128598739,
+    "sha256": "ab02991df55def3a85a0fe9fbd2b4c5fb67ef57112702e75a144c02a1e4c8eda",
+    "parts": [
+      {
+        "name": "a2z-zip.part1",
+        "size": 62914560
+      },
+      {
+        "name": "a2z-zip.part2",
+        "size": 62914560
+      },
+      {
+        "name": "a2z-zip.part3",
+        "size": 2769619
+      }
+    ]
+  }
+}
