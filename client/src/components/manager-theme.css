@@ -1320,3 +1320,187 @@ body.theme-manager .gstr3b-stat-table td.cash-paid-cell,
   background: #FAF6F8 !important;
   color: #653B4B !important;
 }
+
+/* --------------------------------------------------------------------------
+   17. GST OVERVIEW, GSTR-1, & ITC REGISTER - STORE MANAGER DEEP BURGUNDY
+   -------------------------------------------------------------------------- */
+
+/* --- GST Overview View --- */
+body.theme-manager .gst-view-wrapper .gst-header-card,
+.theme-manager .gst-view-wrapper .gst-header-card {
+  border: 1.5px solid #D9C8D0 !important;
+  background: #FAF6F8 !important;
+  box-shadow: 0 2px 8px rgba(101, 59, 75, 0.06) !important;
+}
+
+body.theme-manager .gst-hero-liability,
+.theme-manager .gst-hero-liability {
+  background: linear-gradient(135deg, #1A0B12 0%, #2D1822 40%, #4A2433 75%, #653B4B 100%) !important;
+  border: 1px solid rgba(232, 214, 222, 0.28) !important;
+  box-shadow: 0 20px 40px -10px rgba(45, 24, 34, 0.45) !important;
+  color: #FFFFFF !important;
+}
+
+body.theme-manager .gst-hero-btn-primary,
+.theme-manager .gst-hero-btn-primary {
+  background: linear-gradient(135deg, #7A475B 0%, #653B4B 100%) !important;
+  box-shadow: 0 8px 20px rgba(101, 59, 75, 0.35) !important;
+}
+
+body.theme-manager .gst-hero-btn-primary:hover,
+.theme-manager .gst-hero-btn-primary:hover {
+  background: linear-gradient(135deg, #653B4B 0%, #522E3C 100%) !important;
+  box-shadow: 0 12px 26px rgba(101, 59, 75, 0.45) !important;
+}
+
+body.theme-manager .gst-kpi-card,
+.theme-manager .gst-kpi-card {
+  border: 1.5px solid #D9C8D0 !important;
+}
+
+body.theme-manager .gst-kpi-card:hover,
+.theme-manager .gst-kpi-card:hover {
+  border-color: #653B4B !important;
+  box-shadow: 0 10px 24px -6px rgba(101, 59, 75, 0.12) !important;
+}
+
+body.theme-manager .gst-kpi-card.output-gst,
+.theme-manager .gst-kpi-card.output-gst {
+  border-color: #D9C8D0 !important;
+  background: linear-gradient(180deg, #FAF6F8 0%, #ffffff 100%) !important;
+}
+
+body.theme-manager .gst-kpi-card.output-gst .gst-kpi-val,
+.theme-manager .gst-kpi-card.output-gst .gst-kpi-val {
+  color: #653B4B !important;
+}
+
+body.theme-manager .gst-kpi-card.output-gst .gst-kpi-num-badge,
+.theme-manager .gst-kpi-card.output-gst .gst-kpi-num-badge {
+  background: #F5ECF0 !important;
+  color: #653B4B !important;
+}
+
+body.theme-manager .gst-journey-card,
+.theme-manager .gst-journey-card {
+  border: 1.5px solid #D9C8D0 !important;
+  box-shadow: 0 4px 12px -2px rgba(101, 59, 75, 0.05) !important;
+}
+
+body.theme-manager .gst-journey-title,
+.theme-manager .gst-journey-title {
+  color: #1A0F14 !important;
+}
+
+body.theme-manager .gst-journey-step,
+.theme-manager .gst-journey-step {
+  background: #FAF6F8 !important;
+  border: 1.5px solid #D9C8D0 !important;
+}
+
+body.theme-manager .gst-journey-step:hover,
+.theme-manager .gst-journey-step:hover {
+  border-color: #653B4B !important;
+  box-shadow: 0 8px 20px -4px rgba(101, 59, 75, 0.15) !important;
+}
+
+body.theme-manager .gst-journey-step-tag,
+.theme-manager .gst-journey-step-tag {
+  color: #653B4B !important;
+}
+
+body.theme-manager .gst-journey-action-btn,
+.theme-manager .gst-journey-action-btn {
+  border: 1.5px solid #D9C8D0 !important;
+  color: #653B4B !important;
+  background: #FFFFFF !important;
+}
+
+body.theme-manager .gst-journey-action-btn:hover,
+.theme-manager .gst-journey-action-btn:hover {
+  background: #653B4B !important;
+  border-color: #653B4B !important;
+  color: #FFFFFF !important;
+}
+
+/* --- GSTR-1 Outward Supplies --- */
+body.theme-manager .gstr1-bento-container .gstr1-control-bar,
+.theme-manager .gstr1-bento-container .gstr1-control-bar {
+  border-color: #D9C8D0 !important;
+  background: #FAF6F8 !important;
+}
+
+body.theme-manager .gstr1-control-bar::before,
+.theme-manager .gstr1-control-bar::before {
+  background: linear-gradient(90deg, #7A475B 0%, #653B4B 50%, #522E3C 100%) !important;
+}
+
+body.theme-manager .gstr1-kpi-tile.tile-b2b::after,
+.theme-manager .gstr1-kpi-tile.tile-b2b::after {
+  background: linear-gradient(90deg, #7A475B, #653B4B) !important;
+}
+
+body.theme-manager .gstr1-kpi-tile.tile-b2b:hover,
+.theme-manager .gstr1-kpi-tile.tile-b2b:hover {
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04), 0 18px 36px -6px rgba(101, 59, 75, 0.22) !important;
+}
+
+body.theme-manager .gstr1-kpi-tile.tile-tax::after,
+.theme-manager .gstr1-kpi-tile.tile-tax::after {
+  background: linear-gradient(90deg, #653B4B, #522E3C) !important;
+}
+
+body.theme-manager .gstr1-kpi-tile.tile-tax:hover,
+.theme-manager .gstr1-kpi-tile.tile-tax:hover {
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04), 0 18px 36px -6px rgba(101, 59, 75, 0.22) !important;
+}
+
+body.theme-manager .icon-box-indigo,
+.theme-manager .icon-box-indigo {
+  background: linear-gradient(135deg, #FAF6F8 0%, #F5ECF0 100%) !important;
+  color: #653B4B !important;
+  border-color: #D9C8D0 !important;
+}
+
+body.theme-manager .icon-box-purple,
+.theme-manager .icon-box-purple {
+  background: linear-gradient(135deg, #FAF6F8 0%, #F5ECF0 100%) !important;
+  color: #522E3C !important;
+  border-color: #D9C8D0 !important;
+}
+
+body.theme-manager .gstr1-b2c-card.card-indigo,
+.theme-manager .gstr1-b2c-card.card-indigo {
+  background: linear-gradient(145deg, #ffffff 0%, #FAF6F8 60%, #F5ECF0 100%) !important;
+  border-color: #D9C8D0 !important;
+}
+
+body.theme-manager .gstr1-b2c-card.card-indigo:hover,
+.theme-manager .gstr1-b2c-card.card-indigo:hover {
+  border-color: #653B4B !important;
+  box-shadow: 0 4px 12px rgba(101, 59, 75, 0.08), 0 18px 36px -6px rgba(101, 59, 75, 0.22) !important;
+}
+
+body.theme-manager .gstr1-b2c-card.card-purple,
+.theme-manager .gstr1-b2c-card.card-purple {
+  background: linear-gradient(145deg, #ffffff 0%, #FAF6F8 60%, #F5ECF0 100%) !important;
+  border-color: #D9C8D0 !important;
+}
+
+body.theme-manager .gstr1-b2c-card.card-purple:hover,
+.theme-manager .gstr1-b2c-card.card-purple:hover {
+  border-color: #522E3C !important;
+  box-shadow: 0 4px 12px rgba(101, 59, 75, 0.08), 0 18px 36px -6px rgba(101, 59, 75, 0.22) !important;
+}
+
+body.theme-manager .badge-indigo,
+.theme-manager .badge-indigo {
+  background: #F5ECF0 !important;
+  color: #653B4B !important;
+}
+
+body.theme-manager .badge-purple,
+.theme-manager .badge-purple {
+  background: #F5ECF0 !important;
+  color: #522E3C !important;
+}

@@ -1635,6 +1635,7 @@ export function App() {
   const [showPosOpenShiftModal, setShowPosOpenShiftModal] = useState(false);
   const [showCounterModal, setShowCounterModal] = useState<boolean>(false);
   const [showLogoutShiftModal, setShowLogoutShiftModal] = useState<boolean>(false);
+  const [showLogoutConfirmModal, setShowLogoutConfirmModal] = useState<boolean>(false);
   const [showHeldOrdersModal, setShowHeldOrdersModal] = useState(false);
   const [showCustomItemModal, setShowCustomItemModal] = useState(false);
   const [showShortcutsModal, setShowShortcutsModal] = useState(false);
@@ -3545,6 +3546,23 @@ export function App() {
       return;
     }
     await performLogout(false);
+  };
+
+  const handleSidebarLogoutClick = () => {
+    const role = String(user?.role || '').toLowerCase();
+    const isSuperAdminOrManager =
+      role === 'owner' ||
+      role === 'super_admin' ||
+      role === 'admin' ||
+      role === 'manager' ||
+      role === 'store_manager';
+
+    if (isSuperAdminOrManager) {
+      setShowLogoutConfirmModal(true);
+      return;
+    }
+
+    handleLogout();
   };
 
   const handleLogoFileUpload = (file: File) => {
@@ -7793,17 +7811,35 @@ export function App() {
     }
     const userBusinesses = myBusinesses.length > 0 ? myBusinesses : (shop ? [shop as any] : []);
     return (
-      <BusinessSelector
-        user={user}
-        currentShop={shop}
-        businesses={userBusinesses}
-        onSelectBusiness={(tenantId) => {
-          handleSwitchBusiness(tenantId);
-          navigateTo('dashboard');
-        }}
-        onLogout={handleLogout}
-        onBackToDashboard={() => navigateTo('dashboard')}
-      />
+      <>
+        <BusinessSelector
+          user={user}
+          currentShop={shop}
+          businesses={userBusinesses}
+          onSelectBusiness={(tenantId) => {
+            handleSwitchBusiness(tenantId);
+            navigateTo('dashboard');
+          }}
+          onLogout={handleSidebarLogoutClick}
+          onBackToDashboard={() => navigateTo('dashboard')}
+        />
+        <ConfirmModal
+          isOpen={showLogoutConfirmModal}
+          title="Are you sure you want to log out?"
+          message="You will need to log in again to access your account."
+          confirmText="Log Out"
+          cancelText="Keep Me Logged In"
+          variant="danger"
+          icon={<LogOut size={26} strokeWidth={2.2} color="#dc2626" />}
+          onConfirm={() => {
+            setShowLogoutConfirmModal(false);
+            handleLogout();
+          }}
+          onCancel={() => {
+            setShowLogoutConfirmModal(false);
+          }}
+        />
+      </>
     );
   }
 
@@ -8830,7 +8866,7 @@ export function App() {
               <button
                 type="button"
                 className="sidebar-action-row-btn signout"
-                onClick={handleLogout}
+                onClick={handleSidebarLogoutClick}
                 title="Logout of current business"
               >
                 <span className="action-row-icon">
@@ -25745,6 +25781,24 @@ export function App() {
             setShowReturnExchangeModal(false);
             loadParties();
             loadInvoices();
+          }}
+        />
+
+        {/* Super Admin & Store Manager Logout Confirmation Dialog */}
+        <ConfirmModal
+          isOpen={showLogoutConfirmModal}
+          title="Are you sure you want to log out?"
+          message="You will need to log in again to access your account."
+          confirmText="Log Out"
+          cancelText="Keep Me Logged In"
+          variant="danger"
+          icon={<LogOut size={26} strokeWidth={2.2} color="#dc2626" />}
+          onConfirm={() => {
+            setShowLogoutConfirmModal(false);
+            handleLogout();
+          }}
+          onCancel={() => {
+            setShowLogoutConfirmModal(false);
           }}
         />
 
