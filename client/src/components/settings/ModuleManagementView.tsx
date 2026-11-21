@@ -5,12 +5,11 @@ import {
   TOTAL_PARENT_MODULES,
   TOTAL_SUB_MODULES,
   DEFAULT_ROLE_MODULE_ACCESS,
-  CASHIER_MANDATORY_MODULES,
   type RoleModuleAccessConfig,
   type AppModule,
   type AppSubModule,
 } from '../../../../shared/modules.ts';
-import { fetchModuleAccess, saveModuleAccess } from '../../api.ts';
+import { fetchModuleAccess, saveModuleAccess, type ModuleAccessChangeItem } from '../../api.ts';
 import './ModuleManagementView.css';
 
 // Lucide icon components or inline SVGs
@@ -41,6 +40,7 @@ import {
   HelpCircle,
   X,
   AlertCircle,
+  Loader2,
 } from 'lucide-react';
 
 interface ModuleManagementViewProps {
@@ -82,12 +82,6 @@ export const ModuleManagementView: React.FC<ModuleManagementViewProps> = ({
         if (isMounted && res && res.access) {
           // Safeguard: Ensure Super Admin Settings is locked true
           res.access.owner.settings = true;
-          // Safeguard: Ensure Cashier mandatory modules are locked true
-          if (res.access.cashier) {
-            for (const m of CASHIER_MANDATORY_MODULES) {
-              res.access.cashier[m] = true;
-            }
-          }
           setSavedConfig(res.access);
           setDraftConfig(res.access);
         }
@@ -103,26 +97,24 @@ export const ModuleManagementView: React.FC<ModuleManagementViewProps> = ({
     };
   }, []);
 
-  // Compute unsaved changes count and affected roles
+  // Compute unsaved changes count and affected roles (Super Admin and Store Manager only)
   const { unsavedCount, changedRoles } = useMemo(() => {
     let count = 0;
     const rolesChanged = new Set<string>();
-    const roles: Array<'owner' | 'manager' | 'cashier'> = ['owner', 'manager', 'cashier'];
+    const roles: Array<'owner' | 'manager'> = ['owner', 'manager'];
 
     for (const role of roles) {
       const savedMap = savedConfig[role] || {};
       const draftMap = draftConfig[role] || {};
 
       for (const mod of APP_MODULES) {
-        const isLocked =
-          (role === 'owner' && mod.key === 'settings') ||
-          (role === 'cashier' && (CASHIER_MANDATORY_MODULES as readonly string[]).includes(mod.key));
+        const isLocked = role === 'owner' && mod.key === 'settings';
 
         const sVal = isLocked ? true : (savedMap[mod.key] ?? DEFAULT_ROLE_MODULE_ACCESS[role][mod.key] ?? true);
         const dVal = isLocked ? true : (draftMap[mod.key] ?? DEFAULT_ROLE_MODULE_ACCESS[role][mod.key] ?? true);
         if (sVal !== dVal) {
           count++;
-          rolesChanged.add(role === 'owner' ? 'Super Admin' : role === 'manager' ? 'Store Manager' : 'Cashier');
+          rolesChanged.add(role === 'owner' ? 'Super Admin' : 'Store Manager');
         }
 
         if (mod.subModules) {
@@ -131,7 +123,7 @@ export const ModuleManagementView: React.FC<ModuleManagementViewProps> = ({
             const dSub = draftMap[sub.key] ?? DEFAULT_ROLE_MODULE_ACCESS[role][sub.key] ?? true;
             if (sSub !== dSub) {
               count++;
-              rolesChanged.add(role === 'owner' ? 'Super Admin' : role === 'manager' ? 'Store Manager' : 'Cashier');
+              rolesChanged.add(role === 'owner' ? 'Super Admin' : 'Store Manager');
             }
           }
         }
@@ -157,16 +149,11 @@ export const ModuleManagementView: React.FC<ModuleManagementViewProps> = ({
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [unsavedCount]);
 
-  // Toggle module for a specific role
+  // Toggle module for a specific role (Super Admin or Store Manager)
   const handleToggle = useCallback(
-    (role: 'owner' | 'manager' | 'cashier', key: string) => {
+    (role: 'owner' | 'manager', key: string) => {
       // Super Admin Settings is locked and non-modifiable
       if (role === 'owner' && key === 'settings') {
-        return;
-      }
-
-      // Cashier mandatory modules are locked and non-modifiable
-      if (role === 'cashier' && (CASHIER_MANDATORY_MODULES as readonly string[]).includes(key)) {
         return;
       }
 
@@ -175,25 +162,12 @@ export const ModuleManagementView: React.FC<ModuleManagementViewProps> = ({
         const currentValue = currentRoleMap[key] ?? DEFAULT_ROLE_MODULE_ACCESS[role][key] ?? true;
         const newValue = !currentValue;
 
-        const updatedRoleMap = {
-          ...currentRoleMap,
-          [key]: newValue,
-        };
-
-        // Synchronize related module keys across parent/submodule representation
-        if (key === 'day-closing') {
-          updatedRoleMap['accounts.day_closing'] = newValue;
-        } else if (key === 'accounts.day_closing') {
-          updatedRoleMap['day-closing'] = newValue;
-        } else if (key === 'recent-bills') {
-          updatedRoleMap['accounts.invoices'] = newValue;
-        } else if (key === 'accounts.invoices') {
-          updatedRoleMap['recent-bills'] = newValue;
-        }
-
         return {
           ...prev,
-          [role]: updatedRoleMap,
+          [role]: {
+            ...currentRoleMap,
+            [key]: newValue,
+          },
         };
       });
     },
@@ -219,33 +193,70 @@ export const ModuleManagementView: React.FC<ModuleManagementViewProps> = ({
     setDraftConfig(savedConfig);
   };
 
-  // Save changes
+  // Save changes (optimized to send only changed module entries for Super Admin and Store Manager)
   const handleSave = async () => {
     if (saving) return;
+
+    // 1. Calculate the exact changed items between savedConfig and draftConfig
+    const changes: ModuleAccessChangeItem[] = [];
+    const roles: Array<'owner' | 'manager'> = ['owner', 'manager'];
+
+    for (const role of roles) {
+      const savedMap = savedConfig[role] || {};
+      const draftMap = draftConfig[role] || {};
+
+      for (const mod of APP_MODULES) {
+        const isLocked = role === 'owner' && mod.key === 'settings';
+
+        if (!isLocked) {
+          const sVal = savedMap[mod.key] ?? DEFAULT_ROLE_MODULE_ACCESS[role][mod.key] ?? true;
+          const dVal = draftMap[mod.key] ?? DEFAULT_ROLE_MODULE_ACCESS[role][mod.key] ?? true;
+          if (sVal !== dVal) {
+            changes.push({ role, moduleKey: mod.key, enabled: dVal });
+          }
+        }
+
+        if (mod.subModules) {
+          for (const sub of mod.subModules) {
+            const sSub = savedMap[sub.key] ?? DEFAULT_ROLE_MODULE_ACCESS[role][sub.key] ?? true;
+            const dSub = draftMap[sub.key] ?? DEFAULT_ROLE_MODULE_ACCESS[role][sub.key] ?? true;
+            if (sSub !== dSub) {
+              changes.push({ role, moduleKey: sub.key, enabled: dSub });
+            }
+          }
+        }
+      }
+    }
+
+    // 2. If nothing changed, give immediate positive feedback without hitting the network
+    if (changes.length === 0) {
+      showToast('All module permissions are already up to date.', 'info');
+      return;
+    }
+
     setSaving(true);
     try {
-      // Ensure Super Admin Settings and Cashier mandatory modules are strictly true
-      const cashierMap = { ...draftConfig.cashier };
-      for (const m of CASHIER_MANDATORY_MODULES) {
-        cashierMap[m] = true;
-      }
-
-      const payload: RoleModuleAccessConfig = {
+      const fullAccess: RoleModuleAccessConfig = {
         ...draftConfig,
         owner: {
           ...draftConfig.owner,
           settings: true,
         },
-        cashier: cashierMap,
       };
 
-      const res = await saveModuleAccess(payload);
+      // Send optimized payload with changes
+      const res = await saveModuleAccess({
+        changes,
+        access: fullAccess,
+      });
+
       if (res && res.success) {
-        setSavedConfig(res.access || payload);
-        setDraftConfig(res.access || payload);
+        const updated = res.access || fullAccess;
+        setSavedConfig(updated);
+        setDraftConfig(updated);
         showToast('Module access permissions saved successfully!', 'success');
         if (onModuleAccessUpdated) {
-          onModuleAccessUpdated(res.access || payload);
+          onModuleAccessUpdated(updated);
         }
       } else {
         throw new Error(res?.message || 'Failed to save module access');
@@ -253,6 +264,7 @@ export const ModuleManagementView: React.FC<ModuleManagementViewProps> = ({
     } catch (err: any) {
       console.error('Error saving module access:', err);
       showToast(err.message || 'Failed to save module access. Please try again.', 'error');
+      // Unsaved changes in draftConfig are preserved so the user doesn't lose work!
     } finally {
       setSaving(false);
     }
@@ -277,17 +289,15 @@ export const ModuleManagementView: React.FC<ModuleManagementViewProps> = ({
       // Status filter check
       if (statusFilter === 'all') return true;
 
-      const roles: Array<'owner' | 'manager' | 'cashier'> = ['owner', 'manager', 'cashier'];
+      const roles: Array<'owner' | 'manager'> = ['owner', 'manager'];
       const isEnabledForAnyRole = roles.some((role) => {
         if (mod.key === 'settings' && role === 'owner') return true;
-        if (role === 'cashier' && (CASHIER_MANDATORY_MODULES as readonly string[]).includes(mod.key)) return true;
         const roleMap = draftConfig[role] || {};
         return roleMap[mod.key] ?? DEFAULT_ROLE_MODULE_ACCESS[role][mod.key] ?? true;
       });
 
       const isDisabledForAnyRole = roles.some((role) => {
         if (mod.key === 'settings' && role === 'owner') return false;
-        if (role === 'cashier' && (CASHIER_MANDATORY_MODULES as readonly string[]).includes(mod.key)) return false;
         const roleMap = draftConfig[role] || {};
         return !(roleMap[mod.key] ?? DEFAULT_ROLE_MODULE_ACCESS[role][mod.key] ?? true);
       });
@@ -301,21 +311,19 @@ export const ModuleManagementView: React.FC<ModuleManagementViewProps> = ({
 
   // Counts for filter pills
   const filterCounts = useMemo(() => {
-    const roles: Array<'owner' | 'manager' | 'cashier'> = ['owner', 'manager', 'cashier'];
+    const roles: Array<'owner' | 'manager'> = ['owner', 'manager'];
     let enabledCount = 0;
     let disabledCount = 0;
 
     for (const mod of APP_MODULES) {
       const isEnabledForAnyRole = roles.some((role) => {
         if (mod.key === 'settings' && role === 'owner') return true;
-        if (role === 'cashier' && (CASHIER_MANDATORY_MODULES as readonly string[]).includes(mod.key)) return true;
         const roleMap = draftConfig[role] || {};
         return roleMap[mod.key] ?? DEFAULT_ROLE_MODULE_ACCESS[role][mod.key] ?? true;
       });
 
       const isDisabledForAnyRole = roles.some((role) => {
         if (mod.key === 'settings' && role === 'owner') return false;
-        if (role === 'cashier' && (CASHIER_MANDATORY_MODULES as readonly string[]).includes(mod.key)) return false;
         const roleMap = draftConfig[role] || {};
         return !(roleMap[mod.key] ?? DEFAULT_ROLE_MODULE_ACCESS[role][mod.key] ?? true);
       });
@@ -410,7 +418,7 @@ export const ModuleManagementView: React.FC<ModuleManagementViewProps> = ({
           >
             {saving ? (
               <>
-                <span className="spinner" style={{ width: 14, height: 14 }} /> Saving...
+                <Loader2 size={15} className="mm-spin" /> Saving...
               </>
             ) : (
               <>
@@ -502,22 +510,19 @@ export const ModuleManagementView: React.FC<ModuleManagementViewProps> = ({
             <table className="mm-table">
               <thead>
                 <tr>
-                  <th style={{ width: '40%' }}>Module</th>
-                  <th className="mm-th-role">
+                  <th style={{ width: '50%' }}>Module</th>
+                  <th className="mm-th-role" style={{ width: '25%' }}>
                     <span className="mm-role-dot" /> Super Admin
                   </th>
-                  <th className="mm-th-role">
+                  <th className="mm-th-role" style={{ width: '25%' }}>
                     <span className="mm-role-dot" /> Store Manager
-                  </th>
-                  <th className="mm-th-role">
-                    <span className="mm-role-dot" /> Cashier
                   </th>
                 </tr>
               </thead>
               <tbody>
                 {filteredModules.length === 0 ? (
                   <tr>
-                    <td colSpan={4} style={{ textAlign: 'center', padding: '3rem 1rem', color: '#6B6670' }}>
+                    <td colSpan={3} style={{ textAlign: 'center', padding: '3rem 1rem', color: '#6B6670' }}>
                       <AlertCircle size={32} style={{ color: '#A39DA5', marginBottom: '0.5rem' }} />
                       <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>No modules match your filter</div>
                       <div style={{ fontSize: '0.8rem', marginTop: '4px' }}>
@@ -533,7 +538,6 @@ export const ModuleManagementView: React.FC<ModuleManagementViewProps> = ({
                     // State for each role for parent module
                     const saEnabled = mod.key === 'settings' ? true : (draftConfig.owner[mod.key] ?? true);
                     const smEnabled = draftConfig.manager[mod.key] ?? true;
-                    const caEnabled = draftConfig.cashier[mod.key] ?? false;
 
                     return (
                       <React.Fragment key={mod.key}>
@@ -635,51 +639,6 @@ export const ModuleManagementView: React.FC<ModuleManagementViewProps> = ({
                               </span>
                             </div>
                           </td>
-
-                          {/* Cashier Toggle */}
-                          <td>
-                            <div className="mm-toggle-cell">
-                              {(CASHIER_MANDATORY_MODULES as readonly string[]).includes(mod.key) ? (
-                                <div>
-                                  <button
-                                    type="button"
-                                    role="switch"
-                                    aria-checked={true}
-                                    aria-disabled={true}
-                                    disabled={true}
-                                    className="mm-switch-track on locked-cashier"
-                                    title="This module is mandatory for Cashier access and cannot be disabled."
-                                  >
-                                    <span className="mm-switch-knob locked locked-cashier">
-                                      <Lock size={9} strokeWidth={3} />
-                                    </span>
-                                  </button>
-                                  <span className="mm-switch-label on locked locked-cashier">
-                                    Enabled <Lock size={11} strokeWidth={2.5} />
-                                  </span>
-                                  <div className="mm-lock-helper">
-                                    This module is mandatory for Cashier access and cannot be disabled.
-                                  </div>
-                                </div>
-                              ) : (
-                                <>
-                                  <button
-                                    type="button"
-                                    role="switch"
-                                    aria-checked={caEnabled}
-                                    className={`mm-switch-track ${caEnabled ? 'on' : ''}`}
-                                    onClick={() => handleToggle('cashier', mod.key)}
-                                    title={`Click to ${caEnabled ? 'disable' : 'enable'} ${mod.name} for Cashier`}
-                                  >
-                                    <span className="mm-switch-knob" />
-                                  </button>
-                                  <span className={`mm-switch-label ${caEnabled ? 'on' : 'off'}`}>
-                                    {caEnabled ? 'Enabled' : 'Disabled'}
-                                  </span>
-                                </>
-                              )}
-                            </div>
-                          </td>
                         </tr>
 
                         {/* Sub-Module Rows (if expanded) */}
@@ -689,7 +648,6 @@ export const ModuleManagementView: React.FC<ModuleManagementViewProps> = ({
                             // Sub-module draft values
                             const saSubVal = draftConfig.owner[sub.key] ?? true;
                             const smSubVal = draftConfig.manager[sub.key] ?? true;
-                            const caSubVal = draftConfig.cashier[sub.key] ?? false;
 
                             return (
                               <tr key={sub.key} className="mm-row-sub">
@@ -780,45 +738,6 @@ export const ModuleManagementView: React.FC<ModuleManagementViewProps> = ({
                                     )}
                                   </div>
                                 </td>
-
-                                {/* Cashier Sub-Toggle */}
-                                <td>
-                                  <div className="mm-toggle-cell">
-                                    {!caEnabled ? (
-                                      <>
-                                        <button
-                                          type="button"
-                                          role="switch"
-                                          aria-checked={false}
-                                          aria-disabled={true}
-                                          className="mm-switch-track dashed-inactive"
-                                          title={`Parent module "${mod.name}" is disabled. Sub-module is hidden.`}
-                                        >
-                                          <span className="mm-switch-knob inactive" />
-                                        </button>
-                                        <span className="mm-switch-label hidden-parent">
-                                          Hidden with parent
-                                        </span>
-                                      </>
-                                    ) : (
-                                      <>
-                                        <button
-                                          type="button"
-                                          role="switch"
-                                          aria-checked={caSubVal}
-                                          className={`mm-switch-track ${caSubVal ? 'on' : ''}`}
-                                          onClick={() => handleToggle('cashier', sub.key)}
-                                          title={`Click to ${caSubVal ? 'disable' : 'enable'} ${sub.name} for Cashier`}
-                                        >
-                                          <span className="mm-switch-knob" />
-                                        </button>
-                                        <span className={`mm-switch-label ${caSubVal ? 'on' : 'off'}`}>
-                                          {caSubVal ? 'Enabled' : 'Disabled'}
-                                        </span>
-                                      </>
-                                    )}
-                                  </div>
-                                </td>
                               </tr>
                             );
                           })}
@@ -838,7 +757,7 @@ export const ModuleManagementView: React.FC<ModuleManagementViewProps> = ({
           </div>
           <div className="mm-footer-lock-notice">
             <Lock size={13} />
-            <span>Settings stays on for Super Admin · POS Counter, My Cashier, Recent Bills &amp; Day Closing stay locked on for Cashier.</span>
+            <span>Settings stays on for Super Admin.</span>
           </div>
         </div>
       </div>
@@ -872,7 +791,7 @@ export const ModuleManagementView: React.FC<ModuleManagementViewProps> = ({
             >
               {saving ? (
                 <>
-                  <span className="spinner" style={{ width: 14, height: 14 }} /> Saving...
+                  <Loader2 size={15} className="mm-spin" /> Saving...
                 </>
               ) : (
                 <>

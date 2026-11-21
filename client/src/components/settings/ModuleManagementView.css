@@ -585,15 +585,9 @@
   color: #6B6670;
 }
 
-/* Super Admin Settings Lock & Cashier Mandatory Modules Lock */
+/* Super Admin Settings Lock */
 .mm-switch-track.locked-admin {
   background: #49364A !important;
-  cursor: not-allowed;
-  opacity: 0.95;
-}
-
-.mm-switch-track.locked-cashier {
-  background: #0F766E !important;
   cursor: not-allowed;
   opacity: 0.95;
 }
@@ -602,19 +596,11 @@
   color: #49364A;
 }
 
-.mm-switch-knob.locked.locked-cashier {
-  color: #0F766E;
-}
-
 .mm-switch-label.locked {
   color: #49364A;
   display: inline-flex;
   align-items: center;
   gap: 4px;
-}
-
-.mm-switch-label.locked.locked-cashier {
-  color: #0F766E;
 }
 
 .mm-lock-helper {
@@ -786,4 +772,19 @@
 @keyframes mmShimmer {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
+}
+
+@keyframes mm-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.mm-spin {
+  animation: mm-spin 0.8s linear infinite;
+  display: inline-block;
+  vertical-align: middle;
 }
