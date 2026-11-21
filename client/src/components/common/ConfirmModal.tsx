@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 
 export interface ConfirmModalProps {
   isOpen: boolean;
@@ -7,6 +8,7 @@ export interface ConfirmModalProps {
   confirmText?: string;
   cancelText?: string;
   variant?: 'danger' | 'warning' | 'info' | 'error';
+  icon?: React.ReactNode;
   showCancel?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
@@ -19,6 +21,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   confirmText = 'Confirm',
   cancelText = 'Cancel',
   variant = 'warning',
+  icon,
   showCancel = true,
   onConfirm,
   onCancel,
@@ -56,7 +59,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   const confirmBg = (isDanger || isError) ? '#dc2626' : isWarning ? '#d97706' : isSuperAdmin ? '#49364A' : '#4f46e5';
   const confirmHoverBg = (isDanger || isError) ? '#b91c1c' : isWarning ? '#b45309' : isSuperAdmin ? '#604B61' : '#4338ca';
 
-  return (
+  const modalContent = (
     <div
       role="dialog"
       aria-modal="true"
@@ -108,7 +111,9 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
             boxShadow: `0 4px 12px ${iconBg}`,
           }}
         >
-          {(isDanger || isError) ? (
+          {icon ? (
+            icon
+          ) : (isDanger || isError) ? (
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke={iconColor} strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10" />
               <line x1="15" y1="9" x2="9" y2="15" />
@@ -213,4 +218,6 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : modalContent;
 };
