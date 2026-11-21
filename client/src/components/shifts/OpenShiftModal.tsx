@@ -86,24 +86,43 @@ export const OpenShiftModal: React.FC<OpenShiftModalProps> = ({
   const quickAmounts = [500, 1000, 2000, 5000, 10000];
 
   const branchCounters: Array<{ code: string; name: string; id?: string }> = React.useMemo(() => {
+    let list: Array<{ code: string; name: string; id?: string }> = [];
+
     if (activeDetails && activeDetails.length > 0) {
-      return activeDetails.map((c: any) => ({
+      list = activeDetails.map((c: any) => ({
         id: c.id,
         code: c.code,
         name: c.name || c.code,
       }));
+    } else {
+      const rawCounters = activeBranchObj?.counters && Array.isArray(activeBranchObj.counters) && activeBranchObj.counters.length > 0
+        ? activeBranchObj.counters
+        : ['COUNTER-1'];
+      list = rawCounters.map((c: string) => {
+        const m = c.trim().match(/^counter[_\-\s]*(\d+)$/i);
+        return {
+          code: c,
+          name: m ? `Counter ${m[1]}` : c,
+        };
+      });
     }
-    const rawCounters = activeBranchObj?.counters && Array.isArray(activeBranchObj.counters) && activeBranchObj.counters.length > 0
-      ? activeBranchObj.counters
-      : ['COUNTER-1'];
-    return rawCounters.map((c: string) => {
-      const m = c.trim().match(/^counter[_\-\s]*(\d+)$/i);
-      return {
-        code: c,
-        name: m ? `Counter ${m[1]}` : c,
-      };
+
+    if (userRole === 'owner') {
+      const adminOnly = list.filter(c => c.code.toUpperCase() === 'ADMIN-POS' || c.name.toLowerCase().includes('admin counter'));
+      return adminOnly.length > 0 ? adminOnly : [{ code: 'ADMIN-POS', name: 'Admin Counter' }];
+    }
+    if (userRole === 'manager') {
+      const mgrOnly = list.filter(c => c.code.toUpperCase().includes('MGR') || c.name.toLowerCase().includes('manager counter'));
+      return mgrOnly.length > 0 ? mgrOnly : [{ code: `${location.toUpperCase()}-MGR`, name: `Manager Counter (${location.toUpperCase()})` }];
+    }
+
+    // Cashier: only cash registers (never admin or manager counters)
+    return list.filter(c => {
+      const cd = c.code.toUpperCase();
+      const nm = c.name.toLowerCase();
+      return cd !== 'ADMIN-POS' && !cd.endsWith('-MGR') && !cd.includes('MGR') && !nm.includes('admin counter') && !nm.includes('manager counter');
     });
-  }, [activeDetails, activeBranchObj]);
+  }, [activeDetails, activeBranchObj, userRole, location]);
 
   const getOccupantForCounter = (cCode: string, cId?: string): OccupiedCounterInfo | null => {
     return occupiedList.find((occ) => {

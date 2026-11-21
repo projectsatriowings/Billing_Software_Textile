@@ -1762,16 +1762,45 @@ export function App() {
     }
   }, [activeTab]);
 
-  // Synchronize and validate cashier counter selection with active branch counters
+  // Synchronize and validate counter station selection strictly scoped by role
   useEffect(() => {
     if (!activeBranch || !activeBranch.counterDetails || activeBranch.counterDetails.length === 0) return;
     const activeList = activeBranch.counterDetails.filter((c: any) => c.status !== 'DISABLED');
     if (activeList.length === 0) return;
 
+    // Super Admin: strictly locked to dedicated Admin Counter (never occupies cashier stations)
+    if (user?.role === 'owner') {
+      const adminMatch = activeList.find((c: any) => c.code.toUpperCase() === 'ADMIN-POS' || c.name.toLowerCase().includes('admin counter'));
+      const targetCode = adminMatch?.code || 'ADMIN-POS';
+      const targetId = adminMatch?.id || 'ADMIN-POS';
+      if (selectedCounter !== targetCode || selectedCounterId !== targetId) {
+        setSelectedCounter(targetCode);
+        setSelectedCounterId(targetId);
+      }
+      return;
+    }
+
+    // Store Manager: strictly locked to dedicated Manager Counter for this branch (never occupies cashier stations)
+    if (user?.role === 'manager') {
+      const mgrMatch = activeList.find((c: any) => c.code.toUpperCase().includes('MGR') || c.name.toLowerCase().includes('manager counter'));
+      const targetCode = mgrMatch?.code || `${currentBranchCode}-MGR`;
+      const targetId = mgrMatch?.id || `${currentBranchCode}-MGR`;
+      if (selectedCounter !== targetCode || selectedCounterId !== targetId) {
+        setSelectedCounter(targetCode);
+        setSelectedCounterId(targetId);
+      }
+      return;
+    }
+
+    // Cashier role: strictly limited to cashier stations (exclude Admin & Manager counters)
+    const cashierCounters = activeList.filter(
+      (c: any) => c.code !== 'ADMIN-POS' && !c.code.includes('MGR') && !c.name.toLowerCase().includes('admin') && !c.name.toLowerCase().includes('manager')
+    );
+
     if (selectedCounterId) {
-      const match = activeList.find((c: any) => c.id === selectedCounterId);
+      const match = cashierCounters.find((c: any) => c.id === selectedCounterId);
       if (!match) {
-        // Counter ID does not belong to active branch (e.g. branch switched or deleted) -> reset
+        // Counter ID does not belong to active branch cashier stations -> reset
         setSelectedCounterId('');
         setSelectedCounter('');
         try {
@@ -1782,9 +1811,7 @@ export function App() {
           localStorage.removeItem('pos_selected_counter');
           localStorage.removeItem('pos_selected_counter_name');
         } catch { }
-        if (user?.role === 'cashier') {
-          setShowCounterModal(true);
-        }
+        setShowCounterModal(true);
       } else {
         if (match.code !== selectedCounter) {
           setSelectedCounter(match.code);
@@ -1793,17 +1820,21 @@ export function App() {
             localStorage.setItem('pos_selected_counter', match.code);
           } catch { }
         }
-        // Ensure backend registers this station as occupied by the current cashier
-        if (user?.role === 'cashier') {
-          selectActiveShiftCounter({
-            counterId: match.id,
-            counter: match.code,
-            branchId: activeBranch.id,
-          }).catch(() => { });
-        }
+        // Ensure backend immediately registers this station as occupied by the current cashier
+        selectActiveShiftCounter({
+          counterId: match.id,
+          counter: match.code,
+          branchId: activeBranch.id,
+        }).catch((err: any) => {
+          if (err?.code === 'COUNTER_OCCUPIED') {
+            setSelectedCounterId('');
+            setSelectedCounter('');
+            setShowCounterModal(true);
+          }
+        });
       }
     } else if (selectedCounter) {
-      const match = activeList.find((c: any) => c.code.toUpperCase() === selectedCounter.toUpperCase() || c.name.toLowerCase() === selectedCounter.toLowerCase());
+      const match = cashierCounters.find((c: any) => c.code.toUpperCase() === selectedCounter.toUpperCase() || c.name.toLowerCase() === selectedCounter.toLowerCase());
       if (match) {
         setSelectedCounterId(match.id);
         setSelectedCounter(match.code);
@@ -1813,16 +1844,26 @@ export function App() {
           localStorage.setItem('pos_selected_counter_id', match.id);
           localStorage.setItem('pos_selected_counter', match.code);
         } catch { }
-        if (user?.role === 'cashier') {
-          selectActiveShiftCounter({
-            counterId: match.id,
-            counter: match.code,
-            branchId: activeBranch.id,
-          }).catch(() => { });
-        }
+        selectActiveShiftCounter({
+          counterId: match.id,
+          counter: match.code,
+          branchId: activeBranch.id,
+        }).catch((err: any) => {
+          if (err?.code === 'COUNTER_OCCUPIED') {
+            setSelectedCounterId('');
+            setSelectedCounter('');
+            setShowCounterModal(true);
+          }
+        });
+      } else {
+        setSelectedCounterId('');
+        setSelectedCounter('');
+        setShowCounterModal(true);
       }
+    } else {
+      setShowCounterModal(true);
     }
-  }, [activeBranch, selectedCounterId, selectedCounter, user?.role]);
+  }, [activeBranch, selectedCounterId, selectedCounter, user?.role, currentBranchCode]);
 
   // Periodic counter heartbeat for cashier on POS tab to keep station occupied in real-time
   useEffect(() => {
@@ -8037,6 +8078,83 @@ export function App() {
     );
   });
 
+  const renderPosCounterBadge = () => {
+    const isOwner = user?.role === 'owner';
+    const isManager = user?.role === 'manager';
+    const isCashier = user?.role === 'cashier';
+
+    let badgeLabel = 'Counter';
+    let badgeVal = selectedCounter || 'Counter 1';
+    let badgeTag = isCashier && activeShiftNumber ? 'Locked' : 'Station';
+    const isLockedState = isCashier ? Boolean(activeShiftNumber) : true;
+
+    if (isOwner) {
+      badgeLabel = 'Admin POS';
+      badgeVal = 'Admin Counter (ADMIN-POS)';
+      badgeTag = 'Admin';
+    } else if (isManager) {
+      badgeLabel = 'Manager POS';
+      badgeVal = `Manager Counter (${currentBranchCode})`;
+      badgeTag = currentBranchCode;
+    } else {
+      const match = activeBranch?.counterDetails?.find(c => c.code === selectedCounter || c.name === selectedCounter);
+      if (match) badgeVal = `${match.name} (${match.code})`;
+      badgeTag = activeShiftNumber ? 'Locked' : (selectedCounter ? 'Station' : 'Select');
+    }
+
+    const handleClick = () => {
+      if (isOwner) {
+        showToast('Super Admin POS Terminal • Dedicated Admin Counter (ADMIN-POS) active. Cashier counters are unaffected.', 'info');
+        return;
+      }
+      if (isManager) {
+        showToast(`Store Manager POS Terminal • Dedicated Manager Counter (${currentBranchCode}-MGR) active for ${currentBranchName}. Cashier counters are unaffected.`, 'info');
+        return;
+      }
+      if (activeShiftNumber) {
+        showToast(`Billing counter is locked to ${badgeVal} while Shift #${activeShiftNumber} is active. Close shift to reassign.`, 'info');
+        return;
+      }
+      setShowCounterModal(true);
+    };
+
+    return (
+      <div
+        className={`top-pos-bento-badge top-pos-counter-badge ${isLockedState ? 'locked' : ''}`}
+        title={isOwner ? 'Super Admin POS Terminal (ADMIN-POS)' : isManager ? `Store Manager POS Terminal (${currentBranchCode}-MGR)` : (activeShiftNumber ? 'Counter locked for active shift' : 'Click to select counter station')}
+        onClick={handleClick}
+        style={{ cursor: isCashier && !activeShiftNumber ? 'pointer' : 'default' }}
+      >
+        <div className="top-pos-badge-icon counter">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+            <line x1="8" y1="21" x2="16" y2="21" />
+            <line x1="12" y1="17" x2="12" y2="21" />
+          </svg>
+        </div>
+        <div className="top-pos-badge-text">
+          <span className="top-pos-badge-label">{badgeLabel}</span>
+          <div className="top-pos-badge-val-row">
+            <span className="top-pos-badge-val">{badgeVal}</span>
+            {isCashier && activeShiftNumber ? (
+              <span className="top-pos-lock-tag" title="Counter station is locked while shift is active">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+                <span>Locked</span>
+              </span>
+            ) : (
+              <span className="top-pos-code-tag" style={{ color: '#0d9488', background: '#ccfbf1', borderColor: '#99f6e4' }}>
+                {badgeTag}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <BranchProvider
       user={user}
@@ -9022,57 +9140,7 @@ export function App() {
                   </div>
                 </div>
 
-                <div
-                  className={`top-pos-bento-badge top-pos-counter-badge ${selectedCounter ? 'locked' : ''}`}
-                  title={
-                    selectedCounter
-                      ? `Billing counter station locked (${selectedCounter}). Once assigned, station cannot be changed while in active use.`
-                      : 'Select billing counter station'
-                  }
-                  onClick={() => {
-                    if (selectedCounter) {
-                      const match = activeBranch?.counterDetails?.find(c => c.code === selectedCounter || c.name === selectedCounter);
-                      const label = match ? `${match.name} (${match.code})` : selectedCounter;
-                      showToast(`Billing counter is locked to ${label}. Stations cannot be changed while in active use. Close shift or log out to reassign.`, 'info');
-                    } else {
-                      setShowCounterModal(true);
-                    }
-                  }}
-                  style={{ cursor: selectedCounter ? 'default' : 'pointer' }}
-                >
-                  <div className="top-pos-badge-icon counter">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
-                      <line x1="8" y1="21" x2="16" y2="21" />
-                      <line x1="12" y1="17" x2="12" y2="21" />
-                    </svg>
-                  </div>
-                  <div className="top-pos-badge-text">
-                    <span className="top-pos-badge-label">Counter</span>
-                    <div className="top-pos-badge-val-row">
-                      <span className="top-pos-badge-val">
-                        {(() => {
-                          const match = activeBranch?.counterDetails?.find(c => c.code === selectedCounter || c.name === selectedCounter);
-                          if (match) return `${match.name} (${match.code})`;
-                          return selectedCounter || activeBranch?.counters?.[0] || 'Counter 1';
-                        })()}
-                      </span>
-                      {selectedCounter ? (
-                        <span className="top-pos-lock-tag" title="Counter station is locked for this terminal while in active use">
-                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                          </svg>
-                          <span>Locked</span>
-                        </span>
-                      ) : (
-                        <span className="top-pos-code-tag" style={{ color: '#0d9488', background: '#ccfbf1', borderColor: '#99f6e4' }}>
-                          Select
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                {renderPosCounterBadge()}
 
                 {/* Customer Screen Button in Top Bar right after Counter */}
                 <button
@@ -9115,57 +9183,7 @@ export function App() {
                     </div>
                   </div>
                 </div>
-                <div
-                  className={`top-pos-bento-badge top-pos-counter-badge ${selectedCounter ? 'locked' : ''}`}
-                  title={
-                    selectedCounter
-                      ? `Billing counter station locked (${selectedCounter}). Once assigned, station cannot be changed while in active use.`
-                      : 'Select billing counter station'
-                  }
-                  onClick={() => {
-                    if (selectedCounter) {
-                      const match = activeBranch?.counterDetails?.find(c => c.code === selectedCounter || c.name === selectedCounter);
-                      const label = match ? `${match.name} (${match.code})` : selectedCounter;
-                      showToast(`Billing counter is locked to ${label}. Stations cannot be changed while in active use. Close shift or log out to reassign.`, 'info');
-                    } else {
-                      setShowCounterModal(true);
-                    }
-                  }}
-                  style={{ cursor: selectedCounter ? 'default' : 'pointer' }}
-                >
-                  <div className="top-pos-badge-icon counter">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
-                      <line x1="8" y1="21" x2="16" y2="21" />
-                      <line x1="12" y1="17" x2="12" y2="21" />
-                    </svg>
-                  </div>
-                  <div className="top-pos-badge-text">
-                    <span className="top-pos-badge-label">Counter</span>
-                    <div className="top-pos-badge-val-row">
-                      <span className="top-pos-badge-val">
-                        {(() => {
-                          const match = activeBranch?.counterDetails?.find(c => c.code === selectedCounter || c.name === selectedCounter);
-                          if (match) return `${match.name} (${match.code})`;
-                          return selectedCounter || activeBranch?.counters?.[0] || 'Counter 1';
-                        })()}
-                      </span>
-                      {selectedCounter ? (
-                        <span className="top-pos-lock-tag" title="Counter station is locked for this terminal while in active use">
-                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                          </svg>
-                          <span>Locked</span>
-                        </span>
-                      ) : (
-                        <span className="top-pos-code-tag" style={{ color: '#0d9488', background: '#ccfbf1', borderColor: '#99f6e4' }}>
-                          Select
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                {renderPosCounterBadge()}
               </div>
             ) : (displayTab === 'shifts' || activeTab === 'shifts') && user?.role === 'cashier' ? (
               <div className="top-invoices-header-left">
@@ -9192,57 +9210,7 @@ export function App() {
                     </div>
                   </div>
                 </div>
-                <div
-                  className={`top-pos-bento-badge top-pos-counter-badge ${selectedCounter ? 'locked' : ''}`}
-                  title={
-                    selectedCounter
-                      ? `Billing counter station locked (${selectedCounter}). Once assigned, station cannot be changed while in active use.`
-                      : 'Select billing counter station'
-                  }
-                  onClick={() => {
-                    if (selectedCounter) {
-                      const match = activeBranch?.counterDetails?.find(c => c.code === selectedCounter || c.name === selectedCounter);
-                      const label = match ? `${match.name} (${match.code})` : selectedCounter;
-                      showToast(`Billing counter is locked to ${label}. Stations cannot be changed while in active use. Close shift or log out to reassign.`, 'info');
-                    } else {
-                      setShowCounterModal(true);
-                    }
-                  }}
-                  style={{ cursor: selectedCounter ? 'default' : 'pointer' }}
-                >
-                  <div className="top-pos-badge-icon counter">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
-                      <line x1="8" y1="21" x2="16" y2="21" />
-                      <line x1="12" y1="17" x2="12" y2="21" />
-                    </svg>
-                  </div>
-                  <div className="top-pos-badge-text">
-                    <span className="top-pos-badge-label">Counter</span>
-                    <div className="top-pos-badge-val-row">
-                      <span className="top-pos-badge-val">
-                        {(() => {
-                          const match = activeBranch?.counterDetails?.find(c => c.code === selectedCounter || c.name === selectedCounter);
-                          if (match) return `${match.name} (${match.code})`;
-                          return selectedCounter || activeBranch?.counters?.[0] || 'Counter 1';
-                        })()}
-                      </span>
-                      {selectedCounter ? (
-                        <span className="top-pos-lock-tag" title="Counter station is locked for this terminal while in active use">
-                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                          </svg>
-                          <span>Locked</span>
-                        </span>
-                      ) : (
-                        <span className="top-pos-code-tag" style={{ color: '#0d9488', background: '#ccfbf1', borderColor: '#99f6e4' }}>
-                          Select
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                {renderPosCounterBadge()}
               </div>
             ) : displayTab === 'inventory' || activeTab === 'inventory' ? (
               <div className="top-inventory-header-left">
@@ -20092,7 +20060,7 @@ export function App() {
         )}
 
         {/* CASHIER COUNTER SELECTION MODAL */}
-        {showCounterModal && user && (
+        {showCounterModal && user && user.role === 'cashier' && (
           <SelectCounterModal
             isOpen={showCounterModal}
             onClose={() => setShowCounterModal(false)}
@@ -20129,7 +20097,7 @@ export function App() {
             availableCounters={activeBranch?.counters}
             counterDetails={activeBranch?.counterDetails}
             canClose={Boolean(selectedCounter)}
-            isLocked={Boolean(selectedCounter)}
+            isLocked={Boolean(activeShiftNumber)}
           />
         )}
 

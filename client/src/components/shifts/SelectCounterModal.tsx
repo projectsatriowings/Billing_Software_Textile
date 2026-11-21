@@ -144,8 +144,21 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
 
   // Build list of active counters created for this particular branch
   const branchCountersList: ResolvedCounterOption[] = React.useMemo(() => {
+    // Cashiers must only see and select cashier counters (exclude Admin Counter and Store Manager counters)
+    const isExcludedForCashier = (code: string, name?: string) => {
+      const c = (code || '').toUpperCase();
+      const n = (name || '').toLowerCase();
+      return (
+        c === 'ADMIN-POS' ||
+        c.endsWith('-MGR') ||
+        c.includes('MGR') ||
+        n.includes('admin counter') ||
+        n.includes('manager counter')
+      );
+    };
+
     if (counterDetails && counterDetails.length > 0) {
-      const activeDetails = counterDetails.filter(c => c.status !== 'DISABLED');
+      const activeDetails = counterDetails.filter(c => c.status !== 'DISABLED' && !isExcludedForCashier(c.code, c.name));
       return activeDetails.map((c, idx) => {
         const { name, tag, desc, isExpress } = resolveCounterNameAndTag(c.code, c.name, idx);
         return {
@@ -160,7 +173,8 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
     }
 
     if (availableCounters && availableCounters.length > 0) {
-      return availableCounters.map((codeStr, idx) => {
+      const filtered = availableCounters.filter(codeStr => !isExcludedForCashier(codeStr));
+      return filtered.map((codeStr, idx) => {
         const { name, tag, desc, isExpress } = resolveCounterNameAndTag(codeStr, undefined, idx);
         return {
           id: codeStr,
