@@ -276,18 +276,38 @@ export function registerShifts(r: Router) {
     let resolvedCounterCode: string = counter;
     let resolvedCounterName: string = counter;
 
+    const userRole = ctx.user!.role;
     let counterRow: any = null;
-    if (inputCounterId) {
+
+    if (userRole === 'owner') {
+      // Super Admin: always open shift on dedicated Admin Counter
       counterRow = await ctx.db.one<any>(
-        'SELECT id, name, code, status FROM counters WHERE tenant_id = ? AND branch_id = ? AND id = ?',
-        [tenantId, branchId, inputCounterId],
+        "SELECT id, name, code, status FROM counters WHERE tenant_id = ? AND upper(code) = 'ADMIN-POS' LIMIT 1",
+        [tenantId],
       );
-    }
-    if (!counterRow && counter) {
+    } else if (userRole === 'manager') {
+      // Store Manager: always open shift on dedicated branch Manager Counter
       counterRow = await ctx.db.one<any>(
-        'SELECT id, name, code, status FROM counters WHERE tenant_id = ? AND branch_id = ? AND (upper(code) = upper(?) OR lower(name) = lower(?))',
-        [tenantId, branchId, counter, counter],
+        "SELECT id, name, code, status FROM counters WHERE tenant_id = ? AND branch_id = ? AND upper(code) LIKE '%-MGR' LIMIT 1",
+        [tenantId, branchId],
       );
+    } else {
+      if (inputCounterId) {
+        counterRow = await ctx.db.one<any>(
+          'SELECT id, name, code, status FROM counters WHERE tenant_id = ? AND branch_id = ? AND id = ?',
+          [tenantId, branchId, inputCounterId],
+        );
+      }
+      if (!counterRow && counter) {
+        counterRow = await ctx.db.one<any>(
+          'SELECT id, name, code, status FROM counters WHERE tenant_id = ? AND branch_id = ? AND (upper(code) = upper(?) OR lower(name) = lower(?))',
+          [tenantId, branchId, counter, counter],
+        );
+      }
+      // Cashiers can never select or occupy admin/manager counters
+      if (counterRow && (counterRow.code === 'ADMIN-POS' || counterRow.code.includes('-MGR') || counterRow.code.includes('MGR'))) {
+        throw bad('Cashiers can only open shifts on cashier billing stations.', 'FORBIDDEN_COUNTER');
+      }
     }
 
     if (counterRow) {
@@ -682,22 +702,6 @@ export function registerShifts(r: Router) {
 
     let shift = await ctx.db.one<any>(sql, params);
 
-    // If an owner, manager, or accountant doesn't have an active shift opened by themselves, find the open shift for this tenant
-    if (!shift && isManagerOrOwner) {
-      let fallbackSql = `SELECT s.*, u.name AS user_name, u.email AS user_email, u.role AS user_role
-         FROM shifts s
-         JOIN users u ON u.id = s.user_id
-         WHERE s.tenant_id = ? AND s.status = 'open'`;
-      const fallbackParams: any[] = [tenantId];
-      if (counterParam) {
-        fallbackSql += ' AND (s.counter = ? OR s.counter = ? OR s.location = ? OR s.location = ?)';
-        fallbackParams.push(counterParam, counterParam.replace(/\s+/g, '-').toUpperCase(), counterParam, counterParam === 'Counter 1' ? 'MAIN' : counterParam);
-      }
-      fallbackSql += ' ORDER BY s.opened_at DESC LIMIT 1';
-
-      shift = await ctx.db.one<any>(fallbackSql, fallbackParams);
-    }
-
     if (!shift) {
       return { ok: true, activeShift: null };
     }
@@ -766,29 +770,53 @@ export function registerShifts(r: Router) {
       branchId = canonicalBranch.id;
     }
 
+    const userRole = ctx.user!.role;
     let counterRow: any = null;
-    if (inputCounterId) {
-      counterRow = await ctx.db.one(
-        'SELECT id, name, code, status FROM counters WHERE tenant_id = ? AND branch_id = ? AND id = ?',
-        [tenantId, branchId, inputCounterId],
-      );
-    }
-    if (!counterRow && (inputCounter || inputCounterId)) {
-      const searchVal = inputCounter || inputCounterId;
-      counterRow = await ctx.db.one(
-        'SELECT id, name, code, status FROM counters WHERE tenant_id = ? AND branch_id = ? AND (upper(code) = upper(?) OR lower(name) = lower(?))',
-        [tenantId, branchId, searchVal, searchVal],
-      );
-    }
 
-    if (!counterRow) {
-      // Fallback: search across all branches of this tenant if branchId was slightly mismatched
-      counterRow = await ctx.db.one(
-        'SELECT id, name, code, status, branch_id FROM counters WHERE tenant_id = ? AND (id = ? OR upper(code) = upper(?) OR lower(name) = lower(?)) LIMIT 1',
-        [tenantId, inputCounterId || inputCounter, inputCounter || inputCounterId, inputCounter || inputCounterId],
-      );
+    if (userRole === 'owner') {
+      // Super Admin: always assign to dedicated Admin Counter
+      counterRow = (await ctx.db.one(
+        "SELECT id, name, code, status, branch_id FROM counters WHERE tenant_id = ? AND upper(code) = 'ADMIN-POS' LIMIT 1",
+        [tenantId],
+      )) as any;
       if (counterRow) {
         branchId = counterRow.branchId ?? counterRow.branch_id;
+      }
+    } else if (userRole === 'manager') {
+      // Store Manager: always assign to dedicated branch Manager Counter
+      counterRow = (await ctx.db.one(
+        "SELECT id, name, code, status, branch_id FROM counters WHERE tenant_id = ? AND branch_id = ? AND upper(code) LIKE '%-MGR' LIMIT 1",
+        [tenantId, branchId],
+      )) as any;
+    } else {
+      if (inputCounterId) {
+        counterRow = await ctx.db.one(
+          'SELECT id, name, code, status FROM counters WHERE tenant_id = ? AND branch_id = ? AND id = ?',
+          [tenantId, branchId, inputCounterId],
+        );
+      }
+      if (!counterRow && (inputCounter || inputCounterId)) {
+        const searchVal = inputCounter || inputCounterId;
+        counterRow = await ctx.db.one(
+          'SELECT id, name, code, status FROM counters WHERE tenant_id = ? AND branch_id = ? AND (upper(code) = upper(?) OR lower(name) = lower(?))',
+          [tenantId, branchId, searchVal, searchVal],
+        );
+      }
+
+      if (!counterRow) {
+        // Fallback: search across all branches of this tenant if branchId was slightly mismatched
+        counterRow = await ctx.db.one(
+          'SELECT id, name, code, status, branch_id FROM counters WHERE tenant_id = ? AND (id = ? OR upper(code) = upper(?) OR lower(name) = lower(?)) LIMIT 1',
+          [tenantId, inputCounterId || inputCounter, inputCounter || inputCounterId, inputCounter || inputCounterId],
+        );
+        if (counterRow) {
+          branchId = counterRow.branchId ?? counterRow.branch_id;
+        }
+      }
+
+      // Cashiers can never select or occupy admin/manager counters
+      if (counterRow && (counterRow.code === 'ADMIN-POS' || counterRow.code.includes('-MGR') || counterRow.code.includes('MGR'))) {
+        throw bad('Cashiers can only select cashier billing stations.', 'FORBIDDEN_COUNTER');
       }
     }
 
