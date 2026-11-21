@@ -17,7 +17,10 @@ backups/
 *.traineddata
 
 # Electron desktop build outputs
-release/
+release/*
+!release/bin/
+!release/bin/**
+!release/Install-A2Z.bat
 dist-electron/
 win-unpacked/
 *.exe
