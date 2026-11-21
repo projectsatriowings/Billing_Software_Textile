@@ -182,13 +182,13 @@ export const Gstr1View: React.FC<Gstr1ViewProps> = ({ onNavigate }) => {
                   <span className="gstr1-kpi-badge font-mono">Table 4 + 7</span>
                 </div>
                 <div className="gstr1-kpi-label">Total Taxable Turnover</div>
-                <div className="gstr1-kpi-val text-emerald-800 font-mono">
+                <div className="gstr1-kpi-val font-mono" style={{ color: '#2D1822' }}>
                   {formatRupees(grandTaxable)}
                 </div>
               </div>
               <div className="gstr1-kpi-footer">
                 <span>{totalBillsCount} total invoices / bills</span>
-                <span className="font-semibold text-emerald-700">Gross: {formatRupees(grandTaxable + grandTax)}</span>
+                <span className="font-semibold" style={{ color: '#653B4B' }}>Gross: {formatRupees(grandTaxable + grandTax)}</span>
               </div>
             </div>
 
@@ -222,13 +222,13 @@ export const Gstr1View: React.FC<Gstr1ViewProps> = ({ onNavigate }) => {
                   <span className="gstr1-kpi-badge font-mono">Table 7</span>
                 </div>
                 <div className="gstr1-kpi-label">B2C Retail Consumer Sales</div>
-                <div className="gstr1-kpi-val text-sky-800 font-mono">
+                <div className="gstr1-kpi-val font-mono" style={{ color: '#2D1822' }}>
                   {formatRupees(b2cTaxable)}
                 </div>
               </div>
               <div className="gstr1-kpi-footer">
                 <span>{b2cInvoices.length} Counter Sales</span>
-                <span className="font-semibold text-sky-700">Tax: {formatRupees(b2cCgst + b2cSgst + b2cIgst)}</span>
+                <span className="font-semibold" style={{ color: '#653B4B' }}>Tax: {formatRupees(b2cCgst + b2cSgst + b2cIgst)}</span>
               </div>
             </div>
 
@@ -304,7 +304,8 @@ export const Gstr1View: React.FC<Gstr1ViewProps> = ({ onNavigate }) => {
                 <button
                   type="button"
                   onClick={() => setB2bSearch('')}
-                  className="mt-2 text-xs font-bold text-teal-700 hover:underline"
+                  className="mt-2 text-xs font-bold hover:underline"
+                  style={{ color: '#653B4B' }}
                 >
                   Clear search filter
                 </button>
@@ -421,12 +422,12 @@ export const Gstr1View: React.FC<Gstr1ViewProps> = ({ onNavigate }) => {
                     <div className="gstr1-b2c-icon-badge badge-amber">
                       <Receipt size={20} />
                     </div>
-                    <span className="text-xs font-mono font-bold text-amber-700 bg-amber-100/70 px-2 py-0.5 rounded-full">
+                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full" style={{ color: '#653B4B', background: '#F5ECF0' }}>
                       Counter Bills
                     </span>
                   </div>
                   <div className="gstr1-b2c-label">B2C Bills Count</div>
-                  <div className="gstr1-b2c-val text-amber-900 font-mono">
+                  <div className="gstr1-b2c-val font-mono" style={{ color: '#2D1822' }}>
                     {b2cInvoices.length}
                   </div>
                 </div>
@@ -442,12 +443,12 @@ export const Gstr1View: React.FC<Gstr1ViewProps> = ({ onNavigate }) => {
                     <div className="gstr1-b2c-icon-badge badge-teal">
                       <TrendingUp size={20} />
                     </div>
-                    <span className="text-xs font-mono font-bold text-teal-700 bg-teal-100/70 px-2 py-0.5 rounded-full">
+                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full" style={{ color: '#653B4B', background: '#F5ECF0' }}>
                       Net Taxable
                     </span>
                   </div>
                   <div className="gstr1-b2c-label">Taxable Value</div>
-                  <div className="gstr1-b2c-val text-teal-900 font-mono">
+                  <div className="gstr1-b2c-val font-mono" style={{ color: '#2D1822' }}>
                     {formatRupees(b2cTaxable)}
                   </div>
                 </div>
