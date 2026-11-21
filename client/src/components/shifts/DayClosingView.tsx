@@ -435,6 +435,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
   }, [auditData, auditFilter]);
 
   const loadNotifications = async () => {
+    if (user?.role === 'cashier') return;
     try {
       const res = await fetchDayClosingNotifications({ branchId: activeBranchId });
       if (res.success) {
@@ -1084,26 +1085,28 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
           </div>
 
           <div className="cat-bento-header-actions">
-            <button
-              type="button"
-              onClick={() => {
-                if (onNavigateToNotifications) {
-                  onNavigateToNotifications();
-                } else {
-                  setShowNotifDrawer(true);
-                }
-              }}
-              className="cat-btn-outline day-closing-notif-hero-btn"
-              title="Open Shift Notifications"
-            >
-              <BellRingIcon size={14} />
-              <span>Shift Notifications</span>
-              {unreadNotifCount > 0 ? (
-                <span className="day-closing-notif-counter-pill red">{unreadNotifCount} new</span>
-              ) : notifications.length > 0 ? (
-                <span className="day-closing-notif-counter-pill teal">{notifications.length}</span>
-              ) : null}
-            </button>
+            {user?.role !== 'cashier' && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (onNavigateToNotifications) {
+                    onNavigateToNotifications();
+                  } else {
+                    setShowNotifDrawer(true);
+                  }
+                }}
+                className="cat-btn-outline day-closing-notif-hero-btn"
+                title="Open Shift Notifications"
+              >
+                <BellRingIcon size={14} />
+                <span>Shift Notifications</span>
+                {unreadNotifCount > 0 ? (
+                  <span className="day-closing-notif-counter-pill red">{unreadNotifCount} new</span>
+                ) : notifications.length > 0 ? (
+                  <span className="day-closing-notif-counter-pill teal">{notifications.length}</span>
+                ) : null}
+              </button>
+            )}
 
             {closedRecord?.id && (
               <>
@@ -1732,17 +1735,18 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                   </div>
                 )}
 
-                {notifications
-                  .filter((n: any) => n.type === 'rejection' && (!n.isRead && !n.is_read))
-                  .map((n: any) => (
-                    <div key={n.id} className="bento-ops-alert-chip recount">
-                      <AlertTriangleIcon size={16} />
-                      <div className="bento-ops-alert-content">
-                        <strong>{n.title}:</strong> {n.message}
+                {user?.role !== 'cashier' &&
+                  notifications
+                    .filter((n: any) => n.type === 'rejection' && (!n.isRead && !n.is_read))
+                    .map((n: any) => (
+                      <div key={n.id} className="bento-ops-alert-chip recount">
+                        <AlertTriangleIcon size={16} />
+                        <div className="bento-ops-alert-content">
+                          <strong>{n.title}:</strong> {n.message}
+                        </div>
+                        <button onClick={() => handleDismissNotification(n.id)} className="bento-ops-alert-dismiss" title="Dismiss alert">✕</button>
                       </div>
-                      <button onClick={() => handleDismissNotification(n.id)} className="bento-ops-alert-dismiss" title="Dismiss alert">✕</button>
-                    </div>
-                  ))}
+                    ))}
 
                 {preview?.closingReminder?.hasUnclosedPrevDay && (
                   <div className="bento-ops-alert-chip reminder">
@@ -4278,7 +4282,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
       )}
 
       {/* Slide-over Separate Shift Notifications Drawer */}
-      {showNotifDrawer && (
+      {user?.role !== 'cashier' && showNotifDrawer && (
         <div className="day-closing-drawer-backdrop" onClick={() => setShowNotifDrawer(false)}>
           <div className="day-closing-drawer-panel" onClick={(e) => e.stopPropagation()}>
             {/* Header */}

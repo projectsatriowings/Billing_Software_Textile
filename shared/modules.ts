@@ -16,16 +16,8 @@ export interface AppModule {
   icon: string;
   route: string;
   isSettingsLocked?: boolean;
-  isCashierMandatory?: boolean;
   subModules?: AppSubModule[];
 }
-
-export const CASHIER_MANDATORY_MODULES = [
-  'pos',
-  'shifts',
-  'recent-bills',
-  'day-closing',
-] as const;
 
 export const APP_MODULES: AppModule[] = [
   {
@@ -34,38 +26,6 @@ export const APP_MODULES: AppModule[] = [
     description: 'Executive revenue overview, sales analytics & live store metrics',
     icon: 'LayoutDashboard',
     route: 'dashboard',
-  },
-  {
-    key: 'pos',
-    name: 'POS Counter',
-    description: 'High-speed retail checkout, barcode scanner & quick billing',
-    icon: 'ShoppingCart',
-    route: 'pos',
-    isCashierMandatory: true,
-  },
-  {
-    key: 'shifts',
-    name: 'My Cashier',
-    description: 'Cashier shift management, opening float & cash drawer closing',
-    icon: 'Clock',
-    route: 'shifts',
-    isCashierMandatory: true,
-  },
-  {
-    key: 'recent-bills',
-    name: 'Recent Bills',
-    description: 'Real-time counter receipts, transaction lookup & bill reprints',
-    icon: 'Receipt',
-    route: 'invoices',
-    isCashierMandatory: true,
-  },
-  {
-    key: 'day-closing',
-    name: 'Day Closing',
-    description: 'Daily cash register reconciliation, cash drawer counts & shift closing',
-    icon: 'Lock',
-    route: 'day-closing',
-    isCashierMandatory: true,
   },
   {
     key: 'wholesale',
@@ -270,10 +230,6 @@ export type RoleModuleAccessConfig = Record<'owner' | 'manager' | 'cashier', Mod
 export const DEFAULT_ROLE_MODULE_ACCESS: RoleModuleAccessConfig = {
   owner: {
     dashboard: true,
-    pos: true,
-    shifts: true,
-    'recent-bills': true,
-    'day-closing': true,
     wholesale: true,
     notifications: true,
     items: true,
@@ -306,10 +262,6 @@ export const DEFAULT_ROLE_MODULE_ACCESS: RoleModuleAccessConfig = {
   },
   manager: {
     dashboard: true,
-    pos: true,
-    shifts: true,
-    'recent-bills': true,
-    'day-closing': true,
     wholesale: true,
     notifications: true,
     items: true,
@@ -381,16 +333,13 @@ export const DEFAULT_ROLE_MODULE_ACCESS: RoleModuleAccessConfig = {
 const KEY_ALIASES: Record<string, string[]> = {
   'inventory.adjustment': ['inventory.levels'],
   'inventory.levels': ['inventory.adjustment'],
-  'accounts.invoices': ['recent-bills', 'accounts.sales_invoices', 'accounts.payments'],
-  'recent-bills': ['accounts.invoices', 'accounts.sales_invoices', 'invoices'],
+  'accounts.invoices': ['accounts.sales_invoices', 'accounts.payments'],
   'accounts.purchases': ['accounts.payments'],
-  'accounts.day_closing': ['day-closing', 'accounts'],
-  'day-closing': ['accounts.day_closing', 'accounts'],
+  'accounts.day_closing': ['accounts'],
   'accounts.return_reports': ['accounts'],
   'gst.overview': ['gst'],
   'gst.itc': ['gst.hsn'],
   'gst.hsn': ['gst.itc'],
-  shifts: ['pos'],
 };
 
 /**
@@ -404,15 +353,16 @@ export function isModuleEnabledForRole(
 ): boolean {
   if (!config || !role) return true;
   const canonicalRole = (role === 'super_admin' ? 'owner' : role) as 'owner' | 'manager' | 'cashier';
+
+  // Cashier navigation is completely standalone and independent from Module Management
+  if (canonicalRole === 'cashier') {
+    return true;
+  }
+
   const roleAccess = config[canonicalRole] || DEFAULT_ROLE_MODULE_ACCESS[canonicalRole] || DEFAULT_ROLE_MODULE_ACCESS.owner;
 
   // Settings is permanently locked on for Super Admin
   if (canonicalRole === 'owner' && moduleKey === 'settings') {
-    return true;
-  }
-
-  // Cashier mandatory modules are permanently locked on for Cashier
-  if (canonicalRole === 'cashier' && (CASHIER_MANDATORY_MODULES as readonly string[]).includes(moduleKey)) {
     return true;
   }
 

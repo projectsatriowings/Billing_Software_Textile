@@ -1,5 +1,6 @@
 // Typed client API wrapper for Adaptive Billing Platform
 import type { StockTransfer, StockTransferLine, CreateStockTransferInput, StockMove } from '../../shared/types.ts';
+import type { RoleModuleAccessConfig } from '../../shared/modules.ts';
 
 export const getToken = (): string =>
   sessionStorage.getItem('billing_token') || sessionStorage.getItem('token') ||
@@ -3309,14 +3310,39 @@ export const deleteWholesaleCustomer = (id: string) =>
     method: 'DELETE',
   });
 
-export const fetchModuleAccess = () =>
-  api<{ success: boolean; access: import('../../shared/modules.ts').RoleModuleAccessConfig }>('/api/module-access');
+export type { RoleModuleAccessConfig };
 
-export const saveModuleAccess = (access: import('../../shared/modules.ts').RoleModuleAccessConfig) =>
-  api<{ success: boolean; message: string; access: import('../../shared/modules.ts').RoleModuleAccessConfig }>('/api/module-access', {
+export interface ModuleAccessChangeItem {
+  role: 'owner' | 'manager' | 'cashier';
+  moduleKey: string;
+  enabled: boolean;
+}
+
+export interface SaveModuleAccessPayload {
+  access?: RoleModuleAccessConfig;
+  changes?: ModuleAccessChangeItem[];
+}
+
+export const fetchModuleAccess = () =>
+  api<{ success: boolean; access: RoleModuleAccessConfig }>('/api/module-access');
+
+export const saveModuleAccess = (
+  payload: SaveModuleAccessPayload | RoleModuleAccessConfig
+) => {
+  const body =
+    typeof payload === 'object' && payload !== null && ('access' in payload || 'changes' in payload)
+      ? payload
+      : { access: payload };
+  return api<{
+    success: boolean;
+    message: string;
+    access: RoleModuleAccessConfig;
+    updatedCount?: number;
+  }>('/api/module-access', {
     method: 'PUT',
-    body: JSON.stringify({ access }),
+    body: JSON.stringify(body),
   });
+};
 
 // Developer Mode API helpers
 export async function unlockDeveloperMode(passcode: string): Promise<{ success: boolean; developerToken: string; expiresInSeconds: number }> {
