@@ -127,12 +127,12 @@ export const GstPurchaseRegisterView: React.FC<GstPurchaseRegisterViewProps> = (
             <div className="mt-1 text-xs text-slate-400">Before Tax</div>
           </div>
 
-          <div className="rounded-xl border border-indigo-200 bg-indigo-50/50 p-4 shadow-sm dark:border-indigo-800/40 dark:bg-indigo-950/20">
-            <div className="text-xs font-medium text-indigo-700 dark:text-indigo-300">Total Inward GST</div>
-            <div className="mt-1 text-2xl font-bold text-indigo-600 dark:text-indigo-400">
+          <div className="rounded-xl border border-[#D9C8D0] bg-[#FAF6F8] p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div className="text-xs font-medium" style={{ color: '#653B4B' }}>Total Inward GST</div>
+            <div className="mt-1 text-2xl font-bold" style={{ color: '#653B4B' }}>
               ₹{(data.summary.totalGstMinor / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
             </div>
-            <div className="mt-1 text-xs text-indigo-600/80">CGST + SGST + IGST</div>
+            <div className="mt-1 text-xs text-slate-500">CGST + SGST + IGST</div>
           </div>
 
           <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-4 shadow-sm dark:border-emerald-800/40 dark:bg-emerald-950/20">
@@ -153,7 +153,7 @@ export const GstPurchaseRegisterView: React.FC<GstPurchaseRegisterViewProps> = (
             placeholder="Search supplier, GSTIN, invoice number..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+            className="w-full rounded-lg border border-[#D9C8D0] bg-slate-50 px-3 py-1.5 text-sm focus:border-[#653B4B] focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
           />
         </div>
 

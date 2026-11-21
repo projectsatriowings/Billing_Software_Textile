@@ -151,8 +151,8 @@ export const ItcRegisterView: React.FC<ItcRegisterViewProps> = ({ onNavigate }) 
         );
       case 'missing_in_books':
         return (
-          <span className="inline-flex items-center gap-1 rounded-full bg-purple-50 px-2.5 py-0.5 text-xs font-medium text-purple-700 dark:bg-purple-950/40 dark:text-purple-300">
-            <AlertTriangleIcon className="h-3 w-3" /> Not in Books
+          <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium border" style={{ background: '#F5ECF0', color: '#522E3C', borderColor: '#D9C8D0' }}>
+            <AlertTriangleIcon className="h-3 w-3" style={{ color: '#653B4B' }} /> Not in Books
           </span>
         );
       default:
@@ -187,7 +187,8 @@ export const ItcRegisterView: React.FC<ItcRegisterViewProps> = ({ onNavigate }) 
           <button
             type="button"
             onClick={() => onNavigate('gst-purchase-register')}
-            className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-indigo-700 shadow-sm hover:bg-indigo-50 dark:border-slate-700 dark:bg-slate-800 dark:text-indigo-400"
+            className="flex items-center gap-1.5 rounded-lg border border-[#D9C8D0] bg-white px-3 py-1.5 text-xs font-semibold shadow-sm hover:bg-[#FAF6F8]"
+            style={{ color: '#653B4B' }}
             title="Open invoice-by-invoice detailed purchase and inward register"
           >
             📋 Itemized Purchase Register
@@ -200,13 +201,14 @@ export const ItcRegisterView: React.FC<ItcRegisterViewProps> = ({ onNavigate }) 
               type="month"
               value={period}
               onChange={(e) => setPeriod(e.target.value)}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+              className="rounded-lg border border-[#D9C8D0] bg-white px-3 py-1.5 text-sm font-medium text-slate-800 focus:border-[#653B4B] focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
             />
           </div>
 
           <button
             onClick={() => setIsImportModalOpen(true)}
-            className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700"
+            className="flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all"
+            style={{ background: 'linear-gradient(135deg, #7A475B 0%, #653B4B 100%)' }}
           >
             <UploadIcon className="h-4 w-4" />
             <span>Import GSTR-2B</span>
@@ -247,7 +249,7 @@ export const ItcRegisterView: React.FC<ItcRegisterViewProps> = ({ onNavigate }) 
           }}
         >
           {/* Card 1: Total Book GST */}
-          <div className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-4 shadow-xs transition-all hover:border-purple-200 hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
+          <div className="flex flex-col justify-between rounded-2xl border border-[#D9C8D0] bg-white p-4 shadow-xs transition-all hover:border-[#653B4B] hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
             <div className="flex items-center justify-between">
               <h1 className="text-xs font-bold text-slate-500 uppercase tracking-wider dark:text-slate-400 m-0">Total Book GST</h1>
               <span className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2 py-0.5 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">
@@ -315,11 +317,11 @@ export const ItcRegisterView: React.FC<ItcRegisterViewProps> = ({ onNavigate }) 
           </div>
 
           {/* Card 5: 2B Matching Result */}
-          <div className="flex flex-col justify-between rounded-2xl border border-indigo-200/80 bg-gradient-to-br from-indigo-50/70 to-white p-4 shadow-xs transition-all hover:border-indigo-300 hover:shadow-md dark:border-indigo-900/50 dark:from-slate-900 dark:to-indigo-950/20">
+          <div className="flex flex-col justify-between rounded-2xl border border-[#D9C8D0] bg-gradient-to-br from-[#FAF6F8] to-white p-4 shadow-xs transition-all hover:border-[#653B4B] hover:shadow-md dark:border-slate-800 dark:from-slate-900 dark:to-slate-800">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-indigo-800 uppercase tracking-wider dark:text-indigo-300">2B Matching Result</span>
-              <span className="inline-flex items-center gap-1 rounded-lg bg-indigo-100/80 px-2 py-0.5 text-[11px] font-bold text-indigo-800 dark:bg-indigo-900/60 dark:text-indigo-200">
-                <ScaleIcon className="h-3.5 w-3.5 text-indigo-700" />
+              <span className="text-xs font-bold uppercase tracking-wider" style={{ color: '#653B4B' }}>2B Matching Result</span>
+              <span className="inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[11px] font-bold" style={{ background: '#F5ECF0', color: '#653B4B' }}>
+                <ScaleIcon className="h-3.5 w-3.5" style={{ color: '#653B4B' }} />
                 <span>Alignment</span>
               </span>
             </div>
@@ -329,7 +331,7 @@ export const ItcRegisterView: React.FC<ItcRegisterViewProps> = ({ onNavigate }) 
               <span className="text-2xl font-black text-rose-600">{summary.mismatchCount + summary.missingIn2BCount}</span>
               <span className="text-xs font-semibold text-slate-500">diffs</span>
             </div>
-            <div className="mt-2 text-[11px] font-medium text-indigo-700/80 dark:text-indigo-300/80">
+            <div className="mt-2 text-[11px] font-medium" style={{ color: '#653B4B' }}>
               GSTR-2B portal comparison
             </div>
           </div>
@@ -344,7 +346,7 @@ export const ItcRegisterView: React.FC<ItcRegisterViewProps> = ({ onNavigate }) 
             placeholder="Search supplier, GSTIN, invoice no..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+            className="w-full rounded-lg border border-[#D9C8D0] bg-slate-50 px-3 py-1.5 text-sm focus:border-[#653B4B] focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
           />
         </div>
 
@@ -493,7 +495,8 @@ export const ItcRegisterView: React.FC<ItcRegisterViewProps> = ({ onNavigate }) 
                     <td className="py-3 px-3 text-center">
                       <button
                         onClick={() => openReviewModal(item)}
-                        className="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 shadow-sm hover:bg-slate-50 hover:border-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                        className="rounded-lg border border-[#D9C8D0] bg-white px-2.5 py-1 text-xs font-semibold shadow-sm hover:bg-[#FAF6F8] hover:border-[#653B4B] dark:border-slate-700 dark:bg-slate-800"
+                        style={{ color: '#653B4B' }}
                       >
                         Review
                       </button>
@@ -535,7 +538,7 @@ export const ItcRegisterView: React.FC<ItcRegisterViewProps> = ({ onNavigate }) 
                 </div>
                 <div className="flex justify-between font-bold border-t border-slate-200 pt-1 mt-1 dark:border-slate-700">
                   <span>Original GST in Books:</span>
-                  <span className="font-mono text-indigo-600 dark:text-indigo-400">
+                  <span className="font-mono" style={{ color: '#653B4B' }}>
                     ₹{(selectedItemForReview.totalGstMinor / 100).toFixed(2)}
                   </span>
                 </div>
@@ -560,7 +563,7 @@ export const ItcRegisterView: React.FC<ItcRegisterViewProps> = ({ onNavigate }) 
                       setCustomEligibleAmount('0.00');
                     }
                   }}
-                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  className="w-full rounded-lg border border-[#D9C8D0] bg-white px-3 py-2 text-sm focus:border-[#653B4B] focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                 >
                   <option value="eligible_reviewed">Eligible — Full ITC Claim</option>
                   <option value="partially_eligible_reviewed">Partially Eligible — Specific Amount</option>
@@ -581,7 +584,7 @@ export const ItcRegisterView: React.FC<ItcRegisterViewProps> = ({ onNavigate }) 
                     value={customEligibleAmount}
                     onChange={(e) => setCustomEligibleAmount(e.target.value)}
                     max={(selectedItemForReview.totalGstMinor / 100).toFixed(2)}
-                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-mono focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                    className="w-full rounded-lg border border-[#D9C8D0] bg-white px-3 py-2 text-sm font-mono focus:border-[#653B4B] focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                   />
                   <p className="mt-1 text-[11px] text-slate-500">
                     Cannot exceed total tax of ₹{(selectedItemForReview.totalGstMinor / 100).toFixed(2)}
@@ -598,7 +601,7 @@ export const ItcRegisterView: React.FC<ItcRegisterViewProps> = ({ onNavigate }) 
                   value={reviewReason}
                   onChange={(e) => setReviewReason(e.target.value)}
                   placeholder="e.g. Verified with 2B; inputs used exclusively for taxable retail garment sales."
-                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  className="w-full rounded-lg border border-[#D9C8D0] bg-white px-3 py-2 text-sm focus:border-[#653B4B] focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                 />
               </div>
             </div>
@@ -614,7 +617,8 @@ export const ItcRegisterView: React.FC<ItcRegisterViewProps> = ({ onNavigate }) 
               <button
                 onClick={handleSaveReview}
                 disabled={submittingReview}
-                className="rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 disabled:opacity-50"
+                className="rounded-lg px-5 py-2 text-sm font-semibold text-white shadow-sm transition-all disabled:opacity-50"
+                style={{ background: 'linear-gradient(135deg, #7A475B 0%, #653B4B 100%)' }}
               >
                 {submittingReview ? 'Saving Review...' : 'Save Decision'}
               </button>
