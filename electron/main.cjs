@@ -1,4 +1,9 @@
-const { app, BrowserWindow, ipcMain, dialog, Menu, shell } = require('electron');
+const electron = require('electron');
+if (!electron || typeof electron !== 'object' || !electron.app) {
+  console.error('[A2Z Desktop] Electron main process APIs unavailable. Ensure the app is launched via Electron, not Node CLI.');
+  process.exit(1);
+}
+const { app, BrowserWindow, ipcMain, dialog, Menu, shell } = electron;
 const path = require('node:path');
 const fs = require('node:fs');
 const http = require('node:http');
@@ -6,6 +11,50 @@ const http = require('node:http');
 const LIVE_PRODUCTION_URL = 'https://billing.atriowings.in/';
 
 let mainWindow = null;
+
+// Persistent log helper
+function logToFile(message) {
+  try {
+    if (!app || typeof app.getPath !== 'function') return;
+    const logDir = app.getPath('userData');
+    fs.mkdirSync(logDir, { recursive: true });
+    const logPath = path.join(logDir, 'desktop-app.log');
+    const timestamp = new Date().toISOString();
+    fs.appendFileSync(logPath, `[${timestamp}] ${message}\n`);
+  } catch (err) {
+    console.error('[A2Z Desktop] Log error:', err);
+  }
+}
+
+// Global crash and rejection protection so app never silently disappears
+process.on('uncaughtException', (error) => {
+  console.error('[A2Z Desktop] Uncaught exception:', error);
+  logToFile(`FATAL UNCAUGHT EXCEPTION: ${error ? (error.stack || error.message || error) : 'Unknown error'}`);
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('[A2Z Desktop] Unhandled rejection:', reason);
+  logToFile(`UNHANDLED REJECTION: ${reason ? (reason.stack || reason.message || reason) : 'Unknown rejection'}`);
+});
+
+// Ignore certificate errors for the production domain and local counter endpoints
+app.on('certificate-error', (event, webContents, url, error, certificate, callback) => {
+  try {
+    const parsed = new URL(url);
+    if (
+      parsed.hostname === 'billing.atriowings.in' ||
+      parsed.hostname === 'localhost' ||
+      parsed.hostname === '127.0.0.1' ||
+      parsed.hostname.startsWith('192.168.') ||
+      parsed.hostname.startsWith('10.')
+    ) {
+      event.preventDefault();
+      callback(true);
+      return;
+    }
+  } catch {}
+  callback(false);
+});
 
 // Config file path in user data directory
 function getConfigPath() {
@@ -21,6 +70,7 @@ function getSavedServerUrl() {
     }
   } catch (err) {
     console.error('[A2Z Desktop] Error reading server config:', err);
+    logToFile(`Error reading server config: ${err.message}`);
   }
   // In packaged desktop application, connect directly to the live production site
   if (app.isPackaged) {
@@ -34,9 +84,11 @@ function saveServerUrl(url) {
     const cfgPath = getConfigPath();
     fs.mkdirSync(path.dirname(cfgPath), { recursive: true });
     fs.writeFileSync(cfgPath, JSON.stringify({ serverUrl: url.trim(), updatedAt: new Date().toISOString() }, null, 2));
+    logToFile(`Saved server URL: ${url.trim()}`);
     return true;
   } catch (err) {
     console.error('[A2Z Desktop] Error saving server config:', err);
+    logToFile(`Error saving server config: ${err.message}`);
     return false;
   }
 }
@@ -132,12 +184,12 @@ function getFallbackHtml(currentUrl, errorMsg) {
       margin-bottom: 20px;
       outline: none;
     }
-    .input:focus { border-color: #6366f1; }
+    .input:focus { border-color: #0f766e; }
     .actions { display: flex; gap: 12px; }
     .btn-primary {
       flex: 1;
       padding: 12px;
-      background: #4f46e5;
+      background: #0f766e;
       color: #ffffff;
       border: none;
       border-radius: 8px;
@@ -146,7 +198,7 @@ function getFallbackHtml(currentUrl, errorMsg) {
       cursor: pointer;
       transition: background 0.15s ease;
     }
-    .btn-primary:hover { background: #4338ca; }
+    .btn-primary:hover { background: #115e59; }
     .btn-secondary {
       padding: 12px 18px;
       background: #334155;
@@ -159,13 +211,15 @@ function getFallbackHtml(currentUrl, errorMsg) {
     }
     .btn-secondary:hover { background: #475569; }
     .tip { margin-top: 20px; font-size: 12px; color: #64748b; line-height: 1.4; border-top: 1px solid #334155; padding-top: 16px; }
+    .err-detail { font-size: 12px; color: #f87171; background: #291415; padding: 8px 12px; border-radius: 6px; margin-bottom: 16px; word-break: break-all; }
   </style>
 </head>
 <body>
   <div class="card">
     <div class="badge">Connection Offline</div>
     <h1>Connecting to A2Z Server</h1>
-    <p>Could not reach the server at <strong>${currentUrl}</strong>. If your server is hosted in the cloud or on another store PC, enter the server URL below.</p>
+    <p>Could not reach the server at <strong>${currentUrl || 'https://billing.atriowings.in/'}</strong>.</p>
+    ${errorMsg ? `<div class="err-detail">Details: ${errorMsg}</div>` : ''}
     
     <label class="label">Server Address (URL):</label>
     <input id="serverUrl" class="input" type="text" value="${currentUrl || 'https://billing.atriowings.in/'}" placeholder="https://billing.atriowings.in/" />
@@ -176,7 +230,7 @@ function getFallbackHtml(currentUrl, errorMsg) {
     </div>
 
     <div class="tip">
-      💡 Tip: For local testing, ensure the development server is running via <code>npm run dev</code>. For counter PCs, enter the store manager's IP address (e.g., <code>http://192.168.1.100:3001</code>).
+      💡 Tip: Check your internet connection. For counter PCs, enter the store manager's IP address (e.g., <code>http://192.168.1.100:3001</code>).
     </div>
   </div>
 
@@ -204,6 +258,7 @@ async function createWindow() {
     minHeight: 700,
     title: 'A2Z',
     icon: icon,
+    show: false, // Show once ready-to-show to prevent blank screen flicker
     autoHideMenuBar: true,
     backgroundColor: '#ffffff',
     webPreferences: {
@@ -216,16 +271,34 @@ async function createWindow() {
 
   mainWindow.setMenuBarVisibility(false);
 
+  // Show window smoothly when content is ready, with safety timeout fallback
+  mainWindow.once('ready-to-show', () => {
+    if (mainWindow) {
+      mainWindow.show();
+      mainWindow.focus();
+    }
+  });
+
+  setTimeout(() => {
+    if (mainWindow && !mainWindow.isVisible()) {
+      mainWindow.show();
+      mainWindow.focus();
+    }
+  }, 1500);
+
   const isDev = process.env.ELECTRON_DEV === 'true' || !app.isPackaged;
   const targetUrl = getSavedServerUrl();
+
+  logToFile(`Target URL: ${targetUrl}, isDev: ${isDev}, isPackaged: ${app.isPackaged}`);
 
   // Handle connection errors gracefully
   mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
     // Error code -3 is aborted (e.g. redirected or user cancelled), do not show error page for it
     if (errorCode === -3) return;
     console.warn(`[A2Z Desktop] Failed to load ${validatedURL}: ${errorDescription} (${errorCode})`);
+    logToFile(`Failed to load ${validatedURL}: ${errorDescription} (${errorCode})`);
     if (mainWindow) {
-      mainWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(getFallbackHtml(validatedURL || targetUrl, errorDescription))}`);
+      mainWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(getFallbackHtml(validatedURL || targetUrl, errorDescription))}`).catch(() => {});
     }
   });
 
@@ -234,11 +307,21 @@ async function createWindow() {
     const ready = await pollServer(targetUrl, 25000);
     if (mainWindow) {
       console.log(`[A2Z Desktop] Loading ${targetUrl}`);
-      mainWindow.loadURL(targetUrl);
+      mainWindow.loadURL(targetUrl).catch((err) => {
+        logToFile(`Error loading dev URL: ${err.message}`);
+        if (mainWindow) {
+          mainWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(getFallbackHtml(targetUrl, err.message))}`).catch(() => {});
+        }
+      });
     }
   } else {
     console.log(`[A2Z Desktop] Loading target URL: ${targetUrl}`);
-    mainWindow.loadURL(targetUrl);
+    mainWindow.loadURL(targetUrl).catch((err) => {
+      logToFile(`Error loading target URL: ${err.message}`);
+      if (mainWindow) {
+        mainWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(getFallbackHtml(targetUrl, err.message))}`).catch(() => {});
+      }
+    });
   }
 
   mainWindow.on('closed', () => {
@@ -249,21 +332,29 @@ async function createWindow() {
 // Single instance lock
 const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
+  logToFile('Another instance is already running. Quitting duplicate process.');
   app.quit();
 } else {
   app.on('second-instance', () => {
+    logToFile('Second instance launch intercepted. Bringing window to focus.');
     if (mainWindow) {
       if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.show();
       mainWindow.focus();
     }
   });
 
   app.whenReady().then(() => {
-    createWindow();
+    logToFile('App ready. Creating main window...');
+    createWindow().catch((err) => {
+      logToFile(`Fatal createWindow error: ${err.stack || err.message || err}`);
+    });
 
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) createWindow();
     });
+  }).catch((err) => {
+    logToFile(`Fatal whenReady error: ${err.stack || err.message || err}`);
   });
 }
 
