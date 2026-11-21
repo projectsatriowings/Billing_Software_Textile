@@ -1435,6 +1435,16 @@ body.theme-manager .gstr1-control-bar::before,
   background: linear-gradient(90deg, #7A475B 0%, #653B4B 50%, #522E3C 100%) !important;
 }
 
+body.theme-manager .gstr1-kpi-tile.tile-turnover::after,
+.theme-manager .gstr1-kpi-tile.tile-turnover::after {
+  background: linear-gradient(90deg, #7A475B, #653B4B) !important;
+}
+
+body.theme-manager .gstr1-kpi-tile.tile-turnover:hover,
+.theme-manager .gstr1-kpi-tile.tile-turnover:hover {
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04), 0 18px 36px -6px rgba(101, 59, 75, 0.22) !important;
+}
+
 body.theme-manager .gstr1-kpi-tile.tile-b2b::after,
 .theme-manager .gstr1-kpi-tile.tile-b2b::after {
   background: linear-gradient(90deg, #7A475B, #653B4B) !important;
@@ -1442,6 +1452,16 @@ body.theme-manager .gstr1-kpi-tile.tile-b2b::after,
 
 body.theme-manager .gstr1-kpi-tile.tile-b2b:hover,
 .theme-manager .gstr1-kpi-tile.tile-b2b:hover {
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04), 0 18px 36px -6px rgba(101, 59, 75, 0.22) !important;
+}
+
+body.theme-manager .gstr1-kpi-tile.tile-b2c::after,
+.theme-manager .gstr1-kpi-tile.tile-b2c::after {
+  background: linear-gradient(90deg, #653B4B, #522E3C) !important;
+}
+
+body.theme-manager .gstr1-kpi-tile.tile-b2c:hover,
+.theme-manager .gstr1-kpi-tile.tile-b2c:hover {
   box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04), 0 18px 36px -6px rgba(101, 59, 75, 0.22) !important;
 }
 
@@ -1453,6 +1473,20 @@ body.theme-manager .gstr1-kpi-tile.tile-tax::after,
 body.theme-manager .gstr1-kpi-tile.tile-tax:hover,
 .theme-manager .gstr1-kpi-tile.tile-tax:hover {
   box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04), 0 18px 36px -6px rgba(101, 59, 75, 0.22) !important;
+}
+
+body.theme-manager .icon-box-emerald,
+.theme-manager .icon-box-emerald {
+  background: linear-gradient(135deg, #FAF6F8 0%, #F5ECF0 100%) !important;
+  color: #653B4B !important;
+  border-color: #D9C8D0 !important;
+}
+
+body.theme-manager .icon-box-sky,
+.theme-manager .icon-box-sky {
+  background: linear-gradient(135deg, #FAF6F8 0%, #F5ECF0 100%) !important;
+  color: #522E3C !important;
+  border-color: #D9C8D0 !important;
 }
 
 body.theme-manager .icon-box-indigo,
@@ -1467,6 +1501,30 @@ body.theme-manager .icon-box-purple,
   background: linear-gradient(135deg, #FAF6F8 0%, #F5ECF0 100%) !important;
   color: #522E3C !important;
   border-color: #D9C8D0 !important;
+}
+
+body.theme-manager .gstr1-b2c-card.card-amber,
+.theme-manager .gstr1-b2c-card.card-amber {
+  background: linear-gradient(145deg, #ffffff 0%, #FAF6F8 60%, #F5ECF0 100%) !important;
+  border-color: #D9C8D0 !important;
+}
+
+body.theme-manager .gstr1-b2c-card.card-amber:hover,
+.theme-manager .gstr1-b2c-card.card-amber:hover {
+  border-color: #653B4B !important;
+  box-shadow: 0 4px 12px rgba(101, 59, 75, 0.08), 0 18px 36px -6px rgba(101, 59, 75, 0.22) !important;
+}
+
+body.theme-manager .gstr1-b2c-card.card-teal,
+.theme-manager .gstr1-b2c-card.card-teal {
+  background: linear-gradient(145deg, #ffffff 0%, #FAF6F8 60%, #F5ECF0 100%) !important;
+  border-color: #D9C8D0 !important;
+}
+
+body.theme-manager .gstr1-b2c-card.card-teal:hover,
+.theme-manager .gstr1-b2c-card.card-teal:hover {
+  border-color: #653B4B !important;
+  box-shadow: 0 4px 12px rgba(101, 59, 75, 0.08), 0 18px 36px -6px rgba(101, 59, 75, 0.22) !important;
 }
 
 body.theme-manager .gstr1-b2c-card.card-indigo,
@@ -1493,6 +1551,18 @@ body.theme-manager .gstr1-b2c-card.card-purple:hover,
   box-shadow: 0 4px 12px rgba(101, 59, 75, 0.08), 0 18px 36px -6px rgba(101, 59, 75, 0.22) !important;
 }
 
+body.theme-manager .badge-amber,
+.theme-manager .badge-amber {
+  background: #F5ECF0 !important;
+  color: #653B4B !important;
+}
+
+body.theme-manager .badge-teal,
+.theme-manager .badge-teal {
+  background: #F5ECF0 !important;
+  color: #653B4B !important;
+}
+
 body.theme-manager .badge-indigo,
 .theme-manager .badge-indigo {
   background: #F5ECF0 !important;
@@ -1503,4 +1573,50 @@ body.theme-manager .badge-purple,
 .theme-manager .badge-purple {
   background: #F5ECF0 !important;
   color: #522E3C !important;
+}
+
+body.theme-manager .gstr1-inv-pill,
+.theme-manager .gstr1-inv-pill {
+  color: #653B4B !important;
+  background: #F5ECF0 !important;
+  border-color: #D9C8D0 !important;
+}
+
+body.theme-manager .gstr1-count-chip,
+.theme-manager .gstr1-count-chip {
+  color: #653B4B !important;
+  background: #FAF6F8 !important;
+  border-color: #D9C8D0 !important;
+  box-shadow: 0 1px 3px rgba(101, 59, 75, 0.08) !important;
+}
+
+/* --- Purchase Management --- */
+body.theme-manager .kpi-card,
+.theme-manager .kpi-card {
+  border: 1.5px solid #D9C8D0 !important;
+  background: #FAF6F8 !important;
+  box-shadow: 0 4px 18px -2px rgba(101, 59, 75, 0.05) !important;
+}
+
+body.theme-manager .kpi-card:hover,
+.theme-manager .kpi-card:hover {
+  border-color: #653B4B !important;
+  box-shadow: 0 8px 24px -4px rgba(101, 59, 75, 0.12) !important;
+}
+
+body.theme-manager .kpi-card .kpi-icon,
+.theme-manager .kpi-card .kpi-icon {
+  background: #F5ECF0 !important;
+  color: #653B4B !important;
+  border: 1px solid #D9C8D0 !important;
+}
+
+body.theme-manager .kpi-card .kpi-val,
+.theme-manager .kpi-card .kpi-val {
+  color: #2D1822 !important;
+}
+
+body.theme-manager .kpi-card .kpi-label,
+.theme-manager .kpi-card .kpi-label {
+  color: #64555E !important;
 }

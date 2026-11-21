@@ -252,6 +252,7 @@ export function createHandler(opts: ServerOptions): http.RequestListener {
         }
         let result: unknown;
         for (const h of m.route.handlers) result = await h(ctx);
+        if (res.writableEnded || res.headersSent) return;
         if (result instanceof FileResponse) {
           const h: Record<string, string | number> = { 'Content-Type': result.contentType, 'Content-Length': Buffer.byteLength(result.data), 'Cache-Control': 'no-store' };
           if (result.filename) h['Content-Disposition'] = `attachment; filename="${result.filename.replace(/[^\w.\-]/g, '_')}"`;

@@ -8903,10 +8903,22 @@ export function App() {
                 </div>
 
                 <div
-                  className="top-pos-bento-badge top-pos-counter-badge locked"
-                  title="Billing counter station (Click to change or view stations)"
-                  onClick={() => setShowCounterModal(true)}
-                  style={{ cursor: 'pointer' }}
+                  className={`top-pos-bento-badge top-pos-counter-badge ${selectedCounter ? 'locked' : ''}`}
+                  title={
+                    selectedCounter
+                      ? `Billing counter station locked (${selectedCounter}). Once assigned, station cannot be changed while in active use.`
+                      : 'Select billing counter station'
+                  }
+                  onClick={() => {
+                    if (selectedCounter) {
+                      const match = activeBranch?.counterDetails?.find(c => c.code === selectedCounter || c.name === selectedCounter);
+                      const label = match ? `${match.name} (${match.code})` : selectedCounter;
+                      showToast(`Billing counter is locked to ${label}. Stations cannot be changed while in active use. Close shift or log out to reassign.`, 'info');
+                    } else {
+                      setShowCounterModal(true);
+                    }
+                  }}
+                  style={{ cursor: selectedCounter ? 'default' : 'pointer' }}
                 >
                   <div className="top-pos-badge-icon counter">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -8925,13 +8937,19 @@ export function App() {
                           return selectedCounter || activeBranch?.counters?.[0] || 'Counter 1';
                         })()}
                       </span>
-                      <span className="top-pos-lock-tag" title="Counter is locked for this logged-in session">
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                        </svg>
-                        <span>Locked</span>
-                      </span>
+                      {selectedCounter ? (
+                        <span className="top-pos-lock-tag" title="Counter station is locked for this terminal while in active use">
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                          </svg>
+                          <span>Locked</span>
+                        </span>
+                      ) : (
+                        <span className="top-pos-code-tag" style={{ color: '#0d9488', background: '#ccfbf1', borderColor: '#99f6e4' }}>
+                          Select
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -8978,10 +8996,22 @@ export function App() {
                   </div>
                 </div>
                 <div
-                  className="top-pos-bento-badge top-pos-counter-badge locked"
-                  title="Billing counter station (Click to change or view stations)"
-                  onClick={() => setShowCounterModal(true)}
-                  style={{ cursor: 'pointer' }}
+                  className={`top-pos-bento-badge top-pos-counter-badge ${selectedCounter ? 'locked' : ''}`}
+                  title={
+                    selectedCounter
+                      ? `Billing counter station locked (${selectedCounter}). Once assigned, station cannot be changed while in active use.`
+                      : 'Select billing counter station'
+                  }
+                  onClick={() => {
+                    if (selectedCounter) {
+                      const match = activeBranch?.counterDetails?.find(c => c.code === selectedCounter || c.name === selectedCounter);
+                      const label = match ? `${match.name} (${match.code})` : selectedCounter;
+                      showToast(`Billing counter is locked to ${label}. Stations cannot be changed while in active use. Close shift or log out to reassign.`, 'info');
+                    } else {
+                      setShowCounterModal(true);
+                    }
+                  }}
+                  style={{ cursor: selectedCounter ? 'default' : 'pointer' }}
                 >
                   <div className="top-pos-badge-icon counter">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -9000,13 +9030,19 @@ export function App() {
                           return selectedCounter || activeBranch?.counters?.[0] || 'Counter 1';
                         })()}
                       </span>
-                      <span className="top-pos-lock-tag" title="Counter is locked for this logged-in session">
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                        </svg>
-                        <span>Locked</span>
-                      </span>
+                      {selectedCounter ? (
+                        <span className="top-pos-lock-tag" title="Counter station is locked for this terminal while in active use">
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                          </svg>
+                          <span>Locked</span>
+                        </span>
+                      ) : (
+                        <span className="top-pos-code-tag" style={{ color: '#0d9488', background: '#ccfbf1', borderColor: '#99f6e4' }}>
+                          Select
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -9037,10 +9073,22 @@ export function App() {
                   </div>
                 </div>
                 <div
-                  className="top-pos-bento-badge top-pos-counter-badge locked"
-                  title="Billing counter station (Click to change or view stations)"
-                  onClick={() => setShowCounterModal(true)}
-                  style={{ cursor: 'pointer' }}
+                  className={`top-pos-bento-badge top-pos-counter-badge ${selectedCounter ? 'locked' : ''}`}
+                  title={
+                    selectedCounter
+                      ? `Billing counter station locked (${selectedCounter}). Once assigned, station cannot be changed while in active use.`
+                      : 'Select billing counter station'
+                  }
+                  onClick={() => {
+                    if (selectedCounter) {
+                      const match = activeBranch?.counterDetails?.find(c => c.code === selectedCounter || c.name === selectedCounter);
+                      const label = match ? `${match.name} (${match.code})` : selectedCounter;
+                      showToast(`Billing counter is locked to ${label}. Stations cannot be changed while in active use. Close shift or log out to reassign.`, 'info');
+                    } else {
+                      setShowCounterModal(true);
+                    }
+                  }}
+                  style={{ cursor: selectedCounter ? 'default' : 'pointer' }}
                 >
                   <div className="top-pos-badge-icon counter">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -9059,13 +9107,19 @@ export function App() {
                           return selectedCounter || activeBranch?.counters?.[0] || 'Counter 1';
                         })()}
                       </span>
-                      <span className="top-pos-lock-tag" title="Counter is locked for this logged-in session">
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                        </svg>
-                        <span>Locked</span>
-                      </span>
+                      {selectedCounter ? (
+                        <span className="top-pos-lock-tag" title="Counter station is locked for this terminal while in active use">
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                          </svg>
+                          <span>Locked</span>
+                        </span>
+                      ) : (
+                        <span className="top-pos-code-tag" style={{ color: '#0d9488', background: '#ccfbf1', borderColor: '#99f6e4' }}>
+                          Select
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -14719,67 +14773,67 @@ export function App() {
 
               return (
                 <div>
-                  {/* Purchases Metric Cards */}
+                  {/* Purchases Metric Cards - Store Manager Deep Burgundy Theme */}
                   <div className="kpi-grid" style={{ marginBottom: '1.25rem' }}>
-                    <div className="kpi-card">
-                      <div className="kpi-icon" style={{ background: 'rgba(99, 102, 241, 0.15)', color: '#6366f1' }}>
+                    <div className="kpi-card" style={{ border: '1.5px solid #D9C8D0', borderRadius: '16px', background: '#FAF6F8', boxShadow: '0 4px 18px -2px rgba(101, 59, 75, 0.05)' }}>
+                      <div className="kpi-icon" style={{ background: '#F5ECF0', color: '#653B4B', border: '1px solid #D9C8D0', borderRadius: '12px' }}>
                         <TruckIcon size={24} />
                       </div>
                       <div>
-                        <div className="kpi-val mono" style={{ color: '#6366f1' }}>
+                        <div className="kpi-val mono" style={{ color: '#2D1822' }}>
                           {formatRupees(totalPurchasesVolume)}
                         </div>
-                        <div className="kpi-label">Total Inward Stock Volume</div>
+                        <div className="kpi-label" style={{ color: '#64555E' }}>Total Inward Stock Volume</div>
                       </div>
                     </div>
 
-                    <div className="kpi-card">
-                      <div className="kpi-icon" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981' }}>
+                    <div className="kpi-card" style={{ border: '1.5px solid #D9C8D0', borderRadius: '16px', background: '#FAF6F8', boxShadow: '0 4px 18px -2px rgba(101, 59, 75, 0.05)' }}>
+                      <div className="kpi-icon" style={{ background: '#F5ECF0', color: '#653B4B', border: '1px solid #D9C8D0', borderRadius: '12px' }}>
                         <LandmarkIcon size={24} />
                       </div>
                       <div>
-                        <div className="kpi-val mono" style={{ color: '#10b981' }}>
+                        <div className="kpi-val mono" style={{ color: '#2D1822' }}>
                           {formatRupees(totalItcRecorded)}
                         </div>
-                        <div className="kpi-label">Input Tax Credit (ITC) Recorded</div>
+                        <div className="kpi-label" style={{ color: '#64555E' }}>Input Tax Credit (ITC) Recorded</div>
                       </div>
                     </div>
 
-                    <div className="kpi-card">
-                      <div className="kpi-icon" style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444' }}>
+                    <div className="kpi-card" style={{ border: '1.5px solid #D9C8D0', borderRadius: '16px', background: '#FAF6F8', boxShadow: '0 4px 18px -2px rgba(101, 59, 75, 0.05)' }}>
+                      <div className="kpi-icon" style={{ background: '#F5ECF0', color: '#522E3C', border: '1px solid #D9C8D0', borderRadius: '12px' }}>
                         <CreditCardIcon size={24} />
                       </div>
                       <div>
-                        <div className="kpi-val mono" style={{ color: '#ef4444' }}>
+                        <div className="kpi-val mono" style={{ color: '#522E3C' }}>
                           {formatRupees(totalBalancePayable)}
                         </div>
-                        <div className="kpi-label">Supplier Payable Balance</div>
+                        <div className="kpi-label" style={{ color: '#64555E' }}>Supplier Payable Balance</div>
                       </div>
                     </div>
 
-                    <div className="kpi-card">
-                      <div className="kpi-icon" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b' }}>
+                    <div className="kpi-card" style={{ border: '1.5px solid #D9C8D0', borderRadius: '16px', background: '#FAF6F8', boxShadow: '0 4px 18px -2px rgba(101, 59, 75, 0.05)' }}>
+                      <div className="kpi-icon" style={{ background: '#F5ECF0', color: '#653B4B', border: '1px solid #D9C8D0', borderRadius: '12px' }}>
                         <FileTextIcon size={24} />
                       </div>
                       <div>
-                        <div className="kpi-val mono" style={{ color: '#f59e0b' }}>{openBillsCount}</div>
-                        <div className="kpi-label">Open Supplier Bills</div>
+                        <div className="kpi-val mono" style={{ color: '#2D1822' }}>{openBillsCount}</div>
+                        <div className="kpi-label" style={{ color: '#64555E' }}>Open Supplier Bills</div>
                       </div>
                     </div>
                   </div>
 
                   {/* Main Purchases Table Card */}
-                  <div className="card">
+                  <div className="card" style={{ border: '1.5px solid #D9C8D0', borderRadius: '18px', background: '#ffffff', boxShadow: '0 4px 18px -2px rgba(101, 59, 75, 0.05)' }}>
                     <div className="card-title" style={{ flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center' }}>
                       <div>
-                        <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 400, margin: 0 }}>
+                        <div style={{ fontSize: '0.8rem', color: '#64555E', fontWeight: 500, margin: 0 }}>
                           Record supplier invoices, inward goods stock into ledger, and track input GST credit
                         </div>
                       </div>
 
                       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
                         {/* Status Filter Tabs */}
-                        <div style={{ display: 'flex', background: '#f1f5f9', borderRadius: '8px', padding: '2px' }}>
+                        <div style={{ display: 'flex', background: '#F5ECF0', borderRadius: '10px', padding: '3px', border: '1px solid #D9C8D0' }}>
                           {([
                             { id: 'ALL', label: 'All Bills' },
                             { id: 'unpaid', label: 'Unpaid' },
@@ -14794,12 +14848,13 @@ export function App() {
                                 padding: '0.35rem 0.75rem',
                                 fontSize: '0.8rem',
                                 border: 'none',
-                                borderRadius: '6px',
+                                borderRadius: '7px',
                                 cursor: 'pointer',
-                                fontWeight: 600,
-                                background: purchaseStatusFilter === st.id ? '#ffffff' : 'transparent',
-                                color: purchaseStatusFilter === st.id ? '#6d4aff' : '#64748b',
-                                boxShadow: purchaseStatusFilter === st.id ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                                fontWeight: 700,
+                                background: purchaseStatusFilter === st.id ? '#653B4B' : 'transparent',
+                                color: purchaseStatusFilter === st.id ? '#ffffff' : '#64555E',
+                                boxShadow: purchaseStatusFilter === st.id ? '0 1px 4px rgba(101, 59, 75, 0.3)' : 'none',
+                                transition: 'all 0.18s ease',
                               }}
                               onClick={() => setPurchaseStatusFilter(st.id)}
                             >
@@ -14811,30 +14866,34 @@ export function App() {
                         <input
                           type="text"
                           className="form-input"
-                          style={{ width: '230px', padding: '0.45rem 0.75rem', fontSize: '0.85rem' }}
+                          style={{ width: '230px', padding: '0.45rem 0.75rem', fontSize: '0.85rem', border: '1.5px solid #D9C8D0', borderRadius: '10px', background: '#FAF6F8', color: '#2D1822' }}
                           placeholder="Search bill #, supplier, invoice #..."
                           value={purchaseSearch}
                           onChange={(e) => setPurchaseSearch(e.target.value)}
                         />
 
-                        <button className="btn btn-primary" onClick={() => openNewPurchaseModal()}>
+                        <button
+                          className="btn btn-primary"
+                          style={{ background: 'linear-gradient(135deg, #7A475B 0%, #653B4B 100%)', borderColor: '#653B4B', color: '#ffffff', borderRadius: '10px', fontWeight: 700 }}
+                          onClick={() => openNewPurchaseModal()}
+                        >
                           + Inward Goods / New Bill
                         </button>
                       </div>
                     </div>
 
                     <table className="data-table">
-                      <thead>
+                      <thead style={{ background: '#FAF6F8' }}>
                         <tr>
-                          <th>Purchase # & Date</th>
-                          <th>Supplier Invoice # & Date</th>
-                          <th>Supplier / Vendor</th>
-                          <th>Status</th>
-                          <th>Taxable Amount</th>
-                          <th>GST (ITC)</th>
-                          <th>Total Amount</th>
-                          <th>Paid / Balance</th>
-                          <th>Actions</th>
+                          <th style={{ color: '#653B4B', fontWeight: 700, borderBottom: '1.5px solid #D9C8D0' }}>Purchase # & Date</th>
+                          <th style={{ color: '#653B4B', fontWeight: 700, borderBottom: '1.5px solid #D9C8D0' }}>Supplier Invoice # & Date</th>
+                          <th style={{ color: '#653B4B', fontWeight: 700, borderBottom: '1.5px solid #D9C8D0' }}>Supplier / Vendor</th>
+                          <th style={{ color: '#653B4B', fontWeight: 700, borderBottom: '1.5px solid #D9C8D0' }}>Status</th>
+                          <th style={{ color: '#653B4B', fontWeight: 700, borderBottom: '1.5px solid #D9C8D0' }}>Taxable Amount</th>
+                          <th style={{ color: '#653B4B', fontWeight: 700, borderBottom: '1.5px solid #D9C8D0' }}>GST (ITC)</th>
+                          <th style={{ color: '#653B4B', fontWeight: 700, borderBottom: '1.5px solid #D9C8D0' }}>Total Amount</th>
+                          <th style={{ color: '#653B4B', fontWeight: 700, borderBottom: '1.5px solid #D9C8D0' }}>Paid / Balance</th>
+                          <th style={{ color: '#653B4B', fontWeight: 700, borderBottom: '1.5px solid #D9C8D0' }}>Actions</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -14847,7 +14906,7 @@ export function App() {
                           return (
                             <tr key={p.id} style={{ opacity: isVoided ? 0.65 : 1 }}>
                               <td>
-                                <div style={{ fontWeight: 700, color: isVoided ? '#94a3b8' : '#6d4aff' }}>
+                                <div style={{ fontWeight: 700, color: isVoided ? '#94a3b8' : '#653B4B' }}>
                                   {p.purchaseNumber || (p.billNo ? `#${p.billNo}` : `Ref: ${p.id.slice(-6)}`)}
                                 </div>
                                 <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
@@ -14879,38 +14938,47 @@ export function App() {
                                 {isVoided ? (
                                   <span
                                     className="badge"
-                                    style={{ background: '#fef2f2', color: '#b91c1c', border: '1px solid #fecaca' }}
+                                    style={{ background: '#f8fafc', color: '#64748b', border: '1px solid #e2e8f0', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                                     title={p.voidReason ? `Voided: ${p.voidReason}` : 'Voided'}
                                   >
                                     <XCircleIcon size={12} /> Voided
                                   </span>
                                 ) : isPaid ? (
-                                  <span className="badge badge-emerald">
+                                  <span
+                                    className="badge"
+                                    style={{ background: '#FAF6F8', color: '#522E3C', border: '1px solid #D9C8D0', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                  >
                                     <CheckCircleIcon size={12} /> Paid
                                   </span>
                                 ) : isPartPaid ? (
-                                  <span className="badge badge-amber">
+                                  <span
+                                    className="badge"
+                                    style={{ background: '#F5ECF0', color: '#7A475B', border: '1px solid #D9C8D0', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                  >
                                     <ClockIcon size={12} /> Part-Paid
                                   </span>
                                 ) : (
-                                  <span className="badge" style={{ background: '#fff1f2', color: '#e11d48', border: '1px solid #fecdd3' }}>
-                                    <AlertTriangleIcon size={12} /> Unpaid
+                                  <span
+                                    className="badge"
+                                    style={{ background: '#F5ECF0', color: '#653B4B', border: '1px solid #D9C8D0', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                  >
+                                    <AlertTriangleIcon size={12} /> UNPAID
                                   </span>
                                 )}
                               </td>
-                              <td className="mono">{formatRupees(p.taxableMinor)}</td>
-                              <td className="mono" style={{ color: '#6366f1' }}>
+                              <td className="mono" style={{ color: '#2D1822' }}>{formatRupees(p.taxableMinor)}</td>
+                              <td className="mono" style={{ color: '#653B4B', fontWeight: 600 }}>
                                 {formatRupees(p.itcMinor ?? (p.cgstMinor + p.sgstMinor + p.igstMinor))}
                               </td>
-                              <td className="mono" style={{ fontWeight: 700, color: '#1e1b4b' }}>
+                              <td className="mono" style={{ fontWeight: 800, color: '#2D1822' }}>
                                 {formatRupees(p.totalMinor)}
                               </td>
                               <td>
-                                <div className="mono" style={{ color: '#10b981', fontSize: '0.85rem' }}>
+                                <div className="mono" style={{ color: '#653B4B', fontSize: '0.85rem', fontWeight: 600 }}>
                                   Paid: {formatRupees(p.paidMinor)}
                                 </div>
                                 {(p.balanceMinor || 0) > 0 && !isVoided && (
-                                  <div className="mono" style={{ color: '#ef4444', fontSize: '0.8rem', fontWeight: 600 }}>
+                                  <div className="mono" style={{ color: '#522E3C', fontSize: '0.8rem', fontWeight: 700 }}>
                                     Bal: {formatRupees(p.balanceMinor)}
                                   </div>
                                 )}
@@ -14920,7 +14988,7 @@ export function App() {
                                   <button
                                     type="button"
                                     className="btn btn-secondary"
-                                    style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
+                                    style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', borderColor: '#D9C8D0', color: '#653B4B', background: '#FAF6F8' }}
                                     onClick={() => handleViewPurchaseDetails(p.id)}
                                   >
                                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><EyeIcon size={13} /> View</span>
@@ -14928,7 +14996,7 @@ export function App() {
                                   <button
                                     type="button"
                                     className="btn btn-secondary"
-                                    style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
+                                    style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', borderColor: '#D9C8D0', color: '#653B4B', background: '#FAF6F8' }}
                                     onClick={() => window.open(`/api/purchases/${p.id}/print?format=a4`, '_blank')}
                                     title="Print A4 Purchase Document"
                                   >
@@ -14938,7 +15006,7 @@ export function App() {
                                     <button
                                       type="button"
                                       className="btn btn-primary"
-                                      style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', background: '#10b981', borderColor: '#10b981' }}
+                                      style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', background: '#653B4B', borderColor: '#653B4B', color: '#ffffff', borderRadius: '6px', fontWeight: 600 }}
                                       onClick={() => {
                                         const sup = parties.find((part) => part.id === p.supplierId);
                                         if (sup) {
@@ -14985,26 +15053,27 @@ export function App() {
                                     width: '54px',
                                     height: '54px',
                                     borderRadius: '14px',
-                                    background: 'rgba(99, 102, 241, 0.08)',
-                                    color: '#6366f1',
+                                    background: '#F5ECF0',
+                                    color: '#653B4B',
+                                    border: '1px solid #D9C8D0',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    boxShadow: '0 2px 8px rgba(99, 102, 241, 0.08)',
+                                    boxShadow: '0 2px 8px rgba(101, 59, 75, 0.08)',
                                   }}
                                 >
                                   <InboxIcon size={28} />
                                 </div>
-                                <div style={{ fontWeight: 700, fontSize: '1rem', color: '#334155' }}>
+                                <div style={{ fontWeight: 700, fontSize: '1rem', color: '#2D1822' }}>
                                   No purchase bills found matching your filter
                                 </div>
-                                <div style={{ fontSize: '0.825rem', color: '#94a3b8', maxWidth: '380px', lineHeight: 1.5 }}>
+                                <div style={{ fontSize: '0.825rem', color: '#64555E', maxWidth: '380px', lineHeight: 1.5 }}>
                                   Record supplier invoices to inward products into your stock ledger and track input GST credit.
                                 </div>
                                 <button
                                   type="button"
                                   className="btn btn-primary"
-                                  style={{ marginTop: '0.4rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.55rem 1.25rem', fontWeight: 600 }}
+                                  style={{ marginTop: '0.4rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.55rem 1.25rem', fontWeight: 700, background: 'linear-gradient(135deg, #7A475B 0%, #653B4B 100%)', borderColor: '#653B4B', color: '#ffffff', borderRadius: '10px' }}
                                   onClick={() => openNewPurchaseModal()}
                                 >
                                   <PlusIcon size={16} />
@@ -19940,6 +20009,7 @@ export function App() {
             availableCounters={activeBranch?.counters}
             counterDetails={activeBranch?.counterDetails}
             canClose={Boolean(selectedCounter)}
+            isLocked={Boolean(selectedCounter)}
           />
         )}
 

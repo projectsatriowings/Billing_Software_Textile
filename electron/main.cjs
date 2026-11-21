@@ -99,7 +99,7 @@ function getIconPath() {
   if (fs.existsSync(icoPath)) return icoPath;
   const pngPath = path.join(__dirname, 'assets', 'icon.png');
   if (fs.existsSync(pngPath)) return pngPath;
-  const defaultPng = path.join(__dirname, '..', 'client', 'public', 'wholesale-billing-icon.png');
+  const defaultPng = path.join(__dirname, '..', 'client', 'public', 'icon.png');
   if (fs.existsSync(defaultPng)) return defaultPng;
   return undefined;
 }

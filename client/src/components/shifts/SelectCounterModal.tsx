@@ -29,6 +29,7 @@ export interface SelectCounterModalProps {
   counterDetails?: BranchCounterDetail[];
   canClose?: boolean;
   occupiedCounters?: OccupiedCounterInfo[];
+  isLocked?: boolean;
 }
 
 interface ResolvedCounterOption {
@@ -54,6 +55,7 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
   counterDetails,
   canClose = true,
   occupiedCounters,
+  isLocked = false,
 }) => {
   const [occupiedList, setOccupiedList] = useState<OccupiedCounterInfo[]>(occupiedCounters || []);
   const [loadingOccupied, setLoadingOccupied] = useState(false);
@@ -259,6 +261,10 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
       : selectedCode;
 
   const handleSelect = (counterCode: string) => {
+    if (isLocked) {
+      setError(`Billing counter is locked to "${currentSelectedObj?.name || currentCounter}" for this active session. Station cannot be changed while in active use.`);
+      return;
+    }
     const target = branchCountersList.find(c => c.code === counterCode);
     const occ = target ? getOccupantForCounter(target) : null;
     if (occ) {
@@ -273,6 +279,10 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
   };
 
   const handleConfirm = () => {
+    if (isLocked) {
+      setError(`Station is locked to "${currentSelectedObj?.name || currentCounter}". Counter cannot be changed during an active billing session.`);
+      return;
+    }
     let finalCode = selectedCode;
     let finalName = currentSelectedObj?.name || selectedCode;
     let finalId = currentSelectedObj?.id;
@@ -379,7 +389,7 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
             </div>
             <div className="shift-bento-title-wrap">
               <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: 'var(--sidebar, #0F2D2E)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span>Select Billing Counter</span>
+                <span>{isLocked ? 'Billing Counter Station' : 'Select Billing Counter'}</span>
                 <span
                   className="shift-ref-pill"
                   style={{
@@ -387,16 +397,22 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
                     fontWeight: 700,
                     padding: '2px 8px',
                     borderRadius: '20px',
-                    background: 'var(--primary-soft, #E6F4F3)',
-                    color: 'var(--primary, #0F766E)',
-                    border: '1px solid rgba(20, 184, 166, 0.35)',
+                    background: isLocked ? '#ecfdf5' : 'var(--primary-soft, #E6F4F3)',
+                    color: isLocked ? '#047857' : 'var(--primary, #0F766E)',
+                    border: isLocked ? '1px solid #a7f3d0' : '1px solid rgba(20, 184, 166, 0.35)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
                   }}
                 >
-                  Branch Station
+                  {isLocked && <LockIcon size={11} />}
+                  <span>{isLocked ? 'Station Locked' : 'Branch Station'}</span>
                 </span>
               </h3>
               <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: 'var(--text-muted, #475569)' }}>
-                Choose the checkout station created in this branch for accurate counter sales tracking and shift data analysis.
+                {isLocked
+                  ? 'This terminal is locked to this checkout counter for your active session. To change stations, close your shift or log out.'
+                  : 'Choose the checkout station created in this branch for accurate counter sales tracking and shift data analysis.'}
               </p>
             </div>
           </div>
@@ -563,13 +579,57 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
             </div>
           )}
 
+          {/* Station Locked Notice Banner */}
+          {isLocked && (
+            <div
+              style={{
+                background: '#ecfdf5',
+                border: '1.5px solid #a7f3d0',
+                color: '#065f46',
+                padding: '0.85rem 1.15rem',
+                borderRadius: '12px',
+                fontSize: '0.84rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                marginBottom: '1.15rem',
+                boxShadow: '0 2px 6px rgba(16, 185, 129, 0.08)',
+              }}
+            >
+              <div
+                style={{
+                  width: '34px',
+                  height: '34px',
+                  borderRadius: '9px',
+                  background: '#d1fae5',
+                  color: '#059669',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                <LockIcon size={18} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 800, color: '#064e3b', fontSize: '0.88rem' }}>
+                  Billing Counter Station Locked
+                </div>
+                <div style={{ fontSize: '0.78rem', color: '#047857', marginTop: '2px', lineHeight: 1.4 }}>
+                  This terminal is locked to <strong>{currentSelectedObj?.name || currentCounter}</strong> ({currentSelectedObj?.code || currentCounter}) for your active session.
+                  Once selected, counters cannot be changed while in active use to maintain drawer floats and sales audit integrity. Close shift or log out to reassign.
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Section Heading */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
             <span style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--sidebar, #0F2D2E)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               Checkout Stations Created in {branchCode}
             </span>
             <span style={{ fontSize: '0.74rem', color: 'var(--text-muted, #475569)' }}>
-              Click an available station to assign
+              {isLocked ? 'Counter locked for active session' : 'Click an available station to assign'}
             </span>
           </div>
 
@@ -587,34 +647,45 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
               const isOccupied = Boolean(occupant);
               const isMyStation = isCurrentUserStation(c);
               const isCardActive = !isCustomMode && selectedCode === c.code;
+              const isLockedCard = isLocked && !isCardActive;
 
               return (
                 <div
                   key={c.code}
-                  className={`select-counter-card ${isCardActive && !isOccupied ? 'select-counter-card-active' : ''} ${isOccupied ? 'select-counter-card-occupied' : ''}`}
+                  className={`select-counter-card ${isCardActive && !isOccupied ? 'select-counter-card-active' : ''} ${isOccupied || isLockedCard ? 'select-counter-card-occupied' : ''}`}
                   onClick={() => {
+                    if (isLocked) {
+                      if (!isCardActive) {
+                        setError(`Billing counter is locked to "${currentSelectedObj?.name || currentCounter}". Station cannot be changed while in active use.`);
+                      }
+                      return;
+                    }
                     if (isOccupied) {
                       setError(`Billing station "${c.name}" (${c.code}) is currently occupied by ${occupant!.userName}. Please choose an available counter.`);
                     } else {
                       handleSelect(c.code);
                     }
                   }}
-                  title={isOccupied ? `Occupied by ${occupant!.userName}` : `Select ${c.name}`}
+                  title={
+                    isLocked
+                      ? (isCardActive ? `Current Station: ${c.name} (Locked)` : `Locked: Cannot switch to ${c.name} while in active use`)
+                      : (isOccupied ? `Occupied by ${occupant!.userName}` : `Select ${c.name}`)
+                  }
                   style={{
-                    background: isOccupied
+                    background: isOccupied || isLockedCard
                       ? 'var(--surface-muted, #F3EDE3)'
                       : isCardActive
                         ? 'linear-gradient(135deg, var(--primary-soft, #E6F4F3) 0%, var(--surface, #FAF7F2) 100%)'
                         : 'var(--surface, #FAF7F2)',
-                    border: isOccupied
+                    border: isOccupied || isLockedCard
                       ? '1.5px dashed #D0C7B8'
                       : isCardActive
                         ? '2px solid var(--primary, #0F766E)'
                         : '1.5px solid var(--border, #D0C7B8)',
                     borderRadius: '14px',
                     padding: '1.05rem',
-                    cursor: isOccupied ? 'not-allowed' : 'pointer',
-                    opacity: isOccupied ? 0.65 : 1,
+                    cursor: isLockedCard || isOccupied ? 'not-allowed' : 'pointer',
+                    opacity: isLockedCard ? 0.5 : (isOccupied ? 0.65 : 1),
                     transition: 'all 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
                     display: 'flex',
                     flexDirection: 'column',
@@ -634,13 +705,13 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
                         width: '38px',
                         height: '38px',
                         borderRadius: '10px',
-                        background: isOccupied
-                          ? '#fee2e2'
+                        background: isOccupied || isLockedCard
+                          ? (isOccupied ? '#fee2e2' : '#f1f5f9')
                           : isCardActive
                             ? 'var(--primary, #0F766E)'
                             : 'var(--primary-soft, #E6F4F3)',
-                        color: isOccupied
-                          ? '#b91c1c'
+                        color: isOccupied || isLockedCard
+                          ? (isOccupied ? '#b91c1c' : '#64748b')
                           : isCardActive
                             ? '#ffffff'
                             : 'var(--primary, #0F766E)',
@@ -650,7 +721,7 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
                         transition: 'all 0.15s ease',
                       }}
                     >
-                      {isOccupied ? (
+                      {isOccupied || isLockedCard ? (
                         <LockIcon size={18} />
                       ) : c.isExpress ? (
                         <ZapIcon size={18} />
@@ -683,6 +754,27 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
                         >
                           <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#ef4444', display: 'inline-block' }} />
                           Occupied • {(occupant?.userName || '').trim() || 'In Use'}
+                        </span>
+                      ) : isLockedCard ? (
+                        <span
+                          className="counter-card-tag"
+                          style={{
+                            fontSize: '0.68rem',
+                            fontWeight: 800,
+                            textTransform: 'uppercase',
+                            padding: '3px 8px',
+                            borderRadius: '12px',
+                            background: '#f1f5f9',
+                            color: '#64748b',
+                            border: '1px solid #cbd5e1',
+                            letterSpacing: '0.03em',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                          }}
+                        >
+                          <LockIcon size={10} />
+                          Locked
                         </span>
                       ) : isMyStation ? (
                         <span
@@ -727,7 +819,7 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
 
                   <div>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', marginBottom: '0.2rem' }}>
-                      <span style={{ fontSize: '1.05rem', fontWeight: 800, color: isOccupied ? 'var(--text-muted, #64748b)' : 'var(--sidebar, #0F2D2E)' }}>
+                      <span style={{ fontSize: '1.05rem', fontWeight: 800, color: isOccupied || isLockedCard ? 'var(--text-muted, #64748b)' : 'var(--sidebar, #0F2D2E)' }}>
                         {c.name}
                       </span>
                       <span
@@ -735,12 +827,12 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
                           fontSize: '0.72rem',
                           fontWeight: 700,
                           fontFamily: 'monospace',
-                          color: isOccupied
+                          color: isOccupied || isLockedCard
                             ? '#94a3b8'
                             : isCardActive
                               ? 'var(--primary, #0F766E)'
                               : 'var(--text-muted, #475569)',
-                          background: isOccupied
+                          background: isOccupied || isLockedCard
                             ? 'rgba(0, 0, 0, 0.05)'
                             : isCardActive
                               ? 'var(--primary-soft, #E6F4F3)'
@@ -753,8 +845,12 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
                         {c.code}
                       </span>
                     </div>
-                    <div style={{ fontSize: '0.74rem', color: isOccupied ? '#94a3b8' : 'var(--text-muted, #475569)', lineHeight: 1.35 }}>
-                      {isOccupied ? `Currently active under ${(occupant?.userName || '').trim() || 'another cashier'}` : c.desc}
+                    <div style={{ fontSize: '0.74rem', color: isOccupied || isLockedCard ? '#94a3b8' : 'var(--text-muted, #475569)', lineHeight: 1.35 }}>
+                      {isOccupied
+                        ? `Currently active under ${(occupant?.userName || '').trim() || 'another cashier'}`
+                        : isLockedCard
+                          ? 'Counter locked for this terminal. Reassignment disabled.'
+                          : c.desc}
                     </div>
                   </div>
 
@@ -775,16 +871,20 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
                         fontWeight: 700,
                         color: isOccupied
                           ? '#b91c1c'
-                          : isCardActive
-                            ? 'var(--primary, #0F766E)'
-                            : 'var(--text-muted, #475569)',
+                          : isLockedCard
+                            ? '#94a3b8'
+                            : isCardActive
+                              ? 'var(--primary, #0F766E)'
+                              : 'var(--text-muted, #475569)',
                       }}
                     >
                       {isOccupied
                         ? `In use (${(occupant?.userName || '').trim() || 'Active Cashier'})`
-                        : isCardActive
-                          ? 'Selected Counter'
-                          : 'Click to select'}
+                        : isLockedCard
+                          ? 'Station Locked'
+                          : isCardActive
+                            ? 'Active Station (Locked)'
+                            : 'Click to select'}
                     </span>
                     <div
                       className="counter-card-radio"
@@ -794,21 +894,25 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
                         borderRadius: '50%',
                         border: isOccupied
                           ? '1.5px solid #fca5a5'
-                          : isCardActive
-                            ? '2px solid var(--primary, #0F766E)'
-                            : '1.5px solid var(--border, #D0C7B8)',
+                          : isLockedCard
+                            ? '1.5px solid #cbd5e1'
+                            : isCardActive
+                              ? '2px solid var(--primary, #0F766E)'
+                              : '1.5px solid var(--border, #D0C7B8)',
                         background: isOccupied
                           ? '#fee2e2'
-                          : isCardActive
-                            ? 'var(--primary, #0F766E)'
-                            : 'var(--surface, #FAF7F2)',
+                          : isLockedCard
+                            ? '#f1f5f9'
+                            : isCardActive
+                              ? 'var(--primary, #0F766E)'
+                              : 'var(--surface, #FAF7F2)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        color: isOccupied ? '#b91c1c' : '#ffffff',
+                        color: isOccupied ? '#b91c1c' : isLockedCard ? '#64748b' : '#ffffff',
                       }}
                     >
-                      {isOccupied ? (
+                      {isOccupied || isLockedCard ? (
                         <LockIcon size={12} />
                       ) : (
                         isCardActive && <CheckCircle2Icon size={14} />
@@ -834,6 +938,10 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
           >
             <div
               onClick={() => {
+                if (isLocked) {
+                  setError(`Billing station is locked to "${currentSelectedObj?.name || currentCounter}". Station cannot be changed while in active use.`);
+                  return;
+                }
                 setIsCustomMode(!isCustomMode);
                 if (!isCustomMode && !customCounterText) {
                   setCustomCounterText(`${branchCode || 'MAIN'}-C05`);
@@ -843,7 +951,8 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                cursor: 'pointer',
+                cursor: isLocked ? 'not-allowed' : 'pointer',
+                opacity: isLocked ? 0.6 : 1,
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
@@ -866,7 +975,7 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
                     Other / Dedicated Terminal Code
                   </div>
                   <div style={{ fontSize: '0.74rem', color: 'var(--text-muted, #475569)' }}>
-                    Manually specify a custom counter identifier or register lane
+                    {isLocked ? 'Manual station specification disabled while session is locked' : 'Manually specify a custom counter identifier or register lane'}
                   </div>
                 </div>
               </div>
@@ -881,11 +990,11 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
                   borderRadius: '6px',
                 }}
               >
-                {isCustomMode ? 'Active' : 'Custom +'}
+                {isLocked ? 'Locked' : (isCustomMode ? 'Active' : 'Custom +')}
               </div>
             </div>
 
-            {isCustomMode && (
+            {isCustomMode && !isLocked && (
               <div style={{ marginTop: '0.85rem', paddingTop: '0.85rem', borderTop: '1px solid var(--border, #D0C7B8)' }}>
                 <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center' }}>
                   <input
@@ -1006,35 +1115,61 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
                   cursor: 'pointer',
                 }}
               >
-                Cancel
+                {isLocked ? 'Close' : 'Cancel'}
               </button>
             )}
 
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={handleConfirm}
-              disabled={Boolean(selectedOccupant)}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.65rem 1.4rem',
-                borderRadius: '10px',
-                background: selectedOccupant ? '#94a3b8' : 'var(--primary, #0F766E)',
-                color: '#ffffff',
-                border: 'none',
-                fontWeight: 800,
-                fontSize: '0.88rem',
-                cursor: selectedOccupant ? 'not-allowed' : 'pointer',
-                opacity: selectedOccupant ? 0.6 : 1,
-                boxShadow: selectedOccupant ? 'none' : '0 4px 14px rgba(15, 118, 110, 0.35)',
-                transition: 'all 0.15s ease',
-              }}
-            >
-              <span>{selectedOccupant ? 'Station Occupied' : 'Confirm & Start Billing'}</span>
-              <ArrowRightIcon size={15} />
-            </button>
+            {!isLocked ? (
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleConfirm}
+                disabled={Boolean(selectedOccupant)}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.65rem 1.4rem',
+                  borderRadius: '10px',
+                  background: selectedOccupant ? '#94a3b8' : 'var(--primary, #0F766E)',
+                  color: '#ffffff',
+                  border: 'none',
+                  fontWeight: 800,
+                  fontSize: '0.88rem',
+                  cursor: selectedOccupant ? 'not-allowed' : 'pointer',
+                  opacity: selectedOccupant ? 0.6 : 1,
+                  boxShadow: selectedOccupant ? 'none' : '0 4px 14px rgba(15, 118, 110, 0.35)',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                <span>{selectedOccupant ? 'Station Occupied' : 'Confirm & Start Billing'}</span>
+                <ArrowRightIcon size={15} />
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={onClose}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.65rem 1.4rem',
+                  borderRadius: '10px',
+                  background: 'var(--primary, #0F766E)',
+                  color: '#ffffff',
+                  border: 'none',
+                  fontWeight: 800,
+                  fontSize: '0.88rem',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 14px rgba(15, 118, 110, 0.35)',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                <LockIcon size={14} />
+                <span>Station Locked • Keep Current Counter</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
