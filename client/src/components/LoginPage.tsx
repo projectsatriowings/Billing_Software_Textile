@@ -141,7 +141,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   const [forgotStatus, setForgotStatus] = useState<{ message: string; isError?: boolean } | null>(null);
   const [isSendingReset, setIsSendingReset] = useState(false);
 
-  // PWA Desktop App Installation
+  // Desktop App Installer & PWA
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
   const [installPrompt, setInstallPrompt] = useState<any>(null);
   const [isInstalled, setIsInstalled] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
@@ -168,6 +169,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       window.removeEventListener('appinstalled', installedHandler);
     };
   }, []);
+
+  const handleDownloadInstaller = () => {
+    window.location.href = '/api/download/desktop';
+  };
+
+  const handleDownloadZip = () => {
+    window.location.href = '/api/download/desktop-zip';
+  };
 
   const handleInstallApp = async () => {
     if (installPrompt) {
@@ -556,43 +565,48 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             {!isInstalled && (
               <button
                 type="button"
-                onClick={handleInstallApp}
+                onClick={() => setShowDownloadModal(true)}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '0.55rem',
+                  gap: '0.65rem',
                   width: '100%',
-                  padding: '0.68rem 1rem',
+                  padding: '0.75rem 1rem',
                   borderRadius: '12px',
-                  background: '#F0FDFA',
-                  border: '1.5px solid #99F6E4',
-                  color: '#0F766E',
+                  background: 'linear-gradient(135deg, #FAF5FF 0%, #F3E8FF 100%)',
+                  border: '1.5px solid #D8B4FE',
+                  color: '#6B21A8',
                   fontWeight: 700,
                   fontSize: '0.84rem',
                   cursor: 'pointer',
                   marginTop: '0.85rem',
-                  boxShadow: '0 2px 6px rgba(15, 118, 110, 0.08)',
+                  boxShadow: '0 2px 8px rgba(107, 33, 168, 0.08)',
                   transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                   fontFamily: 'inherit',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#CCFBF1';
-                  e.currentTarget.style.borderColor = '#5EEAD4';
+                  e.currentTarget.style.background = 'linear-gradient(135deg, #F3E8FF 0%, #E9D5FF 100%)';
+                  e.currentTarget.style.borderColor = '#C084FC';
                   e.currentTarget.style.transform = 'translateY(-1px)';
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(107, 33, 168, 0.15)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = '#F0FDFA';
-                  e.currentTarget.style.borderColor = '#99F6E4';
+                  e.currentTarget.style.background = 'linear-gradient(135deg, #FAF5FF 0%, #F3E8FF 100%)';
+                  e.currentTarget.style.borderColor = '#D8B4FE';
                   e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(107, 33, 168, 0.08)';
                 }}
               >
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
-                  <line x1="8" y1="21" x2="16" y2="21" />
-                  <line x1="12" y1="17" x2="12" y2="21" />
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
                 </svg>
-                <span>Install A2Z Desktop App</span>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', textAlign: 'left', lineHeight: 1.25 }}>
+                  <span style={{ fontWeight: 800 }}>Download A2Z Desktop App (.exe)</span>
+                  <span style={{ fontSize: '0.72rem', color: '#7E22CE', fontWeight: 500 }}>Setup Wizard • Choose Install Location</span>
+                </div>
               </button>
             )}
 
@@ -714,6 +728,206 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* Modern Desktop Software Download Modal */}
+      {showDownloadModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.72)',
+            backdropFilter: 'blur(6px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '1.25rem',
+          }}
+          onClick={() => setShowDownloadModal(false)}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: '520px',
+              background: '#FFFFFF',
+              borderRadius: '24px',
+              padding: '2rem',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1.25rem',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header with Official Logo */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                <img
+                  src="/icon.png"
+                  alt="A2Z Billing Software"
+                  style={{
+                    width: '46px',
+                    height: '46px',
+                    borderRadius: '12px',
+                    boxShadow: '0 4px 12px rgba(109, 40, 217, 0.3)',
+                    objectFit: 'contain',
+                  }}
+                />
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800, color: '#0F172A', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    A2Z Desktop Software
+                    <span style={{ fontSize: '0.7rem', background: '#EDE9FE', color: '#6D28D9', padding: '2px 8px', borderRadius: '9999px', fontWeight: 700 }}>
+                      v0.1.0
+                    </span>
+                  </h3>
+                  <p style={{ margin: '3px 0 0', fontSize: '0.8rem', color: '#64748B' }}>
+                    Full Windows installer with step-by-step setup wizard
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                style={{
+                  background: '#F1F5F9',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1rem',
+                  cursor: 'pointer',
+                  color: '#64748B',
+                }}
+                onClick={() => setShowDownloadModal(false)}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Direct Download Buttons */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.25rem' }}>
+              <button
+                type="button"
+                onClick={handleDownloadInstaller}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.65rem',
+                  padding: '0.9rem 1.25rem',
+                  borderRadius: '14px',
+                  background: 'linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%)',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  fontSize: '0.95rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  boxShadow: '0 6px 18px rgba(109, 40, 217, 0.35)',
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                  e.currentTarget.style.boxShadow = '0 8px 24px rgba(109, 40, 217, 0.45)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 6px 18px rgba(109, 40, 217, 0.35)';
+                }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                <span>Download Windows Installer (.exe)</span>
+                <span style={{ fontSize: '0.75rem', opacity: 0.85, fontWeight: 500 }}>(122 MB)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleDownloadZip}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  padding: '0.7rem 1rem',
+                  borderRadius: '12px',
+                  background: '#F8FAFC',
+                  color: '#475569',
+                  border: '1.5px solid #E2E8F0',
+                  fontSize: '0.825rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#F1F5F9';
+                  e.currentTarget.style.borderColor = '#CBD5E1';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = '#F8FAFC';
+                  e.currentTarget.style.borderColor = '#E2E8F0';
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                </svg>
+                <span>Download ZIP with 1-Click Auto-Unblock Script (.zip)</span>
+              </button>
+            </div>
+
+            {/* Quick 3-Step Setup Guide */}
+            <div style={{ background: '#F8FAFC', borderRadius: '14px', padding: '1rem', border: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <div style={{ fontSize: '0.78rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Setup Wizard Steps
+              </div>
+              <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'flex-start', fontSize: '0.82rem', color: '#475569', lineHeight: 1.45 }}>
+                <span style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#6D28D9', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.72rem', fontWeight: 800, flexShrink: 0, marginTop: '1px' }}>1</span>
+                <div>Double-click <strong>A2Z Setup 0.1.0.exe</strong> after download completes.</div>
+              </div>
+              <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'flex-start', fontSize: '0.82rem', color: '#475569', lineHeight: 1.45 }}>
+                <span style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#6D28D9', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.72rem', fontWeight: 800, flexShrink: 0, marginTop: '1px' }}>2</span>
+                <div>Click <strong>Next</strong>, choose your preferred installation directory, and click <strong>Install</strong>.</div>
+              </div>
+              <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'flex-start', fontSize: '0.82rem', color: '#475569', lineHeight: 1.45 }}>
+                <span style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#6D28D9', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.72rem', fontWeight: 800, flexShrink: 0, marginTop: '1px' }}>3</span>
+                <div>The setup wizard will finish and place the official <strong>A2Z purple shortcut</strong> on your Desktop!</div>
+              </div>
+            </div>
+
+            {/* SmartScreen / Smart App Control Helper */}
+            <div style={{ background: '#FFFBEB', borderRadius: '14px', padding: '0.85rem 1rem', border: '1px solid #FDE68A', display: 'flex', gap: '0.65rem', alignItems: 'flex-start' }}>
+              <span style={{ fontSize: '1.1rem', marginTop: '1px' }}>💡</span>
+              <div style={{ fontSize: '0.78rem', color: '#92400E', lineHeight: 1.45 }}>
+                <strong>If Windows SmartScreen or Smart App Control shows a warning:</strong>
+                <div style={{ marginTop: '3px' }}>
+                  Click <em>"More info"</em> → <strong>"Run anyway"</strong>. Or right-click the <code>.exe</code> file → <strong>Properties</strong> → check <strong>Unblock</strong> at the bottom → <strong>OK</strong>.
+                </div>
+              </div>
+            </div>
+
+            {/* Alternative PWA link if available */}
+            {installPrompt && (
+              <div style={{ textAlign: 'center', paddingTop: '0.25rem', borderTop: '1px solid #F1F5F9' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleInstallApp();
+                    setShowDownloadModal(false);
+                  }}
+                  style={{ background: 'none', border: 'none', color: '#6D28D9', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}
+                >
+                  Or install instant browser app (PWA)
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
