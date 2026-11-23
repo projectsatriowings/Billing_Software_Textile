@@ -75,6 +75,8 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
   const [filterFromDate, setFilterFromDate] = useState<string>('');
   const [filterToDate, setFilterToDate] = useState<string>('');
   const [submittingAcceptId, setSubmittingAcceptId] = useState<string | null>(null);
+  // Mobile View Toggle: 'cards' | 'table'
+  const [mobileTableView, setMobileTableView] = useState<'cards' | 'table'>('cards');
 
   // Screens 2, 3, 4: Creation Wizard State
   const [nextTransferNumber, setNextTransferNumber] = useState<string>('TRF-0001');
@@ -827,6 +829,8 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
               display: 'inline-flex',
               alignItems: 'center',
               gap: '4px',
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
             }}
           >
             ● Completed
@@ -846,6 +850,8 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
               display: 'inline-flex',
               alignItems: 'center',
               gap: '4px',
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
             }}
           >
             ● In Transit
@@ -865,6 +871,8 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
               display: 'inline-flex',
               alignItems: 'center',
               gap: '4px',
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
             }}
           >
             ● Partially Received
@@ -882,6 +890,11 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
               borderRadius: '9999px',
               fontSize: '0.78rem',
               fontWeight: 700,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
             }}
           >
             ● {status === 'cancelled' ? 'Cancelled' : 'Rejected'}
@@ -904,12 +917,85 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
               display: 'inline-flex',
               alignItems: 'center',
               gap: '4px',
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
             }}
           >
             ● Pending
           </span>
         );
     }
+  };
+
+  // Reusable Action Buttons for both Desktop Table and Mobile Cards
+  const renderActionButtons = (trf: StockTransfer, isMobileCard = false) => {
+    const isPending = ['draft', 'requested', 'approved', 'pending'].includes(trf.status);
+    const isDestOnly =
+      !isSuperAdmin &&
+      checkIsDestinationBranch(trf) &&
+      !checkIsSourceBranch(trf) &&
+      trf.requestedBy !== user?.id;
+    const canDispatchTrf = isPending && !isDestOnly;
+
+    const isTrfSending =
+      checkIsSourceBranch(trf) ||
+      (Boolean(user?.id) && trf.requestedBy === user?.id) ||
+      (trf.requestedByName != null && user?.name != null && user.name.trim().toLowerCase() === trf.requestedByName.trim().toLowerCase()) ||
+      (trf.requestedByName != null && user?.username != null && user.username.trim().toLowerCase() === trf.requestedByName.trim().toLowerCase());
+    const canReceiveTrf = trf.status === 'in_transit' && !isTrfSending && (checkIsDestinationBranch(trf) || isSuperAdmin);
+
+    return (
+      <div className={`stock-transfer-actions-group ${isMobileCard ? 'mobile-card-actions' : ''}`}>
+        <button
+          type="button"
+          onClick={() => handleViewTransferDetails(trf.id)}
+          className="stock-transfer-action-btn view-btn"
+          title="View transfer details"
+        >
+          {isMobileCard ? 'View Details' : 'View'}
+        </button>
+
+        {canDispatchTrf && (
+          <button
+            type="button"
+            className="stock-transfer-action-btn dispatch-btn"
+            onClick={() => {
+              handleViewTransferDetails(trf.id);
+              setShowDispatchModal(true);
+            }}
+            title="Dispatch stock transfer"
+            style={{
+              background: isStoreManager
+                ? 'linear-gradient(135deg, #7A475B 0%, #653B4B 100%)'
+                : isSuperAdmin
+                ? '#49364A'
+                : 'linear-gradient(135deg, #4f46e5 0%, #4338ca 100%)',
+              color: '#ffffff',
+              boxShadow: isStoreManager
+                ? '0 2px 6px rgba(101, 59, 75, 0.3)'
+                : isSuperAdmin
+                ? '0 2px 6px rgba(73, 54, 74, 0.35)'
+                : '0 2px 6px rgba(79, 70, 229, 0.3)',
+            }}
+          >
+            <TruckIcon size={13} /> <span>Dispatch</span>
+          </button>
+        )}
+
+        {canReceiveTrf && (
+          <button
+            type="button"
+            className="stock-transfer-action-btn receive-btn"
+            onClick={() => handleDirectAccept(trf.id)}
+            disabled={submittingAcceptId === trf.id}
+            title="Receive and credit stock into inventory"
+          >
+            <CheckCircleIcon size={13} />
+            <span>{submittingAcceptId === trf.id ? 'Receiving...' : 'Receive Stock'}</span>
+          </button>
+        )}
+      </div>
+    );
   };
 
   const renderCreateStepper = (currentStep: 1 | 2 | 3) => {
@@ -1121,6 +1207,7 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
 
             {/* Filters Toolbar - Date Filter Only */}
             <div
+              className="stock-transfer-filters-toolbar"
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -1134,7 +1221,7 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                 gap: '0.75rem',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+              <div className="stock-transfer-filters-left" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
                 <span
                   style={{
                     fontSize: '0.85rem',
@@ -1150,6 +1237,7 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
 
                 {/* Date Range Filter Capsule */}
                 <div
+                  className="stock-transfer-date-capsule"
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -1237,25 +1325,134 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                 )}
               </div>
 
-              <div style={{ fontSize: '0.82rem', color: '#64748b' }}>
-                Showing transfers for <strong>{currentBranchObj?.name || 'Current Branch'}</strong>
+              <div className="stock-transfer-meta-bar">
+                <div style={{ fontSize: '0.82rem', color: '#64748b' }}>
+                  Showing transfers for <strong>{currentBranchObj?.name || 'Current Branch'}</strong>
+                </div>
+
+                {/* Mobile View Switcher (Cards / Table) */}
+                <div className="stock-transfer-view-toggle">
+                  <button
+                    type="button"
+                    onClick={() => setMobileTableView('cards')}
+                    className={`stock-transfer-toggle-btn ${mobileTableView === 'cards' ? 'active' : ''}`}
+                    title="Card View (Mobile Optimized)"
+                  >
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="3" width="7" height="7"></rect>
+                      <rect x="14" y="3" width="7" height="7"></rect>
+                      <rect x="14" y="14" width="7" height="7"></rect>
+                      <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                    <span>Cards</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMobileTableView('table')}
+                    className={`stock-transfer-toggle-btn ${mobileTableView === 'table' ? 'active' : ''}`}
+                    title="Table View (Full Columns)"
+                  >
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 3v18"></path>
+                      <rect width="18" height="18" x="3" y="3" rx="2"></rect>
+                      <path d="M3 9h18"></path>
+                      <path d="M3 15h18"></path>
+                    </svg>
+                    <span>Table</span>
+                  </button>
+                </div>
               </div>
             </div>
 
-            {/* Table Matching Reference Image */}
-            <div style={{ overflowX: 'auto' }}>
+            {/* 1. Mobile Cards View (Visible on mobile <= 768px when Cards view is selected) */}
+            <div className={`stock-transfers-mobile-cards-wrap ${mobileTableView === 'cards' ? 'active' : ''}`}>
+              {initialLoading && transfers.length === 0 ? (
+                <div className="stock-transfer-mobile-empty" style={{ textAlign: 'center', padding: '2.5rem 1rem', color: '#64748b' }}>
+                  <RefreshCwIcon size={24} className="spin" style={{ marginBottom: '8px' }} />
+                  <div>Loading stock transfers...</div>
+                </div>
+              ) : transfers.length === 0 ? (
+                <div className="stock-transfer-mobile-empty" style={{ textAlign: 'center', padding: '2.5rem 1rem', color: '#94a3b8' }}>
+                  <PackageIcon size={36} style={{ color: '#cbd5e1', marginBottom: '8px' }} />
+                  <div style={{ fontWeight: 600, color: '#475569' }}>No stock transfers found</div>
+                  <div style={{ fontSize: '0.8rem', marginTop: '4px', color: '#64748b' }}>
+                    Click "+ Create New Transfer" above to initiate a branch transfer.
+                  </div>
+                </div>
+              ) : (
+                <div className="stock-transfer-cards-list">
+                  {transfers.map((trf) => (
+                    <div key={trf.id} className="stock-transfer-card-item">
+                      <div className="stock-transfer-card-header">
+                        <div>
+                          <div className="stock-transfer-card-id">{trf.transferNumber}</div>
+                          <div className="stock-transfer-card-date">
+                            <CalendarIcon size={12} />
+                            <span>{trf.transferDate}</span>
+                          </div>
+                        </div>
+                        <div className="stock-transfer-card-status">
+                          {renderStatusBadge(trf.status)}
+                        </div>
+                      </div>
+
+                      <div className="stock-transfer-card-route">
+                        <div className="route-node">
+                          <span className="route-label">From</span>
+                          <span className="route-name" title={trf.fromBranchName || trf.fromBranch}>
+                            {trf.fromBranchName || trf.fromBranch}
+                          </span>
+                        </div>
+                        <div className="route-arrow-wrap">
+                          <ArrowRightIcon size={15} />
+                        </div>
+                        <div className="route-node">
+                          <span className="route-label">To</span>
+                          <span className="route-name" title={trf.toBranchName || trf.toBranch}>
+                            {trf.toBranchName || trf.toBranch}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="stock-transfer-card-meta">
+                        <div className="card-meta-item">
+                          <span className="card-meta-label">Items:</span>
+                          <span className="card-meta-val">
+                            <strong>{trf.itemsCount || 0}</strong> items
+                          </span>
+                        </div>
+                        <div className="card-meta-item">
+                          <span className="card-meta-label">By:</span>
+                          <span className="card-meta-val" title={trf.requestedByName || 'Staff'}>
+                            {trf.requestedByName || 'Staff'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="stock-transfer-card-footer">
+                        {renderActionButtons(trf, true)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* 2. Desktop & Responsive Mobile Table Container */}
+            <div className={`stock-transfer-table-wrapper ${mobileTableView === 'cards' ? 'mobile-hidden' : 'mobile-active'}`}>
+              <div className="stock-transfer-scroll-hint">
+                <span>↔ Swipe horizontally to view full transfer columns</span>
+              </div>
               <table
-                className="table"
+                className="table stock-transfer-table"
                 style={{
-                  width: '100%',
                   borderCollapse: 'separate',
                   borderSpacing: '0',
-                  fontSize: '0.86rem',
                 }}
               >
                 <thead>
                   <tr style={{ background: '#f8fafc', color: '#475569', textAlign: 'left' }}>
-                    <th style={{ padding: '0.85rem 1rem', borderBottom: '1px solid #e2e8f0', fontWeight: 700 }}>
+                    <th className="sticky-col-left" style={{ padding: '0.85rem 1rem', borderBottom: '1px solid #e2e8f0', fontWeight: 700 }}>
                       Transfer No.
                     </th>
                     <th style={{ padding: '0.85rem 1rem', borderBottom: '1px solid #e2e8f0', fontWeight: 700 }}>
@@ -1277,6 +1474,7 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                       Created By
                     </th>
                     <th
+                      className="sticky-col-right"
                       style={{
                         padding: '0.85rem 1rem',
                         borderBottom: '1px solid #e2e8f0',
@@ -1317,8 +1515,11 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                         onMouseEnter={(e) => (e.currentTarget.style.background = '#f8fafc')}
                         onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                       >
-                        <td style={{ padding: '0.9rem 1rem', fontWeight: 700, color: '#1e293b' }}>
-                          {trf.transferNumber}
+                        <td className="sticky-col-left" style={{ padding: '0.9rem 1rem', fontWeight: 700, color: '#1e293b' }}>
+                          <span style={{ display: 'block' }}>{trf.transferNumber}</span>
+                          <span className="trf-mobile-subdate" style={{ fontSize: '0.74rem', color: '#64748b', fontWeight: 500, marginTop: '2px' }}>
+                            {trf.transferDate}
+                          </span>
                         </td>
                         <td style={{ padding: '0.9rem 1rem', color: '#334155' }}>
                           {trf.fromBranchName || trf.fromBranch}
@@ -1336,102 +1537,8 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                         <td style={{ padding: '0.9rem 1rem', color: '#475569' }}>
                           {trf.requestedByName || 'Staff'}
                         </td>
-                        <td style={{ padding: '0.9rem 1rem', textAlign: 'right' }}>
-                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}>
-                            <button
-                              type="button"
-                              onClick={() => handleViewTransferDetails(trf.id)}
-                              style={{
-                                background: '#f1f5f9',
-                                border: '1px solid #cbd5e1',
-                                color: '#334155',
-                                padding: '0.35rem 0.75rem',
-                                borderRadius: '6px',
-                                fontSize: '0.8rem',
-                                fontWeight: 600,
-                                cursor: 'pointer',
-                              }}
-                            >
-                              View
-                            </button>
-
-                            {/* Dispatch button: Displayed when Pending and not destination-only */}
-                            {(() => {
-                              const isPending = ['draft', 'requested', 'approved', 'pending'].includes(trf.status);
-                              const isDestOnly = !isSuperAdmin && checkIsDestinationBranch(trf) && !checkIsSourceBranch(trf) && trf.requestedBy !== user?.id;
-                              const canDispatchTrf = isPending && !isDestOnly;
-                              if (!canDispatchTrf) return null;
-                              return (
-                                <button
-                                  type="button"
-                                  className="stock-transfer-btn-dispatch"
-                                  onClick={() => {
-                                    handleViewTransferDetails(trf.id);
-                                    setShowDispatchModal(true);
-                                  }}
-                                  style={{
-                                    background: isStoreManager
-                                      ? 'linear-gradient(135deg, #7A475B 0%, #653B4B 100%)'
-                                      : isSuperAdmin
-                                      ? '#49364A'
-                                      : 'linear-gradient(135deg, #4f46e5 0%, #4338ca 100%)',
-                                    color: '#ffffff',
-                                    border: 'none',
-                                    padding: '0.35rem 0.75rem',
-                                    borderRadius: '6px',
-                                    fontSize: '0.8rem',
-                                    fontWeight: 700,
-                                    cursor: 'pointer',
-                                    boxShadow: isStoreManager
-                                      ? '0 2px 6px rgba(101, 59, 75, 0.3)'
-                                      : isSuperAdmin
-                                      ? '0 2px 6px rgba(73, 54, 74, 0.35)'
-                                      : '0 2px 6px rgba(79, 70, 229, 0.3)',
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '4px',
-                                  }}
-                                >
-                                  <TruckIcon size={13} /> Dispatch
-                                </button>
-                              );
-                            })()}
-
-                            {/* Receive Stock button: Destination branch ONLY AFTER dispatch (In Transit) - NEVER for sending branch */}
-                            {(() => {
-                              const isTrfSending =
-                                checkIsSourceBranch(trf) ||
-                                (Boolean(user?.id) && trf.requestedBy === user?.id) ||
-                                (trf.requestedByName != null && user?.name != null && user.name.trim().toLowerCase() === trf.requestedByName.trim().toLowerCase()) ||
-                                (trf.requestedByName != null && user?.username != null && user.username.trim().toLowerCase() === trf.requestedByName.trim().toLowerCase());
-                              if (trf.status !== 'in_transit' || isTrfSending) return null;
-                              const canReceiveTrf = !isTrfSending && (checkIsDestinationBranch(trf) || isSuperAdmin);
-                              if (!canReceiveTrf) return null;
-                              return (
-                                <button
-                                  type="button"
-                                  onClick={() => handleDirectAccept(trf.id)}
-                                  disabled={submittingAcceptId === trf.id}
-                                  style={{
-                                    background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
-                                    color: '#ffffff',
-                                    border: 'none',
-                                    padding: '0.35rem 0.75rem',
-                                    borderRadius: '6px',
-                                    fontSize: '0.8rem',
-                                    fontWeight: 700,
-                                    cursor: submittingAcceptId === trf.id ? 'not-allowed' : 'pointer',
-                                    boxShadow: '0 2px 6px rgba(22, 163, 74, 0.3)',
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '4px',
-                                  }}
-                                >
-                                  <CheckCircleIcon size={13} /> {submittingAcceptId === trf.id ? 'Receiving...' : 'Receive Stock'}
-                                </button>
-                              );
-                            })()}
-                          </div>
+                        <td className="sticky-col-right" style={{ padding: '0.9rem 1rem', textAlign: 'right' }}>
+                          {renderActionButtons(trf, false)}
                         </td>
                       </tr>
                     ))
