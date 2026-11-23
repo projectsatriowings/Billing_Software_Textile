@@ -1617,6 +1617,8 @@ export function App() {
   }, [currentBranchCode, activeBranch?.code, selectedCounter]);
   const [showMobileScannerModal, setShowMobileScannerModal] = useState(false);
   const [isPhoneScannerConnected, setIsPhoneScannerConnected] = useState(false);
+  type ScannerConnectionStatus = 'waiting' | 'phone_connected' | 'scanner_ready' | 'connection_lost' | 'unable_to_connect';
+  const [scannerStatus, setScannerStatus] = useState<ScannerConnectionStatus>('waiting');
   const [externalBarcodeScan, setExternalBarcodeScan] = useState<{ barcode: string; timestamp: number } | null>(null);
   // Inline POS Camera Scanner States
   const [isPosCameraActive, setIsPosCameraActive] = useState(false);
@@ -1628,25 +1630,51 @@ export function App() {
   const posHtml5QrCodeRef = useRef<Html5Qrcode | null>(null);
   const isPosCameraStartingRef = useRef(false);
   const lastCameraScanRef = useRef<{ code: string; time: number } | null>(null);
-  const [scannerNetworkInfo, setScannerNetworkInfo] = useState<{ localIp: string; httpPort: number; httpsPort: number; tunnelUrl?: string } | null>(null);
-  const [scannerProtocol, setScannerProtocol] = useState<'tunnel' | 'https' | 'http'>('tunnel');
+  const [scannerNetworkInfo, setScannerNetworkInfo] = useState<{
+    localIp: string;
+    lanIp?: string;
+    isLanAvailable?: boolean;
+    lanIps?: string[];
+    publicIps?: string[];
+    allIps?: string[];
+    httpPort: number;
+    httpsPort: number;
+    tunnelUrl?: string;
+    isTunnelAlive?: boolean;
+    tunnelStatus?: string;
+    tunnelError?: string;
+  } | null>(null);
+  const [scannerProtocol, setScannerProtocol] = useState<'tunnel' | 'wifi' | 'https' | 'server'>('tunnel');
   const [scannerSoundEnabled, setScannerSoundEnabled] = useState(true);
   const [customTunnelUrl, setCustomTunnelUrl] = useState('');
   const [showCfdModal, setShowCfdModal] = useState(false);
   const [isCfdConnected, setIsCfdConnected] = useState(false);
 
   const scannerPairingUrl = useMemo(() => {
-    const localIp = scannerNetworkInfo?.localIp || window.location.hostname;
-    const port = scannerProtocol === 'https'
-      ? (scannerNetworkInfo?.httpsPort || 3444)
-      : (scannerNetworkInfo?.httpPort || 3001);
-    const effectiveProto = scannerProtocol === 'https' ? 'https' : 'http';
     const counterParam = encodeURIComponent(selectedCounter || 'Counter 1');
-    const base = customTunnelUrl.trim()
-      ? customTunnelUrl.trim().replace(/\/+$/, '')
-      : scannerNetworkInfo?.tunnelUrl
-        ? scannerNetworkInfo.tunnelUrl.replace(/\/+$/, '')
-        : `${effectiveProto}://${localIp}:${port}`;
+    const httpPort = scannerNetworkInfo?.httpPort || 3000;
+    const httpsPort = scannerNetworkInfo?.httpsPort || 3443;
+    const lanIp = scannerNetworkInfo?.lanIp || scannerNetworkInfo?.localIp || window.location.hostname;
+
+    let base = '';
+    if (customTunnelUrl.trim()) {
+      base = customTunnelUrl.trim().replace(/\/+$/, '');
+    } else if (scannerProtocol === 'tunnel') {
+      if (scannerNetworkInfo?.tunnelUrl) {
+        base = scannerNetworkInfo.tunnelUrl.replace(/\/+$/, '');
+      } else if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+        base = window.location.origin.replace(/\/+$/, '');
+      } else {
+        base = `http://${lanIp}:${httpPort}`;
+      }
+    } else if (scannerProtocol === 'server') {
+      base = window.location.origin.replace(/\/+$/, '');
+    } else if (scannerProtocol === 'https') {
+      base = `https://${lanIp}:${httpsPort}`;
+    } else {
+      // 'wifi'
+      base = `http://${lanIp}:${httpPort}`;
+    }
     return `${base}/scanner?session=${encodeURIComponent(scannerSessionId)}&counter=${counterParam}`;
   }, [scannerNetworkInfo, scannerProtocol, customTunnelUrl, scannerSessionId, selectedCounter]);
 
@@ -4426,9 +4454,21 @@ export function App() {
         .then((r) => r.json())
         .then((data) => {
           setScannerNetworkInfo(data);
-          if (data?.tunnelUrl && !customTunnelUrl) {
-            setScannerProtocol('tunnel');
-          }
+          // Intelligently select best initial protocol if not custom
+          setScannerProtocol((prev) => {
+            if (customTunnelUrl) return 'tunnel';
+            if (prev === 'server' || prev === 'https' || prev === 'wifi' || prev === 'tunnel') {
+              // If current choice is valid, keep it unless tunnel was active and died
+              if (prev === 'tunnel' && !data?.tunnelUrl) {
+                return data?.isLanAvailable ? 'wifi' : 'server';
+              }
+              return prev;
+            }
+            if (data?.tunnelUrl) return 'tunnel';
+            if (data?.isLanAvailable) return 'wifi';
+            if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') return 'server';
+            return 'wifi';
+          });
         })
         .catch(() => { });
     };
@@ -4442,6 +4482,7 @@ export function App() {
   useEffect(() => {
     let active = true;
     let lastScanId = '';
+    let consecutiveErrors = 0;
 
     const listenForScans = async () => {
       while (active) {
@@ -4449,12 +4490,20 @@ export function App() {
           const url = `/api/scanner/events?session=${encodeURIComponent(scannerSessionId)}${lastScanId ? `&after=${encodeURIComponent(lastScanId)}` : ''}`;
           const res = await fetch(url);
           if (!res.ok) {
+            consecutiveErrors++;
+            if (consecutiveErrors >= 3) {
+              setScannerStatus('unable_to_connect');
+            }
             await new Promise((r) => setTimeout(r, 2000));
             continue;
           }
+          consecutiveErrors = 0;
           const data = await res.json();
           if (!active) break;
 
+          if (data.status) {
+            setScannerStatus(data.status);
+          }
           if (data.phoneConnected !== undefined) {
             setIsPhoneScannerConnected(Boolean(data.phoneConnected));
           }
@@ -4473,6 +4522,10 @@ export function App() {
           }
         } catch {
           if (active) {
+            consecutiveErrors++;
+            if (consecutiveErrors >= 3) {
+              setScannerStatus('unable_to_connect');
+            }
             await new Promise((r) => setTimeout(r, 2500));
           }
         }
@@ -19872,19 +19925,50 @@ export function App() {
 
               <div className="scanner-modal-body">
                 {/* Status Banner */}
-                <div className={`scanner-pairing-status-banner ${isPhoneScannerConnected ? 'connected' : 'waiting'}`}>
-                  <div className="status-indicator-dot"></div>
-                  <div>
-                    <div className="status-main-text">
-                      {isPhoneScannerConnected ? 'Phone Scanner Connected & Active' : 'Waiting for Phone to Connect...'}
+                {(() => {
+                  let statusClass = 'waiting';
+                  let statusTitle = 'Waiting for Phone to Connect...';
+                  let statusSubtitle = 'Scan the QR code below using your phone camera (both devices must be on the same Wi-Fi).';
+
+                  switch (scannerStatus) {
+                    case 'phone_connected':
+                      statusClass = 'phone_connected';
+                      statusTitle = 'Phone Connected';
+                      statusSubtitle = 'Phone scanner paired! Initializing camera stream...';
+                      break;
+                    case 'scanner_ready':
+                      statusClass = 'scanner_ready';
+                      statusTitle = 'Scanner Ready';
+                      statusSubtitle = 'Camera stream active! Aim phone camera at product barcodes to instantly add to bill.';
+                      break;
+                    case 'connection_lost':
+                      statusClass = 'connection_lost';
+                      statusTitle = 'Connection Lost';
+                      statusSubtitle = 'Phone scanner disconnected. Scan the QR code or refresh the phone scanner to reconnect.';
+                      break;
+                    case 'unable_to_connect':
+                      statusClass = 'unable_to_connect';
+                      statusTitle = 'Unable to Connect';
+                      statusSubtitle = 'Cannot reach scanner server. Check network connection or switch connection mode below.';
+                      break;
+                    case 'waiting':
+                    default:
+                      statusClass = 'waiting';
+                      statusTitle = 'Waiting for Phone to Connect...';
+                      statusSubtitle = 'Scan the QR code below using your phone camera (both devices must be on the same Wi-Fi).';
+                      break;
+                  }
+
+                  return (
+                    <div className={`scanner-pairing-status-banner ${statusClass}`}>
+                      <div className="status-indicator-dot"></div>
+                      <div>
+                        <div className="status-main-text">{statusTitle}</div>
+                        <div className="status-sub-text">{statusSubtitle}</div>
+                      </div>
                     </div>
-                    <div className="status-sub-text">
-                      {isPhoneScannerConnected
-                        ? 'Aim your phone camera at product barcodes to instantly add them to the counter bill.'
-                        : 'Scan the QR code below using your phone camera (both devices must be on the same Wi-Fi).'}
-                    </div>
-                  </div>
-                </div>
+                  );
+                })()}
 
                 {/* QR Code and Instructions Grid */}
                 {/* QR Code and Instructions Grid (Landscape Rectangle) */}
@@ -19944,11 +20028,11 @@ export function App() {
 
                     {/* Protocol Selector Tabs */}
                     <div className="scanner-protocol-toggle" style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', width: '100%' }}>
-                      {scannerNetworkInfo?.tunnelUrl && (
+                      {(scannerNetworkInfo?.tunnelUrl || customTunnelUrl) && (
                         <button
                           type="button"
-                          className={`proto-btn ${scannerProtocol === 'tunnel' && !customTunnelUrl ? 'active' : ''}`}
-                          onClick={() => { setScannerProtocol('tunnel'); setCustomTunnelUrl(''); }}
+                          className={`proto-btn ${scannerProtocol === 'tunnel' ? 'active' : ''}`}
+                          onClick={() => { setScannerProtocol('tunnel'); }}
                           style={{
                             background: scannerProtocol === 'tunnel'
                               ? (user?.role === 'cashier' ? 'linear-gradient(135deg, var(--sidebar, #0F2D2E) 0%, var(--primary, #0F766E) 100%)' : 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)')
@@ -19973,9 +20057,10 @@ export function App() {
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.25rem' }}>
                         <button
                           type="button"
-                          className={`proto-btn ${scannerProtocol === 'http' && !customTunnelUrl ? 'active' : ''}`}
-                          onClick={() => { setScannerProtocol('http'); setCustomTunnelUrl(''); }}
+                          className={`proto-btn ${scannerProtocol === 'wifi' && !customTunnelUrl ? 'active' : ''}`}
+                          onClick={() => { setScannerProtocol('wifi'); setCustomTunnelUrl(''); }}
                           style={{ padding: '0.35rem 0.35rem', fontSize: '0.72rem' }}
+                          title={scannerNetworkInfo?.lanIp ? `Private LAN IP: ${scannerNetworkInfo.lanIp}` : 'Direct Wi-Fi pairing'}
                         >
                           <span>⚡ Local Wi-Fi</span>
                         </button>
@@ -19988,6 +20073,17 @@ export function App() {
                           <span>🔒 Local HTTPS</span>
                         </button>
                       </div>
+                      {typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' && (
+                        <button
+                          type="button"
+                          className={`proto-btn ${scannerProtocol === 'server' && !customTunnelUrl ? 'active' : ''}`}
+                          onClick={() => { setScannerProtocol('server'); setCustomTunnelUrl(''); }}
+                          style={{ padding: '0.35rem 0.35rem', fontSize: '0.72rem' }}
+                          title={`Direct server link via ${window.location.host}`}
+                        >
+                          <span>🖥️ Current Web Server</span>
+                        </button>
+                      )}
                     </div>
                   </div>
 
