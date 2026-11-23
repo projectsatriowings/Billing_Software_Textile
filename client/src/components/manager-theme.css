@@ -1885,3 +1885,23 @@ body.theme-manager .product-catalog-page-card,
   overflow: visible !important;
 }
 
+/* Inventory Dashboard Manager Theme Enhancements */
+body.theme-manager .inv-toggle-btn.active,
+.theme-manager .inv-toggle-btn.active {
+  background: #7A475B !important;
+  color: #ffffff !important;
+  box-shadow: 0 1px 4px rgba(122, 71, 91, 0.3) !important;
+}
+
+body.theme-manager .btn-stock-adjust-deep-plum,
+.theme-manager .btn-stock-adjust-deep-plum,
+body.theme-manager .btn-stock-adjustment,
+.theme-manager .btn-stock-adjustment,
+body.theme-manager .inv-mobile-action-btn.adjust,
+.theme-manager .inv-mobile-action-btn.adjust {
+  background: #7A475B !important;
+  border-color: #653B4B !important;
+  color: #ffffff !important;
+}
+
+

@@ -141,6 +141,7 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
   const [sortField, setSortField] = useState<string>('name_asc');
   const [page, setPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(15);
+  const [mobileTableView, setMobileTableView] = useState<'cards' | 'table'>('cards');
 
   // Helper to filter and sort items locally as immediate fallback
   const getLocalFilteredItems = useCallback((rawItems: Item[]) => {
@@ -1245,148 +1246,154 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
             </div>
 
             <div className="inv-filter-group">
-              {isOwnerOrManager && (
-                <button
-                  type="button"
-                  className={`cat-btn-primary btn-stock-adjustment ${isSuperAdmin ? 'btn-stock-adjust-deep-plum' : ''}`}
+              <div className={`inv-actions-grid ${isOwnerOrManager && onOpenSupplierInvoiceConverter && !isSuperAdmin ? '' : 'single-action'}`}>
+                {isOwnerOrManager && (
+                  <button
+                    type="button"
+                    className={`cat-btn-primary btn-stock-adjustment ${isSuperAdmin ? 'btn-stock-adjust-deep-plum' : ''}`}
+                    disabled={showOverviewSkeleton}
+                    onClick={() => {
+                      setAdjustmentTargetItem(null);
+                      setShowAdjustmentModal(true);
+                    }}
+                    title="Create a manual stock increase, decrease or count discrepancy adjustment"
+                    style={{
+                      height: '38px',
+                      borderRadius: '10px',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      padding: '0 16px',
+                      background: isSuperAdmin ? '#49364A' : '#5B4CF5',
+                      color: '#FFFFFF',
+                      border: isSuperAdmin ? '1px solid #352638' : 'none',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      whiteSpace: 'nowrap',
+                      cursor: showOverviewSkeleton ? 'not-allowed' : 'pointer',
+                      boxShadow: isSuperAdmin ? '0 2px 6px rgba(73, 54, 74, 0.25)' : 'none',
+                      transition: 'all 0.15s ease',
+                      opacity: showOverviewSkeleton ? 0.65 : 1,
+                    }}
+                    onMouseEnter={(e) => {
+                      if (isSuperAdmin && !showOverviewSkeleton) {
+                        e.currentTarget.style.background = '#604B61';
+                        e.currentTarget.style.borderColor = '#49364A';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (isSuperAdmin && !showOverviewSkeleton) {
+                        e.currentTarget.style.background = '#49364A';
+                        e.currentTarget.style.borderColor = '#352638';
+                      }
+                    }}
+                    onMouseDown={(e) => {
+                      if (isSuperAdmin && !showOverviewSkeleton) {
+                        e.currentTarget.style.background = '#352638';
+                      }
+                    }}
+                    onMouseUp={(e) => {
+                      if (isSuperAdmin && !showOverviewSkeleton) {
+                        e.currentTarget.style.background = '#604B61';
+                      }
+                    }}
+                  >
+                    <SlidersIcon size={14} style={{ color: '#FFFFFF' }} /> Stock Adjustment
+                  </button>
+                )}
+                {isOwnerOrManager && onOpenSupplierInvoiceConverter && !isSuperAdmin && (
+                  <button
+                    type="button"
+                    className="cat-btn-secondary"
+                    disabled={showOverviewSkeleton}
+                    onClick={onOpenSupplierInvoiceConverter}
+                    title="Convert Supplier Invoice PDF/Image into Excel for Import"
+                    style={{
+                      height: '38px',
+                      borderRadius: '10px',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      padding: '0 14px',
+                      background: '#FFFFFF',
+                      color: '#4338CA',
+                      border: '1.5px solid #C7D2FE',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      whiteSpace: 'nowrap',
+                      cursor: showOverviewSkeleton ? 'not-allowed' : 'pointer',
+                      opacity: showOverviewSkeleton ? 0.65 : 1,
+                    }}
+                  >
+                    <FileTextIcon size={14} /> Convert Invoice to Excel
+                  </button>
+                )}
+              </div>
+
+              {/* Selects Grid: Categories, Statuses, Sorting */}
+              <div className="inv-selects-grid">
+                {/* Category Filter */}
+                <select
+                  className="inv-select"
+                  value={categoryFilter}
                   disabled={showOverviewSkeleton}
-                  onClick={() => {
-                    setAdjustmentTargetItem(null);
-                    setShowAdjustmentModal(true);
-                  }}
-                  title="Create a manual stock increase, decrease or count discrepancy adjustment"
-                  style={{
-                    height: '38px',
-                    borderRadius: '10px',
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    padding: '0 16px',
-                    background: isSuperAdmin ? '#49364A' : '#5B4CF5',
-                    color: '#FFFFFF',
-                    border: isSuperAdmin ? '1px solid #352638' : 'none',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    whiteSpace: 'nowrap',
-                    cursor: showOverviewSkeleton ? 'not-allowed' : 'pointer',
-                    boxShadow: isSuperAdmin ? '0 2px 6px rgba(73, 54, 74, 0.25)' : 'none',
-                    transition: 'all 0.15s ease',
-                    opacity: showOverviewSkeleton ? 0.65 : 1,
-                  }}
-                  onMouseEnter={(e) => {
-                    if (isSuperAdmin && !showOverviewSkeleton) {
-                      e.currentTarget.style.background = '#604B61';
-                      e.currentTarget.style.borderColor = '#49364A';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (isSuperAdmin && !showOverviewSkeleton) {
-                      e.currentTarget.style.background = '#49364A';
-                      e.currentTarget.style.borderColor = '#352638';
-                    }
-                  }}
-                  onMouseDown={(e) => {
-                    if (isSuperAdmin && !showOverviewSkeleton) {
-                      e.currentTarget.style.background = '#352638';
-                    }
-                  }}
-                  onMouseUp={(e) => {
-                    if (isSuperAdmin && !showOverviewSkeleton) {
-                      e.currentTarget.style.background = '#604B61';
-                    }
+                  onChange={(e) => {
+                    setCategoryFilter(e.target.value);
+                    setPage(1);
                   }}
                 >
-                  <SlidersIcon size={14} style={{ color: '#FFFFFF' }} /> Stock Adjustment
-                </button>
-              )}
-              {isOwnerOrManager && onOpenSupplierInvoiceConverter && !isSuperAdmin && (
-                <button
-                  type="button"
-                  className="cat-btn-secondary"
-                  disabled={showOverviewSkeleton}
-                  onClick={onOpenSupplierInvoiceConverter}
-                  title="Convert Supplier Invoice PDF/Image into Excel for Import"
-                  style={{
-                    height: '38px',
-                    borderRadius: '10px',
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    padding: '0 14px',
-                    background: '#FFFFFF',
-                    color: '#4338CA',
-                    border: '1.5px solid #C7D2FE',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    whiteSpace: 'nowrap',
-                    cursor: showOverviewSkeleton ? 'not-allowed' : 'pointer',
-                    opacity: showOverviewSkeleton ? 0.65 : 1,
-                  }}
-                >
-                  <FileTextIcon size={14} /> Convert Invoice to Excel
-                </button>
-              )}
-              {/* Category Filter */}
-              <select
-                className="inv-select"
-                value={categoryFilter}
-                disabled={showOverviewSkeleton}
-                onChange={(e) => {
-                  setCategoryFilter(e.target.value);
-                  setPage(1);
-                }}
-              >
-                <option value="ALL">All Categories</option>
-                {categoriesList && categoriesList.length > 0
-                  ? categoriesList
-                    .filter((c) => c.active)
-                    .map((c) => (
-                      <option key={c.id} value={c.name}>
-                        {c.parentName ? `${c.parentName} → ${c.name}` : c.name}
+                  <option value="ALL">All Categories</option>
+                  {categoriesList && categoriesList.length > 0
+                    ? categoriesList
+                      .filter((c) => c.active)
+                      .map((c) => (
+                        <option key={c.id} value={c.name}>
+                          {c.parentName ? `${c.parentName} → ${c.name}` : c.name}
+                        </option>
+                      ))
+                    : categories.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
                       </option>
-                    ))
-                  : categories.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-              </select>
+                    ))}
+                </select>
 
-              {/* Status Filter */}
-              <select
-                className="inv-select"
-                value={statusFilter}
-                disabled={showOverviewSkeleton}
-                onChange={(e) => {
-                  setStatusFilter(e.target.value);
-                  setPage(1);
-                }}
-              >
-                <option value="all">All Stock Statuses</option>
-                <option value="in_stock">In Stock (Healthy)</option>
-                <option value="low_stock">Low Stock (At Reorder Point)</option>
-                <option value="out_of_stock">Out of Stock (0 or Negative)</option>
-                <option value="zero_stock">Zero Stock (Exactly 0)</option>
-                <option value="negative_stock">Negative Stock (Oversold / &lt; 0)</option>
-                <option value="unconfigured">Unconfigured (No Reorder Level)</option>
-              </select>
+                {/* Status Filter */}
+                <select
+                  className="inv-select"
+                  value={statusFilter}
+                  disabled={showOverviewSkeleton}
+                  onChange={(e) => {
+                    setStatusFilter(e.target.value);
+                    setPage(1);
+                  }}
+                >
+                  <option value="all">All Stock Statuses</option>
+                  <option value="in_stock">In Stock (Healthy)</option>
+                  <option value="low_stock">Low Stock (At Reorder Point)</option>
+                  <option value="out_of_stock">Out of Stock (0 or Negative)</option>
+                  <option value="zero_stock">Zero Stock (Exactly 0)</option>
+                  <option value="negative_stock">Negative Stock (Oversold / &lt; 0)</option>
+                  <option value="unconfigured">Unconfigured (No Reorder Level)</option>
+                </select>
 
-              {/* Sorting */}
-              <select
-                className="inv-select"
-                value={sortField}
-                disabled={showOverviewSkeleton}
-                onChange={(e) => {
-                  setSortField(e.target.value);
-                  setPage(1);
-                }}
-              >
-                <option value="name_asc">Name (A-Z)</option>
-                <option value="name_desc">Name (Z-A)</option>
-                <option value="stock_asc">Stock (Lowest First)</option>
-                <option value="stock_desc">Stock (Highest First)</option>
-                {isAuthorizedForCost && <option value="value_desc">Valuation (Highest First)</option>}
-              </select>
+                {/* Sorting */}
+                <select
+                  className="inv-select inv-select-sort"
+                  value={sortField}
+                  disabled={showOverviewSkeleton}
+                  onChange={(e) => {
+                    setSortField(e.target.value);
+                    setPage(1);
+                  }}
+                >
+                  <option value="name_asc">Name (A-Z)</option>
+                  <option value="name_desc">Name (Z-A)</option>
+                  <option value="stock_asc">Stock (Lowest First)</option>
+                  <option value="stock_desc">Stock (Highest First)</option>
+                  {isAuthorizedForCost && <option value="value_desc">Valuation (Highest First)</option>}
+                </select>
+              </div>
             </div>
           </div>
 
@@ -1397,8 +1404,228 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
             </div>
           )}
 
+          {/* Meta Bar: Product count, View toggle, Scroll hint */}
+          <div className="inv-meta-bar">
+            <div className="inv-meta-count">
+              Showing {tableItems.length} of {totalItems || tableItems.length} items
+            </div>
+
+            <div className="inv-view-toggle">
+              <button
+                type="button"
+                onClick={() => setMobileTableView('cards')}
+                className={`inv-toggle-btn ${mobileTableView === 'cards' ? 'active' : ''}`}
+                title="Card View (Mobile Optimized)"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="7" height="7" />
+                  <rect x="14" y="3" width="7" height="7" />
+                  <rect x="14" y="14" width="7" height="7" />
+                  <rect x="3" y="14" width="7" height="7" />
+                </svg>
+                <span>Cards</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setMobileTableView('table')}
+                className={`inv-toggle-btn ${mobileTableView === 'table' ? 'active' : ''}`}
+                title="Table View (Full Columns)"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 3h18v18H3z" />
+                  <path d="M3 9h18" />
+                  <path d="M3 15h18" />
+                  <path d="M9 3v18" />
+                </svg>
+                <span>Table</span>
+              </button>
+            </div>
+
+            <div className="inv-scroll-hint">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="18 8 22 12 18 16" />
+                <polyline points="6 8 2 12 6 16" />
+                <line x1="2" y1="12" x2="22" y2="12" />
+              </svg>
+              <span>Swipe horizontally to view full columns</span>
+            </div>
+          </div>
+
+          {/* 1. Mobile Cards View (Visible on mobile <= 768px when Cards view is selected) */}
+          <div className={`inv-mobile-cards-wrap ${mobileTableView === 'cards' ? 'active' : ''}`}>
+            {tableItems.map((item) => {
+              const currentUnits = item.currentStockMilli / 1000;
+              const reorderUnits = (item.reorderMilli || 0) / 1000;
+              const unit = item.unit || 'pcs';
+              const status = determineStockStatus(currentUnits, reorderUnits);
+              const matchedGlobal = items?.find((it) => it.id === item.id);
+              const imgUrl = item.imageUrl || (item as any).image || matchedGlobal?.imageUrl || (matchedGlobal as any)?.image;
+
+              const catName = item.category || 'General';
+              const catLower = catName.toLowerCase();
+              let catClass = '';
+              if (catLower.includes('grain') || catLower.includes('staple') || catLower.includes('rice') || catLower.includes('dal') || catLower.includes('atta')) catClass = 'cat-grains';
+              else if (catLower.includes('dairy') || catLower.includes('milk') || catLower.includes('curd') || catLower.includes('paneer') || catLower.includes('cheese')) catClass = 'cat-dairy';
+              else if (catLower.includes('snack') || catLower.includes('biscuit') || catLower.includes('cookie') || catLower.includes('bakery') || catLower.includes('chip')) catClass = 'cat-snacks';
+              else if (catLower.includes('grocer') || catLower.includes('oil') || catLower.includes('spice') || catLower.includes('masala')) catClass = 'cat-groceries';
+              else if (catLower.includes('beverage') || catLower.includes('drink') || catLower.includes('juice') || catLower.includes('tea') || catLower.includes('coffee')) catClass = 'cat-beverages';
+
+              return (
+                <div key={`inv-m-${item.id}`} className="inv-mobile-card">
+                  {/* Header: Thumbnail + Name + Badges */}
+                  <div className="inv-mobile-card-header">
+                    <div className="inv-mobile-img-box">
+                      {imgUrl ? (
+                        <img
+                          src={imgUrl}
+                          alt={item.name}
+                          referrerPolicy="no-referrer"
+                          onError={(e) => handleProductImageError(e, imgUrl)}
+                        />
+                      ) : (
+                        <div className="product-thumb-placeholder" style={{ display: 'inline-flex' }}>
+                          <ImageIcon size={18} />
+                        </div>
+                      )}
+                    </div>
+                    <div className="inv-mobile-title-block">
+                      <div className="inv-mobile-title">{item.name}</div>
+                      <div className="inv-mobile-sub">
+                        {item.sku ? `SKU: ${item.sku}` : ''}
+                        {item.sku && item.barcode ? ' • ' : ''}
+                        {item.barcode ? `Barcode: ${item.barcode}` : ''}
+                      </div>
+                      <div className="inv-mobile-badges">
+                        <span className={`category-pill ${catClass}`}>
+                          <TagIcon size={11} style={{ opacity: 0.65, flexShrink: 0 }} />
+                          <span>{catName}</span>
+                        </span>
+                        <span
+                          className={`status-pill ${
+                            status === 'negative_stock'
+                              ? 'purple'
+                              : status === 'out_of_stock'
+                              ? 'red'
+                              : status === 'low_stock'
+                              ? 'amber'
+                              : 'green'
+                          }`}
+                        >
+                          {status === 'negative_stock'
+                            ? 'Negative Stock'
+                            : status === 'out_of_stock'
+                            ? 'Out of Stock'
+                            : status === 'low_stock'
+                            ? 'Low Stock'
+                            : 'In Stock'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Spec Grid */}
+                  <div className="inv-mobile-spec-grid">
+                    <div className="inv-mobile-spec-item">
+                      <span className="inv-mobile-spec-label">Current Stock</span>
+                      <span className="inv-mobile-spec-val stock">
+                        <span className={`stock-number-pill ${currentUnits < 0 ? 'negative' : currentUnits === 0 ? 'zero' : ''}`}>
+                          {formatStockQuantity(currentUnits, unit)}
+                        </span>
+                      </span>
+                    </div>
+
+                    <div className="inv-mobile-spec-item">
+                      <span className="inv-mobile-spec-label">Reorder Point</span>
+                      <span className="inv-mobile-spec-val">
+                        {reorderUnits > 0 ? (
+                          <span
+                            className="editable-reorder-link"
+                            title="Click to change reorder point"
+                            onClick={() => {
+                              setReorderTargetItem(item);
+                              setShowReorderModal(true);
+                            }}
+                          >
+                            {formatStockQuantity(reorderUnits, unit)}
+                            <Edit3Icon size={11} style={{ display: 'inline', marginLeft: 3, verticalAlign: 'middle', opacity: 0.7 }} />
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            className="btn-configure-tag"
+                            onClick={() => {
+                              setReorderTargetItem(item);
+                              setShowReorderModal(true);
+                            }}
+                          >
+                            + Set Reorder
+                          </button>
+                        )}
+                      </span>
+                    </div>
+
+                    <div className="inv-mobile-spec-item">
+                      <span className="inv-mobile-spec-label">Branch</span>
+                      <span className="inv-mobile-spec-val" style={{ fontSize: '0.78rem', color: '#475569' }}>
+                        {getBranchLabel(item.branchId, (item as any).branchName)}
+                      </span>
+                    </div>
+
+                    {item.preferredSupplierName ? (
+                      <div className="inv-mobile-spec-item">
+                        <span className="inv-mobile-spec-label">Supplier</span>
+                        <span className="inv-mobile-spec-val" style={{ fontSize: '0.78rem', color: '#475569' }}>
+                          {item.preferredSupplierName}
+                        </span>
+                      </div>
+                    ) : isAuthorizedForCost ? (
+                      <div className="inv-mobile-spec-item">
+                        <span className="inv-mobile-spec-label">Unit Cost</span>
+                        <span className="inv-mobile-spec-val" style={{ fontSize: '0.8rem', color: '#475569' }}>
+                          {formatIndianCurrency(item.costMinor / 100)}
+                        </span>
+                      </div>
+                    ) : null}
+                  </div>
+
+                  {/* Actions Row */}
+                  <div className="inv-mobile-actions-row">
+                    <button
+                      type="button"
+                      className="inv-mobile-action-btn ledger"
+                      title="View stock movement history for this item"
+                      onClick={() => handleOpenItemLedger(item)}
+                    >
+                      <FileTextIcon size={13} />
+                      <span>Ledger</span>
+                    </button>
+                    {isOwnerOrManager && (
+                      <button
+                        type="button"
+                        className="inv-mobile-action-btn adjust"
+                        title="Adjust physical or system stock"
+                        onClick={() => {
+                          setAdjustmentTargetItem(item);
+                          setShowAdjustmentModal(true);
+                        }}
+                      >
+                        <SlidersIcon size={13} />
+                        <span>Adjust Stock</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+            {tableItems.length === 0 && !showOverviewSkeleton && !overviewError && (
+              <div style={{ textAlign: 'center', padding: '2rem 1rem', color: '#94a3b8' }}>
+                No items match your search or filter criteria.
+              </div>
+            )}
+          </div>
+
           {/* Items Table */}
-          <div className="ledger-table-wrap">
+          <div className={`ledger-table-wrap ${mobileTableView === 'cards' ? 'mobile-hidden' : 'mobile-active'}`}>
             {showOverviewSkeleton ? (
               <TableSkeleton
                 columns={overviewSkeletonColumns}
@@ -1464,8 +1691,8 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
               <table className={`inventory-data-table ${isOverviewRefreshing ? 'table-refreshing-dim' : 'skeleton-fade-in'}`}>
                 <thead>
                   <tr>
-                    <th style={{ width: '64px', minWidth: '64px', textAlign: 'center' }}>Image</th>
-                    <th style={{ minWidth: '170px' }}>Product & Identifiers</th>
+                    <th style={{ width: '64px', minWidth: '64px', textAlign: 'center' }} className="col-sticky-img">Image</th>
+                    <th style={{ minWidth: '170px' }} className="col-sticky-prod">Product & Identifiers</th>
                     <th style={{ minWidth: '130px', textAlign: 'left', whiteSpace: 'nowrap' }}>Branch</th>
                     <th style={{ minWidth: '140px', width: '150px', textAlign: 'left', whiteSpace: 'nowrap' }}>Category</th>
                     <th style={{ minWidth: '100px', textAlign: 'right' }}>Current Stock</th>
@@ -1474,7 +1701,7 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
                     {isAuthorizedForCost && <th style={{ minWidth: '85px', textAlign: 'right' }}>Unit Cost</th>}
                     {isAuthorizedForCost && <th style={{ minWidth: '95px', textAlign: 'right' }}>Total Value</th>}
                     <th style={{ minWidth: '160px', width: '190px', textAlign: 'left' }}>Supplier</th>
-                    <th style={{ minWidth: '120px', textAlign: 'right' }}>Actions</th>
+                    <th style={{ minWidth: '120px', textAlign: 'right' }} className="col-sticky-actions">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1485,7 +1712,7 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
 
                     return (
                       <tr key={item.id} className="item-row">
-                        <td style={{ width: '64px', minWidth: '64px', textAlign: 'center', verticalAlign: 'middle', padding: '0.45rem' }}>
+                        <td style={{ width: '64px', minWidth: '64px', textAlign: 'center', verticalAlign: 'middle', padding: '0.45rem' }} className="col-sticky-img">
                           {(() => {
                             const matchedGlobal = items?.find((it) => it.id === item.id);
                             const imgUrl = item.imageUrl || (item as any).image || matchedGlobal?.imageUrl || (matchedGlobal as any)?.image;
@@ -1511,7 +1738,7 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
                             );
                           })()}
                         </td>
-                        <td style={{ minWidth: '170px', maxWidth: '240px' }}>
+                        <td style={{ minWidth: '170px', maxWidth: '240px' }} className="col-sticky-prod">
                           <div className="item-cell-title" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</div>
                           <div className="item-cell-sub" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                             {item.sku ? `SKU: ${item.sku}` : ''}
@@ -1656,7 +1883,7 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
                             <span style={{ color: 'var(--text-dim)', fontSize: '0.8rem', paddingLeft: '0.25rem' }}>--</span>
                           )}
                         </td>
-                        <td style={{ textAlign: 'right' }}>
+                        <td style={{ textAlign: 'right' }} className="col-sticky-actions">
                           <div className="table-actions-cluster">
                             <button
                               type="button"
@@ -1895,7 +2122,7 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
 
                     return (
                       <tr key={r.itemId}>
-                        <td style={{ width: '64px', minWidth: '64px', textAlign: 'center', verticalAlign: 'middle', padding: '0.45rem' }}>
+                        <td style={{ width: '64px', minWidth: '64px', textAlign: 'center', verticalAlign: 'middle', padding: '0.45rem' }} className="col-sticky-img">
                           {(() => {
                             const matchedItem = items.find((it) => it.id === r.itemId);
                             const imgUrl = matchedItem?.imageUrl || (matchedItem as any)?.image || (r as any).imageUrl || (r as any).image;

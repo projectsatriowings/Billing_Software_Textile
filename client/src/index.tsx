@@ -7,6 +7,7 @@ import './index.css';
 import './components/inventory/PurchaseBentoModal.css';
 import './components/inventory/StockTransfer.css';
 import './components/inventory/ProductCatalogue.css';
+import './components/inventory/InventoryDashboard.css';
 import './components/cashier-login.css';
 import './components/manager-theme.css';
 import './components/superadmin-theme.css';
