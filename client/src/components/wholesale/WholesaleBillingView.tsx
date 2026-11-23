@@ -17,6 +17,8 @@ import {
   CheckCircle2,
   Printer,
   Download,
+  ChevronDown,
+  Check,
 } from 'lucide-react';
 import type { User, Shop, Item, Party, Branch, WholesaleCustomer } from '../../api';
 import { api, downloadInvoicePdf, triggerBlobDownload, fetchWholesaleCustomers, createWholesaleCustomer } from '../../api';
@@ -263,6 +265,25 @@ export function WholesaleBillingView({
   }, [selectedCustomerId]);
   const [customerSearchQuery, setCustomerSearchQuery] = useState('');
   const [isCustomerDropdownOpen, setIsCustomerDropdownOpen] = useState(false);
+  const customerDropdownRef = useRef<HTMLDivElement>(null);
+  const customerSearchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (customerDropdownRef.current && !customerDropdownRef.current.contains(e.target as Node)) {
+        setIsCustomerDropdownOpen(false);
+      }
+    };
+    if (isCustomerDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      setTimeout(() => {
+        customerSearchInputRef.current?.focus();
+      }, 50);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isCustomerDropdownOpen]);
 
   const selectedCustomer = useMemo(() => {
     return wholesaleCustomers.find((p) => p.id === selectedCustomerId) || null;
@@ -794,89 +815,180 @@ export function WholesaleBillingView({
             {/* Left Column: Customer + Product Search + Order Items Table + Logistics */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               {/* STEP 1: WHOLESALE CUSTOMER SELECTION */}
-              <div
-                style={{
-                  background: '#ffffff',
-                  borderRadius: '12px',
-                  border: '1px solid #e2e8f0',
-                  padding: '1.25rem',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <Users size={18} style={{ color: '#4f46e5' }} />
-                    <strong style={{ fontSize: '0.95rem', color: '#1e293b' }}>
+              <div className="wholesale-step-card">
+                <div className="wholesale-step1-header">
+                  <div className="wholesale-step-title-wrap">
+                    <Users size={18} className="wholesale-step-icon" />
+                    <strong className="wholesale-step-title">
                       Step 1: Select Wholesale Buyer / B2B Customer <span style={{ color: '#ef4444' }}>*</span>
                     </strong>
                   </div>
                   <button
                     type="button"
+                    className="btn-wholesale-new-cust"
                     onClick={() => setShowAddCustomerModal(true)}
-                    style={{
-                      background: '#f1f5f9',
-                      border: '1px solid #cbd5e1',
-                      color: '#1e293b',
-                      padding: '0.4rem 0.75rem',
-                      borderRadius: '6px',
-                      fontSize: '0.8rem',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.35rem',
-                    }}
                   >
-                    <UserPlus size={14} /> New Wholesale Customer
+                    <UserPlus size={15} />
+                    <span>New Wholesale Customer</span>
                   </button>
                 </div>
 
-                {/* Customer Dropdown / Search */}
-                <div style={{ position: 'relative', marginBottom: '0.75rem' }}>
-                  {wholesaleCustomers.length > 8 && (
-                    <div style={{ marginBottom: '0.45rem', position: 'relative' }}>
-                      <input
-                        type="text"
-                        className="form-input"
-                        placeholder="Search wholesale customers by name, phone, or GSTIN..."
-                        value={customerSearchQuery}
-                        onChange={(e) => setCustomerSearchQuery(e.target.value)}
-                        style={{ fontSize: '0.84rem', padding: '0.35rem 0.6rem 0.35rem 2rem' }}
-                      />
-                      <Search size={14} style={{ position: 'absolute', left: '0.65rem', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-                      {customerSearchQuery && (
-                        <button
-                          type="button"
-                          onClick={() => setCustomerSearchQuery('')}
-                          style={{ position: 'absolute', right: '0.65rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}
-                        >
-                          <X size={13} />
-                        </button>
+                {/* Custom Searchable Customer Combobox */}
+                <div className="wholesale-customer-dropdown-container" ref={customerDropdownRef}>
+                  <div
+                    tabIndex={0}
+                    role="button"
+                    aria-expanded={isCustomerDropdownOpen}
+                    className={`wholesale-customer-selector-trigger ${isCustomerDropdownOpen ? 'open' : ''} ${selectedCustomer ? 'has-value' : ''}`}
+                    onClick={() => setIsCustomerDropdownOpen((prev) => !prev)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setIsCustomerDropdownOpen((prev) => !prev);
+                      }
+                    }}
+                  >
+                    <div className="wholesale-cust-trigger-left">
+                      <div className="wholesale-cust-avatar">
+                        <Users size={16} />
+                      </div>
+                      {selectedCustomer ? (
+                        <div className="wholesale-cust-selected-info">
+                          <div className="wholesale-cust-selected-name">
+                            {selectedCustomer.name}
+                          </div>
+                          <div className="wholesale-cust-selected-meta">
+                            {selectedCustomer.phone && <span>{selectedCustomer.phone}</span>}
+                            {selectedCustomer.phone && <span className="wholesale-meta-sep">•</span>}
+                            <span className={`wholesale-buyer-badge ${selectedCustomer.gstin ? 'gst-badge' : 'unreg-badge'}`}>
+                              {selectedCustomer.gstin ? `GST: ${selectedCustomer.gstin}` : 'Unregistered'}
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="wholesale-cust-placeholder">
+                          {isLoadingWholesaleCustomers ? 'Loading wholesale customers...' : 'Choose Wholesale Buyer / Company...'}
+                        </div>
                       )}
                     </div>
+                    <div className="wholesale-cust-trigger-actions">
+                      {selectedCustomer && (
+                        <button
+                          type="button"
+                          className="wholesale-cust-clear-btn"
+                          title="Clear customer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedCustomerId('');
+                          }}
+                        >
+                          <X size={15} />
+                        </button>
+                      )}
+                      <ChevronDown
+                        size={17}
+                        className={`wholesale-chevron ${isCustomerDropdownOpen ? 'rotated' : ''}`}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Dropdown Menu */}
+                  {isCustomerDropdownOpen && (
+                    <div className="wholesale-customer-dropdown-menu">
+                      <div className="wholesale-cust-search-wrap">
+                        <Search size={15} className="wholesale-cust-search-icon" />
+                        <input
+                          ref={customerSearchInputRef}
+                          type="text"
+                          className="wholesale-cust-search-input"
+                          placeholder="Search wholesale customers by name, phone, or GSTIN..."
+                          value={customerSearchQuery}
+                          onChange={(e) => setCustomerSearchQuery(e.target.value)}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                        {customerSearchQuery && (
+                          <button
+                            type="button"
+                            className="wholesale-cust-search-clear"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCustomerSearchQuery('');
+                              customerSearchInputRef.current?.focus();
+                            }}
+                          >
+                            <X size={14} />
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="wholesale-cust-options-list">
+                        {selectedCustomer && (
+                          <div
+                            className="wholesale-cust-option-row clear-option"
+                            onClick={() => {
+                              setSelectedCustomerId('');
+                              setIsCustomerDropdownOpen(false);
+                              setCustomerSearchQuery('');
+                            }}
+                          >
+                            <span style={{ color: '#ef4444', fontSize: '0.82rem', fontWeight: 600 }}>
+                              -- Deselect Customer --
+                            </span>
+                          </div>
+                        )}
+
+                        {displayedWholesaleCustomers.length === 0 ? (
+                          <div className="wholesale-cust-empty">
+                            <p style={{ margin: '0 0 0.5rem', color: '#64748b', fontSize: '0.85rem' }}>
+                              No matching wholesale customers found.
+                            </p>
+                            <button
+                              type="button"
+                              className="btn btn-secondary btn-sm"
+                              onClick={() => {
+                                setIsCustomerDropdownOpen(false);
+                                setShowAddCustomerModal(true);
+                              }}
+                              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.35rem 0.75rem', fontSize: '0.8rem' }}
+                            >
+                              <UserPlus size={14} /> New Customer
+                            </button>
+                          </div>
+                        ) : (
+                          displayedWholesaleCustomers.map((c) => {
+                            const isSelected = c.id === selectedCustomerId;
+                            return (
+                              <div
+                                key={c.id}
+                                className={`wholesale-cust-option-row ${isSelected ? 'selected' : ''}`}
+                                onClick={() => {
+                                  setSelectedCustomerId(c.id);
+                                  setIsCustomerDropdownOpen(false);
+                                  setCustomerSearchQuery('');
+                                }}
+                              >
+                                <div className="wholesale-option-left">
+                                  <div className="wholesale-option-name">{c.name}</div>
+                                  <div className="wholesale-option-meta">
+                                    {c.phone && <span className="wholesale-option-phone">{c.phone}</span>}
+                                    {c.phone && <span className="wholesale-meta-sep">•</span>}
+                                    <span className={`wholesale-buyer-badge ${c.gstin ? 'gst-badge' : 'unreg-badge'}`}>
+                                      {c.gstin ? `GST: ${c.gstin}` : 'Unregistered'}
+                                    </span>
+                                  </div>
+                                </div>
+                                {isSelected && (
+                                  <div className="wholesale-option-check">
+                                    <Check size={16} />
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
                   )}
-                  <select
-                    className="form-input"
-                    value={selectedCustomerId}
-                    onChange={(e) => setSelectedCustomerId(e.target.value)}
-                    style={{ fontWeight: 500, fontSize: '0.9rem' }}
-                    disabled={isLoadingWholesaleCustomers}
-                  >
-                    <option value="">
-                      {isLoadingWholesaleCustomers
-                        ? '-- Loading Wholesale Customers... --'
-                        : displayedWholesaleCustomers.length === 0 && customerSearchQuery
-                        ? '-- No Matching Wholesale Customers Found --'
-                        : wholesaleCustomers.length === 0
-                        ? '-- No Wholesale Customers Found (Click "+ New Wholesale Customer") --'
-                        : '-- Choose Wholesale Buyer / Company --'}
-                    </option>
-                    {displayedWholesaleCustomers.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name} {c.phone ? `(${c.phone})` : ''} · {c.gstin ? `GSTIN: ${c.gstin}` : 'Unregistered'}
-                      </option>
-                    ))}
-                  </select>
                 </div>
 
                 {/* Selected Customer Details Card */}
@@ -967,35 +1079,27 @@ export function WholesaleBillingView({
               </div>
 
               {/* STEP 2: PRODUCT SEARCH & CART TABLE */}
-              <div
-                style={{
-                  background: '#ffffff',
-                  borderRadius: '12px',
-                  border: '1px solid #e2e8f0',
-                  padding: '1.25rem',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <Package size={18} style={{ color: '#4f46e5' }} />
-                    <strong style={{ fontSize: '0.95rem', color: '#1e293b' }}>
+              <div className="wholesale-step-card">
+                <div className="wholesale-step2-header">
+                  <div className="wholesale-step-title-wrap">
+                    <Package size={18} className="wholesale-step-icon" />
+                    <strong className="wholesale-step-title">
                       Step 2: Add Bulk Products to Order ({cart.length} items)
                     </strong>
                   </div>
-                  <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                  <div className="wholesale-step-subtitle">
                     Auto-applies Wholesale Price &amp; checks Min Qty
                   </div>
                 </div>
 
                 {/* Search Bar */}
-                <div style={{ position: 'relative', marginBottom: '1rem' }}>
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <div style={{ position: 'relative', flex: 1 }}>
+                <div className="wholesale-search-section">
+                  <div className="wholesale-search-row">
+                    <div className="wholesale-search-input-wrap">
                       <input
                         ref={searchInputRef}
                         type="text"
-                        className="form-input"
+                        className="form-input wholesale-product-search-input"
                         placeholder="Search by Barcode, Item Name, or SKU (Press Enter to add)..."
                         value={productSearch}
                         onChange={(e) => {
@@ -1004,17 +1108,27 @@ export function WholesaleBillingView({
                         }}
                         onFocus={() => setIsProductPickerOpen(true)}
                         onKeyDown={handleSearchKeyDown}
-                        style={{ paddingLeft: '2.4rem' }}
                       />
-                      <span style={{ position: 'absolute', left: '0.8rem', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', display: 'flex', alignItems: 'center' }}>
+                      <span className="wholesale-search-icon">
                         <Search size={16} />
                       </span>
+                      {productSearch && (
+                        <button
+                          type="button"
+                          className="wholesale-search-clear-btn"
+                          onClick={() => {
+                            setProductSearch('');
+                            searchInputRef.current?.focus();
+                          }}
+                        >
+                          <X size={14} />
+                        </button>
+                      )}
                     </div>
                     <button
                       type="button"
-                      className="btn btn-secondary"
+                      className="btn btn-secondary btn-wholesale-browse-catalog"
                       onClick={() => setIsProductPickerOpen(!isProductPickerOpen)}
-                      style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
                     >
                       {isProductPickerOpen ? 'Close Catalog' : 'Browse Catalog'}
                     </button>

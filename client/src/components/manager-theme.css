@@ -1671,25 +1671,95 @@ body.theme-manager .mobile-header-menu-btn:hover,
   color: #522E3C !important;
 }
 
-body.theme-manager .mobile-bottom-nav-bar,
-.theme-manager .mobile-bottom-nav-bar {
-  background: rgba(45, 24, 34, 0.97) !important;
-  border-top: 1px solid rgba(232, 214, 222, 0.22) !important;
-  box-shadow: 0 -4px 22px rgba(45, 24, 34, 0.45) !important;
+/* Wholesale Billing Components in Manager Theme */
+body.theme-manager .wholesale-step-card,
+.theme-manager .wholesale-step-card {
+  background: var(--surface, #FAF6F8) !important;
+  border-color: var(--border, #D9C8D0) !important;
 }
 
-body.theme-manager .mobile-bottom-nav-item,
-.theme-manager .mobile-bottom-nav-item {
-  color: rgba(245, 236, 240, 0.65) !important;
+body.theme-manager .wholesale-step-icon,
+.theme-manager .wholesale-step-icon {
+  color: var(--primary, #653B4B) !important;
 }
 
-body.theme-manager .mobile-bottom-nav-item:hover,
-.theme-manager .mobile-bottom-nav-item:hover {
-  color: #FFFFFF !important;
+body.theme-manager .btn-wholesale-new-cust,
+.theme-manager .btn-wholesale-new-cust {
+  background: var(--surface, #FAF6F8) !important;
+  border-color: var(--border, #D9C8D0) !important;
+  color: var(--primary, #653B4B) !important;
 }
 
-body.theme-manager .mobile-bottom-nav-item.active,
-.theme-manager .mobile-bottom-nav-item.active {
-  color: #FFFFFF !important;
-  background: rgba(101, 59, 75, 0.55) !important;
+body.theme-manager .btn-wholesale-new-cust:hover,
+.theme-manager .btn-wholesale-new-cust:hover {
+  background: var(--primary-soft, #F5ECF0) !important;
+  border-color: var(--primary, #653B4B) !important;
+}
+
+body.theme-manager .wholesale-customer-selector-trigger,
+.theme-manager .wholesale-customer-selector-trigger {
+  background: var(--surface, #FAF6F8) !important;
+  border-color: var(--border, #D9C8D0) !important;
+  color: var(--text, #1A0F14) !important;
+}
+
+body.theme-manager .wholesale-customer-selector-trigger:hover,
+body.theme-manager .wholesale-customer-selector-trigger:focus-visible,
+body.theme-manager .wholesale-customer-selector-trigger.open,
+.theme-manager .wholesale-customer-selector-trigger:hover,
+.theme-manager .wholesale-customer-selector-trigger:focus-visible,
+.theme-manager .wholesale-customer-selector-trigger.open {
+  border-color: var(--primary, #653B4B) !important;
+  box-shadow: 0 0 0 3px var(--primary-glow, rgba(101, 59, 75, 0.2)) !important;
+}
+
+body.theme-manager .wholesale-cust-avatar,
+.theme-manager .wholesale-cust-avatar {
+  background: var(--primary-soft, #F5ECF0) !important;
+  color: var(--primary, #653B4B) !important;
+}
+
+body.theme-manager .wholesale-customer-dropdown-menu,
+.theme-manager .wholesale-customer-dropdown-menu {
+  background: var(--surface, #FAF6F8) !important;
+  border-color: var(--border, #D9C8D0) !important;
+  box-shadow: 0 12px 28px rgba(45, 24, 34, 0.2) !important;
+}
+
+body.theme-manager .wholesale-cust-search-wrap,
+.theme-manager .wholesale-cust-search-wrap {
+  background: var(--primary-light, #F9F5F7) !important;
+  border-bottom-color: var(--border-light, #E8D6DE) !important;
+}
+
+body.theme-manager .wholesale-cust-search-input,
+.theme-manager .wholesale-cust-search-input {
+  background: var(--surface, #FAF6F8) !important;
+  border-color: var(--border, #D9C8D0) !important;
+  color: var(--text, #1A0F14) !important;
+}
+
+body.theme-manager .wholesale-cust-search-input:focus,
+.theme-manager .wholesale-cust-search-input:focus {
+  border-color: var(--primary, #653B4B) !important;
+}
+
+body.theme-manager .wholesale-cust-option-row:hover,
+.theme-manager .wholesale-cust-option-row:hover {
+  background: var(--primary-soft, #F5ECF0) !important;
+}
+
+body.theme-manager .wholesale-cust-option-row.selected,
+.theme-manager .wholesale-cust-option-row.selected {
+  background: var(--primary-soft, #F5ECF0) !important;
+}
+
+body.theme-manager .wholesale-option-check,
+.theme-manager .wholesale-option-check {
+  color: var(--primary, #653B4B) !important;
+}
+
+body.theme-manager .wholesale-chevron.rotated,
+.theme-manager .wholesale-chevron.rotated {
+  color: var(--primary, #653B4B) !important;
 }
