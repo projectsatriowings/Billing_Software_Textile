@@ -1865,3 +1865,23 @@ body.theme-manager .product-catalog-add-btn:hover,
     padding: 0.85rem 0.85rem 2rem !important;
   }
 }
+
+/* Product Catalogue Manager Theme Enhancements */
+body.theme-manager .product-mobile-spec-val.price,
+.theme-manager .product-mobile-spec-val.price {
+  color: #7A475B !important;
+}
+
+body.theme-manager .product-catalog-toggle-btn.active,
+.theme-manager .product-catalog-toggle-btn.active {
+  background: #7A475B !important;
+  color: #ffffff !important;
+  box-shadow: 0 1px 4px rgba(122, 71, 91, 0.3) !important;
+}
+
+body.theme-manager .product-catalog-page-card,
+.theme-manager .product-catalog-page-card {
+  max-height: none !important;
+  overflow: visible !important;
+}
+

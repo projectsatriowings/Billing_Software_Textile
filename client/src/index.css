@@ -3063,12 +3063,20 @@ body {
   text-align: center;
 }
 
-/* Catalog Grid in Left Column */
-.product-catalog-card {
+/* Catalog Grid in Left Column (Legacy POS) */
+.pos-legacy-catalog-card {
   max-height: 380px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+}
+
+.product-catalog-card,
+.product-catalog-page-card {
+  max-height: none !important;
+  overflow: visible !important;
+  display: flex !important;
+  flex-direction: column !important;
 }
 
 .btn-add-item-link {

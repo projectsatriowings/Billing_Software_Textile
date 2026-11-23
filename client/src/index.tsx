@@ -6,6 +6,7 @@ import { CustomerDisplay } from './components/CustomerDisplay';
 import './index.css';
 import './components/inventory/PurchaseBentoModal.css';
 import './components/inventory/StockTransfer.css';
+import './components/inventory/ProductCatalogue.css';
 import './components/cashier-login.css';
 import './components/manager-theme.css';
 import './components/superadmin-theme.css';
