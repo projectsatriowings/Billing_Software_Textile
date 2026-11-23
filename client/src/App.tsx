@@ -8403,7 +8403,7 @@ export function App() {
 
         {/* Left Sidebar Navigation */}
         <aside
-          className={`app-sidebar ${isSidebarCollapsed ? 'icon-only' : ''} ${isMobileSidebarOpen ? 'mobile-open' : ''}`}
+          className={`app-sidebar ${isSidebarCollapsed && !isMobileSidebarOpen ? 'icon-only' : ''} ${isMobileSidebarOpen ? 'mobile-open' : ''}`}
         >
           <div className="sidebar-top">
             {/* Header row with Brand & Collapse/Expand Toggle */}
