@@ -76,6 +76,7 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ sessionId }) => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             sessionId,
+            cameraReady: isScanning,
             deviceInfo: `${navigator.platform || ''} ${navigator.userAgent.slice(0, 50)}`,
           }),
         });
@@ -90,9 +91,9 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ sessionId }) => {
     };
 
     sendHeartbeat();
-    timer = setInterval(sendHeartbeat, 5000);
+    timer = setInterval(sendHeartbeat, 3000);
     return () => clearInterval(timer);
-  }, [sessionId]);
+  }, [sessionId, isScanning]);
 
   // Dispatch scanned barcode to POS terminal
   const dispatchBarcode = async (code: string) => {
