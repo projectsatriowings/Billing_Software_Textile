@@ -2885,7 +2885,7 @@ export function App() {
   // Dynamically update website favicon and browser tab title to match store brand
   useEffect(() => {
     // 1. Dynamic Favicon - force cache busting and eliminate any stale SVG links
-    const targetUrl = shop?.logoUrl || '/icon.png?v=20261123b';
+    const targetUrl = shop?.logoUrl || '/icon.png?v=20261123c';
 
     // Remove any conflicting old icon tags (including stale SVG links)
     try {
@@ -2904,7 +2904,7 @@ export function App() {
     const newShortcut = document.createElement('link');
     newShortcut.rel = 'shortcut icon';
     newShortcut.type = 'image/x-icon';
-    newShortcut.href = `/favicon.ico?v=20261123b`;
+    newShortcut.href = `/favicon.ico?v=20261123c`;
     document.head.appendChild(newShortcut);
 
     // 2. Apple Touch Icon (mobile homescreen)

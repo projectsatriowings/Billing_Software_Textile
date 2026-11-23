@@ -1,19 +1,18 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import zlib from 'node:zlib';
 
-// 1. Read smoothed PNG generated from source
-const smoothedIconPath = path.resolve('C:/Users/MOHAMMED THALHA A/.gemini/antigravity/brain/70d64e97-0dbb-4c04-bd4a-9379cee038d4/smoothed_icon.png');
+// 1. Read rounded icon PNG
+const roundedIconPath = path.resolve('C:/Users/MOHAMMED THALHA A/.gemini/antigravity/brain/70d64e97-0dbb-4c04-bd4a-9379cee038d4/rounded_card_preview.png');
 
-if (!fs.existsSync(smoothedIconPath)) {
-  console.error(`Smoothed icon does not exist: ${smoothedIconPath}`);
+if (!fs.existsSync(roundedIconPath)) {
+  console.error(`Rounded icon does not exist: ${roundedIconPath}`);
   process.exit(1);
 }
 
-const pngBuffer = fs.readFileSync(smoothedIconPath);
-console.log(`Read smoothed PNG: ${pngBuffer.length} bytes`);
+const pngBuffer = fs.readFileSync(roundedIconPath);
+console.log(`Read rounded PNG: ${pngBuffer.length} bytes`);
 
-// Also save back to client/public/images/icon-logo.png
+// Update client/public/images/icon-logo.png
 const logoImagePath = path.resolve('client/public/images/icon-logo.png');
 fs.writeFileSync(logoImagePath, pngBuffer);
 console.log(`Updated source: ${logoImagePath}`);
@@ -66,7 +65,7 @@ for (const dest of icoDestinations) {
   console.log(`Updated ICO: ${dest} (${icoBuffer.length} bytes)`);
 }
 
-// 4. Update favicon.svg with embedded base64 of the smoothed logo
+// 4. Update favicon.svg with embedded base64 of the rounded logo
 const base64Png = pngBuffer.toString('base64');
 const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="64" height="64" viewBox="0 0 64 64">
   <image width="64" height="64" preserveAspectRatio="xMidYMid meet" href="data:image/png;base64,${base64Png}" />
@@ -83,4 +82,4 @@ for (const dest of svgDestinations) {
   console.log(`Updated SVG: ${dest}`);
 }
 
-console.log('✅ All icons successfully updated with smoothed transparent edges!');
+console.log('✅ All icons successfully updated with rounded corners and white background preserved!');
