@@ -1763,3 +1763,44 @@ body.theme-manager .wholesale-chevron.rotated,
 .theme-manager .wholesale-chevron.rotated {
   color: var(--primary, #653B4B) !important;
 }
+
+/* Product Catalog Controls in Store Manager Theme */
+body.theme-manager .product-catalog-action-btn,
+.theme-manager .product-catalog-action-btn {
+  background: var(--surface, #FAF6F8) !important;
+  border-color: var(--border, #D9C8D0) !important;
+  color: var(--text, #1A0F14) !important;
+}
+
+body.theme-manager .product-catalog-action-btn:hover,
+.theme-manager .product-catalog-action-btn:hover {
+  background: var(--primary-soft, #F5ECF0) !important;
+  border-color: var(--primary, #653B4B) !important;
+  color: var(--primary, #653B4B) !important;
+}
+
+body.theme-manager .product-catalog-action-btn.scan-barcodes-btn,
+.theme-manager .product-catalog-action-btn.scan-barcodes-btn {
+  background: rgba(15, 118, 110, 0.08) !important;
+  border-color: rgba(20, 184, 166, 0.4) !important;
+  color: #0f766e !important;
+}
+
+body.theme-manager .product-catalog-action-btn.scan-barcodes-btn:hover,
+.theme-manager .product-catalog-action-btn.scan-barcodes-btn:hover {
+  background: rgba(15, 118, 110, 0.16) !important;
+  border-color: #0f766e !important;
+}
+
+body.theme-manager .product-catalog-add-btn,
+.theme-manager .product-catalog-add-btn {
+  background: var(--primary, #653B4B) !important;
+  border-color: var(--primary-hover, #522E3C) !important;
+  color: #ffffff !important;
+}
+
+body.theme-manager .product-catalog-add-btn:hover,
+.theme-manager .product-catalog-add-btn:hover {
+  background: var(--primary-hover, #522E3C) !important;
+  box-shadow: 0 4px 12px var(--primary-glow, rgba(101, 59, 75, 0.35)) !important;
+}
