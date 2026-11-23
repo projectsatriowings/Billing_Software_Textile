@@ -2382,3 +2382,23 @@ body.theme-cashier .detail-list-val.purple,
   font-weight: 800;
   color: var(--dc-sidebar);
 }
+
+@media (max-width: 640px) {
+  .day-closing-modal-content {
+    padding: 1.2rem 1rem !important;
+    border-radius: 14px !important;
+    margin: 0.5rem !important;
+  }
+
+  .financial-kpi-grid,
+  .tender-kpi-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.65rem !important;
+  }
+
+  .fin-kpi-card,
+  .tender-kpi-card {
+    padding: 0.85rem 1rem !important;
+    border-radius: 12px !important;
+  }
+}

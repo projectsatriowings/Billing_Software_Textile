@@ -214,6 +214,39 @@ body.theme-manager,
   color: #653B4B !important;
 }
 
+/* Empty State Alert Banner in Store Manager Burgundy */
+body.theme-manager .today-empty-alert-banner,
+.theme-manager .today-empty-alert-banner {
+  background: linear-gradient(135deg, #FAF6F8 0%, #F5ECF0 100%) !important;
+  border: 1px solid #D9C8D0 !important;
+  color: #64555E !important;
+  box-shadow: 0 4px 14px rgba(101, 59, 75, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.95) !important;
+}
+
+body.theme-manager .today-empty-alert-banner strong,
+.theme-manager .today-empty-alert-banner strong {
+  color: #2D1822 !important;
+}
+
+body.theme-manager .empty-alert-content,
+.theme-manager .empty-alert-content {
+  color: #64555E !important;
+}
+
+body.theme-manager .btn-empty-start,
+.theme-manager .btn-empty-start {
+  background: linear-gradient(135deg, #7A475B 0%, #653B4B 100%) !important;
+  border: 1px solid #522E3C !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 3px 10px rgba(101, 59, 75, 0.35) !important;
+}
+
+body.theme-manager .btn-empty-start:hover,
+.theme-manager .btn-empty-start:hover {
+  background: linear-gradient(135deg, #653B4B 0%, #522E3C 100%) !important;
+  box-shadow: 0 5px 14px rgba(101, 59, 75, 0.45) !important;
+}
+
 /* --------------------------------------------------------------------------
    4. POS COUNTER BENTO TERMINAL (MATCHING CASHIER STRUCTURE IN BURGUNDY)
    -------------------------------------------------------------------------- */

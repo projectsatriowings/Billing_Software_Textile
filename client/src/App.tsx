@@ -9392,7 +9392,7 @@ export function App() {
                 {currentHeaderTitle}
               </h1>
             ) : displayTab === 'dashboard' && user ? (
-              <div className="top-dash-greeting-group-left" style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+              <div className="top-dash-greeting-group-left">
                 <div>
                   <h1 className="header-greeting-title">
                     {dashboardGreeting}, {userFirstName}
