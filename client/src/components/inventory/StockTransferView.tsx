@@ -39,6 +39,7 @@ import {
   XIcon,
   PrinterIcon,
 } from './InventoryIcons';
+import './StockTransfer.css';
 
 interface StockTransferViewProps {
   user: User;
@@ -1248,8 +1249,8 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                     padding: '0 0.6rem',
                     height: '38px',
                     boxSizing: 'border-box',
-                    flex: '0 0 auto',
-                    minWidth: '290px',
+                    flex: '1 1 auto',
+                    maxWidth: '100%',
                   }}
                 >
                   <CalendarIcon size={14} style={{ color: '#94a3b8', flexShrink: 0 }} />
@@ -1268,7 +1269,9 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                       color: filterFromDate ? '#1e293b' : '#64748b',
                       background: 'transparent',
                       padding: '0',
-                      width: '125px',
+                      width: '110px',
+                      minWidth: 0,
+                      flex: '1 1 auto',
                       cursor: 'pointer',
                     }}
                   />
@@ -1288,7 +1291,9 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                       color: filterToDate ? '#1e293b' : '#64748b',
                       background: 'transparent',
                       padding: '0',
-                      width: '125px',
+                      width: '110px',
+                      minWidth: 0,
+                      flex: '1 1 auto',
                       cursor: 'pointer',
                     }}
                   />
@@ -1398,7 +1403,7 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
 
                       <div className="stock-transfer-card-route">
                         <div className="route-node">
-                          <span className="route-label">From</span>
+                          <span className="route-label">From Branch</span>
                           <span className="route-name" title={trf.fromBranchName || trf.fromBranch}>
                             {trf.fromBranchName || trf.fromBranch}
                           </span>
@@ -1407,7 +1412,7 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                           <ArrowRightIcon size={15} />
                         </div>
                         <div className="route-node">
-                          <span className="route-label">To</span>
+                          <span className="route-label">To Branch</span>
                           <span className="route-name" title={trf.toBranchName || trf.toBranch}>
                             {trf.toBranchName || trf.toBranch}
                           </span>
@@ -1416,13 +1421,13 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
 
                       <div className="stock-transfer-card-meta">
                         <div className="card-meta-item">
-                          <span className="card-meta-label">Items:</span>
+                          <span className="card-meta-label">Items:&nbsp;</span>
                           <span className="card-meta-val">
                             <strong>{trf.itemsCount || 0}</strong> items
                           </span>
                         </div>
                         <div className="card-meta-item">
-                          <span className="card-meta-label">By:</span>
+                          <span className="card-meta-label">Created By:&nbsp;</span>
                           <span className="card-meta-val" title={trf.requestedByName || 'Staff'}>
                             {trf.requestedByName || 'Staff'}
                           </span>

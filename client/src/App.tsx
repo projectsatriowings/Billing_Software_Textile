@@ -9431,13 +9431,19 @@ export function App() {
               <div
                 className="top-stock-transfer-header-left"
                 title="View and manage stock transfers between branches"
+                style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}
               >
-                <div className="top-stock-transfer-icon-tile">
+                <div
+                  className="top-stock-transfer-icon-tile"
+                  style={{ width: '32px', height: '32px', minWidth: '32px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                >
                   <TruckIcon size={18} />
                 </div>
-                <h1 className="top-stock-transfer-title">
-                  <span className="stock-transfer-title-full">Stock Transfer – Transfer List</span>
-                  <span className="stock-transfer-title-short">Stock Transfer</span>
+                <h1
+                  className="top-stock-transfer-title"
+                  style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                >
+                  Stock Transfer
                 </h1>
               </div>
             ) : displayTab === 'wholesale' || activeTab === 'wholesale' ? (
