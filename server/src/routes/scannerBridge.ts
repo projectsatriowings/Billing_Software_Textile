@@ -16,6 +16,7 @@ export interface ScannerSession {
   id: string;
   createdAt: number;
   lastSeenPhoneAt?: number;
+  cameraReady?: boolean;
   deviceInfo?: string;
   scans: ScanEvent[];
   waitingListeners: Array<(events: ScanEvent[]) => void>;
@@ -233,7 +234,10 @@ export function registerScannerBridge(r: Router) {
 
     return {
       localIp,
+      lanIp: localIp,
+      isLanAvailable: Boolean(localIp && localIp !== 'localhost' && localIp !== '127.0.0.1'),
       availableIps,
+      lanIps: availableIps,
       httpPort,
       httpsPort,
       tunnelUrl: validTunnelUrl,
@@ -306,10 +310,14 @@ export function registerScannerBridge(r: Router) {
       sessions.set(sessionId, session);
     }
     session.lastSeenPhoneAt = Date.now();
+    if (ctx.body?.cameraReady !== undefined) {
+      session.cameraReady = Boolean(ctx.body.cameraReady);
+    }
     if (ctx.body?.deviceInfo) session.deviceInfo = ctx.body.deviceInfo;
     return {
       ok: true,
       connected: true,
+      cameraReady: Boolean(session.cameraReady),
       timestamp: Date.now(),
     };
   });
@@ -377,6 +385,10 @@ export function registerScannerBridge(r: Router) {
 
     const afterId = ctx.query?.after;
     const isPhoneActive = Boolean(session.lastSeenPhoneAt && (Date.now() - session.lastSeenPhoneAt < 15000));
+    const isCameraReady = Boolean(isPhoneActive && session.cameraReady);
+    const connectionStatus = !isPhoneActive
+      ? (session.lastSeenPhoneAt ? 'connection_lost' : 'waiting')
+      : (isCameraReady ? 'scanner_ready' : 'phone_connected');
 
     // If afterId is provided, check if there are newer scans
     if (afterId) {
@@ -386,6 +398,8 @@ export function registerScannerBridge(r: Router) {
           ok: true,
           events: session.scans.slice(idx + 1),
           phoneConnected: isPhoneActive,
+          cameraReady: isCameraReady,
+          status: connectionStatus,
         };
       }
     }
@@ -401,10 +415,18 @@ export function registerScannerBridge(r: Router) {
         const lIdx = session!.waitingListeners.indexOf(finish);
         if (lIdx !== -1) session!.waitingListeners.splice(lIdx, 1);
 
+        const activeNow = Boolean(session!.lastSeenPhoneAt && (Date.now() - session!.lastSeenPhoneAt < 15000));
+        const readyNow = Boolean(activeNow && session!.cameraReady);
+        const statusNow = !activeNow
+          ? (session!.lastSeenPhoneAt ? 'connection_lost' : 'waiting')
+          : (readyNow ? 'scanner_ready' : 'phone_connected');
+
         resolve({
           ok: true,
           events,
-          phoneConnected: Boolean(session!.lastSeenPhoneAt && (Date.now() - session!.lastSeenPhoneAt < 15000)),
+          phoneConnected: activeNow,
+          cameraReady: readyNow,
+          status: statusNow,
         });
       };
 

@@ -1652,9 +1652,10 @@ export function App() {
 
   const scannerPairingUrl = useMemo(() => {
     const counterParam = encodeURIComponent(selectedCounter || 'Counter 1');
-    const httpPort = scannerNetworkInfo?.httpPort || 3000;
-    const httpsPort = scannerNetworkInfo?.httpsPort || 3443;
-    const lanIp = scannerNetworkInfo?.lanIp || scannerNetworkInfo?.localIp || window.location.hostname;
+    const port = scannerNetworkInfo?.httpPort || (typeof window !== 'undefined' && window.location.port ? Number(window.location.port) : 3001);
+    const httpsPort = scannerNetworkInfo?.httpsPort || (port + 443);
+    const lanIp = scannerNetworkInfo?.lanIp || scannerNetworkInfo?.localIp || '';
+    const isLiveOrigin = typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
 
     let base = '';
     if (customTunnelUrl.trim()) {
@@ -1662,18 +1663,22 @@ export function App() {
     } else if (scannerProtocol === 'tunnel') {
       if (scannerNetworkInfo?.tunnelUrl) {
         base = scannerNetworkInfo.tunnelUrl.replace(/\/+$/, '');
-      } else if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+      } else if (isLiveOrigin) {
         base = window.location.origin.replace(/\/+$/, '');
+      } else if (lanIp && lanIp !== 'localhost' && lanIp !== '127.0.0.1') {
+        base = `http://${lanIp}:${port}`;
       } else {
-        base = `http://${lanIp}:${httpPort}`;
+        base = window.location.origin.replace(/\/+$/, '');
       }
     } else if (scannerProtocol === 'server') {
-      base = window.location.origin.replace(/\/+$/, '');
+      base = isLiveOrigin ? window.location.origin.replace(/\/+$/, '') : (lanIp && lanIp !== 'localhost' ? `http://${lanIp}:${port}` : window.location.origin.replace(/\/+$/, ''));
     } else if (scannerProtocol === 'https') {
-      base = `https://${lanIp}:${httpsPort}`;
+      base = `https://${lanIp || window.location.hostname}:${httpsPort}`;
     } else {
       // 'wifi'
-      base = `http://${lanIp}:${httpPort}`;
+      base = lanIp && lanIp !== 'localhost' && lanIp !== '127.0.0.1'
+        ? `http://${lanIp}:${port}`
+        : window.location.origin.replace(/\/+$/, '');
     }
     return `${base}/scanner?session=${encodeURIComponent(scannerSessionId)}&counter=${counterParam}`;
   }, [scannerNetworkInfo, scannerProtocol, customTunnelUrl, scannerSessionId, selectedCounter]);
@@ -4457,17 +4462,11 @@ export function App() {
           // Intelligently select best initial protocol if not custom
           setScannerProtocol((prev) => {
             if (customTunnelUrl) return 'tunnel';
-            if (prev === 'server' || prev === 'https' || prev === 'wifi' || prev === 'tunnel') {
-              // If current choice is valid, keep it unless tunnel was active and died
-              if (prev === 'tunnel' && !data?.tunnelUrl) {
-                return data?.isLanAvailable ? 'wifi' : 'server';
-              }
-              return prev;
-            }
+            const isLive = typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+            if (isLive) return 'server';
             if (data?.tunnelUrl) return 'tunnel';
-            if (data?.isLanAvailable) return 'wifi';
-            if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') return 'server';
-            return 'wifi';
+            if (data?.isLanAvailable || data?.lanIp) return 'wifi';
+            return prev || 'wifi';
           });
         })
         .catch(() => { });
@@ -4503,6 +4502,8 @@ export function App() {
 
           if (data.status) {
             setScannerStatus(data.status);
+          } else if (data.phoneConnected !== undefined) {
+            setScannerStatus(data.phoneConnected ? (data.cameraReady ? 'scanner_ready' : 'phone_connected') : 'waiting');
           }
           if (data.phoneConnected !== undefined) {
             setIsPhoneScannerConnected(Boolean(data.phoneConnected));
