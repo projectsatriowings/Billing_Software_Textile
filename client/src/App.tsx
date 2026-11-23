@@ -178,6 +178,8 @@ import {
   Settings as SettingsIcon,
   UserCog,
   LogOut,
+  Menu,
+  Monitor,
 } from 'lucide-react';
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 import { PrintBarcodeModal } from './components/PrintBarcodeModal';
@@ -1768,6 +1770,30 @@ export function App() {
       return next;
     });
   };
+
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  // Close mobile sidebar on route or tab change
+  useEffect(() => {
+    setIsMobileSidebarOpen(false);
+  }, [activeTab, displayTab]);
+
+  // Handle mobile drawer body scroll locking and Escape key
+  useEffect(() => {
+    if (isMobileSidebarOpen) {
+      document.body.classList.add('mobile-drawer-open');
+    } else {
+      document.body.classList.remove('mobile-drawer-open');
+    }
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsMobileSidebarOpen(false);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.classList.remove('mobile-drawer-open');
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isMobileSidebarOpen]);
 
   const [autoCollapsedForPos, setAutoCollapsedForPos] = useState(false);
   const [showProductCatalogDrawer, setShowProductCatalogDrawer] = useState(false);
@@ -8366,16 +8392,28 @@ export function App() {
           </div>
         )}
 
+        {/* Mobile Sidebar Backdrop */}
+        {isMobileSidebarOpen && (
+          <div
+            className="mobile-sidebar-backdrop"
+            onClick={() => setIsMobileSidebarOpen(false)}
+            aria-hidden="true"
+          />
+        )}
+
         {/* Left Sidebar Navigation */}
         <aside
-          className={`app-sidebar ${isSidebarCollapsed ? 'icon-only' : ''}`}
+          className={`app-sidebar ${isSidebarCollapsed ? 'icon-only' : ''} ${isMobileSidebarOpen ? 'mobile-open' : ''}`}
         >
           <div className="sidebar-top">
             {/* Header row with Brand & Collapse/Expand Toggle */}
             <div className="sidebar-header-row">
               <div
                 className="sidebar-brand"
-                onClick={() => navigateTo('dashboard')}
+                onClick={() => {
+                  navigateTo('dashboard');
+                  setIsMobileSidebarOpen(false);
+                }}
                 style={{ cursor: 'pointer' }}
                 title={`${shop?.name || 'Adaptive Billing'} · Cloud POS & GST`}
               >
@@ -8416,13 +8454,23 @@ export function App() {
                 className="sidebar-collapse-toggle"
                 onClick={(e) => {
                   e.stopPropagation();
-                  toggleSidebar();
+                  if (isMobileSidebarOpen) {
+                    setIsMobileSidebarOpen(false);
+                  } else {
+                    toggleSidebar();
+                  }
                 }}
-                title={isSidebarCollapsed ? "Open sidebar" : "Close sidebar"}
-                aria-label={isSidebarCollapsed ? "Open sidebar" : "Close sidebar"}
-                aria-expanded={!isSidebarCollapsed}
+                title={isMobileSidebarOpen ? "Close menu" : isSidebarCollapsed ? "Open sidebar" : "Close sidebar"}
+                aria-label={isMobileSidebarOpen ? "Close menu" : isSidebarCollapsed ? "Open sidebar" : "Close sidebar"}
+                aria-expanded={isMobileSidebarOpen || !isSidebarCollapsed}
               >
-                {isSidebarCollapsed ? (
+                {isMobileSidebarOpen ? (
+                  // X Close icon for mobile drawer
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                ) : isSidebarCollapsed ? (
                   // ☰ Hamburger icon (3 bars) to open
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <line x1="4" y1="6" x2="20" y2="6" />
@@ -9266,6 +9314,17 @@ export function App() {
         <main className="main-content">
           {/* Top Global Bar Matching Image 2 */}
           <div className={`top-global-bar ${hideBusinessBar ? 'no-divider' : ''} ${displayTab === 'dashboard' ? 'dashboard-top-bar' : ''}`}>
+            {/* Mobile Header Menu Hamburger Toggle Button (visible on screens <= 900px) */}
+            <button
+              type="button"
+              className="mobile-header-menu-btn"
+              onClick={() => setIsMobileSidebarOpen(prev => !prev)}
+              aria-label="Toggle navigation menu"
+              title="Open Navigation Menu"
+            >
+              <Menu size={18} />
+              <span className="mobile-header-menu-text">Menu</span>
+            </button>
             {displayTab === 'pos' || activeTab === 'pos' ? (
               <div className="top-pos-header-left">
                 <div className="top-pos-bento-badge top-pos-branch-badge" title={`Store Branch: ${currentBranchName} (${currentBranchCode})`}>
@@ -18139,6 +18198,123 @@ export function App() {
             )}
           </div>
         </main>
+
+        {/* Mobile Fixed Bottom Navigation Bar (Screens <= 900px) */}
+        {user && (
+          <nav className="mobile-bottom-nav-bar" aria-label="Mobile Navigation">
+            {user.role !== 'cashier' ? (
+              <>
+                <button
+                  type="button"
+                  className={`mobile-bottom-nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
+                  onClick={() => {
+                    setActiveTab('dashboard');
+                    setIsMobileSidebarOpen(false);
+                  }}
+                >
+                  <LayoutDashboard size={19} />
+                  <span>Dashboard</span>
+                </button>
+                <button
+                  type="button"
+                  className={`mobile-bottom-nav-item ${activeTab === 'pos' ? 'active' : ''}`}
+                  onClick={() => {
+                    setActiveTab('pos');
+                    setIsMobileSidebarOpen(false);
+                  }}
+                >
+                  <ShoppingCart size={19} />
+                  <span>POS</span>
+                </button>
+                <button
+                  type="button"
+                  className={`mobile-bottom-nav-item ${activeTab === 'inventory' ? 'active' : ''}`}
+                  onClick={() => {
+                    setActiveTab('inventory');
+                    setIsMobileSidebarOpen(false);
+                  }}
+                >
+                  <Package size={19} />
+                  <span>Inventory</span>
+                </button>
+                <button
+                  type="button"
+                  className={`mobile-bottom-nav-item ${activeTab === 'invoices' ? 'active' : ''}`}
+                  onClick={() => {
+                    setActiveTab('invoices');
+                    setIsMobileSidebarOpen(false);
+                  }}
+                >
+                  <Receipt size={19} />
+                  <span>Bills</span>
+                </button>
+                <button
+                  type="button"
+                  className={`mobile-bottom-nav-item ${isMobileSidebarOpen ? 'active' : ''}`}
+                  onClick={() => setIsMobileSidebarOpen(prev => !prev)}
+                >
+                  <Menu size={19} />
+                  <span>More</span>
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  className={`mobile-bottom-nav-item ${activeTab === 'pos' ? 'active' : ''}`}
+                  onClick={() => {
+                    setActiveTab('pos');
+                    setIsMobileSidebarOpen(false);
+                  }}
+                >
+                  <ShoppingCart size={19} />
+                  <span>POS</span>
+                </button>
+                <button
+                  type="button"
+                  className={`mobile-bottom-nav-item ${activeTab === 'invoices' ? 'active' : ''}`}
+                  onClick={() => {
+                    setActiveTab('invoices');
+                    setIsMobileSidebarOpen(false);
+                  }}
+                >
+                  <Receipt size={19} />
+                  <span>Bills</span>
+                </button>
+                <button
+                  type="button"
+                  className={`mobile-bottom-nav-item ${activeTab === 'shifts' ? 'active' : ''}`}
+                  onClick={() => {
+                    setActiveTab('shifts');
+                    setIsMobileSidebarOpen(false);
+                  }}
+                >
+                  <Clock size={19} />
+                  <span>Shift</span>
+                </button>
+                <button
+                  type="button"
+                  className={`mobile-bottom-nav-item ${showCfdModal ? 'active' : ''}`}
+                  onClick={() => {
+                    setShowCfdModal(true);
+                    setIsMobileSidebarOpen(false);
+                  }}
+                >
+                  <Monitor size={19} />
+                  <span>Screen</span>
+                </button>
+                <button
+                  type="button"
+                  className={`mobile-bottom-nav-item ${isMobileSidebarOpen ? 'active' : ''}`}
+                  onClick={() => setIsMobileSidebarOpen(prev => !prev)}
+                >
+                  <Menu size={19} />
+                  <span>More</span>
+                </button>
+              </>
+            )}
+          </nav>
+        )}
 
         {/* PRINT RECEIPT MODAL */}
         {printModalInvoiceId && (() => {

@@ -4804,3 +4804,41 @@ div.app-container.theme-cashier .top-pos-cfd-btn:hover,
   background: var(--primary-soft, #f4ede4) !important;
   border-color: var(--primary, #0F766E) !important;
 }
+
+/* Mobile Navigation Controls & Bottom Bar (Cashier Theme) */
+body.theme-cashier .mobile-header-menu-btn,
+.theme-cashier .mobile-header-menu-btn {
+  background: #FAF7F2 !important;
+  border-color: #D0C7B8 !important;
+  color: #0F766E !important;
+}
+
+body.theme-cashier .mobile-header-menu-btn:hover,
+.theme-cashier .mobile-header-menu-btn:hover {
+  background: #E6F4F3 !important;
+  border-color: #0F766E !important;
+  color: #115E59 !important;
+}
+
+body.theme-cashier .mobile-bottom-nav-bar,
+.theme-cashier .mobile-bottom-nav-bar {
+  background: rgba(15, 45, 46, 0.97) !important;
+  border-top: 1px solid rgba(20, 184, 166, 0.25) !important;
+  box-shadow: 0 -4px 22px rgba(15, 45, 46, 0.45) !important;
+}
+
+body.theme-cashier .mobile-bottom-nav-item,
+.theme-cashier .mobile-bottom-nav-item {
+  color: rgba(230, 244, 243, 0.65) !important;
+}
+
+body.theme-cashier .mobile-bottom-nav-item:hover,
+.theme-cashier .mobile-bottom-nav-item:hover {
+  color: #FFFFFF !important;
+}
+
+body.theme-cashier .mobile-bottom-nav-item.active,
+.theme-cashier .mobile-bottom-nav-item.active {
+  color: #FFFFFF !important;
+  background: rgba(15, 118, 110, 0.55) !important;
+}

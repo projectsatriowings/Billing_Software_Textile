@@ -1653,3 +1653,43 @@ body.theme-manager .kpi-card .kpi-label,
 .theme-manager .kpi-card .kpi-label {
   color: #64555E !important;
 }
+
+/* --------------------------------------------------------------------------
+   18. MOBILE NAVIGATION CONTROLS & BOTTOM BAR (STORE MANAGER THEME)
+   -------------------------------------------------------------------------- */
+body.theme-manager .mobile-header-menu-btn,
+.theme-manager .mobile-header-menu-btn {
+  background: #FAF6F8 !important;
+  border-color: #D9C8D0 !important;
+  color: #653B4B !important;
+}
+
+body.theme-manager .mobile-header-menu-btn:hover,
+.theme-manager .mobile-header-menu-btn:hover {
+  background: #F5ECF0 !important;
+  border-color: #653B4B !important;
+  color: #522E3C !important;
+}
+
+body.theme-manager .mobile-bottom-nav-bar,
+.theme-manager .mobile-bottom-nav-bar {
+  background: rgba(45, 24, 34, 0.97) !important;
+  border-top: 1px solid rgba(232, 214, 222, 0.22) !important;
+  box-shadow: 0 -4px 22px rgba(45, 24, 34, 0.45) !important;
+}
+
+body.theme-manager .mobile-bottom-nav-item,
+.theme-manager .mobile-bottom-nav-item {
+  color: rgba(245, 236, 240, 0.65) !important;
+}
+
+body.theme-manager .mobile-bottom-nav-item:hover,
+.theme-manager .mobile-bottom-nav-item:hover {
+  color: #FFFFFF !important;
+}
+
+body.theme-manager .mobile-bottom-nav-item.active,
+.theme-manager .mobile-bottom-nav-item.active {
+  color: #FFFFFF !important;
+  background: rgba(101, 59, 75, 0.55) !important;
+}
