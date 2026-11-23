@@ -2884,29 +2884,38 @@ export function App() {
 
   // Dynamically update website favicon and browser tab title to match store brand
   useEffect(() => {
-    // 1. Dynamic Favicon
-    let faviconLink: HTMLLinkElement | null = document.getElementById('app-favicon') as HTMLLinkElement | null;
-    if (!faviconLink) {
-      faviconLink = document.querySelector("link[rel*='icon']");
-    }
-    if (!faviconLink) {
-      faviconLink = document.createElement('link');
-      faviconLink.id = 'app-favicon';
-      faviconLink.rel = 'shortcut icon';
-      document.head.appendChild(faviconLink);
-    }
-    if (shop?.logoUrl) {
-      faviconLink.href = shop.logoUrl;
-      faviconLink.type = 'image/png';
-    } else {
-      faviconLink.href = '/favicon.ico';
-    }
+    // 1. Dynamic Favicon - force cache busting and eliminate any stale SVG links
+    const targetUrl = shop?.logoUrl || '/icon.png?v=20261123';
+
+    // Remove any conflicting old icon tags (including stale SVG links)
+    try {
+      const existingIcons = document.querySelectorAll("link[rel*='icon'], link[type='image/svg+xml']");
+      existingIcons.forEach((el) => el.remove());
+    } catch { }
+
+    const newFavicon = document.createElement('link');
+    newFavicon.id = 'app-favicon';
+    newFavicon.rel = 'icon';
+    newFavicon.type = 'image/png';
+    newFavicon.setAttribute('sizes', 'any');
+    newFavicon.href = targetUrl;
+    document.head.appendChild(newFavicon);
+
+    const newShortcut = document.createElement('link');
+    newShortcut.rel = 'shortcut icon';
+    newShortcut.type = 'image/x-icon';
+    newShortcut.href = `/favicon.ico?v=20261123`;
+    document.head.appendChild(newShortcut);
 
     // 2. Apple Touch Icon (mobile homescreen)
-    const appleIcon: HTMLLinkElement | null = document.getElementById('app-apple-touch-icon') as HTMLLinkElement | null;
-    if (appleIcon && shop?.logoUrl) {
-      appleIcon.href = shop.logoUrl;
+    let appleIcon = document.getElementById('app-apple-touch-icon') as HTMLLinkElement | null;
+    if (!appleIcon) {
+      appleIcon = document.createElement('link');
+      appleIcon.id = 'app-apple-touch-icon';
+      appleIcon.rel = 'apple-touch-icon';
+      document.head.appendChild(appleIcon);
     }
+    appleIcon.href = targetUrl;
 
     // 3. Dynamic Browser Tab Title
     if (shop?.name) {
