@@ -2,7 +2,7 @@ import { requirePerm, requireUser } from '../auth.ts';
 import { audit } from '../audit.ts';
 import { bad, conflict, notFound, V, type Router } from '../http.ts';
 import { newId } from '../security.ts';
-import { j } from '../db/index.ts';
+import { j, type Queryable } from '../db/index.ts';
 import type { Branch, BranchInput } from '../../../shared/types.ts';
 import { getOwnerEmailForTenant, enqueueDeletionAlertEmail } from '../services/mailer.ts';
 
@@ -64,12 +64,74 @@ export const branchView = (b: any): Branch => {
   };
 };
 
+/**
+ * Ensures dedicated Super Admin and Store Manager counters exist for the tenant.
+ * - Single tenant-wide Super Admin POS Counter: ADMIN-POS ('Admin Counter') linked to MAIN branch.
+ * - Dedicated Store Manager Counter per branch: ${branch.code}-MGR ('Manager Counter (${branch.code})').
+ */
+export async function ensureDedicatedCounters(db: Queryable, tenantId: string): Promise<void> {
+  try {
+    // 1. Ensure Manager Counter for every branch
+    await db.exec(
+      `INSERT INTO counters (id, tenant_id, branch_id, name, code, status, created_at, updated_at)
+       SELECT 'cnt_' || substr(md5(b.id || '_mgr'), 1, 16), b.tenant_id, b.id, 'Manager Counter (' || b.code || ')', b.code || '-MGR', 'ACTIVE', now(), now()
+       FROM branches b
+       WHERE b.tenant_id = ?
+         AND NOT EXISTS (
+           SELECT 1 FROM counters c WHERE c.tenant_id = b.tenant_id AND c.branch_id = b.id AND (upper(c.code) = upper(b.code || '-MGR') OR lower(c.name) LIKE 'manager counter%')
+         )
+       ON CONFLICT (id) DO NOTHING`,
+      [tenantId],
+    );
+
+    // 2. Ensure strictly ONE dedicated Super Admin POS Counter per tenant (linked to MAIN branch or first branch)
+    const mainBranch =
+      (await db.one<any>("SELECT id FROM branches WHERE tenant_id = ? AND code = 'MAIN' LIMIT 1", [tenantId])) ||
+      (await db.one<any>('SELECT id FROM branches WHERE tenant_id = ? ORDER BY created_at ASC LIMIT 1', [tenantId]));
+
+    if (mainBranch) {
+      // Remove any misplaced ADMIN-POS on non-main branches if any
+      await db.exec(
+        "DELETE FROM counters WHERE tenant_id = ? AND upper(code) = 'ADMIN-POS' AND branch_id != ?",
+        [tenantId, mainBranch.id],
+      );
+
+      await db.exec(
+        `INSERT INTO counters (id, tenant_id, branch_id, name, code, status, created_at, updated_at)
+         VALUES ('cnt_' || substr(md5(? || '_admin'), 1, 16), ?, ?, 'Admin Counter', 'ADMIN-POS', 'ACTIVE', now(), now())
+         ON CONFLICT (id) DO NOTHING`,
+        [mainBranch.id, tenantId, mainBranch.id],
+      );
+    }
+
+    // 3. Keep branches.counters JSON column in sync
+    await db.exec(
+      `UPDATE branches b
+       SET counters = (
+         SELECT json_agg(c.code ORDER BY c.code ASC)
+         FROM counters c
+         WHERE c.branch_id = b.id AND c.tenant_id = b.tenant_id AND c.status = 'ACTIVE'
+       )
+       WHERE b.tenant_id = ?
+         AND EXISTS (
+           SELECT 1 FROM counters c WHERE c.branch_id = b.id AND c.tenant_id = b.tenant_id
+         )`,
+      [tenantId],
+    );
+  } catch (err) {
+    console.error('ensureDedicatedCounters error:', err);
+  }
+}
+
 export function registerBranches(r: Router) {
   // 1. Get branches accessible to the user
   r.get('/api/branches', requireUser, async (ctx) => {
     ctx.res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
     const tenantId = ctx.user!.tenantId;
     const role = ctx.user!.role;
+
+    // Auto-ensure dedicated Admin & Manager counters exist
+    await ensureDedicatedCounters(ctx.db, tenantId);
 
     const isSuperAdmin = role === 'owner' || String(role).toUpperCase() === 'SUPER_ADMIN';
 
@@ -92,12 +154,14 @@ export function registerBranches(r: Router) {
       }
     }
 
+    const cashierFilter = role === 'cashier' ? " AND c.code != 'ADMIN-POS' AND c.code NOT LIKE '%-MGR'" : "";
+
     const rows = await ctx.db.query<any>(
       `SELECT b.*, u.name AS manager_name, u.email AS manager_email, u.username AS manager_username,
-      (SELECT count(*):: int FROM counters c WHERE c.branch_id = b.id AND c.tenant_id = b.tenant_id) AS counters_total,
-      (SELECT count(*)::int FROM counters c WHERE c.branch_id = b.id AND c.tenant_id = b.tenant_id AND c.status = 'ACTIVE') AS counters_active,
-      (SELECT json_agg(c.code ORDER BY c.code ASC) FROM counters c WHERE c.branch_id = b.id AND c.tenant_id = b.tenant_id AND c.status = 'ACTIVE') AS dynamic_counters,
-      (SELECT json_agg(json_build_object('id', c.id, 'name', c.name, 'code', c.code, 'status', c.status) ORDER BY c.code ASC) FROM counters c WHERE c.branch_id = b.id AND c.tenant_id = b.tenant_id AND c.status = 'ACTIVE') AS dynamic_counter_details
+      (SELECT count(*):: int FROM counters c WHERE c.branch_id = b.id AND c.tenant_id = b.tenant_id ${cashierFilter}) AS counters_total,
+      (SELECT count(*)::int FROM counters c WHERE c.branch_id = b.id AND c.tenant_id = b.tenant_id AND c.status = 'ACTIVE' ${cashierFilter}) AS counters_active,
+      (SELECT json_agg(c.code ORDER BY c.code ASC) FROM counters c WHERE c.branch_id = b.id AND c.tenant_id = b.tenant_id AND c.status = 'ACTIVE' ${cashierFilter}) AS dynamic_counters,
+      (SELECT json_agg(json_build_object('id', c.id, 'name', c.name, 'code', c.code, 'status', c.status) ORDER BY c.code ASC) FROM counters c WHERE c.branch_id = b.id AND c.tenant_id = b.tenant_id AND c.status = 'ACTIVE' ${cashierFilter}) AS dynamic_counter_details
        FROM branches b
        LEFT JOIN users u ON (u.branch_id = b.id OR u.id = b.manager_id) AND lower(u.role) IN ('manager', 'store_manager') AND u.deleted_at IS NULL
        ${ whereClause }
@@ -125,10 +189,10 @@ export function registerBranches(r: Router) {
 
       const syncedRows = await ctx.db.query<any>(
     `SELECT b.*, u.name AS manager_name, u.email AS manager_email, u.username AS manager_username,
-              (SELECT count(*)::int FROM counters c WHERE c.branch_id = b.id AND c.tenant_id = b.tenant_id) AS counters_total,
-              (SELECT count(*)::int FROM counters c WHERE c.branch_id = b.id AND c.tenant_id = b.tenant_id AND c.status = 'ACTIVE') AS counters_active,
-              (SELECT json_agg(c.code ORDER BY c.code ASC) FROM counters c WHERE c.branch_id = b.id AND c.tenant_id = b.tenant_id AND c.status = 'ACTIVE') AS dynamic_counters,
-              (SELECT json_agg(json_build_object('id', c.id, 'name', c.name, 'code', c.code, 'status', c.status) ORDER BY c.code ASC) FROM counters c WHERE c.branch_id = b.id AND c.tenant_id = b.tenant_id AND c.status = 'ACTIVE') AS dynamic_counter_details
+              (SELECT count(*)::int FROM counters c WHERE c.branch_id = b.id AND c.tenant_id = b.tenant_id ${cashierFilter}) AS counters_total,
+              (SELECT count(*)::int FROM counters c WHERE c.branch_id = b.id AND c.tenant_id = b.tenant_id AND c.status = 'ACTIVE' ${cashierFilter}) AS counters_active,
+              (SELECT json_agg(c.code ORDER BY c.code ASC) FROM counters c WHERE c.branch_id = b.id AND c.tenant_id = b.tenant_id AND c.status = 'ACTIVE' ${cashierFilter}) AS dynamic_counters,
+              (SELECT json_agg(json_build_object('id', c.id, 'name', c.name, 'code', c.code, 'status', c.status) ORDER BY c.code ASC) FROM counters c WHERE c.branch_id = b.id AND c.tenant_id = b.tenant_id AND c.status = 'ACTIVE' ${cashierFilter}) AS dynamic_counter_details
          FROM branches b
          LEFT JOIN users u ON (u.branch_id = b.id OR u.id = b.manager_id) AND lower(u.role) IN ('manager', 'store_manager') AND u.deleted_at IS NULL
          WHERE b.tenant_id = ?
@@ -211,6 +275,9 @@ r.post('/api/branches', requirePerm('settings'), async (ctx) => {
       detail: { code, name, counters: countersList, managerId },
     });
   });
+
+  // Automatically provision dedicated manager counter for this branch (and admin counter if MAIN)
+  await ensureDedicatedCounters(ctx.db, tenantId);
 
   const row = await ctx.db.one<any>(
       `SELECT b.*, u.name AS manager_name, u.email AS manager_email, u.username AS manager_username,

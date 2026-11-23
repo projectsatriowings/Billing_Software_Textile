@@ -231,6 +231,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
       if (data.token && data.user && data.shop) {
         setToken(data.token);
+        try {
+          localStorage.setItem('user', JSON.stringify(data.user));
+          localStorage.setItem('shop', JSON.stringify(data.shop));
+          sessionStorage.setItem('user', JSON.stringify(data.user));
+          sessionStorage.setItem('shop', JSON.stringify(data.shop));
+        } catch { }
         onSuccess(data as { token: string; user: User; shop: Shop });
       }
     } catch (err: any) {

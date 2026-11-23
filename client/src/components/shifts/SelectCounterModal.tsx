@@ -144,8 +144,21 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
 
   // Build list of active counters created for this particular branch
   const branchCountersList: ResolvedCounterOption[] = React.useMemo(() => {
+    // Cashiers must only see and select cashier counters (exclude Admin Counter and Store Manager counters)
+    const isExcludedForCashier = (code: string, name?: string) => {
+      const c = (code || '').toUpperCase();
+      const n = (name || '').toLowerCase();
+      return (
+        c === 'ADMIN-POS' ||
+        c.endsWith('-MGR') ||
+        c.includes('MGR') ||
+        n.includes('admin counter') ||
+        n.includes('manager counter')
+      );
+    };
+
     if (counterDetails && counterDetails.length > 0) {
-      const activeDetails = counterDetails.filter(c => c.status !== 'DISABLED');
+      const activeDetails = counterDetails.filter(c => c.status !== 'DISABLED' && !isExcludedForCashier(c.code, c.name));
       return activeDetails.map((c, idx) => {
         const { name, tag, desc, isExpress } = resolveCounterNameAndTag(c.code, c.name, idx);
         return {
@@ -160,7 +173,8 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
     }
 
     if (availableCounters && availableCounters.length > 0) {
-      return availableCounters.map((codeStr, idx) => {
+      const filtered = availableCounters.filter(codeStr => !isExcludedForCashier(codeStr));
+      return filtered.map((codeStr, idx) => {
         const { name, tag, desc, isExpress } = resolveCounterNameAndTag(codeStr, undefined, idx);
         return {
           id: codeStr,
@@ -188,7 +202,6 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
     if (currentCounter) {
       const match = branchCountersList.find(c => c.code.toUpperCase() === currentCounter.toUpperCase() || c.name.toLowerCase() === currentCounter.toLowerCase());
       if (match) return match.code;
-      return currentCounter;
     }
     return branchCountersList[0]?.code || 'MAIN-C01';
   });
@@ -236,9 +249,20 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
   const availableCount = branchCountersList.filter(c => !getOccupantForCounter(c)).length;
   const occupiedCount = branchCountersList.length - availableCount;
 
-  // Auto-switch away from an occupied counter if current selection is occupied by another cashier
+  // Auto-switch away from an occupied or invalid/restricted counter
   useEffect(() => {
     if (!branchCountersList.length) return;
+    const isExcluded = (code: string) => {
+      const s = (code || '').toUpperCase();
+      return s.includes('ADMIN') || s.includes('MGR') || s.includes('MANAGER');
+    };
+    if (isExcluded(selectedCode) || !branchCountersList.some(c => c.code === selectedCode)) {
+      const firstAvailable = branchCountersList.find(c => !getOccupantForCounter(c)) || branchCountersList[0];
+      if (firstAvailable) {
+        setSelectedCode(firstAvailable.code);
+      }
+      return;
+    }
     const curObj = branchCountersList.find(c => c.code === selectedCode);
     const occupant = curObj ? getOccupantForCounter(curObj) : null;
     if (occupant) {
@@ -247,7 +271,7 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
         setSelectedCode(firstAvailable.code);
       }
     }
-  }, [branchCountersList, occupiedList]);
+  }, [branchCountersList, occupiedList, selectedCode]);
 
   if (!isOpen) return null;
 
@@ -258,11 +282,11 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
     ? (customCounterText.trim() || 'Custom Counter')
     : currentSelectedObj
       ? `${currentSelectedObj.name} (${currentSelectedObj.code})`
-      : selectedCode;
+      : (branchCountersList[0] ? `${branchCountersList[0].name} (${branchCountersList[0].code})` : 'Counter 1');
 
   const handleSelect = (counterCode: string) => {
     if (isLocked) {
-      setError(`Billing counter is locked to "${currentSelectedObj?.name || currentCounter}" for this active session. Station cannot be changed while in active use.`);
+      setError(`Billing counter is locked to "${currentSelectedObj?.name || branchCountersList[0]?.name || 'Counter 1'}" for this active session. Station cannot be changed while in active use.`);
       return;
     }
     const target = branchCountersList.find(c => c.code === counterCode);
@@ -280,7 +304,7 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
 
   const handleConfirm = () => {
     if (isLocked) {
-      setError(`Station is locked to "${currentSelectedObj?.name || currentCounter}". Counter cannot be changed during an active billing session.`);
+      setError(`Station is locked to "${currentSelectedObj?.name || branchCountersList[0]?.name || 'Counter 1'}". Counter cannot be changed during an active billing session.`);
       return;
     }
     let finalCode = selectedCode;
@@ -616,7 +640,7 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
                   Billing Counter Station Locked
                 </div>
                 <div style={{ fontSize: '0.78rem', color: '#047857', marginTop: '2px', lineHeight: 1.4 }}>
-                  This terminal is locked to <strong>{currentSelectedObj?.name || currentCounter}</strong> ({currentSelectedObj?.code || currentCounter}) for your active session.
+                  This terminal is locked to <strong>{currentSelectedObj?.name || branchCountersList[0]?.name || 'Counter 1'}</strong> ({currentSelectedObj?.code || branchCountersList[0]?.code || 'MAIN-C01'}) for your active session.
                   Once selected, counters cannot be changed while in active use to maintain drawer floats and sales audit integrity. Close shift or log out to reassign.
                 </div>
               </div>

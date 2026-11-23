@@ -2081,4 +2081,38 @@ export const MIGRATIONS: Migration[] = [
       `ALTER TABLE categories ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT now()`,
     ],
   },
+  {
+    version: 77,
+    statements: [
+      // 1. Ensure dedicated Store Manager Counter for every branch
+      `INSERT INTO counters (id, tenant_id, branch_id, name, code, status, created_at, updated_at)
+       SELECT 'cnt_' || substr(md5(b.id || '_mgr'), 1, 16), b.tenant_id, b.id, 'Manager Counter (' || b.code || ')', b.code || '-MGR', 'ACTIVE', now(), now()
+       FROM branches b
+       WHERE NOT EXISTS (
+         SELECT 1 FROM counters c WHERE c.tenant_id = b.tenant_id AND c.branch_id = b.id AND (upper(c.code) = upper(b.code || '-MGR') OR lower(c.name) LIKE 'manager counter%')
+       )
+       ON CONFLICT (id) DO NOTHING`,
+
+      // 2. Ensure strictly one dedicated Super Admin POS Counter per tenant (linked to MAIN branch or first branch)
+      `INSERT INTO counters (id, tenant_id, branch_id, name, code, status, created_at, updated_at)
+       SELECT 'cnt_' || substr(md5(b.id || '_admin'), 1, 16), b.tenant_id, b.id, 'Admin Counter', 'ADMIN-POS', 'ACTIVE', now(), now()
+       FROM branches b
+       WHERE (b.code = 'MAIN' OR b.id IN (SELECT id FROM branches b2 WHERE b2.tenant_id = b.tenant_id ORDER BY b2.created_at ASC LIMIT 1))
+         AND NOT EXISTS (
+           SELECT 1 FROM counters c WHERE c.tenant_id = b.tenant_id AND (upper(c.code) = 'ADMIN-POS' OR lower(c.name) LIKE 'admin counter%')
+         )
+       ON CONFLICT (id) DO NOTHING`,
+
+      // 3. Keep branches.counters JSON array synchronized with dynamic counters table
+      `UPDATE branches b
+       SET counters = (
+         SELECT json_agg(c.code ORDER BY c.code ASC)
+         FROM counters c
+         WHERE c.branch_id = b.id AND c.tenant_id = b.tenant_id AND c.status = 'ACTIVE'
+       )
+       WHERE EXISTS (
+         SELECT 1 FROM counters c WHERE c.branch_id = b.id AND c.tenant_id = b.tenant_id
+       )`,
+    ],
+  },
 ];

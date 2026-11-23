@@ -5,6 +5,7 @@ import { hashPassword, newId, verifyPassword } from '../security.ts';
 import { parseEmail } from '../shopFields.ts';
 import { j, type DB } from '../db/index.ts';
 import { enqueueUserEmail, sendTestEmail, getOwnerEmailForTenant, enqueueDeletionAlertEmail } from '../services/mailer.ts';
+import { ensureDedicatedCounters } from './branches.ts';
 
 /**
  * Super Admin check: only 'owner' or 'super_admin' roles have access.
@@ -567,11 +568,26 @@ export function registerUserManagement(r: Router) {
         await q.exec('UPDATE branches SET manager_id = ?, updated_at = now() WHERE id = ?', [managerId, branchId]);
       }
 
+      // Ensure dedicated manager counter for this branch
+      let mgrCounterId: string | null = null;
+      let mgrCounterCode: string | null = null;
+      if (branchId) {
+        await ensureDedicatedCounters(q, tenantId);
+        const mgrCounter = await q.one<any>(
+          "SELECT id, code FROM counters WHERE tenant_id = ? AND branch_id = ? AND upper(code) LIKE '%-MGR' LIMIT 1",
+          [tenantId, branchId],
+        ).catch(() => null);
+        if (mgrCounter) {
+          mgrCounterId = mgrCounter.id;
+          mgrCounterCode = mgrCounter.code;
+        }
+      }
+
       // Insert manager
       await q.exec(
-        `INSERT INTO users (id, tenant_id, name, username, email, phone, password_hash, role, status, active, branch_id, must_change_password, created_by, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, 'manager', 'INVITED', true, ?, ?, ?, now(), now())`,
-        [managerId, tenantId, name, username, email, phone, passwordHash, branchId || null, mustChangePassword, ctx.user!.id],
+        `INSERT INTO users (id, tenant_id, name, username, email, phone, password_hash, role, status, active, branch_id, counter_id, assigned_counter, must_change_password, created_by, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, 'manager', 'INVITED', true, ?, ?, ?, ?, ?, now(), now())`,
+        [managerId, tenantId, name, username, email, phone, passwordHash, branchId || null, mgrCounterId, mgrCounterCode, mustChangePassword, ctx.user!.id],
       );
 
       await audit(q, ctx, {
@@ -862,12 +878,20 @@ export function registerUserManagement(r: Router) {
 
         // Assign manager to branch
         await q.exec('UPDATE branches SET manager_id = ?, updated_at = now() WHERE id = ?', [managerId, branchId]);
-        await q.exec('UPDATE users SET branch_id = ?, updated_at = now() WHERE id = ?', [branchId, managerId]);
+        await ensureDedicatedCounters(q, tenantId);
+        const branchMgrCounter = await q.one<any>(
+          "SELECT id, code FROM counters WHERE tenant_id = ? AND branch_id = ? AND upper(code) LIKE '%-MGR' LIMIT 1",
+          [tenantId, branchId],
+        ).catch(() => null);
+        await q.exec(
+          'UPDATE users SET branch_id = ?, counter_id = ?, assigned_counter = ?, updated_at = now() WHERE id = ?',
+          [branchId, branchMgrCounter?.id || null, branchMgrCounter?.code || null, managerId],
+        );
       } else {
         // Clear branch manager
         await q.exec('UPDATE branches SET manager_id = NULL, updated_at = now() WHERE id = ?', [branchId]);
         if (curManagerId) {
-          await q.exec('UPDATE users SET branch_id = NULL WHERE id = ?', [curManagerId]);
+          await q.exec('UPDATE users SET branch_id = NULL, counter_id = NULL, assigned_counter = NULL WHERE id = ?', [curManagerId]);
         }
       }
 
