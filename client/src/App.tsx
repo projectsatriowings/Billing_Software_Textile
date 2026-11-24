@@ -24876,7 +24876,7 @@ export function App() {
             }}
           >
             <div
-              className="shift-bento-dialog invoice-detail-dialog"
+              className="invoice-detail-dialog"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Top Accent Gradient Bar */}
@@ -24888,13 +24888,13 @@ export function App() {
                 }}
               />
 
-              {/* Bento Header */}
-              <div className="shift-bento-header invoice-detail-header">
-                <div className="shift-bento-header-left invoice-detail-header-left">
-                  <div className="shift-bento-icon-badge green invoice-detail-icon-badge">
+              {/* Invoice Detail Header */}
+              <div className="invoice-detail-header">
+                <div className="invoice-detail-header-left">
+                  <div className="invoice-detail-icon-badge">
                     <ReceiptIcon size={22} />
                   </div>
-                  <div className="shift-bento-title-wrap invoice-detail-title-wrap">
+                  <div className="invoice-detail-title-wrap">
                     <h3 className="invoice-detail-title">
                       <span>Bill #{invoiceDetailData?.invoice?.number || selectedInvoiceDetailId}</span>
                       {invoiceDetailData?.invoice?.status && (
@@ -24950,8 +24950,8 @@ export function App() {
                 </button>
               </div>
 
-              {/* Bento Body */}
-              <div className="shift-bento-body invoice-detail-body">
+              {/* Invoice Detail Body */}
+              <div className="invoice-detail-body">
                 {invoiceDetailLoading || !invoiceDetailData ? (
                   <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted, #475569)', background: 'var(--surface, #FAF7F2)', borderRadius: '16px', border: '1px solid var(--border, #D0C7B8)' }}>
                     <div style={{ display: 'inline-block', width: '28px', height: '28px', border: '3px solid var(--border, #D0C7B8)', borderTopColor: 'var(--primary, #0F766E)', borderRadius: '50%', animation: 'spin 0.8s linear infinite', marginBottom: '0.75rem' }} />
@@ -25027,9 +25027,10 @@ export function App() {
                     </div>
 
                     {/* Billed Items Section */}
-                    <div className="shift-bento-panel invoice-billed-items-panel">
-                      <div className="shift-bento-panel-header invoice-billed-items-header">
+                    <div className="invoice-billed-items-panel">
+                      <div className="invoice-billed-items-header">
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <ShoppingCartIcon size={17} style={{ color: 'var(--primary, #0F766E)', flexShrink: 0 }} />
                           <span className="invoice-billed-items-title">
                             Billed Items
                           </span>
@@ -25296,8 +25297,8 @@ export function App() {
                 )}
               </div>
 
-              {/* Bento Footer: Bottom Action Buttons */}
-              <div className="shift-bento-footer invoice-detail-footer">
+              {/* Footer: Bottom Action Buttons */}
+              <div className="invoice-detail-footer">
                 {invoiceDetailData?.invoice?.kind !== 'credit_note' && invoiceDetailData?.invoice?.status !== 'cancelled' && (
                   <button
                     type="button"

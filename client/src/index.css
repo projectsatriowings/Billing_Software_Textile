@@ -39378,14 +39378,14 @@ select.expense-input-control {
     margin: auto !important;
   }
 
-  .shift-bento-header:not(.select-counter-header) {
+  .shift-bento-header:not(.select-counter-header):not(.invoice-detail-header) {
     padding: 0.85rem 1rem !important;
     flex-direction: column !important;
     align-items: flex-start !important;
     gap: 0.5rem !important;
   }
 
-  .shift-bento-header:not(.select-counter-header) .shift-bento-header-actions {
+  .shift-bento-header:not(.select-counter-header):not(.invoice-detail-header) .shift-bento-header-actions {
     width: 100% !important;
     justify-content: space-between !important;
   }
@@ -42033,18 +42033,21 @@ select.expense-input-control {
   background: var(--surface, #FAF7F2) !important;
   border-bottom: 1px solid var(--border, #D0C7B8) !important;
   display: flex !important;
+  flex-direction: row !important;
   justify-content: space-between !important;
   align-items: flex-start !important;
   flex-shrink: 0 !important;
   box-sizing: border-box !important;
+  width: 100% !important;
 }
 
 .invoice-detail-header-left {
   display: flex !important;
+  flex-direction: row !important;
   align-items: flex-start !important;
   gap: 0.85rem !important;
   min-width: 0 !important;
-  flex: 1 !important;
+  flex: 1 1 auto !important;
 }
 
 .invoice-detail-icon-badge {
@@ -42111,6 +42114,8 @@ select.expense-input-control {
   border-radius: 9px !important;
   width: 32px !important;
   height: 32px !important;
+  min-width: 32px !important;
+  min-height: 32px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -42118,6 +42123,8 @@ select.expense-input-control {
   color: var(--text-muted, #475569) !important;
   transition: all 0.15s ease !important;
   flex-shrink: 0 !important;
+  margin-left: 0.5rem !important;
+  align-self: flex-start !important;
 }
 
 .invoice-detail-close-btn:hover {
@@ -42484,7 +42491,31 @@ select.expense-input-control {
 
   .invoice-detail-header {
     padding: 0.85rem 1rem !important;
+    gap: 0.5rem !important;
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: flex-start !important;
+    width: 100% !important;
+  }
+
+  .invoice-detail-header-left {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: flex-start !important;
     gap: 0.65rem !important;
+    min-width: 0 !important;
+    flex: 1 1 auto !important;
+  }
+
+  .invoice-detail-close-btn {
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    min-height: 32px !important;
+    flex-shrink: 0 !important;
+    margin-left: auto !important;
+    align-self: flex-start !important;
   }
 
   .invoice-detail-icon-badge {
@@ -42620,6 +42651,30 @@ select.expense-input-control {
   .invoice-detail-header {
     padding: 1rem 1.4rem !important;
     gap: 0.75rem !important;
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: flex-start !important;
+    width: 100% !important;
+  }
+
+  .invoice-detail-header-left {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: flex-start !important;
+    gap: 0.85rem !important;
+    min-width: 0 !important;
+    flex: 1 1 auto !important;
+  }
+
+  .invoice-detail-close-btn {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    min-height: 34px !important;
+    flex-shrink: 0 !important;
+    margin-left: auto !important;
+    align-self: flex-start !important;
   }
 
   .invoice-detail-icon-badge {
@@ -42636,10 +42691,10 @@ select.expense-input-control {
     gap: 0.95rem !important;
   }
 
-  /* Summary Cards: 2 columns on compact tablet, 4 columns when space permits (>= 900px) */
+  /* Summary Cards: 4 columns in a single row on Tablet */
   .invoice-detail-ribbon {
     display: grid !important;
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
     gap: 0.65rem !important;
     width: 100% !important;
     box-sizing: border-box !important;
