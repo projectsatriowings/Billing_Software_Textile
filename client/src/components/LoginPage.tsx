@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { api, setToken, type User, type Shop } from '../api';
 import './auth/modernLogin.css';
 
@@ -433,7 +434,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   onClick={() => handleRoleTabChange('super_admin')}
                 >
                   <CrownIcon size={13} />
-                  <span>Super Admin</span>
+                  <span className="role-pill-full">Super Admin</span>
+                  <span className="role-pill-short">Admin</span>
                 </button>
                 <button
                   type="button"
@@ -441,7 +443,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   onClick={() => handleRoleTabChange('store_manager')}
                 >
                   <StoreIcon size={13} />
-                  <span>Store Manager</span>
+                  <span className="role-pill-full">Store Manager</span>
+                  <span className="role-pill-short">Manager</span>
                 </button>
                 <button
                   type="button"
@@ -449,7 +452,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   onClick={() => handleRoleTabChange('cashier')}
                 >
                   <CashierIcon size={13} />
-                  <span>Cashier Counter</span>
+                  <span className="role-pill-full">Cashier Counter</span>
+                  <span className="role-pill-short">Cashier</span>
                 </button>
               </div>
             </div>
@@ -568,7 +572,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               </button>
             </form>
 
-            {!isInstalled && (
+            {!isInstalled && !Capacitor.isNativePlatform() && (
               <button
                 type="button"
                 onClick={() => setShowDownloadModal(true)}

@@ -11118,6 +11118,7 @@ body.theme-super-admin .app-sidebar.icon-only .sidebar-action-row-btn.active:hov
   flex-direction: column;
   gap: 1.5rem;
   padding: 0.25rem 0 2rem 0;
+  margin-top: 30px;
 }
 
 /* Shifts Hero Banner - Clean Light 3D Bento */
@@ -11138,6 +11139,7 @@ body.theme-super-admin .app-sidebar.icon-only .sidebar-action-row-btn.active:hov
     inset 0 -1px 0 0 rgba(226, 232, 240, 0.5);
   position: relative;
   overflow: hidden;
+
 }
 
 .shifts-hero-card::after {
@@ -11150,6 +11152,7 @@ body.theme-super-admin .app-sidebar.icon-only .sidebar-action-row-btn.active:hov
   background: radial-gradient(circle, rgba(129, 140, 248, 0.2) 0%, rgba(99, 102, 241, 0) 70%);
   border-radius: 50%;
   pointer-events: none;
+
 }
 
 .shifts-hero-left {
@@ -29711,8 +29714,8 @@ select.expense-input-control {
   display: none;
 }
 
-/* Tablet & Mobile Screens (<= 900px) */
-@media (max-width: 900px) {
+/* Tablet & Mobile Screens (<= 1439px): Vertical sidebar is replaced by Responsive Navbar or Slide-out Drawer */
+@media (max-width: 1439px) {
   body.mobile-drawer-open {
     overflow: hidden !important;
   }
@@ -29720,10 +29723,17 @@ select.expense-input-control {
   .app-container {
     position: relative;
     overflow-x: hidden;
+    flex-direction: column !important;
   }
 
-  /* 1. Slide-out Mobile Sidebar Drawer */
+  /* Desktop sidebar is hidden on tablet and mobile unless opened via mobile drawer */
   .app-sidebar {
+    display: none !important;
+  }
+
+  /* 1. Slide-out Mobile Sidebar Drawer when opened */
+  .app-sidebar.mobile-open {
+    display: flex !important;
     position: fixed !important;
     top: 0 !important;
     bottom: 0 !important;
@@ -29734,29 +29744,13 @@ select.expense-input-control {
     min-width: 295px !important;
     max-width: 86vw !important;
     z-index: 10000 !important;
-    transform: translateX(-100%);
-    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s ease !important;
-    box-shadow: none !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-    padding: 1.25rem 1rem 2rem !important;
-    box-sizing: border-box !important;
-    display: flex !important;
-    flex-direction: column !important;
-  }
-
-  .app-sidebar.mobile-open {
     transform: translateX(0) !important;
     box-shadow: 16px 0 45px rgba(0, 0, 0, 0.55) !important;
-  }
-
-  /* When on mobile drawer, force full readable navigation across all components */
-  .app-sidebar.mobile-open,
-  .app-sidebar.mobile-open.icon-only {
-    width: 295px !important;
-    min-width: 295px !important;
-    max-width: 86vw !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
     padding: 1.25rem 1rem 2.5rem !important;
+    box-sizing: border-box !important;
+    flex-direction: column !important;
   }
 
   .app-sidebar.mobile-open .sidebar-header-row,
@@ -29975,11 +29969,18 @@ select.expense-input-control {
     background: var(--primary-soft, #F5ECF0) !important;
     border-color: var(--primary, #653B4B) !important;
   }
+  .app-container {
+    position: relative;
+    overflow-x: hidden;
+    flex-direction: column !important;
+  }
+
+  }
 
   .main-content {
     width: 100% !important;
     max-width: 100% !important;
-    padding: 0.85rem 0.85rem 2rem !important;
+    padding: 0.85rem !important;
   }
 
   .bento-pos-grid {
@@ -29988,6 +29989,13 @@ select.expense-input-control {
 
   .bento-side-col {
     position: static !important;
+  }
+}
+
+/* Mobile Screens (<= 767px) Content Clearance for Fixed Bottom Navbar */
+@media (max-width: 767px) {
+  .main-content {
+    padding-bottom: calc(76px + env(safe-area-inset-bottom, 16px)) !important;
   }
 }
 
@@ -31715,122 +31723,125 @@ select.expense-input-control {
   line-height: 1.45 !important;
 }
 
-/* 4. Cart Table: High-Contrast, Large Typography, Touch Steppers */
-.bento-cart-table-header,
-.bento-cart-row {
-  grid-template-columns: minmax(170px, 1.8fr) minmax(100px, 1.05fr) minmax(85px, 0.95fr) minmax(118px, 1.25fr) minmax(118px, 1.25fr) 34px !important;
-  gap: 0.75rem !important;
-  min-width: 680px !important;
-}
+/* 4. Cart Table: Desktop (>= 1440px) High-Contrast, Large Typography, Touch Steppers */
+@media (min-width: 1440px) {
 
-.bento-cart-table-header .th-price,
-.bento-cart-table-header .th-total {
-  overflow: visible !important;
-  text-overflow: clip !important;
-  white-space: nowrap !important;
-}
+  .bento-cart-table-header,
+  .bento-cart-row {
+    grid-template-columns: minmax(170px, 1.8fr) minmax(100px, 1.05fr) minmax(85px, 0.95fr) minmax(118px, 1.25fr) minmax(118px, 1.25fr) 34px !important;
+    gap: 0.75rem !important;
+    min-width: 680px !important;
+  }
 
-.bento-cart-table-header {
-  font-size: 0.84rem !important;
-  font-weight: 850 !important;
-  color: #1e293b !important;
-  letter-spacing: 0.04em !important;
-  padding: 0.7rem 0.85rem !important;
-  border-bottom: 2px solid #e2e8f0 !important;
-}
+  .bento-cart-table-header .th-price,
+  .bento-cart-table-header .th-total {
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: nowrap !important;
+  }
 
-.bento-cart-row {
-  padding: 0.7rem 0.85rem !important;
-  align-items: center !important;
-  transition: background 0.18s ease, transform 0.18s ease !important;
-}
+  .bento-cart-table-header {
+    font-size: 0.84rem !important;
+    font-weight: 850 !important;
+    color: #1e293b !important;
+    letter-spacing: 0.04em !important;
+    padding: 0.7rem 0.85rem !important;
+    border-bottom: 2px solid #e2e8f0 !important;
+  }
 
-.bento-cart-row:hover {
-  background: #f8fafc !important;
-}
+  .bento-cart-row {
+    padding: 0.7rem 0.85rem !important;
+    align-items: center !important;
+    transition: background 0.18s ease, transform 0.18s ease !important;
+  }
 
-.bento-cart-item-name {
-  font-size: 1.05rem !important;
-  font-weight: 800 !important;
-  color: #0f172a !important;
-  line-height: 1.35 !important;
-}
+  .bento-cart-row:hover {
+    background: #f8fafc !important;
+  }
 
-.bento-cart-cat-badge {
-  font-size: 0.78rem !important;
-  font-weight: 750 !important;
-  padding: 0.15rem 0.45rem !important;
-  border-radius: 5px !important;
-}
+  .bento-cart-item-name {
+    font-size: 1.05rem !important;
+    font-weight: 800 !important;
+    color: #0f172a !important;
+    line-height: 1.35 !important;
+  }
 
-.bento-cart-savings-tag {
-  font-size: 0.78rem !important;
-  font-weight: 750 !important;
-  padding: 0.15rem 0.45rem !important;
-  border-radius: 5px !important;
-}
+  .bento-cart-cat-badge {
+    font-size: 0.78rem !important;
+    font-weight: 750 !important;
+    padding: 0.15rem 0.45rem !important;
+    border-radius: 5px !important;
+  }
 
-.bento-qty-stepper {
-  border-radius: 8px !important;
-  border: 1.5px solid #cbd5e1 !important;
-  background: #ffffff !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
-}
+  .bento-cart-savings-tag {
+    font-size: 0.78rem !important;
+    font-weight: 750 !important;
+    padding: 0.15rem 0.45rem !important;
+    border-radius: 5px !important;
+  }
 
-.bento-qty-btn {
-  width: 30px !important;
-  height: 30px !important;
-  font-size: 1.15rem !important;
-  font-weight: 900 !important;
-  color: #0f172a !important;
-  transition: all 0.12s ease !important;
-}
+  .bento-qty-stepper {
+    border-radius: 8px !important;
+    border: 1.5px solid #cbd5e1 !important;
+    background: #ffffff !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+  }
 
-.bento-qty-btn:hover {
-  background: #eff6ff !important;
-  color: #2563eb !important;
-}
+  .bento-qty-btn {
+    width: 30px !important;
+    height: 30px !important;
+    font-size: 1.15rem !important;
+    font-weight: 900 !important;
+    color: #0f172a !important;
+    transition: all 0.12s ease !important;
+  }
 
-.bento-qty-btn:active {
-  transform: scale(0.88) !important;
-}
+  .bento-qty-btn:hover {
+    background: #eff6ff !important;
+    color: #2563eb !important;
+  }
 
-.bento-qty-value {
-  min-width: 30px !important;
-  font-size: 1.05rem !important;
-  font-weight: 850 !important;
-  color: #0f172a !important;
-}
+  .bento-qty-btn:active {
+    transform: scale(0.88) !important;
+  }
 
-.bento-mrp-val {
-  font-size: 0.94rem !important;
-  font-weight: 650 !important;
-  color: #64748b !important;
-}
+  .bento-qty-value {
+    min-width: 30px !important;
+    font-size: 1.05rem !important;
+    font-weight: 850 !important;
+    color: #0f172a !important;
+  }
 
-.bento-store-val {
-  font-size: 1.02rem !important;
-  font-weight: 850 !important;
-  color: #4338ca !important;
-}
+  .bento-mrp-val {
+    font-size: 0.94rem !important;
+    font-weight: 650 !important;
+    color: #64748b !important;
+  }
 
-.bento-total-val {
-  font-size: 1.15rem !important;
-  font-weight: 900 !important;
-  color: #0f172a !important;
-}
+  .bento-store-val {
+    font-size: 1.02rem !important;
+    font-weight: 850 !important;
+    color: #4338ca !important;
+  }
 
-.bento-row-remove-btn {
-  width: 26px !important;
-  height: 26px !important;
-  border-radius: 6px !important;
-  transition: all 0.15s ease !important;
-}
+  .bento-total-val {
+    font-size: 1.15rem !important;
+    font-weight: 900 !important;
+    color: #0f172a !important;
+  }
 
-.bento-row-remove-btn:hover {
-  background: #fee2e2 !important;
-  color: #dc2626 !important;
-  transform: scale(1.15) !important;
+  .bento-row-remove-btn {
+    width: 26px !important;
+    height: 26px !important;
+    border-radius: 6px !important;
+    transition: all 0.15s ease !important;
+  }
+
+  .bento-row-remove-btn:hover {
+    background: #fee2e2 !important;
+    color: #dc2626 !important;
+    transform: scale(1.15) !important;
+  }
 }
 
 /* 5. Summary Box & Discounts - PROMINENT & CLEAR */
@@ -36551,26 +36562,6 @@ select.expense-input-control {
   color: #059669;
 }
 
-@media (max-width: 768px) {
-  .top-pos-header-left {
-    margin-left: 10px;
-    gap: 0.5rem;
-  }
-
-  .top-pos-bento-badge {
-    padding: 0.35rem 0.65rem;
-  }
-
-  .top-pos-badge-icon {
-    width: 28px;
-    height: 28px;
-  }
-
-  .top-pos-badge-val {
-    font-size: 0.8rem;
-  }
-}
-
 
 /* ==========================================================================
    BENTO RECENT BILLS & INVOICING STYLES (CASHIER & ADMIN)
@@ -36588,6 +36579,7 @@ select.expense-input-control {
   gap: 1.15rem;
   flex-wrap: wrap;
   margin-left: 20px;
+  margin-bottom: 30px;
 }
 
 .top-invoices-title-group {
@@ -36608,6 +36600,413 @@ select.expense-input-control {
   font-size: 0.78rem;
   color: #64748b;
   font-weight: 500;
+}
+
+/* Tablet View (768px–1439px): Recent Bills Header */
+@media (min-width: 768px) and (max-width: 1439px) {
+  .top-invoices-header-left {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 0.85rem !important;
+    flex-wrap: nowrap !important;
+    margin-left: 0 !important;
+    min-width: 0 !important;
+  }
+
+  .top-invoices-title-group {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 2px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .top-invoices-title {
+    font-size: 21px !important;
+    line-height: 1.25 !important;
+  }
+
+  .top-invoices-subtitle {
+    font-size: 11px !important;
+    line-height: 1.3 !important;
+  }
+
+  /* Hide Branch & Counter Badges on Tablet */
+  .top-invoices-header-left .top-pos-bento-badge,
+  .top-invoices-header-left .top-pos-branch-badge,
+  .top-invoices-header-left .top-pos-counter-badge,
+  .invoices-context-strip {
+    display: none !important;
+    visibility: hidden !important;
+    width: 0 !important;
+    height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+  }
+
+  /* Recent Bills Filter Card (Tablet Layout) */
+  .invoices-controls-bar {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    padding: 0.65rem 0.85rem !important;
+    gap: 0.45rem !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    border-radius: 13px !important;
+  }
+
+  .invoices-controls-left {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.45rem !important;
+    width: 100% !important;
+    flex: none !important;
+    box-sizing: border-box !important;
+  }
+
+  .invoices-search-box {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    height: 38px !important;
+    min-height: 38px !important;
+    padding: 0 0.75rem !important;
+    border-radius: 9px !important;
+    box-sizing: border-box !important;
+    gap: 0.45rem !important;
+  }
+
+  .invoices-search-input {
+    font-size: 12px !important;
+  }
+
+  .invoices-search-icon {
+    width: 15px !important;
+    height: 15px !important;
+  }
+
+  /* Date Filter Buttons: Single Row on Tablet */
+  .invoices-controls-left > .invoices-filter-group:nth-of-type(1) {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    gap: 0.45rem !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .invoices-controls-left > .invoices-filter-group:nth-of-type(1) .invoices-filter-pill {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    height: 34px !important;
+    min-height: 34px !important;
+    padding: 0 0.5rem !important;
+    font-size: 11.5px !important;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.3rem !important;
+    white-space: nowrap !important;
+    text-align: center !important;
+    box-sizing: border-box !important;
+  }
+
+  .invoices-controls-left > .invoices-filter-group:nth-of-type(1) .invoices-filter-pill svg {
+    width: 13px !important;
+    height: 13px !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* Payment Mode Buttons: Single Row on Tablet */
+  .invoices-controls-left > .invoices-filter-group:nth-of-type(2) {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    gap: 0.45rem !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .invoices-controls-left > .invoices-filter-group:nth-of-type(2) .invoices-filter-pill {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    height: 34px !important;
+    min-height: 34px !important;
+    padding: 0 0.5rem !important;
+    font-size: 11.5px !important;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.3rem !important;
+    white-space: nowrap !important;
+    text-align: center !important;
+    box-sizing: border-box !important;
+  }
+
+  .invoices-controls-left > .invoices-filter-group:nth-of-type(2) .invoices-filter-pill svg {
+    width: 13px !important;
+    height: 13px !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* 3. Bottom Spacing (30px on Tablet) */
+  .invoices-bento-root {
+    padding-bottom: 30px !important;
+  }
+}
+
+/* Mobile View (320px–767px): Recent Bills Header */
+@media (max-width: 767px) {
+  .top-invoices-header-left {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    gap: 0.4rem 0.5rem !important;
+    margin-left: 0 !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    width: auto !important;
+  }
+
+  .top-invoices-title-group {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .top-invoices-title {
+    font-size: 18px !important;
+    font-weight: 800 !important;
+    line-height: 1.2 !important;
+    color: var(--sidebar, #0F172A) !important;
+    margin: 0 !important;
+  }
+
+  .top-invoices-subtitle {
+    font-size: 10px !important;
+    line-height: 1.35 !important;
+    color: var(--text-muted, #64748B) !important;
+    margin: 0 !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+  }
+
+  /* Hide Branch & Counter Badges & Context Strip in Recent Bills Header on Mobile */
+  .top-invoices-header-left .top-pos-branch-badge,
+  .top-invoices-header-left .top-pos-counter-badge,
+  .top-invoices-header-left .top-pos-bento-badge,
+  .invoices-context-strip {
+    display: none !important;
+    visibility: hidden !important;
+    width: 0 !important;
+    height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+  }
+
+  /* Right Action Status Badges Alignment */
+  .top-global-bar:has(.top-invoices-header-left) .top-global-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.35rem !important;
+    margin-left: auto !important;
+    flex-shrink: 0 !important;
+    align-self: flex-start !important;
+    padding-top: 2px !important;
+  }
+
+  /* Hide Closing Overdue on Mobile */
+  .top-global-bar:has(.top-invoices-header-left) .top-overdue-closing-btn {
+    display: none !important;
+    visibility: hidden !important;
+    width: 0 !important;
+    height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+  }
+
+  .top-global-bar:has(.top-invoices-header-left) .top-user-chip {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    min-height: 34px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .top-global-bar:has(.top-invoices-header-left) .top-user-avatar {
+    width: 34px !important;
+    height: 34px !important;
+    font-size: 0.82rem !important;
+    margin: 0 !important;
+    border-radius: 50% !important;
+  }
+
+  /* Recent Bills Filter Card (Mobile Layout) */
+  .invoices-controls-bar {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    padding: 0.55rem 0.65rem !important;
+    gap: 0.4rem !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    border-radius: 12px !important;
+  }
+
+  .invoices-controls-left {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.4rem !important;
+    width: 100% !important;
+    flex: none !important;
+    box-sizing: border-box !important;
+  }
+
+  /* 1. Search Field: Top, Full-Width within card */
+  .invoices-search-box {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    height: 36px !important;
+    min-height: 36px !important;
+    padding: 0 0.65rem !important;
+    margin: 0 !important;
+    border-radius: 9px !important;
+    box-sizing: border-box !important;
+    gap: 0.4rem !important;
+  }
+
+  .invoices-search-input {
+    font-size: 11px !important;
+    line-height: 1.2 !important;
+  }
+
+  .invoices-search-icon {
+    width: 14px !important;
+    height: 14px !important;
+  }
+
+  /* 2. Date Filter Buttons: Single Row (Today, Yesterday, All Dates) */
+  .invoices-controls-left > .invoices-filter-group:nth-of-type(1) {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    gap: 0.35rem !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .invoices-controls-left > .invoices-filter-group:nth-of-type(1) .invoices-filter-pill {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    padding: 0 0.35rem !important;
+    font-size: 10.5px !important;
+    font-weight: 600 !important;
+    border-radius: 7px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.25rem !important;
+    white-space: nowrap !important;
+    text-align: center !important;
+    box-sizing: border-box !important;
+  }
+
+  .invoices-controls-left > .invoices-filter-group:nth-of-type(1) .invoices-filter-pill svg {
+    width: 12px !important;
+    height: 12px !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* 3. Payment Mode Buttons: Single Row (All Modes, Cash, UPI, Card) */
+  .invoices-controls-left > .invoices-filter-group:nth-of-type(2) {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    gap: 0.35rem !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .invoices-controls-left > .invoices-filter-group:nth-of-type(2) .invoices-filter-pill {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    padding: 0 0.25rem !important;
+    font-size: 10px !important;
+    font-weight: 600 !important;
+    border-radius: 7px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.22rem !important;
+    white-space: nowrap !important;
+    text-align: center !important;
+    box-sizing: border-box !important;
+  }
+
+  .invoices-controls-left > .invoices-filter-group:nth-of-type(2) .invoices-filter-pill svg {
+    width: 11px !important;
+    height: 11px !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* 3. Bottom Spacing (30px on Mobile) */
+  .invoices-bento-root {
+    padding-bottom: 30px !important;
+  }
+}
+
+/* Extra-narrow screens (<= 340px): graceful wrap */
+@media (max-width: 340px) {
+  .invoices-controls-left > .invoices-filter-group:nth-of-type(1),
+  .invoices-controls-left > .invoices-filter-group:nth-of-type(2) {
+    flex-wrap: wrap !important;
+  }
+
+  .invoices-controls-left > .invoices-filter-group:nth-of-type(1) .invoices-filter-pill,
+  .invoices-controls-left > .invoices-filter-group:nth-of-type(2) .invoices-filter-pill {
+    flex: 1 1 calc(50% - 0.25rem) !important;
+  }
 }
 
 /* Context Strip */
@@ -37413,15 +37812,6 @@ select.expense-input-control {
   .invoices-kpi-grid {
     grid-template-columns: 1fr 1fr;
   }
-
-  .invoices-controls-bar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .invoices-search-box {
-    max-width: 100%;
-  }
 }
 
 /* ==========================================================================
@@ -37446,6 +37836,14 @@ select.expense-input-control {
   animation: topOverdueGlowBlink 1.4s infinite ease-in-out;
   transition: all 0.2s ease;
   z-index: 5;
+}
+
+.top-overdue-label-full {
+  display: inline;
+}
+
+.top-overdue-label-short {
+  display: none;
 }
 
 .top-overdue-closing-btn:hover {
@@ -37573,6 +37971,7 @@ select.expense-input-control {
     transform: scale(1);
   }
 }
+
 /* Top Bar Customer Screen Button (Placed right after Counter Badge) */
 .top-pos-cfd-btn {
   display: inline-flex;
@@ -37615,7 +38014,6 @@ select.expense-input-control {
   display: inline-block;
   margin-left: 2px;
 }
-
 
 /* ==========================================================================
    PRODUCT CATALOGUE TOOLBAR & RESPONSIVE MOBILE ACTION GRID
@@ -38244,5 +38642,4028 @@ select.expense-input-control {
 
   .trf-mobile-subdate {
     display: block !important;
+  }
+}
+
+/* ==========================================================================
+   CASHIER SHIFT DASHBOARD RESPONSIVE SUITE (DESKTOP, TABLET, MOBILE)
+   ========================================================================== */
+
+/* 1. Global Wrapper and Container Adjustments */
+.shifts-dashboard-wrapper {
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+/* 2. Top Global Bar: My Cashier Shift Header */
+.top-shifts-header-left {
+  display: flex;
+  align-items: center;
+  gap: 1.15rem;
+  flex-wrap: wrap;
+  margin-left: 20px;
+  min-width: 0;
+}
+
+.top-shifts-badges-row {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+}
+
+/* Tablet View (768px–1439px) */
+@media (min-width: 768px) and (max-width: 1439px) {
+  .top-shifts-header-left {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 0.85rem !important;
+    flex-wrap: nowrap !important;
+    margin-left: 0 !important;
+    min-width: 0 !important;
+  }
+
+  .top-shifts-title {
+    font-size: 20px !important;
+    line-height: 1.25 !important;
+  }
+
+  .top-shifts-subtitle {
+    font-size: 12px !important;
+    line-height: 1.3 !important;
+  }
+
+  /* Hide Branch & Counter Badges Row on Tablet */
+  .top-shifts-badges-row,
+  .top-shifts-badges-row .top-pos-bento-badge,
+  .top-shifts-badges-row .top-pos-branch-badge,
+  .top-shifts-badges-row .top-pos-counter-badge {
+    display: none !important;
+    visibility: hidden !important;
+    width: 0 !important;
+    height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+  }
+
+  .shifts-bento-header-card {
+    padding: 1rem 1.2rem !important;
+    border-radius: 14px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .shifts-bento-header-card .cat-bento-header-content {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.85rem !important;
+  }
+
+  .shifts-bento-header-card .cat-bento-title {
+    font-size: 18px !important;
+    line-height: 1.25 !important;
+  }
+
+  .shifts-active-title-row .cat-badge-live-sync,
+  .shifts-active-title-row .bento-location-chip,
+  .shifts-active-title-row .bento-counter-chip {
+    font-size: 10px !important;
+    padding: 0.22rem 0.55rem !important;
+    border-radius: 7px !important;
+  }
+
+  .shifts-bento-header-card .cat-bento-subtitle {
+    font-size: 11px !important;
+    line-height: 1.4 !important;
+  }
+
+  .shifts-bento-header-card .cat-bento-header-actions {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 0.65rem !important;
+    width: 100% !important;
+  }
+
+  .shifts-bento-header-card .cat-bento-header-actions button {
+    flex: 1 1 calc(25% - 0.65rem) !important;
+    min-width: 120px !important;
+    justify-content: center !important;
+    min-height: 42px !important;
+    font-size: 0.82rem !important;
+  }
+}
+
+/* Mobile View (320px–767px) */
+@media (max-width: 767px) {
+  .top-shifts-header-left {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.35rem !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    margin-left: 0 !important;
+    width: auto !important;
+  }
+
+  .top-shifts-title-group {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1px !important;
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  .top-shifts-title {
+    font-size: 17px !important;
+    font-weight: 800 !important;
+    line-height: 1.2 !important;
+    color: var(--sidebar, #0F172A) !important;
+    margin: 0 !important;
+  }
+
+  .top-shifts-subtitle {
+    font-size: 10px !important;
+    line-height: 1.35 !important;
+    color: var(--text-muted, #64748B) !important;
+    margin: 0 !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+  }
+
+  /* Hide Branch & Counter Badges Row on Mobile */
+  .top-shifts-badges-row,
+  .top-shifts-badges-row .top-pos-bento-badge,
+  .top-shifts-badges-row .top-pos-branch-badge,
+  .top-shifts-badges-row .top-pos-counter-badge {
+    display: none !important;
+    visibility: hidden !important;
+    width: 0 !important;
+    height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+  }
+
+  /* Right Action Status Badges Alignment */
+  .top-global-bar:has(.top-shifts-header-left) .top-global-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.35rem !important;
+    margin-left: auto !important;
+    flex-shrink: 0 !important;
+    align-self: flex-start !important;
+    padding-top: 2px !important;
+  }
+
+  /* Hide Closing Overdue on Mobile */
+  .top-global-bar:has(.top-shifts-header-left) .top-overdue-closing-btn {
+    display: none !important;
+    visibility: hidden !important;
+    width: 0 !important;
+    height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+  }
+
+  .top-global-bar:has(.top-shifts-header-left) .top-user-chip {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    min-height: 34px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .top-global-bar:has(.top-shifts-header-left) .top-user-avatar {
+    width: 34px !important;
+    height: 34px !important;
+    font-size: 0.82rem !important;
+    margin: 0 !important;
+    border-radius: 50% !important;
+  }
+
+  /* Shift Information Card */
+  .shifts-bento-header-card {
+    padding: 0.75rem 0.85rem !important;
+    border-radius: 14px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+  }
+
+  .shifts-bento-header-card .cat-bento-header-content {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.75rem !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .shifts-active-title-group {
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 0.6rem !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .shifts-bento-header-card .cat-bento-icon-box {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    min-height: 34px !important;
+    border-radius: 8px !important;
+    flex-shrink: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin-top: 2px !important;
+  }
+
+  .shifts-bento-header-card .cat-bento-icon-box svg {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  .shifts-active-title-row {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    gap: 0.35rem !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .shifts-bento-header-card .cat-bento-title {
+    font-size: 16px !important;
+    font-weight: 800 !important;
+    line-height: 1.25 !important;
+    margin: 0 !important;
+  }
+
+  .shifts-active-title-row .cat-badge-live-sync,
+  .shifts-active-title-row .bento-location-chip,
+  .shifts-active-title-row .bento-counter-chip {
+    font-size: 9px !important;
+    font-weight: 700 !important;
+    padding: 0.18rem 0.45rem !important;
+    height: auto !important;
+    min-height: 20px !important;
+    border-radius: 6px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 3px !important;
+    white-space: nowrap !important;
+    line-height: 1.2 !important;
+  }
+
+  .shifts-active-title-row .live-indicator-dot {
+    width: 5px !important;
+    height: 5px !important;
+  }
+
+  .shifts-active-title-row .bento-location-chip svg,
+  .shifts-active-title-row .bento-counter-chip svg {
+    width: 11px !important;
+    height: 11px !important;
+  }
+
+  .shifts-bento-header-card .cat-bento-subtitle {
+    font-size: 10px !important;
+    line-height: 1.4 !important;
+    margin-top: 0.3rem !important;
+    margin-bottom: 0 !important;
+    word-break: break-word !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  /* Responsive Action Button Group */
+  .shifts-active-header-actions {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 0.45rem !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    margin-top: 0.15rem !important;
+    box-sizing: border-box !important;
+  }
+
+  .shifts-active-header-actions button {
+    width: 100% !important;
+    min-height: 40px !important;
+    padding: 0.45rem 0.35rem !important;
+    font-size: 0.76rem !important;
+    font-weight: 700 !important;
+    justify-content: center !important;
+    border-radius: 9px !important;
+    box-sizing: border-box !important;
+    white-space: nowrap !important;
+    gap: 4px !important;
+  }
+
+  .shifts-active-header-actions button svg {
+    width: 13px !important;
+    height: 13px !important;
+    flex-shrink: 0 !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .shifts-active-header-actions {
+    grid-template-columns: 1fr !important;
+    gap: 0.4rem !important;
+  }
+}
+
+/* Desktop View (1440px and above): Preserve existing desktop design */
+@media (min-width: 1440px) {
+  .shifts-bento-header-card .cat-bento-header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 1.5rem;
+  }
+
+  .shifts-bento-header-card .cat-bento-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    flex-shrink: 0;
+  }
+}
+
+/* 4. 5 Summary KPI Cards Grid */
+.shifts-bento-kpi-grid {
+  display: grid;
+  gap: 1rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (min-width: 1440px) {
+  .shifts-bento-kpi-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1439px) {
+  .shifts-bento-kpi-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 767px) and (min-width: 540px) {
+  .shifts-bento-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 539px) {
+  .shifts-bento-kpi-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem !important;
+  }
+}
+
+.shifts-bento-kpi-grid .cat-bento-kpi-card {
+  min-height: 130px;
+  padding: 1.1rem 1.25rem;
+  box-sizing: border-box;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.shifts-bento-kpi-grid .cat-kpi-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.shifts-bento-kpi-grid .cat-kpi-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.shifts-bento-kpi-grid .cat-kpi-title {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.shifts-bento-kpi-grid .cat-kpi-num {
+  font-size: 1.55rem;
+  font-weight: 800;
+  font-family: 'JetBrains Mono', monospace;
+  margin: 0.35rem 0;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 768px) {
+  .shifts-bento-kpi-grid .cat-bento-kpi-card {
+    padding: 0.95rem 1.1rem !important;
+    border-radius: 16px !important;
+    min-height: 118px !important;
+  }
+
+  .shifts-bento-kpi-grid .cat-kpi-num {
+    font-size: 1.35rem !important;
+  }
+
+  .shifts-bento-kpi-grid .cat-kpi-footer {
+    font-size: 0.72rem !important;
+    line-height: 1.35 !important;
+  }
+}
+
+/* 5. Navigation Tabs */
+.shifts-bento-nav-tabs {
+  display: flex;
+  gap: 0.45rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  flex-wrap: nowrap;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.35rem;
+}
+
+.shifts-bento-nav-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.shifts-bento-nav-tabs .bento-nav-tab {
+  flex-shrink: 0;
+  white-space: nowrap;
+  min-height: 44px;
+  padding: 0.65rem 1.15rem;
+  box-sizing: border-box;
+  touch-action: manipulation;
+}
+
+@media (max-width: 768px) {
+  .shifts-bento-nav-tabs {
+    border-radius: 12px !important;
+    padding: 0.3rem !important;
+  }
+
+  .shifts-bento-nav-tabs .bento-nav-tab {
+    padding: 0.55rem 0.9rem !important;
+    font-size: 0.82rem !important;
+    border-radius: 10px !important;
+  }
+}
+
+/* 6. Overview Tab Layout (Formula vs Actions) */
+.shifts-overview-layout {
+  display: grid;
+  gap: 1.5rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (min-width: 1440px) {
+  .shifts-overview-layout {
+    grid-template-columns: 2.2fr 1fr !important;
+  }
+}
+
+@media (max-width: 1439px) {
+  .shifts-overview-layout {
+    grid-template-columns: 1fr !important;
+    gap: 1.25rem !important;
+  }
+}
+
+/* 7. Drawer Reconciliation Formula Section */
+.formula-container-card {
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+@media (min-width: 1440px) {
+  .formula-detailed-flow {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 1rem 0;
+    overflow-x: visible;
+  }
+
+  .formula-step-box {
+    flex: 1;
+    min-width: 135px;
+  }
+
+  .formula-op-pill {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1439px) {
+  .formula-detailed-flow {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.85rem 0.25rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .formula-step-box {
+    flex-shrink: 0;
+    width: 165px;
+    min-width: 165px;
+  }
+
+  .formula-op-pill {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .formula-detailed-flow {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.5rem !important;
+    padding: 0.5rem 0 !important;
+    overflow-x: visible !important;
+    width: 100% !important;
+  }
+
+  .formula-step-box {
+    width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    padding: 0.85rem 1rem !important;
+    border-radius: 12px !important;
+  }
+
+  .formula-step-box .step-box-header {
+    margin-bottom: 0.25rem !important;
+  }
+
+  .formula-step-box .step-box-title {
+    font-size: 0.74rem !important;
+  }
+
+  .formula-step-box .step-box-desc {
+    min-height: 0 !important;
+    font-size: 0.72rem !important;
+  }
+
+  .formula-step-box .step-box-amount {
+    font-size: 1.15rem !important;
+    margin-top: 0.25rem !important;
+  }
+
+  /* Math Operators Centered Between Formula Cards */
+  .formula-op-pill {
+    margin: 0.2rem auto !important;
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 1.15rem !important;
+    font-weight: 800 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08) !important;
+  }
+
+  .formula-step-box.result {
+    margin-top: 0.25rem !important;
+    border-width: 2px !important;
+  }
+
+  .formula-step-box.result .step-box-amount {
+    font-size: 1.35rem !important;
+  }
+
+  .bento-safety-guarantee {
+    margin-top: 1rem !important;
+    padding: 0.85rem 1rem !important;
+    font-size: 0.78rem !important;
+  }
+}
+
+/* 8. Shift Actions Panel */
+.side-actions-bento-card {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.bento-actions-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.bento-action-card {
+  min-height: 54px;
+  touch-action: manipulation;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .bento-action-card {
+    padding: 0.85rem 1rem !important;
+    border-radius: 12px !important;
+  }
+
+  .bento-action-card .action-card-icon-box {
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 10px !important;
+  }
+
+  .bento-action-card .action-card-text strong {
+    font-size: 0.88rem !important;
+  }
+
+  .bento-action-card .action-card-text p {
+    font-size: 0.74rem !important;
+  }
+}
+
+/* 9. Tables in Payment Breakdown, Movements, Past Shifts */
+.bento-table-wrapper {
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  max-width: 100% !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  border-radius: 12px !important;
+}
+
+.shifts-table {
+  min-width: 620px;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .bento-card-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.65rem !important;
+    margin-bottom: 1rem !important;
+  }
+
+  .bento-filter-pills-row {
+    width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    justify-content: flex-start !important;
+  }
+
+  .bento-filter-pill {
+    padding: 0.4rem 0.75rem !important;
+    font-size: 0.72rem !important;
+    flex-shrink: 0 !important;
+  }
+}
+
+/* 10. Modals / Dialogs Responsiveness (Mobile <= 767px) */
+@media (max-width: 767px) {
+  .shift-bento-dialog {
+    width: 96vw !important;
+    max-width: 96vw !important;
+    max-height: 92vh !important;
+    border-radius: 14px !important;
+    margin: auto !important;
+  }
+
+  .shift-bento-header:not(.select-counter-header) {
+    padding: 0.85rem 1rem !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.5rem !important;
+  }
+
+  .shift-bento-header:not(.select-counter-header) .shift-bento-header-actions {
+    width: 100% !important;
+    justify-content: space-between !important;
+  }
+
+  .select-counter-header {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+    padding: 0.85rem 1rem !important;
+    gap: 0.65rem !important;
+    width: 100% !important;
+  }
+
+  .select-counter-header .shift-bento-header-left {
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 0.65rem !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+  }
+
+  .select-counter-header-actions {
+    width: auto !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    flex-shrink: 0 !important;
+    align-self: flex-start !important;
+    margin-left: auto !important;
+  }
+
+  .shift-bento-header-left {
+    gap: 0.65rem !important;
+  }
+
+  .shift-bento-body {
+    padding: 0.85rem 1rem !important;
+    gap: 0.85rem !important;
+  }
+
+  .shift-bento-ribbon {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.55rem !important;
+  }
+
+  .shift-bento-ribbon-tile {
+    padding: 0.65rem 0.75rem !important;
+  }
+
+  .ribbon-tile-val {
+    font-size: 1.15rem !important;
+  }
+
+  .shift-bento-main-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.85rem !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Opening Float & Location Card - Mobile (320px-767px) */
+  .shift-bento-panel {
+    padding: 0.75rem 0.85rem !important;
+    gap: 0.65rem !important;
+    border-radius: 14px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+  }
+
+  .shift-bento-panel .shift-bento-panel-header {
+    padding-bottom: 0.5rem !important;
+    gap: 0.4rem !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .shift-bento-panel .panel-header-title {
+    font-size: 0.88rem !important;
+    line-height: 1.25 !important;
+  }
+
+  .shift-bento-panel .form-group {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.35rem !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .shift-bento-panel .form-label {
+    font-size: 0.78rem !important;
+    font-weight: 700 !important;
+    margin-bottom: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+  }
+
+  .shift-bento-panel .rupee-input-wrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    height: 48px !important;
+    min-height: 48px !important;
+    padding: 0 0.55rem !important;
+    border-radius: 11px !important;
+    gap: 0.45rem !important;
+    display: flex !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+  }
+
+  .shift-bento-panel .rupee-badge-prefix {
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    min-height: 32px !important;
+    font-size: 1.1rem !important;
+    border-radius: 8px !important;
+    flex-shrink: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .shift-bento-panel .rupee-input {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    font-size: 1.25rem !important;
+    padding: 0 0.35rem !important;
+    box-sizing: border-box !important;
+  }
+
+  .shift-bento-panel .quick-amount-pills {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 0.4rem !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    margin-top: 0.45rem !important;
+  }
+
+  .shift-bento-panel .quick-pill {
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 36px !important;
+    min-height: 36px !important;
+    padding: 0 0.35rem !important;
+    font-size: 0.78rem !important;
+    border-radius: 8px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 2px !important;
+    box-sizing: border-box !important;
+    white-space: nowrap !important;
+  }
+
+  .shift-bento-panel .quick-pill-currency {
+    font-size: 0.74rem !important;
+    font-weight: 700 !important;
+  }
+
+  .shift-bento-panel .quick-pill-val {
+    font-size: 0.78rem !important;
+    font-weight: 700 !important;
+  }
+
+  .shift-bento-panel .quick-pill-check {
+    margin-left: 2px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+  }
+
+  .shift-bento-panel .quick-pill-check svg {
+    width: 11px !important;
+    height: 11px !important;
+  }
+
+  .shift-bento-panel .select-input-wrapper {
+    position: relative !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .shift-bento-panel select.form-select,
+  .shift-bento-panel select.form-input {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    height: 42px !important;
+    min-height: 42px !important;
+    padding: 0 2.2rem 0 0.75rem !important;
+    font-size: 0.84rem !important;
+    border-radius: 9px !important;
+    box-sizing: border-box !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    background-color: var(--surface, #ffffff) !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%230F766E' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 0.75rem center !important;
+    background-size: 14px 14px !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    cursor: pointer !important;
+  }
+
+  .shift-bento-panel input[type="text"].form-input,
+  .shift-bento-panel input.form-input:not(.rupee-input) {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    height: 42px !important;
+    min-height: 42px !important;
+    padding: 0 0.75rem !important;
+    font-size: 0.84rem !important;
+    border-radius: 9px !important;
+    box-sizing: border-box !important;
+  }
+
+  .shift-bento-panel input[type="text"].form-input::placeholder,
+  .shift-bento-panel input.form-input:not(.rupee-input)::placeholder {
+    font-size: 0.76rem !important;
+    color: #94a3b8 !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .shift-bento-footer {
+    padding: 0.75rem 1rem !important;
+    flex-direction: column-reverse !important;
+    align-items: stretch !important;
+    gap: 0.65rem !important;
+  }
+
+  .shift-bento-footer-actions {
+    width: 100% !important;
+    display: flex !important;
+    gap: 0.5rem !important;
+  }
+
+  .shift-bento-footer-actions button {
+    flex: 1 !important;
+    min-height: 44px !important;
+    justify-content: center !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .shift-bento-ribbon:not(.select-counter-ribbon) {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 350px) {
+  .shift-bento-panel .quick-amount-pills {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.35rem !important;
+  }
+}
+
+/* ==========================================================================
+   SELECT BILLING COUNTER MODAL RESPONSIVE ENHANCEMENTS
+   ========================================================================== */
+@media (max-width: 768px) {
+
+  .select-counter-bento-dialog,
+  .select-counter-dialog {
+    width: calc(100% - 24px) !important;
+    max-width: calc(100% - 24px) !important;
+    max-height: calc(100dvh - 24px) !important;
+    margin: 12px auto !important;
+    border-radius: 16px !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .select-counter-header {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+    padding: 0.85rem 1rem !important;
+    gap: 0.65rem !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .select-counter-header .shift-bento-header-left {
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 0.65rem !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+  }
+
+  .select-counter-header-actions {
+    display: flex !important;
+    align-items: center !important;
+    flex-shrink: 0 !important;
+    align-self: flex-start !important;
+    margin-left: auto !important;
+  }
+
+  /* Hide extra header branch chip on mobile to keep close button cleanly positioned */
+  .select-counter-branch-chip {
+    display: none !important;
+  }
+
+  .select-counter-close-btn {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+    border-radius: 10px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  /* Compact Station Sync text on mobile to avoid overlap */
+  .station-sync-text {
+    display: none !important;
+  }
+
+  /* Footer Mobile Layout: Active counter indicator stacked above full-width buttons */
+  .select-counter-footer {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.75rem !important;
+    padding: 0.85rem 1rem !important;
+  }
+
+  .select-counter-footer-counter-info {
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    font-size: 0.82rem !important;
+  }
+
+  .select-counter-footer-pill {
+    max-width: 65% !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  .select-counter-footer-actions {
+    display: flex !important;
+    width: 100% !important;
+    gap: 0.65rem !important;
+  }
+
+  .select-counter-btn-cancel {
+    flex: 1 1 35% !important;
+    min-height: 44px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 0.86rem !important;
+    font-weight: 700 !important;
+    border-radius: 10px !important;
+    background: var(--surface, #FAF7F2) !important;
+    border: 1px solid var(--border, #D0C7B8) !important;
+    color: var(--text-muted, #475569) !important;
+  }
+
+  .select-counter-btn-confirm {
+    flex: 2 1 65% !important;
+    min-height: 44px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 0.88rem !important;
+    font-weight: 800 !important;
+    border-radius: 10px !important;
+    background: var(--primary, #0F766E) !important;
+    color: #ffffff !important;
+    border: none !important;
+  }
+}
+
+/* Summary Ribbon Cards in Select Counter Modal */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .select-counter-ribbon {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.65rem !important;
+  }
+
+  .select-counter-ribbon .dest-tile {
+    grid-column: span 2 !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .select-counter-ribbon {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.55rem !important;
+  }
+
+  .select-counter-ribbon .dest-tile {
+    grid-column: auto !important;
+  }
+}
+
+.select-counter-ribbon-tile {
+  min-width: 0 !important;
+  overflow: visible !important;
+  padding: 0.75rem 0.85rem !important;
+}
+
+.select-counter-ribbon-tile .ribbon-tile-val {
+  font-size: 1rem !important;
+  line-height: 1.3 !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+
+.select-counter-ribbon-tile .ribbon-tile-sub {
+  font-size: 0.72rem !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+}
+
+
+/* ==========================================================================
+   POS GLOBAL BAR & HEADER RESPONSIVENESS (MOBILE & TABLET)
+   ========================================================================== */
+
+/* Tablet (768px - 1439px) */
+@media (min-width: 768px) and (max-width: 1439px) {
+  .top-global-bar {
+    flex-wrap: nowrap !important;
+    gap: 0.65rem !important;
+    padding-bottom: 0.65rem !important;
+    margin-bottom: 0.85rem !important;
+  }
+
+  /* Hide Branch, Counter, CFD & Overdue on Tablet */
+  .top-pos-header-left,
+  .top-shifts-badges-row,
+  .top-pos-bento-badge,
+  .top-pos-branch-badge,
+  .top-pos-counter-badge,
+  .top-pos-cfd-btn,
+  .top-overdue-closing-btn {
+    display: none !important;
+    visibility: hidden !important;
+    width: 0 !important;
+    height: 0 !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    max-width: 0 !important;
+    max-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+  }
+
+  .top-global-actions {
+    margin-left: auto !important;
+    gap: 0.5rem !important;
+    flex-shrink: 0 !important;
+  }
+
+  .top-user-name {
+    max-width: 85px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  .bento-shift-warning-banner {
+    padding: 0.75rem 1rem !important;
+  }
+}
+
+/* Mobile (320px - 767px) */
+@media (max-width: 767px) {
+  .top-global-bar {
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 0.45rem 0.65rem !important;
+    margin-bottom: 0.65rem !important;
+    gap: 0.4rem !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Hide Branch, Counter, CFD & Overdue on Mobile */
+  .top-pos-header-left,
+  .top-shifts-badges-row,
+  .top-pos-branch-badge,
+  .top-pos-counter-badge,
+  .top-pos-bento-badge,
+  .top-pos-cfd-btn,
+  .top-overdue-closing-btn {
+    display: none !important;
+    visibility: hidden !important;
+    width: 0 !important;
+    height: 0 !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    max-width: 0 !important;
+    max-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+  }
+
+  /* Right actions */
+  .top-global-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.35rem !important;
+    margin-left: auto !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* User profile circular avatar */
+  .top-user-chip {
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    min-height: 38px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+    background: #ffffff !important;
+    box-sizing: border-box !important;
+  }
+
+  .top-user-avatar {
+    width: 38px !important;
+    height: 38px !important;
+    font-size: 0.88rem !important;
+    margin: 0 !important;
+    border-radius: 50% !important;
+  }
+
+  .top-user-details {
+    display: none !important;
+  }
+
+  /* Cashier Register Shift Warning Banner: Stacks vertically */
+  .bento-shift-warning-banner {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.75rem !important;
+    padding: 0.85rem 1rem !important;
+    border-radius: 14px !important;
+    margin-bottom: 0.75rem !important;
+  }
+
+  .bento-warning-text {
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 0.65rem !important;
+    width: 100% !important;
+  }
+
+  .bento-warning-message {
+    font-size: 0.82rem !important;
+    line-height: 1.4 !important;
+    flex: 1 !important;
+  }
+
+  .bento-open-shift-btn {
+    width: 100% !important;
+    min-height: 44px !important;
+    justify-content: center !important;
+    font-size: 0.88rem !important;
+    font-weight: 800 !important;
+    border-radius: 10px !important;
+  }
+
+  /* Billing Terminal Header: Prevents button title collision */
+  .bento-terminal-header {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.65rem !important;
+    padding: 0.75rem 0.85rem !important;
+  }
+
+  .terminal-title-group {
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 0.5rem !important;
+  }
+
+  .terminal-actions {
+    display: flex !important;
+    align-items: center !important;
+    width: 100% !important;
+    gap: 0.45rem !important;
+  }
+
+  .bento-exchange-btn {
+    flex: 1 1 auto !important;
+    min-height: 38px !important;
+    justify-content: center !important;
+    font-size: 0.8rem !important;
+  }
+
+  .bento-hold-cart-btn,
+  .bento-clear-cart-btn {
+    min-height: 38px !important;
+    padding: 0.35rem 0.65rem !important;
+    font-size: 0.78rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  /* Empty Cart Compact */
+  .bento-empty-cart {
+    padding: 1.25rem 0.85rem !important;
+  }
+
+  .bento-empty-icon-wrap {
+    width: 52px !important;
+    height: 52px !important;
+    margin-bottom: 0.25rem !important;
+  }
+
+  .bento-empty-icon-wrap svg {
+    width: 44px !important;
+    height: 44px !important;
+  }
+
+  .empty-title {
+    font-size: 0.95rem !important;
+  }
+
+  .empty-desc {
+    font-size: 0.72rem !important;
+    margin-bottom: 0.65rem !important;
+  }
+
+  .bento-start-add-btn {
+    min-height: 40px !important;
+    padding: 0.45rem 1rem !important;
+    font-size: 0.82rem !important;
+  }
+
+  /* Barcode Scanner Card */
+  .bento-scanner-card {
+    padding: 0.85rem !important;
+  }
+
+  .scanner-camera-actions {
+    display: flex !important;
+    gap: 0.5rem !important;
+    width: 100% !important;
+  }
+
+  .scanner-camera-actions button {
+    flex: 1 1 0 !important;
+    min-height: 42px !important;
+    justify-content: center !important;
+    font-size: 0.8rem !important;
+  }
+
+  .bento-find-product-btn {
+    min-height: 44px !important;
+    font-size: 0.85rem !important;
+  }
+
+  /* Payment & Settlement: 2x2 grid for tender modes with comfortable touch targets */
+  .bento-payment-modes {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.5rem !important;
+  }
+
+  .bento-pay-mode-btn {
+    min-height: 44px !important;
+    font-size: 0.82rem !important;
+    padding: 0.5rem 0.35rem !important;
+  }
+}
+
+/* POS Customer Inline Inputs Responsive Grid */
+.bento-cust-inputs-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .bento-cust-inputs-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+    width: 100% !important;
+  }
+}
+
+/* ==========================================================================
+   HIDE BRANCH, COUNTER, CFD & CLOSING OVERDUE ON ALL MOBILE & TABLET (<= 1439px)
+   Keep ONLY Page Title, Subtitle & Cashier Profile visible.
+   Fully preserved on Desktop (>= 1440px).
+   ========================================================================== */
+@media (max-width: 1439px) {
+
+  .top-pos-header-left,
+  .top-shifts-badges-row,
+  .top-pos-branch-badge,
+  .top-pos-counter-badge,
+  .top-pos-cfd-btn,
+  .top-overdue-closing-btn,
+  .top-pos-bento-badge,
+  .top-pos-bento-badge.top-pos-branch-badge,
+  .top-pos-bento-badge.top-pos-counter-badge,
+  .top-invoices-header-left .top-pos-bento-badge,
+  .top-invoices-header-left .top-pos-branch-badge,
+  .top-invoices-header-left .top-pos-counter-badge,
+  .top-shifts-header-left .top-pos-bento-badge,
+  .top-shifts-header-left .top-pos-branch-badge,
+  .top-shifts-header-left .top-pos-counter-badge,
+  .top-shifts-badges-row .top-pos-bento-badge,
+  .top-shifts-badges-row .top-pos-branch-badge,
+  .top-shifts-badges-row .top-pos-counter-badge,
+  .top-global-bar .top-pos-branch-badge,
+  .top-global-bar .top-pos-counter-badge,
+  .top-global-bar .top-pos-cfd-btn,
+  .top-global-bar .top-overdue-closing-btn,
+  .invoices-context-strip {
+    display: none !important;
+    visibility: hidden !important;
+    width: 0 !important;
+    height: 0 !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    max-width: 0 !important;
+    max-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+    opacity: 0 !important;
+    flex: 0 0 0% !important;
+  }
+}
+
+/* ==========================================================================
+   RESPONSIVE POS NAVIGATION SUITE (DESKTOP, TABLET, MOBILE)
+   ========================================================================== */
+
+/* 1. Desktop (>= 1440px): Desktop sidebar preserved as-is */
+@media (min-width: 1440px) {
+
+  .responsive-tablet-sidebar,
+  .responsive-tablet-navbar,
+  .responsive-mobile-bottom-nav,
+  .responsive-more-overlay {
+    display: none !important;
+  }
+
+  .app-sidebar {
+    display: flex !important;
+    position: sticky !important;
+    top: 0 !important;
+    left: 0 !important;
+    height: 100vh !important;
+    transform: none !important;
+  }
+}
+
+/* 2. Tablet (768px - 1439px): Dedicated Vertical Icon-Only Left Sidebar (60px) */
+@media (min-width: 768px) and (max-width: 1439px) {
+  .app-sidebar {
+    display: none !important;
+  }
+
+  .responsive-mobile-bottom-nav {
+    display: none !important;
+  }
+
+  .responsive-tablet-sidebar {
+    display: flex !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    bottom: 0 !important;
+    width: 60px !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    background: #0F2D2E !important;
+    border-right: 1px solid rgba(20, 184, 166, 0.25) !important;
+    box-shadow: 2px 0 12px rgba(0, 0, 0, 0.2) !important;
+    z-index: 950 !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 0.75rem 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .theme-super-admin .responsive-tablet-sidebar {
+    background: #241829 !important;
+    border-right-color: rgba(168, 85, 247, 0.28) !important;
+  }
+
+  .main-content {
+    margin-left: 60px !important;
+    width: calc(100% - 60px) !important;
+    max-width: calc(100% - 60px) !important;
+    padding: 0.85rem !important;
+    box-sizing: border-box !important;
+  }
+}
+
+/* 3. Mobile (<= 767px): Fixed Bottom Navigation Bar - Icons ONLY */
+@media (max-width: 767px) {
+  .app-sidebar {
+    display: none !important;
+  }
+
+  .responsive-tablet-sidebar,
+  .responsive-tablet-navbar {
+    display: none !important;
+  }
+
+  .responsive-mobile-bottom-nav {
+    display: flex !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: calc(56px + env(safe-area-inset-bottom, 0px)) !important;
+    padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+    background: #0F2D2E !important;
+    border-top: 1px solid rgba(20, 184, 166, 0.35) !important;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3) !important;
+    z-index: 990 !important;
+    align-items: center !important;
+    justify-content: space-around !important;
+    box-sizing: border-box !important;
+  }
+
+  .theme-super-admin .responsive-mobile-bottom-nav {
+    background: #241829 !important;
+    border-top-color: rgba(168, 85, 247, 0.35) !important;
+  }
+
+  .main-content {
+    margin-left: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding-bottom: calc(76px + env(safe-area-inset-bottom, 16px)) !important;
+    box-sizing: border-box !important;
+  }
+}
+
+/* ==========================================================================
+   TABLET SIDEBAR ELEMENTS - ICONS ONLY, NO BUTTON/CARD BACKGROUNDS
+   ========================================================================== */
+.responsive-tablet-sidebar .tab-sidebar-top {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.responsive-tablet-sidebar .tab-sidebar-brand-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: transparent;
+  border: none;
+  color: #14b8a6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  padding: 0;
+}
+
+.responsive-tablet-sidebar .tab-sidebar-brand-btn:hover {
+  transform: scale(1.05);
+}
+
+.responsive-tablet-sidebar .tab-brand-img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.responsive-tablet-sidebar .tab-sidebar-items {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  flex: 1;
+  padding-top: 0.75rem;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.responsive-tablet-sidebar .tab-sidebar-items::-webkit-scrollbar {
+  display: none;
+}
+
+.responsive-tablet-sidebar .tab-sidebar-bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Tablet Icon Item: Completely transparent button container, icon-only */
+.responsive-tablet-sidebar .tab-icon-item {
+  width: 44px !important;
+  height: 44px !important;
+  min-width: 44px !important;
+  min-height: 44px !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: rgba(255, 255, 255, 0.45) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  position: relative !important;
+  transition: all 0.15s ease !important;
+  padding: 0 !important;
+}
+
+.responsive-tablet-sidebar .tab-icon-item:hover {
+  color: #ffffff !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Active Tablet Navigation State: Teal color, NO colored background box */
+.responsive-tablet-sidebar .tab-icon-item.active {
+  color: #14b8a6 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.theme-super-admin .responsive-tablet-sidebar .tab-icon-item.active {
+  color: #c084fc !important;
+}
+
+.responsive-tablet-sidebar .tab-icon-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.responsive-tablet-sidebar .tab-icon-badge {
+  position: absolute;
+  top: -4px;
+  right: -8px;
+  font-size: 0.62rem;
+  font-weight: 800;
+  background: #ef4444;
+  color: #ffffff;
+  padding: 1px 4px;
+  border-radius: 6px;
+  line-height: 1;
+}
+
+.responsive-tablet-sidebar .tab-icon-badge.active-pulse {
+  top: -2px;
+  right: -3px;
+  width: 8px;
+  height: 8px;
+  min-width: 8px;
+  min-height: 8px;
+  padding: 0;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.8), 0 0 0 1.5px #0F2D2E;
+  font-size: 0;
+  line-height: 0;
+}
+
+.responsive-tablet-sidebar .tab-notif-dot {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ef4444;
+}
+
+.responsive-tablet-sidebar .tab-logout-icon-item:hover {
+  color: #f87171 !important;
+}
+
+/* ==========================================================================
+   MOBILE BOTTOM NAVIGATION ELEMENTS - ICONS ONLY, NO BUTTON BACKGROUNDS
+   ========================================================================== */
+.responsive-mobile-bottom-nav .mobile-icon-btn {
+  flex: 1 1 0 !important;
+  min-width: 44px !important;
+  min-height: 48px !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  cursor: pointer !important;
+  padding: 0 !important;
+  color: rgba(255, 255, 255, 0.45) !important;
+  transition: all 0.15s ease !important;
+  user-select: none !important;
+  touch-action: manipulation !important;
+  position: relative !important;
+}
+
+.responsive-mobile-bottom-nav .mobile-icon-btn:hover {
+  color: #ffffff !important;
+  background: transparent !important;
+}
+
+.responsive-mobile-bottom-nav .mobile-icon-btn:active {
+  transform: scale(0.92);
+}
+
+/* Active Mobile Navigation State: Teal color, NO colored background box */
+.responsive-mobile-bottom-nav .mobile-icon-btn.active {
+  color: #14b8a6 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.theme-super-admin .responsive-mobile-bottom-nav .mobile-icon-btn.active {
+  color: #c084fc !important;
+}
+
+.responsive-mobile-bottom-nav .mobile-icon-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+}
+
+.responsive-mobile-bottom-nav .mobile-icon-badge {
+  position: absolute;
+  top: -4px;
+  right: -8px;
+  font-size: 0.6rem;
+  font-weight: 800;
+  color: #ffffff;
+  background: #ef4444;
+  padding: 1px 4px;
+  border-radius: 6px;
+  line-height: 1;
+}
+
+.responsive-mobile-bottom-nav .mobile-icon-badge.active-pulse {
+  top: -2px;
+  right: -3px;
+  width: 8px;
+  height: 8px;
+  min-width: 8px;
+  min-height: 8px;
+  padding: 0;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.8), 0 0 0 1.5px #0F2D2E;
+  font-size: 0;
+  line-height: 0;
+}
+
+/* Accessible More Menu Overlay & Slide-Up Sheet */
+.responsive-more-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 995;
+  background: rgba(15, 23, 42, 0.68);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: fadeIn 0.18s ease;
+}
+
+@media (min-width: 768px) {
+  .responsive-more-overlay {
+    align-items: center;
+  }
+}
+
+.responsive-more-sheet {
+  width: 100%;
+  max-width: 540px;
+  max-height: 86vh;
+  max-height: 86dvh;
+  background: #ffffff;
+  border-radius: 20px 20px 0 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 -12px 48px rgba(0, 0, 0, 0.35);
+  animation: sheetSlideUp 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (min-width: 768px) {
+  .responsive-more-sheet {
+    border-radius: 20px;
+    max-height: 80vh;
+  }
+}
+
+.sheet-drag-handle {
+  width: 42px;
+  height: 4px;
+  border-radius: 9999px;
+  background: #cbd5e1;
+  margin: 10px auto 4px;
+}
+
+@media (min-width: 768px) {
+  .sheet-drag-handle {
+    display: none;
+  }
+}
+
+.sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1.5px solid #f1f5f9;
+}
+
+.sheet-header-title-box {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.sheet-store-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.sheet-role-badge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  background: #eff6ff;
+  color: #2563eb;
+  padding: 2px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.03em;
+}
+
+.sheet-close-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+  background: #f1f5f9;
+  border: none;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sheet-close-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.sheet-content-scroll {
+  padding: 1rem 1.25rem;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.sheet-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sheet-section-title {
+  font-size: 0.74rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  margin-bottom: 0.2rem;
+}
+
+.sheet-items-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.55rem;
+}
+
+.sheet-item-card {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.65rem 0.85rem;
+  background: #f8fafc;
+  border: 1.2px solid #e2e8f0;
+  border-radius: 12px;
+  color: #1e293b;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+  min-height: 44px;
+}
+
+.sheet-item-card:hover {
+  background: #ffffff;
+  border-color: #6366f1;
+  color: #4f46e5;
+  transform: translateY(-1px);
+}
+
+.sheet-item-card.active {
+  background: #eff6ff;
+  border-color: #3b82f6;
+  color: #1d4ed8;
+}
+
+.sheet-item-card svg {
+  flex-shrink: 0;
+  color: #64748b;
+}
+
+.sheet-item-card:hover svg,
+.sheet-item-card.active svg {
+  color: inherit;
+}
+
+.sheet-item-badge {
+  margin-left: auto;
+  font-size: 0.68rem;
+  font-weight: 800;
+  background: #e2e8f0;
+  color: #475569;
+  padding: 1px 6px;
+  border-radius: 6px;
+}
+
+.sheet-item-badge.alert {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.sheet-footer {
+  padding: 0.85rem 1.25rem calc(0.85rem + env(safe-area-inset-bottom, 0px));
+  border-top: 1.5px solid #f1f5f9;
+  background: #fafbfc;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.sheet-user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.sheet-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #3b82f6;
+  color: #ffffff;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+
+.sheet-user-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.sheet-user-name {
+  font-size: 0.84rem;
+  font-weight: 800;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sheet-user-email {
+  font-size: 0.72rem;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sheet-logout-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 0.95rem;
+  border-radius: 10px;
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  min-height: 42px;
+}
+
+.sheet-logout-btn:hover {
+  background: #fecaca;
+  color: #b91c1c;
+}
+
+/* ==========================================================================
+   POS UNIVERSAL PORTAL TOOLTIP SYSTEM
+   ========================================================================== */
+.pos-portal-tooltip {
+  position: fixed;
+  z-index: 99999;
+  pointer-events: none;
+  background: #0f172a;
+  color: #f8fafc;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.2);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 4px 9px;
+  white-space: nowrap;
+  opacity: 1;
+  animation: posTooltipFadeIn 0.14s ease-out;
+  will-change: opacity, transform;
+}
+
+@keyframes posTooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.pos-portal-tooltip-top {
+  transform: translate(-50%, -100%);
+  margin-top: -6px;
+}
+
+.pos-portal-tooltip-bottom {
+  transform: translate(-50%, 0);
+  margin-top: 6px;
+}
+
+.pos-portal-tooltip-right {
+  transform: translate(0, -50%);
+  margin-left: 7px;
+}
+
+.pos-portal-tooltip-left {
+  transform: translate(-100%, -50%);
+  margin-left: -7px;
+}
+
+.pos-portal-tooltip-content {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  line-height: 1.25;
+  color: #f8fafc;
+}
+
+.pos-portal-tooltip-arrow {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  transform: rotate(45deg);
+}
+
+.pos-portal-tooltip-top .pos-portal-tooltip-arrow {
+  bottom: -3px;
+  border-top: none;
+  border-left: none;
+}
+
+.pos-portal-tooltip-bottom .pos-portal-tooltip-arrow {
+  top: -3px;
+  border-bottom: none;
+  border-right: none;
+}
+
+.pos-portal-tooltip-right .pos-portal-tooltip-arrow {
+  left: -3px;
+  top: 50%;
+  margin-top: -3px;
+  border-top: none;
+  border-right: none;
+}
+
+.pos-portal-tooltip-left .pos-portal-tooltip-arrow {
+  right: -3px;
+  top: 50%;
+  margin-top: -3px;
+  border-bottom: none;
+  border-left: none;
+}
+
+/* ==========================================================================
+   POS PRODUCT TABLE & CATEGORY BREAKDOWN (TABLET: 768px - 1439px)
+   ========================================================================== */
+@media (min-width: 768px) and (max-width: 1439px) {
+
+  /* Category Breakdown Pill */
+  .bento-category-strip-container {
+    padding: 0.35rem 0.6rem !important;
+    gap: 0.5rem !important;
+  }
+
+  .bento-category-strip-title span {
+    font-size: 11px !important;
+    letter-spacing: 0.02em !important;
+  }
+
+  .bento-cat-summary-pill {
+    padding: 2px 7px !important;
+    font-size: 11px !important;
+    gap: 3px !important;
+  }
+
+  .bento-cat-summary-pill .cat-pill-name,
+  .bento-cat-summary-pill .cat-pill-count,
+  .bento-cat-summary-pill .cat-pill-total {
+    font-size: 11px !important;
+  }
+
+  /* Cart Table Wrapper & Grid Layout */
+  .bento-cart-table-wrapper {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Cart Table Headers */
+  .bento-cart-table-header {
+    grid-template-columns: minmax(130px, 1.8fr) minmax(68px, 0.8fr) minmax(58px, 0.7fr) minmax(62px, 0.75fr) minmax(68px, 0.8fr) 26px !important;
+    gap: 6px !important;
+    padding: 0.35rem 0.5rem !important;
+    min-height: 28px !important;
+    height: auto !important;
+    min-width: 100% !important;
+    font-size: 10px !important;
+    box-sizing: border-box !important;
+  }
+
+  .bento-cart-table-header span,
+  .bento-cart-table-header .th-item,
+  .bento-cart-table-header .th-qty,
+  .bento-cart-table-header .th-mrp,
+  .bento-cart-table-header .th-price,
+  .bento-cart-table-header .th-total {
+    font-size: 10px !important;
+    letter-spacing: 0.02em !important;
+    font-weight: 700 !important;
+  }
+
+  /* Cart Row Products & Metadata */
+  .bento-cart-row {
+    grid-template-columns: minmax(130px, 1.8fr) minmax(68px, 0.8fr) minmax(58px, 0.7fr) minmax(62px, 0.75fr) minmax(68px, 0.8fr) 26px !important;
+    gap: 6px !important;
+    padding: 0.38rem 0.5rem !important;
+    min-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .bento-row-item-col {
+    gap: 1px !important;
+    padding-right: 3px !important;
+    min-width: 0 !important;
+  }
+
+  .bento-cart-item-name {
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    line-height: 1.25 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 100% !important;
+    display: block !important;
+  }
+
+  .bento-cart-item-meta {
+    gap: 3px !important;
+    margin-top: 2px !important;
+    min-width: 0 !important;
+    flex-wrap: wrap !important;
+  }
+
+  .bento-cart-cat-badge {
+    font-size: 9px !important;
+    padding: 1px 4.5px !important;
+    border-radius: 3px !important;
+    line-height: 1.2 !important;
+  }
+
+  .bento-cart-promo-badge {
+    font-size: 9px !important;
+    padding: 1px 4.5px !important;
+    border-radius: 3px !important;
+    gap: 2.5px !important;
+    line-height: 1.2 !important;
+  }
+
+  .bento-cart-promo-badge svg {
+    width: 8px !important;
+    height: 8px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .bento-cart-promo-badge span {
+    font-size: 9px !important;
+  }
+
+  .bento-cart-savings-tag {
+    font-size: 9px !important;
+    padding: 1px 4.5px !important;
+    border-radius: 3px !important;
+    line-height: 1.2 !important;
+  }
+
+  .bento-cart-savings-tag.bento-cart-offer-tag,
+  .bento-cart-offer-tag {
+    font-size: 10px !important;
+    padding: 1px 4.5px !important;
+    border-radius: 3px !important;
+    line-height: 1.2 !important;
+  }
+
+  /* Quantity Stepper */
+  .bento-qty-stepper {
+    height: 22px !important;
+    min-height: 22px !important;
+    border-radius: 5px !important;
+  }
+
+  .bento-qty-value {
+    font-size: 11px !important;
+    min-width: 16px !important;
+    text-align: center !important;
+  }
+
+  .bento-qty-btn {
+    font-size: 11px !important;
+    width: 19px !important;
+    height: 22px !important;
+    line-height: 1 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  /* Pricing Columns */
+  .bento-mrp-val {
+    font-size: 10px !important;
+    white-space: nowrap !important;
+    font-variant-numeric: tabular-nums !important;
+  }
+
+  .bento-store-val {
+    font-size: 10px !important;
+    white-space: nowrap !important;
+    font-variant-numeric: tabular-nums !important;
+  }
+
+  .bento-total-val,
+  .bento-total-orig-val {
+    font-size: 10px !important;
+    white-space: nowrap !important;
+    font-variant-numeric: tabular-nums !important;
+  }
+
+  .bento-row-remove-btn {
+    padding: 2px !important;
+    width: 20px !important;
+    height: 20px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .bento-row-remove-btn svg {
+    width: 10px !important;
+    height: 10px !important;
+  }
+}
+
+/* ==========================================================================
+   POS PRODUCT TABLE & CATEGORY BREAKDOWN (MOBILE: 320px - 767px)
+   ========================================================================== */
+@media (max-width: 767px) {
+
+  /* Category Breakdown Pill */
+  .bento-category-strip-container {
+    padding: 0.3rem 0.5rem !important;
+    gap: 0.4rem !important;
+    flex-wrap: wrap !important;
+  }
+
+  .bento-category-strip-title span {
+    font-size: 10px !important;
+    letter-spacing: 0.02em !important;
+  }
+
+  .bento-cat-summary-pill {
+    padding: 2px 5px !important;
+    font-size: 10px !important;
+    gap: 3px !important;
+  }
+
+  .bento-cat-summary-pill .cat-pill-name,
+  .bento-cat-summary-pill .cat-pill-count,
+  .bento-cat-summary-pill .cat-pill-total {
+    font-size: 10px !important;
+  }
+
+  /* Cart Table Wrapper & Grid Layout */
+  .bento-cart-table-wrapper {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Cart Table Headers */
+  .bento-cart-table-header {
+    grid-template-columns: minmax(80px, 1.6fr) minmax(52px, 0.75fr) minmax(38px, 0.65fr) minmax(42px, 0.7fr) minmax(44px, 0.75fr) 22px !important;
+    gap: 3px !important;
+    padding: 0.25rem 0.35rem !important;
+    min-height: 24px !important;
+    height: auto !important;
+    min-width: 100% !important;
+    font-size: 9px !important;
+    box-sizing: border-box !important;
+  }
+
+  .bento-cart-table-header span,
+  .bento-cart-table-header .th-item,
+  .bento-cart-table-header .th-qty,
+  .bento-cart-table-header .th-mrp,
+  .bento-cart-table-header .th-price,
+  .bento-cart-table-header .th-total {
+    font-size: 9px !important;
+    letter-spacing: 0.02em !important;
+    font-weight: 700 !important;
+  }
+
+  /* Cart Row Products & Metadata */
+  .bento-cart-row {
+    grid-template-columns: minmax(80px, 1.6fr) minmax(52px, 0.75fr) minmax(38px, 0.65fr) minmax(42px, 0.7fr) minmax(44px, 0.75fr) 22px !important;
+    gap: 3px !important;
+    padding: 0.28rem 0.35rem !important;
+    min-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .bento-row-item-col {
+    gap: 1px !important;
+    padding-right: 2px !important;
+    min-width: 0 !important;
+  }
+
+  .bento-cart-item-name {
+    font-size: 10px !important;
+    font-weight: 650 !important;
+    line-height: 1.25 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 100% !important;
+    display: block !important;
+  }
+
+  .bento-cart-item-meta {
+    gap: 2.5px !important;
+    margin-top: 2px !important;
+    min-width: 0 !important;
+    flex-wrap: wrap !important;
+  }
+
+  .bento-cart-cat-badge {
+    font-size: 8px !important;
+    padding: 1px 3.5px !important;
+    border-radius: 3px !important;
+    line-height: 1.2 !important;
+  }
+
+  .bento-cart-promo-badge {
+    font-size: 8px !important;
+    padding: 1px 3.5px !important;
+    border-radius: 3px !important;
+    gap: 2px !important;
+    line-height: 1.2 !important;
+  }
+
+  .bento-cart-promo-badge svg {
+    width: 7px !important;
+    height: 7px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .bento-cart-promo-badge span {
+    font-size: 8px !important;
+  }
+
+  .bento-cart-savings-tag {
+    font-size: 8px !important;
+    padding: 1px 3.5px !important;
+    border-radius: 3px !important;
+    line-height: 1.2 !important;
+  }
+
+  .bento-cart-savings-tag.bento-cart-offer-tag,
+  .bento-cart-offer-tag {
+    font-size: 9px !important;
+    padding: 1px 3.5px !important;
+    border-radius: 3px !important;
+    line-height: 1.2 !important;
+  }
+
+  /* Quantity Stepper */
+  .bento-qty-stepper {
+    height: 20px !important;
+    min-height: 20px !important;
+    border-radius: 4px !important;
+  }
+
+  .bento-qty-value {
+    font-size: 10px !important;
+    min-width: 14px !important;
+    text-align: center !important;
+  }
+
+  .bento-qty-btn {
+    font-size: 10px !important;
+    width: 17px !important;
+    height: 20px !important;
+    line-height: 1 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  /* Pricing Columns */
+  .bento-mrp-val {
+    font-size: 9px !important;
+    white-space: nowrap !important;
+    font-variant-numeric: tabular-nums !important;
+  }
+
+  .bento-store-val {
+    font-size: 9px !important;
+    white-space: nowrap !important;
+    font-variant-numeric: tabular-nums !important;
+  }
+
+  .bento-total-val,
+  .bento-total-orig-val {
+    font-size: 9px !important;
+    white-space: nowrap !important;
+    font-variant-numeric: tabular-nums !important;
+  }
+
+  .bento-row-remove-btn {
+    padding: 2px !important;
+    width: 18px !important;
+    height: 18px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .bento-row-remove-btn svg {
+    width: 9px !important;
+    height: 9px !important;
+  }
+}
+
+/* ==========================================================================
+   WIRELESS MOBILE BARCODE SCANNER MODAL (TABLET: 768px - 1439px)
+   ========================================================================== */
+@media (min-width: 768px) and (max-width: 1439px) {
+  .mobile-scanner-modal {
+    width: min(720px, calc(100vw - 40px)) !important;
+    max-width: 720px !important;
+    max-height: calc(100vh - 32px) !important;
+    max-height: calc(100dvh - 32px) !important;
+    margin: auto !important;
+    border-radius: 16px !important;
+  }
+
+  .mobile-scanner-modal .modal-header {
+    padding: 0.85rem 1.15rem !important;
+  }
+
+  .mobile-scanner-modal .card-title {
+    font-size: 16px !important;
+    line-height: 1.25 !important;
+  }
+
+  .mobile-scanner-modal .modal-subtitle {
+    font-size: 12px !important;
+    line-height: 1.3 !important;
+  }
+
+  .mobile-scanner-modal .scanner-modal-body {
+    padding: 0.85rem 1.15rem !important;
+    gap: 0.75rem !important;
+  }
+
+  .mobile-scanner-modal .scanner-pairing-status-banner {
+    padding: 0.45rem 0.75rem !important;
+  }
+
+  .mobile-scanner-modal .status-main-text {
+    font-size: 12px !important;
+  }
+
+  .mobile-scanner-modal .status-sub-text {
+    font-size: 11px !important;
+  }
+
+  .mobile-scanner-modal .scanner-modal-grid {
+    display: grid !important;
+    grid-template-columns: 220px 1fr !important;
+    gap: 0.9rem !important;
+    align-items: stretch !important;
+  }
+
+  .mobile-scanner-modal .scanner-step-list {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 0.45rem !important;
+  }
+
+  .mobile-scanner-modal .scanner-step-item {
+    padding: 0.45rem 0.55rem !important;
+  }
+
+  .mobile-scanner-modal .scanner-step-item strong {
+    font-size: 12px !important;
+  }
+
+  .mobile-scanner-modal .scanner-step-item p {
+    font-size: 11px !important;
+    line-height: 1.25 !important;
+  }
+
+  .mobile-scanner-modal .scanner-troubleshoot-box {
+    padding: 0.45rem 0.7rem !important;
+    font-size: 11px !important;
+  }
+
+  .mobile-scanner-modal .troubleshoot-tag,
+  .mobile-scanner-modal .troubleshoot-list {
+    font-size: 11px !important;
+  }
+
+  .mobile-scanner-modal .proto-btn {
+    font-size: 11px !important;
+    padding: 0.3rem 0.45rem !important;
+  }
+
+  .mobile-scanner-modal .scanner-link-label {
+    font-size: 11px !important;
+  }
+
+  .mobile-scanner-modal .scanner-url-input,
+  .mobile-scanner-modal .scanner-copy-btn,
+  .mobile-scanner-modal .scanner-open-btn {
+    font-size: 11px !important;
+    padding: 0.32rem 0.55rem !important;
+  }
+
+  .mobile-scanner-modal .scanner-simulate-btn,
+  .mobile-scanner-modal .scanner-sound-toggle {
+    font-size: 11px !important;
+  }
+
+  .mobile-scanner-modal .scanner-session-pill {
+    font-size: 11px !important;
+  }
+}
+
+/* ==========================================================================
+   WIRELESS MOBILE BARCODE SCANNER MODAL (MOBILE: 320px - 767px)
+   ========================================================================== */
+@media (max-width: 767px) {
+  .mobile-scanner-modal {
+    width: calc(100vw - 20px) !important;
+    max-width: 100% !important;
+    max-height: calc(100vh - 20px) !important;
+    max-height: calc(100dvh - 20px) !important;
+    margin: auto !important;
+    border-radius: 14px !important;
+  }
+
+  .mobile-scanner-modal .modal-header {
+    padding: 0.75rem 0.9rem !important;
+  }
+
+  .mobile-scanner-modal .card-title {
+    font-size: 14px !important;
+    line-height: 1.25 !important;
+  }
+
+  .mobile-scanner-modal .modal-subtitle {
+    font-size: 10px !important;
+    line-height: 1.3 !important;
+  }
+
+  .mobile-scanner-modal .scanner-modal-body {
+    padding: 0.75rem 0.9rem !important;
+    gap: 0.65rem !important;
+    overflow-y: auto !important;
+  }
+
+  .mobile-scanner-modal .scanner-pairing-status-banner {
+    padding: 0.4rem 0.65rem !important;
+  }
+
+  .mobile-scanner-modal .status-main-text {
+    font-size: 11px !important;
+  }
+
+  .mobile-scanner-modal .status-sub-text {
+    font-size: 10px !important;
+  }
+
+  .mobile-scanner-modal .scanner-modal-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+  }
+
+  .mobile-scanner-modal .scanner-qr-svg-wrap {
+    width: 135px !important;
+    height: 135px !important;
+  }
+
+  .mobile-scanner-modal .scanner-step-list {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.4rem !important;
+  }
+
+  .mobile-scanner-modal .scanner-step-item {
+    padding: 0.4rem 0.5rem !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+  }
+
+  .mobile-scanner-modal .scanner-step-item strong {
+    font-size: 11px !important;
+  }
+
+  .mobile-scanner-modal .scanner-step-item p {
+    font-size: 10px !important;
+    line-height: 1.25 !important;
+  }
+
+  .mobile-scanner-modal .scanner-troubleshoot-box {
+    padding: 0.4rem 0.6rem !important;
+    font-size: 10px !important;
+  }
+
+  .mobile-scanner-modal .troubleshoot-tag,
+  .mobile-scanner-modal .troubleshoot-list {
+    font-size: 10px !important;
+  }
+
+  .mobile-scanner-modal .proto-btn {
+    font-size: 10px !important;
+    padding: 0.28rem 0.4rem !important;
+  }
+
+  .mobile-scanner-modal .scanner-link-label {
+    font-size: 10px !important;
+  }
+
+  .mobile-scanner-modal .scanner-url-input,
+  .mobile-scanner-modal .scanner-copy-btn,
+  .mobile-scanner-modal .scanner-open-btn {
+    font-size: 10px !important;
+    padding: 0.28rem 0.45rem !important;
+  }
+
+  .mobile-scanner-modal .scanner-tools-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.5rem !important;
+  }
+
+  .mobile-scanner-modal .scanner-simulate-btn,
+  .mobile-scanner-modal .scanner-sound-toggle {
+    font-size: 10px !important;
+  }
+
+  .mobile-scanner-modal .modal-footer {
+    padding: 0.65rem 0.9rem !important;
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+  }
+
+  .mobile-scanner-modal .scanner-session-pill {
+    font-size: 10px !important;
+    text-align: center !important;
+    width: 100% !important;
+  }
+
+  .mobile-scanner-modal .modal-footer .btn {
+    width: 100% !important;
+    min-height: 40px !important;
+  }
+}
+
+/* ==========================================================================
+   DESKTOP VIEWPORT PRESERVATION (1440px AND ABOVE)
+   ========================================================================== */
+@media (min-width: 1440px) {
+
+  /* Restore default desktop proportions, prevent tablet styles from leaking */
+  .bento-pos-grid {
+    grid-template-columns: minmax(0, 1.55fr) minmax(370px, 420px) !important;
+    gap: 1.15rem !important;
+  }
+
+  .bento-side-col {
+    display: flex !important;
+    flex-direction: column !important;
+    position: sticky !important;
+    top: 1rem !important;
+  }
+
+  .main-content {
+    margin-left: 0 !important;
+    width: auto !important;
+    max-width: 100% !important;
+  }
+}
+
+/* ==========================================================================
+   LOGOUT SHIFT MODAL FOOTER - RESPONSIVE SUITE (DESKTOP, TABLET, MOBILE)
+   ========================================================================== */
+
+/* 1. Base / Desktop (>= 1440px): Preserved as original desktop design */
+.logout-shift-bento-dialog {
+  max-width: 560px !important;
+  width: 92vw !important;
+  max-height: 90vh !important;
+  border-radius: 20px !important;
+  background: var(--surface, #FAF7F2) !important;
+  border: 1.5px solid var(--border, #D0C7B8) !important;
+  box-shadow: 0 25px 60px -15px rgba(15, 45, 46, 0.3), 0 10px 24px -5px rgba(15, 45, 46, 0.1) !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.logout-shift-modal-footer {
+  padding: 1rem 1.6rem !important;
+  border-top: 1px solid var(--border, #D0C7B8) !important;
+  background: var(--surface, #FAF7F2) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 0.75rem !important;
+  flex-shrink: 0 !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  position: sticky !important;
+  bottom: 0 !important;
+  z-index: 10 !important;
+}
+
+.logout-shift-actions-group {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.65rem !important;
+  flex-shrink: 0 !important;
+}
+
+.logout-modal-btn {
+  border-radius: 10px !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  box-sizing: border-box !important;
+  text-decoration: none !important;
+  line-height: 1.25 !important;
+  outline: none !important;
+}
+
+.logout-modal-btn-cancel {
+  padding: 0.65rem 1.15rem !important;
+  background: var(--surface, #FAF7F2) !important;
+  border: 1px solid var(--border, #D0C7B8) !important;
+  color: var(--text-muted, #475569) !important;
+  font-weight: 700 !important;
+  font-size: 0.86rem !important;
+}
+
+.logout-modal-btn-cancel:hover {
+  background: var(--surface-muted, #F3EDE3) !important;
+  color: var(--sidebar, #0F2D2E) !important;
+}
+
+.logout-modal-btn-reconcile {
+  padding: 0.65rem 1rem !important;
+  background: var(--primary-soft, #E6F4F3) !important;
+  border: 1px solid rgba(20, 184, 166, 0.35) !important;
+  color: var(--primary, #0F766E) !important;
+  font-weight: 700 !important;
+  font-size: 0.86rem !important;
+}
+
+.logout-modal-btn-reconcile:hover {
+  background: rgba(20, 184, 166, 0.2) !important;
+  border-color: var(--primary, #0F766E) !important;
+}
+
+.logout-modal-btn-close-shift {
+  padding: 0.65rem 1.25rem !important;
+  background: var(--primary, #0F766E) !important;
+  color: #ffffff !important;
+  border: none !important;
+  font-weight: 800 !important;
+  font-size: 0.86rem !important;
+  box-shadow: 0 4px 14px rgba(15, 118, 110, 0.35) !important;
+  gap: 0.45rem !important;
+}
+
+.logout-modal-btn-close-shift:hover {
+  filter: brightness(1.08) !important;
+  transform: translateY(-1px) !important;
+}
+
+.logout-btn-arrow-icon {
+  flex-shrink: 0 !important;
+  margin-left: 3px !important;
+}
+
+/* 2. Tablet Screens (768px - 1439px) */
+@media (min-width: 768px) and (max-width: 1439px) {
+  .logout-shift-bento-dialog {
+    max-width: min(540px, calc(100vw - 32px)) !important;
+    width: min(540px, calc(100vw - 32px)) !important;
+    max-height: calc(100vh - 32px) !important;
+    max-height: calc(100dvh - 32px) !important;
+  }
+
+  .logout-shift-modal-footer {
+    padding: 0.85rem 1.25rem !important;
+    gap: 0.65rem !important;
+  }
+
+  .logout-shift-actions-group {
+    gap: 0.55rem !important;
+  }
+
+  .logout-modal-btn {
+    min-height: 42px !important;
+    height: 42px !important;
+    font-size: 12px !important;
+    border-radius: 9px !important;
+    line-height: 1.2 !important;
+  }
+
+  .logout-modal-btn-cancel {
+    padding: 0.45rem 0.95rem !important;
+    font-size: 12px !important;
+  }
+
+  .logout-modal-btn-reconcile {
+    padding: 0.45rem 0.85rem !important;
+    font-size: 12px !important;
+  }
+
+  .logout-modal-btn-close-shift {
+    padding: 0.45rem 1rem !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+  }
+}
+
+/* 3. Mobile Screens (320px - 767px) */
+@media (max-width: 767px) {
+  .logout-shift-bento-dialog {
+    width: calc(100vw - 20px) !important;
+    max-width: 100% !important;
+    max-height: calc(100vh - 20px) !important;
+    max-height: calc(100dvh - 20px) !important;
+    border-radius: 16px !important;
+    margin: auto !important;
+  }
+
+  .logout-shift-modal-footer {
+    padding: 0.65rem 0.75rem !important;
+    padding-bottom: max(0.65rem, env(safe-area-inset-bottom, 0.65rem)) !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+  }
+
+  /* Make actions group transparent so all 3 buttons are direct flex peers in a single row */
+  .logout-shift-actions-group {
+    display: contents !important;
+  }
+
+  .logout-modal-btn {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    width: auto !important;
+    min-height: 42px !important;
+    height: 44px !important;
+    padding: 2px 8px !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    line-height: 1.2 !important;
+    text-align: center !important;
+    justify-content: center !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+    word-break: normal !important;
+    text-wrap: balance !important;
+    overflow: hidden !important;
+  }
+
+  .logout-modal-btn span {
+    display: block !important;
+    line-height: 1.2 !important;
+    text-align: center !important;
+    text-wrap: balance !important;
+  }
+
+  /* Cancel: 11px, weight 600 */
+  .logout-modal-btn-cancel {
+    font-size: 11px !important;
+    padding: 2px 6px !important;
+  }
+
+  .logout-modal-btn-cancel span {
+    font-size: 11px !important;
+  }
+
+  /* Reconcile Drawer: 10px, weight 600, max 2 lines */
+  .logout-modal-btn-reconcile {
+    font-size: 10px !important;
+    padding: 2px 6px !important;
+  }
+
+  .logout-modal-btn-reconcile span {
+    font-size: 10px !important;
+    max-height: 2.4em !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+  }
+
+  /* Close Shift & Logout: 10px, weight 700, max 2-3 lines, visually prominent */
+  .logout-modal-btn-close-shift {
+    font-size: 10px !important;
+    font-weight: 700 !important;
+    padding: 2px 6px !important;
+    gap: 3px !important;
+  }
+
+  .logout-modal-btn-close-shift span {
+    font-size: 10px !important;
+    max-height: 3.6em !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 3 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+  }
+
+  .logout-btn-arrow-icon {
+    width: 12px !important;
+    height: 12px !important;
+    flex-shrink: 0 !important;
+    margin-left: 1px !important;
+  }
+}
+
+/* 4. Small Mobile (<= 350px, e.g. 320px viewport): 2-row layout */
+@media (max-width: 350px) {
+  .logout-shift-modal-footer {
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+    padding: 0.5rem 0.6rem !important;
+  }
+
+  .logout-modal-btn-cancel {
+    flex: 1 1 calc(50% - 3px) !important;
+    width: calc(50% - 3px) !important;
+    order: 1 !important;
+    min-height: 42px !important;
+  }
+
+  .logout-modal-btn-reconcile {
+    flex: 1 1 calc(50% - 3px) !important;
+    width: calc(50% - 3px) !important;
+    order: 2 !important;
+    min-height: 42px !important;
+  }
+
+  .logout-modal-btn-close-shift {
+    flex: 1 1 100% !important;
+    width: 100% !important;
+    order: 3 !important;
+    min-height: 42px !important;
+  }
+}
+
+/* ========================================================
+   OFFERS APPLIED CARD - RESPONSIVE TYPOGRAPHY & LAYOUT
+   ======================================================== */
+
+/* Tablet Screens (768px - 1439px) */
+@media (min-width: 768px) and (max-width: 1439px) {
+  .bento-summary-row.bento-offers-applied-card {
+    padding: 0.35rem 0.55rem !important;
+    gap: 0.2rem !important;
+    margin: 3px 0 !important;
+  }
+
+  .bento-offers-applied-card .offers-applied-header {
+    gap: 0.35rem !important;
+  }
+
+  .bento-offers-applied-card .offers-applied-title {
+    font-size: 10px !important;
+    gap: 0.25rem !important;
+  }
+
+  .bento-offers-applied-card .offers-applied-icon {
+    font-size: 11px !important;
+  }
+
+  .bento-offers-applied-card .offers-applied-title-text {
+    font-size: 10px !important;
+  }
+
+  .bento-offers-applied-card .offers-applied-total {
+    font-size: 12px !important;
+  }
+
+  .bento-offers-applied-card .offers-applied-list {
+    gap: 0.2rem !important;
+  }
+
+  .bento-offers-applied-card .offers-applied-item {
+    font-size: 10px !important;
+    gap: 0.4rem !important;
+  }
+
+  .bento-offers-applied-card .offers-applied-name {
+    font-size: 10px !important;
+    line-height: 1.25 !important;
+  }
+
+  .bento-offers-applied-card .offers-applied-amt {
+    font-size: 10px !important;
+    line-height: 1.25 !important;
+  }
+}
+
+/* Mobile Screens (320px - 767px) */
+@media (max-width: 767px) {
+  .bento-summary-row.bento-offers-applied-card {
+    padding: 0.3rem 0.45rem !important;
+    gap: 0.15rem !important;
+    margin: 3px 0 !important;
+  }
+
+  .bento-offers-applied-card .offers-applied-header {
+    gap: 0.25rem !important;
+  }
+
+  .bento-offers-applied-card .offers-applied-title {
+    font-size: 9px !important;
+    gap: 0.2rem !important;
+  }
+
+  .bento-offers-applied-card .offers-applied-icon {
+    font-size: 10px !important;
+  }
+
+  .bento-offers-applied-card .offers-applied-title-text {
+    font-size: 9px !important;
+  }
+
+  .bento-offers-applied-card .offers-applied-total {
+    font-size: 11px !important;
+  }
+
+  .bento-offers-applied-card .offers-applied-list {
+    gap: 0.15rem !important;
+  }
+
+  .bento-offers-applied-card .offers-applied-item {
+    font-size: 9px !important;
+    gap: 0.35rem !important;
+  }
+
+  .bento-offers-applied-card .offers-applied-name {
+    font-size: 9px !important;
+    line-height: 1.25 !important;
+  }
+
+  .bento-offers-applied-card .offers-applied-amt {
+    font-size: 9px !important;
+    line-height: 1.25 !important;
+  }
+}
+
+/* Base / Desktop (>= 1440px) */
+.bento-summary-row.bento-offers-applied-card {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  background: #eff6ff !important;
+  border: 1px solid #bfdbfe !important;
+  border-radius: 8px !important;
+  padding: 0.45rem 0.65rem !important;
+  margin: 4px 0 !important;
+  gap: 0.25rem !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+}
+
+.bento-offers-applied-card .offers-applied-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  width: 100% !important;
+  gap: 0.5rem !important;
+}
+
+.bento-offers-applied-card .offers-applied-title {
+  color: #1d4ed8 !important;
+  font-weight: 700 !important;
+  font-size: 0.8rem !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+  min-width: 0 !important;
+}
+
+.bento-offers-applied-card .offers-applied-icon {
+  font-size: 0.85rem !important;
+  line-height: 1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  flex-shrink: 0 !important;
+}
+
+.bento-offers-applied-card .offers-applied-title-text {
+  min-width: 0 !important;
+  word-break: break-word !important;
+}
+
+.bento-offers-applied-card .offers-applied-total {
+  font-weight: 800 !important;
+  font-size: 0.86rem !important;
+  flex-shrink: 0 !important;
+  white-space: nowrap !important;
+  text-align: right !important;
+}
+
+.bento-offers-applied-card .offers-applied-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.2rem !important;
+  width: 100% !important;
+}
+
+.bento-offers-applied-card .offers-applied-item {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: flex-start !important;
+  font-size: 0.72rem !important;
+  color: #1e40af !important;
+  gap: 0.5rem !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.bento-offers-applied-card .offers-applied-name {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
+  line-height: 1.25 !important;
+}
+
+.bento-offers-applied-card .offers-applied-amt {
+  flex-shrink: 0 !important;
+  white-space: nowrap !important;
+  text-align: right !important;
+  font-variant-numeric: tabular-nums !important;
+  line-height: 1.25 !important;
+}
+
+/* ==========================================================================
+   INVOICE DETAIL MODAL - RESPONSIVE SUITE (DESKTOP, TABLET, MOBILE)
+   ========================================================================== */
+
+/* 1. Base / Common Styles */
+.invoice-detail-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  background: rgba(15, 23, 42, 0.65) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 1040 !important;
+  padding: 1rem !important;
+  box-sizing: border-box !important;
+}
+
+.invoice-detail-dialog {
+  background: var(--surface, #FAF7F2) !important;
+  border: 1.5px solid var(--border, #D0C7B8) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 25px 60px -15px rgba(15, 45, 46, 0.28), 0 10px 24px -5px rgba(15, 45, 46, 0.08) !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  box-sizing: border-box !important;
+}
+
+.invoice-detail-top-accent {
+  height: 4px !important;
+  background: linear-gradient(90deg, var(--sidebar, #0F2D2E) 0%, var(--primary, #0F766E) 50%, var(--ring, #14B8A6) 100%) !important;
+  flex-shrink: 0 !important;
+}
+
+.invoice-detail-header {
+  background: var(--surface, #FAF7F2) !important;
+  border-bottom: 1px solid var(--border, #D0C7B8) !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: flex-start !important;
+  flex-shrink: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.invoice-detail-header-left {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 0.85rem !important;
+  min-width: 0 !important;
+  flex: 1 !important;
+}
+
+.invoice-detail-icon-badge {
+  border-radius: 12px !important;
+  background: var(--primary-soft, #E6F4F3) !important;
+  color: var(--primary, #0F766E) !important;
+  border: 1.2px solid rgba(20, 184, 166, 0.4) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 2px 8px rgba(15, 118, 110, 0.15) !important;
+  flex-shrink: 0 !important;
+}
+
+.invoice-detail-title-wrap {
+  min-width: 0 !important;
+  flex: 1 !important;
+}
+
+.invoice-detail-title {
+  margin: 0 !important;
+  font-weight: 800 !important;
+  color: var(--sidebar, #0F2D2E) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  flex-wrap: wrap !important;
+  line-height: 1.25 !important;
+}
+
+.invoice-detail-status-pill,
+.invoice-detail-kind-pill {
+  font-size: 0.7rem !important;
+  font-weight: 700 !important;
+  padding: 2px 8px !important;
+  border-radius: 12px !important;
+  text-transform: uppercase !important;
+  line-height: 1.2 !important;
+}
+
+.invoice-detail-subtitle {
+  margin: 0.25rem 0 0 0 !important;
+  font-size: 0.78rem !important;
+  color: var(--text-muted, #475569) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.45rem !important;
+  flex-wrap: wrap !important;
+  line-height: 1.35 !important;
+}
+
+.invoice-detail-phone {
+  margin-top: 0.2rem !important;
+  font-size: 0.78rem !important;
+  color: var(--text-muted, #475569) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+}
+
+.invoice-detail-close-btn {
+  background: var(--surface, #FAF7F2) !important;
+  border: 1px solid var(--border, #D0C7B8) !important;
+  border-radius: 9px !important;
+  width: 32px !important;
+  height: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  color: var(--text-muted, #475569) !important;
+  transition: all 0.15s ease !important;
+  flex-shrink: 0 !important;
+}
+
+.invoice-detail-close-btn:hover {
+  background: var(--surface-muted, #F3EDE3) !important;
+  color: var(--sidebar, #0F2D2E) !important;
+}
+
+.invoice-detail-body {
+  background: var(--bg, #E8E1D5) !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  box-sizing: border-box !important;
+}
+
+/* 4 Summary Ribbon Cards */
+.invoice-tile-icon-badge {
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: 8px !important;
+  background: var(--primary-soft, #E6F4F3) !important;
+  color: var(--primary, #0F766E) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin-bottom: 0.4rem !important;
+  flex-shrink: 0 !important;
+}
+
+.invoice-detail-ribbon-tile {
+  background: #FFFFFF !important;
+  border: 1px solid var(--border, #D0C7B8) !important;
+  border-radius: 14px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  box-sizing: border-box !important;
+  box-shadow: 0 1px 3px rgba(15, 45, 46, 0.04) !important;
+  overflow: hidden !important;
+}
+
+.invoice-detail-ribbon-tile .ribbon-tile-label {
+  font-size: 0.68rem !important;
+  font-weight: 700 !important;
+  color: #64748B !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+  line-height: 1.2 !important;
+}
+
+.invoice-detail-ribbon-tile .ribbon-tile-val {
+  font-size: 1.25rem !important;
+  font-weight: 800 !important;
+  color: var(--sidebar, #0F2D2E) !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  margin-top: 2px !important;
+  line-height: 1.2 !important;
+}
+
+.invoice-detail-ribbon-tile .ribbon-tile-sub {
+  font-size: 0.72rem !important;
+  color: #64748B !important;
+  margin-top: 3px !important;
+  line-height: 1.2 !important;
+}
+
+/* Billed Items Section */
+.invoice-billed-items-panel {
+  background: #FFFFFF !important;
+  border: 1px solid var(--border, #D0C7B8) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 1px 3px rgba(15, 45, 46, 0.04) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  box-sizing: border-box !important;
+}
+
+.invoice-billed-items-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  border-bottom: none !important;
+  padding-bottom: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+.invoice-billed-items-title {
+  font-weight: 800 !important;
+  font-size: 0.95rem !important;
+  color: var(--sidebar, #0F2D2E) !important;
+}
+
+.invoice-billed-items-badge {
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+  padding: 2px 8px !important;
+  border-radius: 12px !important;
+  background: var(--primary-soft, #E6F4F3) !important;
+  color: var(--primary, #0F766E) !important;
+  border: 1px solid rgba(20, 184, 166, 0.35) !important;
+}
+
+.invoice-billed-items-table-wrap {
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  width: 100% !important;
+  border-radius: 10px !important;
+  border: 1px solid var(--border, #D0C7B8) !important;
+  background: #FFFFFF !important;
+  box-sizing: border-box !important;
+}
+
+.invoice-billed-items-table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  border-spacing: 0 !important;
+  font-size: 0.82rem !important;
+}
+
+.invoice-billed-items-table thead tr {
+  background: #F8FAFC !important;
+  border-bottom: 1px solid var(--border, #D0C7B8) !important;
+}
+
+.invoice-billed-items-table th {
+  padding: 9px 10px !important;
+  font-size: 0.76rem !important;
+  font-weight: 700 !important;
+  color: var(--sidebar, #0F2D2E) !important;
+  white-space: nowrap !important;
+}
+
+.invoice-billed-items-table td {
+  padding: 9px 10px !important;
+  border-bottom: 1px solid var(--border, #E8E1D5) !important;
+  vertical-align: middle !important;
+}
+
+.invoice-billed-items-table tr:last-child td {
+  border-bottom: none !important;
+}
+
+.invoice-billed-items-table .col-sno {
+  width: 32px !important;
+  text-align: left !important;
+  color: var(--text-muted, #475569) !important;
+}
+
+.invoice-billed-items-table .col-item {
+  text-align: left !important;
+}
+
+.invoice-item-name {
+  font-weight: 700 !important;
+  color: var(--sidebar, #0F2D2E) !important;
+}
+
+.invoice-billed-items-table .col-hsn {
+  text-align: left !important;
+  color: var(--text-muted, #475569) !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 0.78rem !important;
+}
+
+.invoice-billed-items-table .col-qty {
+  text-align: left !important;
+  font-weight: 600 !important;
+  color: var(--sidebar, #0F2D2E) !important;
+  white-space: nowrap !important;
+}
+
+.invoice-billed-items-table .col-rate {
+  text-align: right !important;
+  color: var(--text-muted, #475569) !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  white-space: nowrap !important;
+}
+
+.invoice-billed-items-table .col-amount {
+  text-align: right !important;
+  font-weight: 800 !important;
+  color: var(--sidebar, #0F2D2E) !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  white-space: nowrap !important;
+}
+
+/* Returns & Credit Notes Section */
+.invoice-returns-section {
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.invoice-returns-toggle-row {
+  background: #FFFFFF !important;
+  border: 1px solid var(--border, #D0C7B8) !important;
+  border-radius: 12px !important;
+  padding: 0.85rem 1rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  cursor: pointer !important;
+  user-select: none !important;
+  box-shadow: 0 1px 3px rgba(15, 45, 46, 0.04) !important;
+  box-sizing: border-box !important;
+  transition: background 0.15s ease !important;
+}
+
+.invoice-returns-toggle-row:hover {
+  background: #FAF8F5 !important;
+}
+
+.invoice-returns-toggle-left {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.invoice-returns-icon {
+  color: var(--primary, #0F766E) !important;
+  flex-shrink: 0 !important;
+}
+
+.invoice-returns-label {
+  font-weight: 800 !important;
+  font-size: 0.92rem !important;
+  color: var(--sidebar, #0F2D2E) !important;
+}
+
+.invoice-returns-badge {
+  font-size: 0.7rem !important;
+  font-weight: 700 !important;
+  padding: 2px 7px !important;
+  border-radius: 10px !important;
+  background: var(--primary-soft, #E6F4F3) !important;
+  color: var(--primary, #0F766E) !important;
+}
+
+.invoice-returns-chevron {
+  color: var(--text-muted, #475569) !important;
+  transition: transform 0.2s ease !important;
+  flex-shrink: 0 !important;
+}
+
+.invoice-returns-chevron.open {
+  transform: rotate(90deg) !important;
+}
+
+.invoice-credit-notes-container {
+  margin-top: 0.65rem !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.invoice-credit-notes-empty {
+  background: #FFFFFF !important;
+  padding: 0.85rem 1rem !important;
+  border-radius: 10px !important;
+  text-align: center !important;
+  color: var(--text-muted, #475569) !important;
+  font-size: 0.8rem !important;
+  border: 1px dashed var(--border, #D0C7B8) !important;
+}
+
+/* Bottom Action Buttons (Footer) */
+.invoice-detail-footer {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.55rem !important;
+  border-top: 1px solid var(--border, #D0C7B8) !important;
+  background: var(--surface, #FAF7F2) !important;
+  flex-shrink: 0 !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+}
+
+.invoice-detail-btn {
+  width: 100% !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  border-radius: 12px !important;
+  font-size: 0.88rem !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  transition: all 0.15s ease !important;
+  box-sizing: border-box !important;
+  outline: none !important;
+}
+
+.invoice-detail-btn-primary {
+  background: var(--primary, #0F766E) !important;
+  color: #FFFFFF !important;
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(15, 118, 110, 0.25) !important;
+}
+
+.invoice-detail-btn-primary:hover:not(:disabled) {
+  filter: brightness(1.08) !important;
+  transform: translateY(-1px) !important;
+}
+
+.invoice-detail-btn-primary:disabled {
+  background: #F1F5F9 !important;
+  color: #94A3B8 !important;
+  border: 1px solid #CBD5E1 !important;
+  box-shadow: none !important;
+  cursor: not-allowed !important;
+}
+
+.invoice-detail-btn-secondary {
+  background: #FFFFFF !important;
+  border: 1.5px solid var(--border, #D0C7B8) !important;
+  color: var(--sidebar, #0F2D2E) !important;
+}
+
+.invoice-detail-btn-secondary:hover {
+  background: var(--surface-muted, #F3EDE3) !important;
+}
+
+/* ==========================================================================
+   2. Responsive Breakpoint Suites: Mobile, Tablet, Desktop
+   ========================================================================== */
+
+/* Mobile Screens (320px - 767px) */
+@media (max-width: 767px) {
+  .invoice-detail-overlay {
+    padding: 0.5rem !important;
+  }
+
+  .invoice-detail-dialog {
+    width: 100% !important;
+    max-width: min(440px, calc(100vw - 16px)) !important;
+    max-height: 94vh !important;
+    max-height: 94dvh !important;
+    border-radius: 20px !important;
+  }
+
+  .invoice-detail-header {
+    padding: 0.85rem 1rem !important;
+    gap: 0.65rem !important;
+  }
+
+  .invoice-detail-icon-badge {
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 11px !important;
+  }
+
+  .invoice-detail-title {
+    font-size: 1.05rem !important;
+  }
+
+  .invoice-detail-body {
+    padding: 0.85rem 1rem !important;
+    gap: 0.75rem !important;
+  }
+
+  /* 2x2 grid for Summary Cards */
+  .invoice-detail-ribbon {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.65rem !important;
+    width: 100% !important;
+  }
+
+  .invoice-detail-ribbon-tile {
+    padding: 0.75rem 0.85rem !important;
+  }
+
+  .invoice-detail-ribbon-tile .ribbon-tile-val {
+    font-size: 1.25rem !important;
+  }
+
+  /* Billed Items Section */
+  .invoice-billed-items-panel {
+    padding: 0.85rem 0.95rem !important;
+  }
+
+  .invoice-billed-items-table-wrap {
+    margin-top: 0.65rem !important;
+  }
+
+  .invoice-billed-items-table {
+    min-width: 440px !important;
+  }
+
+  .invoice-billed-items-table .col-taxable,
+  .invoice-billed-items-table .col-tax {
+    display: none !important;
+  }
+
+  /* Footer */
+  .invoice-detail-footer {
+    padding: 0.75rem 1rem !important;
+    padding-bottom: max(0.85rem, env(safe-area-inset-bottom)) !important;
+    flex-direction: column !important;
+  }
+
+  .invoice-detail-btn {
+    width: 100% !important;
+  }
+}
+
+/* Tablet Screens (768px - 1439px) */
+@media (min-width: 768px) and (max-width: 1439px) {
+  .invoice-detail-overlay {
+    padding: 1rem !important;
+  }
+
+  .invoice-detail-dialog {
+    max-width: 760px !important;
+    width: min(760px, calc(100vw - 32px)) !important;
+    max-height: calc(100vh - 32px) !important;
+    max-height: calc(100dvh - 32px) !important;
+    border-radius: 20px !important;
+  }
+
+  .invoice-detail-header {
+    padding: 1rem 1.4rem !important;
+    gap: 0.75rem !important;
+  }
+
+  .invoice-detail-icon-badge {
+    width: 44px !important;
+    height: 44px !important;
+  }
+
+  .invoice-detail-title {
+    font-size: 1.15rem !important;
+  }
+
+  .invoice-detail-body {
+    padding: 1.15rem 1.4rem !important;
+    gap: 0.95rem !important;
+  }
+
+  /* 4 columns in 1 single horizontal row for Summary Cards */
+  .invoice-detail-ribbon {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 0.65rem !important;
+    width: 100% !important;
+  }
+
+  .invoice-detail-ribbon-tile {
+    padding: 0.75rem 0.85rem !important;
+  }
+
+  .invoice-detail-ribbon-tile .ribbon-tile-val {
+    font-size: 1.25rem !important;
+  }
+
+  /* Billed Items */
+  .invoice-billed-items-panel {
+    padding: 1rem 1.25rem !important;
+  }
+
+  .invoice-billed-items-table-wrap {
+    margin-top: 0.75rem !important;
+  }
+
+  .invoice-billed-items-table {
+    min-width: 100% !important;
+  }
+
+  .invoice-billed-items-table .col-taxable,
+  .invoice-billed-items-table .col-tax {
+    display: none !important;
+  }
+
+  /* Footer: full width stacked buttons as shown in Tablet View in Image 2 */
+  .invoice-detail-footer {
+    padding: 0.85rem 1.4rem !important;
+    flex-direction: column !important;
+  }
+
+  .invoice-detail-btn {
+    width: 100% !important;
+  }
+}
+
+/* Desktop Screens (>= 1440px) */
+@media (min-width: 1440px) {
+  .invoice-detail-dialog {
+    max-width: 880px !important;
+    width: 100% !important;
+    max-height: 92vh !important;
+  }
+
+  .invoice-detail-header {
+    padding: 1.1rem 1.6rem !important;
+  }
+
+  .invoice-detail-body {
+    padding: 1.25rem 1.6rem !important;
+    gap: 1.1rem !important;
+  }
+
+  .invoice-detail-ribbon {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 0.75rem !important;
+  }
+
+  .invoice-detail-ribbon-tile {
+    padding: 0.85rem 1rem !important;
+  }
+
+  .invoice-billed-items-panel {
+    padding: 1.15rem 1.35rem !important;
+  }
+
+  .invoice-billed-items-table-wrap {
+    margin-top: 0.85rem !important;
+  }
+
+  .invoice-billed-items-table {
+    min-width: 100% !important;
+  }
+
+  .invoice-billed-items-table .col-taxable,
+  .invoice-billed-items-table .col-tax {
+    display: table-cell !important;
+  }
+
+  .invoice-detail-footer {
+    padding: 0.85rem 1.6rem !important;
+    flex-direction: row !important;
+    justify-content: flex-end !important;
+  }
+
+  .invoice-detail-btn {
+    width: auto !important;
+    min-width: 130px !important;
   }
 }

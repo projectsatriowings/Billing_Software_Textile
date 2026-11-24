@@ -11,6 +11,9 @@
   "scripts": {
     "dev": "node scripts/dev.mjs",
     "build": "node scripts/build-client.mjs",
+    "build:client": "node scripts/build-client.mjs",
+    "build:mobile": "node scripts/build-client.mjs && npx cap sync android",
+    "build:apk": "node scripts/build-client.mjs && npx cap sync android && powershell -ExecutionPolicy Bypass -File scripts/build-apk.ps1",
     "electron:dev": "cross-env ELECTRON_DEV=true electron .",
     "electron:build": "node scripts/build-client.mjs && electron-builder --win",
     "start": "node --import tsx server/src/index.ts",
@@ -23,6 +26,11 @@
     "tunnel": "npx -y cloudflared tunnel --url http://localhost:3001"
   },
   "dependencies": {
+    "@capacitor/android": "^8.6.2",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/camera": "^8.2.6",
+    "@capacitor/core": "^8.6.2",
+    "@capacitor/status-bar": "^8.0.4",
     "exceljs": "^4.4.0",
     "html5-qrcode": "^2.3.8",
     "jpeg-js": "^0.4.4",
@@ -39,6 +47,7 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.6.2",
     "@types/node": "^22.0.0",
     "@types/nodemailer": "^8.0.2",
     "@types/pg": "^8.11.0",

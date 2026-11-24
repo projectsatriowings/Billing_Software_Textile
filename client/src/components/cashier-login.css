@@ -8,10 +8,13 @@
   --primary: #0F766E;
   --primary-hover: #115E59;
   --primary-soft: #E6F4F3;
-  --bg: #E8E1D5;          /* Deeper warm sand/oat cream canvas to contrast with bento cards */
+  --bg: #E8E1D5;
+  /* Deeper warm sand/oat cream canvas to contrast with bento cards */
   --bg-cream: #E8E1D5;
-  --surface: #FAF7F2;     /* Light cream for all elevated bento cards */
-  --border: #D0C7B8;      /* Warm defined border for card boundaries */
+  --surface: #FAF7F2;
+  /* Light cream for all elevated bento cards */
+  --border: #D0C7B8;
+  /* Warm defined border for card boundaries */
   --text: #0F172A;
   --text-muted: #475569;
   --text-on-primary: #FFFFFF;
@@ -2027,8 +2030,8 @@ body:is(.theme-cashier, .theme-manager) .product-edit-split-grid,
   background-color: var(--bg) !important;
 }
 
-body:is(.theme-cashier, .theme-manager) .product-edit-split-grid > div > div,
-:is(.theme-cashier, .theme-manager) .product-edit-split-grid > div > div {
+body:is(.theme-cashier, .theme-manager) .product-edit-split-grid>div>div,
+:is(.theme-cashier, .theme-manager) .product-edit-split-grid>div>div {
   background: var(--surface) !important;
   background-color: var(--surface) !important;
   border: 1.5px solid var(--border) !important;
@@ -2511,8 +2514,8 @@ div.app-container:is(.theme-cashier, .theme-manager) .formula-container-card,
 div.app-container:is(.theme-cashier, .theme-manager) .side-actions-bento-card,
 div.app-container:is(.theme-cashier, .theme-manager) .shifts-bento-card,
 div.app-container:is(.theme-cashier, .theme-manager) .shifts-bento-hero,
-div.app-container:is(.theme-cashier, .theme-manager) .shifts-overview-layout > div,
-div.app-container:is(.theme-cashier, .theme-manager) .shifts-tab-content > div,
+div.app-container:is(.theme-cashier, .theme-manager) .shifts-overview-layout>div,
+div.app-container:is(.theme-cashier, .theme-manager) .shifts-tab-content>div,
 div.app-container:is(.theme-cashier, .theme-manager) .bento-empty-shift-card,
 div.app-container:is(.theme-cashier, .theme-manager) .bento-empty-state,
 body:is(.theme-cashier, .theme-manager) .cat-bento-card,
@@ -2521,8 +2524,8 @@ body:is(.theme-cashier, .theme-manager) .formula-container-card,
 body:is(.theme-cashier, .theme-manager) .side-actions-bento-card,
 body:is(.theme-cashier, .theme-manager) .shifts-bento-card,
 body:is(.theme-cashier, .theme-manager) .shifts-bento-hero,
-body:is(.theme-cashier, .theme-manager) .shifts-overview-layout > div,
-body:is(.theme-cashier, .theme-manager) .shifts-tab-content > div,
+body:is(.theme-cashier, .theme-manager) .shifts-overview-layout>div,
+body:is(.theme-cashier, .theme-manager) .shifts-tab-content>div,
 body:is(.theme-cashier, .theme-manager) .bento-empty-shift-card,
 body:is(.theme-cashier, .theme-manager) .bento-empty-state,
 :is(.theme-cashier, .theme-manager) .cat-bento-card,
@@ -2531,8 +2534,8 @@ body:is(.theme-cashier, .theme-manager) .bento-empty-state,
 :is(.theme-cashier, .theme-manager) .side-actions-bento-card,
 :is(.theme-cashier, .theme-manager) .shifts-bento-card,
 :is(.theme-cashier, .theme-manager) .shifts-bento-hero,
-:is(.theme-cashier, .theme-manager) .shifts-overview-layout > div,
-:is(.theme-cashier, .theme-manager) .shifts-tab-content > div,
+:is(.theme-cashier, .theme-manager) .shifts-overview-layout>div,
+:is(.theme-cashier, .theme-manager) .shifts-tab-content>div,
 :is(.theme-cashier, .theme-manager) .bento-empty-shift-card,
 :is(.theme-cashier, .theme-manager) .bento-empty-state {
   background: var(--surface) !important;
@@ -3313,40 +3316,40 @@ body:is(.theme-cashier, .theme-manager) .calc-result-amount,
 }
 
 /* Context & Policy Notice Cards in Panels */
-body:is(.theme-cashier, .theme-manager) .shift-bento-panel > div[style*="background: #f8fafc"],
-:is(.theme-cashier, .theme-manager) .shift-bento-panel > div[style*="background: #f8fafc"] {
+body:is(.theme-cashier, .theme-manager) .shift-bento-panel>div[style*="background: #f8fafc"],
+:is(.theme-cashier, .theme-manager) .shift-bento-panel>div[style*="background: #f8fafc"] {
   background: var(--surface) !important;
   border: 1px solid var(--border) !important;
 }
 
-body:is(.theme-cashier, .theme-manager) .shift-bento-panel > div[style*="background: #f8fafc"] span,
-:is(.theme-cashier, .theme-manager) .shift-bento-panel > div[style*="background: #f8fafc"] span {
+body:is(.theme-cashier, .theme-manager) .shift-bento-panel>div[style*="background: #f8fafc"] span,
+:is(.theme-cashier, .theme-manager) .shift-bento-panel>div[style*="background: #f8fafc"] span {
   color: var(--text-muted) !important;
 }
 
-body:is(.theme-cashier, .theme-manager) .shift-bento-panel > div[style*="background: #f8fafc"] strong,
-:is(.theme-cashier, .theme-manager) .shift-bento-panel > div[style*="background: #f8fafc"] strong {
+body:is(.theme-cashier, .theme-manager) .shift-bento-panel>div[style*="background: #f8fafc"] strong,
+:is(.theme-cashier, .theme-manager) .shift-bento-panel>div[style*="background: #f8fafc"] strong {
   color: var(--sidebar) !important;
 }
 
-body:is(.theme-cashier, .theme-manager) .shift-bento-panel > div[style*="background: #f0fdf4"],
-:is(.theme-cashier, .theme-manager) .shift-bento-panel > div[style*="background: #f0fdf4"] {
+body:is(.theme-cashier, .theme-manager) .shift-bento-panel>div[style*="background: #f0fdf4"],
+:is(.theme-cashier, .theme-manager) .shift-bento-panel>div[style*="background: #f0fdf4"] {
   background: var(--primary-soft) !important;
   border: 1px solid rgba(20, 184, 166, 0.35) !important;
 }
 
-body:is(.theme-cashier, .theme-manager) .shift-bento-panel > div[style*="background: #f0fdf4"] div,
-:is(.theme-cashier, .theme-manager) .shift-bento-panel > div[style*="background: #f0fdf4"] div {
+body:is(.theme-cashier, .theme-manager) .shift-bento-panel>div[style*="background: #f0fdf4"] div,
+:is(.theme-cashier, .theme-manager) .shift-bento-panel>div[style*="background: #f0fdf4"] div {
   color: var(--sidebar) !important;
 }
 
-body:is(.theme-cashier, .theme-manager) .shift-bento-panel > div[style*="background: #f0fdf4"] strong,
-:is(.theme-cashier, .theme-manager) .shift-bento-panel > div[style*="background: #f0fdf4"] strong {
+body:is(.theme-cashier, .theme-manager) .shift-bento-panel>div[style*="background: #f0fdf4"] strong,
+:is(.theme-cashier, .theme-manager) .shift-bento-panel>div[style*="background: #f0fdf4"] strong {
   color: var(--primary) !important;
 }
 
-body:is(.theme-cashier, .theme-manager) .shift-bento-panel > div[style*="background: #f0fdf4"] svg,
-:is(.theme-cashier, .theme-manager) .shift-bento-panel > div[style*="background: #f0fdf4"] svg {
+body:is(.theme-cashier, .theme-manager) .shift-bento-panel>div[style*="background: #f0fdf4"] svg,
+:is(.theme-cashier, .theme-manager) .shift-bento-panel>div[style*="background: #f0fdf4"] svg {
   color: var(--primary) !important;
 }
 
@@ -4209,6 +4212,14 @@ body:is(.theme-cashier, .theme-manager) .invoices-bento-root,
   background-color: var(--bg);
 }
 
+@media (max-width: 1439px) {
+  body:is(.theme-cashier, .theme-manager) .invoices-bento-root,
+  :is(.theme-cashier, .theme-manager) .invoices-bento-root,
+  :is(.theme-cashier, .theme-manager).invoices-bento-root {
+    padding-bottom: 30px !important;
+  }
+}
+
 /* Context Strip */
 body:is(.theme-cashier, .theme-manager) .invoices-context-strip,
 :is(.theme-cashier, .theme-manager) .invoices-context-strip {
@@ -4805,17 +4816,4 @@ div.app-container.theme-cashier .top-pos-cfd-btn:hover,
   border-color: var(--primary, #0F766E) !important;
 }
 
-/* Mobile Navigation Controls & Bottom Bar (Cashier Theme) */
-body.theme-cashier .mobile-header-menu-btn,
-.theme-cashier .mobile-header-menu-btn {
-  background: #FAF7F2 !important;
-  border-color: #D0C7B8 !important;
-  color: #0F766E !important;
-}
-
-body.theme-cashier .mobile-header-menu-btn:hover,
-.theme-cashier .mobile-header-menu-btn:hover {
-  background: #E6F4F3 !important;
-  border-color: #0F766E !important;
-  color: #115E59 !important;
-}
+\n\n

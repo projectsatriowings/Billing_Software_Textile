@@ -63,7 +63,7 @@ export const LogoutShiftModal: React.FC<LogoutShiftModalProps> = ({
       }}
     >
       <div
-        className="shift-bento-dialog"
+        className="shift-bento-dialog logout-shift-bento-dialog"
         onClick={(e) => e.stopPropagation()}
         style={{
           maxWidth: '560px',
@@ -384,75 +384,31 @@ export const LogoutShiftModal: React.FC<LogoutShiftModalProps> = ({
         </div>
 
         {/* 3. Footer */}
-        <div
-          style={{
-            padding: '1rem 1.6rem',
-            borderTop: '1px solid var(--border, #D0C7B8)',
-            background: 'var(--surface, #FAF7F2)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '0.75rem',
-          }}
-        >
+        <div className="logout-shift-modal-footer">
           <button
             type="button"
             onClick={onClose}
-            style={{
-              padding: '0.65rem 1.15rem',
-              borderRadius: '10px',
-              fontWeight: 700,
-              fontSize: '0.86rem',
-              background: 'var(--surface, #FAF7F2)',
-              border: '1px solid var(--border, #D0C7B8)',
-              color: 'var(--text-muted, #475569)',
-              cursor: 'pointer',
-              transition: 'all 0.15s ease',
-            }}
+            className="logout-modal-btn logout-modal-btn-cancel"
           >
-            Cancel
+            <span>Cancel</span>
           </button>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+          <div className="logout-shift-actions-group">
             <button
               type="button"
               onClick={onReconcileFirst}
-              style={{
-                padding: '0.65rem 1rem',
-                borderRadius: '10px',
-                fontWeight: 700,
-                fontSize: '0.86rem',
-                background: 'var(--primary-soft, #E6F4F3)',
-                border: '1px solid rgba(20, 184, 166, 0.35)',
-                color: 'var(--primary, #0F766E)',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-              }}
+              className="logout-modal-btn logout-modal-btn-reconcile"
             >
-              Reconcile Drawer
+              <span>Reconcile Drawer</span>
             </button>
 
             <button
               type="button"
               onClick={onConfirmCloseAndLogout}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.45rem',
-                padding: '0.65rem 1.25rem',
-                borderRadius: '10px',
-                background: 'var(--primary, #0F766E)',
-                color: '#ffffff',
-                border: 'none',
-                fontWeight: 800,
-                fontSize: '0.86rem',
-                cursor: 'pointer',
-                boxShadow: '0 4px 14px rgba(15, 118, 110, 0.35)',
-                transition: 'all 0.15s ease',
-              }}
+              className="logout-modal-btn logout-modal-btn-close-shift"
             >
-              <span>Close Shift & Logout</span>
-              <ArrowRightIcon size={14} />
+              <span>Close Shift &amp; Logout</span>
+              <ArrowRightIcon size={14} className="logout-btn-arrow-icon" />
             </button>
           </div>
         </div>
