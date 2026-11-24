@@ -18696,49 +18696,49 @@ export function App() {
 
             {/* GST FILING TAB VIEWS */}
             {user?.role !== 'cashier' && displayTab === 'gst-overview' && (
-              <div className="tab-content-wrapper" style={{ padding: '1.5rem' }}>
+              <div className="tab-content-wrapper gst-tab-content-wrapper">
                 <GstOverviewView key={selectedBranchScope} tenantGstin={shop?.gstin || ''} onNavigateTab={(tab) => setActiveTab(tab as any)} />
               </div>
             )}
 
             {user?.role !== 'cashier' && displayTab === 'gst-sales-register' && (
-              <div className="tab-content-wrapper" style={{ padding: '16px 1.5rem 1.5rem' }}>
+              <div className="tab-content-wrapper gst-tab-content-wrapper">
                 <GstSalesRegisterView key={selectedBranchScope} onNavigate={(tab) => setActiveTab(tab as any)} />
               </div>
             )}
 
             {user?.role !== 'cashier' && displayTab === 'gst-purchase-register' && (
-              <div className="tab-content-wrapper" style={{ padding: '1.5rem' }}>
+              <div className="tab-content-wrapper gst-tab-content-wrapper">
                 <GstPurchaseRegisterView key={selectedBranchScope} onNavigate={(tab) => setActiveTab(tab as any)} />
               </div>
             )}
 
             {user?.role !== 'cashier' && displayTab === 'gst-itc-reconciliation' && (
-              <div className="tab-content-wrapper" style={{ padding: '1.5rem' }}>
+              <div className="tab-content-wrapper gst-tab-content-wrapper">
                 <ItcRegisterView key={selectedBranchScope} onNavigate={(tab) => setActiveTab(tab as any)} />
               </div>
             )}
 
             {user?.role !== 'cashier' && displayTab === 'gst-gstr3b' && (
-              <div className="tab-content-wrapper" style={{ padding: '1.5rem' }}>
+              <div className="tab-content-wrapper gst-tab-content-wrapper">
                 <Gstr3bView key={selectedBranchScope} onNavigate={(tab) => setActiveTab(tab as any)} />
               </div>
             )}
 
             {user?.role !== 'cashier' && displayTab === 'gst-gstr1' && (
-              <div className="tab-content-wrapper" style={{ padding: '1.5rem' }}>
+              <div className="tab-content-wrapper gst-tab-content-wrapper">
                 <Gstr1View key={selectedBranchScope} onNavigate={(tab) => setActiveTab(tab as any)} />
               </div>
             )}
 
             {user?.role !== 'cashier' && displayTab === 'gst-import-export' && (
-              <div className="tab-content-wrapper" style={{ padding: '1.5rem' }}>
+              <div className="tab-content-wrapper gst-tab-content-wrapper">
                 <GstImportExportView key={selectedBranchScope} onNavigate={(tab) => setActiveTab(tab as any)} />
               </div>
             )}
 
             {user?.role !== 'cashier' && displayTab === 'gst-filing-history' && (
-              <div className="tab-content-wrapper" style={{ padding: '1.5rem' }}>
+              <div className="tab-content-wrapper gst-tab-content-wrapper">
                 <GstFilingHistoryView key={selectedBranchScope} onNavigate={(tab) => setActiveTab(tab as any)} />
               </div>
             )}

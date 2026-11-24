@@ -21140,6 +21140,18 @@ select.expense-input-control {
 }
 
 /* Outer View Wrappers */
+.gst-tab-content-wrapper {
+  padding: 1.5rem;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .gst-tab-content-wrapper {
+    padding: 0.5rem !important;
+  }
+}
+
 .gst-view-wrapper,
 .gstr3b-view-wrapper {
   display: flex;
@@ -21196,10 +21208,55 @@ select.expense-input-control {
     justify-content: space-between;
   }
 
+  .gst-header-card,
   .gstr3b-header-card {
     flex-direction: column;
     align-items: stretch;
-    padding: 16px;
+    padding: 14px;
+    gap: 12px;
+  }
+
+  .gst-header-left {
+    width: 100%;
+  }
+
+  .gst-header-title {
+    font-size: 1.15rem !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+
+  .gst-header-branch-badge {
+    margin-left: 0 !important;
+    display: inline-block;
+  }
+
+  .gst-header-subtitle {
+    font-size: 0.74rem;
+  }
+
+  .gst-header-actions {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .gst-header-actions .gst-period-picker-group {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .gst-header-btn-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .gst-header-btn-row .gst-pill-btn {
+    flex: 1;
+    justify-content: center;
   }
 
   .gstr3b-controls-group {
@@ -21255,6 +21312,12 @@ select.expense-input-control {
 .gst-header-actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.gst-header-btn-row {
+  display: flex;
   align-items: center;
   gap: 0.65rem;
 }
@@ -21843,6 +21906,176 @@ select.expense-input-control {
   border-color: #653B4B;
   color: #ffffff;
   gap: 0.6rem;
+}
+
+/* ==========================================================================
+   GST OVERVIEW MOBILE VIEW RESPONSIVENESS (< 768px)
+   ========================================================================== */
+@media (max-width: 768px) {
+  .gst-view-wrapper {
+    gap: 0.85rem;
+  }
+
+  /* Net Liability Hero Card */
+  .gst-hero-liability {
+    padding: 1.15rem 1rem !important;
+    border-radius: 16px !important;
+  }
+
+  .gst-hero-layout {
+    gap: 1rem;
+  }
+
+  .gst-hero-left {
+    gap: 0.5rem;
+  }
+
+  .gst-hero-badge {
+    font-size: 0.64rem !important;
+    padding: 0.25rem 0.55rem !important;
+    max-width: 100%;
+    white-space: normal !important;
+    line-height: 1.35;
+    letter-spacing: 0.04em !important;
+  }
+
+  .gst-hero-amount {
+    font-size: 1.95rem !important;
+    letter-spacing: -0.02em !important;
+    line-height: 1.15;
+  }
+
+  .gst-hero-formula-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+    background: rgba(0, 0, 0, 0.22);
+    padding: 0.55rem 0.65rem;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 0.72rem;
+  }
+
+  .gst-formula-chip {
+    padding: 0.2rem 0.45rem;
+    font-size: 0.7rem;
+    gap: 0.25rem;
+  }
+
+  .gst-formula-op {
+    font-size: 0.85rem;
+  }
+
+  .gst-hero-actions {
+    width: 100%;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .gst-hero-btn-primary,
+  .gst-hero-btn-secondary {
+    width: 100%;
+    justify-content: center;
+    padding: 0.7rem 1rem;
+    font-size: 0.825rem;
+  }
+
+  /* 10 Required Summary Cards - 2x2 Bento Grid */
+  .gst-kpi-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.55rem !important;
+  }
+
+  .gst-kpi-card {
+    padding: 0.75rem 0.85rem !important;
+    border-radius: 12px !important;
+  }
+
+  .gst-kpi-card-top {
+    margin-bottom: 0.4rem !important;
+  }
+
+  .gst-kpi-num-badge {
+    font-size: 0.6rem !important;
+    padding: 0.1rem 0.25rem !important;
+  }
+
+  .gst-kpi-title {
+    font-size: 0.65rem !important;
+    max-width: 95px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .gst-kpi-icon-pill {
+    width: 24px !important;
+    height: 24px !important;
+  }
+
+  .gst-kpi-val {
+    font-size: 1.15rem !important;
+    word-break: break-all !important;
+  }
+
+  .gst-kpi-sub {
+    font-size: 0.65rem !important;
+    margin-top: 0.25rem !important;
+  }
+
+  .gst-status-badge {
+    font-size: 0.7rem !important;
+    padding: 0.2rem 0.5rem !important;
+  }
+
+  /* Recommended Journey Card */
+  .gst-journey-card {
+    padding: 1rem !important;
+    border-radius: 14px !important;
+  }
+
+  .gst-journey-header {
+    margin-bottom: 0.75rem !important;
+  }
+
+  .gst-journey-title {
+    font-size: 0.95rem !important;
+  }
+
+  .gst-journey-subtitle {
+    font-size: 0.74rem !important;
+  }
+
+  .gst-journey-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem !important;
+  }
+
+  .gst-journey-step {
+    padding: 0.85rem 1rem !important;
+    gap: 0.65rem !important;
+    border-radius: 12px !important;
+  }
+
+  .gst-journey-step-tag {
+    font-size: 0.68rem !important;
+  }
+
+  .gst-journey-step-title {
+    font-size: 0.875rem !important;
+  }
+
+  .gst-journey-step-desc {
+    font-size: 0.75rem !important;
+  }
+
+  .gst-journey-action-btn {
+    width: 100% !important;
+    justify-content: space-between !important;
+    padding: 0.65rem 0.85rem !important;
+    font-size: 0.8rem !important;
+  }
 }
 
 /* ==========================================================================
