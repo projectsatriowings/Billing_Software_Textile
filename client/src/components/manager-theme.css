@@ -1804,3 +1804,104 @@ body.theme-manager .product-catalog-add-btn:hover,
   background: var(--primary-hover, #522E3C) !important;
   box-shadow: 0 4px 12px var(--primary-glow, rgba(101, 59, 75, 0.35)) !important;
 }
+
+
+/* ==========================================================================
+   STORE MANAGER MOBILE RESPONSIVENESS & SLIDE-OUT DRAWER
+   ========================================================================== */
+@media (max-width: 900px) {
+  body.theme-manager .app-sidebar,
+  .theme-manager .app-sidebar {
+    position: fixed !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    width: 295px !important;
+    min-width: 295px !important;
+    max-width: 86vw !important;
+    z-index: 10000 !important;
+    transform: translateX(-100%) !important;
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s ease !important;
+    box-shadow: none !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding: 1.25rem 1rem 2rem !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  body.theme-manager .app-sidebar.mobile-open,
+  .theme-manager .app-sidebar.mobile-open {
+    transform: translateX(0) !important;
+    box-shadow: 16px 0 45px rgba(0, 0, 0, 0.55) !important;
+  }
+
+  body.theme-manager .mobile-header-menu-btn,
+  .theme-manager .mobile-header-menu-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    height: 34px !important;
+    padding: 0 11px !important;
+    border-radius: 9px !important;
+    background: #FFFFFF !important;
+    border: 1px solid #D9C8D0 !important;
+    color: #653B4B !important;
+    font-size: 0.78rem !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+    flex-shrink: 0 !important;
+  }
+
+  body.theme-manager .main-content,
+  .theme-manager .main-content {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0.85rem 0.85rem 2rem !important;
+  }
+}
+
+/* Product Catalogue Manager Theme Enhancements */
+body.theme-manager .product-mobile-spec-val.price,
+.theme-manager .product-mobile-spec-val.price {
+  color: #7A475B !important;
+}
+
+body.theme-manager .product-catalog-toggle-btn.active,
+.theme-manager .product-catalog-toggle-btn.active {
+  background: #7A475B !important;
+  color: #ffffff !important;
+  box-shadow: 0 1px 4px rgba(122, 71, 91, 0.3) !important;
+}
+
+body.theme-manager .product-catalog-page-card,
+.theme-manager .product-catalog-page-card {
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+/* Inventory Dashboard Manager Theme Enhancements */
+body.theme-manager .inv-toggle-btn.active,
+.theme-manager .inv-toggle-btn.active {
+  background: #7A475B !important;
+  color: #ffffff !important;
+  box-shadow: 0 1px 4px rgba(122, 71, 91, 0.3) !important;
+}
+
+body.theme-manager .btn-stock-adjust-deep-plum,
+.theme-manager .btn-stock-adjust-deep-plum,
+body.theme-manager .btn-stock-adjustment,
+.theme-manager .btn-stock-adjustment,
+body.theme-manager .inv-mobile-action-btn.adjust,
+.theme-manager .inv-mobile-action-btn.adjust {
+  background: #7A475B !important;
+  border-color: #653B4B !important;
+  color: #ffffff !important;
+}
+
+

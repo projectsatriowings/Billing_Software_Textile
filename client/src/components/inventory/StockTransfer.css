@@ -1,0 +1,587 @@
+/* ==========================================================================
+   STOCK TRANSFER VIEW STYLES (Component-scoped, guaranteed loading)
+   ========================================================================== */
+
+.top-stock-transfer-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 0 1 auto;
+  cursor: default;
+}
+
+.top-stock-transfer-icon-tile {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #7A475B 0%, #653B4B 100%);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(101, 59, 75, 0.25);
+}
+
+.top-stock-transfer-title {
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+  margin: 0;
+  padding: 0;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.stock-transfer-module {
+  width: 100%;
+}
+
+.stock-transfer-list-view {
+  width: 100%;
+}
+
+.stock-transfer-actions-row {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.stock-transfer-btn-refresh {
+  height: 38px;
+  padding: 0 14px;
+  background: #ffffff;
+  color: #475569;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
+}
+
+.stock-transfer-btn-refresh:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+  color: #1e293b;
+}
+
+.stock-transfer-btn-create {
+  height: 38px;
+  padding: 0 16px;
+  background: linear-gradient(135deg, #7A475B 0%, #653B4B 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 3px 10px rgba(101, 59, 75, 0.28);
+  box-sizing: border-box;
+}
+
+.stock-transfer-btn-create:hover {
+  box-shadow: 0 5px 14px rgba(101, 59, 75, 0.38);
+  transform: translateY(-1px);
+}
+
+.stock-transfer-list-card {
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05);
+  padding: 24px;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.stock-transfer-filters-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8fafc;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.stock-transfer-filters-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.stock-transfer-date-capsule {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 0 0.6rem;
+  height: 38px;
+  box-sizing: border-box;
+}
+
+.stock-transfer-meta-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.85rem;
+}
+
+.stock-transfer-view-toggle {
+  display: none;
+}
+
+.stock-transfer-scroll-hint {
+  display: none;
+}
+
+.stock-transfers-mobile-cards-wrap {
+  display: none;
+}
+
+.stock-transfer-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #ffffff;
+  position: relative;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.stock-transfer-table {
+  width: 100%;
+  min-width: 820px;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.86rem;
+}
+
+.stock-transfer-table th {
+  background: #f8fafc;
+  color: #475569;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid #e2e8f0;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.stock-transfer-table td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+  white-space: nowrap;
+}
+
+.stock-transfer-table tr:last-child td {
+  border-bottom: none;
+}
+
+.stock-transfer-table tr:hover td {
+  background: #f8fafc;
+}
+
+.trf-mobile-subdate {
+  display: none;
+  font-size: 0.74rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.stock-transfer-actions-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  white-space: nowrap;
+}
+
+.stock-transfer-action-btn {
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.stock-transfer-action-btn.view-btn {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+}
+
+.stock-transfer-action-btn.view-btn:hover {
+  background: #e2e8f0;
+  border-color: #94a3b8;
+}
+
+.stock-transfer-action-btn.dispatch-btn {
+  background: linear-gradient(135deg, #7A475B 0%, #653B4B 100%);
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 2px 6px rgba(101, 59, 75, 0.3);
+}
+
+.stock-transfer-action-btn.receive-btn {
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 2px 6px rgba(22, 163, 74, 0.3);
+}
+
+/* ==========================================================================
+   MOBILE VIEWPORT BREAKPOINT (<= 768px)
+   ========================================================================== */
+@media (max-width: 768px) {
+  .stock-transfer-list-card {
+    padding: 12px !important;
+    border-radius: 14px !important;
+  }
+
+  .stock-transfer-actions-row {
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: stretch !important;
+    width: 100% !important;
+    gap: 8px !important;
+  }
+
+  .stock-transfer-btn-create,
+  .stock-transfer-btn-refresh {
+    flex: 1 1 auto !important;
+    width: auto !important;
+    justify-content: center !important;
+  }
+
+  .stock-transfer-filters-toolbar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    padding: 0.75rem !important;
+    gap: 0.65rem !important;
+  }
+
+  .stock-transfer-filters-left {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    gap: 0.5rem !important;
+  }
+
+  .stock-transfer-date-capsule {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    justify-content: space-between !important;
+  }
+
+  .stock-transfer-date-capsule input[type="date"] {
+    width: 44% !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    font-size: 0.8rem !important;
+  }
+
+  .stock-transfer-meta-bar {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 0.5rem !important;
+    width: 100% !important;
+    margin-bottom: 0.75rem !important;
+  }
+
+  .stock-transfer-view-toggle {
+    display: inline-flex !important;
+    align-items: center !important;
+    background: #f1f5f9 !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+    padding: 2px !important;
+    gap: 2px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .stock-transfer-toggle-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    padding: 0.3rem 0.55rem !important;
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+    border: none !important;
+    border-radius: 6px !important;
+    background: transparent !important;
+    color: #64748b !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+  }
+
+  .stock-transfer-toggle-btn.active {
+    background: #ffffff !important;
+    color: #1e293b !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+    font-weight: 700 !important;
+  }
+
+  /* When cards view is active on mobile */
+  .stock-transfers-mobile-cards-wrap.active {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+    width: 100% !important;
+  }
+
+  .stock-transfer-cards-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    width: 100%;
+  }
+
+  .stock-transfer-card-item {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 0.95rem;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    box-sizing: border-box;
+    width: 100%;
+  }
+
+  .stock-transfer-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .stock-transfer-card-id {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -0.01em;
+  }
+
+  .stock-transfer-card-date {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.76rem;
+    color: #64748b;
+    margin-top: 2px;
+  }
+
+  .stock-transfer-card-route {
+    background: #f8fafc;
+    border: 1px solid #edf2f7;
+    border-radius: 10px;
+    padding: 0.75rem 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    box-sizing: border-box;
+  }
+
+  .route-node {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .route-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  .route-name {
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: #1e293b;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: block;
+  }
+
+  .route-arrow-wrap {
+    color: #653B4B;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    padding: 0 6px;
+  }
+
+  .stock-transfer-card-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.78rem;
+    color: #475569;
+    padding: 0 2px;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .card-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .card-meta-label {
+    color: #64748b;
+  }
+
+  .card-meta-val {
+    font-weight: 600;
+    color: #1e293b;
+  }
+
+  .stock-transfer-card-footer {
+    padding-top: 0.65rem;
+    border-top: 1px solid #f1f5f9;
+  }
+
+  .mobile-card-actions {
+    display: flex !important;
+    width: 100% !important;
+    gap: 0.5rem !important;
+  }
+
+  .mobile-card-actions .stock-transfer-action-btn {
+    flex: 1 1 auto !important;
+    justify-content: center !important;
+    padding: 0.55rem 0.75rem !important;
+    font-size: 0.82rem !important;
+    min-height: 38px !important;
+  }
+
+  /* When table view is active on mobile */
+  .stock-transfer-table-wrapper.mobile-hidden {
+    display: none !important;
+  }
+
+  .stock-transfer-table-wrapper.mobile-active {
+    display: block !important;
+  }
+
+  .stock-transfer-scroll-hint {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 0.75rem !important;
+    color: #64748b !important;
+    background: #f1f5f9 !important;
+    padding: 0.4rem 0.65rem !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    font-weight: 500 !important;
+  }
+
+  .stock-transfer-table {
+    min-width: 780px !important;
+    font-size: 0.82rem !important;
+  }
+
+  .stock-transfer-table th,
+  .stock-transfer-table td {
+    padding: 0.65rem 0.75rem !important;
+  }
+
+  /* Sticky First Column on Mobile Table */
+  .stock-transfer-table th.sticky-col-left {
+    position: sticky !important;
+    left: 0 !important;
+    z-index: 15 !important;
+    background: #f8fafc !important;
+    box-shadow: 3px 0 6px rgba(0, 0, 0, 0.06) !important;
+  }
+
+  .stock-transfer-table td.sticky-col-left {
+    position: sticky !important;
+    left: 0 !important;
+    z-index: 10 !important;
+    background: #ffffff !important;
+    box-shadow: 3px 0 6px rgba(0, 0, 0, 0.06) !important;
+  }
+
+  .stock-transfer-table tr:hover td.sticky-col-left {
+    background: #f8fafc !important;
+  }
+
+  /* Sticky Actions Column on Mobile Table */
+  .stock-transfer-table th.sticky-col-right {
+    position: sticky !important;
+    right: 0 !important;
+    z-index: 15 !important;
+    background: #f8fafc !important;
+    box-shadow: -3px 0 6px rgba(0, 0, 0, 0.06) !important;
+  }
+
+  .stock-transfer-table td.sticky-col-right {
+    position: sticky !important;
+    right: 0 !important;
+    z-index: 10 !important;
+    background: #ffffff !important;
+    box-shadow: -3px 0 6px rgba(0, 0, 0, 0.06) !important;
+  }
+
+  .stock-transfer-table tr:hover td.sticky-col-right {
+    background: #f8fafc !important;
+  }
+
+  .trf-mobile-subdate {
+    display: block !important;
+  }
+}

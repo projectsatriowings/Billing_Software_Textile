@@ -2392,6 +2392,7 @@ export function App() {
   const [itemCatFilterMaster, setItemCatFilterMaster] = useState('ALL');
   const [customerFilterMaster, setCustomerFilterMaster] = useState('');
   const [supplierFilterMaster, setSupplierFilterMaster] = useState('');
+  const [productMobileView, setProductMobileView] = useState<'cards' | 'table'>('cards');
 
   // Purchases & Stock Inward state
   const [purchases, setPurchases] = useState<Purchase[]>([]);
@@ -2484,7 +2485,7 @@ export function App() {
       console.warn('[Capacitor] StatusBar setup warning:', err);
     }
 
-    const backSub = CapApp.addListener('backButton', ({ canGoBack }) => {
+    const backSub = CapApp.addListener('backButton', ({ canGoBack }: { canGoBack: boolean }) => {
       // 1. If any modal close button exists in the DOM, click it to safely trigger standard close flow
       const activeModalCloseBtn = document.querySelector<HTMLElement>(
         '.modal-close-btn, .btn-modal-close, button[aria-label="Close"], button.close, .drawer-close'
@@ -2579,7 +2580,7 @@ export function App() {
     });
 
     return () => {
-      backSub.then((sub) => sub.remove()).catch(() => { });
+      backSub.then((sub: any) => sub?.remove?.()).catch(() => { });
     };
   }, [
     showLogoutConfirmModal,
@@ -8578,7 +8579,7 @@ export function App() {
 
         {/* Left Sidebar Navigation */}
         <aside
-          className={`app-sidebar ${isSidebarCollapsed ? 'icon-only' : ''} ${isMobileSidebarOpen ? 'mobile-open' : ''}`}
+          className={`app-sidebar ${isSidebarCollapsed && !isMobileSidebarOpen ? 'icon-only' : ''} ${isMobileSidebarOpen ? 'mobile-open' : ''}`}
         >
           <div className="sidebar-top">
             {/* Header row with Brand & Collapse/Expand Toggle */}
@@ -9645,13 +9646,19 @@ export function App() {
               <div
                 className="top-stock-transfer-header-left"
                 title="View and manage stock transfers between branches"
+                style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}
               >
-                <div className="top-stock-transfer-icon-tile">
+                <div
+                  className="top-stock-transfer-icon-tile"
+                  style={{ width: '32px', height: '32px', minWidth: '32px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                >
                   <TruckIcon size={18} />
                 </div>
-                <h1 className="top-stock-transfer-title">
-                  <span className="stock-transfer-title-full">Stock Transfer – Transfer List</span>
-                  <span className="stock-transfer-title-short">Stock Transfer</span>
+                <h1
+                  className="top-stock-transfer-title"
+                  style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                >
+                  Stock Transfer
                 </h1>
               </div>
             ) : displayTab === 'wholesale' || activeTab === 'wholesale' ? (
@@ -13722,7 +13729,7 @@ export function App() {
               };
 
               return (
-                <div className="card product-catalog-card" key={`items-${selectedBranchScope}`}>
+                <div className="card product-catalog-page-card" key={`items-${selectedBranchScope}`}>
                   <div className="product-catalog-header">
                     <div className="product-catalog-subheading">
                       Track selling price, cost price, GST tax rates, units and live ledger stock
@@ -13864,13 +13871,296 @@ export function App() {
                     </div>
                   </div>
 
-                  <div className="table-scroll-x">
+                  {/* Meta Bar: Product counts, Horizontal Scroll Hint, View Toggle */}
+                  <div className="product-catalog-meta-bar">
+                    <div className="product-catalog-count">
+                      Showing {filteredMasterItems.length} of {items.length} products
+                    </div>
+
+                    <div className="product-catalog-view-toggle">
+                      <button
+                        type="button"
+                        onClick={() => setProductMobileView('cards')}
+                        className={`product-catalog-toggle-btn ${productMobileView === 'cards' ? 'active' : ''}`}
+                        title="Card View (Mobile Optimized)"
+                      >
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="3" y="3" width="7" height="7" />
+                          <rect x="14" y="3" width="7" height="7" />
+                          <rect x="14" y="14" width="7" height="7" />
+                          <rect x="3" y="14" width="7" height="7" />
+                        </svg>
+                        <span>Cards</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setProductMobileView('table')}
+                        className={`product-catalog-toggle-btn ${productMobileView === 'table' ? 'active' : ''}`}
+                        title="Table View (Full Columns)"
+                      >
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M3 3h18v18H3z" />
+                          <path d="M3 9h18" />
+                          <path d="M3 15h18" />
+                          <path d="M9 3v18" />
+                        </svg>
+                        <span>Table</span>
+                      </button>
+                    </div>
+
+                    <div className="product-catalog-scroll-hint">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="18 8 22 12 18 16" />
+                        <polyline points="6 8 2 12 6 16" />
+                        <line x1="2" y1="12" x2="22" y2="12" />
+                      </svg>
+                      <span>Scroll horizontally to view all columns</span>
+                    </div>
+                  </div>
+
+                  {/* 1. Mobile Cards View (Visible on mobile <= 768px when Cards view is selected) */}
+                  <div className={`products-mobile-cards-wrap ${productMobileView === 'cards' ? 'active' : ''}`}>
+                    {filteredMasterItems.map((i) => (
+                      <div key={`m-card-${i.id}`} className={`product-mobile-card ${i.active === false ? 'inactive' : ''}`}>
+                        {/* Header: Thumbnail + Title + Badges */}
+                        <div className="product-mobile-card-header">
+                          <div className="product-mobile-img-box">
+                            {i.imageUrl || (i as any).image ? (
+                              <img
+                                src={i.imageUrl || (i as any).image}
+                                alt={i.name}
+                                referrerPolicy="no-referrer"
+                                onError={(e) => handleProductImageError(e, i.imageUrl || (i as any).image)}
+                              />
+                            ) : (
+                              <div className="product-mobile-img-placeholder">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                  <circle cx="8.5" cy="8.5" r="1.5" />
+                                  <polyline points="21 15 16 10 5 21" />
+                                </svg>
+                              </div>
+                            )}
+                          </div>
+                          <div className="product-mobile-title-block">
+                            <div className="product-mobile-name">{i.name}</div>
+                            {i.custom?.batch && (
+                              <div className="product-mobile-batch">
+                                Batch: {i.custom.batch} {i.custom.expiry ? `| Exp: ${i.custom.expiry}` : ''} {i.custom.rack ? `| ${i.custom.rack}` : ''}
+                              </div>
+                            )}
+                            <div className="product-mobile-badges">
+                              <span className="badge badge-blue">{i.category || 'General'}</span>
+                              {i.active !== false ? (
+                                <span className="badge badge-emerald">Active</span>
+                              ) : (
+                                <span className="badge badge-amber">Inactive</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Specs Grid */}
+                        <div className="product-mobile-spec-grid">
+                          <div className="product-mobile-spec-item">
+                            <span className="product-mobile-spec-label">Selling Price</span>
+                            <span className="product-mobile-spec-val price">{formatRupees(i.priceMinor)}</span>
+                          </div>
+                          <div className="product-mobile-spec-item">
+                            <span className="product-mobile-spec-label">Current Stock</span>
+                            <span className="product-mobile-spec-val stock">
+                              <span className={`badge ${i.currentStockMilli > 0 ? 'badge-emerald' : 'badge-amber'}`}>
+                                {i.currentStockMilli / 1000} {i.unit || 'pcs'}
+                              </span>
+                            </span>
+                          </div>
+                          <div className="product-mobile-spec-item">
+                            <span className="product-mobile-spec-label">SKU / Code</span>
+                            <span className="product-mobile-spec-val mono" style={{ fontSize: '0.8rem' }}>{i.sku || '—'}</span>
+                          </div>
+                          <div className="product-mobile-spec-item">
+                            <span className="product-mobile-spec-label">GST Rate</span>
+                            <span className="product-mobile-spec-val mono" style={{ fontSize: '0.8rem' }}>
+                              {i.taxRateBp / 100}% {i.taxInclusive ? '(Incl)' : '(Excl)'}
+                            </span>
+                          </div>
+                          {can(user?.role as any, 'purchases') && (
+                            <div className="product-mobile-spec-item">
+                              <span className="product-mobile-spec-label">Purchase Cost</span>
+                              <span className="product-mobile-spec-val mono" style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                                {i.costMinor ? formatRupees(i.costMinor) : '—'}
+                              </span>
+                            </div>
+                          )}
+                          <div className="product-mobile-spec-item">
+                            <span className="product-mobile-spec-label">Branch</span>
+                            <span className="product-mobile-spec-val" style={{ fontSize: '0.78rem', color: '#475569' }}>
+                              {branches.find(b => b.id === i.branchId || b.code === i.branchId)?.name || i.branchName || 'Main Store'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Barcode Row */}
+                        <div className="product-mobile-barcode-row">
+                          {i.barcode && i.barcode.trim() ? (
+                            <>
+                              <div
+                                className="product-mobile-barcode-preview"
+                                title="Click to scan or change manufacturer barcode"
+                                onClick={() => {
+                                  setScanMfrInitialItemId(i.id);
+                                  setShowScanMfrModal(true);
+                                }}
+                                dangerouslySetInnerHTML={{ __html: renderBarcodeSvg(i.barcode) }}
+                              />
+                              <button
+                                type="button"
+                                className="btn btn-secondary"
+                                style={{ padding: '0.25rem 0.5rem', fontSize: '0.72rem', color: '#0d9488', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '3px' }}
+                                onClick={() => {
+                                  setScanMfrInitialItemId(i.id);
+                                  setShowScanMfrModal(true);
+                                }}
+                                title="Scan new packaging barcode"
+                              >
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                                  <circle cx="12" cy="13" r="4" />
+                                </svg>
+                                <span>Scan Mfr</span>
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontStyle: 'italic' }}>No barcode</span>
+                              <div style={{ display: 'inline-flex', gap: '0.35rem' }}>
+                                <button
+                                  type="button"
+                                  className="btn btn-secondary"
+                                  style={{ padding: '0.2rem 0.45rem', fontSize: '0.7rem', color: '#4f46e5', fontWeight: 600, borderRadius: '4px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}
+                                  onClick={async () => {
+                                    const code = '20' + Date.now().toString().slice(-10);
+                                    let sum = 0;
+                                    for (let k = 0; k < 12; k++) sum += parseInt(code[k], 10) * (k % 2 === 0 ? 1 : 3);
+                                    const fullBc = code + ((10 - (sum % 10)) % 10);
+                                    try {
+                                      await api(`/api/items/${i.id}`, { method: 'PATCH', body: JSON.stringify({ barcode: fullBc }) });
+                                      showToast(`Generated barcode for ${i.name} & saved to DB!`);
+                                      loadItems();
+                                    } catch (err: any) {
+                                      showToast(err.message || 'Failed to generate barcode');
+                                    }
+                                  }}
+                                  title="Generate internal barcode"
+                                >
+                                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <line x1="12" y1="5" x2="12" y2="19" />
+                                    <line x1="5" y1="12" x2="19" y2="12" />
+                                  </svg>
+                                  <span>Generate</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  className="btn btn-secondary"
+                                  style={{ padding: '0.2rem 0.45rem', fontSize: '0.7rem', color: '#0d9488', fontWeight: 600, borderRadius: '4px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}
+                                  onClick={() => {
+                                    setScanMfrInitialItemId(i.id);
+                                    setShowScanMfrModal(true);
+                                  }}
+                                  title="Scan manufacturer packaging barcode"
+                                >
+                                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                                    <circle cx="12" cy="13" r="4" />
+                                  </svg>
+                                  <span>Scan</span>
+                                </button>
+                              </div>
+                            </>
+                          )}
+                        </div>
+
+                        {/* Actions Row */}
+                        <div className="product-mobile-actions-row">
+                          <div className="product-mobile-actions-left">
+                            <button
+                              type="button"
+                              className="product-mobile-action-btn"
+                              onClick={() => openEditItemModal(i)}
+                              title="Edit product"
+                            >
+                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M12 20h9" />
+                                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                              </svg>
+                              <span>Edit</span>
+                            </button>
+                            <button
+                              type="button"
+                              className="product-mobile-action-btn"
+                              style={{ color: '#2563eb' }}
+                              onClick={() => setActiveTab('inventory')}
+                              title="Open Inventory Hub"
+                            >
+                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                                <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                                <line x1="12" y1="22.08" x2="12" y2="12" />
+                              </svg>
+                              <span>Stock</span>
+                            </button>
+                            <ToggleSwitch
+                              id={`mobile-toggle-item-active-${i.id}`}
+                              checked={i.active !== false}
+                              onChange={() => handleToggleItemActive(i)}
+                              disabled={!can(user?.role as any, 'items.write') || togglingItemId === i.id}
+                              loading={togglingItemId === i.id}
+                              title={
+                                !can(user?.role as any, 'items.write')
+                                  ? "You don't have permission to change product status"
+                                  : i.active !== false
+                                    ? 'Active · click to deactivate'
+                                    : 'Inactive · click to activate'
+                              }
+                              ariaLabel={i.active !== false ? 'Active' : 'Inactive'}
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            className="product-mobile-action-btn delete"
+                            onClick={() => {
+                              setDeletingItem(i);
+                              setDeleteError(null);
+                            }}
+                            title="Delete product"
+                            aria-label="Delete product"
+                          >
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M3 6h18" />
+                              <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                              <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                              <line x1="10" y1="11" x2="10" y2="17" />
+                              <line x1="14" y1="11" x2="14" y2="17" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    {filteredMasterItems.length === 0 && (
+                      <div style={{ textAlign: 'center', padding: '2rem 1rem', color: '#94a3b8' }}>
+                        No products match your search or filter criteria.
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 2. Desktop & Responsive Mobile Table Container */}
+                  <div className={`product-catalog-table-wrapper table-scroll-x ${productMobileView === 'cards' ? 'mobile-hidden' : 'mobile-active'}`}>
                     <div className="table-scroll-y">
                       <table className="data-table">
                         <thead>
                           <tr>
-                            <th style={{ width: '74px', minWidth: '70px', textAlign: 'center' }}>Image</th>
-                            <th className="col-product-name">Product Name</th>
+                            <th style={{ width: '74px', minWidth: '70px', textAlign: 'center' }} className="col-sticky-img">Image</th>
+                            <th className="col-product-name col-sticky-name">Product Name</th>
                             <th className="col-nowrap">Branch</th>
                             <th className="col-nowrap">Category</th>
                             <th className="col-nowrap">Current Stock</th>
@@ -13881,13 +14171,13 @@ export function App() {
                             <th className="col-nowrap">GST Rate</th>
                             <th className="col-nowrap">Status</th>
                             <th className="col-nowrap" style={{ minWidth: '135px', textAlign: 'center' }}>Barcode Label</th>
-                            <th className="col-nowrap" style={{ minWidth: '220px' }}>Actions</th>
+                            <th className="col-nowrap col-sticky-actions" style={{ minWidth: '220px' }}>Actions</th>
                           </tr>
                         </thead>
                         <tbody>
                           {filteredMasterItems.map((i) => (
                             <tr key={i.id} style={{ opacity: i.active === false ? 0.75 : 1 }}>
-                              <td style={{ width: '74px', minWidth: '70px', textAlign: 'center', verticalAlign: 'middle', padding: '0.45rem 0.5rem' }}>
+                              <td style={{ width: '74px', minWidth: '70px', textAlign: 'center', verticalAlign: 'middle', padding: '0.45rem 0.5rem' }} className="col-sticky-img">
                                 <div
                                   className="product-table-image-cell"
                                   style={{
@@ -13970,7 +14260,7 @@ export function App() {
                                   )}
                                 </div>
                               </td>
-                              <td className="col-product-name" style={{ fontWeight: 600 }}>
+                              <td className="col-product-name col-sticky-name" style={{ fontWeight: 600 }}>
                                 <div style={{ color: '#0f172a', fontWeight: 600 }}>{i.name}</div>
                                 {i.custom?.batch && (
                                   <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '1px' }}>
@@ -14148,7 +14438,7 @@ export function App() {
                                   </div>
                                 )}
                               </td>
-                              <td className="col-nowrap" style={{ verticalAlign: 'middle' }}>
+                              <td className="col-nowrap col-sticky-actions" style={{ verticalAlign: 'middle' }}>
                                 <div style={{ display: 'inline-flex', gap: '0.35rem', alignItems: 'center' }}>
                                   <button
                                     className="btn btn-secondary"
