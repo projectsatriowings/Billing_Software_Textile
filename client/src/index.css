@@ -36987,8 +36987,12 @@ select.expense-input-control {
   background: #f8fafc;
   border: 1px solid #cbd5e1;
   border-radius: 10px;
-  padding: 0.42rem 0.75rem;
-  flex: 1 1 240px;
+  padding: 0 0.75rem;
+  height: 40px;
+  min-height: 40px;
+  max-height: 40px;
+  box-sizing: border-box;
+  flex: 0 1 320px;
   max-width: 360px;
   transition: all 0.15s ease;
 }
@@ -37011,6 +37015,9 @@ select.expense-input-control {
   font-size: 0.82rem;
   color: #0f172a;
   width: 100%;
+  height: 100%;
+  padding: 0;
+  line-height: normal;
 }
 
 .invoices-clear-search-btn {
@@ -37771,7 +37778,11 @@ tbody tr:hover td.col-sticky-invoice {
   .invoices-search-box {
     width: 100% !important;
     max-width: 100% !important;
-    min-height: 40px;
+    height: 42px !important;
+    min-height: 42px !important;
+    max-height: 42px !important;
+    flex: none !important;
+    box-sizing: border-box !important;
   }
 
   .invoices-filter-group {
