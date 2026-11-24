@@ -9,15 +9,26 @@ import { HttpError, type Router } from '../http.ts';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-function ensureReleaseFile(type: 'exe' | 'zip'): { filePath: string; size: number } | null {
-  const isExe = type === 'exe';
-  const targetName = isExe ? 'A2Z Setup 0.1.0.exe' : 'A2Z-Billing-Windows-Setup.zip';
+function ensureReleaseFile(type: 'exe' | 'zip' | 'apk'): { filePath: string; size: number } | null {
+  let targetName: string;
+  if (type === 'exe') {
+    targetName = 'A2Z Setup 0.1.0.exe';
+  } else if (type === 'zip') {
+    targetName = 'A2Z-Billing-Windows-Setup.zip';
+  } else {
+    targetName = 'A2Z-Billing.apk';
+  }
 
   // 1. Check if complete file already exists on disk
   const candidateFullPaths = [
     path.resolve(process.cwd(), 'release', targetName),
+    path.resolve(process.cwd(), 'client', 'public', 'downloads', targetName),
+    path.resolve(process.cwd(), 'client', 'dist', 'downloads', targetName),
+    path.resolve(process.cwd(), 'android', 'app', 'build', 'outputs', 'apk', 'debug', 'app-debug.apk'),
     path.resolve(__dirname, '../../../../release', targetName),
     path.resolve(__dirname, '../../../release', targetName),
+    path.resolve(__dirname, '../../../../client/public/downloads', targetName),
+    path.resolve(__dirname, '../../../client/public/downloads', targetName),
   ];
   for (const p of candidateFullPaths) {
     if (fs.existsSync(p)) {
@@ -87,6 +98,7 @@ export function registerMeta(r: Router) {
     try {
       ensureReleaseFile('exe');
       ensureReleaseFile('zip');
+      ensureReleaseFile('apk');
     } catch {}
   }, 500);
 
@@ -152,10 +164,55 @@ export function registerMeta(r: Router) {
     return;
   });
 
+  // Android APK download (.apk)
+  r.get('/api/download/android', async (ctx) => {
+    const file = ensureReleaseFile('apk');
+    if (!file) {
+      throw new HttpError(404, 'NOT_FOUND', 'A2Z Android App (.apk) is not available on this server.');
+    }
+
+    ctx.res.writeHead(200, {
+      'Content-Type': 'application/vnd.android.package-archive',
+      'Content-Length': file.size,
+      'Content-Disposition': 'attachment; filename="A2Z-Billing.apk"',
+      'Cache-Control': 'no-cache',
+    });
+
+    const stream = fs.createReadStream(file.filePath);
+    ctx.req.on('close', () => {
+      stream.destroy();
+    });
+    stream.pipe(ctx.res);
+    return;
+  });
+
+  // Alias /api/download/apk
+  r.get('/api/download/apk', async (ctx) => {
+    const file = ensureReleaseFile('apk');
+    if (!file) {
+      throw new HttpError(404, 'NOT_FOUND', 'A2Z Android App (.apk) is not available on this server.');
+    }
+
+    ctx.res.writeHead(200, {
+      'Content-Type': 'application/vnd.android.package-archive',
+      'Content-Length': file.size,
+      'Content-Disposition': 'attachment; filename="A2Z-Billing.apk"',
+      'Cache-Control': 'no-cache',
+    });
+
+    const stream = fs.createReadStream(file.filePath);
+    ctx.req.on('close', () => {
+      stream.destroy();
+    });
+    stream.pipe(ctx.res);
+    return;
+  });
+
   // Download metadata
   r.get('/api/download/info', () => {
     const exe = ensureReleaseFile('exe');
     const zip = ensureReleaseFile('zip');
+    const apk = ensureReleaseFile('apk');
     return {
       hasInstaller: Boolean(exe),
       exeName: 'A2Z Setup 0.1.0.exe',
@@ -163,6 +220,9 @@ export function registerMeta(r: Router) {
       hasZip: Boolean(zip),
       zipName: 'A2Z-Billing-Windows-Setup.zip',
       zipSize: zip ? zip.size : null,
+      hasApk: Boolean(apk),
+      apkName: 'A2Z-Billing.apk',
+      apkSize: apk ? apk.size : null,
       version: '0.1.0',
     };
   });

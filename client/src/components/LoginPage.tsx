@@ -175,8 +175,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     window.location.href = '/api/download/desktop';
   };
 
-  const handleDownloadZip = () => {
-    window.location.href = '/api/download/desktop-zip';
+  const handleDownloadApk = () => {
+    window.location.href = '/api/download/android';
   };
 
   const handleInstallApp = async () => {
@@ -789,13 +789,13 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 />
                 <div>
                   <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800, color: '#0F172A', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    A2Z Desktop Software
+                    A2Z Software Download
                     <span style={{ fontSize: '0.7rem', background: '#EDE9FE', color: '#6D28D9', padding: '2px 8px', borderRadius: '9999px', fontWeight: 700 }}>
                       v0.1.0
                     </span>
                   </h3>
                   <p style={{ margin: '3px 0 0', fontSize: '0.8rem', color: '#64748B' }}>
-                    Full Windows installer with step-by-step setup wizard
+                    Full Windows installer (.exe) &amp; Android mobile app (.apk)
                   </p>
                 </div>
               </div>
@@ -861,12 +861,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
               <button
                 type="button"
-                onClick={handleDownloadZip}
+                onClick={handleDownloadApk}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '0.5rem',
+                  gap: '0.55rem',
                   padding: '0.7rem 1rem',
                   borderRadius: '12px',
                   background: '#F8FAFC',
@@ -886,39 +886,41 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   e.currentTarget.style.borderColor = '#E2E8F0';
                 }}
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style={{ color: '#059669', flexShrink: 0 }}>
+                  <path d="M6 18c0 .55.45 1 1 1h1v3.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V19h2v3.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V19h1c.55 0 1-.45 1-1V8H6v10zM3.5 8C2.67 8 2 8.67 2 9.5v6c0 .83.67 1.5 1.5 1.5S5 16.33 5 15.5v-6C5 8.67 4.33 8 3.5 8zm17 0c-.83 0-1.5.67-1.5 1.5v6c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5v-6c0-.83-.67-1.5-1.5-1.5zm-4.97-4.84l1.3-1.3c.2-.2.2-.51 0-.71-.2-.2-.51-.2-.71 0l-1.48 1.48C13.68 2.24 12.87 2 12 2c-.87 0-1.68.24-2.64.63L7.88 1.15c-.2-.2-.51-.2-.71 0-.2.2-.2.51 0 .71l1.3 1.3C6.72 4.18 5.5 5.94 5.5 8h13c0-2.06-1.22-3.82-2.97-4.84zM9 6c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm6 0c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z" />
                 </svg>
-                <span>Download ZIP with 1-Click Auto-Unblock Script (.zip)</span>
+                <span>Download Android App (.apk)</span>
+                <span style={{ fontSize: '0.75rem', opacity: 0.75, fontWeight: 500 }}>(113 MB)</span>
               </button>
             </div>
 
             {/* Quick 3-Step Setup Guide */}
             <div style={{ background: '#F8FAFC', borderRadius: '14px', padding: '1rem', border: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               <div style={{ fontSize: '0.78rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                Setup Wizard Steps
+                Setup &amp; Installation Steps
               </div>
               <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'flex-start', fontSize: '0.82rem', color: '#475569', lineHeight: 1.45 }}>
                 <span style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#6D28D9', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.72rem', fontWeight: 800, flexShrink: 0, marginTop: '1px' }}>1</span>
-                <div>Double-click <strong>A2Z Setup 0.1.0.exe</strong> after download completes.</div>
+                <div><strong>Windows (.exe):</strong> Double-click <strong>A2Z Setup 0.1.0.exe</strong> after download completes and follow the setup wizard.</div>
               </div>
               <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'flex-start', fontSize: '0.82rem', color: '#475569', lineHeight: 1.45 }}>
-                <span style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#6D28D9', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.72rem', fontWeight: 800, flexShrink: 0, marginTop: '1px' }}>2</span>
-                <div>Click <strong>Next</strong>, choose your preferred installation directory, and click <strong>Install</strong>.</div>
+                <span style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#059669', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.72rem', fontWeight: 800, flexShrink: 0, marginTop: '1px' }}>2</span>
+                <div><strong>Android (.apk):</strong> Open <strong>A2Z-Billing.apk</strong> on your device, enable <em>"Install unknown apps"</em> when prompted, and tap <strong>Install</strong>.</div>
               </div>
               <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'flex-start', fontSize: '0.82rem', color: '#475569', lineHeight: 1.45 }}>
                 <span style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#6D28D9', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.72rem', fontWeight: 800, flexShrink: 0, marginTop: '1px' }}>3</span>
-                <div>The setup wizard will finish and place the official <strong>A2Z purple shortcut</strong> on your Desktop!</div>
+                <div>Launch the official <strong>A2Z shortcut</strong> on your Desktop or Android Home Screen to begin billing!</div>
               </div>
             </div>
 
-            {/* SmartScreen / Smart App Control Helper */}
+            {/* SmartScreen / Unknown Apps Helper */}
             <div style={{ background: '#FFFBEB', borderRadius: '14px', padding: '0.85rem 1rem', border: '1px solid #FDE68A', display: 'flex', gap: '0.65rem', alignItems: 'flex-start' }}>
               <span style={{ fontSize: '1.1rem', marginTop: '1px' }}>💡</span>
               <div style={{ fontSize: '0.78rem', color: '#92400E', lineHeight: 1.45 }}>
-                <strong>If Windows SmartScreen or Smart App Control shows a warning:</strong>
+                <strong>Installation Tips:</strong>
                 <div style={{ marginTop: '3px' }}>
-                  Click <em>"More info"</em> → <strong>"Run anyway"</strong>. Or right-click the <code>.exe</code> file → <strong>Properties</strong> → check <strong>Unblock</strong> at the bottom → <strong>OK</strong>.
+                  <strong>Windows:</strong> If SmartScreen appears, click <em>"More info"</em> → <strong>"Run anyway"</strong>.<br />
+                  <strong>Android:</strong> Allow Chrome or Files to <em>"Install unknown apps"</em> in device Settings when prompted.
                 </div>
               </div>
             </div>
