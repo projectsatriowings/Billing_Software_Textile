@@ -17,11 +17,10 @@ async function startDev() {
     fs.mkdirSync(distDir, { recursive: true });
   }
 
-  // Copy index.html
-  const publicHtml = path.resolve('client/public/index.html');
-  const distHtml = path.resolve(distDir, 'index.html');
-  if (fs.existsSync(publicHtml)) {
-    fs.copyFileSync(publicHtml, distHtml);
+  // Copy public assets recursively
+  const publicDir = path.resolve('client/public');
+  if (fs.existsSync(publicDir)) {
+    fs.cpSync(publicDir, distDir, { recursive: true });
   }
 
   console.log('Starting esbuild watch mode for client...');

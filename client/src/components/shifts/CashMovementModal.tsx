@@ -163,7 +163,7 @@ export const CashMovementModal: React.FC<CashMovementModalProps> = ({
             <div className="shift-bento-title-wrap">
               <h3>
                 <span>Record Cash Movement</span>
-                <span className="shift-ref-pill">#{activeShift.shiftNumber || activeShift.id.slice(0, 8)}</span>
+                <span className="shift-ref-pill">#{activeShift.shiftNumber || (activeShift.id || '').slice(0, 8)}</span>
               </h3>
               <p>
                 <StoreIcon size={12} />

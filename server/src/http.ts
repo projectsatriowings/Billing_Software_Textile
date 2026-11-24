@@ -146,7 +146,8 @@ function serveStatic(root: string, pathname: string, req: http.IncomingMessage, 
 
   const isHtml = ext === '.html' || isSpaFallback;
   const isJsOrCss = ext === '.js' || ext === '.css';
-  const cacheControl = (isHtml || isJsOrCss)
+  const isIcon = ext === '.ico' || ext === '.png' || ext === '.svg' || ext === '.webmanifest';
+  const cacheControl = (isHtml || isJsOrCss || isIcon)
     ? 'no-cache, must-revalidate'
     : 'public, max-age=86400, stale-while-revalidate=604800';
 

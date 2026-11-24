@@ -179,6 +179,8 @@ import {
   Settings as SettingsIcon,
   UserCog,
   LogOut,
+  Menu,
+  Monitor,
 } from 'lucide-react';
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 import { PrintBarcodeModal } from './components/PrintBarcodeModal';
@@ -616,7 +618,12 @@ export function App() {
   const [user, setUser] = useState<User | null>(() => {
     try {
       const stored = localStorage.getItem('user') || sessionStorage.getItem('user');
-      return stored ? JSON.parse(stored) : null;
+      if (!stored) return null;
+      const parsed = JSON.parse(stored);
+      if (parsed && typeof parsed === 'object' && parsed.id && parsed.role) {
+        return parsed;
+      }
+      return null;
     } catch {
       return null;
     }
@@ -624,7 +631,12 @@ export function App() {
   const [shop, setShop] = useState<Shop | null>(() => {
     try {
       const stored = localStorage.getItem('shop') || sessionStorage.getItem('shop');
-      return stored ? JSON.parse(stored) : null;
+      if (!stored) return null;
+      const parsed = JSON.parse(stored);
+      if (parsed && typeof parsed === 'object' && parsed.id) {
+        return parsed;
+      }
+      return null;
     } catch {
       return null;
     }
@@ -1658,9 +1670,10 @@ export function App() {
 
   const scannerPairingUrl = useMemo(() => {
     const counterParam = encodeURIComponent(selectedCounter || 'Counter 1');
-    const httpPort = scannerNetworkInfo?.httpPort || 3000;
-    const httpsPort = scannerNetworkInfo?.httpsPort || 3443;
-    const lanIp = scannerNetworkInfo?.lanIp || scannerNetworkInfo?.localIp || window.location.hostname;
+    const port = scannerNetworkInfo?.httpPort || (typeof window !== 'undefined' && window.location.port ? Number(window.location.port) : 3001);
+    const httpsPort = scannerNetworkInfo?.httpsPort || (port + 443);
+    const lanIp = scannerNetworkInfo?.lanIp || scannerNetworkInfo?.localIp || '';
+    const isLiveOrigin = typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
 
     let base = '';
     if (customTunnelUrl.trim()) {
@@ -1668,18 +1681,22 @@ export function App() {
     } else if (scannerProtocol === 'tunnel') {
       if (scannerNetworkInfo?.tunnelUrl) {
         base = scannerNetworkInfo.tunnelUrl.replace(/\/+$/, '');
-      } else if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+      } else if (isLiveOrigin) {
         base = window.location.origin.replace(/\/+$/, '');
+      } else if (lanIp && lanIp !== 'localhost' && lanIp !== '127.0.0.1') {
+        base = `http://${lanIp}:${port}`;
       } else {
-        base = `http://${lanIp}:${httpPort}`;
+        base = window.location.origin.replace(/\/+$/, '');
       }
     } else if (scannerProtocol === 'server') {
-      base = window.location.origin.replace(/\/+$/, '');
+      base = isLiveOrigin ? window.location.origin.replace(/\/+$/, '') : (lanIp && lanIp !== 'localhost' ? `http://${lanIp}:${port}` : window.location.origin.replace(/\/+$/, ''));
     } else if (scannerProtocol === 'https') {
-      base = `https://${lanIp}:${httpsPort}`;
+      base = `https://${lanIp || window.location.hostname}:${httpsPort}`;
     } else {
       // 'wifi'
-      base = `http://${lanIp}:${httpPort}`;
+      base = lanIp && lanIp !== 'localhost' && lanIp !== '127.0.0.1'
+        ? `http://${lanIp}:${port}`
+        : window.location.origin.replace(/\/+$/, '');
     }
     return `${base}/scanner?session=${encodeURIComponent(scannerSessionId)}&counter=${counterParam}`;
   }, [scannerNetworkInfo, scannerProtocol, customTunnelUrl, scannerSessionId, selectedCounter]);
@@ -1769,6 +1786,30 @@ export function App() {
       return next;
     });
   };
+
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  // Close mobile sidebar on route or tab change
+  useEffect(() => {
+    setIsMobileSidebarOpen(false);
+  }, [activeTab, displayTab]);
+
+  // Handle mobile drawer body scroll locking and Escape key
+  useEffect(() => {
+    if (isMobileSidebarOpen) {
+      document.body.classList.add('mobile-drawer-open');
+    } else {
+      document.body.classList.remove('mobile-drawer-open');
+    }
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsMobileSidebarOpen(false);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.classList.remove('mobile-drawer-open');
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isMobileSidebarOpen]);
 
   const [autoCollapsedForPos, setAutoCollapsedForPos] = useState(false);
   const [showProductCatalogDrawer, setShowProductCatalogDrawer] = useState(false);
@@ -3016,29 +3057,38 @@ export function App() {
 
   // Dynamically update website favicon and browser tab title to match store brand
   useEffect(() => {
-    // 1. Dynamic Favicon
-    let faviconLink: HTMLLinkElement | null = document.getElementById('app-favicon') as HTMLLinkElement | null;
-    if (!faviconLink) {
-      faviconLink = document.querySelector("link[rel*='icon']");
-    }
-    if (!faviconLink) {
-      faviconLink = document.createElement('link');
-      faviconLink.id = 'app-favicon';
-      faviconLink.rel = 'shortcut icon';
-      document.head.appendChild(faviconLink);
-    }
-    if (shop?.logoUrl) {
-      faviconLink.href = shop.logoUrl;
-      faviconLink.type = 'image/png';
-    } else {
-      faviconLink.href = '/favicon.ico';
-    }
+    // 1. Dynamic Favicon - force cache busting and eliminate any stale SVG links
+    const targetUrl = shop?.logoUrl || '/icon.png?v=20261123c';
+
+    // Remove any conflicting old icon tags (including stale SVG links)
+    try {
+      const existingIcons = document.querySelectorAll("link[rel*='icon'], link[type='image/svg+xml']");
+      existingIcons.forEach((el) => el.remove());
+    } catch { }
+
+    const newFavicon = document.createElement('link');
+    newFavicon.id = 'app-favicon';
+    newFavicon.rel = 'icon';
+    newFavicon.type = 'image/png';
+    newFavicon.setAttribute('sizes', 'any');
+    newFavicon.href = targetUrl;
+    document.head.appendChild(newFavicon);
+
+    const newShortcut = document.createElement('link');
+    newShortcut.rel = 'shortcut icon';
+    newShortcut.type = 'image/x-icon';
+    newShortcut.href = `/favicon.ico?v=20261123c`;
+    document.head.appendChild(newShortcut);
 
     // 2. Apple Touch Icon (mobile homescreen)
-    const appleIcon: HTMLLinkElement | null = document.getElementById('app-apple-touch-icon') as HTMLLinkElement | null;
-    if (appleIcon && shop?.logoUrl) {
-      appleIcon.href = shop.logoUrl;
+    let appleIcon = document.getElementById('app-apple-touch-icon') as HTMLLinkElement | null;
+    if (!appleIcon) {
+      appleIcon = document.createElement('link');
+      appleIcon.id = 'app-apple-touch-icon';
+      appleIcon.rel = 'apple-touch-icon';
+      document.head.appendChild(appleIcon);
     }
+    appleIcon.href = targetUrl;
 
     // 3. Dynamic Browser Tab Title
     if (shop?.name) {
@@ -4594,17 +4644,11 @@ export function App() {
           // Intelligently select best initial protocol if not custom
           setScannerProtocol((prev) => {
             if (customTunnelUrl) return 'tunnel';
-            if (prev === 'server' || prev === 'https' || prev === 'wifi' || prev === 'tunnel') {
-              // If current choice is valid, keep it unless tunnel was active and died
-              if (prev === 'tunnel' && !data?.tunnelUrl) {
-                return data?.isLanAvailable ? 'wifi' : 'server';
-              }
-              return prev;
-            }
+            const isLive = typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+            if (isLive) return 'server';
             if (data?.tunnelUrl) return 'tunnel';
-            if (data?.isLanAvailable) return 'wifi';
-            if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') return 'server';
-            return 'wifi';
+            if (data?.isLanAvailable || data?.lanIp) return 'wifi';
+            return prev || 'wifi';
           });
         })
         .catch(() => { });
@@ -4640,6 +4684,8 @@ export function App() {
 
           if (data.status) {
             setScannerStatus(data.status);
+          } else if (data.phoneConnected !== undefined) {
+            setScannerStatus(data.phoneConnected ? (data.cameraReady ? 'scanner_ready' : 'phone_connected') : 'waiting');
           }
           if (data.phoneConnected !== undefined) {
             setIsPhoneScannerConnected(Boolean(data.phoneConnected));
@@ -8521,16 +8567,28 @@ export function App() {
           </div>
         )}
 
+        {/* Mobile Sidebar Backdrop */}
+        {isMobileSidebarOpen && (
+          <div
+            className="mobile-sidebar-backdrop"
+            onClick={() => setIsMobileSidebarOpen(false)}
+            aria-hidden="true"
+          />
+        )}
+
         {/* Left Sidebar Navigation */}
         <aside
-          className={`app-sidebar ${isSidebarCollapsed ? 'icon-only' : ''}`}
+          className={`app-sidebar ${isSidebarCollapsed ? 'icon-only' : ''} ${isMobileSidebarOpen ? 'mobile-open' : ''}`}
         >
           <div className="sidebar-top">
             {/* Header row with Brand & Collapse/Expand Toggle */}
             <div className="sidebar-header-row">
               <div
                 className="sidebar-brand"
-                onClick={() => navigateTo('dashboard')}
+                onClick={() => {
+                  navigateTo('dashboard');
+                  setIsMobileSidebarOpen(false);
+                }}
                 style={{ cursor: 'pointer' }}
                 title={`${shop?.name || 'Adaptive Billing'} · Cloud POS & GST`}
               >
@@ -8571,13 +8629,23 @@ export function App() {
                 className="sidebar-collapse-toggle"
                 onClick={(e) => {
                   e.stopPropagation();
-                  toggleSidebar();
+                  if (isMobileSidebarOpen) {
+                    setIsMobileSidebarOpen(false);
+                  } else {
+                    toggleSidebar();
+                  }
                 }}
-                title={isSidebarCollapsed ? "Open sidebar" : "Close sidebar"}
-                aria-label={isSidebarCollapsed ? "Open sidebar" : "Close sidebar"}
-                aria-expanded={!isSidebarCollapsed}
+                title={isMobileSidebarOpen ? "Close menu" : isSidebarCollapsed ? "Open sidebar" : "Close sidebar"}
+                aria-label={isMobileSidebarOpen ? "Close menu" : isSidebarCollapsed ? "Open sidebar" : "Close sidebar"}
+                aria-expanded={isMobileSidebarOpen || !isSidebarCollapsed}
               >
-                {isSidebarCollapsed ? (
+                {isMobileSidebarOpen ? (
+                  // X Close icon for mobile drawer
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                ) : isSidebarCollapsed ? (
                   // ☰ Hamburger icon (3 bars) to open
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <line x1="4" y1="6" x2="20" y2="6" />
@@ -9342,14 +9410,14 @@ export function App() {
           {/* Sidebar Footer (User Profile & Utilities Matching Image 2) */}
           <div className="sidebar-footer">
             <div className="sidebar-user-card">
-              <div className="sidebar-user-avatar" title={user.name}>
-                {user.name.slice(0, 1).toUpperCase()}
+              <div className="sidebar-user-avatar" title={user?.name || user?.email || 'User'}>
+                {(user?.name || user?.email || 'User').slice(0, 1).toUpperCase()}
               </div>
               <div className="sidebar-user-meta">
-                <span className="sidebar-user-name">{user.name}</span>
+                <span className="sidebar-user-name">{user?.name || user?.email || 'User'}</span>
                 <span className="sidebar-user-role">
                   <span className="user-status-dot"></span>
-                  {user.role === 'owner' ? 'Super Admin' : user.role === 'manager' ? 'Store Manager' : user?.role === 'cashier' ? 'Cashier' : user.role}
+                  {user?.role === 'owner' ? 'Super Admin' : user?.role === 'manager' ? 'Store Manager' : user?.role === 'cashier' ? 'Cashier' : (user?.role || 'Staff')}
                 </span>
               </div>
             </div>
@@ -9444,6 +9512,17 @@ export function App() {
         <main className="main-content">
           {/* Top Global Bar Matching Image 2 */}
           <div className={`top-global-bar ${hideBusinessBar ? 'no-divider' : ''} ${displayTab === 'dashboard' ? 'dashboard-top-bar' : ''}`}>
+            {/* Mobile Header Menu Hamburger Toggle Button (visible on screens <= 900px) */}
+            <button
+              type="button"
+              className="mobile-header-menu-btn"
+              onClick={() => setIsMobileSidebarOpen(prev => !prev)}
+              aria-label="Toggle navigation menu"
+              title="Open Navigation Menu"
+            >
+              <Menu size={18} />
+              <span className="mobile-header-menu-text">Menu</span>
+            </button>
             {displayTab === 'pos' || activeTab === 'pos' ? (
               <div className="top-pos-header-left">
                 <Tooltip label={`Store Branch: ${currentBranchName} (${currentBranchCode})`} position="bottom">
@@ -9586,7 +9665,7 @@ export function App() {
                 {currentHeaderTitle}
               </h1>
             ) : displayTab === 'dashboard' && user ? (
-              <div className="top-dash-greeting-group-left" style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+              <div className="top-dash-greeting-group-left">
                 <div>
                   <h1 className="header-greeting-title">
                     {dashboardGreeting}, {userFirstName}
@@ -10344,7 +10423,7 @@ export function App() {
                         : user?.role === 'cashier'
                           ? 'Cashier'
                           : user?.role
-                            ? user.role.charAt(0).toUpperCase() + user.role.slice(1)
+                            ? String(user.role).charAt(0).toUpperCase() + String(user.role).slice(1)
                             : 'Staff'}
                   </span>
                 </div>
@@ -13643,166 +13722,145 @@ export function App() {
               };
 
               return (
-                <div className="card" key={`items-${selectedBranchScope}`}>
-                  <div className="card-title" style={{ flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center' }}>
-                    <div>
-                      <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 400, margin: 0 }}>
-                        Track selling price, cost price, GST tax rates, units and live ledger stock
-                      </div>
+                <div className="card product-catalog-card" key={`items-${selectedBranchScope}`}>
+                  <div className="product-catalog-header">
+                    <div className="product-catalog-subheading">
+                      Track selling price, cost price, GST tax rates, units and live ledger stock
                     </div>
-                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                      <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+                    <div className="product-catalog-toolbar">
+                      {/* Search Bar */}
+                      <div className="product-catalog-search-wrap">
                         <svg
-                          width="14"
-                          height="14"
+                          width="15"
+                          height="15"
                           viewBox="0 0 24 24"
                           fill="none"
                           stroke="#94a3b8"
                           strokeWidth="2.2"
                           strokeLinecap="round"
                           strokeLinejoin="round"
-                          style={{ position: 'absolute', left: '0.65rem', pointerEvents: 'none' }}
+                          className="product-catalog-search-icon"
                         >
                           <circle cx="11" cy="11" r="8" />
                           <line x1="21" y1="21" x2="16.65" y2="16.65" />
                         </svg>
                         <input
                           type="text"
-                          className="form-input"
-                          style={{ width: '185px', padding: '0.45rem 0.75rem 0.45rem 2rem', fontSize: '0.85rem' }}
-                          placeholder="Search items, SKU, HS..."
+                          className="form-input product-catalog-search-input"
+                          placeholder="Search items, SKU, HSN, barcode..."
                           value={itemSearchMaster}
                           onChange={(e) => setItemSearchMaster(e.target.value)}
                         />
+                        {itemSearchMaster && (
+                          <button
+                            type="button"
+                            className="product-catalog-search-clear"
+                            onClick={() => setItemSearchMaster('')}
+                            title="Clear search"
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                              <line x1="18" y1="6" x2="6" y2="18" />
+                              <line x1="6" y1="6" x2="18" y2="18" />
+                            </svg>
+                          </button>
+                        )}
                       </div>
-                      <select
-                        className="form-input"
-                        style={{ width: '140px', padding: '0.45rem 0.75rem', fontSize: '0.85rem' }}
-                        value={itemCatFilterMaster}
-                        onChange={(e) => setItemCatFilterMaster(e.target.value)}
-                      >
-                        <option value="ALL">All Categories</option>
-                        {categoriesList.filter((c) => c.active).map((c) => (
-                          <option key={c.id} value={c.name}>
-                            {c.parentName ? `${c.parentName} → ${c.name}` : c.name}
-                          </option>
-                        ))}
-                      </select>
-                      <button
-                        className="btn btn-secondary"
-                        onClick={() => setShowCategoryModal(true)}
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', fontWeight: 600, padding: '0.45rem 0.85rem' }}
-                      >
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                          <path d="m20.59 13.41-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
-                          <line x1="7" y1="7" x2="7.01" y2="7" />
-                        </svg>
-                        <span>Categories</span>
-                      </button>
-                      <button
-                        id="bulk-import-open-btn"
-                        className="btn btn-secondary"
-                        onClick={() => setShowBulkImportModal(true)}
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.45rem',
-                          fontWeight: 600,
-                          padding: '0.45rem 0.85rem',
-                        }}
-                        title="Bulk import products from Excel or spreadsheet"
-                      >
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                          <polyline points="7 10 12 15 17 10" />
-                          <line x1="12" y1="15" x2="12" y2="3" />
-                        </svg>
-                        <span>Import Products</span>
-                      </button>
-                      <button
-                        id="convert-supplier-invoice-btn"
-                        className="btn btn-secondary"
-                        onClick={() => setShowSupplierInvoiceConverter(true)}
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.45rem',
-                          fontWeight: 600,
-                          padding: '0.45rem 0.85rem',
-                        }}
-                        title="Convert Supplier Invoice (PDF, JPG, PNG) to Excel import template"
-                      >
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                          <polyline points="14 2 14 8 20 8" />
-                          <line x1="8" y1="13" x2="16" y2="13" />
-                          <line x1="8" y1="17" x2="16" y2="17" />
-                          <polyline points="10 9 9 9 8 9" />
-                        </svg>
-                        <span>Convert Supplier Invoice to Excel</span>
-                      </button>
-                      <button
-                        id="scan-manufacturer-barcodes-catalog-btn"
-                        className="btn btn-secondary"
-                        onClick={() => {
-                          setScanMfrInitialItemId(null);
-                          setShowScanMfrModal(true);
-                        }}
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.45rem',
-                          fontWeight: 600,
-                          padding: '0.45rem 0.85rem',
-                          color: '#0f766e',
-                          borderColor: '#99f6e4',
-                          background: '#f0fdfa',
-                        }}
-                        title="Scan and assign manufacturer barcodes using Camera, USB Scanner, or Phone"
-                      >
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0f766e" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                          <circle cx="12" cy="13" r="4" />
-                        </svg>
-                        <span>Scan Barcodes</span>
-                      </button>
-                      <button
-                        id="bulk-print-custom-labels-btn"
-                        className="btn btn-secondary"
-                        onClick={() => setShowBulkBarcodeModal(true)}
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.45rem',
-                          fontWeight: 600,
-                          padding: '0.45rem 0.85rem',
-                        }}
-                        title="Select multiple products and set custom label quantities for each"
-                      >
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                          <polyline points="6 9 6 2 18 2 18 9" />
-                          <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
-                          <rect x="6" y="14" width="12" height="8" />
-                        </svg>
-                        <span>Bulk Print Labels</span>
-                      </button>
-                      <button
-                        className="btn btn-primary"
-                        onClick={openAddItemModal}
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.45rem',
-                          fontWeight: 700,
-                          padding: '0.45rem 1rem',
-                        }}
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                          <line x1="12" y1="5" x2="12" y2="19" />
-                          <line x1="5" y1="12" x2="19" y2="12" />
-                        </svg>
-                        <span>Add New Item</span>
-                      </button>
+
+                      {/* Filter & Primary Action */}
+                      <div className="product-catalog-filter-action-row">
+                        <select
+                          className="form-input product-catalog-cat-select"
+                          value={itemCatFilterMaster}
+                          onChange={(e) => setItemCatFilterMaster(e.target.value)}
+                        >
+                          <option value="ALL">All Categories</option>
+                          {categoriesList.filter((c) => c.active).map((c) => (
+                            <option key={c.id} value={c.name}>
+                              {c.parentName ? `${c.parentName} → ${c.name}` : c.name}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          className="btn btn-primary product-catalog-add-btn"
+                          onClick={openAddItemModal}
+                        >
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                          </svg>
+                          <span>Add New Item</span>
+                        </button>
+                      </div>
+
+                      {/* Secondary Action Buttons Grid */}
+                      <div className="product-catalog-actions-grid">
+                        <button
+                          className="btn btn-secondary product-catalog-action-btn"
+                          onClick={() => setShowCategoryModal(true)}
+                        >
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                            <path d="m20.59 13.41-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+                            <line x1="7" y1="7" x2="7.01" y2="7" />
+                          </svg>
+                          <span>Categories</span>
+                        </button>
+                        <button
+                          id="bulk-import-open-btn"
+                          className="btn btn-secondary product-catalog-action-btn"
+                          onClick={() => setShowBulkImportModal(true)}
+                          title="Bulk import products from Excel or spreadsheet"
+                        >
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="7 10 12 15 17 10" />
+                            <line x1="12" y1="15" x2="12" y2="3" />
+                          </svg>
+                          <span>Import Products</span>
+                        </button>
+                        <button
+                          id="scan-manufacturer-barcodes-catalog-btn"
+                          className="btn btn-secondary product-catalog-action-btn scan-barcodes-btn"
+                          onClick={() => {
+                            setScanMfrInitialItemId(null);
+                            setShowScanMfrModal(true);
+                          }}
+                          title="Scan and assign manufacturer barcodes using Camera, USB Scanner, or Phone"
+                        >
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                            <circle cx="12" cy="13" r="4" />
+                          </svg>
+                          <span>Scan Barcodes</span>
+                        </button>
+                        <button
+                          id="bulk-print-custom-labels-btn"
+                          className="btn btn-secondary product-catalog-action-btn"
+                          onClick={() => setShowBulkBarcodeModal(true)}
+                          title="Select multiple products and set custom label quantities for each"
+                        >
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                            <polyline points="6 9 6 2 18 2 18 9" />
+                            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                            <rect x="6" y="14" width="12" height="8" />
+                          </svg>
+                          <span>Bulk Print Labels</span>
+                        </button>
+                        <button
+                          id="convert-supplier-invoice-btn"
+                          className="btn btn-secondary product-catalog-action-btn convert-invoice-btn"
+                          onClick={() => setShowSupplierInvoiceConverter(true)}
+                          title="Convert Supplier Invoice (PDF, JPG, PNG) to Excel import template"
+                        >
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                            <line x1="8" y1="13" x2="16" y2="13" />
+                            <line x1="8" y1="17" x2="16" y2="17" />
+                            <polyline points="10 9 9 9 8 9" />
+                          </svg>
+                          <span>Convert Supplier Invoice to Excel</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
 

@@ -214,6 +214,39 @@ body.theme-manager,
   color: #653B4B !important;
 }
 
+/* Empty State Alert Banner in Store Manager Burgundy */
+body.theme-manager .today-empty-alert-banner,
+.theme-manager .today-empty-alert-banner {
+  background: linear-gradient(135deg, #FAF6F8 0%, #F5ECF0 100%) !important;
+  border: 1px solid #D9C8D0 !important;
+  color: #64555E !important;
+  box-shadow: 0 4px 14px rgba(101, 59, 75, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.95) !important;
+}
+
+body.theme-manager .today-empty-alert-banner strong,
+.theme-manager .today-empty-alert-banner strong {
+  color: #2D1822 !important;
+}
+
+body.theme-manager .empty-alert-content,
+.theme-manager .empty-alert-content {
+  color: #64555E !important;
+}
+
+body.theme-manager .btn-empty-start,
+.theme-manager .btn-empty-start {
+  background: linear-gradient(135deg, #7A475B 0%, #653B4B 100%) !important;
+  border: 1px solid #522E3C !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 3px 10px rgba(101, 59, 75, 0.35) !important;
+}
+
+body.theme-manager .btn-empty-start:hover,
+.theme-manager .btn-empty-start:hover {
+  background: linear-gradient(135deg, #653B4B 0%, #522E3C 100%) !important;
+  box-shadow: 0 5px 14px rgba(101, 59, 75, 0.45) !important;
+}
+
 /* --------------------------------------------------------------------------
    4. POS COUNTER BENTO TERMINAL (MATCHING CASHIER STRUCTURE IN BURGUNDY)
    -------------------------------------------------------------------------- */
@@ -1619,4 +1652,155 @@ body.theme-manager .kpi-card .kpi-val,
 body.theme-manager .kpi-card .kpi-label,
 .theme-manager .kpi-card .kpi-label {
   color: #64555E !important;
+}
+
+/* --------------------------------------------------------------------------
+   18. MOBILE NAVIGATION CONTROLS & BOTTOM BAR (STORE MANAGER THEME)
+   -------------------------------------------------------------------------- */
+body.theme-manager .mobile-header-menu-btn,
+.theme-manager .mobile-header-menu-btn {
+  background: #FAF6F8 !important;
+  border-color: #D9C8D0 !important;
+  color: #653B4B !important;
+}
+
+body.theme-manager .mobile-header-menu-btn:hover,
+.theme-manager .mobile-header-menu-btn:hover {
+  background: #F5ECF0 !important;
+  border-color: #653B4B !important;
+  color: #522E3C !important;
+}
+
+/* Wholesale Billing Components in Manager Theme */
+body.theme-manager .wholesale-step-card,
+.theme-manager .wholesale-step-card {
+  background: var(--surface, #FAF6F8) !important;
+  border-color: var(--border, #D9C8D0) !important;
+}
+
+body.theme-manager .wholesale-step-icon,
+.theme-manager .wholesale-step-icon {
+  color: var(--primary, #653B4B) !important;
+}
+
+body.theme-manager .btn-wholesale-new-cust,
+.theme-manager .btn-wholesale-new-cust {
+  background: var(--surface, #FAF6F8) !important;
+  border-color: var(--border, #D9C8D0) !important;
+  color: var(--primary, #653B4B) !important;
+}
+
+body.theme-manager .btn-wholesale-new-cust:hover,
+.theme-manager .btn-wholesale-new-cust:hover {
+  background: var(--primary-soft, #F5ECF0) !important;
+  border-color: var(--primary, #653B4B) !important;
+}
+
+body.theme-manager .wholesale-customer-selector-trigger,
+.theme-manager .wholesale-customer-selector-trigger {
+  background: var(--surface, #FAF6F8) !important;
+  border-color: var(--border, #D9C8D0) !important;
+  color: var(--text, #1A0F14) !important;
+}
+
+body.theme-manager .wholesale-customer-selector-trigger:hover,
+body.theme-manager .wholesale-customer-selector-trigger:focus-visible,
+body.theme-manager .wholesale-customer-selector-trigger.open,
+.theme-manager .wholesale-customer-selector-trigger:hover,
+.theme-manager .wholesale-customer-selector-trigger:focus-visible,
+.theme-manager .wholesale-customer-selector-trigger.open {
+  border-color: var(--primary, #653B4B) !important;
+  box-shadow: 0 0 0 3px var(--primary-glow, rgba(101, 59, 75, 0.2)) !important;
+}
+
+body.theme-manager .wholesale-cust-avatar,
+.theme-manager .wholesale-cust-avatar {
+  background: var(--primary-soft, #F5ECF0) !important;
+  color: var(--primary, #653B4B) !important;
+}
+
+body.theme-manager .wholesale-customer-dropdown-menu,
+.theme-manager .wholesale-customer-dropdown-menu {
+  background: var(--surface, #FAF6F8) !important;
+  border-color: var(--border, #D9C8D0) !important;
+  box-shadow: 0 12px 28px rgba(45, 24, 34, 0.2) !important;
+}
+
+body.theme-manager .wholesale-cust-search-wrap,
+.theme-manager .wholesale-cust-search-wrap {
+  background: var(--primary-light, #F9F5F7) !important;
+  border-bottom-color: var(--border-light, #E8D6DE) !important;
+}
+
+body.theme-manager .wholesale-cust-search-input,
+.theme-manager .wholesale-cust-search-input {
+  background: var(--surface, #FAF6F8) !important;
+  border-color: var(--border, #D9C8D0) !important;
+  color: var(--text, #1A0F14) !important;
+}
+
+body.theme-manager .wholesale-cust-search-input:focus,
+.theme-manager .wholesale-cust-search-input:focus {
+  border-color: var(--primary, #653B4B) !important;
+}
+
+body.theme-manager .wholesale-cust-option-row:hover,
+.theme-manager .wholesale-cust-option-row:hover {
+  background: var(--primary-soft, #F5ECF0) !important;
+}
+
+body.theme-manager .wholesale-cust-option-row.selected,
+.theme-manager .wholesale-cust-option-row.selected {
+  background: var(--primary-soft, #F5ECF0) !important;
+}
+
+body.theme-manager .wholesale-option-check,
+.theme-manager .wholesale-option-check {
+  color: var(--primary, #653B4B) !important;
+}
+
+body.theme-manager .wholesale-chevron.rotated,
+.theme-manager .wholesale-chevron.rotated {
+  color: var(--primary, #653B4B) !important;
+}
+
+/* Product Catalog Controls in Store Manager Theme */
+body.theme-manager .product-catalog-action-btn,
+.theme-manager .product-catalog-action-btn {
+  background: var(--surface, #FAF6F8) !important;
+  border-color: var(--border, #D9C8D0) !important;
+  color: var(--text, #1A0F14) !important;
+}
+
+body.theme-manager .product-catalog-action-btn:hover,
+.theme-manager .product-catalog-action-btn:hover {
+  background: var(--primary-soft, #F5ECF0) !important;
+  border-color: var(--primary, #653B4B) !important;
+  color: var(--primary, #653B4B) !important;
+}
+
+body.theme-manager .product-catalog-action-btn.scan-barcodes-btn,
+.theme-manager .product-catalog-action-btn.scan-barcodes-btn {
+  background: rgba(15, 118, 110, 0.08) !important;
+  border-color: rgba(20, 184, 166, 0.4) !important;
+  color: #0f766e !important;
+}
+
+body.theme-manager .product-catalog-action-btn.scan-barcodes-btn:hover,
+.theme-manager .product-catalog-action-btn.scan-barcodes-btn:hover {
+  background: rgba(15, 118, 110, 0.16) !important;
+  border-color: #0f766e !important;
+}
+
+body.theme-manager .product-catalog-add-btn,
+.theme-manager .product-catalog-add-btn {
+  background: var(--primary, #653B4B) !important;
+  border-color: var(--primary-hover, #522E3C) !important;
+  color: #ffffff !important;
+}
+
+body.theme-manager .product-catalog-add-btn:hover,
+.theme-manager .product-catalog-add-btn:hover {
+  background: var(--primary-hover, #522E3C) !important;
+  box-shadow: 0 4px 12px var(--primary-glow, rgba(101, 59, 75, 0.35)) !important;
 }
