@@ -39870,6 +39870,18 @@ select.expense-input-control {
     margin-bottom: 0.85rem !important;
   }
 
+  .top-header-title {
+    margin-left: 0.5rem !important;
+    font-size: 1.35rem !important;
+    white-space: normal !important;
+    line-height: 1.25 !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    word-break: normal !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+  }
+
   /* Hide Branch, Counter, CFD & Overdue on Tablet */
   .top-pos-header-left,
   .top-shifts-badges-row,
@@ -39922,6 +39934,18 @@ select.expense-input-control {
     gap: 0.4rem !important;
     width: 100% !important;
     box-sizing: border-box !important;
+  }
+
+  .top-header-title {
+    margin-left: 0 !important;
+    font-size: 1.15rem !important;
+    white-space: normal !important;
+    line-height: 1.25 !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    word-break: normal !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
   }
 
   /* Hide Branch, Counter, CFD & Overdue on Mobile */
