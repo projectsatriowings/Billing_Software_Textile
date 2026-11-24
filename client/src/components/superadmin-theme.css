@@ -2677,13 +2677,30 @@ body.theme-super-admin .badge-pill.bill-count {
 
 /* Promotions & Offers */
 .theme-super-admin .promo-root,
-body.theme-super-admin .promo-root {
+body.theme-super-admin .promo-root,
+.theme-super-admin .promo-page-wrapper,
+body.theme-super-admin .promo-page-wrapper,
+div.app-container.theme-super-admin .promo-page-wrapper,
+div.app-container.theme-super-admin .promo-root {
   --primary: #49364A !important;
   --primary-hover: #604B61 !important;
   --primary-grad: linear-gradient(135deg, #604B61 0%, #49364A 100%) !important;
   --primary-soft: #F3EDF3 !important;
+  --primary-border: #DDD1DD !important;
+  --primary-glow: rgba(73, 54, 74, 0.25) !important;
+  --page-bg: #FAF6F8 !important;
+  --promo-bg-page: #FAF6F8 !important;
+  --card-border: #DDD1DD !important;
+  --promo-border: #DDD1DD !important;
+  --promo-border-input: #DDD1DD !important;
+  --promo-border-divider: #DDD1DD !important;
+  --promo-border-dashed: #C9B6C9 !important;
   --tag-chip-bg: #F3EDF3 !important;
   --tag-chip-text: #49364A !important;
+  --tag-chip-border: #DDD1DD !important;
+  --promo-green: #49364A !important;
+  --promo-green-hover: #604B61 !important;
   --promo-green-tint: #F3EDF3 !important;
   --promo-green-text: #49364A !important;
+  --promo-bg-chip: #F3EDF3 !important;
 }

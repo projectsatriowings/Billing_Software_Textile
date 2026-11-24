@@ -602,7 +602,7 @@ export function DiscountsPromotionsView({
   // =========================================================================
   if (screenMode === 'create' || screenMode === 'edit') {
     return (
-      <main className="promo-page-wrapper">
+      <main className="promo-page-wrapper promo-root">
         <div className="promo-container">
           {/* Back link */}
           <div className="promo-back-row">
@@ -1046,7 +1046,7 @@ export function DiscountsPromotionsView({
                       <div className="promo-rule-box-header">BILL VALUE THRESHOLDS</div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                         <div className="promo-rule-stepper-row">
-                          <span className="promo-rule-label-connector" style={{ minWidth: '180px' }}>
+                          <span className="promo-rule-label-connector promo-threshold-connector">
                             When the bill is at least
                           </span>
                           <div className="promo-stepper">
@@ -1072,7 +1072,7 @@ export function DiscountsPromotionsView({
                         </div>
 
                         <div className="promo-rule-stepper-row">
-                          <span className="promo-rule-label-connector" style={{ minWidth: '180px' }}>
+                          <span className="promo-rule-label-connector promo-threshold-connector">
                             take off
                           </span>
                           <div className="promo-stepper">
@@ -1436,7 +1436,7 @@ export function DiscountsPromotionsView({
   // RENDER: SCREEN 1 - PROMOTIONS LIST
   // =========================================================================
   return (
-    <div className="promo-page-wrapper">
+    <div className="promo-page-wrapper promo-root">
       <div className="promo-container">
         {/* 1. Bento Intro Card (Matching Category Management Top Card) */}
         <BentoHeaderCard
