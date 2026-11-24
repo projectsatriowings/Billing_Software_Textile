@@ -2382,6 +2382,7 @@ export function App() {
   const [purchasesLoading, setPurchasesLoading] = useState(false);
   const [purchaseSearch, setPurchaseSearch] = useState('');
   const [purchaseStatusFilter, setPurchaseStatusFilter] = useState<'ALL' | 'unpaid' | 'partial' | 'paid' | 'voided'>('ALL');
+  const [purchaseViewMode, setPurchaseViewMode] = useState<'cards' | 'table'>('cards');
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [selectedPurchaseDetails, setSelectedPurchaseDetails] = useState<Purchase | null>(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
@@ -15331,10 +15332,15 @@ export function App() {
               const totalBalancePayable = nonVoidedPurchases.reduce((sum, p) => sum + (p.balanceMinor || 0), 0);
               const openBillsCount = nonVoidedPurchases.filter((p) => (p.balanceMinor || 0) > 0).length;
 
+              const unpaidCount = purchases.filter((p) => p.status !== 'voided' && (p.paidMinor || 0) === 0).length;
+              const partialCount = purchases.filter((p) => p.status !== 'voided' && (p.paidMinor || 0) > 0 && (p.balanceMinor || 0) > 0).length;
+              const paidCount = purchases.filter((p) => p.status !== 'voided' && (p.balanceMinor || 0) === 0).length;
+              const voidedCount = purchases.filter((p) => p.status === 'voided').length;
+
               return (
-                <div>
+                <div className="purchases-page-wrapper">
                   {/* Purchases Metric Cards - Store Manager Deep Burgundy Theme */}
-                  <div className="kpi-grid" style={{ marginBottom: '1.25rem' }}>
+                  <div className="kpi-grid purchases-kpi-grid" style={{ marginBottom: '1.25rem' }}>
                     <div className="kpi-card" style={{ border: '1.5px solid #D9C8D0', borderRadius: '16px', background: '#FAF6F8', boxShadow: '0 4px 18px -2px rgba(101, 59, 75, 0.05)' }}>
                       <div className="kpi-icon" style={{ background: '#F5ECF0', color: '#653B4B', border: '1px solid #D9C8D0', borderRadius: '12px' }}>
                         <TruckIcon size={24} />
@@ -15383,118 +15389,140 @@ export function App() {
                   </div>
 
                   {/* Main Purchases Table Card */}
-                  <div className="card" style={{ border: '1.5px solid #D9C8D0', borderRadius: '18px', background: '#ffffff', boxShadow: '0 4px 18px -2px rgba(101, 59, 75, 0.05)' }}>
-                    <div className="card-title" style={{ flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center' }}>
-                      <div>
-                        <div style={{ fontSize: '0.8rem', color: '#64555E', fontWeight: 500, margin: 0 }}>
-                          Record supplier invoices, inward goods stock into ledger, and track input GST credit
+                  <div className="card purchases-main-card" style={{ border: '1.5px solid #D9C8D0', borderRadius: '18px', background: '#ffffff', boxShadow: '0 4px 18px -2px rgba(101, 59, 75, 0.05)' }}>
+                    {/* Header & Controls Toolbar */}
+                    <div className="purchases-toolbar">
+                      {/* Row 1: Title, Subtitle, Count & Primary Button */}
+                      <div className="purchases-toolbar-top">
+                        <div className="purchases-title-group">
+                          <div className="purchases-main-heading">
+                            <span>Purchases & Stock Inward</span>
+                            <span className="purchases-count-pill">{filteredPurchases.length}</span>
+                          </div>
+                          <div className="purchases-subheading">
+                            Record supplier invoices, inward goods stock into ledger, and track input GST credit
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          className="btn btn-primary purchases-new-btn"
+                          onClick={() => openNewPurchaseModal()}
+                        >
+                          <PlusIcon size={16} />
+                          <span>+ Inward Goods / New Bill</span>
+                        </button>
+                      </div>
+
+                      {/* Row 2: Search input, View Toggle (Cards/Table) */}
+                      <div className="purchases-toolbar-controls">
+                        <div className="purchases-search-box">
+                          <svg className="purchases-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="11" cy="11" r="8" />
+                            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                          </svg>
+                          <input
+                            type="text"
+                            className="purchases-search-input"
+                            placeholder="Search bill #, supplier, invoice #..."
+                            value={purchaseSearch}
+                            onChange={(e) => setPurchaseSearch(e.target.value)}
+                          />
+                          {purchaseSearch && (
+                            <button
+                              type="button"
+                              className="purchases-search-clear"
+                              onClick={() => setPurchaseSearch('')}
+                              title="Clear search"
+                            >
+                              ✕
+                            </button>
+                          )}
+                        </div>
+
+                        {/* View Toggle (Cards vs Table on Mobile) */}
+                        <div className="purchases-view-toggle">
+                          <button
+                            type="button"
+                            onClick={() => setPurchaseViewMode('cards')}
+                            className={`purchases-toggle-btn ${purchaseViewMode === 'cards' ? 'active' : ''}`}
+                            title="Card View (Mobile Optimized)"
+                          >
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                              <rect x="3" y="3" width="7" height="7" />
+                              <rect x="14" y="3" width="7" height="7" />
+                              <rect x="14" y="14" width="7" height="7" />
+                              <rect x="3" y="14" width="7" height="7" />
+                            </svg>
+                            <span>Cards</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setPurchaseViewMode('table')}
+                            className={`purchases-toggle-btn ${purchaseViewMode === 'table' ? 'active' : ''}`}
+                            title="Table View (Full Columns)"
+                          >
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M3 3h18v18H3z" />
+                              <path d="M3 9h18" />
+                              <path d="M3 15h18" />
+                              <path d="M9 3v18" />
+                            </svg>
+                            <span>Table</span>
+                          </button>
                         </div>
                       </div>
 
-                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                        {/* Status Filter Tabs */}
-                        <div style={{ display: 'flex', background: '#F5ECF0', borderRadius: '10px', padding: '3px', border: '1px solid #D9C8D0' }}>
+                      {/* Row 3: Status Filter Tabs (Horizontal scroll on mobile) */}
+                      <div className="purchases-status-tabs-container">
+                        <div className="purchases-status-tabs-scroller">
                           {([
-                            { id: 'ALL', label: 'All Bills' },
-                            { id: 'unpaid', label: 'Unpaid' },
-                            { id: 'partial', label: 'Part-Paid' },
-                            { id: 'paid', label: 'Paid' },
-                            { id: 'voided', label: 'Voided' },
+                            { id: 'ALL', label: 'All Bills', count: purchases.length },
+                            { id: 'unpaid', label: 'Unpaid', count: unpaidCount },
+                            { id: 'partial', label: 'Part-Paid', count: partialCount },
+                            { id: 'paid', label: 'Paid', count: paidCount },
+                            { id: 'voided', label: 'Voided', count: voidedCount },
                           ] as const).map((st) => (
                             <button
                               key={st.id}
                               type="button"
-                              style={{
-                                padding: '0.35rem 0.75rem',
-                                fontSize: '0.8rem',
-                                border: 'none',
-                                borderRadius: '7px',
-                                cursor: 'pointer',
-                                fontWeight: 700,
-                                background: purchaseStatusFilter === st.id ? '#653B4B' : 'transparent',
-                                color: purchaseStatusFilter === st.id ? '#ffffff' : '#64555E',
-                                boxShadow: purchaseStatusFilter === st.id ? '0 1px 4px rgba(101, 59, 75, 0.3)' : 'none',
-                                transition: 'all 0.18s ease',
-                              }}
+                              className={`purchases-status-tab ${purchaseStatusFilter === st.id ? 'active' : ''}`}
                               onClick={() => setPurchaseStatusFilter(st.id)}
                             >
-                              {st.label}
+                              <span>{st.label}</span>
+                              <span className="purchases-tab-badge">{st.count}</span>
                             </button>
                           ))}
                         </div>
-
-                        <input
-                          type="text"
-                          className="form-input"
-                          style={{ width: '230px', padding: '0.45rem 0.75rem', fontSize: '0.85rem', border: '1.5px solid #D9C8D0', borderRadius: '10px', background: '#FAF6F8', color: '#2D1822' }}
-                          placeholder="Search bill #, supplier, invoice #..."
-                          value={purchaseSearch}
-                          onChange={(e) => setPurchaseSearch(e.target.value)}
-                        />
-
-                        <button
-                          className="btn btn-primary"
-                          style={{ background: 'linear-gradient(135deg, #7A475B 0%, #653B4B 100%)', borderColor: '#653B4B', color: '#ffffff', borderRadius: '10px', fontWeight: 700 }}
-                          onClick={() => openNewPurchaseModal()}
-                        >
-                          + Inward Goods / New Bill
-                        </button>
                       </div>
                     </div>
 
-                    <table className="data-table">
-                      <thead style={{ background: '#FAF6F8' }}>
-                        <tr>
-                          <th style={{ color: '#653B4B', fontWeight: 700, borderBottom: '1.5px solid #D9C8D0' }}>Purchase # & Date</th>
-                          <th style={{ color: '#653B4B', fontWeight: 700, borderBottom: '1.5px solid #D9C8D0' }}>Supplier Invoice # & Date</th>
-                          <th style={{ color: '#653B4B', fontWeight: 700, borderBottom: '1.5px solid #D9C8D0' }}>Supplier / Vendor</th>
-                          <th style={{ color: '#653B4B', fontWeight: 700, borderBottom: '1.5px solid #D9C8D0' }}>Status</th>
-                          <th style={{ color: '#653B4B', fontWeight: 700, borderBottom: '1.5px solid #D9C8D0' }}>Taxable Amount</th>
-                          <th style={{ color: '#653B4B', fontWeight: 700, borderBottom: '1.5px solid #D9C8D0' }}>GST (ITC)</th>
-                          <th style={{ color: '#653B4B', fontWeight: 700, borderBottom: '1.5px solid #D9C8D0' }}>Total Amount</th>
-                          <th style={{ color: '#653B4B', fontWeight: 700, borderBottom: '1.5px solid #D9C8D0' }}>Paid / Balance</th>
-                          <th style={{ color: '#653B4B', fontWeight: 700, borderBottom: '1.5px solid #D9C8D0' }}>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredPurchases.map((p) => {
-                          const isVoided = p.status === 'voided';
-                          const isPaid = !isVoided && (p.balanceMinor || 0) === 0;
-                          const isPartPaid = !isVoided && (p.paidMinor || 0) > 0 && (p.balanceMinor || 0) > 0;
-                          const isUnpaid = !isVoided && (p.paidMinor || 0) === 0;
+                    {/* 1. Mobile Cards View (Visible on mobile when Cards view is selected) */}
+                    <div className={`purchases-mobile-cards-wrap ${purchaseViewMode === 'cards' ? 'active' : ''}`}>
+                      {filteredPurchases.map((p) => {
+                        const isVoided = p.status === 'voided';
+                        const isPaid = !isVoided && (p.balanceMinor || 0) === 0;
+                        const isPartPaid = !isVoided && (p.paidMinor || 0) > 0 && (p.balanceMinor || 0) > 0;
+                        const isUnpaid = !isVoided && (p.paidMinor || 0) === 0;
+                        const pNumber = p.purchaseNumber || (p.billNo ? `#${p.billNo}` : `Ref: ${p.id.slice(-6)}`);
+                        const pDate = p.purchaseDate || p.bdate || (p.createdAt ? new Date(p.createdAt).toISOString().slice(0, 10) : '—');
+                        const invNumber = p.supplierInvoiceNumber || p.billNo || '—';
+                        const invDate = p.supplierInvoiceDate || p.bdate || '—';
+                        const gstItc = p.itcMinor ?? ((p.cgstMinor || 0) + (p.sgstMinor || 0) + (p.igstMinor || 0));
 
-                          return (
-                            <tr key={p.id} style={{ opacity: isVoided ? 0.65 : 1 }}>
-                              <td>
-                                <div style={{ fontWeight: 700, color: isVoided ? '#94a3b8' : '#653B4B' }}>
-                                  {p.purchaseNumber || (p.billNo ? `#${p.billNo}` : `Ref: ${p.id.slice(-6)}`)}
-                                </div>
-                                <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-                                  {p.purchaseDate || p.bdate || (p.createdAt ? new Date(p.createdAt).toISOString().slice(0, 10) : '—')}
-                                </div>
-                              </td>
-                              <td>
-                                <div style={{ fontWeight: 600 }}>{p.supplierInvoiceNumber || p.billNo || '—'}</div>
-                                <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-                                  {p.supplierInvoiceDate || p.bdate || '—'}
-                                </div>
-                              </td>
-                              <td>
-                                <div style={{ fontWeight: 600 }}>{p.supplierName || 'Unknown Supplier'}</div>
-                                {p.supplierGstin ? (
-                                  <div className="mono" style={{ fontSize: '0.75rem', color: '#64748b' }}>
-                                    GSTIN: {p.supplierGstin}
-                                  </div>
-                                ) : (
-                                  <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Unregistered Supplier</div>
-                                )}
-                                {p.supplierPhone && (
-                                  <div className="mono" style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><PhoneIcon size={12} /> {p.supplierPhone}</span>
-                                  </div>
-                                )}
-                              </td>
-                              <td>
+                        return (
+                          <div key={`m-pur-${p.id}`} className={`purchase-m-card ${isVoided ? 'is-voided' : ''}`}>
+                            {/* Card Header: Purchase Number + Date + Status */}
+                            <div className="purchase-m-card-header">
+                              <div className="purchase-m-id-block">
+                                <span className="purchase-m-number">{pNumber}</span>
+                                <span className="purchase-m-date">
+                                  <CalendarIcon size={12} />
+                                  <span>{pDate}</span>
+                                </span>
+                              </div>
+
+                              <div className="purchase-m-status-block">
                                 {isVoided ? (
                                   <span
                                     className="badge"
@@ -15525,126 +15553,375 @@ export function App() {
                                     <AlertTriangleIcon size={12} /> UNPAID
                                   </span>
                                 )}
-                              </td>
-                              <td className="mono" style={{ color: '#2D1822' }}>{formatRupees(p.taxableMinor)}</td>
-                              <td className="mono" style={{ color: '#653B4B', fontWeight: 600 }}>
-                                {formatRupees(p.itcMinor ?? (p.cgstMinor + p.sgstMinor + p.igstMinor))}
-                              </td>
-                              <td className="mono" style={{ fontWeight: 800, color: '#2D1822' }}>
-                                {formatRupees(p.totalMinor)}
-                              </td>
-                              <td>
-                                <div className="mono" style={{ color: '#653B4B', fontSize: '0.85rem', fontWeight: 600 }}>
-                                  Paid: {formatRupees(p.paidMinor)}
+                              </div>
+                            </div>
+
+                            {/* Vendor & Invoice Details */}
+                            <div className="purchase-m-vendor-box">
+                              <div className="purchase-m-vendor-main">
+                                <div className="purchase-m-vendor-name">{p.supplierName || 'Unknown Supplier'}</div>
+                                <div className="purchase-m-invoice-meta">
+                                  <span className="purchase-m-inv-pill">
+                                    Inv: <strong>{invNumber}</strong>
+                                  </span>
+                                  <span className="purchase-m-inv-date">({invDate})</span>
                                 </div>
-                                {(p.balanceMinor || 0) > 0 && !isVoided && (
-                                  <div className="mono" style={{ color: '#522E3C', fontSize: '0.8rem', fontWeight: 700 }}>
-                                    Bal: {formatRupees(p.balanceMinor)}
-                                  </div>
+                              </div>
+
+                              <div className="purchase-m-vendor-sub">
+                                {p.supplierGstin ? (
+                                  <span className="purchase-m-gstin mono">
+                                    GSTIN: {p.supplierGstin}
+                                  </span>
+                                ) : (
+                                  <span className="purchase-m-unregistered">Unregistered Supplier</span>
                                 )}
-                              </td>
-                              <td>
-                                <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                                  <button
-                                    type="button"
-                                    className="btn btn-secondary"
-                                    style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', borderColor: '#D9C8D0', color: '#653B4B', background: '#FAF6F8' }}
-                                    onClick={() => handleViewPurchaseDetails(p.id)}
-                                  >
-                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><EyeIcon size={13} /> View</span>
-                                  </button>
-                                  <button
-                                    type="button"
-                                    className="btn btn-secondary"
-                                    style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', borderColor: '#D9C8D0', color: '#653B4B', background: '#FAF6F8' }}
-                                    onClick={() => window.open(`/api/purchases/${p.id}/print?format=a4`, '_blank')}
-                                    title="Print A4 Purchase Document"
-                                  >
-                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><PrinterIcon size={13} /> Print</span>
-                                  </button>
-                                  {!isVoided && (p.balanceMinor || 0) > 0 && can(user?.role as any, 'purchases.pay') && (
+
+                                {p.supplierPhone && (
+                                  <a href={`tel:${p.supplierPhone}`} className="purchase-m-phone mono" title="Tap to call">
+                                    <PhoneIcon size={12} />
+                                    <span>{p.supplierPhone}</span>
+                                  </a>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Financials Overview Box */}
+                            <div className="purchase-m-finance-box">
+                              <div className="purchase-m-finance-top">
+                                <div className="purchase-m-finance-col">
+                                  <span className="purchase-m-finance-label">Taxable</span>
+                                  <span className="purchase-m-finance-val mono">{formatRupees(p.taxableMinor)}</span>
+                                </div>
+                                <div className="purchase-m-finance-col">
+                                  <span className="purchase-m-finance-label">GST (ITC)</span>
+                                  <span className="purchase-m-finance-val mono" style={{ color: '#653B4B', fontWeight: 600 }}>
+                                    {formatRupees(gstItc)}
+                                  </span>
+                                </div>
+                                <div className="purchase-m-finance-col total-col">
+                                  <span className="purchase-m-finance-label">Total Amount</span>
+                                  <span className="purchase-m-finance-val total mono">{formatRupees(p.totalMinor)}</span>
+                                </div>
+                              </div>
+
+                              <div className="purchase-m-finance-bottom">
+                                <div className="purchase-m-pay-status">
+                                  <span className="mono">Paid: <strong>{formatRupees(p.paidMinor)}</strong></span>
+                                  {(p.balanceMinor || 0) > 0 && !isVoided ? (
+                                    <span className="purchase-m-balance-chip mono">
+                                      Bal: {formatRupees(p.balanceMinor)}
+                                    </span>
+                                  ) : isPaid ? (
+                                    <span className="purchase-m-settled-chip">Fully Settled</span>
+                                  ) : null}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Actions Row */}
+                            <div className="purchase-m-actions">
+                              <button
+                                type="button"
+                                className="btn btn-secondary purchase-m-btn"
+                                onClick={() => handleViewPurchaseDetails(p.id)}
+                              >
+                                <EyeIcon size={13} />
+                                <span>View</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                className="btn btn-secondary purchase-m-btn"
+                                onClick={() => window.open(`/api/purchases/${p.id}/print?format=a4`, '_blank')}
+                                title="Print A4 Purchase Document"
+                              >
+                                <PrinterIcon size={13} />
+                                <span>Print</span>
+                              </button>
+
+                              {!isVoided && (p.balanceMinor || 0) > 0 && can(user?.role as any, 'purchases.pay') && (
+                                <button
+                                  type="button"
+                                  className="btn btn-primary purchase-m-btn pay-btn"
+                                  onClick={() => {
+                                    const sup = parties.find((part) => part.id === p.supplierId);
+                                    if (sup) {
+                                      handleOpenPaySupplier(sup);
+                                    } else {
+                                      handleOpenPaySupplier({
+                                        id: p.supplierId,
+                                        name: p.supplierName || 'Supplier',
+                                        phone: p.supplierPhone,
+                                        payableMinor: p.balanceMinor,
+                                        openPurchasesCount: 1,
+                                        type: 'supplier',
+                                        creditLimitMinor: 0,
+                                      });
+                                    }
+                                  }}
+                                  title="Pay supplier balance"
+                                >
+                                  <CreditCardIcon size={13} />
+                                  <span>Pay</span>
+                                </button>
+                              )}
+
+                              {!isVoided && can(user?.role as any, 'purchases.void') && (
+                                <button
+                                  type="button"
+                                  className="btn btn-secondary purchase-m-btn void-btn"
+                                  onClick={() => handleOpenVoidPurchase(p)}
+                                  title="Void this purchase and reverse stock inward"
+                                >
+                                  <Trash2Icon size={13} />
+                                  <span>Void</span>
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+
+                      {filteredPurchases.length === 0 && (
+                        <div className="purchases-mobile-empty">
+                          <div className="purchases-mobile-empty-icon">
+                            <InboxIcon size={32} />
+                          </div>
+                          <div className="purchases-mobile-empty-title">No purchase bills found</div>
+                          <div className="purchases-mobile-empty-desc">
+                            No purchase bills match the selected status filter or search query.
+                          </div>
+                          <button
+                            type="button"
+                            className="btn btn-primary"
+                            style={{ background: 'linear-gradient(135deg, #7A475B 0%, #653B4B 100%)', borderColor: '#653B4B', color: '#ffffff', borderRadius: '10px', fontWeight: 700, padding: '0.55rem 1.25rem' }}
+                            onClick={() => openNewPurchaseModal()}
+                          >
+                            <PlusIcon size={16} />
+                            <span>+ Record New Purchase</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 2. Full Table View (Scrollable horizontally on mobile when Table view is active, and visible on desktop) */}
+                    <div className={`purchases-table-container ${purchaseViewMode === 'cards' ? 'hide-on-mobile' : ''}`}>
+                      <div className="purchases-table-scroll-hint">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="18 8 22 12 18 16" />
+                          <polyline points="6 8 2 12 6 16" />
+                          <line x1="2" y1="12" x2="22" y2="12" />
+                        </svg>
+                        <span>Swipe horizontally to view all columns (Taxable, GST, Total, Balance & Actions) ↔</span>
+                      </div>
+
+                      <div className="purchases-table-scroller">
+                        <table className="data-table purchases-data-table">
+                          <thead style={{ background: '#FAF6F8' }}>
+                            <tr>
+                              <th className="col-sticky-purchase" style={{ color: '#653B4B', fontWeight: 700, borderBottom: '1.5px solid #D9C8D0' }}>Purchase # & Date</th>
+                              <th style={{ color: '#653B4B', fontWeight: 700, borderBottom: '1.5px solid #D9C8D0' }}>Supplier Invoice # & Date</th>
+                              <th style={{ color: '#653B4B', fontWeight: 700, borderBottom: '1.5px solid #D9C8D0' }}>Supplier / Vendor</th>
+                              <th style={{ color: '#653B4B', fontWeight: 700, borderBottom: '1.5px solid #D9C8D0' }}>Status</th>
+                              <th style={{ color: '#653B4B', fontWeight: 700, borderBottom: '1.5px solid #D9C8D0' }}>Taxable Amount</th>
+                              <th style={{ color: '#653B4B', fontWeight: 700, borderBottom: '1.5px solid #D9C8D0' }}>GST (ITC)</th>
+                              <th style={{ color: '#653B4B', fontWeight: 700, borderBottom: '1.5px solid #D9C8D0' }}>Total Amount</th>
+                              <th style={{ color: '#653B4B', fontWeight: 700, borderBottom: '1.5px solid #D9C8D0' }}>Paid / Balance</th>
+                              <th style={{ color: '#653B4B', fontWeight: 700, borderBottom: '1.5px solid #D9C8D0' }}>Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {filteredPurchases.map((p) => {
+                              const isVoided = p.status === 'voided';
+                              const isPaid = !isVoided && (p.balanceMinor || 0) === 0;
+                              const isPartPaid = !isVoided && (p.paidMinor || 0) > 0 && (p.balanceMinor || 0) > 0;
+                              const isUnpaid = !isVoided && (p.paidMinor || 0) === 0;
+
+                              return (
+                                <tr key={p.id} style={{ opacity: isVoided ? 0.65 : 1 }}>
+                                  <td className="col-sticky-purchase">
+                                    <div style={{ fontWeight: 700, color: isVoided ? '#94a3b8' : '#653B4B' }}>
+                                      {p.purchaseNumber || (p.billNo ? `#${p.billNo}` : `Ref: ${p.id.slice(-6)}`)}
+                                    </div>
+                                    <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                                      {p.purchaseDate || p.bdate || (p.createdAt ? new Date(p.createdAt).toISOString().slice(0, 10) : '—')}
+                                    </div>
+                                  </td>
+                                  <td>
+                                    <div style={{ fontWeight: 600 }}>{p.supplierInvoiceNumber || p.billNo || '—'}</div>
+                                    <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                                      {p.supplierInvoiceDate || p.bdate || '—'}
+                                    </div>
+                                  </td>
+                                  <td>
+                                    <div style={{ fontWeight: 600 }}>{p.supplierName || 'Unknown Supplier'}</div>
+                                    {p.supplierGstin ? (
+                                      <div className="mono" style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                                        GSTIN: {p.supplierGstin}
+                                      </div>
+                                    ) : (
+                                      <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Unregistered Supplier</div>
+                                    )}
+                                    {p.supplierPhone && (
+                                      <div className="mono" style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><PhoneIcon size={12} /> {p.supplierPhone}</span>
+                                      </div>
+                                    )}
+                                  </td>
+                                  <td>
+                                    {isVoided ? (
+                                      <span
+                                        className="badge"
+                                        style={{ background: '#f8fafc', color: '#64748b', border: '1px solid #e2e8f0', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                        title={p.voidReason ? `Voided: ${p.voidReason}` : 'Voided'}
+                                      >
+                                        <XCircleIcon size={12} /> Voided
+                                      </span>
+                                    ) : isPaid ? (
+                                      <span
+                                        className="badge"
+                                        style={{ background: '#FAF6F8', color: '#522E3C', border: '1px solid #D9C8D0', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                      >
+                                        <CheckCircleIcon size={12} /> Paid
+                                      </span>
+                                    ) : isPartPaid ? (
+                                      <span
+                                        className="badge"
+                                        style={{ background: '#F5ECF0', color: '#7A475B', border: '1px solid #D9C8D0', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                      >
+                                        <ClockIcon size={12} /> Part-Paid
+                                      </span>
+                                    ) : (
+                                      <span
+                                        className="badge"
+                                        style={{ background: '#F5ECF0', color: '#653B4B', border: '1px solid #D9C8D0', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                      >
+                                        <AlertTriangleIcon size={12} /> UNPAID
+                                      </span>
+                                    )}
+                                  </td>
+                                  <td className="mono" style={{ color: '#2D1822' }}>{formatRupees(p.taxableMinor)}</td>
+                                  <td className="mono" style={{ color: '#653B4B', fontWeight: 600 }}>
+                                    {formatRupees(p.itcMinor ?? (p.cgstMinor + p.sgstMinor + p.igstMinor))}
+                                  </td>
+                                  <td className="mono" style={{ fontWeight: 800, color: '#2D1822' }}>
+                                    {formatRupees(p.totalMinor)}
+                                  </td>
+                                  <td>
+                                    <div className="mono" style={{ color: '#653B4B', fontSize: '0.85rem', fontWeight: 600 }}>
+                                      Paid: {formatRupees(p.paidMinor)}
+                                    </div>
+                                    {(p.balanceMinor || 0) > 0 && !isVoided && (
+                                      <div className="mono" style={{ color: '#522E3C', fontSize: '0.8rem', fontWeight: 700 }}>
+                                        Bal: {formatRupees(p.balanceMinor)}
+                                      </div>
+                                    )}
+                                  </td>
+                                  <td>
+                                    <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                                      <button
+                                        type="button"
+                                        className="btn btn-secondary"
+                                        style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', borderColor: '#D9C8D0', color: '#653B4B', background: '#FAF6F8' }}
+                                        onClick={() => handleViewPurchaseDetails(p.id)}
+                                      >
+                                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><EyeIcon size={13} /> View</span>
+                                      </button>
+                                      <button
+                                        type="button"
+                                        className="btn btn-secondary"
+                                        style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', borderColor: '#D9C8D0', color: '#653B4B', background: '#FAF6F8' }}
+                                        onClick={() => window.open(`/api/purchases/${p.id}/print?format=a4`, '_blank')}
+                                        title="Print A4 Purchase Document"
+                                      >
+                                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><PrinterIcon size={13} /> Print</span>
+                                      </button>
+                                      {!isVoided && (p.balanceMinor || 0) > 0 && can(user?.role as any, 'purchases.pay') && (
+                                        <button
+                                          type="button"
+                                          className="btn btn-primary"
+                                          style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', background: '#653B4B', borderColor: '#653B4B', color: '#ffffff', borderRadius: '6px', fontWeight: 600 }}
+                                          onClick={() => {
+                                            const sup = parties.find((part) => part.id === p.supplierId);
+                                            if (sup) {
+                                              handleOpenPaySupplier(sup);
+                                            } else {
+                                              handleOpenPaySupplier({
+                                                id: p.supplierId,
+                                                name: p.supplierName || 'Supplier',
+                                                phone: p.supplierPhone,
+                                                payableMinor: p.balanceMinor,
+                                                openPurchasesCount: 1,
+                                                type: 'supplier',
+                                                creditLimitMinor: 0,
+                                              });
+                                            }
+                                          }}
+                                          title="Pay supplier balance"
+                                        >
+                                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><CreditCardIcon size={13} /> Pay</span>
+                                        </button>
+                                      )}
+                                      {!isVoided && can(user?.role as any, 'purchases.void') && (
+                                        <button
+                                          type="button"
+                                          className="btn btn-secondary"
+                                          style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', color: '#ef4444' }}
+                                          onClick={() => handleOpenVoidPurchase(p)}
+                                          title="Void this purchase and reverse stock inward"
+                                        >
+                                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><Trash2Icon size={13} /> Void</span>
+                                        </button>
+                                      )}
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                            {filteredPurchases.length === 0 && (
+                              <tr>
+                                <td colSpan={9} style={{ textAlign: 'center', padding: '3.5rem 1.5rem', color: '#94a3b8' }}>
+                                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
+                                    <div
+                                      style={{
+                                        width: '54px',
+                                        height: '54px',
+                                        borderRadius: '14px',
+                                        background: '#F5ECF0',
+                                        color: '#653B4B',
+                                        border: '1px solid #D9C8D0',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        boxShadow: '0 2px 8px rgba(101, 59, 75, 0.08)',
+                                      }}
+                                    >
+                                      <InboxIcon size={28} />
+                                    </div>
+                                    <div style={{ fontWeight: 700, fontSize: '1rem', color: '#2D1822' }}>
+                                      No purchase bills found matching your filter
+                                    </div>
+                                    <div style={{ fontSize: '0.825rem', color: '#64555E', maxWidth: '380px', lineHeight: 1.5 }}>
+                                      Record supplier invoices to inward products into your stock ledger and track input GST credit.
+                                    </div>
                                     <button
                                       type="button"
                                       className="btn btn-primary"
-                                      style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', background: '#653B4B', borderColor: '#653B4B', color: '#ffffff', borderRadius: '6px', fontWeight: 600 }}
-                                      onClick={() => {
-                                        const sup = parties.find((part) => part.id === p.supplierId);
-                                        if (sup) {
-                                          handleOpenPaySupplier(sup);
-                                        } else {
-                                          handleOpenPaySupplier({
-                                            id: p.supplierId,
-                                            name: p.supplierName || 'Supplier',
-                                            phone: p.supplierPhone,
-                                            payableMinor: p.balanceMinor,
-                                            openPurchasesCount: 1,
-                                            type: 'supplier',
-                                            creditLimitMinor: 0,
-                                          });
-                                        }
-                                      }}
-                                      title="Pay supplier balance"
+                                      style={{ marginTop: '0.4rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.55rem 1.25rem', fontWeight: 700, background: 'linear-gradient(135deg, #7A475B 0%, #653B4B 100%)', borderColor: '#653B4B', color: '#ffffff', borderRadius: '10px' }}
+                                      onClick={() => openNewPurchaseModal()}
                                     >
-                                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><CreditCardIcon size={13} /> Pay</span>
+                                      <PlusIcon size={16} />
+                                      Record Your First Purchase Bill
                                     </button>
-                                  )}
-                                  {!isVoided && can(user?.role as any, 'purchases.void') && (
-                                    <button
-                                      type="button"
-                                      className="btn btn-secondary"
-                                      style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', color: '#ef4444' }}
-                                      onClick={() => handleOpenVoidPurchase(p)}
-                                      title="Void this purchase and reverse stock inward"
-                                    >
-                                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><Trash2Icon size={13} /> Void</span>
-                                    </button>
-                                  )}
-                                </div>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                        {filteredPurchases.length === 0 && (
-                          <tr>
-                            <td colSpan={9} style={{ textAlign: 'center', padding: '3.5rem 1.5rem', color: '#94a3b8' }}>
-                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
-                                <div
-                                  style={{
-                                    width: '54px',
-                                    height: '54px',
-                                    borderRadius: '14px',
-                                    background: '#F5ECF0',
-                                    color: '#653B4B',
-                                    border: '1px solid #D9C8D0',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    boxShadow: '0 2px 8px rgba(101, 59, 75, 0.08)',
-                                  }}
-                                >
-                                  <InboxIcon size={28} />
-                                </div>
-                                <div style={{ fontWeight: 700, fontSize: '1rem', color: '#2D1822' }}>
-                                  No purchase bills found matching your filter
-                                </div>
-                                <div style={{ fontSize: '0.825rem', color: '#64555E', maxWidth: '380px', lineHeight: 1.5 }}>
-                                  Record supplier invoices to inward products into your stock ledger and track input GST credit.
-                                </div>
-                                <button
-                                  type="button"
-                                  className="btn btn-primary"
-                                  style={{ marginTop: '0.4rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.55rem 1.25rem', fontWeight: 700, background: 'linear-gradient(135deg, #7A475B 0%, #653B4B 100%)', borderColor: '#653B4B', color: '#ffffff', borderRadius: '10px' }}
-                                  onClick={() => openNewPurchaseModal()}
-                                >
-                                  <PlusIcon size={16} />
-                                  Record Your First Purchase Bill
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
                   </div>
                 </div>
               );
