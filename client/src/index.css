@@ -9,6 +9,14 @@
    ========================================================================== */
 
 :root {
+  --safe-area-inset-top: env(safe-area-inset-top, 0px);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-inset-left: env(safe-area-inset-left, 0px);
+  --safe-area-inset-right: env(safe-area-inset-right, 0px);
+  --safe-area-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+  --safe-area-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+  --safe-area-left: var(--safe-area-inset-left, env(safe-area-inset-left, 0px));
+  --safe-area-right: var(--safe-area-inset-right, env(safe-area-inset-right, 0px));
   --deep-purple: #312e81;
   --deep-purple-hover: #26236b;
   --primary: #6d4aff;
@@ -29979,6 +29987,9 @@ select.expense-input-control {
     width: 100% !important;
     max-width: 100% !important;
     padding: 0.85rem !important;
+    padding-top: max(0.85rem, calc(0.35rem + env(safe-area-inset-top, 0px))) !important;
+    padding-left: max(0.65rem, calc(0.35rem + env(safe-area-inset-left, 0px))) !important;
+    padding-right: max(0.65rem, calc(0.35rem + env(safe-area-inset-right, 0px))) !important;
   }
 
   .bento-pos-grid {
@@ -29993,13 +30004,16 @@ select.expense-input-control {
 /* Mobile Screens (<= 767px) Content Clearance for Fixed Bottom Navbar */
 @media (max-width: 767px) {
   .main-content {
+    padding-top: max(0.85rem, calc(0.35rem + env(safe-area-inset-top, 0px))) !important;
+    padding-left: max(0.65rem, calc(0.35rem + env(safe-area-inset-left, 0px))) !important;
+    padding-right: max(0.65rem, calc(0.35rem + env(safe-area-inset-right, 0px))) !important;
     padding-bottom: calc(76px + env(safe-area-inset-bottom, 16px)) !important;
   }
 
   .main-content.no-bottom-nav,
   .theme-super-admin .main-content,
   .theme-manager .main-content {
-    padding-bottom: max(1rem, env(safe-area-inset-bottom, 16px)) !important;
+    padding-bottom: max(1.25rem, calc(0.85rem + env(safe-area-inset-bottom, 16px))) !important;
   }
 }
 
@@ -37440,6 +37454,10 @@ select.expense-input-control {
   width: 100%;
 }
 
+.invoices-mobile-cards-list {
+  display: none;
+}
+
 .invoices-bento-table {
   width: 100%;
   border-collapse: collapse;
@@ -40264,7 +40282,10 @@ select.expense-input-control {
     flex-direction: column !important;
     align-items: center !important;
     justify-content: space-between !important;
-    padding: 0.75rem 0 !important;
+    padding-top: max(0.75rem, calc(0.35rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))) !important;
+    padding-bottom: max(0.75rem, calc(0.35rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)))) !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
     box-sizing: border-box !important;
   }
 
@@ -40277,7 +40298,10 @@ select.expense-input-control {
     margin-left: 60px !important;
     width: calc(100% - 60px) !important;
     max-width: calc(100% - 60px) !important;
-    padding: 0.85rem !important;
+    padding-top: max(0.85rem, calc(0.35rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))) !important;
+    padding-left: max(0.85rem, calc(0.35rem + var(--safe-area-inset-left, env(safe-area-inset-left, 0px)))) !important;
+    padding-right: max(0.85rem, calc(0.35rem + var(--safe-area-inset-right, env(safe-area-inset-right, 0px)))) !important;
+    padding-bottom: max(0.85rem, calc(0.35rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)))) !important;
     box-sizing: border-box !important;
   }
 }
@@ -40299,8 +40323,10 @@ select.expense-input-control {
     bottom: 0 !important;
     left: 0 !important;
     right: 0 !important;
-    height: calc(56px + env(safe-area-inset-bottom, 0px)) !important;
-    padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+    height: calc(56px + max(0px, var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)))) !important;
+    padding-bottom: max(0px, var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))) !important;
+    padding-left: var(--safe-area-inset-left, env(safe-area-inset-left, 0px)) !important;
+    padding-right: var(--safe-area-inset-right, env(safe-area-inset-right, 0px)) !important;
     background: #0F2D2E !important;
     border-top: 1px solid rgba(20, 184, 166, 0.35) !important;
     box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3) !important;
@@ -40319,14 +40345,17 @@ select.expense-input-control {
     margin-left: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
-    padding-bottom: calc(76px + env(safe-area-inset-bottom, 16px)) !important;
+    padding-top: max(0.85rem, calc(0.35rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))) !important;
+    padding-left: max(0.65rem, calc(0.35rem + var(--safe-area-inset-left, env(safe-area-inset-left, 0px)))) !important;
+    padding-right: max(0.65rem, calc(0.35rem + var(--safe-area-inset-right, env(safe-area-inset-right, 0px)))) !important;
+    padding-bottom: calc(76px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 16px))) !important;
     box-sizing: border-box !important;
   }
 
   .main-content.no-bottom-nav,
   .theme-super-admin .main-content,
   .theme-manager .main-content {
-    padding-bottom: max(1rem, env(safe-area-inset-bottom, 16px)) !important;
+    padding-bottom: max(1.25rem, calc(0.85rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 16px)))) !important;
   }
 }
 
@@ -43280,3 +43309,289 @@ select.expense-input-control {
     justify-content: space-between !important;
   }
 }
+
+/* ==========================================================================
+   MOBILE & TABLET SYSTEM UI SAFE AREA SUITE (STATUS BAR & BOTTOM NAVIGATION / GESTURE)
+   Applies across entire application for mobile and tablet screens (<= 1439px)
+   Desktop (>= 1440px) layouts remain 100% unchanged.
+   ========================================================================== */
+@media (max-width: 1439px) {
+  /* 4. All Mobile & Tablet Modal Backdrops & Overlays - Avoid Notches, Dynamic Islands & Punch Holes */
+  .modal-overlay,
+  .modal-backdrop,
+  .sub-modal-backdrop,
+  .select-counter-backdrop,
+  .return-modal-overlay,
+  .invoice-detail-overlay,
+  .sales-schedule-modal-backdrop,
+  .day-closing-modal-backdrop,
+  .dev-modal-overlay,
+  .pbm-modal-overlay,
+  .promo-modal-overlay,
+  .loyalty-modal-overlay,
+  .um-modal-overlay,
+  .um-delete-dialog-overlay,
+  .bento-confirm-modal-overlay,
+  .login-forgot-modal-backdrop,
+  .login-download-modal-backdrop {
+    padding-top: max(16px, calc(8px + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))) !important;
+    padding-bottom: max(16px, calc(8px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)))) !important;
+    padding-left: max(12px, calc(6px + var(--safe-area-inset-left, env(safe-area-inset-left, 0px)))) !important;
+    padding-right: max(12px, calc(6px + var(--safe-area-inset-right, env(safe-area-inset-right, 0px)))) !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  /* 5. All Mobile & Tablet Modal Dialog Frames - Prevent Screen Cutoff & Enable Scroll */
+  .select-counter-bento-dialog,
+  .select-counter-dialog,
+  .logout-shift-bento-dialog,
+  .shift-bento-dialog,
+  .return-modal-dialog,
+  .invoice-detail-dialog,
+  .modal-dialog,
+  .cat-bento-dialog,
+  .print-barcode-dialog,
+  .um-delete-dialog,
+  .day-closing-modal-content,
+  .product-edit-rectangle-modal,
+  .modal-content,
+  .pbm-modal-container,
+  .dev-modal-card,
+  .promo-modal-dialog,
+  .loyalty-modal-card,
+  .um-modal-card,
+  .bento-confirm-modal-card,
+  .login-forgot-modal-card,
+  .login-download-modal-card {
+    max-height: calc(100dvh - 32px - var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) - var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))) !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    box-sizing: border-box !important;
+  }
+}
+
+@media (max-width: 767px) {
+  /* 1. Universal Main Content Container - Clear Top Status Bar & Bottom Navigation */
+  .main-content {
+    margin-left: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding-top: max(0.85rem, calc(0.35rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))) !important;
+    padding-left: max(0.65rem, calc(0.35rem + var(--safe-area-inset-left, env(safe-area-inset-left, 0px)))) !important;
+    padding-right: max(0.65rem, calc(0.35rem + var(--safe-area-inset-right, env(safe-area-inset-right, 0px)))) !important;
+    padding-bottom: calc(76px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 16px))) !important;
+    box-sizing: border-box !important;
+  }
+
+  .main-content.no-bottom-nav,
+  .theme-super-admin .main-content,
+  .theme-manager .main-content {
+    padding-bottom: max(1.25rem, calc(0.85rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 16px)))) !important;
+  }
+
+  /* 2. Fixed Mobile Bottom Navigation Bar - Safe area above physical gesture/home indicator */
+  .responsive-mobile-bottom-nav {
+    height: calc(56px + max(0px, var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)))) !important;
+    padding-bottom: max(0px, var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))) !important;
+    padding-left: var(--safe-area-inset-left, env(safe-area-inset-left, 0px)) !important;
+    padding-right: var(--safe-area-inset-right, env(safe-area-inset-right, 0px)) !important;
+    box-sizing: border-box !important;
+  }
+
+  /* 3. Slide-out Mobile Sidebar Drawer & All Full-Screen Flyout Drawers */
+  .app-sidebar.mobile-open {
+    padding-top: max(1.25rem, calc(0.75rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))) !important;
+    padding-bottom: max(2.5rem, calc(1rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)))) !important;
+    padding-left: max(1rem, calc(0.5rem + var(--safe-area-inset-left, env(safe-area-inset-left, 0px)))) !important;
+    box-sizing: border-box !important;
+  }
+
+  .bento-catalog-drawer,
+  .day-closing-drawer-panel,
+  .customer-drawer-panel,
+  .supplier-drawer-panel,
+  .um-drawer,
+  .cat-import-drawer-bento {
+    height: 100vh !important;
+    height: 100dvh !important;
+    padding-top: max(0px, var(--safe-area-inset-top, env(safe-area-inset-top, 0px))) !important;
+    padding-bottom: max(0px, var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))) !important;
+    padding-left: var(--safe-area-inset-left, env(safe-area-inset-left, 0px)) !important;
+    padding-right: var(--safe-area-inset-right, env(safe-area-inset-right, 0px)) !important;
+    box-sizing: border-box !important;
+  }
+
+  /* 6. Recent Cashier Bills Mobile Cards View (<= 767px) */
+  .invoices-table-scroller {
+    display: none !important;
+  }
+
+  .invoices-mobile-cards-list {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+    padding: 0.75rem !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+  }
+
+  .invoices-mobile-card {
+    background: #ffffff;
+    border: 1.2px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 0.9rem 0.95rem;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    box-sizing: border-box;
+    width: 100%;
+    transition: all 0.15s ease;
+  }
+
+  .invoices-card-top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding-bottom: 0.65rem;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .invoices-card-number-group {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+
+  .invoices-card-amount-group {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.15rem;
+    flex-shrink: 0;
+  }
+
+  .invoices-card-amount-val {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--primary, #0F766E);
+    font-family: 'JetBrains Mono', monospace;
+    line-height: 1.2;
+  }
+
+  .invoices-card-due-badge {
+    font-size: 0.68rem;
+    font-weight: 700;
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+    border-radius: 4px;
+    padding: 1px 5px;
+    white-space: nowrap;
+  }
+
+  .invoices-card-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem 0.85rem;
+    align-items: start;
+  }
+
+  @media (max-width: 320px) {
+    .invoices-card-grid {
+      gap: 0.5rem 0.5rem;
+    }
+  }
+
+  .invoices-card-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.22rem;
+    min-width: 0;
+  }
+
+  .invoices-card-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #64748b;
+  }
+
+  .invoices-card-value {
+    font-size: 0.84rem;
+    color: #1e293b;
+    min-width: 0;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+
+  .invoices-card-cell .invoices-cust-wrap {
+    min-width: 0;
+  }
+
+  .invoices-card-cell .invoices-cust-name-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.35rem;
+    min-width: 0;
+  }
+
+  .invoices-card-cell .invoices-cust-name {
+    min-width: 0;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    line-height: 1.25;
+  }
+
+  .invoices-card-cell .invoices-cust-phone-row {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    min-width: 0;
+  }
+
+  .invoices-card-cell .invoices-cust-phone {
+    min-width: 0;
+    word-break: break-all;
+  }
+
+  .invoices-card-cell .invoices-pmt-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: row;
+    gap: 0.3rem;
+    align-items: center;
+  }
+
+  .invoices-card-cell .invoices-datetime-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+  }
+
+  .invoices-card-actions-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    padding-top: 0.65rem;
+    border-top: 1px dashed #e2e8f0;
+  }
+
+  .invoices-card-actions-row .bento-act-btn {
+    flex: 1 1 auto;
+    justify-content: center;
+    min-height: 36px;
+    padding: 0.4rem 0.65rem;
+    font-size: 0.76rem;
+  }
+}
+

@@ -631,23 +631,29 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       {/* Modern Forgot Password Modal */}
       {showForgotModal && (
         <div
+          className="login-forgot-modal-backdrop"
           style={{
             position: 'fixed',
             inset: 0,
             background: 'rgba(15, 23, 42, 0.65)',
             backdropFilter: 'blur(4px)',
+            WebkitBackdropFilter: 'blur(4px)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 1000,
-            padding: '1.5rem',
+            padding: 'max(1.5rem, calc(0.75rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))) max(1rem, calc(0.5rem + var(--safe-area-inset-right, env(safe-area-inset-right, 0px)))) max(1.5rem, calc(0.75rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)))) max(1rem, calc(0.5rem + var(--safe-area-inset-left, env(safe-area-inset-left, 0px))))',
+            boxSizing: 'border-box',
           }}
           onClick={() => setShowForgotModal(false)}
         >
           <div
+            className="login-forgot-modal-card"
             style={{
               width: '100%',
               maxWidth: '460px',
+              maxHeight: 'calc(100dvh - 32px - var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) - var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)))',
+              overflowY: 'auto',
               background: '#FFFFFF',
               borderRadius: '20px',
               padding: '2rem',
@@ -655,6 +661,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               display: 'flex',
               flexDirection: 'column',
               gap: '1.25rem',
+              boxSizing: 'border-box',
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -744,20 +751,24 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       {/* Modern Desktop Software Download Modal */}
       {showDownloadModal && (
         <div
+          className="login-download-modal-backdrop"
           style={{
             position: 'fixed',
             inset: 0,
             background: 'rgba(15, 23, 42, 0.72)',
             backdropFilter: 'blur(6px)',
+            WebkitBackdropFilter: 'blur(6px)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 1000,
-            padding: '1.25rem',
+            padding: 'max(1.25rem, calc(0.75rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))) max(1rem, calc(0.5rem + var(--safe-area-inset-right, env(safe-area-inset-right, 0px)))) max(1.25rem, calc(0.75rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)))) max(1rem, calc(0.5rem + var(--safe-area-inset-left, env(safe-area-inset-left, 0px))))',
+            boxSizing: 'border-box',
           }}
           onClick={() => setShowDownloadModal(false)}
         >
           <div
+            className="login-download-modal-card"
             style={{
               width: '100%',
               maxWidth: '520px',
@@ -768,8 +779,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               display: 'flex',
               flexDirection: 'column',
               gap: '1.25rem',
-              maxHeight: '90vh',
+              maxHeight: 'calc(100dvh - 32px - var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) - var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)))',
               overflowY: 'auto',
+              boxSizing: 'border-box',
             }}
             onClick={(e) => e.stopPropagation()}
           >
