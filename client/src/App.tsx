@@ -15339,52 +15339,58 @@ export function App() {
 
               return (
                 <div className="purchases-page-wrapper">
-                  {/* Purchases Metric Cards - Store Manager Deep Burgundy Theme */}
-                  <div className="kpi-grid purchases-kpi-grid" style={{ marginBottom: '1.25rem' }}>
-                    <div className="kpi-card" style={{ border: '1.5px solid #D9C8D0', borderRadius: '16px', background: '#FAF6F8', boxShadow: '0 4px 18px -2px rgba(101, 59, 75, 0.05)' }}>
-                      <div className="kpi-icon" style={{ background: '#F5ECF0', color: '#653B4B', border: '1px solid #D9C8D0', borderRadius: '12px' }}>
-                        <TruckIcon size={24} />
-                      </div>
-                      <div>
-                        <div className="kpi-val mono" style={{ color: '#2D1822' }}>
-                          {formatRupees(totalPurchasesVolume)}
+                  {/* Purchases Metric Cards - Bento 3D Store Management Theme */}
+                  <div className="purchases-kpi-grid">
+                    <div className="purchases-bento-card bento-card-stock">
+                      <div className="purchases-bento-top">
+                        <div className="purchases-bento-icon icon-stock">
+                          <TruckIcon size={20} />
                         </div>
-                        <div className="kpi-label" style={{ color: '#64555E' }}>Total Inward Stock Volume</div>
+                        <span className="purchases-bento-badge badge-stock">Inward Stock</span>
                       </div>
+                      <div className="purchases-bento-val mono">
+                        {formatRupees(totalPurchasesVolume)}
+                      </div>
+                      <div className="purchases-bento-label">Total Inward Stock</div>
                     </div>
 
-                    <div className="kpi-card" style={{ border: '1.5px solid #D9C8D0', borderRadius: '16px', background: '#FAF6F8', boxShadow: '0 4px 18px -2px rgba(101, 59, 75, 0.05)' }}>
-                      <div className="kpi-icon" style={{ background: '#F5ECF0', color: '#653B4B', border: '1px solid #D9C8D0', borderRadius: '12px' }}>
-                        <LandmarkIcon size={24} />
-                      </div>
-                      <div>
-                        <div className="kpi-val mono" style={{ color: '#2D1822' }}>
-                          {formatRupees(totalItcRecorded)}
+                    <div className="purchases-bento-card bento-card-itc">
+                      <div className="purchases-bento-top">
+                        <div className="purchases-bento-icon icon-itc">
+                          <LandmarkIcon size={20} />
                         </div>
-                        <div className="kpi-label" style={{ color: '#64555E' }}>Input Tax Credit (ITC) Recorded</div>
+                        <span className="purchases-bento-badge badge-itc">Input Tax</span>
                       </div>
+                      <div className="purchases-bento-val mono">
+                        {formatRupees(totalItcRecorded)}
+                      </div>
+                      <div className="purchases-bento-label">Input Tax Credit (ITC)</div>
                     </div>
 
-                    <div className="kpi-card" style={{ border: '1.5px solid #D9C8D0', borderRadius: '16px', background: '#FAF6F8', boxShadow: '0 4px 18px -2px rgba(101, 59, 75, 0.05)' }}>
-                      <div className="kpi-icon" style={{ background: '#F5ECF0', color: '#522E3C', border: '1px solid #D9C8D0', borderRadius: '12px' }}>
-                        <CreditCardIcon size={24} />
-                      </div>
-                      <div>
-                        <div className="kpi-val mono" style={{ color: '#522E3C' }}>
-                          {formatRupees(totalBalancePayable)}
+                    <div className="purchases-bento-card bento-card-payable">
+                      <div className="purchases-bento-top">
+                        <div className="purchases-bento-icon icon-payable">
+                          <CreditCardIcon size={20} />
                         </div>
-                        <div className="kpi-label" style={{ color: '#64555E' }}>Supplier Payable Balance</div>
+                        <span className="purchases-bento-badge badge-payable">Due to Pay</span>
                       </div>
+                      <div className="purchases-bento-val mono">
+                        {formatRupees(totalBalancePayable)}
+                      </div>
+                      <div className="purchases-bento-label">Supplier Payable</div>
                     </div>
 
-                    <div className="kpi-card" style={{ border: '1.5px solid #D9C8D0', borderRadius: '16px', background: '#FAF6F8', boxShadow: '0 4px 18px -2px rgba(101, 59, 75, 0.05)' }}>
-                      <div className="kpi-icon" style={{ background: '#F5ECF0', color: '#653B4B', border: '1px solid #D9C8D0', borderRadius: '12px' }}>
-                        <FileTextIcon size={24} />
+                    <div className="purchases-bento-card bento-card-bills">
+                      <div className="purchases-bento-top">
+                        <div className="purchases-bento-icon icon-bills">
+                          <FileTextIcon size={20} />
+                        </div>
+                        <span className="purchases-bento-badge badge-bills">Invoices</span>
                       </div>
-                      <div>
-                        <div className="kpi-val mono" style={{ color: '#2D1822' }}>{openBillsCount}</div>
-                        <div className="kpi-label" style={{ color: '#64555E' }}>Open Supplier Bills</div>
+                      <div className="purchases-bento-val mono">
+                        {openBillsCount}
                       </div>
+                      <div className="purchases-bento-label">Open Supplier Bills</div>
                     </div>
                   </div>
 

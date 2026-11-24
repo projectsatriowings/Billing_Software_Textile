@@ -39743,22 +39743,221 @@ tbody tr:hover td.col-sticky-invoice {
   }
 }
 
-@media (max-width: 480px) {
+/* ==========================================================================
+   PURCHASES BENTO 3D METRIC CARDS
+   ========================================================================== */
+.purchases-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  width: 100%;
+}
+
+.purchases-bento-card {
+  background: linear-gradient(180deg, #ffffff 0%, #fbfcfe 60%, #f8fafc 100%);
+  border: 1.5px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 1.15rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.03);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+}
+
+.purchases-bento-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: 18px 18px 0 0;
+}
+
+/* Card 1: Inward Stock - Store Burgundy/Purple Theme */
+.purchases-bento-card.bento-card-stock::before {
+  background: linear-gradient(90deg, #7A475B 0%, #653B4B 100%);
+}
+.purchases-bento-card.bento-card-stock {
+  border-color: #D9C8D0;
+  box-shadow: 0 4px 16px -2px rgba(101, 59, 75, 0.07), 0 1px 3px rgba(101, 59, 75, 0.04);
+}
+.purchases-bento-card.bento-card-stock:hover {
+  transform: translateY(-3px);
+  border-color: #653B4B;
+  box-shadow: 0 12px 28px -4px rgba(101, 59, 75, 0.16), 0 4px 10px rgba(101, 59, 75, 0.08);
+}
+.purchases-bento-card.bento-card-stock .purchases-bento-val { color: #2D1822; }
+.purchases-bento-card.bento-card-stock .purchases-bento-label { color: #653B4B; }
+
+/* Card 2: ITC Recorded - Emerald Green Theme */
+.purchases-bento-card.bento-card-itc::before {
+  background: linear-gradient(90deg, #059669 0%, #10b981 100%);
+}
+.purchases-bento-card.bento-card-itc {
+  border-color: #a7f3d0;
+  box-shadow: 0 4px 16px -2px rgba(16, 185, 129, 0.07), 0 1px 3px rgba(16, 185, 129, 0.04);
+}
+.purchases-bento-card.bento-card-itc:hover {
+  transform: translateY(-3px);
+  border-color: #059669;
+  box-shadow: 0 12px 28px -4px rgba(16, 185, 129, 0.16), 0 4px 10px rgba(16, 185, 129, 0.08);
+}
+.purchases-bento-card.bento-card-itc .purchases-bento-val { color: #065f46; }
+.purchases-bento-card.bento-card-itc .purchases-bento-label { color: #047857; }
+
+/* Card 3: Supplier Payable - Rose / Amber Warning Theme */
+.purchases-bento-card.bento-card-payable::before {
+  background: linear-gradient(90deg, #e11d48 0%, #f43f5e 100%);
+}
+.purchases-bento-card.bento-card-payable {
+  border-color: #fecdd3;
+  box-shadow: 0 4px 16px -2px rgba(225, 29, 72, 0.07), 0 1px 3px rgba(225, 29, 72, 0.04);
+}
+.purchases-bento-card.bento-card-payable:hover {
+  transform: translateY(-3px);
+  border-color: #e11d48;
+  box-shadow: 0 12px 28px -4px rgba(225, 29, 72, 0.16), 0 4px 10px rgba(225, 29, 72, 0.08);
+}
+.purchases-bento-card.bento-card-payable .purchases-bento-val { color: #be123c; }
+.purchases-bento-card.bento-card-payable .purchases-bento-label { color: #be123c; }
+
+/* Card 4: Open Supplier Bills - Royal Indigo Theme */
+.purchases-bento-card.bento-card-bills::before {
+  background: linear-gradient(90deg, #4f46e5 0%, #6366f1 100%);
+}
+.purchases-bento-card.bento-card-bills {
+  border-color: #c7d2fe;
+  box-shadow: 0 4px 16px -2px rgba(99, 102, 241, 0.07), 0 1px 3px rgba(99, 102, 241, 0.04);
+}
+.purchases-bento-card.bento-card-bills:hover {
+  transform: translateY(-3px);
+  border-color: #4f46e5;
+  box-shadow: 0 12px 28px -4px rgba(99, 102, 241, 0.16), 0 4px 10px rgba(99, 102, 241, 0.08);
+}
+.purchases-bento-card.bento-card-bills .purchases-bento-val { color: #3730a3; }
+.purchases-bento-card.bento-card-bills .purchases-bento-label { color: #4338ca; }
+
+/* Bento Top Header with Icon and Badge */
+.purchases-bento-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 0.75rem;
+}
+
+.purchases-bento-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.purchases-bento-card:hover .purchases-bento-icon {
+  transform: scale(1.08) rotate(-2deg);
+}
+
+.icon-stock { background: #FAF6F8; color: #653B4B; border: 1px solid #D9C8D0; }
+.icon-itc { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
+.icon-payable { background: #fff1f2; color: #e11d48; border: 1px solid #fecdd3; }
+.icon-bills { background: #eef2ff; color: #4f46e5; border: 1px solid #c7d2fe; }
+
+.purchases-bento-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.18rem 0.5rem;
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+
+.badge-stock { background: #FAF6F8; color: #653B4B; border: 1px solid #D9C8D0; }
+.badge-itc { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+.badge-payable { background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; }
+.badge-bills { background: #eef2ff; color: #4338ca; border: 1px solid #c7d2fe; }
+
+.purchases-bento-val {
+  font-size: 1.55rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin-bottom: 0.25rem;
+}
+
+.purchases-bento-label {
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: normal;
+  line-height: 1.3;
+}
+
+@media (max-width: 768px) {
   .purchases-kpi-grid {
-    grid-template-columns: 1fr 1fr !important;
-    gap: 0.5rem !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.55rem !important;
+    margin-bottom: 1rem !important;
   }
 
-  .purchases-kpi-grid .kpi-card {
-    padding: 0.65rem !important;
+  .purchases-bento-card {
+    padding: 0.8rem 0.85rem !important;
+    border-radius: 14px !important;
   }
 
-  .purchases-kpi-grid .kpi-val {
+  .purchases-bento-top {
+    margin-bottom: 0.45rem !important;
+  }
+
+  .purchases-bento-icon {
+    width: 30px !important;
+    height: 30px !important;
+    border-radius: 9px !important;
+  }
+
+  .purchases-bento-icon svg {
+    width: 15px !important;
+    height: 15px !important;
+  }
+
+  .purchases-bento-badge {
+    font-size: 0.6rem !important;
+    padding: 0.12rem 0.4rem !important;
+  }
+
+  .purchases-bento-val {
+    font-size: 1.18rem !important;
+    word-break: break-all;
+    line-height: 1.2;
+    margin-bottom: 0.15rem;
+  }
+
+  .purchases-bento-label {
+    font-size: 0.65rem !important;
+    line-height: 1.25 !important;
+    letter-spacing: 0.02em !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .purchases-bento-badge {
+    display: none;
+  }
+
+  .purchases-bento-val {
     font-size: 1.05rem !important;
-  }
-
-  .purchases-kpi-grid .kpi-label {
-    font-size: 0.68rem !important;
   }
 }
 
