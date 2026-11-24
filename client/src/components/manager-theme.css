@@ -496,6 +496,7 @@ body.theme-manager .btn-loyalty-rules,
   background: #F5ECF0 !important;
   border: 1.5px solid #D9C8D0 !important;
   color: #653B4B !important;
+  white-space: nowrap !important;
 }
 
 body.theme-manager .btn-loyalty-rules:hover,
@@ -511,6 +512,12 @@ body.theme-manager .loyalty-rule-badge,
 .theme-manager .loyalty-rule-badge {
   background: #653B4B !important;
   color: #FFFFFF !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  border-radius: 9999px !important;
+  line-height: 1.3 !important;
 }
 
 body.theme-manager .customer-loyalty-pill,
