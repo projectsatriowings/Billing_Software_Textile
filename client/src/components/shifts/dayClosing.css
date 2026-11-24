@@ -2402,3 +2402,181 @@ body.theme-cashier .detail-list-val.purple,
     border-radius: 12px !important;
   }
 }
+
+/* ==========================================================================
+   MOBILE VIEW & RESPONSIVE DESIGN (<= 768px)
+   Matches edge-to-edge compact layout of Customer Management Directory
+   ========================================================================== */
+@media (max-width: 768px) {
+  .day-closing-wrapper {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    gap: 0.85rem !important;
+  }
+
+  .day-closing-bento-hero,
+  .day-closing-header-card,
+  .day-closing-card,
+  .smart-audit-panel,
+  .bento-card-3d {
+    padding: 1rem !important;
+    border-radius: 16px !important;
+  }
+
+  .day-closing-header-content {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.85rem !important;
+    width: 100% !important;
+  }
+
+  .day-closing-header-left,
+  .cat-bento-title-group {
+    gap: 0.75rem !important;
+    width: 100% !important;
+  }
+
+  .day-closing-header-icon,
+  .cat-bento-icon-box {
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 12px !important;
+  }
+
+  .day-closing-header-icon svg,
+  .cat-bento-icon-box svg {
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  .cat-bento-title-row {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.35rem !important;
+    margin-bottom: 0.2rem !important;
+  }
+
+  .day-closing-title,
+  .cat-bento-title {
+    font-size: 1.15rem !important;
+    line-height: 1.25 !important;
+  }
+
+  .day-closing-subtitle,
+  .cat-bento-subtitle {
+    font-size: 0.76rem !important;
+    line-height: 1.35 !important;
+  }
+
+  .cat-badge-live-sync {
+    font-size: 0.68rem !important;
+    padding: 0.2rem 0.55rem !important;
+    align-self: flex-start !important;
+  }
+
+  .cat-bento-header-actions {
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+  }
+
+  .cat-bento-header-actions .cat-btn-outline,
+  .cat-bento-header-actions .cat-btn-primary {
+    flex: 1 !important;
+    justify-content: center !important;
+    padding: 0.55rem 0.85rem !important;
+    font-size: 0.8rem !important;
+    box-sizing: border-box !important;
+  }
+
+  .bento-hero-context-bar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.5rem !important;
+    width: 100% !important;
+  }
+
+  .bento-hero-context-left {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+    width: 100% !important;
+  }
+
+  .bento-context-select-item {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    padding: 0.38rem 0.65rem !important;
+  }
+
+  .bento-context-chip {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    justify-content: flex-start !important;
+    padding: 0.38rem 0.65rem !important;
+    font-size: 0.8rem !important;
+  }
+
+  .bento-select,
+  .bento-input-date {
+    width: 100% !important;
+    min-width: 0 !important;
+    font-size: 0.82rem !important;
+  }
+
+  .bento-breakdown-shortcut-btn {
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 0.5rem 0.85rem !important;
+    font-size: 0.8rem !important;
+    box-sizing: border-box !important;
+  }
+
+  .bento-hero-tabs-segment {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    overflow-x: auto !important;
+    display: flex !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding: 0.3rem !important;
+    gap: 0.35rem !important;
+  }
+
+  .bento-hero-tab {
+    padding: 0.42rem 0.85rem !important;
+    font-size: 0.76rem !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+  }
+
+  .bento-diagnostics-deck {
+    grid-template-columns: 1fr !important;
+    gap: 0.85rem !important;
+  }
+
+  .diagnostics-deck-left,
+  .diagnostics-deck-right {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .day-closing-table-wrap,
+  .table-responsive {
+    width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    border-radius: 12px !important;
+  }
+
+  .denominations-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.65rem !important;
+  }
+}
+
