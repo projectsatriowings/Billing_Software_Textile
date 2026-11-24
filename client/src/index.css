@@ -36679,6 +36679,11 @@ select.expense-input-control {
     min-width: 0 !important;
     height: 38px !important;
     min-height: 38px !important;
+    max-height: 38px !important;
+    flex: none !important;
+    flex-basis: auto !important;
+    flex-grow: 0 !important;
+    flex-shrink: 0 !important;
     padding: 0 0.75rem !important;
     border-radius: 9px !important;
     box-sizing: border-box !important;
@@ -36903,6 +36908,11 @@ select.expense-input-control {
     min-width: 0 !important;
     height: 36px !important;
     min-height: 36px !important;
+    max-height: 36px !important;
+    flex: none !important;
+    flex-basis: auto !important;
+    flex-grow: 0 !important;
+    flex-shrink: 0 !important;
     padding: 0 0.65rem !important;
     margin: 0 !important;
     border-radius: 9px !important;
@@ -37279,6 +37289,10 @@ select.expense-input-control {
   padding: 0.42rem 0.75rem;
   flex: 1 1 240px;
   max-width: 360px;
+  height: 38px;
+  min-height: 38px;
+  max-height: 44px;
+  box-sizing: border-box;
   transition: all 0.15s ease;
 }
 

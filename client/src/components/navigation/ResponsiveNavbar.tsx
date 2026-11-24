@@ -87,10 +87,10 @@ export const ResponsiveNavbar: React.FC<ResponsiveNavbarProps> = ({
 
   const isCashier = user?.role === 'cashier';
   const isSuperAdmin = Boolean(
-    user && (user.role === 'owner' || user.role === 'admin' || String(user.role).toUpperCase() === 'SUPER_ADMIN' || String(user.role).toLowerCase() === 'superadmin')
+    user && (user.role === 'owner' || user.role === 'admin' || String(user.role).toUpperCase() === 'SUPER_ADMIN' || String(user.role).toLowerCase() === 'superadmin' || String(user.role).toLowerCase() === 'admin' || String(user.role).toLowerCase() === 'owner')
   );
   const isManager = Boolean(
-    user && (user.role === 'manager' || user.role === 'store_manager' || String(user.role).toLowerCase() === 'storemanager')
+    user && (user.role === 'manager' || user.role === 'store_manager' || String(user.role).toLowerCase() === 'storemanager' || String(user.role).toLowerCase() === 'manager' || String(user.role).toLowerCase() === 'store_manager')
   );
   const hideBottomNav = isSuperAdmin || isManager;
 

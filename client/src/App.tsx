@@ -9510,7 +9510,7 @@ export function App() {
         />
 
         {/* Main Body */}
-        <main className={`main-content ${(isSuperAdminUser || user?.role === 'manager' || user?.role === 'store_manager') ? 'no-bottom-nav' : ''}`}>
+        <main className={`main-content ${(isSuperAdminUser || user?.role === 'manager' || user?.role === 'store_manager' || String(user?.role || '').toLowerCase() === 'storemanager' || String(user?.role || '').toLowerCase() === 'manager') ? 'no-bottom-nav' : ''}`}>
           {/* Top Global Bar Matching Image 2 */}
           <div className={`top-global-bar ${hideBusinessBar ? 'no-divider' : ''} ${displayTab === 'dashboard' ? 'dashboard-top-bar' : ''}`}>
             {/* Mobile Header Menu Hamburger Toggle Button (visible on screens <= 900px, hidden for Cashier) */}
