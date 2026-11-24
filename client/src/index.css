@@ -37523,18 +37523,344 @@ select.expense-input-control {
   transform: translateY(-1px);
 }
 
+/* --------------------------------------------------------------------------
+   Invoices Cards / Table View Switcher & Mobile Card Styles
+   -------------------------------------------------------------------------- */
+.invoices-header-right-tools {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.invoices-date-label-badge {
+  font-size: 0.76rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.invoices-view-toggle {
+  display: inline-flex;
+  align-items: center;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.invoices-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: none;
+  background: transparent;
+  padding: 0.32rem 0.65rem;
+  border-radius: 6px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1;
+}
+
+.invoices-toggle-btn.active {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+/* Horizontal Scroll Hint for Table on Mobile */
+.invoices-scroll-hint {
+  display: none;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem 0.95rem;
+  background: #eff6ff;
+  border-bottom: 1px solid #dbeafe;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: #1e40af;
+}
+
+.invoices-scroll-hint svg {
+  flex-shrink: 0;
+  color: #3b82f6;
+}
+
+/* Sticky Invoice Column */
+.col-sticky-invoice {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: #ffffff;
+}
+
+thead th.col-sticky-invoice {
+  background: #f8fafc;
+  z-index: 3;
+}
+
+tbody tr:hover td.col-sticky-invoice {
+  background: #f8fafc;
+}
+
+/* Mobile Cards Container (Default Hidden on Desktop) */
+.invoices-mobile-cards-wrap {
+  display: none;
+}
+
+.invoices-m-card {
+  background: #ffffff;
+  border: 1.2px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 0.95rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  transition: all 0.18s ease;
+}
+
+.invoices-m-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+}
+
+.invoices-m-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.invoices-m-top-left {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.invoices-m-datetime {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.74rem;
+}
+
+.invoices-m-cust-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding-bottom: 0.55rem;
+  border-bottom: 1px dashed #f1f5f9;
+}
+
+.invoices-m-cust-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.invoices-m-phone-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.76rem;
+  color: #4338ca;
+  text-decoration: none;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+}
+
+.invoices-m-phone-link:hover {
+  text-decoration: underline;
+}
+
+.invoices-m-finance-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  background: #f8fafc;
+  padding: 0.65rem 0.85rem;
+  border-radius: 10px;
+  border: 1px solid #f1f5f9;
+}
+
+.invoices-m-amount-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.invoices-m-amount-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.invoices-m-pmt-col {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.invoices-m-actions-wrap {
+  display: flex;
+  align-items: center;
+  padding-top: 0.15rem;
+}
+
+.invoices-m-actions-wrap .bento-act-group {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(78px, 1fr));
+  gap: 0.4rem;
+}
+
+.invoices-m-actions-wrap .bento-act-btn {
+  justify-content: center;
+  padding: 0.45rem 0.5rem;
+  font-size: 0.74rem;
+  min-height: 34px;
+}
+
+/* Responsive Overrides (Tablets & Mobile Screens) */
 @media (max-width: 768px) {
   .invoices-kpi-grid {
     grid-template-columns: 1fr 1fr;
+    gap: 0.65rem;
+  }
+
+  .invoices-context-strip {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.65rem;
+  }
+
+  .invoices-context-left {
+    justify-content: space-between;
+  }
+
+  .invoices-quick-pos-btn {
+    width: 100%;
+    justify-content: center;
   }
 
   .invoices-controls-bar {
     flex-direction: column;
     align-items: stretch;
+    gap: 0.75rem;
+    padding: 0.75rem;
+  }
+
+  .invoices-controls-left {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.65rem;
+    width: 100%;
+    flex: unset;
   }
 
   .invoices-search-box {
-    max-width: 100%;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 40px;
+  }
+
+  .invoices-filter-group {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+    gap: 0.45rem;
+    width: 100%;
+  }
+
+  .invoices-filter-group::-webkit-scrollbar {
+    display: none;
+  }
+
+  .invoices-filter-pill {
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    padding: 0.38rem 0.75rem !important;
+    font-size: 0.78rem !important;
+  }
+
+  .invoices-controls-right {
+    width: 100%;
+  }
+
+  .invoices-admin-branch-select-wrap {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    padding: 0.4rem 0.75rem;
+  }
+
+  .invoices-branch-dropdown {
+    flex: 1;
+    text-align: right;
+  }
+
+  .invoices-table-header-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.65rem;
+    padding: 0.85rem 1rem;
+  }
+
+  .invoices-header-right-tools {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+
+  /* Cards View (Default on Mobile) */
+  .invoices-mobile-cards-wrap.active {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: #f8fafc;
+  }
+
+  /* Table Scroller View Switching */
+  .invoices-table-scroller.mobile-hidden {
+    display: none;
+  }
+
+  .invoices-table-scroller.mobile-active {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .invoices-scroll-hint {
+    display: flex;
+  }
+
+  .col-sticky-invoice {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    background: #ffffff;
+    box-shadow: 2px 0 6px rgba(15, 23, 42, 0.08);
+  }
+
+  thead th.col-sticky-invoice {
+    background: #f8fafc;
+    z-index: 3;
   }
 }
 

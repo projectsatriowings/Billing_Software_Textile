@@ -76,6 +76,7 @@ export const RecentBillsBentoView: React.FC<RecentBillsBentoViewProps> = ({
   onNavigateToPos,
 }) => {
   const isCashier = user?.role === 'cashier';
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
   const [searchQuery, setSearchQuery] = useState('');
   const [paymentFilter, setPaymentFilter] = useState<'all' | 'cash' | 'upi' | 'card'>('all');
 
@@ -197,6 +198,174 @@ export const RecentBillsBentoView: React.FC<RecentBillsBentoViewProps> = ({
       returnsMinor,
     };
   }, [filteredInvoices]);
+
+  // Helper to render actions cleanly for both desktop table and mobile cards
+  const renderActions = (inv: Invoice, isMobileCard = false) => {
+    return (
+      <div className={`bento-act-group ${isMobileCard ? 'm-card-actions' : ''}`}>
+        {/* 1. View / Items */}
+        {inv.kind === 'credit_note' ? (
+          <>
+            <button
+              type="button"
+              className="bento-act-btn view"
+              onClick={() => openInvoiceDetail(inv.id)}
+              title="View credit note lines"
+            >
+              <EyeIcon size={13} />
+              <span>View</span>
+            </button>
+            <a
+              href={`/api/credit-notes/${inv.id}/print?paper=thermal80&autoprint=true`}
+              target="_blank"
+              rel="noreferrer"
+              className="bento-act-btn thermal"
+              title="Print 80mm thermal receipt"
+            >
+              <PrinterIcon size={13} />
+              <span>Thermal</span>
+            </a>
+            <a
+              href={`/api/credit-notes/${inv.id}/print?paper=a4`}
+              target="_blank"
+              rel="noreferrer"
+              className="bento-act-btn a4"
+              title="Print official A4 GST credit note"
+            >
+              <FileTextIcon size={13} />
+              <span>A4 GST</span>
+            </a>
+          </>
+        ) : (inv.invoiceType === 'wholesale' || (inv as any).invoice_type === 'wholesale') ? (
+          <>
+            <a
+              href={`/api/invoices/${inv.id}/print?paper=wholesale_a4&autoprint=true`}
+              target="_blank"
+              rel="noreferrer"
+              className="bento-act-btn a4"
+              title="Print Wholesale A4 Tax Invoice"
+            >
+              <PrinterIcon size={13} />
+              <span>A4 Print</span>
+            </a>
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  const blob = await downloadInvoicePdf(inv.id, 'wholesale_a4');
+                  triggerBlobDownload(blob, `Wholesale_Invoice_${inv.number}.pdf`);
+                } catch (err: any) {
+                  alert(err.message || 'Failed to download wholesale invoice PDF');
+                }
+              }}
+              className="bento-act-btn view"
+              title="Download Wholesale A4 Tax Invoice PDF"
+            >
+              <FileTextIcon size={13} />
+              <span>PDF</span>
+            </button>
+            <button
+              type="button"
+              className="bento-act-btn view"
+              onClick={() => openInvoiceDetail(inv.id)}
+              title="View invoice lines & items"
+            >
+              <EyeIcon size={13} />
+              <span>Items</span>
+            </button>
+          </>
+        ) : (
+          <>
+            <a
+              href={`/api/invoices/${inv.id}/print?paper=thermal80&autoprint=true`}
+              target="_blank"
+              rel="noreferrer"
+              className="bento-act-btn thermal"
+              title="Print original 80mm thermal receipt"
+            >
+              <PrinterIcon size={13} />
+              <span>Thermal</span>
+            </a>
+            <a
+              href={`/api/invoices/${inv.id}/print?paper=thermal80`}
+              target="_blank"
+              rel="noreferrer"
+              className="bento-act-btn view"
+              title="Preview thermal receipt"
+            >
+              <FileTextIcon size={13} />
+              <span>Receipt</span>
+            </a>
+            <button
+              type="button"
+              className="bento-act-btn view"
+              onClick={() => openInvoiceDetail(inv.id)}
+              title="View bill lines & items"
+            >
+              <EyeIcon size={13} />
+              <span>Items</span>
+            </button>
+          </>
+        )}
+
+        {/* 4. Return / Credit Note */}
+        {inv.kind !== 'credit_note' && inv.status !== 'cancelled' && (
+          <button
+            type="button"
+            className="bento-act-btn return"
+            disabled={Boolean(inv.fullyReturned)}
+            onClick={() => openReturnModal(inv.id)}
+            title={inv.fullyReturned ? 'Fully returned' : 'Issue sales return or credit note'}
+          >
+            <RotateCcwIcon size={13} />
+            <span>Return / CN</span>
+          </button>
+        )}
+
+        {/* 6. Void (Owner / Manager on Credit Note) */}
+        {inv.kind === 'credit_note' && inv.status !== 'voided' && (user?.role === 'owner' || user?.role === 'manager') && (
+          <button
+            type="button"
+            className="bento-act-btn void"
+            onClick={() =>
+              handleOpenVoidModal({
+                id: inv.id,
+                number: inv.number,
+                totalCreditMinor: inv.totalMinor,
+                advanceAmountMinor: 0,
+              })
+            }
+            title="Void this credit note (Manager only)"
+          >
+            <XCircleIcon size={13} />
+            <span>Void</span>
+          </button>
+        )}
+
+        {/* 7. Collect Payment (if unpaid balance due) */}
+        {inv.balanceMinor > 0 && inv.status === 'posted' && inv.partyId && (
+          <button
+            type="button"
+            className="bento-act-btn collect"
+            onClick={() => {
+              const cust = parties.find((p) => p.id === inv.partyId) || {
+                id: inv.partyId!,
+                name: inv.customerName || 'Customer',
+                phone: inv.customerPhone,
+                type: 'customer',
+                creditLimitMinor: 0,
+              };
+              openCollectPayment(cust, inv.id);
+            }}
+            title="Collect balance payment towards this bill"
+          >
+            <WalletIcon size={13} />
+            <span>Collect</span>
+          </button>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className={`invoices-bento-root ${isCashier ? 'theme-cashier' : ''}`}>
@@ -445,8 +614,38 @@ export const RecentBillsBentoView: React.FC<RecentBillsBentoViewProps> = ({
             </span>
           </div>
 
-          <div style={{ fontSize: '0.76rem', color: '#64748b', fontWeight: 500 }}>
-            {invoiceFilterDate ? `Date: ${invoiceFilterDate}` : 'All Recent Records'}
+          <div className="invoices-header-right-tools">
+            <div className="invoices-date-label-badge">
+              {invoiceFilterDate ? `Date: ${invoiceFilterDate}` : 'All Recent Records'}
+            </div>
+            {/* View Switcher: Cards (mobile-friendly) vs Table (full columns) */}
+            <div className="invoices-view-toggle">
+              <button
+                type="button"
+                onClick={() => setViewMode('cards')}
+                className={`invoices-toggle-btn ${viewMode === 'cards' ? 'active' : ''}`}
+                title="Card View (Mobile Optimized)"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="7" height="7" />
+                  <rect x="14" y="3" width="7" height="7" />
+                  <rect x="14" y="14" width="7" height="7" />
+                  <rect x="3" y="14" width="7" height="7" />
+                </svg>
+                <span>Cards</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('table')}
+                className={`invoices-toggle-btn ${viewMode === 'table' ? 'active' : ''}`}
+                title="Table View (Full Columns)"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 3h18v18H3zM3 9h18M3 15h18M9 3v18M15 3v18" />
+                </svg>
+                <span>Table</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -472,25 +671,20 @@ export const RecentBillsBentoView: React.FC<RecentBillsBentoViewProps> = ({
             </button>
           </div>
         ) : (
-          <div className="invoices-table-scroller">
-            <table className="invoices-bento-table">
-              <thead>
-                <tr>
-                  <th>Invoice No</th>
-                  <th>Branch</th>
-                  <th>Date & Time</th>
-                  <th>Customer / Contact</th>
-                  <th style={{ textAlign: 'right' }}>Total Amount</th>
-                  <th>Payment</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredInvoices.map((inv) => (
-                  <tr key={inv.id}>
-                    {/* Invoice Number */}
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
+          <>
+            {/* 4A. Mobile Responsive Cards View */}
+            <div className={`invoices-mobile-cards-wrap ${viewMode === 'cards' ? 'active' : ''}`}>
+              {filteredInvoices.map((inv) => {
+                const branchCode =
+                  branches.find((b) => b.id === inv.branchId || b.code === (inv as any).location)?.code ||
+                  currentBranchCode ||
+                  'MAIN';
+
+                return (
+                  <div key={inv.id} className="invoices-m-card">
+                    {/* Top Row: Bill Number + Status Tags + Branch + Date & Time */}
+                    <div className="invoices-m-top">
+                      <div className="invoices-m-top-left">
                         <button
                           type="button"
                           className="bento-bill-btn"
@@ -506,24 +700,13 @@ export const RecentBillsBentoView: React.FC<RecentBillsBentoViewProps> = ({
                         {inv.status === 'voided' && (
                           <span className="invoices-tag-voided">VOID</span>
                         )}
-                      </div>
-                    </td>
-
-                    {/* Branch */}
-                    <td>
-                      <span className="invoices-branch-tag">
-                        <Building2Icon size={12} style={{ color: 'var(--primary, #0F766E)' }} />
-                        <span>
-                          {branches.find((b) => b.id === inv.branchId || b.code === (inv as any).location)?.code ||
-                            currentBranchCode ||
-                            'MAIN'}
+                        <span className="invoices-branch-tag">
+                          <Building2Icon size={11} style={{ color: 'var(--primary, #0F766E)' }} />
+                          <span>{branchCode}</span>
                         </span>
-                      </span>
-                    </td>
+                      </div>
 
-                    {/* Date & Time */}
-                    <td>
-                      <div className="invoices-datetime-wrap">
+                      <div className="invoices-m-datetime">
                         <span className="invoices-date-text">
                           {new Date(inv.createdAt).toLocaleDateString('en-IN', {
                             day: 'numeric',
@@ -539,256 +722,271 @@ export const RecentBillsBentoView: React.FC<RecentBillsBentoViewProps> = ({
                           })}
                         </span>
                       </div>
-                    </td>
+                    </div>
 
-                    {/* Customer */}
-                    <td>
-                      <div className="invoices-cust-wrap">
+                    {/* Customer & Contact Row */}
+                    <div className="invoices-m-cust-row">
+                      <div className="invoices-m-cust-info">
                         <div className="invoices-cust-name-row">
                           <UserIcon size={13} style={{ color: '#64748b' }} />
                           <span className="invoices-cust-name">{inv.customerName || 'Walk-in Customer'}</span>
                         </div>
                         {inv.customerPhone && (
-                          <div className="invoices-cust-phone-row">
-                            <PhoneIcon size={11} style={{ color: '#94a3b8' }} />
-                            <span className="invoices-cust-phone">{inv.customerPhone}</span>
-                          </div>
-                        )}
-                        {inv.fullyReturned ? (
-                          <span
-                            className="invoices-return-status-pill full"
-                            onClick={() => openInvoiceDetail(inv.id)}
-                            title="Fully returned"
+                          <a
+                            href={`tel:${inv.customerPhone}`}
+                            className="invoices-m-phone-link"
+                            title="Tap to call customer"
+                            onClick={(e) => e.stopPropagation()}
                           >
-                            <RotateCcwIcon size={10} />
-                            <span>Fully Returned</span>
-                          </span>
-                        ) : (inv.returnedMinor || 0) > 0 ? (
-                          <span
-                            className="invoices-return-status-pill partial"
-                            onClick={() => openInvoiceDetail(inv.id)}
-                            title="Partially returned"
-                          >
-                            <RotateCcwIcon size={10} />
-                            <span>Ret: {formatRupees(inv.returnedMinor || 0)}</span>
-                          </span>
-                        ) : null}
-                      </div>
-                    </td>
-
-                    {/* Total Amount */}
-                    <td style={{ textAlign: 'right' }}>
-                      <span className="invoices-amount-total">
-                        {formatRupees(inv.totalMinor)}
-                      </span>
-                    </td>
-
-                    {/* Payment Method */}
-                    <td>
-                      <div className="invoices-pmt-wrap">
-                        {inv.payments && inv.payments.length > 0 ? (
-                          inv.payments.map((p: any, pidx: number) => {
-                            const method = (p.method || 'cash').toLowerCase();
-                            const isCash = method === 'cash';
-                            const isUpi = method.includes('upi') || method.includes('qr');
-                            const isCard = method.includes('card');
-                            return (
-                              <span
-                                key={pidx}
-                                className={`invoices-pmt-pill ${isCash ? 'cash' : isUpi ? 'upi' : isCard ? 'card' : 'other'}`}
-                              >
-                                {isCash ? (
-                                  <BanknoteIcon size={11} />
-                                ) : isUpi ? (
-                                  <ZapIcon size={11} />
-                                ) : isCard ? (
-                                  <CreditCardIcon size={11} />
-                                ) : (
-                                  <WalletIcon size={11} />
-                                )}
-                                <span>{p.method}</span>
-                              </span>
-                            );
-                          })
-                        ) : (
-                          <span className="invoices-pmt-pill cash">
-                            <BanknoteIcon size={11} />
-                            <span>CASH</span>
-                          </span>
+                            <PhoneIcon size={11} style={{ color: '#6366f1' }} />
+                            <span>{inv.customerPhone}</span>
+                          </a>
                         )}
                       </div>
-                    </td>
 
-                    {/* Action Buttons (Strictly Zero Emojis) */}
-                    <td>
-                      <div className="bento-act-group">
-                        {/* 1. View */}
-                        {inv.kind === 'credit_note' ? (
-                          <>
-                            <button
-                              type="button"
-                              className="bento-act-btn view"
-                              onClick={() => openInvoiceDetail(inv.id)}
-                              title="View credit note lines"
-                            >
-                              <EyeIcon size={13} />
-                              <span>View</span>
-                            </button>
-                            <a
-                              href={`/api/credit-notes/${inv.id}/print?paper=thermal80&autoprint=true`}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="bento-act-btn thermal"
-                              title="Print 80mm thermal receipt"
-                            >
-                              <PrinterIcon size={13} />
-                              <span>Thermal</span>
-                            </a>
-                            <a
-                              href={`/api/credit-notes/${inv.id}/print?paper=a4`}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="bento-act-btn a4"
-                              title="Print official A4 GST credit note"
-                            >
-                              <FileTextIcon size={13} />
-                              <span>A4 GST</span>
-                            </a>
-                          </>
-                        ) : (inv.invoiceType === 'wholesale' || (inv as any).invoice_type === 'wholesale') ? (
-                          <>
-                            <a
-                              href={`/api/invoices/${inv.id}/print?paper=wholesale_a4&autoprint=true`}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="bento-act-btn a4"
-                              title="Print Wholesale A4 Tax Invoice"
-                            >
-                              <PrinterIcon size={13} />
-                              <span>A4 Print</span>
-                            </a>
-                            <button
-                              type="button"
-                              onClick={async () => {
-                                try {
-                                  const blob = await downloadInvoicePdf(inv.id, 'wholesale_a4');
-                                  triggerBlobDownload(blob, `Wholesale_Invoice_${inv.number}.pdf`);
-                                } catch (err: any) {
-                                  alert(err.message || 'Failed to download wholesale invoice PDF');
-                                }
-                              }}
-                              className="bento-act-btn view"
-                              title="Download Wholesale A4 Tax Invoice PDF"
-                            >
-                              <FileTextIcon size={13} />
-                              <span>Download PDF</span>
-                            </button>
-                            <button
-                              type="button"
-                              className="bento-act-btn view"
-                              onClick={() => openInvoiceDetail(inv.id)}
-                              title="View invoice lines & items"
-                            >
-                              <EyeIcon size={13} />
-                              <span>Items</span>
-                            </button>
-                          </>
-                        ) : (
-                          <>
-                            <a
-                              href={`/api/invoices/${inv.id}/print?paper=thermal80&autoprint=true`}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="bento-act-btn thermal"
-                              title="Print original 80mm thermal receipt"
-                            >
-                              <PrinterIcon size={13} />
-                              <span>Thermal</span>
-                            </a>
-                            <a
-                              href={`/api/invoices/${inv.id}/print?paper=thermal80`}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="bento-act-btn view"
-                              title="Preview thermal receipt"
-                            >
-                              <FileTextIcon size={13} />
-                              <span>Receipt</span>
-                            </a>
-                            <button
-                              type="button"
-                              className="bento-act-btn view"
-                              onClick={() => openInvoiceDetail(inv.id)}
-                              title="View bill lines & items"
-                            >
-                              <EyeIcon size={13} />
-                              <span>Items</span>
-                            </button>
-                          </>
-                        )}
+                      {inv.fullyReturned ? (
+                        <span
+                          className="invoices-return-status-pill full"
+                          onClick={() => openInvoiceDetail(inv.id)}
+                          title="Fully returned"
+                        >
+                          <RotateCcwIcon size={10} />
+                          <span>Fully Returned</span>
+                        </span>
+                      ) : (inv.returnedMinor || 0) > 0 ? (
+                        <span
+                          className="invoices-return-status-pill partial"
+                          onClick={() => openInvoiceDetail(inv.id)}
+                          title="Partially returned"
+                        >
+                          <RotateCcwIcon size={10} />
+                          <span>Ret: {formatRupees(inv.returnedMinor || 0)}</span>
+                        </span>
+                      ) : null}
+                    </div>
 
-                        {/* 4. Return / Credit Note */}
-                        {inv.kind !== 'credit_note' && inv.status !== 'cancelled' && (
-                          <button
-                            type="button"
-                            className="bento-act-btn return"
-                            disabled={Boolean(inv.fullyReturned)}
-                            onClick={() => openReturnModal(inv.id)}
-                            title={inv.fullyReturned ? 'Fully returned' : 'Issue sales return or credit note'}
-                          >
-                            <RotateCcwIcon size={13} />
-                            <span>Return / CN</span>
-                          </button>
-                        )}
-
-                        {/* 6. Void (Owner / Manager on Credit Note) */}
-                        {inv.kind === 'credit_note' && inv.status !== 'voided' && (user?.role === 'owner' || user?.role === 'manager') && (
-                          <button
-                            type="button"
-                            className="bento-act-btn void"
-                            onClick={() =>
-                              handleOpenVoidModal({
-                                id: inv.id,
-                                number: inv.number,
-                                totalCreditMinor: inv.totalMinor,
-                                advanceAmountMinor: 0,
-                              })
-                            }
-                            title="Void this credit note (Manager only)"
-                          >
-                            <XCircleIcon size={13} />
-                            <span>Void</span>
-                          </button>
-                        )}
-
-                        {/* 7. Collect Payment (if unpaid balance due) */}
-                        {inv.balanceMinor > 0 && inv.status === 'posted' && inv.partyId && (
-                          <button
-                            type="button"
-                            className="bento-act-btn collect"
-                            onClick={() => {
-                              const cust = parties.find((p) => p.id === inv.partyId) || {
-                                id: inv.partyId!,
-                                name: inv.customerName || 'Customer',
-                                phone: inv.customerPhone,
-                                type: 'customer',
-                                creditLimitMinor: 0,
-                              };
-                              openCollectPayment(cust, inv.id);
-                            }}
-                            title="Collect balance payment towards this bill"
-                          >
-                            <WalletIcon size={13} />
-                            <span>Collect</span>
-                          </button>
-                        )}
+                    {/* Financials & Payment Method Row */}
+                    <div className="invoices-m-finance-row">
+                      <div className="invoices-m-amount-col">
+                        <span className="invoices-m-amount-label">Bill Total</span>
+                        <span className="invoices-amount-total">
+                          {formatRupees(inv.totalMinor)}
+                        </span>
                       </div>
-                    </td>
+
+                      <div className="invoices-m-pmt-col">
+                        <div className="invoices-pmt-wrap">
+                          {inv.payments && inv.payments.length > 0 ? (
+                            inv.payments.map((p: any, pidx: number) => {
+                              const method = (p.method || 'cash').toLowerCase();
+                              const isCash = method === 'cash';
+                              const isUpi = method.includes('upi') || method.includes('qr');
+                              const isCard = method.includes('card');
+                              return (
+                                <span
+                                  key={pidx}
+                                  className={`invoices-pmt-pill ${isCash ? 'cash' : isUpi ? 'upi' : isCard ? 'card' : 'other'}`}
+                                >
+                                  {isCash ? (
+                                    <BanknoteIcon size={11} />
+                                  ) : isUpi ? (
+                                    <ZapIcon size={11} />
+                                  ) : isCard ? (
+                                    <CreditCardIcon size={11} />
+                                  ) : (
+                                    <WalletIcon size={11} />
+                                  )}
+                                  <span>{p.method}</span>
+                                </span>
+                              );
+                            })
+                          ) : (
+                            <span className="invoices-pmt-pill cash">
+                              <BanknoteIcon size={11} />
+                              <span>CASH</span>
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Actions Row */}
+                    <div className="invoices-m-actions-wrap">
+                      {renderActions(inv, true)}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* 4B. Table Scroller with Sticky Invoice Column and Scroll Hint */}
+            <div className={`invoices-table-scroller ${viewMode === 'cards' ? 'mobile-hidden' : 'mobile-active'}`}>
+              {viewMode === 'table' && (
+                <div className="invoices-scroll-hint">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="18 8 22 12 18 16" />
+                    <polyline points="6 8 2 12 6 16" />
+                    <line x1="2" y1="12" x2="22" y2="12" />
+                  </svg>
+                  <span>Swipe horizontally to view all columns (Customer, Total, Payment & Actions) ↔</span>
+                </div>
+              )}
+              <table className="invoices-bento-table">
+                <thead>
+                  <tr>
+                    <th className="col-sticky-invoice">Invoice No</th>
+                    <th>Branch</th>
+                    <th>Date & Time</th>
+                    <th>Customer / Contact</th>
+                    <th style={{ textAlign: 'right' }}>Total Amount</th>
+                    <th>Payment</th>
+                    <th>Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {filteredInvoices.map((inv) => (
+                    <tr key={inv.id}>
+                      {/* Invoice Number */}
+                      <td className="col-sticky-invoice">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
+                          <button
+                            type="button"
+                            className="bento-bill-btn"
+                            onClick={() => openInvoiceDetail(inv.id)}
+                            title="Click to view bill items, tax details and credit notes"
+                          >
+                            <ReceiptIcon size={13} />
+                            <span>{inv.number}</span>
+                          </button>
+                          {inv.kind === 'credit_note' && (
+                            <span className="invoices-tag-credit-note">CN</span>
+                          )}
+                          {inv.status === 'voided' && (
+                            <span className="invoices-tag-voided">VOID</span>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Branch */}
+                      <td>
+                        <span className="invoices-branch-tag">
+                          <Building2Icon size={12} style={{ color: 'var(--primary, #0F766E)' }} />
+                          <span>
+                            {branches.find((b) => b.id === inv.branchId || b.code === (inv as any).location)?.code ||
+                              currentBranchCode ||
+                              'MAIN'}
+                          </span>
+                        </span>
+                      </td>
+
+                      {/* Date & Time */}
+                      <td>
+                        <div className="invoices-datetime-wrap">
+                          <span className="invoices-date-text">
+                            {new Date(inv.createdAt).toLocaleDateString('en-IN', {
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric',
+                            })}
+                          </span>
+                          <span className="invoices-time-text">
+                            {new Date(inv.createdAt).toLocaleTimeString('en-IN', {
+                              hour: 'numeric',
+                              minute: '2-digit',
+                              hour12: true,
+                            })}
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* Customer */}
+                      <td>
+                        <div className="invoices-cust-wrap">
+                          <div className="invoices-cust-name-row">
+                            <UserIcon size={13} style={{ color: '#64748b' }} />
+                            <span className="invoices-cust-name">{inv.customerName || 'Walk-in Customer'}</span>
+                          </div>
+                          {inv.customerPhone && (
+                            <div className="invoices-cust-phone-row">
+                              <PhoneIcon size={11} style={{ color: '#94a3b8' }} />
+                              <span className="invoices-cust-phone">{inv.customerPhone}</span>
+                            </div>
+                          )}
+                          {inv.fullyReturned ? (
+                            <span
+                              className="invoices-return-status-pill full"
+                              onClick={() => openInvoiceDetail(inv.id)}
+                              title="Fully returned"
+                            >
+                              <RotateCcwIcon size={10} />
+                              <span>Fully Returned</span>
+                            </span>
+                          ) : (inv.returnedMinor || 0) > 0 ? (
+                            <span
+                              className="invoices-return-status-pill partial"
+                              onClick={() => openInvoiceDetail(inv.id)}
+                              title="Partially returned"
+                            >
+                              <RotateCcwIcon size={10} />
+                              <span>Ret: {formatRupees(inv.returnedMinor || 0)}</span>
+                            </span>
+                          ) : null}
+                        </div>
+                      </td>
+
+                      {/* Total Amount */}
+                      <td style={{ textAlign: 'right' }}>
+                        <span className="invoices-amount-total">
+                          {formatRupees(inv.totalMinor)}
+                        </span>
+                      </td>
+
+                      {/* Payment Method */}
+                      <td>
+                        <div className="invoices-pmt-wrap">
+                          {inv.payments && inv.payments.length > 0 ? (
+                            inv.payments.map((p: any, pidx: number) => {
+                              const method = (p.method || 'cash').toLowerCase();
+                              const isCash = method === 'cash';
+                              const isUpi = method.includes('upi') || method.includes('qr');
+                              const isCard = method.includes('card');
+                              return (
+                                <span
+                                  key={pidx}
+                                  className={`invoices-pmt-pill ${isCash ? 'cash' : isUpi ? 'upi' : isCard ? 'card' : 'other'}`}
+                                >
+                                  {isCash ? (
+                                    <BanknoteIcon size={11} />
+                                  ) : isUpi ? (
+                                    <ZapIcon size={11} />
+                                  ) : isCard ? (
+                                    <CreditCardIcon size={11} />
+                                  ) : (
+                                    <WalletIcon size={11} />
+                                  )}
+                                  <span>{p.method}</span>
+                                </span>
+                              );
+                            })
+                          ) : (
+                            <span className="invoices-pmt-pill cash">
+                              <BanknoteIcon size={11} />
+                              <span>CASH</span>
+                            </span>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Action Buttons */}
+                      <td>
+                        {renderActions(inv, false)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
     </div>
