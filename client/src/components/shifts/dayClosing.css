@@ -2384,21 +2384,434 @@ body.theme-cashier .detail-list-val.purple,
 }
 
 @media (max-width: 640px) {
+  .day-closing-modal-backdrop {
+    padding-top: max(16px, calc(8px + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))) !important;
+    padding-bottom: max(16px, calc(8px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)))) !important;
+    padding-left: max(12px, calc(6px + var(--safe-area-inset-left, env(safe-area-inset-left, 0px)))) !important;
+    padding-right: max(12px, calc(6px + var(--safe-area-inset-right, env(safe-area-inset-right, 0px)))) !important;
+    box-sizing: border-box !important;
+  }
+
   .day-closing-modal-content {
     padding: 1.2rem 1rem !important;
     border-radius: 14px !important;
-    margin: 0.5rem !important;
-  }
-
-  .financial-kpi-grid,
-  .tender-kpi-grid {
-    grid-template-columns: 1fr !important;
-    gap: 0.65rem !important;
+    margin: auto !important;
+    max-height: calc(100dvh - 32px - var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) - var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))) !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
   }
 
   .fin-kpi-card,
   .tender-kpi-card {
     padding: 0.85rem 1rem !important;
     border-radius: 12px !important;
+  }
+}
+
+/* ==========================================================================
+   DAY CLOSING RESPONSIVE LAYOUT SUITE (TABLET: 768px - 1200px)
+   ========================================================================== */
+@media (min-width: 768px) and (max-width: 1200px) {
+  .day-closing-wrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 1rem 0.85rem !important;
+    margin: 0 auto !important;
+    gap: 1.15rem !important;
+    box-sizing: border-box !important;
+  }
+
+  /* 1. Master Bento Hero Command Deck */
+  .day-closing-bento-hero,
+  .day-closing-header-card {
+    padding: 1.25rem 1.35rem !important;
+    border-radius: 18px !important;
+    gap: 1rem !important;
+  }
+
+  .cat-bento-title {
+    font-size: 1.2rem !important;
+    line-height: 1.3 !important;
+  }
+
+  .cat-bento-header-actions {
+    gap: 0.5rem !important;
+  }
+
+  /* 2. Dual-Card Diagnostics Deck */
+  .bento-diagnostics-deck {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+
+  .bento-audit-deck-card,
+  .bento-ops-deck-card,
+  .day-closing-card {
+    padding: 1.25rem 1.35rem !important;
+    border-radius: 18px !important;
+  }
+
+  /* 3. Financial KPI Deck */
+  .bento-financial-kpi-deck {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+
+  /* 4. Tender Collections Grid */
+  .day-closing-bento-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1.15rem !important;
+  }
+
+  .bento-col-7,
+  .bento-col-5 {
+    grid-column: span 1 !important;
+    width: 100% !important;
+  }
+
+  .tender-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.85rem !important;
+  }
+
+  /* 5. Navigation Tabs */
+  .day-closing-tabs-bar {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+}
+
+/* ==========================================================================
+   DAY CLOSING RESPONSIVE LAYOUT SUITE (MOBILE: <= 767px)
+   ========================================================================== */
+@media (max-width: 767px) {
+  .day-closing-wrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0.35rem 0.15rem 1.75rem !important;
+    margin: 0 !important;
+    gap: 0.95rem !important;
+    box-sizing: border-box !important;
+  }
+
+  /* 1. Master Bento Hero Command Deck */
+  .day-closing-bento-hero,
+  .day-closing-header-card {
+    padding: 1rem 0.9rem !important;
+    border-radius: 16px !important;
+    gap: 0.85rem !important;
+    box-sizing: border-box !important;
+  }
+
+  .day-closing-header-content {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.85rem !important;
+  }
+
+  .cat-bento-title-group {
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 0.65rem !important;
+    width: 100% !important;
+    flex-wrap: nowrap !important;
+  }
+
+  .cat-bento-icon-box {
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    border-radius: 12px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .cat-bento-title-row {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.45rem !important;
+    width: 100% !important;
+  }
+
+  .cat-bento-title {
+    font-size: 1.05rem !important;
+    line-height: 1.3 !important;
+    word-break: break-word !important;
+  }
+
+  .cat-badge-live-sync {
+    font-size: 0.68rem !important;
+    padding: 0.25rem 0.6rem !important;
+    white-space: normal !important;
+    text-align: left !important;
+    line-height: 1.3 !important;
+  }
+
+  .cat-bento-subtitle {
+    font-size: 0.76rem !important;
+    line-height: 1.35 !important;
+    margin-top: 0.25rem !important;
+  }
+
+  /* Hero Actions */
+  .cat-bento-header-actions {
+    width: 100% !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 0.45rem !important;
+  }
+
+  .cat-bento-header-actions .cat-btn-primary,
+  .cat-bento-header-actions .cat-btn-outline,
+  .cat-bento-header-actions .day-closing-notif-hero-btn {
+    flex: 1 1 auto !important;
+    justify-content: center !important;
+    min-height: 38px !important;
+    font-size: 0.78rem !important;
+    padding: 0.45rem 0.75rem !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Hero Context Bar & Chips */
+  .bento-hero-context-bar {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.65rem !important;
+    padding-top: 0.75rem !important;
+  }
+
+  .bento-hero-context-left {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 0.4rem !important;
+    width: 100% !important;
+  }
+
+  .bento-context-chip,
+  .bento-location-chip,
+  .bento-counter-chip,
+  .bento-date-chip,
+  .bento-cashier-chip {
+    font-size: 0.72rem !important;
+    padding: 0.3rem 0.6rem !important;
+    max-width: 100% !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    box-sizing: border-box !important;
+  }
+
+  .bento-hero-context-right {
+    width: 100% !important;
+  }
+
+  .bento-hero-select {
+    width: 100% !important;
+    min-height: 38px !important;
+    font-size: 0.78rem !important;
+    box-sizing: border-box !important;
+  }
+
+  /* 2. Row 2: Diagnostics & Operations Deck - Vertical Stack */
+  .bento-diagnostics-deck {
+    grid-template-columns: 1fr !important;
+    gap: 0.85rem !important;
+  }
+
+  .bento-audit-deck-card,
+  .bento-ops-deck-card,
+  .day-closing-card {
+    padding: 1rem 0.9rem !important;
+    border-radius: 16px !important;
+    gap: 0.75rem !important;
+    box-sizing: border-box !important;
+  }
+
+  .day-closing-card-header {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.65rem !important;
+    padding-bottom: 0.75rem !important;
+    margin-bottom: 0.75rem !important;
+  }
+
+  .day-closing-card-title-group {
+    width: 100% !important;
+    gap: 0.65rem !important;
+  }
+
+  .bento-deck-card-title {
+    font-size: 0.92rem !important;
+    line-height: 1.3 !important;
+  }
+
+  .bento-deck-card-sub {
+    font-size: 0.72rem !important;
+  }
+
+  .bento-audit-header-actions {
+    width: 100% !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 0.4rem !important;
+  }
+
+  .bento-audit-header-actions .smart-audit-status-badge,
+  .bento-audit-header-actions .smart-audit-run-btn,
+  .bento-audit-header-actions .smart-audit-toggle-btn {
+    flex: 1 1 auto !important;
+    justify-content: center !important;
+    min-height: 34px !important;
+    font-size: 0.75rem !important;
+    padding: 0.35rem 0.65rem !important;
+    box-sizing: border-box !important;
+  }
+
+  .bento-audit-summary-body {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.65rem !important;
+    padding: 0.75rem 0.85rem !important;
+    box-sizing: border-box !important;
+  }
+
+  .bento-audit-score-pill {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+  }
+
+  .bento-audit-score-val {
+    font-size: 1.35rem !important;
+  }
+
+  .bento-audit-chips-row {
+    width: 100% !important;
+    gap: 0.4rem !important;
+    flex-wrap: wrap !important;
+  }
+
+  /* 3. Row 3: Financial KPI Deck */
+  .bento-financial-kpi-deck {
+    grid-template-columns: 1fr !important;
+    gap: 0.85rem !important;
+  }
+
+  .bento-kpi-hero-card {
+    padding: 1.15rem 1rem !important;
+    border-radius: 16px !important;
+    box-sizing: border-box !important;
+  }
+
+  .bento-kpi-hero-val {
+    font-size: 1.75rem !important;
+  }
+
+  .bento-kpi-secondary-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem !important;
+  }
+
+  .bento-kpi-sub-tile {
+    padding: 0.85rem 1rem !important;
+    border-radius: 14px !important;
+    box-sizing: border-box !important;
+  }
+
+  /* 4. Row 4: Tender Collections & Final Submission */
+  .day-closing-bento-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.85rem !important;
+  }
+
+  .bento-col-7,
+  .bento-col-5 {
+    grid-column: span 1 !important;
+    width: 100% !important;
+    gap: 0.85rem !important;
+  }
+
+  .tender-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.65rem !important;
+  }
+
+  .tender-kpi-card {
+    padding: 0.75rem 0.85rem !important;
+    border-radius: 12px !important;
+    box-sizing: border-box !important;
+  }
+
+  .tender-kpi-val {
+    font-size: 1.05rem !important;
+  }
+
+  /* 5. Navigation Tabs Bar */
+  .day-closing-tabs-bar {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding: 0.35rem !important;
+    border-radius: 12px !important;
+    flex-wrap: nowrap !important;
+  }
+
+  .bento-hero-tab {
+    padding: 0.45rem 0.75rem !important;
+    font-size: 0.76rem !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* 6. Form inputs and tables */
+  .reconciliation-cash-input-wrap,
+  .cash-reconciliation-card,
+  .closing-submission-card {
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .denomination-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.5rem !important;
+  }
+
+  .day-closing-table-wrap,
+  .day-closing-table-container,
+  .compliance-table-container,
+  .history-table-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    box-sizing: border-box !important;
+  }
+}
+
+/* Very narrow screens (<= 380px) */
+@media (max-width: 380px) {
+  .tender-kpi-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.5rem !important;
+  }
+
+  .cat-bento-title {
+    font-size: 0.98rem !important;
+  }
+
+  .tender-kpi-card {
+    padding: 0.65rem 0.75rem !important;
+  }
+
+  .tender-kpi-val {
+    font-size: 0.95rem !important;
   }
 }

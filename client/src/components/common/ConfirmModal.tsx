@@ -64,6 +64,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
       role="dialog"
       aria-modal="true"
       aria-labelledby="bento-confirm-title"
+      className="bento-confirm-modal-overlay"
       style={{
         position: 'fixed',
         inset: 0,
@@ -74,7 +75,8 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 10005,
-        padding: '1rem',
+        padding: 'max(1rem, calc(0.5rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))) max(1rem, calc(0.5rem + var(--safe-area-inset-right, env(safe-area-inset-right, 0px)))) max(1rem, calc(0.5rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)))) max(1rem, calc(0.5rem + var(--safe-area-inset-left, env(safe-area-inset-left, 0px))))',
+        boxSizing: 'border-box',
         animation: 'fadeInModal 0.15s ease-out',
       }}
       onClick={(e) => {
@@ -82,12 +84,15 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
       }}
     >
       <div
+        className="bento-confirm-modal-card"
         style={{
           background: '#ffffff',
           borderRadius: '20px',
           boxShadow: '0 25px 50px -12px rgba(15, 23, 42, 0.25), 0 0 0 1px rgba(226, 232, 240, 0.8)',
           width: '100%',
           maxWidth: '440px',
+          maxHeight: 'calc(100dvh - 32px - var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) - var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)))',
+          overflowY: 'auto',
           padding: '1.75rem',
           textAlign: 'center',
           position: 'relative',
