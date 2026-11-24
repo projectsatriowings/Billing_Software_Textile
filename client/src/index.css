@@ -29969,13 +29969,7 @@ select.expense-input-control {
     background: var(--primary-soft, #F5ECF0) !important;
     border-color: var(--primary, #653B4B) !important;
   }
-  .app-container {
-    position: relative;
-    overflow-x: hidden;
-    flex-direction: column !important;
-  }
 
-  }
 
   .main-content {
     width: 100% !important;
