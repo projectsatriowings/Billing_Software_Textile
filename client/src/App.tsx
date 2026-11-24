@@ -24960,9 +24960,9 @@ export function App() {
                 ) : (
                   <>
                     {/* Bento Ribbon (Summary Tiles - 2x2 on Mobile, 4x1 on Tablet/Desktop) */}
-                    <div className="shift-bento-ribbon invoice-detail-ribbon">
+                    <div className="invoice-detail-ribbon">
                       {/* 1. Total Bill */}
-                      <div className="shift-bento-ribbon-tile invoice-detail-ribbon-tile">
+                      <div className="invoice-detail-ribbon-tile">
                         <div className="invoice-tile-icon-badge">
                           <ReceiptIcon size={16} />
                         </div>
@@ -24976,7 +24976,7 @@ export function App() {
                       </div>
 
                       {/* 2. Paid Amount */}
-                      <div className="shift-bento-ribbon-tile invoice-detail-ribbon-tile">
+                      <div className="invoice-detail-ribbon-tile">
                         <div className="invoice-tile-icon-badge">
                           <CreditCardIcon size={16} />
                         </div>
@@ -24990,7 +24990,7 @@ export function App() {
                       </div>
 
                       {/* 3. Balance Due */}
-                      <div className="shift-bento-ribbon-tile invoice-detail-ribbon-tile">
+                      <div className="invoice-detail-ribbon-tile">
                         <div className="invoice-tile-icon-badge">
                           <RupeeIcon size={16} />
                         </div>
@@ -25004,7 +25004,7 @@ export function App() {
                       </div>
 
                       {/* 4. Tender / Change */}
-                      <div className="shift-bento-ribbon-tile invoice-detail-ribbon-tile">
+                      <div className="invoice-detail-ribbon-tile">
                         <div className="invoice-tile-icon-badge">
                           <WalletIcon size={16} />
                         </div>
