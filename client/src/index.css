@@ -7931,8 +7931,11 @@ body.theme-super-admin .app-sidebar.icon-only .sidebar-action-row-btn.active:hov
 
 @media (max-width: 768px) {
   .inventory-module-wrapper {
-    padding-left: 16px;
-    padding-right: 16px;
+    padding-left: 0;
+    padding-right: 0;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 }
 

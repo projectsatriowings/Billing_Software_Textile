@@ -1215,7 +1215,7 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
       {activeSubTab === 'overview' && (
         <div className="inv-subview-content">
           {/* Filters Bar */}
-          <div className="inv-table-filters-card">
+          <div className="inv-table-filters-card inv-filter-bar">
             <div className="inv-search-box">
               <SearchIcon size={16} style={{ position: 'absolute', left: '0.75rem', color: 'var(--text-dim)', pointerEvents: 'none' }} />
               <input
@@ -1304,7 +1304,7 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
                 {isOwnerOrManager && onOpenSupplierInvoiceConverter && !isSuperAdmin && (
                   <button
                     type="button"
-                    className="cat-btn-secondary"
+                    className="cat-btn-secondary btn-convert-invoice"
                     disabled={showOverviewSkeleton}
                     onClick={onOpenSupplierInvoiceConverter}
                     title="Convert Supplier Invoice PDF/Image into Excel for Import"
