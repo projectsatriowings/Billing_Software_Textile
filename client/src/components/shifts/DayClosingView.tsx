@@ -3058,7 +3058,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                                                 fontSize: '0.75rem',
                                                 fontWeight: 800,
                                               }}>
-                                                {cashier.cashierName.slice(0, 1).toUpperCase()}
+                                                {(cashier.cashierName || 'C').slice(0, 1).toUpperCase()}
                                               </div>
                                               <div>
                                                 <div style={{ fontWeight: 700, fontSize: '0.88rem', color: '#0f172a' }}>

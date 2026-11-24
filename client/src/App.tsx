@@ -612,7 +612,12 @@ export function App() {
   const [user, setUser] = useState<User | null>(() => {
     try {
       const stored = localStorage.getItem('user') || sessionStorage.getItem('user');
-      return stored ? JSON.parse(stored) : null;
+      if (!stored) return null;
+      const parsed = JSON.parse(stored);
+      if (parsed && typeof parsed === 'object' && parsed.id && parsed.role) {
+        return parsed;
+      }
+      return null;
     } catch {
       return null;
     }
@@ -620,7 +625,12 @@ export function App() {
   const [shop, setShop] = useState<Shop | null>(() => {
     try {
       const stored = localStorage.getItem('shop') || sessionStorage.getItem('shop');
-      return stored ? JSON.parse(stored) : null;
+      if (!stored) return null;
+      const parsed = JSON.parse(stored);
+      if (parsed && typeof parsed === 'object' && parsed.id) {
+        return parsed;
+      }
+      return null;
     } catch {
       return null;
     }
@@ -9235,14 +9245,14 @@ export function App() {
           {/* Sidebar Footer (User Profile & Utilities Matching Image 2) */}
           <div className="sidebar-footer">
             <div className="sidebar-user-card">
-              <div className="sidebar-user-avatar" title={user.name}>
-                {user.name.slice(0, 1).toUpperCase()}
+              <div className="sidebar-user-avatar" title={user?.name || user?.email || 'User'}>
+                {(user?.name || user?.email || 'User').slice(0, 1).toUpperCase()}
               </div>
               <div className="sidebar-user-meta">
-                <span className="sidebar-user-name">{user.name}</span>
+                <span className="sidebar-user-name">{user?.name || user?.email || 'User'}</span>
                 <span className="sidebar-user-role">
                   <span className="user-status-dot"></span>
-                  {user.role === 'owner' ? 'Super Admin' : user.role === 'manager' ? 'Store Manager' : user?.role === 'cashier' ? 'Cashier' : user.role}
+                  {user?.role === 'owner' ? 'Super Admin' : user?.role === 'manager' ? 'Store Manager' : user?.role === 'cashier' ? 'Cashier' : (user?.role || 'Staff')}
                 </span>
               </div>
             </div>
@@ -10202,7 +10212,7 @@ export function App() {
                         : user?.role === 'cashier'
                           ? 'Cashier'
                           : user?.role
-                            ? user.role.charAt(0).toUpperCase() + user.role.slice(1)
+                            ? String(user.role).charAt(0).toUpperCase() + String(user.role).slice(1)
                             : 'Staff'}
                   </span>
                 </div>

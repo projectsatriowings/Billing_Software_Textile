@@ -43,6 +43,18 @@ class RootErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState
     window.location.reload();
   };
 
+  handleResetAndLogin = () => {
+    try {
+      localStorage.removeItem('user');
+      localStorage.removeItem('shop');
+      localStorage.removeItem('billing_token');
+      localStorage.removeItem('token');
+      sessionStorage.clear();
+    } catch { }
+    window.location.hash = '#login';
+    window.location.reload();
+  };
+
   render() {
     if (this.state.hasError) {
       const isScanner = this.props.isScanner;
@@ -162,6 +174,34 @@ class RootErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState
                     <polyline points="9 22 9 12 15 12 15 22"/>
                   </svg>
                   Go to Dashboard
+                </button>
+              )}
+
+              {!isScanner && (
+                <button
+                  type="button"
+                  onClick={this.handleResetAndLogin}
+                  style={{
+                    background: '#fef2f2',
+                    color: '#dc2626',
+                    border: '1px solid #fecaca',
+                    padding: '11px 20px',
+                    borderRadius: '10px',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    fontFamily: 'inherit',
+                  }}
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                    <polyline points="16 17 21 12 16 7"/>
+                    <line x1="21" y1="12" x2="9" y2="12"/>
+                  </svg>
+                  Sign In Again
                 </button>
               )}
             </div>
