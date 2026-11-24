@@ -101,6 +101,7 @@ export const SupplierDirectory: React.FC<SupplierDirectoryProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [filterMode, setFilterMode] = useState<'all' | 'has_dues' | 'overdue' | 'zero_dues' | 'inactive'>('all');
   const [sortBy, setSortBy] = useState<'payable_desc' | 'due_date_asc' | 'name_asc'>('payable_desc');
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
   const [selectedSupplier, setSelectedSupplier] = useState<Party | null>(null);
   const [actionMenuOpenId, setActionMenuOpenId] = useState<string | null>(null);
   const [menuPosition, setMenuPosition] = useState<{
@@ -476,37 +477,6 @@ export const SupplierDirectory: React.FC<SupplierDirectoryProps> = ({
           </div>
 
           <div className="header-actions-group">
-            <button
-              type="button"
-              className="btn-export-csv"
-              onClick={handleExportCSV}
-              title="Download supplier directory as CSV"
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="7 10 12 15 17 10"></polyline>
-                <line x1="12" y1="15" x2="12" y2="3"></line>
-              </svg>
-              <span>Export CSV</span>
-            </button>
-
-            {canManagePurchases && (
-              <button
-                type="button"
-                className="btn-add-bill"
-                onClick={() => onNewPurchase()}
-                title="Record a new purchase bill / stock inward from any supplier"
-              >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                  <polyline points="14 2 14 8 20 8"></polyline>
-                  <line x1="12" y1="18" x2="12" y2="12"></line>
-                  <line x1="9" y1="15" x2="15" y2="15"></line>
-                </svg>
-                <span>+ Add Supplier Bill</span>
-              </button>
-            )}
-
             <button type="button" className="supplier-primary-add-btn" onClick={onAddSupplier}>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -514,6 +484,39 @@ export const SupplierDirectory: React.FC<SupplierDirectoryProps> = ({
               </svg>
               <span>Add Supplier</span>
             </button>
+
+            <div className="supplier-sub-actions-row">
+              {canManagePurchases && (
+                <button
+                  type="button"
+                  className="btn-add-bill"
+                  onClick={() => onNewPurchase()}
+                  title="Record a new purchase bill / stock inward from any supplier"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="12" y1="18" x2="12" y2="12"></line>
+                    <line x1="9" y1="15" x2="15" y2="15"></line>
+                  </svg>
+                  <span>+ Inward Bill</span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                className="btn-export-csv"
+                onClick={handleExportCSV}
+                title="Download supplier directory as CSV"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                <span>Export CSV</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -583,31 +586,270 @@ export const SupplierDirectory: React.FC<SupplierDirectoryProps> = ({
               )}
             </div>
 
-            <div className="sort-dropdown-wrap">
-              <label htmlFor="supplier-sort">Sort:</label>
-              <select
-                id="supplier-sort"
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as any)}
-              >
-                <option value="payable_desc">Highest Payable</option>
-                <option value="due_date_asc">Earliest Due Date</option>
-                <option value="name_asc">Name (A–Z)</option>
-              </select>
+            <div className="supplier-sort-and-view-row">
+              <div className="sort-dropdown-wrap">
+                <label htmlFor="supplier-sort">Sort:</label>
+                <select
+                  id="supplier-sort"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as any)}
+                >
+                  <option value="payable_desc">Highest Payable</option>
+                  <option value="due_date_asc">Earliest Due Date</option>
+                  <option value="name_asc">Name (A–Z)</option>
+                </select>
+              </div>
+
+              {/* Mobile View Toggle Switcher (Cards vs Table) */}
+              <div className="supplier-view-toggle">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('cards')}
+                  className={`supplier-toggle-btn ${viewMode === 'cards' ? 'active' : ''}`}
+                  title="Card View (Mobile Optimized)"
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
+                  </svg>
+                  <span>Cards</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('table')}
+                  className={`supplier-toggle-btn ${viewMode === 'table' ? 'active' : ''}`}
+                  title="Table View (Full Columns)"
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 3h18v18H3zM3 9h18M3 15h18M9 3v18M15 3v18"></path>
+                  </svg>
+                  <span>Table</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* 3. MODERN SUPPLIERS DATA TABLE */}
-        <div className="supplier-table-container">
+        {/* 3A. MOBILE CARDS VIEW (Clean responsive touch layout) */}
+        <div className={`supplier-mobile-cards-wrap ${viewMode === 'cards' ? 'active' : ''}`}>
+          {filteredSuppliers.map((s) => {
+            const avatarStyle = getAvatarColor(s.name);
+            const payable = s.payableMinor || 0;
+            const dueDateStatus = getDueDateStatus(s.oldestDueDate);
+
+            return (
+              <div
+                key={s.id}
+                className={`supplier-m-card ${s.active === false ? 'inactive-card' : ''}`}
+                onClick={() => setSelectedSupplier(s)}
+                title="Tap to view vendor profile & purchase history"
+              >
+                {/* Card Header: Avatar + Vendor Name + Address snippet + Inactive tag + Edit button */}
+                <div className="supplier-m-header">
+                  <div className="supplier-m-identity">
+                    <div
+                      className="supplier-avatar"
+                      style={{
+                        background: avatarStyle.bg,
+                        color: avatarStyle.text,
+                        borderColor: avatarStyle.border,
+                      }}
+                    >
+                      {s.name.slice(0, 2).toUpperCase()}
+                    </div>
+                    <div className="supplier-m-name-group">
+                      <div className="supplier-m-name-row">
+                        <span className="supplier-full-name">{s.name}</span>
+                        {s.active === false && (
+                          <span className="badge-inactive-tag">Inactive</span>
+                        )}
+                      </div>
+                      {s.address ? (
+                        <span className="supplier-address-snippet" title={s.address}>
+                          📍 {s.address}
+                        </span>
+                      ) : (
+                        <span className="text-muted" style={{ fontSize: '0.74rem' }}>Wholesale Vendor</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="supplier-m-quick-actions" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      type="button"
+                      className="btn-action-edit mini"
+                      onClick={() => onEditSupplier(s)}
+                      title="Edit supplier details"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                        <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+                      </svg>
+                      <span>Edit</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Contact info row: Phone with tap-to-call, Email, GSTIN */}
+                <div className="supplier-m-contact-row" onClick={(e) => e.stopPropagation()}>
+                  {s.phone && (
+                    <div className="supplier-m-contact-item">
+                      <a href={`tel:${s.phone}`} className="supplier-m-phone-link" title="Tap to call">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                        </svg>
+                        <span>{s.phone}</span>
+                      </a>
+                      <button
+                        type="button"
+                        className="phone-copy-mini-btn"
+                        onClick={() => handleCopy(s.phone!, s.id + '-m-phone')}
+                        title="Copy phone"
+                      >
+                        {copiedId === s.id + '-m-phone' ? 'Copied!' : '📋'}
+                      </button>
+                    </div>
+                  )}
+
+                  {s.gstin ? (
+                    <div
+                      className="supplier-m-gstin-badge"
+                      onClick={() => handleCopy(s.gstin!, s.id + '-m-gstin')}
+                      title="Click to copy GSTIN"
+                    >
+                      <span className="mono bold">{s.gstin}</span>
+                      <span className="copy-label">{copiedId === s.id + '-m-gstin' ? 'Copied!' : '📋'}</span>
+                    </div>
+                  ) : (
+                    <span className="badge-unregistered-tag" style={{ fontSize: '0.68rem' }}>Unregistered</span>
+                  )}
+                </div>
+
+                {/* Financials / Payable Status */}
+                <div className="supplier-m-payable-box">
+                  <div className="supplier-m-payable-left">
+                    <span className="supplier-m-payable-label">Outstanding Payable</span>
+                    {payable > 0 ? (
+                      <div className="supplier-m-payable-val mono due">{formatRupees(payable)}</div>
+                    ) : (
+                      <div className="supplier-m-settled-pill">
+                        <span className="settled-check">✓</span>
+                        <span>Settled • No Dues</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {payable > 0 && (
+                    <div className="supplier-m-payable-right">
+                      <span className="open-bills-count">
+                        {s.openPurchasesCount || 1} open bill{(s.openPurchasesCount || 1) > 1 ? 's' : ''}
+                      </span>
+                      {dueDateStatus && (
+                        <span className={`due-aging-tag ${dueDateStatus.isOverdue ? 'overdue' : 'upcoming'}`}>
+                          {dueDateStatus.isOverdue ? '⚠️ ' : '⏱️ '}
+                          {dueDateStatus.label}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Footer Actions */}
+                <div className="supplier-m-footer" onClick={(e) => e.stopPropagation()}>
+                  <div className="supplier-m-footer-actions">
+                    {canPayPurchases && payable > 0 && (
+                      <button
+                        type="button"
+                        className="btn-action-pay mini"
+                        onClick={() => onPaySupplier(s)}
+                        title="Pay this supplier"
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
+                          <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                          <line x1="1" y1="10" x2="23" y2="10"></line>
+                        </svg>
+                        <span>Pay Due</span>
+                      </button>
+                    )}
+
+                    {canManagePurchases && (
+                      <button
+                        type="button"
+                        className="btn-action-inward mini"
+                        onClick={() => onNewPurchase(s.id)}
+                        title="Record inward bill"
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
+                          <polyline points="7 10 12 15 17 10"></polyline>
+                          <line x1="12" y1="15" x2="12" y2="3"></line>
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        </svg>
+                        <span>+ Inward Bill</span>
+                      </button>
+                    )}
+                  </div>
+
+                  <span
+                    className="supplier-m-view-link"
+                    onClick={() => setSelectedSupplier(s)}
+                  >
+                    <span>Profile</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                      <polyline points="9 18 15 12 9 6" />
+                    </svg>
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+
+          {filteredSuppliers.length === 0 && (
+            <div className="supplier-empty-state">
+              <div className="empty-icon-box">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.8">
+                  <rect x="1" y="3" width="15" height="13"></rect>
+                  <polygon points="16 8 20 8 23 11 23 16 16 16 8"></polygon>
+                  <circle cx="5.5" cy="18.5" r="2.5"></circle>
+                  <circle cx="18.5" cy="18.5" r="2.5"></circle>
+                </svg>
+              </div>
+              <h3>No suppliers matched your criteria</h3>
+              <p>Try searching for a different vendor name, phone, or GSTIN.</p>
+              <button
+                type="button"
+                className="btn-reset-filters"
+                onClick={() => {
+                  setSearchTerm('');
+                  setFilterMode('all');
+                }}
+              >
+                Reset All Filters
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* 3B. MODERN SUPPLIERS DATA TABLE */}
+        <div className={`supplier-table-container ${viewMode === 'cards' ? 'mobile-hidden' : 'mobile-active'}`}>
+          {viewMode === 'table' && (
+            <div className="supplier-scroll-hint">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="18 8 22 12 18 16" />
+                <polyline points="6 8 2 12 6 16" />
+                <line x1="2" y1="12" x2="22" y2="12" />
+              </svg>
+              <span>Swipe horizontally to view all columns</span>
+            </div>
+          )}
           <table className="supplier-modern-table">
             <thead>
               <tr>
-                <th style={{ width: '28%', minWidth: '220px' }}>SUPPLIER / VENDOR NAME</th>
+                <th className="col-sticky-supplier" style={{ width: '28%', minWidth: '200px' }}>SUPPLIER / VENDOR NAME</th>
                 <th style={{ width: '18%', minWidth: '150px' }}>CONTACT</th>
                 <th style={{ width: '16%', minWidth: '140px' }}>GSTIN</th>
                 <th style={{ width: '20%', minWidth: '180px' }}>OUTSTANDING PAYABLE</th>
-                <th style={{ width: '18%', minWidth: '240px', textAlign: 'right' }}>ACTIONS</th>
+                <th style={{ width: '18%', minWidth: '220px', textAlign: 'right' }}>ACTIONS</th>
               </tr>
             </thead>
             <tbody>
@@ -622,8 +864,8 @@ export const SupplierDirectory: React.FC<SupplierDirectoryProps> = ({
                     className={`supplier-row ${s.active === false ? 'inactive-row' : ''}`}
                     onClick={() => setSelectedSupplier(s)}
                   >
-                    {/* Supplier Identity & Avatar */}
-                    <td>
+                    {/* Supplier Identity & Avatar (Sticky on horizontal scroll) */}
+                    <td className="col-sticky-supplier">
                       <div className="supplier-cell-identity">
                         <div
                           className="supplier-avatar"
