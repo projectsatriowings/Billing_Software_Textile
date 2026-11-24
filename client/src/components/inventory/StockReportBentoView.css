@@ -1708,3 +1708,479 @@
   border-color: #0f172a;
   font-weight: 700;
 }
+
+/* ==========================================================================
+   DESKTOP DEFAULT VISIBILITY
+   ========================================================================== */
+.srb-view-toggle {
+  display: none;
+}
+
+.srb-mobile-cards-wrap {
+  display: none;
+}
+
+.srb-scroll-hint {
+  display: none;
+}
+
+.srb-meta-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+}
+
+/* ==========================================================================
+   MOBILE RESPONSIVE BREAKPOINT (<= 768px)
+   ========================================================================== */
+@media (max-width: 768px) {
+  .stock-report-bento-root {
+    padding: 0.25rem 0 1.5rem 0 !important;
+    gap: 0.85rem !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+    box-sizing: border-box !important;
+  }
+
+  /* 1. Header Card */
+  .srb-header-card {
+    padding: 0.85rem !important;
+    border-radius: 14px !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.75rem !important;
+  }
+
+  .srb-header-left {
+    gap: 0.75rem !important;
+  }
+
+  .srb-header-icon-box {
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    border-radius: 10px !important;
+  }
+
+  .srb-header-title {
+    font-size: 1.1rem !important;
+  }
+
+  .srb-header-sub {
+    font-size: 0.75rem !important;
+  }
+
+  .srb-header-actions {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 0.45rem !important;
+    width: 100% !important;
+  }
+
+  .srb-range-pills {
+    width: 100% !important;
+    display: flex !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .srb-range-btn {
+    flex: 1 !important;
+    justify-content: center !important;
+    padding: 0.35rem 0.5rem !important;
+    font-size: 0.75rem !important;
+    white-space: nowrap !important;
+  }
+
+  .srb-btn-outline,
+  .srb-btn-primary {
+    flex: 1 !important;
+    justify-content: center !important;
+    min-height: 38px !important;
+    font-size: 0.78rem !important;
+  }
+
+  /* Bento Boxes */
+  .srb-bento-box {
+    padding: 0.85rem !important;
+    border-radius: 14px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* 2. Top 10 High-Velocity Best Sellers (Multi-Row Responsive Cardlet) */
+  .srb-leader-cardlet {
+    display: grid !important;
+    grid-template-columns: auto 1fr auto !important;
+    grid-template-rows: auto auto !important;
+    grid-template-areas:
+      "rank meta volume"
+      "progress progress progress" !important;
+    gap: 0.45rem 0.6rem !important;
+    padding: 0.75rem 0.85rem !important;
+    align-items: center !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .srb-rank-squircle {
+    grid-area: rank !important;
+    align-self: start !important;
+    margin-top: 2px !important;
+    width: 26px !important;
+    height: 26px !important;
+    min-width: 26px !important;
+  }
+
+  .srb-leader-meta {
+    grid-area: meta !important;
+    width: auto !important;
+    min-width: 0 !important;
+    flex: 1 1 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 3px !important;
+  }
+
+  .srb-leader-product-name {
+    white-space: normal !important;
+    line-height: 1.3 !important;
+    font-size: 0.84rem !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    word-break: break-word !important;
+  }
+
+  .srb-leader-meta-tags {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.35rem !important;
+    flex-wrap: wrap !important;
+  }
+
+  .srb-leader-volume-box {
+    grid-area: volume !important;
+    min-width: auto !important;
+    align-self: start !important;
+    text-align: right !important;
+    white-space: nowrap !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-end !important;
+  }
+
+  .srb-leader-volume-val {
+    font-size: 0.95rem !important;
+    font-weight: 800 !important;
+    color: #0f172a !important;
+  }
+
+  .srb-leader-progress-block {
+    grid-area: progress !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 0.65rem !important;
+    margin-top: 0.15rem !important;
+  }
+
+  .srb-leader-track-capsule {
+    flex: 1 !important;
+    height: 7px !important;
+  }
+
+  .srb-leader-pct-label {
+    align-self: center !important;
+    white-space: nowrap !important;
+    font-size: 0.68rem !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* Grounded Risk Intel Cards */
+  .srb-intel-card {
+    padding: 0.85rem !important;
+  }
+
+  .srb-intel-stats-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 0.4rem !important;
+  }
+
+  .srb-intel-stat-chip {
+    min-width: 0 !important;
+    padding: 0.35rem 0.45rem !important;
+  }
+
+  .srb-stat-chip-val {
+    font-size: 0.78rem !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  /* 3. Table Toolbar & Filters */
+  .srb-table-toolbar {
+    padding: 0.75rem !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.65rem !important;
+  }
+
+  .srb-toolbar-left {
+    width: 100% !important;
+    flex: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+  }
+
+  .srb-search-wrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: none !important;
+  }
+
+  .srb-search-input {
+    width: 100% !important;
+    height: 40px !important;
+    font-size: 0.84rem !important;
+  }
+
+  .srb-select {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 40px !important;
+  }
+
+  .srb-filter-status-pills {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    box-sizing: border-box !important;
+  }
+
+  .srb-filter-pill-btn {
+    justify-content: center !important;
+    text-align: center !important;
+    padding: 0.4rem 0.2rem !important;
+    font-size: 0.72rem !important;
+  }
+
+  /* 4. Meta Bar & View Switcher */
+  .srb-meta-bar {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
+    padding: 0.5rem 0.1rem 0.25rem !important;
+    box-sizing: border-box !important;
+  }
+
+  .srb-meta-count {
+    font-size: 0.8rem !important;
+    color: #64748b !important;
+    font-weight: 600 !important;
+  }
+
+  .srb-view-toggle {
+    display: inline-flex !important;
+    align-items: center !important;
+    background: #f1f5f9 !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+    padding: 2px !important;
+    gap: 2px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .srb-toggle-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    padding: 0.3rem 0.6rem !important;
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+    border: none !important;
+    border-radius: 6px !important;
+    background: transparent !important;
+    color: #64748b !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+  }
+
+  .srb-toggle-btn.active {
+    background: #ffffff !important;
+    color: #1e293b !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+    font-weight: 700 !important;
+  }
+
+  .srb-scroll-hint {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.35rem !important;
+    color: #94a3b8 !important;
+    font-size: 0.74rem !important;
+    width: 100% !important;
+    margin-top: 0.25rem !important;
+  }
+
+  /* 5. Mobile Cards View */
+  .srb-mobile-cards-wrap.active {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+    width: 100% !important;
+    padding: 0.75rem !important;
+    box-sizing: border-box !important;
+  }
+
+  .srb-mobile-card {
+    background: #ffffff !important;
+    border: 1.5px solid #e2e8f0 !important;
+    border-radius: 14px !important;
+    padding: 0.85rem !important;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.65rem !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+  }
+
+  .srb-mobile-card-header {
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+    gap: 0.65rem !important;
+  }
+
+  .srb-mobile-title-block {
+    flex: 1 !important;
+    min-width: 0 !important;
+  }
+
+  .srb-mobile-title {
+    font-size: 0.92rem !important;
+    font-weight: 700 !important;
+    color: #0f172a !important;
+    line-height: 1.3 !important;
+    word-break: break-word !important;
+  }
+
+  .srb-mobile-sub {
+    font-size: 0.72rem !important;
+    color: #64748b !important;
+    margin-top: 2px !important;
+    word-break: break-all !important;
+  }
+
+  .srb-mobile-status-row {
+    display: flex !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 0.4rem !important;
+  }
+
+  .srb-mobile-spec-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 0.45rem !important;
+    background: #f8fafc !important;
+    border: 1px solid #edf2f7 !important;
+    border-radius: 10px !important;
+    padding: 0.6rem 0.75rem !important;
+    box-sizing: border-box !important;
+  }
+
+  .srb-mobile-spec-item {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 2px !important;
+    min-width: 0 !important;
+  }
+
+  .srb-mobile-spec-label {
+    font-size: 0.65rem !important;
+    font-weight: 700 !important;
+    color: #94a3b8 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.03em !important;
+  }
+
+  .srb-mobile-spec-val {
+    font-size: 0.84rem !important;
+    font-weight: 700 !important;
+    color: #1e293b !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  .srb-mobile-action-row {
+    padding-top: 0.35rem !important;
+    border-top: 1px solid #f1f5f9 !important;
+  }
+
+  /* 6. Table Visibility Toggles */
+  .srb-table-wrapper.mobile-hidden {
+    display: none !important;
+  }
+
+  .srb-table-wrapper.mobile-active {
+    display: block !important;
+    width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  /* Sticky Columns for Table View */
+  .srb-master-table th.col-sticky-name,
+  .srb-master-table td.col-sticky-name {
+    position: sticky !important;
+    left: 0 !important;
+    z-index: 5 !important;
+    background: #ffffff !important;
+    box-shadow: 2px 0 6px rgba(0, 0, 0, 0.06) !important;
+    min-width: 160px !important;
+  }
+
+  .srb-master-table thead th.col-sticky-name {
+    background: #f8fafc !important;
+    z-index: 15 !important;
+  }
+
+  .srb-master-table th.col-sticky-action,
+  .srb-master-table td.col-sticky-action {
+    position: sticky !important;
+    right: 0 !important;
+    z-index: 5 !important;
+    background: #ffffff !important;
+    box-shadow: -2px 0 6px rgba(0, 0, 0, 0.06) !important;
+  }
+
+  .srb-master-table thead th.col-sticky-action {
+    background: #f8fafc !important;
+    z-index: 15 !important;
+  }
+
+  /* Pagination */
+  .srb-table-pagination {
+    padding: 0.75rem !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    text-align: center !important;
+  }
+}

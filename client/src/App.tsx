@@ -100,6 +100,7 @@ import type { Branch } from '../../shared/types.ts';
 import { TerminalManagementTab } from './components/terminal/TerminalManagementTab';
 import { UserManagementView } from './components/users/UserManagementView';
 import { BranchUserManagementView } from './components/users/BranchUserManagementView';
+import { PosCardCheckoutPanel } from './components/terminal/PosCardCheckoutPanel';
 import {
   CreditCardIcon,
   BanknoteIcon,
@@ -601,7 +602,7 @@ export const getBusinessLabel = (type?: string) => {
   }
 };
 
-export const CASHIER_ALLOWED_TABS = new Set<string>(['pos', 'shifts', 'invoices', 'day-closing']);
+export const CASHIER_ALLOWED_TABS = new Set<string>(['pos', 'shifts', 'invoices', 'day-closing', 'notifications']);
 
 export interface PosCartItem {
   item: Item;
@@ -12795,6 +12796,19 @@ export function App() {
                             )}
                           </div>
                         </div>
+                      )}
+
+                      {/* CARD PAYMENT TERMINAL (INTEGRATED & STANDALONE EDC) */}
+                      {selectedPayMode === 'card' && cart.length > 0 && (
+                        <PosCardCheckoutPanel
+                          branchId={branches[0]?.id || 'b_main'}
+                          payableMinor={finalPayableMinor}
+                          cashierName={user?.name}
+                          onPaymentSuccess={(details) => {
+                            setPaymentCardRef(details.reference);
+                          }}
+                          showToast={showToast}
+                        />
                       )}
 
                       {/* SPLIT TENDER ASSISTANT CARD (MULTI-TENDER: HALF UPI / HALF CASH / CUSTOM) */}

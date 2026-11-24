@@ -18,6 +18,7 @@ import {
   PaymentModesReal,
 } from './SalesLoaders.tsx';
 import './SalesLoaders.css';
+import './SalesAnalysisView.css';
 import { useDelayedLoading } from '../../hooks/useDelayedLoading.ts';
 
 interface SalesAnalysisViewProps {
@@ -1547,6 +1548,7 @@ export const SalesAnalysisView: React.FC<SalesAnalysisViewProps> = ({
   const [sortField, setSortField] = useState<keyof DaywiseSalesRow>('netSalesMinor');
   const [sortAsc, setSortAsc] = useState<boolean>(false);
   const [grouping, setGrouping] = useState<GroupingPreset>('day');
+  const [daywiseTableView, setDaywiseTableView] = useState<'cards' | 'table'>('cards');
 
   // Schedule daily report modal (Email)
   const [showScheduleModal, setShowScheduleModal] = useState<boolean>(false);
@@ -2839,12 +2841,145 @@ export const SalesAnalysisView: React.FC<SalesAnalysisViewProps> = ({
               </div>
             </div>
 
+            {/* Meta Bar: Count & View Switcher Toggle */}
+            <div className="daywise-meta-bar">
+              <div className="daywise-meta-count">
+                Showing <b>{sortedDaywiseRows.length}</b> days
+              </div>
+
+              <div className="daywise-view-toggle">
+                <button
+                  type="button"
+                  onClick={() => setDaywiseTableView('cards')}
+                  className={`daywise-toggle-btn ${daywiseTableView === 'cards' ? 'active' : ''}`}
+                  title="Card View (Mobile Optimized)"
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
+                  </svg>
+                  <span>Cards</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDaywiseTableView('table')}
+                  className={`daywise-toggle-btn ${daywiseTableView === 'table' ? 'active' : ''}`}
+                  title="Table View (Full Columns)"
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 3h18v18H3zM3 9h18M3 15h18M9 3v18M15 3v18"></path>
+                  </svg>
+                  <span>Table</span>
+                </button>
+              </div>
+
+              {daywiseTableView === 'table' && (
+                <div className="daywise-scroll-hint">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="18 8 22 12 18 16" />
+                    <polyline points="6 8 2 12 6 16" />
+                    <line x1="2" y1="12" x2="22" y2="12" />
+                  </svg>
+                  <span>Swipe horizontally to view full columns</span>
+                </div>
+              )}
+            </div>
+
+            {/* 1. Mobile Cards View (Visible on mobile <= 768px when Cards view is selected) */}
+            <div className={`daywise-mobile-cards-wrap ${daywiseTableView === 'cards' ? 'active' : ''}`}>
+              {sortedDaywiseRows.map((row) => (
+                <div
+                  key={`day-m-${row.date}`}
+                  className="daywise-mobile-card"
+                  onClick={() => onNavigateToInvoices?.(row.date)}
+                  title={`Click to view all bills issued on ${row.formattedDate}`}
+                >
+                  <div className="daywise-m-header">
+                    <div className="daywise-m-date-block">
+                      <div className="daywise-m-date">{row.formattedDate}</div>
+                      <div className="daywise-m-bills-tag">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1Z" />
+                          <line x1="8" y1="8" x2="16" y2="8" />
+                          <line x1="8" y1="12" x2="16" y2="12" />
+                          <line x1="8" y1="16" x2="12" y2="16" />
+                        </svg>
+                        <span>{row.billsCount} bills</span>
+                      </div>
+                    </div>
+
+                    <div className="daywise-m-header-right">
+                      <div className="daywise-m-net-sales">
+                        {formatRupees(row.netSalesMinor)}
+                      </div>
+                      {row.prevWeekSameDayChangePct !== null ? (
+                        <span className={`daywise-change-badge ${row.prevWeekSameDayChangePct >= 0 ? 'pos' : 'neg'}`}>
+                          {row.prevWeekSameDayChangePct >= 0 ? <TrendUpIcon /> : <TrendDownIcon />}
+                          <span>{Math.abs(row.prevWeekSameDayChangePct)}%</span>
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  {/* Metric Spec Grid */}
+                  <div className="daywise-m-spec-grid">
+                    <div className="daywise-m-spec-item">
+                      <span className="daywise-m-spec-label">Gross Profit</span>
+                      <span className="daywise-m-spec-val profit">{formatRupees(row.grossProfitMinor)}</span>
+                    </div>
+                    <div className="daywise-m-spec-item">
+                      <span className="daywise-m-spec-label">Margin</span>
+                      <span className="daywise-m-spec-val">{row.marginPct}%</span>
+                    </div>
+                    <div className="daywise-m-spec-item">
+                      <span className="daywise-m-spec-label">Returns</span>
+                      <span className={`daywise-m-spec-val ${row.returnsMinor > 0 ? 'returns' : ''}`}>
+                        {row.returnsMinor > 0 ? formatRupees(row.returnsMinor) : '₹0'}
+                      </span>
+                    </div>
+                    <div className="daywise-m-spec-item">
+                      <span className="daywise-m-spec-label">Discount</span>
+                      <span className="daywise-m-spec-val muted">
+                        {row.discountMinor > 0 ? formatRupees(row.discountMinor) : '₹0'}
+                      </span>
+                    </div>
+                    <div className="daywise-m-spec-item">
+                      <span className="daywise-m-spec-label">GST Tax</span>
+                      <span className="daywise-m-spec-val muted">{formatRupees(row.gstMinor)}</span>
+                    </div>
+                    <div className="daywise-m-spec-item">
+                      <span className="daywise-m-spec-label">Avg / Bill</span>
+                      <span className="daywise-m-spec-val">
+                        {row.billsCount > 0 ? formatRupees(Math.round(row.netSalesMinor / row.billsCount)) : '₹0'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Card footer CTA */}
+                  <div className="daywise-m-footer">
+                    <span>View all {row.billsCount} bills</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="9 18 15 12 9 6" />
+                    </svg>
+                  </div>
+                </div>
+              ))}
+
+              {sortedDaywiseRows.length === 0 && (
+                <div style={{ textAlign: 'center', padding: '2.5rem 1rem', color: '#94a3b8' }}>
+                  No completed bills found in this period.
+                </div>
+              )}
+            </div>
+
             {/* Responsive Table Wrap */}
-            <div className="daywise-table-scroll">
+            <div className={`daywise-table-scroll ${daywiseTableView === 'cards' ? 'mobile-hidden' : 'mobile-active'}`}>
               <table className="daywise-table">
                 <thead>
                   <tr>
-                    <th onClick={() => { setSortField('date'); setSortAsc(!sortAsc); }} className="sortable-th">
+                    <th onClick={() => { setSortField('date'); setSortAsc(!sortAsc); }} className="sortable-th col-sticky-date">
                       <span>DATE</span>
                       {sortField === 'date' && (
                         <span className="th-sort-arrow">{sortAsc ? '↑' : '↓'}</span>
@@ -2904,7 +3039,7 @@ export const SalesAnalysisView: React.FC<SalesAnalysisViewProps> = ({
                       onClick={() => onNavigateToInvoices?.(row.date)}
                       title={`Click to view all bills issued on ${row.formattedDate}`}
                     >
-                      <td className="col-date-text">{row.formattedDate}</td>
+                      <td className="col-date-text col-sticky-date">{row.formattedDate}</td>
                       <td className="col-num mono">{row.billsCount}</td>
                       <td className="col-num mono font-bold" style={{ color: '#3B1E36' }}>
                         {formatRupees(row.netSalesMinor)}

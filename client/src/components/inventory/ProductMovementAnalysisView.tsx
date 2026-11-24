@@ -85,6 +85,7 @@ export const ProductMovementAnalysisView: React.FC<ProductMovementAnalysisViewPr
   const [sortField, setSortField] = useState<
     'units_desc' | 'units_asc' | 'txns_desc' | 'name_asc' | 'stock_desc' | 'stock_asc'
   >('units_desc');
+  const [mobileTableView, setMobileTableView] = useState<'cards' | 'table'>('cards');
 
   // Pagination state
   const [page, setPage] = useState<number>(1);
@@ -1417,17 +1418,157 @@ export const ProductMovementAnalysisView: React.FC<ProductMovementAnalysisViewPr
             )}
           </div>
 
-          <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>
-            Showing <b>{filteredProducts.length}</b> of <b>{data?.products.length || 0}</b> products
+          <div className="srb-meta-bar">
+            <div className="srb-meta-count">
+              Showing <b>{filteredProducts.length}</b> of <b>{data?.products.length || 0}</b> products
+            </div>
+
+            <div className="srb-view-toggle">
+              <button
+                type="button"
+                onClick={() => setMobileTableView('cards')}
+                className={`srb-toggle-btn ${mobileTableView === 'cards' ? 'active' : ''}`}
+                title="Card View (Mobile Optimized)"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="7" height="7"></rect>
+                  <rect x="14" y="3" width="7" height="7"></rect>
+                  <rect x="14" y="14" width="7" height="7"></rect>
+                  <rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
+                <span>Cards</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setMobileTableView('table')}
+                className={`srb-toggle-btn ${mobileTableView === 'table' ? 'active' : ''}`}
+                title="Table View (Full Columns)"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 3h18v18H3zM3 9h18M3 15h18M9 3v18M15 3v18"></path>
+                </svg>
+                <span>Table</span>
+              </button>
+            </div>
+
+            {mobileTableView === 'table' && (
+              <div className="srb-scroll-hint">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="18 8 22 12 18 16" />
+                  <polyline points="6 8 2 12 6 16" />
+                  <line x1="2" y1="12" x2="22" y2="12" />
+                </svg>
+                <span>Swipe horizontally to view full columns</span>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Master Data Table */}
-        <div style={{ overflowX: 'auto', width: '100%' }}>
+        {/* 1. Mobile Cards View (Visible on mobile <= 768px when Cards view is selected) */}
+        <div className={`srb-mobile-cards-wrap ${mobileTableView === 'cards' ? 'active' : ''}`}>
+          {paginatedProducts.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '2.5rem 1rem', color: '#94a3b8' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.6rem', color: '#94a3b8' }}>
+                <SearchIcon size={28} />
+              </div>
+              <div style={{ fontWeight: 700, fontSize: '0.92rem', color: '#475569' }}>
+                No matching products found
+              </div>
+            </div>
+          ) : (
+            paginatedProducts.map((p) => {
+              const isNegStock = p.currentStockUnits < 0;
+              const isLowStock = p.currentStockUnits >= 0 && p.currentStockUnits <= 5;
+
+              return (
+                <div key={`srb-m-${p.id}`} className="srb-mobile-card">
+                  {/* Card Header: Product Name + Category Pill */}
+                  <div className="srb-mobile-card-header">
+                    <div className="srb-mobile-title-block">
+                      <div className="srb-mobile-title">{p.name}</div>
+                      <div className="srb-mobile-sub">
+                        {p.sku ? `SKU: ${p.sku}` : ''}
+                        {p.sku && p.barcode ? ' · ' : ''}
+                        {p.barcode ? `Barcode: ${p.barcode}` : ''}
+                      </div>
+                    </div>
+                    <span className="srb-cat-pill">{p.category || 'General'}</span>
+                  </div>
+
+                  {/* Status Badges Row */}
+                  <div className="srb-mobile-status-row">
+                    <span className={`srb-stock-pill ${isNegStock ? 'zero' : isLowStock ? 'low' : 'healthy'}`}>
+                      ● {p.currentStockUnits.toLocaleString('en-IN')} {p.unit}
+                    </span>
+                    {p.movementStatus === 'fast_moving' && (
+                      <span className="srb-movement-status-badge fast">
+                        <ZapIcon size={12} color="#047857" /> Fast-Moving
+                      </span>
+                    )}
+                    {p.movementStatus === 'slow_moving' && (
+                      <span className="srb-movement-status-badge slow">
+                        <HourglassIcon size={12} color="#b45309" /> Slow-Moving
+                      </span>
+                    )}
+                    {p.movementStatus === 'non_moving' && (
+                      <span className="srb-movement-status-badge dead">
+                        <AlertOctagonIcon size={12} color="#dc2626" /> Non-Moving
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Metrics Spec Grid */}
+                  <div className="srb-mobile-spec-grid">
+                    <div className="srb-mobile-spec-item">
+                      <span className="srb-mobile-spec-label">Units Sold</span>
+                      <span className="srb-mobile-spec-val" style={{ color: '#6d4aff', fontWeight: 800 }}>
+                        {p.unitsSold.toLocaleString('en-IN')}{' '}
+                        <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 500 }}>{p.unit}</span>
+                      </span>
+                    </div>
+
+                    <div className="srb-mobile-spec-item">
+                      <span className="srb-mobile-spec-label">Invoices</span>
+                      <span className="srb-mobile-spec-val">
+                        {p.salesTxns}{' '}
+                        <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 500 }}>bills</span>
+                      </span>
+                    </div>
+
+                    <div className="srb-mobile-spec-item">
+                      <span className="srb-mobile-spec-label">Last Sold</span>
+                      <span className="srb-mobile-spec-val" style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600 }}>
+                        {formatLastSold(p.lastSoldAt)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Action Row */}
+                  {onNavigateToPurchases && (p.movementStatus === 'fast_moving' || isLowStock) ? (
+                    <div className="srb-mobile-action-row">
+                      <button
+                        type="button"
+                        className="srb-btn-restock-action"
+                        style={{ width: '100%', justifyContent: 'center', height: '36px', fontSize: '0.8rem' }}
+                        onClick={() => onNavigateToPurchases(undefined, p.id)}
+                      >
+                        <ShoppingCartIcon size={13} /> + Restock Product
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* 2. Master Data Table */}
+        <div className={`srb-table-wrapper ${mobileTableView === 'cards' ? 'mobile-hidden' : 'mobile-active'}`}>
           <table className="srb-master-table">
             <thead>
               <tr>
                 <th
+                  className="col-sticky-name"
                   style={{ cursor: 'pointer' }}
                   onClick={() =>
                     setSortField((prev) => (prev === 'name_asc' ? 'units_desc' : 'name_asc'))
@@ -1462,7 +1603,7 @@ export const ProductMovementAnalysisView: React.FC<ProductMovementAnalysisViewPr
                 </th>
                 <th>LAST SOLD</th>
                 <th>MOVEMENT STATUS</th>
-                <th style={{ textAlign: 'right' }}>ACTION</th>
+                <th className="col-sticky-action" style={{ textAlign: 'right' }}>ACTION</th>
               </tr>
             </thead>
             <tbody>
@@ -1488,7 +1629,7 @@ export const ProductMovementAnalysisView: React.FC<ProductMovementAnalysisViewPr
                   return (
                     <tr key={p.id}>
                       {/* Product Name & SKU */}
-                      <td>
+                      <td className="col-sticky-name">
                         <div className="srb-table-product-name">{p.name}</div>
                         <div className="srb-table-product-sku">
                           SKU: {p.sku || '—'}
@@ -1554,7 +1695,7 @@ export const ProductMovementAnalysisView: React.FC<ProductMovementAnalysisViewPr
                       </td>
 
                       {/* Action */}
-                      <td style={{ textAlign: 'right' }}>
+                      <td className="col-sticky-action" style={{ textAlign: 'right' }}>
                         {onNavigateToPurchases &&
                           (p.movementStatus === 'fast_moving' || isLowStock) ? (
                           <button

@@ -1,0 +1,292 @@
+/* ==========================================================================
+   SALES ANALYSIS VIEW RESPONSIVE STYLES
+   Component-scoped, guaranteed loading & mobile-first optimizations
+   ========================================================================== */
+
+/* Desktop Defaults */
+.daywise-view-toggle {
+  display: none;
+}
+
+.daywise-mobile-cards-wrap {
+  display: none;
+}
+
+.daywise-scroll-hint {
+  display: none;
+}
+
+.daywise-meta-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+/* ==========================================================================
+   MOBILE BREAKPOINT (<= 768px)
+   ========================================================================== */
+@media (max-width: 768px) {
+  /* Daywise Card Container */
+  .sales-daywise-card {
+    padding: 0.85rem !important;
+    border-radius: 14px !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .daywise-table-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.75rem !important;
+    margin-bottom: 0.75rem !important;
+  }
+
+  .daywise-actions-area {
+    width: 100% !important;
+  }
+
+  .daywise-btn {
+    width: 100% !important;
+    justify-content: center !important;
+    min-height: 40px !important;
+  }
+
+  /* Meta Bar & Toggle */
+  .daywise-meta-bar {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
+    padding: 0.4rem 0.1rem 0.5rem !important;
+    box-sizing: border-box !important;
+  }
+
+  .daywise-meta-count {
+    font-size: 0.8rem !important;
+    color: #64748b !important;
+    font-weight: 600 !important;
+  }
+
+  .daywise-view-toggle {
+    display: inline-flex !important;
+    align-items: center !important;
+    background: #f1f5f9 !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+    padding: 2px !important;
+    gap: 2px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .daywise-toggle-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    padding: 0.3rem 0.6rem !important;
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+    border: none !important;
+    border-radius: 6px !important;
+    background: transparent !important;
+    color: #64748b !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+  }
+
+  .daywise-toggle-btn.active {
+    background: #ffffff !important;
+    color: #1e293b !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+    font-weight: 700 !important;
+  }
+
+  .daywise-scroll-hint {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.35rem !important;
+    color: #94a3b8 !important;
+    font-size: 0.74rem !important;
+    width: 100% !important;
+    margin-top: 0.25rem !important;
+  }
+
+  /* Mobile Cards Container */
+  .daywise-mobile-cards-wrap.active {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .daywise-mobile-card {
+    background: #ffffff !important;
+    border: 1.5px solid #e2e8f0 !important;
+    border-radius: 14px !important;
+    padding: 0.85rem !important;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.65rem !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+  }
+
+  .daywise-mobile-card:active {
+    transform: scale(0.99) !important;
+    background: #f8fafc !important;
+  }
+
+  .daywise-m-header {
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+    gap: 0.5rem !important;
+  }
+
+  .daywise-m-date-block {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+  }
+
+  .daywise-m-date {
+    font-size: 0.95rem !important;
+    font-weight: 800 !important;
+    color: #0f172a !important;
+    line-height: 1.25 !important;
+  }
+
+  .daywise-m-bills-tag {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    font-size: 0.74rem !important;
+    font-weight: 600 !important;
+    color: #64748b !important;
+    background: #f1f5f9 !important;
+    padding: 2px 8px !important;
+    border-radius: 6px !important;
+    width: fit-content !important;
+  }
+
+  .daywise-m-header-right {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-end !important;
+    gap: 4px !important;
+  }
+
+  .daywise-m-net-sales {
+    font-size: 1.1rem !important;
+    font-weight: 800 !important;
+    color: #3B1E36 !important;
+    font-family: inherit !important;
+  }
+
+  /* Metric Spec Grid (3 columns) */
+  .daywise-m-spec-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 0.45rem !important;
+    background: #f8fafc !important;
+    border: 1px solid #edf2f7 !important;
+    border-radius: 10px !important;
+    padding: 0.6rem 0.75rem !important;
+    box-sizing: border-box !important;
+  }
+
+  .daywise-m-spec-item {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 2px !important;
+    min-width: 0 !important;
+  }
+
+  .daywise-m-spec-label {
+    font-size: 0.65rem !important;
+    font-weight: 700 !important;
+    color: #94a3b8 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.03em !important;
+  }
+
+  .daywise-m-spec-val {
+    font-size: 0.85rem !important;
+    font-weight: 700 !important;
+    color: #1e293b !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  .daywise-m-spec-val.profit {
+    color: #059669 !important;
+  }
+
+  .daywise-m-spec-val.returns {
+    color: #dc2626 !important;
+  }
+
+  .daywise-m-spec-val.muted {
+    color: #64748b !important;
+    font-weight: 600 !important;
+  }
+
+  .daywise-m-footer {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding-top: 0.4rem !important;
+    border-top: 1px solid #f1f5f9 !important;
+    font-size: 0.75rem !important;
+    color: #6366f1 !important;
+    font-weight: 600 !important;
+  }
+
+  /* Table Visibility Toggle */
+  .daywise-table-scroll.mobile-hidden {
+    display: none !important;
+  }
+
+  .daywise-table-scroll.mobile-active {
+    display: block !important;
+    width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .daywise-table {
+    min-width: 780px !important;
+  }
+
+  /* Sticky Date Column on Mobile */
+  .daywise-table th.col-sticky-date,
+  .daywise-table td.col-sticky-date {
+    position: sticky !important;
+    left: 0 !important;
+    z-index: 5 !important;
+    background: #ffffff !important;
+    box-shadow: 2px 0 6px rgba(0, 0, 0, 0.06) !important;
+    white-space: nowrap !important;
+    min-width: 110px !important;
+  }
+
+  .daywise-table thead th.col-sticky-date {
+    background: #f8fafc !important;
+    z-index: 15 !important;
+  }
+
+  .col-date-text {
+    white-space: nowrap !important;
+  }
+}

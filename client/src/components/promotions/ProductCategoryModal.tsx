@@ -263,8 +263,8 @@ export function ProductCategoryModal({
                       <div className="promo-item-radio">
                         {isSelected ? (
                           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                            <circle cx="10" cy="10" r="9" stroke="var(--primary, #5B4CF5)" strokeWidth="2" fill="#FFFFFF" />
-                            <circle cx="10" cy="10" r="5" fill="var(--primary, #5B4CF5)" />
+                            <circle cx="10" cy="10" r="9" stroke="var(--primary, #653B4B)" strokeWidth="2" fill="#FFFFFF" />
+                            <circle cx="10" cy="10" r="5" fill="var(--primary, #653B4B)" />
                           </svg>
                         ) : (
                           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">

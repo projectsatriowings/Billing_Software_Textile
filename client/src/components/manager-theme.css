@@ -1904,4 +1904,37 @@ body.theme-manager .inv-mobile-action-btn.adjust,
   color: #ffffff !important;
 }
 
+/* ==========================================================================
+   Promotions & Offers - Store Manager Theme
+   ========================================================================== */
+.theme-manager .promo-root,
+body.theme-manager .promo-root,
+.theme-manager .promo-page-wrapper,
+body.theme-manager .promo-page-wrapper,
+div.app-container.theme-manager .promo-page-wrapper,
+div.app-container.theme-manager .promo-root {
+  --primary: #653B4B !important;
+  --primary-hover: #522E3C !important;
+  --primary-grad: linear-gradient(135deg, #7A475B 0%, #653B4B 100%) !important;
+  --primary-soft: #F5ECF0 !important;
+  --primary-border: #E8D7DF !important;
+  --primary-glow: rgba(101, 59, 75, 0.25) !important;
+  --page-bg: #FAF6F8 !important;
+  --promo-bg-page: #FAF6F8 !important;
+  --card-border: #E8D7DF !important;
+  --promo-border: #E8D7DF !important;
+  --promo-border-input: #E8D7DF !important;
+  --promo-border-divider: #E8D7DF !important;
+  --promo-border-dashed: #D4B8C7 !important;
+  --tag-chip-bg: #F5ECF0 !important;
+  --tag-chip-text: #653B4B !important;
+  --tag-chip-border: #E8D7DF !important;
+  --promo-green: #653B4B !important;
+  --promo-green-hover: #522E3C !important;
+  --promo-green-tint: #F5ECF0 !important;
+  --promo-green-text: #653B4B !important;
+  --promo-bg-chip: #F5ECF0 !important;
+}
+
+
 
