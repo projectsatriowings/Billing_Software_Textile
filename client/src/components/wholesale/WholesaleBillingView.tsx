@@ -312,14 +312,14 @@ export function WholesaleBillingView({
   }, [customerStateCode]);
 
   const shopStateCode = useMemo(() => {
-    if (wholesaleProfile.gstin && wholesaleProfile.gstin.length >= 2) {
+    if (wholesaleProfile?.gstin && wholesaleProfile.gstin.length >= 2) {
       return wholesaleProfile.gstin.slice(0, 2);
     }
     if (shop?.gstin && shop.gstin.length >= 2) {
       return shop.gstin.slice(0, 2);
     }
     return '33'; // Default TN
-  }, [wholesaleProfile.gstin, shop?.gstin]);
+  }, [wholesaleProfile?.gstin, shop?.gstin]);
 
   const isInterstate = useMemo(() => {
     if (!customerStateCode) return false;
