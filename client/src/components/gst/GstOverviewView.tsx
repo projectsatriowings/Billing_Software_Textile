@@ -378,8 +378,8 @@ export function GstOverviewView({ tenantGstin = '', onNavigateTab }: GstOverview
                     {metrics.gstr3bStatus === 'draft'
                       ? 'Draft Computation'
                       : metrics.gstr3bStatus === 'ready_to_file'
-                      ? 'Ready to File'
-                      : 'Pending Review'}
+                        ? 'Ready to File'
+                        : 'Pending Review'}
                   </span>
                 </span>
               </div>

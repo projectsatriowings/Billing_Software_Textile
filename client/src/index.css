@@ -21181,6 +21181,16 @@ select.expense-input-control {
   gap: 12px;
 }
 
+.gstr3b-sub-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gstr3b-table-scroll-hint {
+  display: none;
+}
+
 .gst-toolbar-card {
   justify-content: flex-start;
 }
@@ -21276,12 +21286,31 @@ select.expense-input-control {
 
   .gstr3b-controls-group.gstr3b-action-controls {
     display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 8px;
+  }
+
+  .gstr3b-sub-actions-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     width: 100%;
   }
 
-  .gstr3b-controls-group.gstr3b-action-controls .gst-pill-btn {
+  .gstr3b-sub-actions-row .gst-pill-btn {
     flex: 1;
     justify-content: center;
+    padding: 8px 10px;
+    font-size: 0.785rem;
+  }
+
+  .gstr3b-lock-btn {
+    width: 100% !important;
+    justify-content: center;
+    padding: 9px 12px;
+    font-size: 0.825rem;
+    font-weight: 700;
   }
 }
 
@@ -22512,6 +22541,139 @@ select.expense-input-control {
 .gstr3b-stat-table td.eligible-val {
   color: #059669;
   font-weight: 700;
+}
+
+/* ========================================================
+   GSTR-3B Mobile Responsive & Sticky Columns
+   ======================================================== */
+@media (max-width: 768px) {
+  .gstr3b-view-wrapper {
+    gap: 1rem !important;
+  }
+
+  .gstr3b-header-card {
+    padding: 12px 14px !important;
+    gap: 10px !important;
+  }
+
+  .gstr3b-alert-banner {
+    padding: 12px 14px !important;
+    gap: 10px !important;
+    flex-direction: column !important;
+  }
+
+  .gstr3b-alert-content {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+  }
+
+  .gstr3b-alert-btn {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  /* Hero Card Mobile */
+  .gstr3b-hero-card {
+    padding: 1.15rem 1rem !important;
+    border-radius: 16px !important;
+  }
+
+  .gstr3b-hero-badge {
+    font-size: 0.64rem !important;
+    padding: 0.25rem 0.55rem !important;
+    max-width: 100%;
+    white-space: normal !important;
+    line-height: 1.35;
+  }
+
+  .gstr3b-hero-amount {
+    font-size: 1.95rem !important;
+  }
+
+  .gstr3b-hero-meta {
+    gap: 0.4rem !important;
+  }
+
+  .gstr3b-meta-tag {
+    font-size: 0.7rem !important;
+    padding: 0.15rem 0.5rem !important;
+  }
+
+  .gstr3b-tax-split-grid {
+    min-width: 0 !important;
+    width: 100% !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 0.45rem !important;
+  }
+
+  .gstr3b-tax-split-item {
+    padding: 0.55rem 0.65rem !important;
+    border-radius: 10px !important;
+  }
+
+  .gstr3b-tax-split-label {
+    font-size: 0.62rem !important;
+  }
+
+  .gstr3b-tax-split-value {
+    font-size: 0.92rem !important;
+    word-break: break-all;
+  }
+
+  /* Table Cards & Pinned Columns */
+  .gstr3b-table-card {
+    border-radius: 14px !important;
+    margin-bottom: 1rem !important;
+  }
+
+  .gstr3b-table-header {
+    padding: 0.85rem 1rem !important;
+  }
+
+  .gstr3b-table-title {
+    font-size: 0.92rem !important;
+  }
+
+  .gstr3b-table-note {
+    font-size: 0.72rem !important;
+  }
+
+  .gstr3b-table-scroll-hint {
+    display: block !important;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #653B4B;
+    background: #FAF6F8;
+    padding: 6px 12px;
+    border-radius: 8px;
+    margin: 0.5rem 1rem;
+    text-align: center;
+    border: 1px dashed #D9C8D0;
+  }
+
+  .gstr3b-col-sticky {
+    position: sticky !important;
+    left: 0 !important;
+    z-index: 5 !important;
+    background: #ffffff !important;
+    box-shadow: 2px 0 6px -1px rgba(0, 0, 0, 0.08) !important;
+    min-width: 140px;
+    max-width: 190px;
+  }
+
+  th.gstr3b-col-sticky {
+    z-index: 6 !important;
+    background: #FAF6F8 !important;
+  }
+
+  tr.highlight-summary td.gstr3b-col-sticky {
+    background: #ecfdf5 !important;
+  }
+
+  tfoot td.gstr3b-col-sticky {
+    background: #f8fafc !important;
+  }
 }
 
 /* ========================================================

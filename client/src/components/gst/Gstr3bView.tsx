@@ -102,7 +102,7 @@ export const Gstr3bView: React.FC<Gstr3bViewProps> = ({ onNavigate }) => {
     <div className="gstr3b-view-wrapper">
       {/* Header and Action Controls Card */}
       <div className="gstr3b-header-card">
-        {/* Left group: PERIOD selector + Current button */}
+        {/* Left group: PERIOD selector */}
         <div className="gstr3b-controls-group gstr3b-period-controls">
           <div className="gst-period-picker-group">
             <span className="gst-period-label">Period</span>
@@ -129,48 +129,50 @@ export const Gstr3bView: React.FC<Gstr3bViewProps> = ({ onNavigate }) => {
               <ChevronRightIcon className="h-3.5 w-3.5" />
             </button>
           </div>
-
-          <button
-            type="button"
-            onClick={setThisMonth}
-            className="gst-pill-btn"
-            title="Jump to current return month"
-          >
-            <CalendarIcon className="h-3.5 w-3.5" />
-            <span>Current</span>
-          </button>
         </div>
 
-        {/* Right group: Export JSON / CSV + Mark Reviewed & Lock */}
+        {/* Right group: Current + Export JSON / CSV + Mark Reviewed & Lock */}
         <div className="gstr3b-controls-group gstr3b-action-controls">
-          <button
-            type="button"
-            onClick={async () => {
-              try {
-                setExporting(true);
-                await downloadFile(
-                  `/api/gst/gstr3b/export?period=${encodeURIComponent(period)}`,
-                  `GSTR3B_Summary_${period}.csv`
-                );
-              } catch (err: any) {
-                alert(`Export failed: ${err.message}`);
-              } finally {
-                setExporting(false);
-              }
-            }}
-            disabled={exporting}
-            className="gst-pill-btn"
-            title="Download filing summary in JSON / CSV format"
-          >
-            {exporting ? <SpinnerIcon className="h-4 w-4 animate-spin text-slate-500" /> : <DownloadIcon className="h-4 w-4 text-slate-600" />}
-            <span>{exporting ? 'Exporting...' : 'Export JSON / CSV'}</span>
-          </button>
+          <div className="gstr3b-sub-actions-row">
+            <button
+              type="button"
+              onClick={setThisMonth}
+              className="gst-pill-btn"
+              title="Jump to current return month"
+            >
+              <CalendarIcon className="h-3.5 w-3.5" />
+              <span>Current</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  setExporting(true);
+                  await downloadFile(
+                    `/api/gst/gstr3b/export?period=${encodeURIComponent(period)}`,
+                    `GSTR3B_Summary_${period}.csv`
+                  );
+                } catch (err: any) {
+                  alert(`Export failed: ${err.message}`);
+                } finally {
+                  setExporting(false);
+                }
+              }}
+              disabled={exporting}
+              className="gst-pill-btn"
+              title="Download filing summary in JSON / CSV format"
+            >
+              {exporting ? <SpinnerIcon className="h-4 w-4 animate-spin text-slate-500" /> : <DownloadIcon className="h-4 w-4 text-slate-600" />}
+              <span>{exporting ? 'Exporting...' : 'Export JSON / CSV'}</span>
+            </button>
+          </div>
 
           <button
             type="button"
             onClick={() => handleSaveDraft('reviewed')}
             disabled={saving || !gstr3b}
-            className="gst-pill-btn success"
+            className="gst-pill-btn success gstr3b-lock-btn"
             title="Lock return after reviewing all ITC decisions"
           >
             {saving ? <SpinnerIcon className="h-4 w-4 animate-spin" /> : <CheckIcon className="h-4 w-4" />}
@@ -300,11 +302,12 @@ export const Gstr3bView: React.FC<Gstr3bViewProps> = ({ onNavigate }) => {
               </div>
             </div>
 
+            <div className="gstr3b-table-scroll-hint">Swipe horizontally to view full table columns ↔</div>
             <div className="gstr3b-table-wrapper">
               <table className="gstr3b-stat-table">
                 <thead>
                   <tr>
-                    <th style={{ width: '40%' }}>Nature of Supplies</th>
+                    <th className="gstr3b-col-sticky" style={{ width: '40%' }}>Nature of Supplies</th>
                     <th className="num">Total Taxable Value</th>
                     <th className="num">Integrated Tax (IGST)</th>
                     <th className="num">Central Tax (CGST)</th>
@@ -314,7 +317,7 @@ export const Gstr3bView: React.FC<Gstr3bViewProps> = ({ onNavigate }) => {
                 </thead>
                 <tbody>
                   <tr>
-                    <td style={{ fontWeight: 700, color: '#0f172a' }}>
+                    <td className="gstr3b-col-sticky" style={{ fontWeight: 700, color: '#0f172a' }}>
                       (a) Outward taxable supplies (other than zero rated, nil rated and exempted)
                     </td>
                     <td className="num">{renderAmount(gstr3b.table31Outward.taxableSupplies.taxableMinor)}</td>
@@ -324,7 +327,7 @@ export const Gstr3bView: React.FC<Gstr3bViewProps> = ({ onNavigate }) => {
                     <td className="num"><span className="zero-val">₹0.00</span></td>
                   </tr>
                   <tr>
-                    <td style={{ color: '#475569' }}>
+                    <td className="gstr3b-col-sticky" style={{ color: '#475569' }}>
                       (b) Outward taxable supplies (zero rated)
                     </td>
                     <td className="num">{renderAmount(gstr3b.table31Outward.zeroRated.taxableMinor)}</td>
@@ -334,7 +337,7 @@ export const Gstr3bView: React.FC<Gstr3bViewProps> = ({ onNavigate }) => {
                     <td className="num"><span className="zero-val">₹0.00</span></td>
                   </tr>
                   <tr>
-                    <td style={{ color: '#475569' }}>
+                    <td className="gstr3b-col-sticky" style={{ color: '#475569' }}>
                       (c) Other outward supplies (nil rated, exempted)
                     </td>
                     <td className="num">{renderAmount(gstr3b.table31Outward.nilRatedExempt.taxableMinor)}</td>
@@ -344,7 +347,7 @@ export const Gstr3bView: React.FC<Gstr3bViewProps> = ({ onNavigate }) => {
                     <td className="num"><span className="zero-val">₹0.00</span></td>
                   </tr>
                   <tr>
-                    <td style={{ color: '#475569' }}>
+                    <td className="gstr3b-col-sticky" style={{ color: '#475569' }}>
                       (d) Inward supplies liable to reverse charge
                     </td>
                     <td className="num">{renderAmount(gstr3b.table31Outward.reverseChargeInward.taxableMinor)}</td>
@@ -354,7 +357,7 @@ export const Gstr3bView: React.FC<Gstr3bViewProps> = ({ onNavigate }) => {
                     <td className="num"><span className="zero-val">₹0.00</span></td>
                   </tr>
                   <tr>
-                    <td style={{ color: '#475569' }}>
+                    <td className="gstr3b-col-sticky" style={{ color: '#475569' }}>
                       (e) Non-GST outward supplies
                     </td>
                     <td className="num">{renderAmount(gstr3b.table31Outward.nonGst.taxableMinor)}</td>
@@ -384,11 +387,12 @@ export const Gstr3bView: React.FC<Gstr3bViewProps> = ({ onNavigate }) => {
               </div>
             </div>
 
+            <div className="gstr3b-table-scroll-hint">Swipe horizontally to view full table columns ↔</div>
             <div className="gstr3b-table-wrapper">
               <table className="gstr3b-stat-table">
                 <thead>
                   <tr>
-                    <th style={{ width: '40%' }}>Details</th>
+                    <th className="gstr3b-col-sticky" style={{ width: '40%' }}>Details</th>
                     <th className="num">Integrated Tax (IGST)</th>
                     <th className="num">Central Tax (CGST)</th>
                     <th className="num">State/UT Tax (SGST)</th>
@@ -403,7 +407,7 @@ export const Gstr3bView: React.FC<Gstr3bViewProps> = ({ onNavigate }) => {
                     </td>
                   </tr>
                   <tr>
-                    <td style={{ paddingLeft: '2rem', fontWeight: 600, color: '#0f172a' }}>
+                    <td className="gstr3b-col-sticky" style={{ paddingLeft: '2rem', fontWeight: 600, color: '#0f172a' }}>
                       (5) All other ITC (Purchases &amp; Expenses Reviewed as Eligible)
                     </td>
                     <td className="num">{renderAmount(gstr3b.table4EligibleItc.allOtherItc.igstMinor, { isEligible: true })}</td>
@@ -419,7 +423,7 @@ export const Gstr3bView: React.FC<Gstr3bViewProps> = ({ onNavigate }) => {
                     </td>
                   </tr>
                   <tr>
-                    <td style={{ paddingLeft: '2rem', color: '#475569' }}>
+                    <td className="gstr3b-col-sticky" style={{ paddingLeft: '2rem', color: '#475569' }}>
                       (2) Others (Rule 42, 43 or non-business apportionment)
                     </td>
                     <td className="num">{renderAmount(gstr3b.table4EligibleItc.reversalRule42_43.igstMinor, { isReversal: true })}</td>
@@ -430,7 +434,7 @@ export const Gstr3bView: React.FC<Gstr3bViewProps> = ({ onNavigate }) => {
 
                   {/* (C) Net ITC Available */}
                   <tr className="highlight-summary">
-                    <td style={{ fontWeight: 800 }}>
+                    <td className="gstr3b-col-sticky" style={{ fontWeight: 800 }}>
                       (C) Net ITC Available (A) − (B)
                     </td>
                     <td className="num">{renderAmount(gstr3b.table4EligibleItc.netItcAvailable.igstMinor, { isEligible: true })}</td>
@@ -446,7 +450,7 @@ export const Gstr3bView: React.FC<Gstr3bViewProps> = ({ onNavigate }) => {
                     </td>
                   </tr>
                   <tr>
-                    <td style={{ paddingLeft: '2rem', color: '#64748b' }}>
+                    <td className="gstr3b-col-sticky" style={{ paddingLeft: '2rem', color: '#64748b' }}>
                       (1) As per section 17(5) (Blocked credits)
                     </td>
                     <td className="num">{renderAmount(gstr3b.table4EligibleItc.ineligibleSection17_5.igstMinor)}</td>
@@ -475,11 +479,12 @@ export const Gstr3bView: React.FC<Gstr3bViewProps> = ({ onNavigate }) => {
               </div>
             </div>
 
+            <div className="gstr3b-table-scroll-hint">Swipe horizontally to view full table columns ↔</div>
             <div className="gstr3b-table-wrapper">
               <table className="gstr3b-stat-table">
                 <thead>
                   <tr>
-                    <th style={{ width: '40%' }}>Description</th>
+                    <th className="gstr3b-col-sticky" style={{ width: '40%' }}>Description</th>
                     <th className="num">Tax Payable (Output)</th>
                     <th className="num">Paid Through ITC</th>
                     <th className="num" style={{ background: '#F5ECF0', color: '#522E3C', borderBottom: '2px solid #D9C8D0' }}>
@@ -489,7 +494,7 @@ export const Gstr3bView: React.FC<Gstr3bViewProps> = ({ onNavigate }) => {
                 </thead>
                 <tbody>
                   <tr>
-                    <td style={{ fontWeight: 700, color: '#0f172a' }}>Integrated Tax (IGST)</td>
+                    <td className="gstr3b-col-sticky" style={{ fontWeight: 700, color: '#0f172a' }}>Integrated Tax (IGST)</td>
                     <td className="num">{renderAmount(gstr3b.table31Outward.taxableSupplies.igstMinor)}</td>
                     <td className="num">{renderAmount(gstr3b.table4EligibleItc.netItcAvailable.igstMinor, { isEligible: true })}</td>
                     <td className="num cash-paid-cell">
@@ -497,7 +502,7 @@ export const Gstr3bView: React.FC<Gstr3bViewProps> = ({ onNavigate }) => {
                     </td>
                   </tr>
                   <tr>
-                    <td style={{ fontWeight: 700, color: '#0f172a' }}>Central Tax (CGST)</td>
+                    <td className="gstr3b-col-sticky" style={{ fontWeight: 700, color: '#0f172a' }}>Central Tax (CGST)</td>
                     <td className="num">{renderAmount(gstr3b.table31Outward.taxableSupplies.cgstMinor)}</td>
                     <td className="num">{renderAmount(gstr3b.table4EligibleItc.netItcAvailable.cgstMinor, { isEligible: true })}</td>
                     <td className="num cash-paid-cell">
@@ -505,7 +510,7 @@ export const Gstr3bView: React.FC<Gstr3bViewProps> = ({ onNavigate }) => {
                     </td>
                   </tr>
                   <tr>
-                    <td style={{ fontWeight: 700, color: '#0f172a' }}>State/UT Tax (SGST)</td>
+                    <td className="gstr3b-col-sticky" style={{ fontWeight: 700, color: '#0f172a' }}>State/UT Tax (SGST)</td>
                     <td className="num">{renderAmount(gstr3b.table31Outward.taxableSupplies.sgstMinor)}</td>
                     <td className="num">{renderAmount(gstr3b.table4EligibleItc.netItcAvailable.sgstMinor, { isEligible: true })}</td>
                     <td className="num cash-paid-cell">
@@ -515,7 +520,7 @@ export const Gstr3bView: React.FC<Gstr3bViewProps> = ({ onNavigate }) => {
                 </tbody>
                 <tfoot>
                   <tr style={{ background: '#f8fafc', fontWeight: 800, borderTop: '2px solid #cbd5e1' }}>
-                    <td style={{ fontWeight: 800, color: '#0f172a' }}>Total Cash Payable</td>
+                    <td className="gstr3b-col-sticky" style={{ fontWeight: 800, color: '#0f172a' }}>Total Cash Payable</td>
                     <td className="num" style={{ fontWeight: 800 }}>
                       {fmtMoney(
                         gstr3b.table31Outward.taxableSupplies.igstMinor +
