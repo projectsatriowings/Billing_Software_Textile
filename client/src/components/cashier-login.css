@@ -7292,17 +7292,8 @@ div.app-container.theme-cashier .top-pos-cfd-btn:hover,
   }
 }
 
-/* Mobile Navigation Controls & Bottom Bar (Cashier Theme) */
+/* Mobile Navigation Controls & Bottom Bar (Cashier Theme) - Menu button hidden for Cashier */
 body.theme-cashier .mobile-header-menu-btn,
 .theme-cashier .mobile-header-menu-btn {
-  background: #FAF7F2 !important;
-  border-color: #D0C7B8 !important;
-  color: #0F766E !important;
-}
-
-body.theme-cashier .mobile-header-menu-btn:hover,
-.theme-cashier .mobile-header-menu-btn:hover {
-  background: #E6F4F3 !important;
-  border-color: #0F766E !important;
-  color: #115E59 !important;
+  display: none !important;
 }

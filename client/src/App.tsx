@@ -9513,17 +9513,19 @@ export function App() {
         <main className={`main-content ${(isSuperAdminUser || user?.role === 'manager' || user?.role === 'store_manager') ? 'no-bottom-nav' : ''}`}>
           {/* Top Global Bar Matching Image 2 */}
           <div className={`top-global-bar ${hideBusinessBar ? 'no-divider' : ''} ${displayTab === 'dashboard' ? 'dashboard-top-bar' : ''}`}>
-            {/* Mobile Header Menu Hamburger Toggle Button (visible on screens <= 900px) */}
-            <button
-              type="button"
-              className="mobile-header-menu-btn"
-              onClick={() => setIsMobileSidebarOpen(prev => !prev)}
-              aria-label="Toggle navigation menu"
-              title="Open Navigation Menu"
-            >
-              <Menu size={18} />
-              <span className="mobile-header-menu-text">Menu</span>
-            </button>
+            {/* Mobile Header Menu Hamburger Toggle Button (visible on screens <= 900px, hidden for Cashier) */}
+            {user?.role !== 'cashier' && (
+              <button
+                type="button"
+                className="mobile-header-menu-btn"
+                onClick={() => setIsMobileSidebarOpen(prev => !prev)}
+                aria-label="Toggle navigation menu"
+                title="Open Navigation Menu"
+              >
+                <Menu size={18} />
+                <span className="mobile-header-menu-text">Menu</span>
+              </button>
+            )}
             {displayTab === 'pos' || activeTab === 'pos' ? (
               <div className="top-pos-header-left">
                 <Tooltip label={`Store Branch: ${currentBranchName} (${currentBranchCode})`} position="bottom">

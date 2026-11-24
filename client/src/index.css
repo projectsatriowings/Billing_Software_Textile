@@ -29944,7 +29944,7 @@ select.expense-input-control {
     font-size: 0.85rem !important;
   }
 
-  /* 2. Mobile Header Hamburger Button */
+  /* 2. Mobile Header Hamburger Button (hidden for Cashier) */
   .mobile-header-menu-btn {
     display: inline-flex !important;
     align-items: center !important;
@@ -29962,6 +29962,10 @@ select.expense-input-control {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
     flex-shrink: 0 !important;
     transition: all 0.15s ease !important;
+  }
+
+  .theme-cashier .mobile-header-menu-btn {
+    display: none !important;
   }
 
   .mobile-header-menu-btn:hover,
