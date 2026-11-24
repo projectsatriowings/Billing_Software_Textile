@@ -29991,6 +29991,12 @@ select.expense-input-control {
   .main-content {
     padding-bottom: calc(76px + env(safe-area-inset-bottom, 16px)) !important;
   }
+
+  .main-content.no-bottom-nav,
+  .theme-super-admin .main-content,
+  .theme-manager .main-content {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom, 16px)) !important;
+  }
 }
 
 /* Small Tablets and Mobile Screens (<= 640px) */
@@ -40261,9 +40267,9 @@ select.expense-input-control {
     box-sizing: border-box !important;
   }
 
-  .theme-super-admin .responsive-mobile-bottom-nav {
-    background: #241829 !important;
-    border-top-color: rgba(168, 85, 247, 0.35) !important;
+  .theme-super-admin .responsive-mobile-bottom-nav,
+  .theme-manager .responsive-mobile-bottom-nav {
+    display: none !important;
   }
 
   .main-content {
@@ -40272,6 +40278,12 @@ select.expense-input-control {
     max-width: 100% !important;
     padding-bottom: calc(76px + env(safe-area-inset-bottom, 16px)) !important;
     box-sizing: border-box !important;
+  }
+
+  .main-content.no-bottom-nav,
+  .theme-super-admin .main-content,
+  .theme-manager .main-content {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom, 16px)) !important;
   }
 }
 
