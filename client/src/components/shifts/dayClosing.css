@@ -2180,13 +2180,32 @@ body.theme-cashier .detail-list-val.purple,
    -------------------------------------------------------------------------- */
 .data-table-container {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   border-radius: 14px;
   border: 1.5px solid var(--dc-border);
   background: var(--dc-surface);
 }
 
+.data-table-container::-webkit-scrollbar {
+  height: 6px;
+}
+
+.data-table-container::-webkit-scrollbar-track {
+  background: var(--dc-surface-inner);
+  border-radius: 9999px;
+}
+
+.data-table-container::-webkit-scrollbar-thumb {
+  background: var(--dc-border);
+  border-radius: 9999px;
+}
+
 .analytics-table {
   width: 100%;
+  min-width: 540px;
   border-collapse: collapse;
   font-size: 0.835rem;
   text-align: left;
@@ -2210,6 +2229,78 @@ body.theme-cashier .detail-list-val.purple,
 
 .analytics-table tr:hover td {
   background: rgba(20, 184, 166, 0.04);
+}
+
+/* --------------------------------------------------------------------------
+   Compliance Tab & Register Schedule Matrix
+   -------------------------------------------------------------------------- */
+.compliance-layout-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.compliance-kpi-grid {
+  grid-template-columns: repeat(5, 1fr) !important;
+}
+
+.compliance-action-banner {
+  background: var(--dc-surface);
+  border: 1.5px solid var(--dc-border);
+  border-radius: 16px;
+  padding: 1.15rem 1.35rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.compliance-action-banner-text h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--dc-sidebar);
+}
+
+.compliance-action-banner-text p {
+  margin: 4px 0 0 0;
+  font-size: 0.8rem;
+  color: var(--dc-text-muted);
+}
+
+.compliance-last-sent-chip {
+  margin-left: 8px;
+  color: var(--dc-primary);
+  font-weight: 600;
+}
+
+.compliance-reminder-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.compliance-schedule-form {
+  padding: 0.5rem 0 0.25rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+@media (max-width: 1200px) {
+  .compliance-kpi-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+}
+
+@media (max-width: 992px) {
+  .compliance-layout-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
 }
 
 /* --------------------------------------------------------------------------
@@ -2577,6 +2668,40 @@ body.theme-cashier .detail-list-val.purple,
   .denominations-grid {
     grid-template-columns: 1fr !important;
     gap: 0.65rem !important;
+  }
+
+  .compliance-layout-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.85rem !important;
+  }
+
+  .compliance-layout-grid .day-closing-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .compliance-kpi-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.65rem !important;
+  }
+
+  .compliance-action-banner {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    padding: 1rem !important;
+    gap: 0.85rem !important;
+  }
+
+  .compliance-action-banner .compliance-reminder-btn {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  .analytics-table th,
+  .analytics-table td {
+    padding: 0.65rem 0.8rem !important;
+    font-size: 0.78rem !important;
   }
 }
 
