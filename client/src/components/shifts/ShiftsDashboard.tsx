@@ -184,12 +184,12 @@ export const ShiftsDashboard: React.FC<ShiftsDashboardProps> = ({
       {/* 3D BENTO HEADER RECTANGLE CARD (MATCHING SUPER ADMIN STYLE) */}
       <div className="cat-bento-header-card bento-card-3d shifts-bento-header-card">
         <div className="cat-bento-header-content">
-          <div className="cat-bento-title-group">
+          <div className="cat-bento-title-group shifts-active-title-group">
             <div className="cat-bento-icon-box">
               <StoreIcon size={24} />
             </div>
             <div>
-              <div className="cat-bento-title-row">
+              <div className="cat-bento-title-row shifts-active-title-row">
                 <h2 className="cat-bento-title">
                   {activeShift ? `Shift #${activeShift.shiftNumber}` : 'Drawer Register Ready for New Shift'}
                 </h2>
@@ -231,7 +231,7 @@ export const ShiftsDashboard: React.FC<ShiftsDashboardProps> = ({
             </div>
           </div>
 
-          <div className="cat-bento-header-actions">
+          <div className="cat-bento-header-actions shifts-active-header-actions">
             {activeShift ? (
               <>
                 <button
@@ -463,7 +463,7 @@ export const ShiftsDashboard: React.FC<ShiftsDashboardProps> = ({
                   <span className="bento-pill-badge info">Strict Integer Paise Math</span>
                 </div>
 
-                <div className="formula-detailed-flow">
+                <div className="formula-detailed-flow shifts-formula-flow">
                   {/* Step 1 */}
                   <div className="formula-step-box">
                     <div className="step-box-header">
@@ -475,7 +475,7 @@ export const ShiftsDashboard: React.FC<ShiftsDashboardProps> = ({
                     <span className="step-box-amount font-mono">{formatMoney(summary.openingCashMinor)}</span>
                   </div>
 
-                  <div className="formula-op-pill">+</div>
+                  <div className="formula-op-pill shifts-formula-op">+</div>
 
                   {/* Step 2 */}
                   <div className="formula-step-box">
@@ -488,7 +488,7 @@ export const ShiftsDashboard: React.FC<ShiftsDashboardProps> = ({
                     <span className="step-box-amount font-mono text-emerald-600">+{formatMoney(summary.cashSalesMinor)}</span>
                   </div>
 
-                  <div className="formula-op-pill">+</div>
+                  <div className="formula-op-pill shifts-formula-op">+</div>
 
                   {/* Step 3 */}
                   <div className="formula-step-box">
@@ -501,7 +501,7 @@ export const ShiftsDashboard: React.FC<ShiftsDashboardProps> = ({
                     <span className="step-box-amount font-mono text-emerald-600">+{formatMoney(summary.cashInMinor)}</span>
                   </div>
 
-                  <div className="formula-op-pill">-</div>
+                  <div className="formula-op-pill shifts-formula-op">-</div>
 
                   {/* Step 4 */}
                   <div className="formula-step-box">
@@ -514,7 +514,7 @@ export const ShiftsDashboard: React.FC<ShiftsDashboardProps> = ({
                     <span className="step-box-amount font-mono text-amber-600">-{formatMoney(summary.cashOutMinor)}</span>
                   </div>
 
-                  <div className="formula-op-pill">-</div>
+                  <div className="formula-op-pill shifts-formula-op">-</div>
 
                   {/* Step 5 */}
                   <div className="formula-step-box">
@@ -527,10 +527,10 @@ export const ShiftsDashboard: React.FC<ShiftsDashboardProps> = ({
                     <span className="step-box-amount font-mono text-rose-600">-{formatMoney(summary.cashRefundsMinor)}</span>
                   </div>
 
-                  <div className="formula-op-pill">=</div>
+                  <div className="formula-op-pill shifts-formula-op">=</div>
 
                   {/* Step Result */}
-                  <div className="formula-step-box result">
+                  <div className="formula-step-box result shifts-formula-result">
                     <div className="step-box-header">
                       <span className="step-box-badge result">
                         <CheckCircle2Icon size={13} />
@@ -557,7 +557,7 @@ export const ShiftsDashboard: React.FC<ShiftsDashboardProps> = ({
               </div>
 
               {/* Shift Actions Bento Card */}
-              <div className="cat-bento-card bento-card-3d side-actions-bento-card">
+              <div className="cat-bento-card bento-card-3d side-actions-bento-card shifts-side-actions-card">
                 <div className="bento-card-header">
                   <div className="bento-card-title-group">
                     <div className="bento-card-icon-pill emerald">

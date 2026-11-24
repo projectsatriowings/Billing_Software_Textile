@@ -8,10 +8,13 @@
   --primary: #0F766E;
   --primary-hover: #115E59;
   --primary-soft: #E6F4F3;
-  --bg: #E8E1D5;          /* Deeper warm sand/oat cream canvas to contrast with bento cards */
+  --bg: #E8E1D5;
+  /* Deeper warm sand/oat cream canvas to contrast with bento cards */
   --bg-cream: #E8E1D5;
-  --surface: #FAF7F2;     /* Light cream for all elevated bento cards */
-  --border: #D0C7B8;      /* Warm defined border for card boundaries */
+  --surface: #FAF7F2;
+  /* Light cream for all elevated bento cards */
+  --border: #D0C7B8;
+  /* Warm defined border for card boundaries */
   --text: #0F172A;
   --text-muted: #475569;
   --text-on-primary: #FFFFFF;
@@ -2027,8 +2030,8 @@ body:is(.theme-cashier, .theme-manager) .product-edit-split-grid,
   background-color: var(--bg) !important;
 }
 
-body:is(.theme-cashier, .theme-manager) .product-edit-split-grid > div > div,
-:is(.theme-cashier, .theme-manager) .product-edit-split-grid > div > div {
+body:is(.theme-cashier, .theme-manager) .product-edit-split-grid>div>div,
+:is(.theme-cashier, .theme-manager) .product-edit-split-grid>div>div {
   background: var(--surface) !important;
   background-color: var(--surface) !important;
   border: 1.5px solid var(--border) !important;
@@ -2511,8 +2514,8 @@ div.app-container:is(.theme-cashier, .theme-manager) .formula-container-card,
 div.app-container:is(.theme-cashier, .theme-manager) .side-actions-bento-card,
 div.app-container:is(.theme-cashier, .theme-manager) .shifts-bento-card,
 div.app-container:is(.theme-cashier, .theme-manager) .shifts-bento-hero,
-div.app-container:is(.theme-cashier, .theme-manager) .shifts-overview-layout > div,
-div.app-container:is(.theme-cashier, .theme-manager) .shifts-tab-content > div,
+div.app-container:is(.theme-cashier, .theme-manager) .shifts-overview-layout>div,
+div.app-container:is(.theme-cashier, .theme-manager) .shifts-tab-content>div,
 div.app-container:is(.theme-cashier, .theme-manager) .bento-empty-shift-card,
 div.app-container:is(.theme-cashier, .theme-manager) .bento-empty-state,
 body:is(.theme-cashier, .theme-manager) .cat-bento-card,
@@ -2521,8 +2524,8 @@ body:is(.theme-cashier, .theme-manager) .formula-container-card,
 body:is(.theme-cashier, .theme-manager) .side-actions-bento-card,
 body:is(.theme-cashier, .theme-manager) .shifts-bento-card,
 body:is(.theme-cashier, .theme-manager) .shifts-bento-hero,
-body:is(.theme-cashier, .theme-manager) .shifts-overview-layout > div,
-body:is(.theme-cashier, .theme-manager) .shifts-tab-content > div,
+body:is(.theme-cashier, .theme-manager) .shifts-overview-layout>div,
+body:is(.theme-cashier, .theme-manager) .shifts-tab-content>div,
 body:is(.theme-cashier, .theme-manager) .bento-empty-shift-card,
 body:is(.theme-cashier, .theme-manager) .bento-empty-state,
 :is(.theme-cashier, .theme-manager) .cat-bento-card,
@@ -2531,8 +2534,8 @@ body:is(.theme-cashier, .theme-manager) .bento-empty-state,
 :is(.theme-cashier, .theme-manager) .side-actions-bento-card,
 :is(.theme-cashier, .theme-manager) .shifts-bento-card,
 :is(.theme-cashier, .theme-manager) .shifts-bento-hero,
-:is(.theme-cashier, .theme-manager) .shifts-overview-layout > div,
-:is(.theme-cashier, .theme-manager) .shifts-tab-content > div,
+:is(.theme-cashier, .theme-manager) .shifts-overview-layout>div,
+:is(.theme-cashier, .theme-manager) .shifts-tab-content>div,
 :is(.theme-cashier, .theme-manager) .bento-empty-shift-card,
 :is(.theme-cashier, .theme-manager) .bento-empty-state {
   background: var(--surface) !important;
@@ -3313,40 +3316,40 @@ body:is(.theme-cashier, .theme-manager) .calc-result-amount,
 }
 
 /* Context & Policy Notice Cards in Panels */
-body:is(.theme-cashier, .theme-manager) .shift-bento-panel > div[style*="background: #f8fafc"],
-:is(.theme-cashier, .theme-manager) .shift-bento-panel > div[style*="background: #f8fafc"] {
+body:is(.theme-cashier, .theme-manager) .shift-bento-panel>div[style*="background: #f8fafc"],
+:is(.theme-cashier, .theme-manager) .shift-bento-panel>div[style*="background: #f8fafc"] {
   background: var(--surface) !important;
   border: 1px solid var(--border) !important;
 }
 
-body:is(.theme-cashier, .theme-manager) .shift-bento-panel > div[style*="background: #f8fafc"] span,
-:is(.theme-cashier, .theme-manager) .shift-bento-panel > div[style*="background: #f8fafc"] span {
+body:is(.theme-cashier, .theme-manager) .shift-bento-panel>div[style*="background: #f8fafc"] span,
+:is(.theme-cashier, .theme-manager) .shift-bento-panel>div[style*="background: #f8fafc"] span {
   color: var(--text-muted) !important;
 }
 
-body:is(.theme-cashier, .theme-manager) .shift-bento-panel > div[style*="background: #f8fafc"] strong,
-:is(.theme-cashier, .theme-manager) .shift-bento-panel > div[style*="background: #f8fafc"] strong {
+body:is(.theme-cashier, .theme-manager) .shift-bento-panel>div[style*="background: #f8fafc"] strong,
+:is(.theme-cashier, .theme-manager) .shift-bento-panel>div[style*="background: #f8fafc"] strong {
   color: var(--sidebar) !important;
 }
 
-body:is(.theme-cashier, .theme-manager) .shift-bento-panel > div[style*="background: #f0fdf4"],
-:is(.theme-cashier, .theme-manager) .shift-bento-panel > div[style*="background: #f0fdf4"] {
+body:is(.theme-cashier, .theme-manager) .shift-bento-panel>div[style*="background: #f0fdf4"],
+:is(.theme-cashier, .theme-manager) .shift-bento-panel>div[style*="background: #f0fdf4"] {
   background: var(--primary-soft) !important;
   border: 1px solid rgba(20, 184, 166, 0.35) !important;
 }
 
-body:is(.theme-cashier, .theme-manager) .shift-bento-panel > div[style*="background: #f0fdf4"] div,
-:is(.theme-cashier, .theme-manager) .shift-bento-panel > div[style*="background: #f0fdf4"] div {
+body:is(.theme-cashier, .theme-manager) .shift-bento-panel>div[style*="background: #f0fdf4"] div,
+:is(.theme-cashier, .theme-manager) .shift-bento-panel>div[style*="background: #f0fdf4"] div {
   color: var(--sidebar) !important;
 }
 
-body:is(.theme-cashier, .theme-manager) .shift-bento-panel > div[style*="background: #f0fdf4"] strong,
-:is(.theme-cashier, .theme-manager) .shift-bento-panel > div[style*="background: #f0fdf4"] strong {
+body:is(.theme-cashier, .theme-manager) .shift-bento-panel>div[style*="background: #f0fdf4"] strong,
+:is(.theme-cashier, .theme-manager) .shift-bento-panel>div[style*="background: #f0fdf4"] strong {
   color: var(--primary) !important;
 }
 
-body:is(.theme-cashier, .theme-manager) .shift-bento-panel > div[style*="background: #f0fdf4"] svg,
-:is(.theme-cashier, .theme-manager) .shift-bento-panel > div[style*="background: #f0fdf4"] svg {
+body:is(.theme-cashier, .theme-manager) .shift-bento-panel>div[style*="background: #f0fdf4"] svg,
+:is(.theme-cashier, .theme-manager) .shift-bento-panel>div[style*="background: #f0fdf4"] svg {
   color: var(--primary) !important;
 }
 
@@ -4209,6 +4212,14 @@ body:is(.theme-cashier, .theme-manager) .invoices-bento-root,
   background-color: var(--bg);
 }
 
+@media (max-width: 1439px) {
+  body:is(.theme-cashier, .theme-manager) .invoices-bento-root,
+  :is(.theme-cashier, .theme-manager) .invoices-bento-root,
+  :is(.theme-cashier, .theme-manager).invoices-bento-root {
+    padding-bottom: 30px !important;
+  }
+}
+
 /* Context Strip */
 body:is(.theme-cashier, .theme-manager) .invoices-context-strip,
 :is(.theme-cashier, .theme-manager) .invoices-context-strip {
@@ -4804,3 +4815,2480 @@ div.app-container.theme-cashier .top-pos-cfd-btn:hover,
   background: var(--primary-soft, #f4ede4) !important;
   border-color: var(--primary, #0F766E) !important;
 }
+
+/* ==========================================================================
+   SELECT COUNTER MODAL - MOBILE & TABLET RESPONSIVENESS
+   ========================================================================== */
+
+.select-counter-bento-dialog {
+  width: 90vw !important;
+  max-width: 860px !important;
+  max-height: calc(100vh - 48px) !important;
+  max-height: calc(100dvh - 48px) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  border-radius: 20px !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+  background: var(--surface, #FAF7F2) !important;
+  box-shadow: 0 25px 60px -15px rgba(15, 45, 46, 0.28), 0 10px 24px -5px rgba(15, 45, 46, 0.08) !important;
+}
+
+/* Header: Fixed top-right close button, left monitor icon, wrapped title & badge, description below */
+.select-counter-header {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  padding: 1.1rem 1.6rem !important;
+  border-bottom: 1px solid var(--border, #D0C7B8) !important;
+  background: var(--surface, #FAF7F2) !important;
+  gap: 0.75rem !important;
+  position: relative !important;
+  flex-shrink: 0 !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+}
+
+.select-counter-header .shift-bento-header-left {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 0.85rem !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+}
+
+.select-counter-header .select-counter-icon-badge {
+  width: 44px !important;
+  height: 44px !important;
+  min-width: 44px !important;
+  min-height: 44px !important;
+  border-radius: 12px !important;
+  background: var(--primary-soft, #E6F4F3) !important;
+  color: var(--primary, #0F766E) !important;
+  border: 1.2px solid rgba(20, 184, 166, 0.4) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+}
+
+.select-counter-header .shift-bento-title-wrap {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+}
+
+.select-counter-title-row {
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 0.5rem !important;
+}
+
+.select-counter-header h3 {
+  margin: 0 !important;
+  font-size: 1.18rem !important;
+  font-weight: 800 !important;
+  color: var(--sidebar, #0F2D2E) !important;
+  line-height: 1.25 !important;
+}
+
+.select-counter-header .select-counter-badge {
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+  padding: 2px 8px !important;
+  border-radius: 20px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  flex-shrink: 0 !important;
+}
+
+.select-counter-header .select-counter-subtitle {
+  font-size: 0.78rem !important;
+  color: var(--text-muted, #475569) !important;
+  line-height: 1.35 !important;
+  margin-top: 0.25rem !important;
+  word-break: break-word !important;
+  display: block !important;
+}
+
+.select-counter-header-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  flex-shrink: 0 !important;
+  align-self: flex-start !important;
+  margin-left: auto !important;
+  width: auto !important;
+}
+
+.select-counter-close-btn,
+.select-counter-header .modal-close-btn {
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px !important;
+  min-height: 40px !important;
+  border-radius: 10px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: var(--surface, #FAF7F2) !important;
+  border: 1px solid var(--border, #D0C7B8) !important;
+  color: var(--text-muted, #475569) !important;
+  cursor: pointer !important;
+  flex-shrink: 0 !important;
+  transition: all 0.15s ease !important;
+}
+
+.select-counter-close-btn:hover,
+.select-counter-header .modal-close-btn:hover {
+  background: var(--surface-muted, #F3EDE3) !important;
+  color: var(--sidebar, #0F2D2E) !important;
+}
+
+/* Modal Body */
+.select-counter-body {
+  padding: 1.2rem 1.6rem !important;
+  background: var(--bg, #E8E1D5) !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  box-sizing: border-box !important;
+}
+
+/* 2. Summary Ribbon Cards: Desktop & Default (3-column layout) */
+.select-counter-ribbon.shift-bento-ribbon {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 0.75rem !important;
+  margin-bottom: 1.15rem !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.select-counter-ribbon .shift-bento-ribbon-tile {
+  padding: 0.75rem 0.95rem !important;
+  border-radius: 12px !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+  overflow: visible !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  background: #ffffff !important;
+  border: 1px solid var(--border, #D0C7B8) !important;
+}
+
+.select-counter-ribbon .shift-bento-ribbon-tile.highlight,
+.select-counter-ribbon .shift-bento-ribbon-tile.dest-tile {
+  background: linear-gradient(135deg, var(--primary-soft, #E6F4F3) 0%, #ffffff 100%) !important;
+  border: 1px solid rgba(20, 184, 166, 0.45) !important;
+}
+
+.select-counter-ribbon .ribbon-tile-label {
+  font-size: 0.68rem !important;
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+  color: var(--text-muted, #64748b) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 4px !important;
+  width: 100% !important;
+}
+
+/* Station Availability Card Label & Live Sync */
+.select-counter-ribbon .station-tile-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  flex-wrap: wrap !important;
+  gap: 0.25rem 0.5rem !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+.select-counter-ribbon .station-tile-title {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  font-size: 0.68rem !important;
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+  color: var(--text-muted, #64748b) !important;
+}
+
+.select-counter-ribbon .station-sync-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  flex-shrink: 0 !important;
+  padding: 2px 4px !important;
+  background: transparent !important;
+  border: none !important;
+  cursor: pointer !important;
+}
+
+.select-counter-ribbon .ribbon-tile-val {
+  font-size: 1.05rem !important;
+  font-weight: 800 !important;
+  line-height: 1.25 !important;
+  margin-top: 3px !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+
+.select-counter-ribbon .ribbon-tile-sub {
+  font-size: 0.72rem !important;
+  line-height: 1.3 !important;
+  color: var(--text-muted, #475569) !important;
+  margin-top: 2px !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+}
+
+/* Stations Grid */
+.select-counter-stations-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)) !important;
+  gap: 0.85rem !important;
+  margin-bottom: 1.15rem !important;
+}
+
+.select-counter-stations-grid .select-counter-card {
+  padding: 1.05rem !important;
+  border-radius: 14px !important;
+  box-sizing: border-box !important;
+  min-width: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  min-height: 125px !important;
+}
+
+/* Counter Analytics Notice */
+.select-counter-analytics-notice {
+  width: 100% !important;
+  box-sizing: border-box !important;
+  padding: 0.75rem 1rem !important;
+  font-size: 0.78rem !important;
+  line-height: 1.4 !important;
+  border-radius: 12px !important;
+  margin-bottom: 0.75rem !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 0.65rem !important;
+  word-break: break-word !important;
+}
+
+/* Modal Footer */
+.select-counter-footer {
+  padding: 1rem 1.6rem !important;
+  border-top: 1px solid var(--border, #D0C7B8) !important;
+  background: var(--surface, #FAF7F2) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 1rem !important;
+  flex-wrap: wrap !important;
+  flex-shrink: 0 !important;
+}
+
+.select-counter-footer-counter-info {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  font-size: 0.84rem !important;
+  color: var(--text-muted, #475569) !important;
+  min-width: 0 !important;
+}
+
+.select-counter-footer-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+}
+
+.select-counter-footer-actions .btn {
+  min-height: 44px !important;
+  border-radius: 10px !important;
+  font-size: 0.88rem !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0.65rem 1.4rem !important;
+  box-sizing: border-box !important;
+  cursor: pointer !important;
+}
+
+/* ==========================================================================
+   BREAKPOINT: TABLET SCREENS (768px - 1439px)
+   ========================================================================== */
+@media (min-width: 768px) and (max-width: 1439px) {
+  .select-counter-bento-dialog {
+    width: min(760px, calc(100% - 32px)) !important;
+    max-width: 100% !important;
+    max-height: calc(100vh - 32px) !important;
+    max-height: calc(100dvh - 32px) !important;
+  }
+
+  .select-counter-header {
+    padding: 1rem 1.35rem !important;
+  }
+
+  .select-counter-body {
+    padding: 1rem 1.35rem !important;
+  }
+
+  /* Balanced 3-column summary cards on tablet with wrap-safe labels */
+  .select-counter-ribbon.shift-bento-ribbon {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 0.65rem !important;
+  }
+
+  .select-counter-ribbon .shift-bento-ribbon-tile {
+    padding: 0.65rem 0.75rem !important;
+  }
+
+  .select-counter-ribbon .station-tile-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 3px !important;
+  }
+
+  .select-counter-ribbon .station-sync-btn {
+    font-size: 0.65rem !important;
+  }
+
+  .select-counter-ribbon .ribbon-tile-val {
+    font-size: 0.95rem !important;
+  }
+
+  /* 2-column station selection cards */
+  .select-counter-stations-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.75rem !important;
+  }
+}
+
+/* ==========================================================================
+   BREAKPOINT: MOBILE PHONES (320px - 767px)
+   ========================================================================== */
+@media (max-width: 767px) {
+  .select-counter-backdrop {
+    padding: 12px !important;
+  }
+
+  .select-counter-bento-dialog {
+    width: calc(100% - 24px) !important;
+    max-width: 100% !important;
+    max-height: calc(100vh - 24px) !important;
+    max-height: calc(100dvh - 24px) !important;
+    border-radius: 18px !important;
+    margin: auto !important;
+  }
+
+  /* Header stays row, close button locked top-right */
+  .select-counter-header {
+    padding: 0.85rem 1rem !important;
+    gap: 0.65rem !important;
+    flex-direction: row !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+  }
+
+  .select-counter-header .shift-bento-header-left {
+    gap: 0.65rem !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+  }
+
+  .select-counter-header .select-counter-icon-badge {
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    min-height: 38px !important;
+    border-radius: 10px !important;
+  }
+
+  .select-counter-header .select-counter-icon-badge svg {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  .select-counter-header h3 {
+    font-size: 1.05rem !important;
+    line-height: 1.25 !important;
+  }
+
+  .select-counter-header .select-counter-badge {
+    font-size: 0.68rem !important;
+    padding: 2px 7px !important;
+  }
+
+  .select-counter-header .select-counter-subtitle {
+    font-size: 0.74rem !important;
+    line-height: 1.35 !important;
+    margin-top: 0.2rem !important;
+  }
+
+  .select-counter-header-actions {
+    width: auto !important;
+    flex-shrink: 0 !important;
+    align-self: flex-start !important;
+  }
+
+  .select-counter-header-actions .select-counter-branch-chip {
+    display: none !important;
+  }
+
+  .select-counter-close-btn,
+  .select-counter-header .modal-close-btn {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+    border-radius: 10px !important;
+  }
+
+  .select-counter-body {
+    padding: 0.85rem 1rem !important;
+  }
+
+  /* 2-column grid for summary cards; Card 3 spans full width */
+  .select-counter-ribbon.shift-bento-ribbon {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.55rem !important;
+    margin-bottom: 0.85rem !important;
+  }
+
+  .select-counter-ribbon .shift-bento-ribbon-tile {
+    padding: 0.6rem 0.7rem !important;
+    border-radius: 12px !important;
+  }
+
+  .select-counter-ribbon .shift-bento-ribbon-tile.highlight,
+  .select-counter-ribbon .shift-bento-ribbon-tile.dest-tile {
+    grid-column: 1 / -1 !important;
+  }
+
+  .select-counter-ribbon .ribbon-tile-label {
+    font-size: 0.66rem !important;
+  }
+
+  .select-counter-ribbon .station-tile-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 3px !important;
+  }
+
+  .select-counter-ribbon .station-sync-btn {
+    margin-top: 2px !important;
+    font-size: 0.64rem !important;
+  }
+
+  .select-counter-ribbon .ribbon-tile-val {
+    font-size: 0.92rem !important;
+    line-height: 1.25 !important;
+  }
+
+  .select-counter-ribbon .ribbon-tile-sub {
+    font-size: 0.7rem !important;
+    line-height: 1.25 !important;
+  }
+
+  /* 2-column stations grid on mobile */
+  .select-counter-stations-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.6rem !important;
+    margin-bottom: 0.75rem !important;
+  }
+
+  .select-counter-stations-grid .select-counter-card {
+    padding: 0.85rem !important;
+    border-radius: 12px !important;
+    min-height: 115px !important;
+    gap: 0.5rem !important;
+  }
+
+  .select-counter-stations-grid .counter-card-icon {
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 8px !important;
+  }
+
+  .select-counter-stations-grid .counter-card-icon svg {
+    width: 15px !important;
+    height: 15px !important;
+  }
+
+  .select-counter-stations-grid .counter-card-tag {
+    font-size: 0.62rem !important;
+    padding: 2px 6px !important;
+    white-space: normal !important;
+    line-height: 1.25 !important;
+  }
+
+  /* Counter Analytics Notice */
+  .select-counter-analytics-notice {
+    padding: 0.65rem 0.85rem !important;
+    font-size: 0.76rem !important;
+    line-height: 1.35 !important;
+    border-radius: 10px !important;
+    margin-bottom: 0.65rem !important;
+  }
+
+  /* Modal Footer */
+  .select-counter-footer {
+    padding: 0.85rem 1rem !important;
+    padding-bottom: max(0.85rem, env(safe-area-inset-bottom, 0.85rem)) !important;
+    gap: 0.75rem !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .select-counter-footer-counter-info {
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 6px !important;
+  }
+
+  .select-counter-footer-counter-info span:first-child {
+    font-size: 0.74rem !important;
+    font-weight: 700 !important;
+  }
+
+  .select-counter-footer-pill {
+    font-size: 0.85rem !important;
+    padding: 3px 8px !important;
+    max-width: 70% !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  /* Action Buttons */
+  .select-counter-footer-actions {
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 8px !important;
+  }
+
+  .select-counter-footer-actions .btn,
+  .select-counter-btn-cancel,
+  .select-counter-btn-confirm {
+    min-height: 46px !important;
+    height: 46px !important;
+    border-radius: 10px !important;
+    font-size: 0.86rem !important;
+    box-sizing: border-box !important;
+  }
+
+  .select-counter-btn-cancel {
+    flex: 1 !important;
+    min-width: 0 !important;
+    text-align: center !important;
+    justify-content: center !important;
+    padding: 0 0.5rem !important;
+    background: var(--surface, #FAF7F2) !important;
+    border: 1px solid var(--border, #D0C7B8) !important;
+    color: var(--text-muted, #475569) !important;
+    font-weight: 700 !important;
+  }
+
+  .select-counter-btn-confirm {
+    flex: 1.6 !important;
+    min-width: 0 !important;
+    text-align: center !important;
+    justify-content: center !important;
+    padding: 0 0.75rem !important;
+    gap: 6px !important;
+    background: var(--primary, #0F766E) !important;
+    color: #ffffff !important;
+    border: none !important;
+    font-weight: 800 !important;
+    box-shadow: 0 4px 14px rgba(15, 118, 110, 0.35) !important;
+  }
+
+  .select-counter-btn-confirm span {
+    white-space: nowrap !important;
+  }
+}
+
+/* ==========================================================================
+   BREAKPOINT: EXTRA SMALL PHONES (<= 360px)
+   ========================================================================== */
+@media (max-width: 360px) {
+  .select-counter-ribbon.shift-bento-ribbon {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+  }
+
+  .select-counter-ribbon .shift-bento-ribbon-tile {
+    width: 100% !important;
+  }
+
+  .select-counter-stations-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .select-counter-footer-actions {
+    flex-direction: column-reverse !important;
+    gap: 8px !important;
+  }
+
+  .select-counter-btn-cancel,
+  .select-counter-btn-confirm {
+    width: 100% !important;
+    flex: none !important;
+  }
+}
+
+/* ==========================================================================
+   THEME CASHIER: CASHIER SHIFT PAGE RESPONSIVE ENHANCEMENTS (MOBILE <= 767px)
+   ========================================================================== */
+@media (max-width: 767px) {
+  .theme-cashier .shifts-dashboard-wrapper {
+    padding: 0 0 1.5rem 0 !important;
+  }
+
+  .theme-cashier .shifts-bento-header-card {
+    background: var(--surface) !important;
+    border-color: var(--border) !important;
+    padding: 0.75rem 0.85rem !important;
+    border-radius: 14px !important;
+  }
+
+  .theme-cashier .shifts-bento-header-card .cat-bento-title {
+    font-size: 16px !important;
+  }
+
+  .theme-cashier .shifts-bento-header-card .cat-bento-subtitle {
+    font-size: 10px !important;
+  }
+
+  .theme-cashier .shifts-active-header-actions button {
+    min-height: 40px !important;
+    padding: 0.45rem 0.35rem !important;
+    font-size: 0.76rem !important;
+  }
+
+  .theme-cashier .shifts-active-header-actions .cat-btn-primary {
+    background: var(--primary) !important;
+    color: #FFFFFF !important;
+  }
+
+  .theme-cashier .shifts-active-header-actions .cat-btn-danger {
+    background: var(--danger) !important;
+    color: #FFFFFF !important;
+  }
+
+  .theme-cashier .shifts-active-header-actions .cat-btn-outline {
+    background: var(--surface) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+  }
+
+  .theme-cashier .shifts-bento-kpi-grid .cat-bento-kpi-card {
+    background: var(--surface) !important;
+    border-color: var(--border) !important;
+  }
+
+  .theme-cashier .formula-step-box {
+    background: var(--surface) !important;
+    border-color: var(--border) !important;
+  }
+
+  .theme-cashier .formula-step-box.result {
+    background: var(--primary-soft) !important;
+    border: 2px solid var(--primary) !important;
+  }
+
+  .theme-cashier .formula-step-box.result .step-box-badge.result {
+    background: var(--primary) !important;
+  }
+
+  .theme-cashier .formula-step-box.result .step-box-amount {
+    color: var(--primary) !important;
+  }
+
+  .theme-cashier .formula-op-pill {
+    background: #DDD5C6 !important;
+    border-color: var(--border) !important;
+    color: var(--sidebar) !important;
+  }
+
+  .theme-cashier .bento-action-card {
+    background: var(--surface) !important;
+    border-color: var(--border) !important;
+  }
+}
+
+/* ==========================================================================
+   POS BILLING SCREEN - MOBILE & TABLET COMPLETE RESPONSIVE SUITE
+   ========================================================================== */
+
+/* Default desktop for customer inputs grid */
+.bento-cust-inputs-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+/* Tablet screens (768px - 1439px) */
+@media (min-width: 768px) and (max-width: 1439px) {
+  /* Hide Branch, Counter, CFD, Overdue, Context Strip on Tablet */
+  .top-pos-header-left,
+  .top-shifts-badges-row,
+  .top-pos-bento-badge,
+  .top-pos-branch-badge,
+  .top-pos-counter-badge,
+  .top-pos-cfd-btn,
+  .top-overdue-closing-btn,
+  .invoices-context-strip {
+    display: none !important;
+    visibility: hidden !important;
+    width: 0 !important;
+    height: 0 !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    max-width: 0 !important;
+    max-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+  }
+
+  .theme-cashier .shifts-bento-header-card {
+    padding: 1rem 1.2rem !important;
+    border-radius: 14px !important;
+  }
+
+  .theme-cashier .shifts-bento-header-card .cat-bento-title {
+    font-size: 18px !important;
+  }
+
+  .theme-cashier .shifts-bento-header-card .cat-bento-subtitle {
+    font-size: 11px !important;
+  }
+
+  .theme-cashier .shifts-active-title-row .cat-badge-live-sync,
+  .theme-cashier .shifts-active-title-row .bento-location-chip,
+  .theme-cashier .shifts-active-title-row .bento-counter-chip {
+    font-size: 10px !important;
+  }
+
+  .bento-pos-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.85rem !important;
+  }
+
+  .bento-side-col {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.85rem !important;
+  }
+
+  .bento-scanner-card,
+  .bento-checkout-panel-card {
+    height: 100% !important;
+  }
+}
+
+/* Mobile Screens (320px - 767px) */
+@media (max-width: 767px) {
+
+  /* Global Page / Container */
+  .bento-pos-root {
+    width: 100% !important;
+    max-width: 100% !important;
+    gap: 0.75rem !important;
+    padding-bottom: max(1.5rem, env(safe-area-inset-bottom, 1.5rem)) !important;
+    overflow-x: hidden !important;
+  }
+
+  .bento-pos-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem !important;
+    width: 100% !important;
+  }
+
+  .bento-main-col,
+  .bento-side-col {
+    width: 100% !important;
+    min-width: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+  }
+
+  /* 1. Header – Branch, Counter & Customer Screen */
+  .top-global-bar {
+    padding: 0.4rem 0.65rem !important;
+    margin-bottom: 0.55rem !important;
+    gap: 0.35rem !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Hide Branch, Counter, CFD, Overdue, Context Strip on Mobile */
+  .top-pos-header-left,
+  .top-shifts-badges-row,
+  .top-pos-bento-badge,
+  .top-pos-branch-badge,
+  .top-pos-counter-badge,
+  .top-pos-cfd-btn,
+  .top-overdue-closing-btn,
+  .invoices-context-strip {
+    display: none !important;
+    visibility: hidden !important;
+    width: 0 !important;
+    height: 0 !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    max-width: 0 !important;
+    max-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+  }
+
+  .top-global-actions {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 0.35rem !important;
+    margin-left: auto !important;
+    width: auto !important;
+    flex-shrink: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .top-user-chip {
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    min-height: 38px !important;
+    border-radius: 50% !important;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex: 0 0 38px !important;
+    background: #ffffff !important;
+    border: 1px solid rgba(0, 0, 0, 0.12) !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+  }
+
+  .top-user-avatar {
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    border-radius: 50% !important;
+    font-size: 0.88rem !important;
+  }
+
+  .top-user-details {
+    display: none !important;
+  }
+
+  /* 2. Cash Drawer Alert */
+  .bento-shift-warning-banner {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.65rem !important;
+    padding: 0.8rem 0.9rem !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    border-radius: 12px !important;
+  }
+
+  .bento-warning-text {
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 0.55rem !important;
+    font-size: 0.8rem !important;
+    line-height: 1.4 !important;
+    color: #92400e !important;
+  }
+
+  .bento-warning-text .warning-icon {
+    margin-top: 2px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .bento-open-shift-btn {
+    width: 100% !important;
+    min-height: 44px !important;
+    height: 44px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+    font-size: 0.86rem !important;
+    font-weight: 750 !important;
+    border-radius: 9px !important;
+    box-sizing: border-box !important;
+    padding: 0 1rem !important;
+  }
+
+  /* 3. Billing Terminal Card Header & Actions */
+  .bento-billing-terminal {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    border-radius: 14px !important;
+  }
+
+  .bento-terminal-header {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.65rem !important;
+    padding: 0.75rem 0.85rem !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .terminal-title-group {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.6rem !important;
+    width: 100% !important;
+  }
+
+  .terminal-icon-box {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    border-radius: 9px !important;
+  }
+
+  .terminal-heading {
+    font-size: 1rem !important;
+    font-weight: 800 !important;
+    margin: 0 !important;
+    line-height: 1.2 !important;
+  }
+
+  .terminal-subheading {
+    font-size: 0.72rem !important;
+    color: var(--text-muted, #64748b) !important;
+  }
+
+  .terminal-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.45rem !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .bento-exchange-btn {
+    flex: 1.3 !important;
+    min-width: 0 !important;
+    min-height: 40px !important;
+    height: 40px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 5px !important;
+    font-size: 0.76rem !important;
+    font-weight: 750 !important;
+    padding: 0 0.5rem !important;
+    border-radius: 8px !important;
+    white-space: nowrap !important;
+    box-sizing: border-box !important;
+  }
+
+  .bento-hold-cart-btn {
+    flex: 1 !important;
+    min-width: 0 !important;
+    min-height: 40px !important;
+    height: 40px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    font-size: 0.76rem !important;
+    font-weight: 750 !important;
+    padding: 0 0.45rem !important;
+    border-radius: 8px !important;
+    white-space: nowrap !important;
+    box-sizing: border-box !important;
+  }
+
+  .bento-clear-cart-btn {
+    flex: 0.9 !important;
+    min-width: 0 !important;
+    min-height: 40px !important;
+    height: 40px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    font-size: 0.76rem !important;
+    font-weight: 750 !important;
+    padding: 0 0.45rem !important;
+    border-radius: 8px !important;
+    white-space: nowrap !important;
+    box-sizing: border-box !important;
+  }
+
+  /* 4. Cart Empty State */
+  .bento-cart-body {
+    min-height: auto !important;
+    height: auto !important;
+  }
+
+  .bento-empty-cart {
+    padding: 1.5rem 0.85rem !important;
+    min-height: 180px !important;
+  }
+
+  .bento-empty-icon-wrap {
+    width: 52px !important;
+    height: 52px !important;
+    margin-bottom: 0.35rem !important;
+  }
+
+  .bento-empty-icon-wrap svg {
+    width: 44px !important;
+    height: 44px !important;
+  }
+
+  .empty-title {
+    font-size: 0.96rem !important;
+    margin: 0.25rem 0 0 !important;
+  }
+
+  .empty-desc {
+    font-size: 0.74rem !important;
+    margin: 0.15rem 0 0.75rem !important;
+  }
+
+  .bento-start-add-btn {
+    min-height: 42px !important;
+    height: 42px !important;
+    padding: 0 1.2rem !important;
+    font-size: 0.84rem !important;
+    font-weight: 750 !important;
+    border-radius: 9px !important;
+  }
+
+  /* 5. Bill Summary & GST Card */
+  .bento-summary-box {
+    padding: 0.75rem 0.85rem !important;
+    gap: 0.45rem !important;
+    border-radius: 10px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .bento-summary-row {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    font-size: 0.78rem !important;
+  }
+
+  .bento-summary-row .summary-label {
+    flex: 1 !important;
+    min-width: 0 !important;
+    word-break: break-word !important;
+  }
+
+  .bento-summary-row .summary-val {
+    flex-shrink: 0 !important;
+    text-align: right !important;
+    font-weight: 700 !important;
+    font-variant-numeric: tabular-nums !important;
+  }
+
+  .bento-summary-row.tax-row {
+    padding: 0.5rem 0.65rem !important;
+    border-radius: 8px !important;
+  }
+
+  .tax-label-group {
+    flex: 1 !important;
+    min-width: 0 !important;
+  }
+
+  .tax-sub-breakdown {
+    font-size: 0.68rem !important;
+    word-break: break-word !important;
+  }
+
+  .tax-val {
+    flex-shrink: 0 !important;
+    font-weight: 800 !important;
+    font-size: 0.88rem !important;
+  }
+
+  /* 6. Barcode Scanner Card */
+  .bento-scanner-card {
+    padding: 0.85rem !important;
+    border-radius: 12px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .bento-scanner-body {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .scanner-input-container {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    min-height: 46px !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+
+  .scanner-input {
+    height: 46px !important;
+    font-size: 16px !important;
+    border-radius: 10px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    padding-left: 2.2rem !important;
+  }
+
+  .scanner-action-row {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 0.5rem !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    margin-top: 0 !important;
+  }
+
+  .bento-trigger-scan-btn,
+  .bento-mobile-scanner-btn {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    min-height: 46px !important;
+    height: 46px !important;
+    font-size: 0.82rem !important;
+    font-weight: 750 !important;
+    border-radius: 9px !important;
+    padding: 0 0.5rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 5px !important;
+    white-space: nowrap !important;
+    box-sizing: border-box !important;
+  }
+
+  .bento-find-product-btn {
+    width: 100% !important;
+    min-height: 48px !important;
+    height: 48px !important;
+    font-size: 0.86rem !important;
+    font-weight: 750 !important;
+    border-radius: 10px !important;
+    margin-top: 0.25rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.55rem !important;
+    box-sizing: border-box !important;
+  }
+
+  /* 7. Payment & Settlement Card */
+  .bento-checkout-panel-card {
+    padding: 0.85rem !important;
+    border-radius: 12px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .bento-billing-customer-box {
+    padding: 0.75rem 0.85rem !important;
+    border-radius: 10px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    margin: 0.5rem 0 0.75rem 0 !important;
+  }
+
+  .bento-cust-inputs-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .bento-cust-prefix {
+    padding: 0 0.65rem !important;
+    font-size: 0.82rem !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .bento-cust-input {
+    height: 44px !important;
+    min-height: 44px !important;
+    font-size: 16px !important;
+    box-sizing: border-box !important;
+  }
+
+  .bento-cust-browse-btn {
+    min-height: 30px !important;
+    padding: 0 8px !important;
+    font-size: 0.72rem !important;
+  }
+
+  .bento-payment-modes {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.5rem !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    margin-bottom: 0.75rem !important;
+  }
+
+  .bento-pay-mode-btn {
+    min-height: 48px !important;
+    height: 48px !important;
+    font-size: 0.88rem !important;
+    font-weight: 750 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+    border-radius: 10px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .bento-pay-mode-btn .pay-mode-svg {
+    width: 17px !important;
+    height: 17px !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* 8. Grand Total & Checkout Section */
+  .bento-checkout-row {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    margin: 0.5rem 0 0 0 !important;
+    padding: 0.5rem 0 0 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.65rem !important;
+    border-top: 1px solid var(--border, #e2e8f0) !important;
+  }
+
+  .bento-grand-total {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: baseline !important;
+    padding: 0.65rem 0.85rem !important;
+    border-radius: 10px !important;
+    background: var(--surface, #f8fafc) !important;
+    border: 1px solid var(--border, #e2e8f0) !important;
+  }
+
+  .grand-total-label {
+    font-size: 0.78rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.04em !important;
+    color: var(--text-muted, #64748b) !important;
+  }
+
+  .grand-total-val {
+    font-size: 1.45rem !important;
+    font-weight: 900 !important;
+    text-align: right !important;
+    color: var(--sidebar, #0f172a) !important;
+    font-family: monospace !important;
+  }
+
+  .bento-checkout-actions {
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+    box-sizing: border-box !important;
+  }
+
+  .bento-checkout-btn {
+    width: 100% !important;
+    min-height: 50px !important;
+    height: 50px !important;
+    font-size: 0.95rem !important;
+    font-weight: 800 !important;
+    border-radius: 11px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+    padding: 0 1.25rem !important;
+    box-sizing: border-box !important;
+  }
+}
+
+/* Extra small devices (<= 400px) */
+@media (max-width: 400px) {
+  .scanner-action-row {
+    flex-direction: column !important;
+    gap: 0.45rem !important;
+  }
+
+  .bento-trigger-scan-btn,
+  .bento-mobile-scanner-btn {
+    width: 100% !important;
+    flex: none !important;
+  }
+
+  .bento-exchange-btn span,
+  .bento-hold-cart-btn span,
+  .bento-clear-cart-btn span {
+    font-size: 0.72rem !important;
+  }
+}
+
+/* ==========================================================================
+   LOGOUT SHIFT MODAL FOOTER - RESPONSIVE SUITE (DESKTOP, TABLET, MOBILE)
+   ========================================================================== */
+
+/* 1. Base / Desktop (>= 1440px): Preserved as original desktop design */
+.logout-shift-bento-dialog {
+  max-width: 560px !important;
+  width: 92vw !important;
+  max-height: 90vh !important;
+  border-radius: 20px !important;
+  background: var(--surface, #FAF7F2) !important;
+  border: 1.5px solid var(--border, #D0C7B8) !important;
+  box-shadow: 0 25px 60px -15px rgba(15, 45, 46, 0.3), 0 10px 24px -5px rgba(15, 45, 46, 0.1) !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.logout-shift-modal-footer {
+  padding: 1rem 1.6rem !important;
+  border-top: 1px solid var(--border, #D0C7B8) !important;
+  background: var(--surface, #FAF7F2) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 0.75rem !important;
+  flex-shrink: 0 !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  position: sticky !important;
+  bottom: 0 !important;
+  z-index: 10 !important;
+}
+
+.logout-shift-actions-group {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.65rem !important;
+  flex-shrink: 0 !important;
+}
+
+.logout-modal-btn {
+  border-radius: 10px !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  box-sizing: border-box !important;
+  text-decoration: none !important;
+  line-height: 1.25 !important;
+  outline: none !important;
+}
+
+.logout-modal-btn-cancel {
+  padding: 0.65rem 1.15rem !important;
+  background: var(--surface, #FAF7F2) !important;
+  border: 1px solid var(--border, #D0C7B8) !important;
+  color: var(--text-muted, #475569) !important;
+  font-weight: 700 !important;
+  font-size: 0.86rem !important;
+}
+
+.logout-modal-btn-cancel:hover {
+  background: var(--surface-muted, #F3EDE3) !important;
+  color: var(--sidebar, #0F2D2E) !important;
+}
+
+.logout-modal-btn-reconcile {
+  padding: 0.65rem 1rem !important;
+  background: var(--primary-soft, #E6F4F3) !important;
+  border: 1px solid rgba(20, 184, 166, 0.35) !important;
+  color: var(--primary, #0F766E) !important;
+  font-weight: 700 !important;
+  font-size: 0.86rem !important;
+}
+
+.logout-modal-btn-reconcile:hover {
+  background: rgba(20, 184, 166, 0.2) !important;
+  border-color: var(--primary, #0F766E) !important;
+}
+
+.logout-modal-btn-close-shift {
+  padding: 0.65rem 1.25rem !important;
+  background: var(--primary, #0F766E) !important;
+  color: #ffffff !important;
+  border: none !important;
+  font-weight: 800 !important;
+  font-size: 0.86rem !important;
+  box-shadow: 0 4px 14px rgba(15, 118, 110, 0.35) !important;
+  gap: 0.45rem !important;
+}
+
+.logout-modal-btn-close-shift:hover {
+  filter: brightness(1.08) !important;
+  transform: translateY(-1px) !important;
+}
+
+.logout-btn-arrow-icon {
+  flex-shrink: 0 !important;
+  margin-left: 3px !important;
+}
+
+/* 2. Tablet Screens (768px - 1439px) */
+@media (min-width: 768px) and (max-width: 1439px) {
+  .logout-shift-bento-dialog {
+    max-width: min(540px, calc(100vw - 32px)) !important;
+    width: min(540px, calc(100vw - 32px)) !important;
+    max-height: calc(100vh - 32px) !important;
+    max-height: calc(100dvh - 32px) !important;
+  }
+
+  .logout-shift-modal-footer {
+    padding: 0.85rem 1.25rem !important;
+    gap: 0.65rem !important;
+  }
+
+  .logout-shift-actions-group {
+    gap: 0.55rem !important;
+  }
+
+  .logout-modal-btn {
+    min-height: 42px !important;
+    height: 42px !important;
+    font-size: 12px !important;
+    border-radius: 9px !important;
+    line-height: 1.2 !important;
+  }
+
+  .logout-modal-btn-cancel {
+    padding: 0.45rem 0.95rem !important;
+    font-size: 12px !important;
+  }
+
+  .logout-modal-btn-reconcile {
+    padding: 0.45rem 0.85rem !important;
+    font-size: 12px !important;
+  }
+
+  .logout-modal-btn-close-shift {
+    padding: 0.45rem 1rem !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+  }
+}
+
+/* 3. Mobile Screens (320px - 767px) */
+@media (max-width: 767px) {
+  .logout-shift-bento-dialog {
+    width: calc(100vw - 20px) !important;
+    max-width: 100% !important;
+    max-height: calc(100vh - 20px) !important;
+    max-height: calc(100dvh - 20px) !important;
+    border-radius: 16px !important;
+    margin: auto !important;
+  }
+
+  .logout-shift-modal-footer {
+    padding: 0.65rem 0.75rem !important;
+    padding-bottom: max(0.65rem, env(safe-area-inset-bottom, 0.65rem)) !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+  }
+
+  /* Make actions group transparent so all 3 buttons are direct flex peers in a single row */
+  .logout-shift-actions-group {
+    display: contents !important;
+  }
+
+  .logout-modal-btn {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    width: auto !important;
+    min-height: 42px !important;
+    height: 44px !important;
+    padding: 2px 8px !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    line-height: 1.2 !important;
+    text-align: center !important;
+    justify-content: center !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+    word-break: normal !important;
+    text-wrap: balance !important;
+    overflow: hidden !important;
+  }
+
+  .logout-modal-btn span {
+    display: block !important;
+    line-height: 1.2 !important;
+    text-align: center !important;
+    text-wrap: balance !important;
+  }
+
+  /* Cancel: 11px, weight 600 */
+  .logout-modal-btn-cancel {
+    font-size: 11px !important;
+    padding: 2px 6px !important;
+  }
+
+  .logout-modal-btn-cancel span {
+    font-size: 11px !important;
+  }
+
+  /* Reconcile Drawer: 10px, weight 600, max 2 lines */
+  .logout-modal-btn-reconcile {
+    font-size: 10px !important;
+    padding: 2px 6px !important;
+  }
+
+  .logout-modal-btn-reconcile span {
+    font-size: 10px !important;
+    max-height: 2.4em !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+  }
+
+  /* Close Shift & Logout: 10px, weight 700, max 2-3 lines, visually prominent */
+  .logout-modal-btn-close-shift {
+    font-size: 10px !important;
+    font-weight: 700 !important;
+    padding: 2px 6px !important;
+    gap: 3px !important;
+  }
+
+  .logout-modal-btn-close-shift span {
+    font-size: 10px !important;
+    max-height: 3.6em !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 3 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+  }
+
+  .logout-btn-arrow-icon {
+    width: 12px !important;
+    height: 12px !important;
+    flex-shrink: 0 !important;
+    margin-left: 1px !important;
+  }
+}
+
+/* 4. Small Mobile (<= 350px, e.g. 320px viewport): 2-row layout */
+@media (max-width: 350px) {
+  .logout-shift-modal-footer {
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+    padding: 0.5rem 0.6rem !important;
+  }
+
+  .logout-modal-btn-cancel {
+    flex: 1 1 calc(50% - 3px) !important;
+    width: calc(50% - 3px) !important;
+    order: 1 !important;
+    min-height: 42px !important;
+  }
+
+  .logout-modal-btn-reconcile {
+    flex: 1 1 calc(50% - 3px) !important;
+    width: calc(50% - 3px) !important;
+    order: 2 !important;
+    min-height: 42px !important;
+  }
+
+  .logout-modal-btn-close-shift {
+    flex: 1 1 100% !important;
+    width: 100% !important;
+    order: 3 !important;
+    min-height: 42px !important;
+  }
+}
+
+/* =========================================
+   TABLET: 768px – 1439px
+========================================= */
+@media (min-width: 768px) and (max-width: 1439px) {
+
+  /* Loyalty summary card */
+  .loyalty-earn-row {
+    padding: 5px 8px !important;
+    gap: 5px;
+    min-width: 0;
+  }
+
+  .loyalty-label-row {
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .loyalty-gift-icon {
+    width: 12px;
+    height: 12px;
+  }
+
+  .loyalty-label-content {
+    gap: 3px;
+    min-width: 0;
+    flex-wrap: wrap;
+  }
+
+  .loyalty-summary-label {
+    font-size: 10px !important;
+    line-height: 1.25;
+  }
+
+  .loyalty-conversion-rate {
+    font-size: 9px !important;
+  }
+
+  .loyalty-earn-row .summary-val {
+    font-size: 11px !important;
+  }
+
+  .loyalty-earn-row span[style*="fontSize"] {
+    font-size: 9px !important;
+  }
+
+  .loyalty-earn-row button {
+    font-size: 9px !important;
+    padding: 3px 6px !important;
+    margin-left: 2px !important;
+  }
+
+  /* Total customer savings */
+  .bento-savings-alert {
+    padding: 7px 9px;
+    gap: 5px;
+    font-size: 11px;
+    line-height: 1.3;
+  }
+
+  .bento-savings-alert .savings-icon svg {
+    width: 13px;
+    height: 13px;
+  }
+
+  .bento-savings-alert strong {
+    font-size: 11px;
+  }
+
+  /* Offers Applied Card (Tablet: 768px - 1439px) */
+  .bento-summary-row.bento-offers-applied-card {
+    padding: 0.35rem 0.55rem !important;
+    gap: 0.2rem !important;
+    margin: 3px 0 !important;
+  }
+
+  .bento-offers-applied-card .offers-applied-header {
+    gap: 0.35rem !important;
+  }
+
+  .bento-offers-applied-card .offers-applied-title {
+    font-size: 10px !important;
+    gap: 0.25rem !important;
+  }
+
+  .bento-offers-applied-card .offers-applied-icon {
+    font-size: 11px !important;
+  }
+
+  .bento-offers-applied-card .offers-applied-title-text {
+    font-size: 10px !important;
+  }
+
+  .bento-offers-applied-card .offers-applied-total {
+    font-size: 12px !important;
+  }
+
+  .bento-offers-applied-card .offers-applied-list {
+    gap: 0.2rem !important;
+  }
+
+  .bento-offers-applied-card .offers-applied-item {
+    font-size: 10px !important;
+    gap: 0.4rem !important;
+  }
+
+  .bento-offers-applied-card .offers-applied-name {
+    font-size: 10px !important;
+    line-height: 1.25 !important;
+  }
+
+  .bento-offers-applied-card .offers-applied-amt {
+    font-size: 10px !important;
+    line-height: 1.25 !important;
+  }
+
+  /* POS Product Table (Tablet: 768px - 1439px) */
+  .bento-cart-table-wrapper {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .bento-cart-table-header {
+    grid-template-columns: minmax(130px, 1.8fr) minmax(68px, 0.8fr) minmax(58px, 0.7fr) minmax(62px, 0.75fr) minmax(68px, 0.8fr) 26px !important;
+    gap: 6px !important;
+    padding: 0.35rem 0.5rem !important;
+    min-height: 28px !important;
+    height: auto !important;
+    min-width: 100% !important;
+    font-size: 10px !important;
+    box-sizing: border-box !important;
+  }
+
+  .bento-cart-table-header span,
+  .bento-cart-table-header .th-item,
+  .bento-cart-table-header .th-qty,
+  .bento-cart-table-header .th-mrp,
+  .bento-cart-table-header .th-price,
+  .bento-cart-table-header .th-total {
+    font-size: 10px !important;
+    letter-spacing: 0.02em !important;
+    font-weight: 700 !important;
+  }
+
+  .bento-cart-row {
+    grid-template-columns: minmax(130px, 1.8fr) minmax(68px, 0.8fr) minmax(58px, 0.7fr) minmax(62px, 0.75fr) minmax(68px, 0.8fr) 26px !important;
+    gap: 6px !important;
+    padding: 0.38rem 0.5rem !important;
+    min-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .bento-row-item-col {
+    gap: 1px !important;
+    padding-right: 3px !important;
+    min-width: 0 !important;
+  }
+
+  .bento-cart-item-name {
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    line-height: 1.25 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 100% !important;
+    display: block !important;
+  }
+
+  .bento-cart-item-meta {
+    gap: 3px !important;
+    margin-top: 2px !important;
+    min-width: 0 !important;
+    flex-wrap: wrap !important;
+  }
+
+  .bento-cart-cat-badge {
+    font-size: 9px !important;
+    padding: 1px 4.5px !important;
+    border-radius: 3px !important;
+    line-height: 1.2 !important;
+  }
+
+  .bento-cart-promo-badge {
+    font-size: 9px !important;
+    padding: 1px 4.5px !important;
+    border-radius: 3px !important;
+    gap: 2.5px !important;
+    line-height: 1.2 !important;
+  }
+
+  .bento-cart-promo-badge svg {
+    width: 8px !important;
+    height: 8px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .bento-cart-promo-badge span {
+    font-size: 9px !important;
+  }
+
+  .bento-cart-savings-tag {
+    font-size: 9px !important;
+    padding: 1px 4.5px !important;
+    border-radius: 3px !important;
+    line-height: 1.2 !important;
+  }
+
+  .bento-cart-savings-tag.bento-cart-offer-tag,
+  .bento-cart-offer-tag {
+    font-size: 10px !important;
+    padding: 1px 4.5px !important;
+    border-radius: 3px !important;
+    line-height: 1.2 !important;
+  }
+
+  .bento-qty-stepper {
+    height: 22px !important;
+    min-height: 22px !important;
+    border-radius: 5px !important;
+  }
+
+  .bento-qty-value {
+    font-size: 11px !important;
+    min-width: 16px !important;
+    text-align: center !important;
+  }
+
+  .bento-qty-btn {
+    font-size: 11px !important;
+    width: 19px !important;
+    height: 22px !important;
+    line-height: 1 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .bento-mrp-val {
+    font-size: 10px !important;
+    white-space: nowrap !important;
+    font-variant-numeric: tabular-nums !important;
+  }
+
+  .bento-store-val {
+    font-size: 10px !important;
+    white-space: nowrap !important;
+    font-variant-numeric: tabular-nums !important;
+  }
+
+  .bento-total-val,
+  .bento-total-orig-val {
+    font-size: 10px !important;
+    white-space: nowrap !important;
+    font-variant-numeric: tabular-nums !important;
+  }
+
+  .bento-row-remove-btn {
+    padding: 2px !important;
+    width: 20px !important;
+    height: 20px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .bento-row-remove-btn svg {
+    width: 10px !important;
+    height: 10px !important;
+  }
+}
+
+
+/* =========================================
+   MOBILE: 320px – 767px
+========================================= */
+@media (max-width: 767px) {
+
+  /* Loyalty summary card */
+  .loyalty-earn-row {
+    padding: 6px 7px !important;
+    margin: 3px 0 !important;
+    gap: 5px;
+    min-width: 0;
+    flex-wrap: wrap;
+    box-sizing: border-box;
+  }
+
+  .loyalty-label-row {
+    gap: 4px;
+    min-width: 0;
+    flex: 1 1 100%;
+    align-items: flex-start;
+  }
+
+  .loyalty-gift-icon {
+    width: 11px;
+    height: 11px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .loyalty-label-content {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px 4px;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .loyalty-summary-label {
+    font-size: 9px !important;
+    line-height: 1.3;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+  }
+
+  .loyalty-conversion-rate {
+    font-size: 8px !important;
+    line-height: 1.3;
+  }
+
+  /* Points and reward value */
+  .loyalty-earn-row>div:last-child {
+    display: flex !important;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px !important;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .loyalty-earn-row .summary-val {
+    font-size: 11px !important;
+    line-height: 1.2;
+  }
+
+  .loyalty-earn-row span[style*="fontSize"] {
+    font-size: 9px !important;
+  }
+
+  /* Redeem button */
+  .loyalty-earn-row button {
+    font-size: 9px !important;
+    padding: 3px 6px !important;
+    margin-left: 0 !important;
+    line-height: 1.2;
+    white-space: normal;
+  }
+
+  /* Total customer savings */
+  .bento-savings-alert {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 7px 9px;
+    margin: 4px 0;
+    font-size: 10px;
+    line-height: 1.3;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .bento-savings-alert .savings-icon {
+    flex-shrink: 0;
+  }
+
+  .bento-savings-alert .savings-icon svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .bento-savings-alert>span:last-child {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .bento-savings-alert strong {
+    font-size: 10px;
+    white-space: nowrap;
+  }
+
+  /* Offers Applied Card (Mobile: 320px - 767px) */
+  .bento-summary-row.bento-offers-applied-card {
+    padding: 0.3rem 0.45rem !important;
+    gap: 0.15rem !important;
+    margin: 3px 0 !important;
+  }
+
+  .bento-offers-applied-card .offers-applied-header {
+    gap: 0.25rem !important;
+  }
+
+  .bento-offers-applied-card .offers-applied-title {
+    font-size: 9px !important;
+    gap: 0.2rem !important;
+  }
+
+  .bento-offers-applied-card .offers-applied-icon {
+    font-size: 10px !important;
+  }
+
+  .bento-offers-applied-card .offers-applied-title-text {
+    font-size: 9px !important;
+  }
+
+  .bento-offers-applied-card .offers-applied-total {
+    font-size: 11px !important;
+  }
+
+  .bento-offers-applied-card .offers-applied-list {
+    gap: 0.15rem !important;
+  }
+
+  .bento-offers-applied-card .offers-applied-item {
+    font-size: 9px !important;
+    gap: 0.35rem !important;
+  }
+
+  .bento-offers-applied-card .offers-applied-name {
+    font-size: 9px !important;
+    line-height: 1.25 !important;
+  }
+
+  .bento-offers-applied-card .offers-applied-amt {
+    font-size: 9px !important;
+    line-height: 1.25 !important;
+  }
+
+  /* POS Product Table (Mobile: 320px - 767px) */
+  .bento-cart-table-wrapper {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .bento-cart-table-header {
+    grid-template-columns: minmax(80px, 1.6fr) minmax(52px, 0.75fr) minmax(38px, 0.65fr) minmax(42px, 0.7fr) minmax(44px, 0.75fr) 22px !important;
+    gap: 3px !important;
+    padding: 0.25rem 0.35rem !important;
+    min-height: 24px !important;
+    height: auto !important;
+    min-width: 100% !important;
+    font-size: 9px !important;
+    box-sizing: border-box !important;
+  }
+
+  .bento-cart-table-header span,
+  .bento-cart-table-header .th-item,
+  .bento-cart-table-header .th-qty,
+  .bento-cart-table-header .th-mrp,
+  .bento-cart-table-header .th-price,
+  .bento-cart-table-header .th-total {
+    font-size: 9px !important;
+    letter-spacing: 0.02em !important;
+    font-weight: 700 !important;
+  }
+
+  .bento-cart-row {
+    grid-template-columns: minmax(80px, 1.6fr) minmax(52px, 0.75fr) minmax(38px, 0.65fr) minmax(42px, 0.7fr) minmax(44px, 0.75fr) 22px !important;
+    gap: 3px !important;
+    padding: 0.28rem 0.35rem !important;
+    min-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .bento-row-item-col {
+    gap: 1px !important;
+    padding-right: 2px !important;
+    min-width: 0 !important;
+  }
+
+  .bento-cart-item-name {
+    font-size: 10px !important;
+    font-weight: 650 !important;
+    line-height: 1.25 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 100% !important;
+    display: block !important;
+  }
+
+  .bento-cart-item-meta {
+    gap: 2.5px !important;
+    margin-top: 2px !important;
+    min-width: 0 !important;
+    flex-wrap: wrap !important;
+  }
+
+  .bento-cart-cat-badge {
+    font-size: 8px !important;
+    padding: 1px 3.5px !important;
+    border-radius: 3px !important;
+    line-height: 1.2 !important;
+  }
+
+  .bento-cart-promo-badge {
+    font-size: 8px !important;
+    padding: 1px 3.5px !important;
+    border-radius: 3px !important;
+    gap: 2px !important;
+    line-height: 1.2 !important;
+  }
+
+  .bento-cart-promo-badge svg {
+    width: 7px !important;
+    height: 7px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .bento-cart-promo-badge span {
+    font-size: 8px !important;
+  }
+
+  .bento-cart-savings-tag {
+    font-size: 8px !important;
+    padding: 1px 3.5px !important;
+    border-radius: 3px !important;
+    line-height: 1.2 !important;
+  }
+
+  .bento-cart-savings-tag.bento-cart-offer-tag,
+  .bento-cart-offer-tag {
+    font-size: 9px !important;
+    padding: 1px 3.5px !important;
+    border-radius: 3px !important;
+    line-height: 1.2 !important;
+  }
+
+  .bento-qty-stepper {
+    height: 20px !important;
+    min-height: 20px !important;
+    border-radius: 4px !important;
+  }
+
+  .bento-qty-value {
+    font-size: 10px !important;
+    min-width: 14px !important;
+    text-align: center !important;
+  }
+
+  .bento-qty-btn {
+    font-size: 10px !important;
+    width: 17px !important;
+    height: 20px !important;
+    line-height: 1 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .bento-mrp-val {
+    font-size: 9px !important;
+    white-space: nowrap !important;
+    font-variant-numeric: tabular-nums !important;
+  }
+
+  .bento-store-val {
+    font-size: 9px !important;
+    white-space: nowrap !important;
+    font-variant-numeric: tabular-nums !important;
+  }
+
+  .bento-total-val,
+  .bento-total-orig-val {
+    font-size: 9px !important;
+    white-space: nowrap !important;
+    font-variant-numeric: tabular-nums !important;
+  }
+
+  .bento-row-remove-btn {
+    padding: 2px !important;
+    width: 18px !important;
+    height: 18px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .bento-row-remove-btn svg {
+    width: 9px !important;
+    height: 9px !important;
+  }
+}
+
+/* Active Navigation Status Dot */
+.responsive-mobile-bottom-nav .mobile-icon-badge.active-pulse,
+.responsive-tablet-sidebar .tab-icon-badge.active-pulse {
+  position: absolute !important;
+  top: -2px !important;
+  right: -3px !important;
+  width: 8px !important;
+  height: 8px !important;
+  min-width: 8px !important;
+  min-height: 8px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  background: #10b981 !important;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.8), 0 0 0 1.5px #0F2D2E !important;
+  font-size: 0 !important;
+  line-height: 0 !important;
+  color: transparent !important;
+  display: block !important;
+}
+
+/* Offers Applied Card - Base / Desktop (>= 1440px) */
+.bento-summary-row.bento-offers-applied-card {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  background: #eff6ff !important;
+  border: 1px solid #bfdbfe !important;
+  border-radius: 8px !important;
+  padding: 0.45rem 0.65rem !important;
+  margin: 4px 0 !important;
+  gap: 0.25rem !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+}
+
+.bento-offers-applied-card .offers-applied-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  width: 100% !important;
+  gap: 0.5rem !important;
+}
+
+.bento-offers-applied-card .offers-applied-title {
+  color: #1d4ed8 !important;
+  font-weight: 700 !important;
+  font-size: 0.8rem !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+  min-width: 0 !important;
+}
+
+.bento-offers-applied-card .offers-applied-icon {
+  font-size: 0.85rem !important;
+  line-height: 1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  flex-shrink: 0 !important;
+}
+
+.bento-offers-applied-card .offers-applied-title-text {
+  min-width: 0 !important;
+  word-break: break-word !important;
+}
+
+.bento-offers-applied-card .offers-applied-total {
+  font-weight: 800 !important;
+  font-size: 0.86rem !important;
+  flex-shrink: 0 !important;
+  white-space: nowrap !important;
+  text-align: right !important;
+}
+
+.bento-offers-applied-card .offers-applied-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.2rem !important;
+  width: 100% !important;
+}
+
+.bento-offers-applied-card .offers-applied-item {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: flex-start !important;
+  font-size: 0.72rem !important;
+  color: #1e40af !important;
+  gap: 0.5rem !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.bento-offers-applied-card .offers-applied-name {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
+  line-height: 1.25 !important;
+}
+
+.bento-offers-applied-card .offers-applied-amt {
+  flex-shrink: 0 !important;
+  white-space: nowrap !important;
+  text-align: right !important;
+  font-variant-numeric: tabular-nums !important;
+  line-height: 1.25 !important;
+}
+
+/* Opening Float & Location Card - Mobile Responsiveness (320px–767px) */
+@media (max-width: 767px) {
+  body:is(.theme-cashier, .theme-manager) .shift-bento-panel,
+  :is(.theme-cashier, .theme-manager) .shift-bento-panel {
+    padding: 0.75rem 0.85rem !important;
+    gap: 0.65rem !important;
+    border-radius: 14px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+  }
+
+  body:is(.theme-cashier, .theme-manager) .shift-bento-panel .rupee-input-wrapper,
+  :is(.theme-cashier, .theme-manager) .shift-bento-panel .rupee-input-wrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    height: 48px !important;
+    min-height: 48px !important;
+    padding: 0 0.55rem !important;
+    border-radius: 11px !important;
+    gap: 0.45rem !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+  }
+
+  body:is(.theme-cashier, .theme-manager) .shift-bento-panel .rupee-badge-prefix,
+  :is(.theme-cashier, .theme-manager) .shift-bento-panel .rupee-badge-prefix {
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    min-height: 32px !important;
+    font-size: 1.1rem !important;
+    border-radius: 8px !important;
+    flex-shrink: 0 !important;
+  }
+
+  body:is(.theme-cashier, .theme-manager) .shift-bento-panel .rupee-input,
+  :is(.theme-cashier, .theme-manager) .shift-bento-panel .rupee-input {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    font-size: 1.25rem !important;
+    padding: 0 0.35rem !important;
+    box-sizing: border-box !important;
+  }
+
+  body:is(.theme-cashier, .theme-manager) .shift-bento-panel .quick-amount-pills,
+  :is(.theme-cashier, .theme-manager) .shift-bento-panel .quick-amount-pills {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 0.4rem !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    margin-top: 0.45rem !important;
+  }
+
+  body:is(.theme-cashier, .theme-manager) .shift-bento-panel .quick-pill,
+  :is(.theme-cashier, .theme-manager) .shift-bento-panel .quick-pill {
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 36px !important;
+    min-height: 36px !important;
+    padding: 0 0.35rem !important;
+    font-size: 0.78rem !important;
+    border-radius: 8px !important;
+    box-sizing: border-box !important;
+    white-space: nowrap !important;
+  }
+
+  body:is(.theme-cashier, .theme-manager) .shift-bento-panel select.form-select,
+  body:is(.theme-cashier, .theme-manager) .shift-bento-panel select.form-input,
+  :is(.theme-cashier, .theme-manager) .shift-bento-panel select.form-select,
+  :is(.theme-cashier, .theme-manager) .shift-bento-panel select.form-input {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    height: 42px !important;
+    min-height: 42px !important;
+    padding: 0 2.2rem 0 0.75rem !important;
+    font-size: 0.84rem !important;
+    border-radius: 9px !important;
+    box-sizing: border-box !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    background-color: var(--surface, #ffffff) !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%230F766E' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 0.75rem center !important;
+    background-size: 14px 14px !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    cursor: pointer !important;
+  }
+
+  body:is(.theme-cashier, .theme-manager) .shift-bento-panel input[type="text"].form-input,
+  body:is(.theme-cashier, .theme-manager) .shift-bento-panel input.form-input:not(.rupee-input),
+  :is(.theme-cashier, .theme-manager) .shift-bento-panel input[type="text"].form-input,
+  :is(.theme-cashier, .theme-manager) .shift-bento-panel input.form-input:not(.rupee-input) {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    height: 42px !important;
+    min-height: 42px !important;
+    padding: 0 0.75rem !important;
+    font-size: 0.84rem !important;
+    border-radius: 9px !important;
+    box-sizing: border-box !important;
+  }
+}
+
+@media (max-width: 350px) {
+  body:is(.theme-cashier, .theme-manager) .shift-bento-panel .quick-amount-pills,
+  :is(.theme-cashier, .theme-manager) .shift-bento-panel .quick-amount-pills {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.35rem !important;
+  }
+}
+
