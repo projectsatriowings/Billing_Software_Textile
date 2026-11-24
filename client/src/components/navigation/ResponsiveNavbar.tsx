@@ -86,8 +86,13 @@ export const ResponsiveNavbar: React.FC<ResponsiveNavbarProps> = ({
   const moreMenuRef = useRef<HTMLDivElement>(null);
 
   const isCashier = user?.role === 'cashier';
-  const isSuperAdmin = user?.role === 'owner' || String(user?.role).toUpperCase() === 'SUPER_ADMIN';
-  const isManager = user?.role === 'manager' || user?.role === 'store_manager';
+  const isSuperAdmin = Boolean(
+    user && (user.role === 'owner' || user.role === 'admin' || String(user.role).toUpperCase() === 'SUPER_ADMIN' || String(user.role).toLowerCase() === 'superadmin' || String(user.role).toLowerCase() === 'admin' || String(user.role).toLowerCase() === 'owner')
+  );
+  const isManager = Boolean(
+    user && (user.role === 'manager' || user.role === 'store_manager' || String(user.role).toLowerCase() === 'storemanager' || String(user.role).toLowerCase() === 'manager' || String(user.role).toLowerCase() === 'store_manager')
+  );
+  const hideBottomNav = isSuperAdmin || isManager;
 
   // Close more menu on Escape key
   useEffect(() => {
@@ -379,55 +384,57 @@ export const ResponsiveNavbar: React.FC<ResponsiveNavbarProps> = ({
       {/* =========================================================================
           2. MOBILE FIXED BOTTOM NAVIGATION BAR (<= 767px) - ICONS ONLY
          ========================================================================= */}
-      <nav className="responsive-mobile-bottom-nav" aria-label="Mobile Navigation">
-        {mobilePrimaryItems.map((item) => {
-          const isActive = activeTab === item.id;
-          const itemLabel = item.fullLabel || item.label;
-          return (
-            <Tooltip key={item.id} label={itemLabel} position="top">
-              <button
-                type="button"
-                className={`mobile-icon-btn ${isActive ? 'active' : ''}`}
-                onClick={() => handleSelectTab(item.id)}
-                aria-label={itemLabel}
-                aria-current={isActive ? 'page' : undefined}
-              >
-                <div className="mobile-icon-wrap">
-                  {item.icon}
-                  {item.badge && (
-                    item.badgeActive ? (
-                      <span
-                        className="mobile-icon-badge active-pulse"
-                        title="Active"
-                        aria-label="Active"
-                        role="status"
-                      />
-                    ) : (
-                      <span className="mobile-icon-badge">
-                        {item.badge}
-                      </span>
-                    )
-                  )}
-                </div>
-              </button>
-            </Tooltip>
-          );
-        })}
+      {!hideBottomNav && (
+        <nav className="responsive-mobile-bottom-nav" aria-label="Mobile Navigation">
+          {mobilePrimaryItems.map((item) => {
+            const isActive = activeTab === item.id;
+            const itemLabel = item.fullLabel || item.label;
+            return (
+              <Tooltip key={item.id} label={itemLabel} position="top">
+                <button
+                  type="button"
+                  className={`mobile-icon-btn ${isActive ? 'active' : ''}`}
+                  onClick={() => handleSelectTab(item.id)}
+                  aria-label={itemLabel}
+                  aria-current={isActive ? 'page' : undefined}
+                >
+                  <div className="mobile-icon-wrap">
+                    {item.icon}
+                    {item.badge && (
+                      item.badgeActive ? (
+                        <span
+                          className="mobile-icon-badge active-pulse"
+                          title="Active"
+                          aria-label="Active"
+                          role="status"
+                        />
+                      ) : (
+                        <span className="mobile-icon-badge">
+                          {item.badge}
+                        </span>
+                      )
+                    )}
+                  </div>
+                </button>
+              </Tooltip>
+            );
+          })}
 
-        <Tooltip label="More Modules and Options" position="top">
-          <button
-            type="button"
-            className={`mobile-icon-btn mobile-more-btn ${showMoreMenu ? 'active' : ''}`}
-            onClick={() => setShowMoreMenu((prev) => !prev)}
-            aria-label="More"
-            aria-expanded={showMoreMenu}
-          >
-            <div className="mobile-icon-wrap">
-              <MoreHorizontal size={22} strokeWidth={showMoreMenu ? 2.6 : 2.0} />
-            </div>
-          </button>
-        </Tooltip>
-      </nav>
+          <Tooltip label="More Modules and Options" position="top">
+            <button
+              type="button"
+              className={`mobile-icon-btn mobile-more-btn ${showMoreMenu ? 'active' : ''}`}
+              onClick={() => setShowMoreMenu((prev) => !prev)}
+              aria-label="More"
+              aria-expanded={showMoreMenu}
+            >
+              <div className="mobile-icon-wrap">
+                <MoreHorizontal size={22} strokeWidth={showMoreMenu ? 2.6 : 2.0} />
+              </div>
+            </button>
+          </Tooltip>
+        </nav>
+      )}
 
       {/* =========================================================================
           3. ACCESSIBLE "MORE" NAVIGATION MENU / SHEET (MOBILE & TABLET)

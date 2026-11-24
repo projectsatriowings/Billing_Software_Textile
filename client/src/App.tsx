@@ -9511,20 +9511,22 @@ export function App() {
         />
 
         {/* Main Body */}
-        <main className="main-content">
+        <main className={`main-content ${(isSuperAdminUser || user?.role === 'manager' || user?.role === 'store_manager' || String(user?.role || '').toLowerCase() === 'storemanager' || String(user?.role || '').toLowerCase() === 'manager') ? 'no-bottom-nav' : ''}`}>
           {/* Top Global Bar Matching Image 2 */}
           <div className={`top-global-bar ${hideBusinessBar ? 'no-divider' : ''} ${displayTab === 'dashboard' ? 'dashboard-top-bar' : ''}`}>
-            {/* Mobile Header Menu Hamburger Toggle Button (visible on screens <= 900px) */}
-            <button
-              type="button"
-              className="mobile-header-menu-btn"
-              onClick={() => setIsMobileSidebarOpen(prev => !prev)}
-              aria-label="Toggle navigation menu"
-              title="Open Navigation Menu"
-            >
-              <Menu size={18} />
-              <span className="mobile-header-menu-text">Menu</span>
-            </button>
+            {/* Mobile Header Menu Hamburger Toggle Button (visible on screens <= 900px, hidden for Cashier) */}
+            {user?.role !== 'cashier' && (
+              <button
+                type="button"
+                className="mobile-header-menu-btn"
+                onClick={() => setIsMobileSidebarOpen(prev => !prev)}
+                aria-label="Toggle navigation menu"
+                title="Open Navigation Menu"
+              >
+                <Menu size={18} />
+                <span className="mobile-header-menu-text">Menu</span>
+              </button>
+            )}
             {displayTab === 'pos' || activeTab === 'pos' ? (
               <div className="top-pos-header-left">
                 <Tooltip label={`Store Branch: ${currentBranchName} (${currentBranchCode})`} position="bottom">
@@ -24974,9 +24976,9 @@ export function App() {
                 ) : (
                   <>
                     {/* Bento Ribbon (Summary Tiles - 2x2 on Mobile, 4x1 on Tablet/Desktop) */}
-                    <div className="shift-bento-ribbon invoice-detail-ribbon">
+                    <div className="invoice-detail-ribbon">
                       {/* 1. Total Bill */}
-                      <div className="shift-bento-ribbon-tile invoice-detail-ribbon-tile">
+                      <div className="invoice-detail-ribbon-tile">
                         <div className="invoice-tile-icon-badge">
                           <ReceiptIcon size={16} />
                         </div>
@@ -24990,7 +24992,7 @@ export function App() {
                       </div>
 
                       {/* 2. Paid Amount */}
-                      <div className="shift-bento-ribbon-tile invoice-detail-ribbon-tile">
+                      <div className="invoice-detail-ribbon-tile">
                         <div className="invoice-tile-icon-badge">
                           <CreditCardIcon size={16} />
                         </div>
@@ -25004,7 +25006,7 @@ export function App() {
                       </div>
 
                       {/* 3. Balance Due */}
-                      <div className="shift-bento-ribbon-tile invoice-detail-ribbon-tile">
+                      <div className="invoice-detail-ribbon-tile">
                         <div className="invoice-tile-icon-badge">
                           <RupeeIcon size={16} />
                         </div>
@@ -25018,7 +25020,7 @@ export function App() {
                       </div>
 
                       {/* 4. Tender / Change */}
-                      <div className="shift-bento-ribbon-tile invoice-detail-ribbon-tile">
+                      <div className="invoice-detail-ribbon-tile">
                         <div className="invoice-tile-icon-badge">
                           <WalletIcon size={16} />
                         </div>
@@ -25059,7 +25061,7 @@ export function App() {
                             <tr>
                               <th className="col-sno">#</th>
                               <th className="col-item">Item</th>
-                              <th className="col-hsn">HSN / Code</th>
+                              <th className="col-hsn">HSN</th>
                               <th className="col-qty">Qty</th>
                               <th className="col-rate">Rate</th>
                               <th className="col-taxable">Taxable</th>
@@ -25344,100 +25346,37 @@ export function App() {
         {/* ========================================================= */}
         {returnModalInvoiceId && (
           <div
-            className="modal-overlay theme-cashier"
-            style={{
-              position: 'fixed',
-              inset: 0,
-              background: 'rgba(15, 23, 42, 0.65)',
-              backdropFilter: 'blur(8px)',
-              WebkitBackdropFilter: 'blur(8px)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 1050,
-              padding: '1rem',
-            }}
+            className="modal-overlay theme-cashier return-modal-overlay"
             onClick={(e) => {
               if (e.target === e.currentTarget) handleCloseReturnModal();
             }}
           >
             <div
-              className="shift-bento-dialog"
+              className="return-modal-dialog"
               onClick={(e) => e.stopPropagation()}
-              style={{
-                width: '100%',
-                maxWidth: '900px',
-                maxHeight: '92vh',
-                display: 'flex',
-                flexDirection: 'column',
-                background: 'var(--surface, #FAF7F2)',
-                borderRadius: '20px',
-                border: '1.5px solid var(--border, #D0C7B8)',
-                boxShadow: '0 25px 60px -15px rgba(15, 45, 46, 0.28), 0 10px 24px -5px rgba(15, 45, 46, 0.08)',
-                overflow: 'hidden',
-              }}
             >
               {/* Top Accent Gradient Bar */}
               <div
-                className="modal-top-accent green-accent"
-                style={{
-                  height: '4px',
-                  background: 'linear-gradient(90deg, var(--sidebar, #0F2D2E) 0%, var(--primary, #0F766E) 50%, var(--ring, #14B8A6) 100%)',
-                }}
+                className="modal-top-accent green-accent return-modal-top-accent"
               />
 
-              {/* Bento Header */}
-              <div
-                className="shift-bento-header"
-                style={{
-                  padding: '1.1rem 1.6rem',
-                  borderBottom: '1px solid var(--border, #D0C7B8)',
-                  background: 'var(--surface, #FAF7F2)',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}
-              >
-                <div className="shift-bento-header-left" style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                  <div
-                    className="shift-bento-icon-badge green"
-                    style={{
-                      width: '46px',
-                      height: '46px',
-                      borderRadius: '13px',
-                      background: 'var(--primary-soft, #E6F4F3)',
-                      color: 'var(--primary, #0F766E)',
-                      border: '1.2px solid rgba(20, 184, 166, 0.4)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      boxShadow: '0 2px 8px rgba(15, 118, 110, 0.15)',
-                    }}
-                  >
+              {/* Return Modal Header */}
+              <div className="return-modal-header">
+                <div className="return-modal-header-left">
+                  <div className="return-modal-icon-badge">
                     <RotateCcwIcon size={22} />
                   </div>
-                  <div className="shift-bento-title-wrap">
-                    <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: 'var(--sidebar, #0F2D2E)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div className="return-modal-title-wrap">
+                    <h3 className="return-modal-title">
                       <span>Create Return / Credit Note</span>
-                      <span
-                        className="shift-ref-pill"
-                        style={{
-                          fontSize: '0.72rem',
-                          fontWeight: 700,
-                          padding: '2px 9px',
-                          borderRadius: '20px',
-                          background: 'var(--primary-soft, #E6F4F3)',
-                          color: 'var(--primary, #0F766E)',
-                          border: '1px solid rgba(20, 184, 166, 0.35)',
-                        }}
-                      >
+                      <span className="shift-ref-pill return-modal-ref-pill">
                         Bill #{returnInfo?.invoice?.number || ''}
                       </span>
                     </h3>
-                    <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: 'var(--text-muted, #475569)', display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
-                      <span>Customer: <strong style={{ color: 'var(--sidebar, #0F2D2E)' }}>{returnInfo?.customer?.name || returnInfo?.invoice?.customerName || 'Walk-in Customer'}</strong></span>
+                    <p className="return-modal-subtitle">
+                      <span>Customer: <strong>{returnInfo?.customer?.name || returnInfo?.invoice?.customerName || 'Walk-in Customer'}</strong></span>
                       {returnInfo?.invoice?.bdate && <span>· Bill Date: {new Date(returnInfo.invoice.bdate).toLocaleDateString('en-IN')}</span>}
-                      {returnInfo && <span>· Bill Total: <strong style={{ color: 'var(--sidebar, #0F2D2E)' }}>{formatRupees(returnInfo.invoice.totalMinor)}</strong></span>}
+                      {returnInfo && <span>· Bill Total: <strong>{formatRupees(returnInfo.invoice.totalMinor)}</strong></span>}
                       {returnInfo && <span>· Dues: <strong style={{ color: returnInfo.invoice.balanceMinor > 0 ? '#EA580C' : '#15803D' }}>{formatRupees(returnInfo.invoice.balanceMinor)}</strong></span>}
                     </p>
                   </div>
@@ -25445,22 +25384,9 @@ export function App() {
 
                 <button
                   type="button"
-                  className="modal-close-btn"
+                  className="modal-close-btn return-modal-close-btn"
                   onClick={handleCloseReturnModal}
                   aria-label="Close"
-                  style={{
-                    background: 'var(--surface, #FAF7F2)',
-                    border: '1px solid var(--border, #D0C7B8)',
-                    borderRadius: '10px',
-                    width: '32px',
-                    height: '32px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    color: 'var(--text-muted, #475569)',
-                    transition: 'all 0.15s ease',
-                  }}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -25469,8 +25395,8 @@ export function App() {
                 </button>
               </div>
 
-              {/* Bento Body */}
-              <div className="shift-bento-body" style={{ padding: '1.25rem 1.6rem', background: 'var(--bg, #E8E1D5)', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+              {/* Return Modal Body */}
+              <div className="return-modal-body">
                 {returnInfoLoading || !returnInfo ? (
                   <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted, #475569)', background: 'var(--surface, #FAF7F2)', borderRadius: '16px', border: '1px solid var(--border, #D0C7B8)' }}>
                     <div style={{ display: 'inline-block', width: '28px', height: '28px', border: '3px solid var(--border, #D0C7B8)', borderTopColor: 'var(--primary, #0F766E)', borderRadius: '50%', animation: 'spin 0.8s linear infinite', marginBottom: '0.75rem' }} />
@@ -25514,9 +25440,9 @@ export function App() {
                     )}
 
                     {/* Return Items Panel */}
-                    <div className="shift-bento-panel" style={{ background: 'var(--surface, #FAF7F2)', border: '1px solid var(--border, #D0C7B8)', borderRadius: '16px', padding: '1.15rem 1.35rem', boxShadow: '0 1px 3px rgba(15, 45, 46, 0.04)' }}>
-                      <div className="shift-bento-panel-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border, #D0C7B8)', marginBottom: '0.85rem' }}>
-                        <div style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--sidebar, #0F2D2E)' }}>
+                    <div className="return-modal-panel">
+                      <div className="return-modal-panel-header">
+                        <div className="return-modal-panel-title">
                           Return Items & Restock Options
                         </div>
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -25556,8 +25482,8 @@ export function App() {
                       </div>
 
                       {/* Lines Table */}
-                      <div style={{ overflowX: 'auto', marginBottom: '0.5rem' }}>
-                        <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0', fontSize: '0.82rem' }}>
+                      <div className="return-modal-table-wrap">
+                        <table className="return-modal-table">
                           <thead>
                             <tr style={{ background: 'var(--primary-soft, #E6F4F3)', color: 'var(--sidebar, #0F2D2E)' }}>
                               <th style={{ padding: '8px 10px', textAlign: 'left', borderRadius: '8px 0 0 8px', fontWeight: 700 }}>Item</th>
@@ -25750,7 +25676,7 @@ export function App() {
                       const isWalkIn = !returnInfo.customer;
 
                       return (
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1rem', marginBottom: '0.5rem' }}>
+                        <div className="return-modal-calc-grid">
                           {/* Tax Reversal Card */}
                           <div style={{ background: 'var(--surface, #FAF7F2)', border: '1.5px solid var(--border, #D0C7B8)', borderRadius: '16px', padding: '1.1rem 1.25rem', boxShadow: '0 1px 3px rgba(15, 45, 46, 0.04)' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', margin: '0 0 0.65rem 0', color: 'var(--primary, #0F766E)' }}>
@@ -25930,32 +25856,13 @@ export function App() {
                 )}
               </div>
 
-              {/* Bento Footer */}
-              <div
-                className="shift-bento-footer"
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '0.85rem 1.6rem',
-                  borderTop: '1px solid var(--border, #D0C7B8)',
-                  background: 'var(--surface, #FAF7F2)',
-                }}
-              >
+              {/* Footer */}
+              <div className="return-modal-footer">
                 <button
                   type="button"
                   onClick={handleCloseReturnModal}
                   disabled={returnSaving}
-                  style={{
-                    padding: '0.55rem 1.3rem',
-                    fontSize: '0.84rem',
-                    fontWeight: 700,
-                    borderRadius: '10px',
-                    background: 'var(--surface, #FAF7F2)',
-                    border: '1.5px solid var(--border, #D0C7B8)',
-                    color: 'var(--sidebar, #0F2D2E)',
-                    cursor: returnSaving ? 'not-allowed' : 'pointer',
-                  }}
+                  className="return-modal-btn return-modal-btn-secondary"
                 >
                   Cancel
                 </button>
@@ -25964,18 +25871,7 @@ export function App() {
                   type="button"
                   onClick={handleSaveReturn}
                   disabled={returnSaving || !calculateReturnPreview()}
-                  style={{
-                    padding: '0.55rem 1.5rem',
-                    fontSize: '0.86rem',
-                    fontWeight: 800,
-                    borderRadius: '10px',
-                    border: 'none',
-                    background: (returnSaving || !calculateReturnPreview()) ? '#CBD5E1' : 'var(--primary, #0F766E)',
-                    color: '#FFFFFF',
-                    cursor: (returnSaving || !calculateReturnPreview()) ? 'not-allowed' : 'pointer',
-                    boxShadow: (returnSaving || !calculateReturnPreview()) ? 'none' : '0 4px 14px rgba(15, 118, 110, 0.3)',
-                    transition: 'all 0.15s ease',
-                  }}
+                  className="return-modal-btn return-modal-btn-primary"
                 >
                   {returnSaving
                     ? 'Issuing Credit Note...'
