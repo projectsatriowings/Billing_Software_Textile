@@ -15216,7 +15216,7 @@ export function App() {
 
             {/* TAB: RETURN, EXCHANGE & PROFIT REPORTS */}
             {(activeTab === 'return-reports' || displayTab === 'return-reports') && (
-              <div className="tab-content-wrapper" key={`return-reports-${selectedBranchScope}`}>
+              <div className="tab-content-wrapper returns-tab-content-wrapper" key={`return-reports-${selectedBranchScope}`}>
                 <ReturnReportsView
                   user={user}
                   shop={shop}
