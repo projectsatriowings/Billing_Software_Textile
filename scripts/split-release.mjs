@@ -41,10 +41,12 @@ function splitFile(srcPath, outDir, baseName, chunkSize = 60 * 1024 * 1024) {
 const outDir = path.resolve('release', 'bin');
 const exeSrc = path.resolve('release', 'A2Z Setup 0.1.0.exe');
 const zipSrc = path.resolve('release', 'A2Z-Billing-Windows-Setup.zip');
+const apkSrc = path.resolve('release', 'A2Z-Billing.apk');
 
 console.log('Splitting files for Git distribution...');
 const exeMeta = splitFile(exeSrc, outDir, 'a2z-setup');
 const zipMeta = splitFile(zipSrc, outDir, 'a2z-zip');
+const apkMeta = splitFile(apkSrc, outDir, 'a2z-apk');
 
 const manifest = {
   version: '0.1.0',
@@ -55,6 +57,10 @@ const manifest = {
   zip: {
     fileName: 'A2Z-Billing-Windows-Setup.zip',
     ...zipMeta,
+  },
+  apk: {
+    fileName: 'A2Z-Billing.apk',
+    ...apkMeta,
   },
 };
 
