@@ -18621,7 +18621,7 @@ export function App() {
 
             {/* ACCOUNTS & FINANCE TAB VIEWS */}
             {user?.role !== 'cashier' && displayTab === 'payments' && (
-              <div className="tab-content-wrapper" style={{ padding: '1.5rem' }}>
+              <div className="tab-content-wrapper finance-bento-tab-wrapper">
                 <PaymentsView
                   key={selectedBranchScope}
                   onOpenCustomerLedger={(cid) => {
@@ -18678,7 +18678,7 @@ export function App() {
             )}
 
             {user?.role !== 'cashier' && displayTab === 'payables' && (
-              <div className="tab-content-wrapper" style={{ padding: '1.5rem' }}>
+              <div className="tab-content-wrapper finance-bento-tab-wrapper">
                 <PayablesView
                   key={selectedBranchScope}
                   onPaySupplier={(sid) => {
