@@ -20094,12 +20094,12 @@ body.theme-super-admin .app-sidebar.icon-only .sidebar-action-row-btn.active:hov
 }
 
 /* Category Table Body Slide Transitions */
-.cat-table-body-slide.slide-right tr td {
-  animation: catSlideInRight 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+.cat-table-body-slide.slide-right tr td:not(:first-child) {
+  animation: catSlideInRight 0.28s cubic-bezier(0.16, 1, 0.3, 1) backwards;
 }
 
-.cat-table-body-slide.slide-left tr td {
-  animation: catSlideInLeft 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+.cat-table-body-slide.slide-left tr td:not(:first-child) {
+  animation: catSlideInLeft 0.28s cubic-bezier(0.16, 1, 0.3, 1) backwards;
 }
 
 .cat-table-body-slide tr:nth-child(1) td {
@@ -20246,7 +20246,10 @@ body.theme-super-admin .app-sidebar.icon-only .sidebar-action-row-btn.active:hov
 /* 3D Table Wrapper & Clean Elevation */
 .cat-table-wrapper {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   border-radius: 12px;
   border: 1px solid rgba(226, 232, 240, 0.9);
   box-shadow:
@@ -20257,7 +20260,8 @@ body.theme-super-admin .app-sidebar.icon-only .sidebar-action-row-btn.active:hov
 
 .cat-data-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   font-size: 0.85rem;
 }
 
@@ -20282,8 +20286,39 @@ body.theme-super-admin .app-sidebar.icon-only .sidebar-action-row-btn.active:hov
   transition: background 0.18s ease;
 }
 
+/* Lock First Column (Category Name & Hierarchy) during horizontal scroll */
+.cat-data-table th:first-child,
+.cat-data-table td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 6;
+  background: #ffffff;
+  border-right: 1px solid #e2e8f0;
+  box-shadow: 3px 0 8px rgba(15, 23, 42, 0.06);
+}
+
+.cat-data-table thead th:first-child {
+  z-index: 16;
+  background: #f1f5f9;
+}
+
 .cat-data-table tr:hover td {
   background: linear-gradient(90deg, rgba(238, 242, 255, 0.45) 0%, rgba(248, 250, 252, 0.8) 100%);
+}
+
+.cat-data-table tr:hover td:first-child {
+  background: #f8fafc;
+}
+
+@media (max-width: 768px) {
+  .cat-data-table th:first-child,
+  .cat-data-table td:first-child {
+    min-width: 145px;
+    max-width: 175px;
+    white-space: normal;
+    word-break: break-word;
+    padding: 0.7rem 0.75rem;
+  }
 }
 
 .cat-data-table tr.row-inactive td {
