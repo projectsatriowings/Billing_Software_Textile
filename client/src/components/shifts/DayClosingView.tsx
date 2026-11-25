@@ -180,7 +180,19 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
   onNavigateToNotifications,
 }) => {
   // Navigation: Clean, dedicated tabs
-  const [activeTab, setActiveTab] = useState<TabType>('closing');
+  const [activeTab, setActiveTabRaw] = useState<TabType>(() => {
+    try {
+      const saved = localStorage.getItem('day_closing_active_tab');
+      if (saved && ['closing', 'breakdown', 'comparison', 'analytics', 'compliance', 'history'].includes(saved)) {
+        return saved as TabType;
+      }
+    } catch { }
+    return 'closing';
+  });
+  const setActiveTab = (tab: TabType) => {
+    setActiveTabRaw(tab);
+    try { localStorage.setItem('day_closing_active_tab', tab); } catch { }
+  };
 
   // Branch & Filter states
   const [selectedBranchId, setSelectedBranchId] = useState<string>(
