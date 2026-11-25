@@ -361,27 +361,27 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
     },
     ...(isAuthorizedForCost
       ? [
-          {
-            header: 'Unit Cost',
-            minWidth: '85px',
-            align: 'right' as const,
-            renderSkeleton: () => (
-              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <Skeleton width={75} height={12} radius={4} />
-              </div>
-            ),
-          },
-          {
-            header: 'Total Value',
-            minWidth: '95px',
-            align: 'right' as const,
-            renderSkeleton: () => (
-              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <Skeleton width={85} height={12} radius={4} />
-              </div>
-            ),
-          },
-        ]
+        {
+          header: 'Unit Cost',
+          minWidth: '85px',
+          align: 'right' as const,
+          renderSkeleton: () => (
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Skeleton width={75} height={12} radius={4} />
+            </div>
+          ),
+        },
+        {
+          header: 'Total Value',
+          minWidth: '95px',
+          align: 'right' as const,
+          renderSkeleton: () => (
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Skeleton width={85} height={12} radius={4} />
+            </div>
+          ),
+        },
+      ]
       : []),
     {
       header: 'Supplier',
@@ -1099,8 +1099,8 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
             (stats?.negativeStockCount || 0) > 0
               ? { text: `${stats?.negativeStockCount} Neg`, variant: 'purple' }
               : outOfStockCount > 0
-              ? { text: 'Alert', variant: 'red' }
-              : { text: 'OK', variant: 'green' }
+                ? { text: 'Alert', variant: 'red' }
+                : { text: 'OK', variant: 'green' }
           }
           count={statsLoading ? <span className="skeleton-line" style={{ display: 'inline-block', width: '48px', height: '24px', borderRadius: '4px' }} /> : <AnimatedCounter value={outOfStockCount} triggerKey={outOfStockCount} />}
           countColor={outOfStockCount > 0 ? '#B91C1C' : '#0F172A'}
@@ -1501,23 +1501,22 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
                           <span>{catName}</span>
                         </span>
                         <span
-                          className={`status-pill ${
-                            status === 'negative_stock'
-                              ? 'purple'
-                              : status === 'out_of_stock'
+                          className={`status-pill ${status === 'negative_stock'
+                            ? 'purple'
+                            : status === 'out_of_stock'
                               ? 'red'
                               : status === 'low_stock'
-                              ? 'amber'
-                              : 'green'
-                          }`}
+                                ? 'amber'
+                                : 'green'
+                            }`}
                         >
                           {status === 'negative_stock'
                             ? 'Negative Stock'
                             : status === 'out_of_stock'
-                            ? 'Out of Stock'
-                            : status === 'low_stock'
-                            ? 'Low Stock'
-                            : 'In Stock'}
+                              ? 'Out of Stock'
+                              : status === 'low_stock'
+                                ? 'Low Stock'
+                                : 'In Stock'}
                         </span>
                       </div>
                     </div>
@@ -1809,23 +1808,22 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
                             const status = determineStockStatus(currentUnits, reorderUnits);
                             return (
                               <span
-                                className={`status-pill ${
-                                  status === 'negative_stock'
-                                    ? 'purple'
-                                    : status === 'out_of_stock'
+                                className={`status-pill ${status === 'negative_stock'
+                                  ? 'purple'
+                                  : status === 'out_of_stock'
                                     ? 'red'
                                     : status === 'low_stock'
-                                    ? 'amber'
-                                    : 'green'
-                                }`}
+                                      ? 'amber'
+                                      : 'green'
+                                  }`}
                               >
                                 {status === 'negative_stock'
                                   ? 'Negative Stock'
                                   : status === 'out_of_stock'
-                                  ? 'Out of Stock'
-                                  : status === 'low_stock'
-                                  ? 'Low Stock'
-                                  : 'In Stock'}
+                                    ? 'Out of Stock'
+                                    : status === 'low_stock'
+                                      ? 'Low Stock'
+                                      : 'In Stock'}
                               </span>
                             );
                           })()}
@@ -2034,7 +2032,7 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
       {/* SUB-VIEW 4: Replenishment Suggestions */}
       {activeSubTab === 'replenish' && (
         <div className="inv-subview-content">
-          
+
           {isReplenishRefreshing && (
             <div className="refresh-progress-bar-wrap">
               <div className="progress-line" />
@@ -2257,7 +2255,7 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
             </div>
           ) : showInsightsSkeleton ? (
             <div className={`insights-skeleton-wrapper ${isInsightsSlow ? 'slow-load-fade-mask' : ''}`} aria-busy="true" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginTop: '1rem' }}>
-              <div className="visually-hidden" aria-live="polite">Loading inventory intelligence and risk alerts…</div>
+
               {isInsightsSlow && (
                 <div className="slow-load-strip">
                   <div className="slow-load-strip-content">
@@ -2301,7 +2299,7 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
             </div>
           ) : (
             <div className={`insights-content-loaded ${isInsightsRefreshing ? 'table-refreshing-dim' : 'skeleton-fade-in'}`} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-              <div className="visually-hidden" aria-live="polite">Inventory intelligence loaded</div>
+
               {/* Row 1: Stock Alert & Days Remaining + Slow Moving Dead Stock */}
               <div className="insights-grid">
                 {/* 1. Stock Alert & Days Remaining */}
