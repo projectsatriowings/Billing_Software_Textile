@@ -1828,20 +1828,61 @@
   }
 
   .supplier-modern-table {
-    min-width: 620px;
+    min-width: 680px !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
   }
 
-  .col-sticky-supplier {
-    position: sticky;
-    left: 0;
-    z-index: 2;
+  .supplier-modern-table th:not(.col-sticky-supplier),
+  .supplier-modern-table td:not(.col-sticky-supplier) {
+    padding: 0.7rem 0.85rem !important;
+  }
+
+  .supplier-modern-table th.col-sticky-supplier,
+  .supplier-modern-table td.col-sticky-supplier {
+    position: sticky !important;
+    left: 0 !important;
+    z-index: 6 !important;
     background: #ffffff !important;
-    box-shadow: 2px 0 6px rgba(0, 0, 0, 0.05);
+    width: 155px !important;
+    min-width: 155px !important;
+    max-width: 165px !important;
+    padding: 0.7rem 0.65rem !important;
+    border-right: 1px solid #e2e8f0 !important;
+    box-shadow: 3px 0 8px rgba(15, 23, 42, 0.06) !important;
   }
 
-  thead th.col-sticky-supplier {
+  .supplier-modern-table thead th.col-sticky-supplier {
     background: #f8fafc !important;
-    z-index: 3;
+    z-index: 16 !important;
+  }
+
+  .supplier-modern-table tr:hover td.col-sticky-supplier {
+    background: #f8fafc !important;
+  }
+
+  .supplier-modern-table .supplier-cell-identity {
+    gap: 0.5rem !important;
+  }
+
+  .supplier-modern-table .supplier-avatar {
+    display: none !important;
+  }
+
+  .supplier-modern-table .supplier-full-name {
+    font-size: 0.8rem !important;
+    line-height: 1.25 !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+  }
+
+  .supplier-modern-table .supplier-address-snippet {
+    max-width: 135px !important;
+    font-size: 0.68rem !important;
   }
 
   /* Supplier Profile Drawer on mobile */

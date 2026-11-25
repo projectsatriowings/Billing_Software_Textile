@@ -831,17 +831,17 @@ export const SupplierDirectory: React.FC<SupplierDirectoryProps> = ({
         </div>
 
         {/* 3B. MODERN SUPPLIERS DATA TABLE */}
+        {viewMode === 'table' && (
+          <div className="supplier-scroll-hint">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="18 8 22 12 18 16" />
+              <polyline points="6 8 2 12 6 16" />
+              <line x1="2" y1="12" x2="22" y2="12" />
+            </svg>
+            <span>Swipe horizontally to view all columns</span>
+          </div>
+        )}
         <div className={`supplier-table-container ${viewMode === 'cards' ? 'mobile-hidden' : 'mobile-active'}`}>
-          {viewMode === 'table' && (
-            <div className="supplier-scroll-hint">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="18 8 22 12 18 16" />
-                <polyline points="6 8 2 12 6 16" />
-                <line x1="2" y1="12" x2="22" y2="12" />
-              </svg>
-              <span>Swipe horizontally to view all columns</span>
-            </div>
-          )}
           <table className="supplier-modern-table">
             <thead>
               <tr>
