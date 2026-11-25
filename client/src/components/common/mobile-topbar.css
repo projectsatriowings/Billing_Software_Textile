@@ -1,0 +1,356 @@
+/* ==========================================================================
+   NATIVE MOBILE APP BAR & APK SAFE-AREA LAYOUT (<= 900px)
+   Applies consistently across all themes & modules without altering desktop.
+   ========================================================================== */
+
+:root {
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --mobile-safe-top: env(safe-area-inset-top, 0px);
+}
+
+/* Android WebView / Capacitor / Standalone APK wrappers often draw edge-to-edge
+   under the system status bar while some WebViews report 0px for env().
+   Guarantee >= 34px clearance when running in APK/standalone mode. */
+html.apk-standalone-mode {
+  --mobile-safe-top: max(env(safe-area-inset-top, 0px), 34px);
+}
+
+/* Hidden on desktop where the classic desktop top-global-bar is rendered */
+.mobile-appbar-title,
+.mobile-context-strip {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  /* Edge-to-edge main canvas with 0 top padding so sticky bar fills behind status bar */
+  .main-content,
+  body.theme-manager .main-content,
+  .theme-manager .main-content,
+  body.theme-cashier .main-content,
+  .theme-cashier .main-content,
+  body.theme-super-admin .main-content,
+  .theme-super-admin .main-content {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    padding: 0 0.75rem calc(1.75rem + var(--safe-area-bottom, 0px)) 0.75rem !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Slide-out drawer clears phone status bar cleanly */
+  .app-sidebar,
+  body.theme-manager .app-sidebar,
+  .theme-manager .app-sidebar,
+  body.theme-cashier .app-sidebar,
+  .theme-cashier .app-sidebar,
+  body.theme-super-admin .app-sidebar,
+  .theme-super-admin .app-sidebar {
+    padding-top: calc(max(var(--mobile-safe-top, 0px), 14px) + 8px) !important;
+    padding-bottom: calc(1.75rem + var(--safe-area-bottom, 0px)) !important;
+  }
+
+  /* --------------------------------------------------------------------------
+     1. Sticky Native Mobile Top App Bar
+     -------------------------------------------------------------------------- */
+  .top-global-bar.mobile-sticky-appbar,
+  .top-global-bar.mobile-sticky-appbar.no-divider,
+  .top-global-bar.mobile-sticky-appbar.dashboard-top-bar,
+  div.app-container:is(.theme-cashier, .theme-manager) .top-global-bar.mobile-sticky-appbar,
+  body:is(.theme-cashier, .theme-manager) .top-global-bar.mobile-sticky-appbar,
+  :is(.theme-cashier, .theme-manager) .top-global-bar.mobile-sticky-appbar,
+  div.app-container:is(.theme-cashier, .theme-manager) .top-global-bar.mobile-sticky-appbar.dashboard-top-bar,
+  body:is(.theme-cashier, .theme-manager) .top-global-bar.mobile-sticky-appbar.dashboard-top-bar,
+  :is(.theme-cashier, .theme-manager) .top-global-bar.mobile-sticky-appbar.dashboard-top-bar {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 950 !important;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 10px !important;
+    width: calc(100% + 1.5rem) !important;
+    max-width: none !important;
+    margin: 0 -0.75rem 0.75rem -0.75rem !important;
+    padding: calc(var(--mobile-safe-top, 0px) + 10px) 0.75rem 10px 0.75rem !important;
+    background: var(--surface, #ffffff) !important;
+    background-color: var(--surface, #ffffff) !important;
+    border-bottom: 1px solid var(--border, #e2e8f0) !important;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05) !important;
+    overflow: visible !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Compact 38x38 icon-only Hamburger Menu button */
+  .mobile-sticky-appbar .mobile-header-menu-btn,
+  body.theme-manager .mobile-sticky-appbar .mobile-header-menu-btn,
+  body.theme-cashier .mobile-sticky-appbar .mobile-header-menu-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    padding: 0 !important;
+    gap: 0 !important;
+    border-radius: 11px !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* Single-line left-aligned Page Title inside sticky bar */
+  .mobile-appbar-title {
+    display: block !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    text-align: left !important;
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
+    font-size: 1.04rem !important;
+    font-weight: 800 !important;
+    line-height: 1.25 !important;
+    letter-spacing: -0.015em !important;
+    color: var(--text, var(--text-main, #0f172a)) !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  /* Right-aligned compact icons (Dev indicator, Notification Bell, User Avatar) */
+  .mobile-sticky-appbar .top-global-actions.mobile-appbar-actions {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 8px !important;
+    width: auto !important;
+    margin: 0 !important;
+    flex-shrink: 0 !important;
+  }
+
+  .mobile-sticky-appbar .top-notification-btn {
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    max-height: 38px !important;
+    border-radius: 11px !important;
+    border: 1px solid var(--border, #e2e8f0) !important;
+    background: #ffffff !important;
+  }
+
+  .mobile-sticky-appbar .notif-badge {
+    top: -4px !important;
+    right: -4px !important;
+    min-width: 18px !important;
+    height: 18px !important;
+    font-size: 0.65rem !important;
+    padding: 0 4px !important;
+    border: 2px solid var(--surface, #ffffff) !important;
+    box-sizing: border-box !important;
+  }
+
+  .mobile-sticky-appbar .top-user-chip {
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    min-height: 38px !important;
+    max-height: 38px !important;
+    padding: 0 !important;
+    border-radius: 11px !important;
+    justify-content: center !important;
+    border: 1px solid var(--border, #e2e8f0) !important;
+  }
+
+  .mobile-sticky-appbar .top-user-details {
+    display: none !important;
+  }
+
+  .mobile-sticky-appbar .top-user-avatar {
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    font-size: 12.5px !important;
+  }
+
+  /* Constrain Notification Popover neatly inside mobile viewport */
+  .mobile-sticky-appbar .top-notif-popover.bento-notif-popover {
+    position: fixed !important;
+    top: calc(var(--mobile-safe-top, 0px) + 60px) !important;
+    left: 10px !important;
+    right: 10px !important;
+    width: auto !important;
+    max-width: none !important;
+    max-height: calc(100dvh - var(--mobile-safe-top, 0px) - 76px) !important;
+    overflow-y: auto !important;
+    z-index: 1200 !important;
+  }
+
+  /* --------------------------------------------------------------------------
+     2. Scrollable Mobile Context Sub-Header (Below Sticky App Bar)
+     -------------------------------------------------------------------------- */
+  .mobile-context-strip {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.55rem !important;
+    width: 100% !important;
+    margin: 0 0 0.75rem 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .mobile-dash-greeting-card {
+    background: var(--surface, #ffffff) !important;
+    border: 1px solid var(--border, #e2e8f0) !important;
+    border-radius: 14px !important;
+    padding: 0.75rem 0.9rem !important;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04) !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+  }
+
+  .mobile-dash-greeting-card .header-greeting-title {
+    margin: 0 0 6px 0 !important;
+    font-size: 1.15rem !important;
+    font-weight: 800 !important;
+    line-height: 1.25 !important;
+    letter-spacing: -0.015em !important;
+    color: var(--text, var(--text-main, #0f172a)) !important;
+  }
+
+  .mobile-dash-greeting-card .header-meta-line {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    gap: 5px 6px !important;
+    font-size: 0.74rem !important;
+    line-height: 1.35 !important;
+    color: var(--text-muted, #64748b) !important;
+  }
+
+  .mobile-dash-greeting-card .header-meta-item {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    padding: 2px 8px !important;
+    border-radius: 6px !important;
+    background: rgba(0, 0, 0, 0.04) !important;
+    font-size: 0.73rem !important;
+    white-space: nowrap !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  /* Slim Full-Width Overdue Alert Pill Strip on Mobile */
+  .mobile-overdue-strip-btn {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+    width: 100% !important;
+    padding: 8px 12px !important;
+    border-radius: 11px !important;
+    background: #fef2f2 !important;
+    border: 1px solid #fca5a5 !important;
+    color: #991b1b !important;
+    font-size: 0.77rem !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+    box-sizing: border-box !important;
+    animation: topOverdueGlowBlink 1.8s infinite ease-in-out !important;
+  }
+
+  .mobile-overdue-strip-left {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    min-width: 0 !important;
+  }
+
+  .mobile-overdue-strip-cta {
+    font-size: 0.72rem !important;
+    font-weight: 800 !important;
+    padding: 2px 8px !important;
+    border-radius: 999px !important;
+    background: rgba(185, 28, 28, 0.12) !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+  }
+
+  .mobile-pos-badges-strip {
+    display: flex !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+    width: 100% !important;
+  }
+
+  .mobile-pos-badges-strip .top-pos-bento-badge {
+    padding: 0.35rem 0.65rem !important;
+  }
+
+  /* --------------------------------------------------------------------------
+     3. Normalized Top Spacing & Content Header Cleanup on Mobile
+     -------------------------------------------------------------------------- */
+  .stage-business-bar-hidden .cat-bento-module-wrapper,
+  .stage-business-bar-hidden .inventory-module-wrapper,
+  .stage-business-bar-hidden .customer-dir-root,
+  .stage-business-bar-hidden .supplier-dir-root,
+  .stage-business-bar-hidden > div > .kpi-grid:first-child {
+    padding-top: 2px !important;
+  }
+
+  .stage-business-bar-hidden > .card {
+    margin-top: 4px !important;
+  }
+
+  .content-top-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.5rem !important;
+    padding-bottom: 0.75rem !important;
+    margin-bottom: 0.85rem !important;
+  }
+
+  .content-page-subtitle {
+    margin-left: 0 !important;
+    font-size: 0.8rem !important;
+  }
+
+  /* Modals respect safe-area top in APKs */
+  .modal-overlay {
+    padding-top: calc(var(--mobile-safe-top, 0px) + 8px) !important;
+    padding-bottom: calc(var(--safe-area-bottom, 0px) + 8px) !important;
+  }
+}
+
+/* Extra Compact Phones (<= 420px) */
+@media (max-width: 420px) {
+  .main-content,
+  body.theme-manager .main-content,
+  .theme-manager .main-content,
+  body.theme-cashier .main-content,
+  .theme-cashier .main-content,
+  body.theme-super-admin .main-content,
+  .theme-super-admin .main-content {
+    padding: 0 0.55rem calc(1.5rem + var(--safe-area-bottom, 0px)) 0.55rem !important;
+  }
+
+  .top-global-bar.mobile-sticky-appbar,
+  .top-global-bar.mobile-sticky-appbar.no-divider,
+  .top-global-bar.mobile-sticky-appbar.dashboard-top-bar,
+  div.app-container:is(.theme-cashier, .theme-manager) .top-global-bar.mobile-sticky-appbar,
+  body:is(.theme-cashier, .theme-manager) .top-global-bar.mobile-sticky-appbar,
+  :is(.theme-cashier, .theme-manager) .top-global-bar.mobile-sticky-appbar {
+    width: calc(100% + 1.1rem) !important;
+    margin: 0 -0.55rem 0.65rem -0.55rem !important;
+    padding: calc(var(--mobile-safe-top, 0px) + 10px) 0.6rem 10px 0.6rem !important;
+  }
+
+  .mobile-appbar-title {
+    font-size: 0.98rem !important;
+  }
+}

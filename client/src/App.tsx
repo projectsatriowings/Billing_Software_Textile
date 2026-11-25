@@ -832,6 +832,42 @@ export function App() {
     return '';
   })();
 
+  const mobileHeaderTitle = (() => {
+    if (displayTab === 'dashboard' || activeTab === 'dashboard') return 'Dashboard';
+    if (displayTab === 'pos' || activeTab === 'pos') return 'Billing POS';
+    if ((displayTab === 'invoices' || activeTab === 'invoices') && user?.role === 'cashier') return 'Recent Bills';
+    if ((displayTab === 'shifts' || activeTab === 'shifts') && user?.role === 'cashier') return 'My Cashier Shift';
+    if (displayTab === 'inventory' || activeTab === 'inventory') return 'Inventory Hub';
+    if (displayTab === 'product-movement' || activeTab === 'product-movement') return 'Product Movement';
+    if (displayTab === 'stock-transfer' || activeTab === 'stock-transfer') return 'Stock Transfer';
+    if (displayTab === 'wholesale' || activeTab === 'wholesale') return 'Wholesale Billing';
+    if (displayTab === 'sales-analysis' || activeTab === 'sales-analysis') return 'Sales Analysis';
+    if (displayTab === 'user-management' || activeTab === 'user-management') return 'User Management';
+    if (displayTab === 'settings' || activeTab === 'settings') return 'Settings';
+    return currentHeaderTitle || shop?.name || 'Dashboard';
+  })();
+
+  const [isMobileViewport, setIsMobileViewport] = useState<boolean>(() => {
+    try {
+      return typeof window !== 'undefined' && window.matchMedia('(max-width: 900px)').matches;
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const mql = window.matchMedia('(max-width: 900px)');
+    const handleChange = (e: MediaQueryListEvent) => setIsMobileViewport(e.matches);
+    setIsMobileViewport(mql.matches);
+    if (mql.addEventListener) {
+      mql.addEventListener('change', handleChange);
+      return () => mql.removeEventListener('change', handleChange);
+    }
+    mql.addListener(handleChange);
+    return () => mql.removeListener(handleChange);
+  }, []);
+
   // Synchronize browser tab title
   useEffect(() => {
     const appName = shop?.name || 'SKS Super market';
@@ -9315,7 +9351,7 @@ export function App() {
         {/* Main Body */}
         <main className="main-content">
           {/* Top Global Bar Matching Image 2 */}
-          <div className={`top-global-bar ${hideBusinessBar ? 'no-divider' : ''} ${displayTab === 'dashboard' ? 'dashboard-top-bar' : ''}`}>
+          <div className={`top-global-bar ${isMobileViewport ? 'mobile-sticky-appbar' : ''} ${hideBusinessBar ? 'no-divider' : ''} ${displayTab === 'dashboard' ? 'dashboard-top-bar' : ''}`}>
             {/* Mobile Header Menu Hamburger Toggle Button (visible on screens <= 900px) */}
             <button
               type="button"
@@ -9324,10 +9360,14 @@ export function App() {
               aria-label="Toggle navigation menu"
               title="Open Navigation Menu"
             >
-              <Menu size={18} />
-              <span className="mobile-header-menu-text">Menu</span>
+              <Menu size={isMobileViewport ? 20 : 18} />
+              {!isMobileViewport && <span className="mobile-header-menu-text">Menu</span>}
             </button>
-            {displayTab === 'pos' || activeTab === 'pos' ? (
+            {isMobileViewport ? (
+              <h1 className="mobile-appbar-title" title={mobileHeaderTitle}>
+                {mobileHeaderTitle}
+              </h1>
+            ) : displayTab === 'pos' || activeTab === 'pos' ? (
               <div className="top-pos-header-left">
                 <div className="top-pos-bento-badge top-pos-branch-badge" title={`Store Branch: ${currentBranchName} (${currentBranchCode})`}>
                   <div className="top-pos-badge-icon branch">
@@ -9490,9 +9530,9 @@ export function App() {
             ) : (
               <div className="top-header-title-spacer" />
             )}
-            <div className="top-global-actions">
+            <div className={`top-global-actions ${isMobileViewport ? 'mobile-appbar-actions' : ''}`}>
               {/* Overdue Day Closing Blinking Alert Pill */}
-              {topOverdueClosing?.isOverdue && (
+              {!isMobileViewport && topOverdueClosing?.isOverdue && (
                 <button
                   type="button"
                   className="top-overdue-closing-btn blink-alert"
@@ -9504,7 +9544,7 @@ export function App() {
                 </button>
               )}
 
-              {(user.role === 'owner' || user.role === 'admin' || String(user.role).toUpperCase() === 'SUPER_ADMIN') && branches.length > 0 && (
+              {!isMobileViewport && (user.role === 'owner' || user.role === 'admin' || String(user.role).toUpperCase() === 'SUPER_ADMIN') && branches.length > 0 && (
                 <BranchSelector
                   branches={branches}
                   selectedBranch={selectedBranchScope}
@@ -10218,12 +10258,115 @@ export function App() {
             </div>
           </div>
 
+          {/* Scrollable Mobile Context Sub-Header (Greeting, Branch Switcher, POS Counter, Overdue Alert) */}
+          {isMobileViewport && (() => {
+            const isDashView = displayTab === 'dashboard' && !!user;
+            const isPosView = displayTab === 'pos' || activeTab === 'pos';
+            const isCashierSubView = ((displayTab === 'invoices' || activeTab === 'invoices') || (displayTab === 'shifts' || activeTab === 'shifts')) && user?.role === 'cashier';
+            const showMobileBranch = (user.role === 'owner' || user.role === 'admin' || String(user.role).toUpperCase() === 'SUPER_ADMIN') && branches.length > 0;
+            const showMobileOverdue = !!topOverdueClosing?.isOverdue && displayTab !== 'dashboard';
+            if (!isDashView && !isPosView && !isCashierSubView && !showMobileBranch && !showMobileOverdue) {
+              return null;
+            }
+            return (
+              <div className="mobile-context-strip">
+                {isDashView && (
+                  <div className="mobile-dash-greeting-card">
+                    <h2 className="header-greeting-title">
+                      {dashboardGreeting}, {userFirstName}
+                    </h2>
+                    <div className="header-meta-line">
+                      <span className="header-meta-item header-shop-name">{shop?.name || 'Shree Krishna Supermarket & Retail'}</span>
+                      <span className="header-meta-item header-gstin-wrap">
+                        <span className="header-gstin-label">GSTIN </span>
+                        <span className="header-gstin-val">{shop?.gstin || '33AAAAA0000A1Z9'}</span>
+                      </span>
+                      <span className="header-meta-item header-date-wrap">
+                        <CalendarIcon size={13} className="header-calendar-icon" />
+                        <span>
+                          {new Date().toLocaleDateString('en-GB', {
+                            weekday: 'short',
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                            timeZone: 'Asia/Kolkata',
+                          })}
+                        </span>
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {(isPosView || isCashierSubView) && (
+                  <div className="mobile-pos-badges-strip">
+                    <div className="top-pos-bento-badge top-pos-branch-badge" title={`Store Branch: ${currentBranchName} (${currentBranchCode})`}>
+                      <div className="top-pos-badge-icon branch">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                          <circle cx="12" cy="10" r="3" />
+                        </svg>
+                      </div>
+                      <div className="top-pos-badge-text">
+                        <span className="top-pos-badge-label">Branch</span>
+                        <div className="top-pos-badge-val-row">
+                          <span className="top-pos-badge-val">{currentBranchName}</span>
+                          <span className="top-pos-code-tag">{currentBranchCode}</span>
+                        </div>
+                      </div>
+                    </div>
+                    {renderPosCounterBadge()}
+                    {isPosView && (
+                      <button
+                        type="button"
+                        className={`top-pos-cfd-btn ${isCfdConnected ? 'active' : ''}`}
+                        onClick={() => setShowCfdModal(true)}
+                        title="Open Customer-Facing Display"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+                          <line x1="8" y1="21" x2="16" y2="21" />
+                          <line x1="12" y1="17" x2="12" y2="21" />
+                        </svg>
+                        <span>Customer Screen</span>
+                        {isCfdConnected && <span className="bento-cfd-dot" />}
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {showMobileBranch && (
+                  <BranchSelector
+                    branches={branches}
+                    selectedBranch={selectedBranchScope}
+                    onSelectBranch={handleGlobalBranchChange}
+                    canAccessOverall={user.role === 'owner' || user.role === 'admin' || String(user.role).toUpperCase() === 'SUPER_ADMIN'}
+                  />
+                )}
+
+                {showMobileOverdue && (
+                  <button
+                    type="button"
+                    className="mobile-overdue-strip-btn"
+                    onClick={() => setActiveTab('day-closing')}
+                  >
+                    <span className="mobile-overdue-strip-left">
+                      <AlertTriangleIcon size={15} />
+                      <span>Closing Overdue ({topOverdueClosing.expectedClosingTime})</span>
+                    </span>
+                    <span className="mobile-overdue-strip-cta">Reconcile &rarr;</span>
+                  </button>
+                )}
+              </div>
+            );
+          })()}
+
           {/* View Transition Stage (SPA Bento Transition) */}
           <div key={displayTab} className={`app-view-stage ${hideBusinessBar ? 'stage-business-bar-hidden' : ''}`}>
             {/* Tab Headers */}
             {!hideBusinessBar && displayTab !== 'pos' && displayTab !== 'shifts' && displayTab !== 'sales-analysis' && displayTab !== 'dashboard' && displayTab !== 'stock-transfer' && displayTab !== 'wholesale' && activeTab !== 'wholesale' && displayTab !== 'user-management' && activeTab !== 'user-management' && (
               <header className="content-top-header">
                 <div className="content-header-left">
+                  {!isMobileViewport && (
                   <h1 className="content-page-title">
                     {displayTab === 'items' && 'Product & Stock Catalog'}
                     {displayTab === 'purchases' && 'Purchases & Stock Inward'}
@@ -10245,6 +10388,7 @@ export function App() {
                     {displayTab === 'gst-import-export' && 'GST Import & Export Hub'}
                     {displayTab === 'gst-filing-history' && 'GST Returns & Audit Filing History'}
                   </h1>
+                  )}
                   <span className="content-page-subtitle">
                     {displayTab === 'items' && 'Manage your catalog, stock balances, tax rates, and barcodes'}
                     {displayTab === 'purchases' && 'Record supplier invoices, inward goods stock into ledger, and track purchase GST'}
