@@ -771,7 +771,7 @@ export function ExpensesView({
         <div className="expense-datebar-tier">
           {/* Preset Buttons */}
           <div className="expense-preset-scroll">
-            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em', marginRight: '0.2rem', whiteSpace: 'nowrap' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em', marginRight: '0.2rem', whiteSpace: 'nowrap', flexShrink: 0 }}>
               Period:
             </span>
             {([
