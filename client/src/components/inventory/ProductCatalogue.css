@@ -290,6 +290,52 @@
 /* Product Catalog Table Wrapper */
 .product-catalog-table-wrapper {
   width: 100%;
+  max-width: 100%;
+  overflow: auto !important;
+  max-height: calc(100vh - 260px);
+  -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
+}
+
+.product-catalog-table-wrapper .table-scroll-y {
+  max-height: none !important;
+  overflow: visible !important;
+  width: max-content !important;
+  min-width: 100% !important;
+}
+
+.product-catalog-table-wrapper .data-table {
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+}
+
+/* Lock First Column (Image) while scrolling horizontally on all viewports */
+.product-catalog-table-wrapper th.col-sticky-img,
+.product-catalog-table-wrapper td.col-sticky-img {
+  position: sticky !important;
+  left: 0 !important;
+  z-index: 6 !important;
+  background: #ffffff !important;
+  border-right: 1px solid #e2e8f0 !important;
+  box-shadow: 3px 0 8px rgba(15, 23, 42, 0.06) !important;
+}
+
+.product-catalog-table-wrapper tbody tr:hover td.col-sticky-img {
+  background: #faf9ff !important;
+}
+
+.product-catalog-table-wrapper thead th {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 12 !important;
+  background: #f8fafc !important;
+}
+
+.product-catalog-table-wrapper thead th.col-sticky-img {
+  z-index: 20 !important;
+  background: #f8fafc !important;
+  border-right: 1px solid #e2e8f0 !important;
+  box-shadow: 3px 0 8px rgba(15, 23, 42, 0.06) !important;
 }
 
 /* Mobile & Small Screens Media Query */
@@ -323,41 +369,23 @@
     margin-top: 0.65rem !important;
   }
 
-  /* Sticky Columns for Table View on Mobile */
-  .product-catalog-table-wrapper th.col-sticky-img,
-  .product-catalog-table-wrapper td.col-sticky-img {
-    position: sticky !important;
-    left: 0 !important;
-    z-index: 5 !important;
-    background: #ffffff !important;
-  }
-
-  .product-catalog-table-wrapper th.col-sticky-name,
-  .product-catalog-table-wrapper td.col-sticky-name {
-    position: sticky !important;
-    left: 68px !important;
-    z-index: 5 !important;
-    background: #ffffff !important;
-    box-shadow: 2px 0 6px rgba(0, 0, 0, 0.06) !important;
-  }
-
-  .product-catalog-table-wrapper thead th.col-sticky-img,
-  .product-catalog-table-wrapper thead th.col-sticky-name {
-    background: #f8fafc !important;
-    z-index: 15 !important;
-  }
-
-  .product-catalog-table-wrapper th.col-sticky-actions,
+  /* Keep ONLY the first column (Image) locked horizontally on mobile so remaining
+     columns have plenty of space to scroll smoothly without overlap. */
+  .product-catalog-table-wrapper td.col-sticky-name,
   .product-catalog-table-wrapper td.col-sticky-actions {
-    position: sticky !important;
-    right: 0 !important;
-    z-index: 5 !important;
-    background: #ffffff !important;
-    box-shadow: -2px 0 6px rgba(0, 0, 0, 0.06) !important;
+    position: static !important;
+    left: auto !important;
+    right: auto !important;
+    box-shadow: none !important;
   }
 
+  .product-catalog-table-wrapper thead th.col-sticky-name,
   .product-catalog-table-wrapper thead th.col-sticky-actions {
-    background: #f8fafc !important;
-    z-index: 15 !important;
+    position: sticky !important;
+    top: 0 !important;
+    left: auto !important;
+    right: auto !important;
+    z-index: 12 !important;
+    box-shadow: none !important;
   }
 }

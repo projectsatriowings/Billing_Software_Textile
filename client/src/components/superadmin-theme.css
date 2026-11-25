@@ -2688,8 +2688,8 @@ div.app-container.theme-super-admin .promo-root {
   --primary-soft: #F3EDF3 !important;
   --primary-border: #DDD1DD !important;
   --primary-glow: rgba(73, 54, 74, 0.25) !important;
-  --page-bg: #FAF6F8 !important;
-  --promo-bg-page: #FAF6F8 !important;
+  --page-bg: transparent !important;
+  --promo-bg-page: transparent !important;
   --card-border: #DDD1DD !important;
   --promo-border: #DDD1DD !important;
   --promo-border-input: #DDD1DD !important;
@@ -2703,4 +2703,13 @@ div.app-container.theme-super-admin .promo-root {
   --promo-green-tint: #F3EDF3 !important;
   --promo-green-text: #49364A !important;
   --promo-bg-chip: #F3EDF3 !important;
+}
+
+.theme-super-admin .promo-page-wrapper,
+body.theme-super-admin .promo-page-wrapper,
+div.app-container.theme-super-admin .promo-page-wrapper {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }

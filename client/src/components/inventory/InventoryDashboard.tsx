@@ -2083,7 +2083,7 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
               <table className="inventory-data-table replenishment-table">
                 <thead>
                   <tr>
-                    <th style={{ width: '64px', minWidth: '64px', textAlign: 'center' }}>Image</th>
+                    <th style={{ width: '64px', minWidth: '64px', textAlign: 'center' }} className="col-sticky-img">Image</th>
                     <th>Product & Identifiers</th>
                     <th style={{ minWidth: '130px', textAlign: 'left', whiteSpace: 'nowrap' }}>Branch</th>
                     <th style={{ minWidth: '140px', width: '150px', textAlign: 'left', whiteSpace: 'nowrap' }}>Category</th>

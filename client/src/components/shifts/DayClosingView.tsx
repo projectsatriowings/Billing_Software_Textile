@@ -3691,7 +3691,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
           ) : complianceData ? (
             <>
               {/* Compliance KPI summary */}
-              <div className="fin-kpi-grid">
+              <div className="financial-kpi-grid compliance-kpi-grid">
                 <div className="fin-kpi-card blue">
                   <span className="fin-kpi-title">Expected Closing Time</span>
                   <div className="fin-kpi-val" style={{ fontSize: '1.4rem' }}>{complianceData.expectedClosingTime}</div>
@@ -3730,23 +3730,13 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
               </div>
 
               {/* Action Banner: Send Reminder */}
-              <div style={{
-                background: '#ffffff',
-                border: '1px solid #e2e8f0',
-                borderRadius: '12px',
-                padding: '16px 20px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}>
-                <div>
-                  <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: '#0f172a' }}>
-                    Cashier Closing Reminders & Alerts
-                  </h3>
-                  <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>
+              <div className="compliance-action-banner bento-card-3d">
+                <div className="compliance-action-banner-text">
+                  <h3>Cashier Closing Reminders & Alerts</h3>
+                  <p>
                     Send in-app reminder notification to all pending cashiers to seal their registers.
                     {complianceData.lastReminderSentAt && (
-                      <span style={{ marginLeft: '8px', color: 'var(--dc-primary)', fontWeight: 600 }}>
+                      <span className="compliance-last-sent-chip">
                         (Last sent: {new Date(complianceData.lastReminderSentAt).toLocaleTimeString()} - {complianceData.lastReminderType})
                       </span>
                     )}
@@ -3755,16 +3745,15 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                 <button
                   onClick={() => handleSendReminder(null)}
                   disabled={sendingReminder}
-                  className="btn-approve"
-                  style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+                  className="btn-approve compliance-reminder-btn"
                 >
                   <ClockIcon size={15} />
-                  {sendingReminder ? 'Sending...' : 'Send Reminder to All'}
+                  <span>{sendingReminder ? 'Sending...' : 'Send Reminder to All'}</span>
                 </button>
               </div>
 
               {/* Two columns: Register Compliance Matrix (left 65%) and Schedule Settings Form (right 35%) */}
-              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.25rem' }}>
+              <div className="compliance-layout-grid">
                 {/* Cashier Register Status Grid */}
                 <div className="day-closing-card">
                   <div className="day-closing-card-header">
@@ -3845,7 +3834,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                     </div>
                   </div>
 
-                  <form onSubmit={handleSaveSchedule} style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  <form onSubmit={handleSaveSchedule} className="compliance-schedule-form">
                     <div>
                       <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
                         Expected Closing Time (24h)

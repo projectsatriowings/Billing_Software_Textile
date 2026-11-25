@@ -1479,7 +1479,6 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                       Created By
                     </th>
                     <th
-                      className="sticky-col-right"
                       style={{
                         padding: '0.85rem 1rem',
                         borderBottom: '1px solid #e2e8f0',
@@ -1542,7 +1541,7 @@ export const StockTransferView: React.FC<StockTransferViewProps> = ({
                         <td style={{ padding: '0.9rem 1rem', color: '#475569' }}>
                           {trf.requestedByName || 'Staff'}
                         </td>
-                        <td className="sticky-col-right" style={{ padding: '0.9rem 1rem', textAlign: 'right' }}>
+                        <td style={{ padding: '0.9rem 1rem', textAlign: 'right' }}>
                           {renderActionButtons(trf, false)}
                         </td>
                       </tr>

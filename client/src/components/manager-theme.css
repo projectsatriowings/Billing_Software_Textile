@@ -496,6 +496,7 @@ body.theme-manager .btn-loyalty-rules,
   background: #F5ECF0 !important;
   border: 1.5px solid #D9C8D0 !important;
   color: #653B4B !important;
+  white-space: nowrap !important;
 }
 
 body.theme-manager .btn-loyalty-rules:hover,
@@ -511,6 +512,12 @@ body.theme-manager .loyalty-rule-badge,
 .theme-manager .loyalty-rule-badge {
   background: #653B4B !important;
   color: #FFFFFF !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  border-radius: 9999px !important;
+  line-height: 1.3 !important;
 }
 
 body.theme-manager .customer-loyalty-pill,
@@ -1919,8 +1926,8 @@ div.app-container.theme-manager .promo-root {
   --primary-soft: #F5ECF0 !important;
   --primary-border: #E8D7DF !important;
   --primary-glow: rgba(101, 59, 75, 0.25) !important;
-  --page-bg: #FAF6F8 !important;
-  --promo-bg-page: #FAF6F8 !important;
+  --page-bg: transparent !important;
+  --promo-bg-page: transparent !important;
   --card-border: #E8D7DF !important;
   --promo-border: #E8D7DF !important;
   --promo-border-input: #E8D7DF !important;
@@ -1934,6 +1941,15 @@ div.app-container.theme-manager .promo-root {
   --promo-green-tint: #F5ECF0 !important;
   --promo-green-text: #653B4B !important;
   --promo-bg-chip: #F5ECF0 !important;
+}
+
+.theme-manager .promo-page-wrapper,
+body.theme-manager .promo-page-wrapper,
+div.app-container.theme-manager .promo-page-wrapper {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 
