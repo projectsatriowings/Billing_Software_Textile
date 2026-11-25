@@ -16,13 +16,12 @@ const config: CapacitorConfig = {
   },
   plugins: {
     SystemBars: {
-      insetsHandling: 'css',
-      initialViewportFitValueHint: 'cover',
-      style: 'DARK',
+      insetsHandling: 'disable',
     },
     StatusBar: {
+      overlaysWebView: false,
       style: 'DARK',
-      backgroundColor: '#6D28D9',
+      backgroundColor: '#49364A',
     },
     SplashScreen: {
       launchShowDuration: 2000,
