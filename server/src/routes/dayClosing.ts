@@ -15,6 +15,23 @@ function calcGrowth(current: number, previous: number): number {
   return Math.round(pct * 10) / 10;
 }
 
+// Helper to resolve canonical branch IDs and branch codes for robust branch scoping
+async function getBranchIds(db: Queryable, tenantId: string, rawBranchId?: string | null): Promise<string[] | null> {
+  if (!rawBranchId || rawBranchId === 'all') return null;
+  const br = await db.one<any>(
+    'SELECT id, code FROM branches WHERE tenant_id = ? AND (id = ? OR UPPER(code) = UPPER(?)) LIMIT 1',
+    [tenantId, rawBranchId, rawBranchId],
+  );
+  if (br) {
+    const set = new Set<string>();
+    if (br.id) set.add(br.id);
+    if (br.code) set.add(br.code);
+    set.add(rawBranchId);
+    return Array.from(set);
+  }
+  return [rawBranchId];
+}
+
 // ============================================================================
 // SMART CLOSING AUDIT & DETECTOR ENGINE
 // ============================================================================
@@ -1938,7 +1955,12 @@ export function registerDayClosing(r: Router) {
     const scope = await resolveBranchScope(ctx);
     const todayStr = new Date().toISOString().slice(0, 10);
     const currentDate = String(ctx.query.date || todayStr).trim();
-    const branchId = (!scope.isSuperAdminAll && scope.branchId) ? scope.branchId : String(ctx.query.branchId || 'MAIN').trim();
+    const rawBranchId = (!scope.isSuperAdminAll && scope.branchId) ? scope.branchId : String(ctx.query.branchId || 'MAIN').trim();
+    const branchIds = await getBranchIds(ctx.db, tenantId, rawBranchId);
+    const branchFilter = (branchIds && branchIds.length > 0) ? ` AND branch_id IN (${branchIds.map(() => '?').join(',')})` : '';
+    const branchParams = (branchIds && branchIds.length > 0) ? branchIds : [];
+    const iBranchFilter = (branchIds && branchIds.length > 0) ? ` AND i.branch_id IN (${branchIds.map(() => '?').join(',')})` : '';
+    const iBranchParams = (branchIds && branchIds.length > 0) ? branchIds : [];
 
     // Helper to calculate standard single-day metrics
     async function getDayMetrics(dateStr: string) {
@@ -1949,8 +1971,9 @@ export function registerDayClosing(r: Router) {
           COALESCE(SUM(discount_minor), 0)::bigint AS discounts_minor,
           COALESCE(SUM(cgst_minor + sgst_minor + igst_minor), 0)::bigint AS gst_minor
          FROM invoices
-         WHERE tenant_id = ? AND branch_id = ? AND bdate = ? AND status = 'posted' AND kind = 'sale'`,
-        [tenantId, branchId, dateStr],
+         WHERE tenant_id = ? AND bdate = ? AND status = 'posted' AND kind = 'sale'
+           ${branchFilter}`,
+        [tenantId, dateStr, ...branchParams],
       );
 
       const returns = await ctx.db.one<any>(
@@ -1958,29 +1981,33 @@ export function registerDayClosing(r: Router) {
           COUNT(*)::int AS returns_count,
           COALESCE(SUM(total_minor), 0)::bigint AS returns_minor
          FROM invoices
-         WHERE tenant_id = ? AND branch_id = ? AND bdate = ? AND status = 'posted' AND kind = 'credit_note'`,
-        [tenantId, branchId, dateStr],
+         WHERE tenant_id = ? AND bdate = ? AND status = 'posted' AND (kind = 'credit_note' OR kind = 'return')
+           ${branchFilter}`,
+        [tenantId, dateStr, ...branchParams],
       );
 
       const exp = await ctx.db.one<any>(
         `SELECT COALESCE(SUM(total_minor), 0)::bigint AS expenses_minor
-         FROM expenses WHERE tenant_id = ? AND branch_id = ? AND expense_date = ? AND status = 'posted'`,
-        [tenantId, branchId, dateStr],
+         FROM expenses WHERE tenant_id = ? AND expense_date = ? AND status = 'posted'
+           ${branchFilter}`,
+        [tenantId, dateStr, ...branchParams],
       );
 
       const cogsRow = await ctx.db.one<any>(
         `SELECT COALESCE(SUM(il.qty_milli * COALESCE(NULLIF(il.cost_minor, 0), it.cost_minor, 0) / 1000), 0)::bigint AS cogs
          FROM invoice_lines il JOIN invoices i ON i.id = il.invoice_id LEFT JOIN items it ON it.id = il.item_id
-         WHERE i.tenant_id = ? AND i.branch_id = ? AND i.bdate = ? AND i.kind = 'sale' AND i.status = 'posted'`,
-        [tenantId, branchId, dateStr],
+         WHERE i.tenant_id = ? AND i.bdate = ? AND i.kind = 'sale' AND i.status = 'posted'
+           ${iBranchFilter}`,
+        [tenantId, dateStr, ...iBranchParams],
       );
 
       const retCogsRow = await ctx.db.one<any>(
         `SELECT COALESCE(SUM(il.qty_milli * COALESCE(NULLIF(il.cost_minor, 0), it.cost_minor, 0) / 1000), 0)::bigint AS cogs
          FROM invoice_lines il JOIN invoices i ON i.id = il.invoice_id LEFT JOIN items it ON it.id = il.item_id
-         WHERE i.tenant_id = ? AND i.branch_id = ? AND i.bdate = ? AND i.kind = 'credit_note' AND i.status = 'posted'
-           AND (il.item_condition IS NULL OR il.item_condition = 'resellable')`,
-        [tenantId, branchId, dateStr],
+         WHERE i.tenant_id = ? AND i.bdate = ? AND (i.kind = 'credit_note' OR i.kind = 'return') AND i.status = 'posted'
+           AND (il.item_condition IS NULL OR il.item_condition = 'resellable')
+           ${iBranchFilter}`,
+        [tenantId, dateStr, ...iBranchParams],
       );
 
       const grossSales = Number(sales?.grossSalesMinor ?? sales?.gross_sales_minor ?? 0);
@@ -2000,6 +2027,7 @@ export function registerDayClosing(r: Router) {
       return {
         grossSalesMinor: grossSales,
         discountsMinor: discounts,
+        returnsMinor: returnsTotal,
         returnsTotalMinor: returnsTotal,
         netSalesMinor: netSales,
         gstCollectedMinor: gst,
@@ -2015,9 +2043,10 @@ export function registerDayClosing(r: Router) {
     // Find the previous business day with transactions, or default to yesterday
     const prevDayRow = await ctx.db.one<any>(
       `SELECT DISTINCT bdate FROM invoices
-       WHERE tenant_id = ? AND branch_id = ? AND bdate < ? AND status = 'posted'
+       WHERE tenant_id = ? AND bdate < ? AND status = 'posted'
+         ${branchFilter}
        ORDER BY bdate DESC LIMIT 1`,
-      [tenantId, branchId, currentDate],
+      [tenantId, currentDate, ...branchParams],
     );
 
     // If no previous date found in DB, use calendar yesterday
@@ -2032,10 +2061,12 @@ export function registerDayClosing(r: Router) {
 
     // Build metric comparisons with growth %
     function buildComparisonItem(curr: number, prev: number) {
+      const diff = curr - prev;
       return {
         current: curr,
         previous: prev,
-        difference: curr - prev,
+        difference: diff,
+        diff: diff,
         growthPct: calcGrowth(curr, prev),
       };
     }
@@ -2046,13 +2077,17 @@ export function registerDayClosing(r: Router) {
       metrics: {
         grossSales: buildComparisonItem(currentMetrics.grossSalesMinor, previousMetrics.grossSalesMinor),
         discounts: buildComparisonItem(currentMetrics.discountsMinor, previousMetrics.discountsMinor),
+        totalDiscounts: buildComparisonItem(currentMetrics.discountsMinor, previousMetrics.discountsMinor),
         returns: buildComparisonItem(currentMetrics.returnsTotalMinor, previousMetrics.returnsTotalMinor),
+        salesReturns: buildComparisonItem(currentMetrics.returnsTotalMinor, previousMetrics.returnsTotalMinor),
         netSales: buildComparisonItem(currentMetrics.netSalesMinor, previousMetrics.netSalesMinor),
         gstCollected: buildComparisonItem(currentMetrics.gstCollectedMinor, previousMetrics.gstCollectedMinor),
         cogs: buildComparisonItem(currentMetrics.netCogsMinor, previousMetrics.netCogsMinor),
         grossProfit: buildComparisonItem(currentMetrics.grossProfitMinor, previousMetrics.grossProfitMinor),
         expenses: buildComparisonItem(currentMetrics.expensesMinor, previousMetrics.expensesMinor),
         operatingProfit: buildComparisonItem(currentMetrics.operatingProfitMinor, previousMetrics.operatingProfitMinor),
+        netProfit: buildComparisonItem(currentMetrics.operatingProfitMinor, previousMetrics.operatingProfitMinor),
+        invoicesCount: buildComparisonItem(currentMetrics.invoicesCount, previousMetrics.invoicesCount),
         invoiceCount: buildComparisonItem(currentMetrics.invoicesCount, previousMetrics.invoicesCount),
         averageBillValue: buildComparisonItem(currentMetrics.averageBillValueMinor, previousMetrics.averageBillValueMinor),
       },
@@ -2097,11 +2132,12 @@ export function registerDayClosing(r: Router) {
     const todayStr = new Date().toISOString().slice(0, 10);
     const startDate = String(ctx.query.startDate || todayStr).trim();
     const endDate = String(ctx.query.endDate || todayStr).trim();
-    const branchId = (!scope.isSuperAdminAll && scope.branchId) ? scope.branchId : (ctx.query.branchId ? String(ctx.query.branchId).trim() : 'all');
+    const targetBranch = (!scope.isSuperAdminAll && scope.branchId) ? scope.branchId : (ctx.query.branchId ? String(ctx.query.branchId).trim() : 'all');
+    const branchIds = await getBranchIds(ctx.db, tenantId, targetBranch);
     const comparisonMode = String(ctx.query.comparisonMode || 'previous_period'); // 'previous_period' | 'same_period_last_year' | 'none'
 
-    const branchFilter = (branchId && branchId !== 'all') ? ' AND i.branch_id = ?' : '';
-    const branchParams = (branchId && branchId !== 'all') ? [branchId] : [];
+    const branchFilter = (branchIds && branchIds.length > 0) ? ` AND i.branch_id IN (${branchIds.map(() => '?').join(',')})` : '';
+    const branchParams = (branchIds && branchIds.length > 0) ? branchIds : [];
 
     // Helper to calculate aggregations over any date range
     async function calculateRangeMetrics(start: string, end: string) {
@@ -2123,13 +2159,13 @@ export function registerDayClosing(r: Router) {
           COUNT(*)::int AS returns_count,
           COALESCE(SUM(total_minor), 0)::bigint AS returns_minor
          FROM invoices i
-         WHERE i.tenant_id = ? AND i.bdate >= ? AND i.bdate <= ? AND i.status = 'posted' AND i.kind = 'credit_note'
+         WHERE i.tenant_id = ? AND i.bdate >= ? AND i.bdate <= ? AND i.status = 'posted' AND (i.kind = 'credit_note' OR i.kind = 'return')
            ${branchFilter}`,
         [tenantId, start, end, ...branchParams],
       );
 
-      const expFilter = (branchId && branchId !== 'all') ? ' AND branch_id = ?' : '';
-      const expParams = (branchId && branchId !== 'all') ? [branchId] : [];
+      const expFilter = (branchIds && branchIds.length > 0) ? ` AND branch_id IN (${branchIds.map(() => '?').join(',')})` : '';
+      const expParams = (branchIds && branchIds.length > 0) ? branchIds : [];
       const exp = await ctx.db.one<any>(
         `SELECT COALESCE(SUM(total_minor), 0)::bigint AS expenses_minor
          FROM expenses WHERE tenant_id = ? AND expense_date >= ? AND expense_date <= ? AND status = 'posted'
@@ -2148,7 +2184,7 @@ export function registerDayClosing(r: Router) {
       const retCogsRow = await ctx.db.one<any>(
         `SELECT COALESCE(SUM(il.qty_milli * COALESCE(NULLIF(il.cost_minor, 0), it.cost_minor, 0) / 1000), 0)::bigint AS cogs
          FROM invoice_lines il JOIN invoices i ON i.id = il.invoice_id LEFT JOIN items it ON it.id = il.item_id
-         WHERE i.tenant_id = ? AND i.bdate >= ? AND i.bdate <= ? AND i.kind = 'credit_note' AND i.status = 'posted'
+         WHERE i.tenant_id = ? AND i.bdate >= ? AND i.bdate <= ? AND (i.kind = 'credit_note' OR i.kind = 'return') AND i.status = 'posted'
            AND (il.item_condition IS NULL OR il.item_condition = 'resellable')
            ${branchFilter}`,
         [tenantId, start, end, ...branchParams],
@@ -2168,18 +2204,24 @@ export function registerDayClosing(r: Router) {
       const operatingProfit = grossProfit - expenses;
       const invoicesCount = Number(sales?.invoicesCount ?? sales?.invoices_count ?? 0);
       const avgBill = invoicesCount > 0 ? Math.round(netSales / invoicesCount) : 0;
+      const grossMarginPct = netSales > 0 ? (grossProfit / netSales) * 100 : 0;
+      const netMarginPct = netSales > 0 ? (operatingProfit / netSales) * 100 : 0;
 
       return {
         grossSalesMinor: grossSales,
         discountsMinor: discounts,
+        returnsMinor: returnsTotal,
         returnsTotalMinor: returnsTotal,
         netSalesMinor: netSales,
         taxableMinor: taxable,
         gstCollectedMinor: gst,
         netCogsMinor: netCogs,
         grossProfitMinor: grossProfit,
+        grossMarginPct: Math.round(grossMarginPct * 10) / 10,
         expensesMinor: expenses,
+        netProfitMinor: operatingProfit,
         operatingProfitMinor: operatingProfit,
+        netMarginPct: Math.round(netMarginPct * 10) / 10,
         invoicesCount,
         averageBillValueMinor: avgBill,
       };
@@ -2223,7 +2265,7 @@ export function registerDayClosing(r: Router) {
       `SELECT
         i.bdate,
         COALESCE(SUM(CASE WHEN i.kind = 'sale' THEN i.total_minor ELSE 0 END), 0)::bigint AS gross_sales,
-        COALESCE(SUM(CASE WHEN i.kind = 'credit_note' THEN i.total_minor ELSE 0 END), 0)::bigint AS returns,
+        COALESCE(SUM(CASE WHEN (i.kind = 'credit_note' OR i.kind = 'return') THEN i.total_minor ELSE 0 END), 0)::bigint AS returns,
         COUNT(CASE WHEN i.kind = 'sale' THEN 1 END)::int AS invoices_count
        FROM invoices i
        WHERE i.tenant_id = ? AND i.bdate >= ? AND i.bdate <= ? AND i.status = 'posted'
@@ -2233,11 +2275,32 @@ export function registerDayClosing(r: Router) {
       [tenantId, startDate, endDate, ...branchParams],
     );
 
+    const dailyCogs = await ctx.db.query<any>(
+      `SELECT
+        i.bdate,
+        COALESCE(SUM(CASE WHEN i.kind = 'sale' THEN (il.qty_milli * COALESCE(NULLIF(il.cost_minor, 0), it.cost_minor, 0) / 1000) ELSE 0 END), 0)::bigint AS sales_cogs,
+        COALESCE(SUM(CASE WHEN (i.kind = 'credit_note' OR i.kind = 'return') AND (il.item_condition IS NULL OR il.item_condition = 'resellable') THEN (il.qty_milli * COALESCE(NULLIF(il.cost_minor, 0), it.cost_minor, 0) / 1000) ELSE 0 END), 0)::bigint AS return_cogs
+       FROM invoice_lines il
+       JOIN invoices i ON i.id = il.invoice_id
+       LEFT JOIN items it ON it.id = il.item_id
+       WHERE i.tenant_id = ? AND i.bdate >= ? AND i.bdate <= ? AND i.status = 'posted'
+         ${branchFilter}
+       GROUP BY i.bdate`,
+      [tenantId, startDate, endDate, ...branchParams],
+    );
+    const cogsByDate = new Map<string, number>();
+    for (const c of dailyCogs) {
+      const sC = Number(c.salesCogs ?? c.sales_cogs ?? 0);
+      const rC = Number(c.returnCogs ?? c.return_cogs ?? 0);
+      cogsByDate.set(c.bdate, Math.max(0, sC - rC));
+    }
+
     function buildRangeComp(curr: number, prev: number = 0) {
       return {
         current: curr,
         previous: prev,
         difference: curr - prev,
+        diff: curr - prev,
         growthPct: calcGrowth(curr, prev),
       };
     }
@@ -2254,24 +2317,33 @@ export function registerDayClosing(r: Router) {
       comparison: comparisonRange ? {
         grossSales: buildRangeComp(currentRange.grossSalesMinor, comparisonRange.grossSalesMinor),
         discounts: buildRangeComp(currentRange.discountsMinor, comparisonRange.discountsMinor),
+        totalDiscounts: buildRangeComp(currentRange.discountsMinor, comparisonRange.discountsMinor),
         returns: buildRangeComp(currentRange.returnsTotalMinor, comparisonRange.returnsTotalMinor),
+        salesReturns: buildRangeComp(currentRange.returnsTotalMinor, comparisonRange.returnsTotalMinor),
         netSales: buildRangeComp(currentRange.netSalesMinor, comparisonRange.netSalesMinor),
         gstCollected: buildRangeComp(currentRange.gstCollectedMinor, comparisonRange.gstCollectedMinor),
         cogs: buildRangeComp(currentRange.netCogsMinor, comparisonRange.netCogsMinor),
         grossProfit: buildRangeComp(currentRange.grossProfitMinor, comparisonRange.grossProfitMinor),
         expenses: buildRangeComp(currentRange.expensesMinor, comparisonRange.expensesMinor),
         operatingProfit: buildRangeComp(currentRange.operatingProfitMinor, comparisonRange.operatingProfitMinor),
+        netProfit: buildRangeComp(currentRange.operatingProfitMinor, comparisonRange.operatingProfitMinor),
         invoiceCount: buildRangeComp(currentRange.invoicesCount, comparisonRange.invoicesCount),
+        invoicesCount: buildRangeComp(currentRange.invoicesCount, comparisonRange.invoicesCount),
         averageBillValue: buildRangeComp(currentRange.averageBillValueMinor, comparisonRange.averageBillValueMinor),
       } : null,
       dailySeries: dailySeries.map((d: any) => {
         const gross = Number(d.grossSales ?? d.gross_sales ?? 0);
         const ret = Number(d.returns ?? 0);
+        const net = Math.max(0, gross - ret);
+        const cogs = cogsByDate.get(d.bdate) || 0;
+        const gp = Math.max(0, net - cogs);
         return {
           date: d.bdate,
           grossSalesMinor: gross,
           returnsMinor: ret,
-          netSalesMinor: Math.max(0, gross - ret),
+          returnsTotalMinor: ret,
+          netSalesMinor: net,
+          grossProfitMinor: gp,
           invoicesCount: Number(d.invoicesCount ?? d.invoices_count ?? 0),
         };
       }),
@@ -3901,9 +3973,11 @@ export function registerDayClosing(r: Router) {
   // --------------------------------------------------------------------------
   r.get('/api/day-closing/history', requireUser, async (ctx) => {
     const tenantId = ctx.user!.tenantId;
-    const branchId = ctx.query.branchId as string;
+    const scope = await resolveBranchScope(ctx);
+    const rawBranchId = (!scope.isSuperAdminAll && scope.branchId) ? scope.branchId : (ctx.query.branchId as string);
+    const branchIds = await getBranchIds(ctx.db, tenantId, rawBranchId);
     const cashierId = ctx.query.cashierId as string;
-    const limit = Math.min(100, Math.max(1, Number(ctx.query.limit || 30)));
+    const limit = Math.min(100, Math.max(1, Number(ctx.query.limit || 50)));
 
     let sql = `
       SELECT dc.*, u.name AS closed_by_name, vu.name AS verified_by_name,
@@ -3917,14 +3991,14 @@ export function registerDayClosing(r: Router) {
       LEFT JOIN users ru ON ru.id = dc.reopened_by
       LEFT JOIN users su ON su.id = dc.submitted_by
       LEFT JOIN users cu ON cu.id = dc.cashier_id
-      LEFT JOIN branches b ON b.id = dc.branch_id OR b.code = dc.branch_id
+      LEFT JOIN branches b ON (b.id = dc.branch_id OR b.code = dc.branch_id) AND b.tenant_id = dc.tenant_id
       WHERE dc.tenant_id = ?
     `;
     const params: any[] = [tenantId];
 
-    if (branchId && branchId !== 'all') {
-      sql += ` AND dc.branch_id = ?`;
-      params.push(branchId);
+    if (branchIds && branchIds.length > 0) {
+      sql += ` AND dc.branch_id IN (${branchIds.map(() => '?').join(',')})`;
+      params.push(...branchIds);
     }
     if (cashierId) {
       sql += ` AND dc.cashier_id = ?`;
@@ -3934,7 +4008,53 @@ export function registerDayClosing(r: Router) {
     sql += ` ORDER BY dc.bdate DESC, dc.created_at DESC LIMIT ?`;
     params.push(limit);
 
-    const history = await ctx.db.query<any>(sql, params);
+    const rawHistory = await ctx.db.query<any>(sql, params);
+    const history = rawHistory.map((h: any) => {
+      const grossSales = Number(h.grossSalesMinor ?? h.gross_sales_minor ?? 0);
+      const returnsTotal = Number(h.returnsTotalMinor ?? h.returns_total_minor ?? h.sales_returns_minor ?? 0);
+      const netSales = Number(h.netSalesMinor ?? h.net_sales_minor ?? Math.max(0, grossSales - returnsTotal));
+      const expectedCash = Number(h.expectedCashMinor ?? h.expected_cash_minor ?? 0);
+      const actualCash = Number(h.actualCashMinor ?? h.actual_cash_minor ?? 0);
+      const variance = Number(h.varianceMinor ?? h.variance_minor ?? 0);
+      const grossProfit = Number(h.grossProfitMinor ?? h.gross_profit_minor ?? 0);
+      const closedByName = h.closedByName || h.closed_by_name || 'Cashier';
+      const approvedByName = h.approvedByName || h.approved_by_name || '';
+      const reopenedByName = h.reopenedByName || h.reopened_by_name || '';
+      const reopenReason = h.reopenReason || h.reopen_reason || '';
+      const closedAt = h.closedAt || h.closed_at || null;
+      const approvedAt = h.approvedAt || h.approved_at || null;
+
+      return {
+        ...h,
+        gross_sales_minor: grossSales,
+        grossSalesMinor: grossSales,
+        returns_total_minor: returnsTotal,
+        returnsTotalMinor: returnsTotal,
+        sales_returns_minor: returnsTotal,
+        net_sales_minor: netSales,
+        netSalesMinor: netSales,
+        expected_cash_minor: expectedCash,
+        expectedCashMinor: expectedCash,
+        actual_cash_minor: actualCash,
+        actualCashMinor: actualCash,
+        variance_minor: variance,
+        varianceMinor: variance,
+        gross_profit_minor: grossProfit,
+        grossProfitMinor: grossProfit,
+        closed_by_name: closedByName,
+        closedByName: closedByName,
+        approved_by_name: approvedByName,
+        approvedByName: approvedByName,
+        reopened_by_name: reopenedByName,
+        reopenedByName: reopenedByName,
+        reopen_reason: reopenReason,
+        reopenReason: reopenReason,
+        closed_at: closedAt,
+        closedAt: closedAt,
+        approved_at: approvedAt,
+        approvedAt: approvedAt,
+      };
+    });
     return { history };
   });
 
@@ -4121,8 +4241,6 @@ export function registerDayClosing(r: Router) {
 </html>`;
 
     return new HtmlResponse(html);
-
-    return new HtmlResponse(html);
   });
 
   // --------------------------------------------------------------------------
@@ -4130,20 +4248,22 @@ export function registerDayClosing(r: Router) {
   // --------------------------------------------------------------------------
   r.get('/api/day-closing/history/export.csv', requireUser, async (ctx) => {
     const tenantId = ctx.user!.tenantId;
-    const branchId = ctx.query.branchId as string;
+    const scope = await resolveBranchScope(ctx);
+    const rawBranchId = (!scope.isSuperAdminAll && scope.branchId) ? scope.branchId : (ctx.query.branchId as string);
+    const branchIds = await getBranchIds(ctx.db, tenantId, rawBranchId);
 
     let sql = `
       SELECT dc.*, u.name AS closed_by_name, au.name AS approved_by_name, b.name AS branch_name
       FROM day_closings dc
       LEFT JOIN users u ON u.id = dc.closed_by
       LEFT JOIN users au ON au.id = dc.approved_by
-      LEFT JOIN branches b ON b.id = dc.branch_id OR b.code = dc.branch_id
+      LEFT JOIN branches b ON (b.id = dc.branch_id OR b.code = dc.branch_id) AND b.tenant_id = dc.tenant_id
       WHERE dc.tenant_id = ?
     `;
     const params: any[] = [tenantId];
-    if (branchId && branchId !== 'all') {
-      sql += ` AND dc.branch_id = ?`;
-      params.push(branchId);
+    if (branchIds && branchIds.length > 0) {
+      sql += ` AND dc.branch_id IN (${branchIds.map(() => '?').join(',')})`;
+      params.push(...branchIds);
     }
     sql += ` ORDER BY dc.bdate DESC LIMIT 365`;
     const history = await ctx.db.query<any>(sql, params);
@@ -4157,22 +4277,22 @@ export function registerDayClosing(r: Router) {
     ];
     const rows = history.map((h: any) => [
       h.bdate,
-      h.branch_name || h.branch_id,
+      h.branchName || h.branch_name || h.branchId || h.branch_id,
       h.status,
-      (Number(h.gross_sales_minor || 0) / 100).toFixed(2),
-      (Number(h.returns_total_minor || h.sales_returns_minor || 0) / 100).toFixed(2),
-      (Number(h.net_sales_minor || 0) / 100).toFixed(2),
-      h.invoices_count || 0,
-      (Number(h.net_cogs_minor || 0) / 100).toFixed(2),
-      (Number(h.gross_profit_minor || 0) / 100).toFixed(2),
-      (Number(h.operating_expenses_minor || 0) / 100).toFixed(2),
-      (Number(h.net_profit_minor || 0) / 100).toFixed(2),
-      (Number(h.opening_cash_minor || 0) / 100).toFixed(2),
-      (Number(h.expected_cash_minor || 0) / 100).toFixed(2),
-      (Number(h.actual_cash_minor || 0) / 100).toFixed(2),
-      (Number(h.variance_minor ?? 0) / 100).toFixed(2),
-      h.closed_by_name || 'Cashier',
-      h.approved_by_name || '—',
+      (Number(h.grossSalesMinor ?? h.gross_sales_minor ?? 0) / 100).toFixed(2),
+      (Number(h.returnsTotalMinor ?? h.returns_total_minor ?? h.sales_returns_minor ?? 0) / 100).toFixed(2),
+      (Number(h.netSalesMinor ?? h.net_sales_minor ?? 0) / 100).toFixed(2),
+      h.invoicesCount ?? h.invoices_count ?? 0,
+      (Number(h.netCogsMinor ?? h.net_cogs_minor ?? 0) / 100).toFixed(2),
+      (Number(h.grossProfitMinor ?? h.gross_profit_minor ?? 0) / 100).toFixed(2),
+      (Number(h.operatingExpensesMinor ?? h.operating_expenses_minor ?? 0) / 100).toFixed(2),
+      (Number(h.netProfitMinor ?? h.net_profit_minor ?? 0) / 100).toFixed(2),
+      (Number(h.openingCashMinor ?? h.opening_cash_minor ?? 0) / 100).toFixed(2),
+      (Number(h.expectedCashMinor ?? h.expected_cash_minor ?? 0) / 100).toFixed(2),
+      (Number(h.actualCashMinor ?? h.actual_cash_minor ?? 0) / 100).toFixed(2),
+      (Number(h.varianceMinor ?? h.variance_minor ?? 0) / 100).toFixed(2),
+      h.closedByName || h.closed_by_name || 'Cashier',
+      h.approvedByName || h.approved_by_name || '—',
       h.remarks || ''
     ]);
 
