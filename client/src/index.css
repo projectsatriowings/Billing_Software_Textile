@@ -9,14 +9,6 @@
    ========================================================================== */
 
 :root {
-  --safe-area-inset-top: env(safe-area-inset-top, 0px);
-  --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
-  --safe-area-inset-left: env(safe-area-inset-left, 0px);
-  --safe-area-inset-right: env(safe-area-inset-right, 0px);
-  --safe-area-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
-  --safe-area-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
-  --safe-area-left: var(--safe-area-inset-left, env(safe-area-inset-left, 0px));
-  --safe-area-right: var(--safe-area-inset-right, env(safe-area-inset-right, 0px));
   --deep-purple: #312e81;
   --deep-purple-hover: #26236b;
   --primary: #6d4aff;
@@ -1490,6 +1482,7 @@ body {
     opacity: 0;
     transform: translateY(-4px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -30022,9 +30015,6 @@ select.expense-input-control {
     width: 100% !important;
     max-width: 100% !important;
     padding: 0.85rem !important;
-    padding-top: max(0.85rem, calc(0.35rem + env(safe-area-inset-top, 0px))) !important;
-    padding-left: max(0.65rem, calc(0.35rem + env(safe-area-inset-left, 0px))) !important;
-    padding-right: max(0.65rem, calc(0.35rem + env(safe-area-inset-right, 0px))) !important;
   }
 
   .bento-pos-grid {
@@ -30039,16 +30029,13 @@ select.expense-input-control {
 /* Mobile Screens (<= 767px) Content Clearance for Fixed Bottom Navbar */
 @media (max-width: 767px) {
   .main-content {
-    padding-top: max(0.85rem, calc(0.35rem + env(safe-area-inset-top, 0px))) !important;
-    padding-left: max(0.65rem, calc(0.35rem + env(safe-area-inset-left, 0px))) !important;
-    padding-right: max(0.65rem, calc(0.35rem + env(safe-area-inset-right, 0px))) !important;
-    padding-bottom: calc(76px + env(safe-area-inset-bottom, 16px)) !important;
+    padding: 0.85rem 0.65rem 76px 0.65rem !important;
   }
 
   .main-content.no-bottom-nav,
   .theme-super-admin .main-content,
   .theme-manager .main-content {
-    padding-bottom: max(1.25rem, calc(0.85rem + env(safe-area-inset-bottom, 16px))) !important;
+    padding-bottom: 1.25rem !important;
   }
 }
 
@@ -34268,6 +34255,7 @@ select.expense-input-control {
 }
 
 @media (max-width: 768px) {
+
   /* 1. Dashboard Top Bar Header on Mobile */
   .top-global-bar.dashboard-top-bar {
     padding: 0 0.85rem 12px 0.85rem !important;
@@ -36632,7 +36620,6 @@ select.expense-input-control {
   gap: 1.15rem;
   flex-wrap: wrap;
   margin-left: 20px;
-  margin-bottom: 30px;
 }
 
 .top-invoices-title-group {
@@ -36749,7 +36736,7 @@ select.expense-input-control {
   }
 
   /* Date Filter Buttons: Single Row on Tablet */
-  .invoices-controls-left > .invoices-filter-group:nth-of-type(1) {
+  .invoices-controls-left>.invoices-filter-group:nth-of-type(1) {
     display: flex !important;
     flex-direction: row !important;
     flex-wrap: nowrap !important;
@@ -36761,7 +36748,7 @@ select.expense-input-control {
     box-sizing: border-box !important;
   }
 
-  .invoices-controls-left > .invoices-filter-group:nth-of-type(1) .invoices-filter-pill {
+  .invoices-controls-left>.invoices-filter-group:nth-of-type(1) .invoices-filter-pill {
     flex: 1 1 0 !important;
     min-width: 0 !important;
     height: 34px !important;
@@ -36779,14 +36766,14 @@ select.expense-input-control {
     box-sizing: border-box !important;
   }
 
-  .invoices-controls-left > .invoices-filter-group:nth-of-type(1) .invoices-filter-pill svg {
+  .invoices-controls-left>.invoices-filter-group:nth-of-type(1) .invoices-filter-pill svg {
     width: 13px !important;
     height: 13px !important;
     flex-shrink: 0 !important;
   }
 
   /* Payment Mode Buttons: Single Row on Tablet */
-  .invoices-controls-left > .invoices-filter-group:nth-of-type(2) {
+  .invoices-controls-left>.invoices-filter-group:nth-of-type(2) {
     display: flex !important;
     flex-direction: row !important;
     flex-wrap: nowrap !important;
@@ -36798,7 +36785,7 @@ select.expense-input-control {
     box-sizing: border-box !important;
   }
 
-  .invoices-controls-left > .invoices-filter-group:nth-of-type(2) .invoices-filter-pill {
+  .invoices-controls-left>.invoices-filter-group:nth-of-type(2) .invoices-filter-pill {
     flex: 1 1 0 !important;
     min-width: 0 !important;
     height: 34px !important;
@@ -36816,7 +36803,7 @@ select.expense-input-control {
     box-sizing: border-box !important;
   }
 
-  .invoices-controls-left > .invoices-filter-group:nth-of-type(2) .invoices-filter-pill svg {
+  .invoices-controls-left>.invoices-filter-group:nth-of-type(2) .invoices-filter-pill svg {
     width: 13px !important;
     height: 13px !important;
     flex-shrink: 0 !important;
@@ -36980,7 +36967,7 @@ select.expense-input-control {
   }
 
   /* 2. Date Filter Buttons: Single Row (Today, Yesterday, All Dates) */
-  .invoices-controls-left > .invoices-filter-group:nth-of-type(1) {
+  .invoices-controls-left>.invoices-filter-group:nth-of-type(1) {
     display: flex !important;
     flex-direction: row !important;
     flex-wrap: nowrap !important;
@@ -36992,7 +36979,7 @@ select.expense-input-control {
     box-sizing: border-box !important;
   }
 
-  .invoices-controls-left > .invoices-filter-group:nth-of-type(1) .invoices-filter-pill {
+  .invoices-controls-left>.invoices-filter-group:nth-of-type(1) .invoices-filter-pill {
     flex: 1 1 0 !important;
     min-width: 0 !important;
     height: 32px !important;
@@ -37010,14 +36997,14 @@ select.expense-input-control {
     box-sizing: border-box !important;
   }
 
-  .invoices-controls-left > .invoices-filter-group:nth-of-type(1) .invoices-filter-pill svg {
+  .invoices-controls-left>.invoices-filter-group:nth-of-type(1) .invoices-filter-pill svg {
     width: 12px !important;
     height: 12px !important;
     flex-shrink: 0 !important;
   }
 
   /* 3. Payment Mode Buttons: Single Row (All Modes, Cash, UPI, Card) */
-  .invoices-controls-left > .invoices-filter-group:nth-of-type(2) {
+  .invoices-controls-left>.invoices-filter-group:nth-of-type(2) {
     display: flex !important;
     flex-direction: row !important;
     flex-wrap: nowrap !important;
@@ -37029,7 +37016,7 @@ select.expense-input-control {
     box-sizing: border-box !important;
   }
 
-  .invoices-controls-left > .invoices-filter-group:nth-of-type(2) .invoices-filter-pill {
+  .invoices-controls-left>.invoices-filter-group:nth-of-type(2) .invoices-filter-pill {
     flex: 1 1 0 !important;
     min-width: 0 !important;
     height: 32px !important;
@@ -37047,7 +37034,7 @@ select.expense-input-control {
     box-sizing: border-box !important;
   }
 
-  .invoices-controls-left > .invoices-filter-group:nth-of-type(2) .invoices-filter-pill svg {
+  .invoices-controls-left>.invoices-filter-group:nth-of-type(2) .invoices-filter-pill svg {
     width: 11px !important;
     height: 11px !important;
     flex-shrink: 0 !important;
@@ -37061,13 +37048,14 @@ select.expense-input-control {
 
 /* Extra-narrow screens (<= 340px): graceful wrap */
 @media (max-width: 340px) {
-  .invoices-controls-left > .invoices-filter-group:nth-of-type(1),
-  .invoices-controls-left > .invoices-filter-group:nth-of-type(2) {
+
+  .invoices-controls-left>.invoices-filter-group:nth-of-type(1),
+  .invoices-controls-left>.invoices-filter-group:nth-of-type(2) {
     flex-wrap: wrap !important;
   }
 
-  .invoices-controls-left > .invoices-filter-group:nth-of-type(1) .invoices-filter-pill,
-  .invoices-controls-left > .invoices-filter-group:nth-of-type(2) .invoices-filter-pill {
+  .invoices-controls-left>.invoices-filter-group:nth-of-type(1) .invoices-filter-pill,
+  .invoices-controls-left>.invoices-filter-group:nth-of-type(2) .invoices-filter-pill {
     flex: 1 1 calc(50% - 0.25rem) !important;
   }
 }
@@ -40317,10 +40305,7 @@ select.expense-input-control {
     flex-direction: column !important;
     align-items: center !important;
     justify-content: space-between !important;
-    padding-top: max(0.75rem, calc(0.35rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))) !important;
-    padding-bottom: max(0.75rem, calc(0.35rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)))) !important;
-    padding-left: 0 !important;
-    padding-right: 0 !important;
+    padding: 0.75rem 0 !important;
     box-sizing: border-box !important;
   }
 
@@ -40333,10 +40318,7 @@ select.expense-input-control {
     margin-left: 60px !important;
     width: calc(100% - 60px) !important;
     max-width: calc(100% - 60px) !important;
-    padding-top: max(0.85rem, calc(0.35rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))) !important;
-    padding-left: max(0.85rem, calc(0.35rem + var(--safe-area-inset-left, env(safe-area-inset-left, 0px)))) !important;
-    padding-right: max(0.85rem, calc(0.35rem + var(--safe-area-inset-right, env(safe-area-inset-right, 0px)))) !important;
-    padding-bottom: max(0.85rem, calc(0.35rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)))) !important;
+    padding: 0.85rem !important;
     box-sizing: border-box !important;
   }
 }
@@ -40358,10 +40340,8 @@ select.expense-input-control {
     bottom: 0 !important;
     left: 0 !important;
     right: 0 !important;
-    height: calc(56px + max(0px, var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)))) !important;
-    padding-bottom: max(0px, var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))) !important;
-    padding-left: var(--safe-area-inset-left, env(safe-area-inset-left, 0px)) !important;
-    padding-right: var(--safe-area-inset-right, env(safe-area-inset-right, 0px)) !important;
+    height: 56px !important;
+    padding: 0 !important;
     background: #0F2D2E !important;
     border-top: 1px solid rgba(20, 184, 166, 0.35) !important;
     box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3) !important;
@@ -40380,17 +40360,14 @@ select.expense-input-control {
     margin-left: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
-    padding-top: max(0.85rem, calc(0.35rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))) !important;
-    padding-left: max(0.65rem, calc(0.35rem + var(--safe-area-inset-left, env(safe-area-inset-left, 0px)))) !important;
-    padding-right: max(0.65rem, calc(0.35rem + var(--safe-area-inset-right, env(safe-area-inset-right, 0px)))) !important;
-    padding-bottom: calc(76px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 16px))) !important;
+    padding: 0.85rem 0.65rem 76px 0.65rem !important;
     box-sizing: border-box !important;
   }
 
   .main-content.no-bottom-nav,
   .theme-super-admin .main-content,
   .theme-manager .main-content {
-    padding-bottom: max(1.25rem, calc(0.85rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 16px)))) !important;
+    padding-bottom: 1.25rem !important;
   }
 }
 
@@ -43345,13 +43322,7 @@ select.expense-input-control {
   }
 }
 
-/* ==========================================================================
-   MOBILE & TABLET SYSTEM UI SAFE AREA SUITE (STATUS BAR & BOTTOM NAVIGATION / GESTURE)
-   Applies across entire application for mobile and tablet screens (<= 1439px)
-   Desktop (>= 1440px) layouts remain 100% unchanged.
-   ========================================================================== */
 @media (max-width: 1439px) {
-  /* 4. All Mobile & Tablet Modal Backdrops & Overlays - Avoid Notches, Dynamic Islands & Punch Holes */
   .modal-overlay,
   .modal-backdrop,
   .sub-modal-backdrop,
@@ -43369,17 +43340,13 @@ select.expense-input-control {
   .bento-confirm-modal-overlay,
   .login-forgot-modal-backdrop,
   .login-download-modal-backdrop {
-    padding-top: max(16px, calc(8px + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))) !important;
-    padding-bottom: max(16px, calc(8px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)))) !important;
-    padding-left: max(12px, calc(6px + var(--safe-area-inset-left, env(safe-area-inset-left, 0px)))) !important;
-    padding-right: max(12px, calc(6px + var(--safe-area-inset-right, env(safe-area-inset-right, 0px)))) !important;
+    padding: 16px 12px !important;
     box-sizing: border-box !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
   }
 
-  /* 5. All Mobile & Tablet Modal Dialog Frames - Prevent Screen Cutoff & Enable Scroll */
   .select-counter-bento-dialog,
   .select-counter-dialog,
   .logout-shift-bento-dialog,
@@ -43401,7 +43368,7 @@ select.expense-input-control {
   .bento-confirm-modal-card,
   .login-forgot-modal-card,
   .login-download-modal-card {
-    max-height: calc(100dvh - 32px - var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) - var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))) !important;
+    max-height: calc(100dvh - 32px) !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
     box-sizing: border-box !important;
@@ -43409,41 +43376,6 @@ select.expense-input-control {
 }
 
 @media (max-width: 767px) {
-  /* 1. Universal Main Content Container - Clear Top Status Bar & Bottom Navigation */
-  .main-content {
-    margin-left: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    padding-top: max(0.85rem, calc(0.35rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))) !important;
-    padding-left: max(0.65rem, calc(0.35rem + var(--safe-area-inset-left, env(safe-area-inset-left, 0px)))) !important;
-    padding-right: max(0.65rem, calc(0.35rem + var(--safe-area-inset-right, env(safe-area-inset-right, 0px)))) !important;
-    padding-bottom: calc(76px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 16px))) !important;
-    box-sizing: border-box !important;
-  }
-
-  .main-content.no-bottom-nav,
-  .theme-super-admin .main-content,
-  .theme-manager .main-content {
-    padding-bottom: max(1.25rem, calc(0.85rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 16px)))) !important;
-  }
-
-  /* 2. Fixed Mobile Bottom Navigation Bar - Safe area above physical gesture/home indicator */
-  .responsive-mobile-bottom-nav {
-    height: calc(56px + max(0px, var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)))) !important;
-    padding-bottom: max(0px, var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))) !important;
-    padding-left: var(--safe-area-inset-left, env(safe-area-inset-left, 0px)) !important;
-    padding-right: var(--safe-area-inset-right, env(safe-area-inset-right, 0px)) !important;
-    box-sizing: border-box !important;
-  }
-
-  /* 3. Slide-out Mobile Sidebar Drawer & All Full-Screen Flyout Drawers */
-  .app-sidebar.mobile-open {
-    padding-top: max(1.25rem, calc(0.75rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))) !important;
-    padding-bottom: max(2.5rem, calc(1rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)))) !important;
-    padding-left: max(1rem, calc(0.5rem + var(--safe-area-inset-left, env(safe-area-inset-left, 0px)))) !important;
-    box-sizing: border-box !important;
-  }
-
   .bento-catalog-drawer,
   .day-closing-drawer-panel,
   .customer-drawer-panel,
@@ -43452,10 +43384,6 @@ select.expense-input-control {
   .cat-import-drawer-bento {
     height: 100vh !important;
     height: 100dvh !important;
-    padding-top: max(0px, var(--safe-area-inset-top, env(safe-area-inset-top, 0px))) !important;
-    padding-bottom: max(0px, var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))) !important;
-    padding-left: var(--safe-area-inset-left, env(safe-area-inset-left, 0px)) !important;
-    padding-right: var(--safe-area-inset-right, env(safe-area-inset-right, 0px)) !important;
     box-sizing: border-box !important;
   }
 
@@ -43629,4 +43557,3 @@ select.expense-input-control {
     font-size: 0.76rem;
   }
 }
-

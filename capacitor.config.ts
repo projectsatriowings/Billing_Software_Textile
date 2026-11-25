@@ -17,9 +17,10 @@ const config: CapacitorConfig = {
   plugins: {
     SystemBars: {
       insetsHandling: 'disable',
+      style: 'DARK',
     },
     StatusBar: {
-      overlaysWebView: false,
+      overlaysWebView: true,
       style: 'DARK',
       backgroundColor: '#49364A',
     },

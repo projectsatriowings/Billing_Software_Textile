@@ -1443,7 +1443,7 @@
   .modern-login-page {
     min-height: 100vh;
     min-height: 100dvh;
-    width: 100vw;
+    width: 100%;
   }
 
   .modern-login-card {
@@ -1463,8 +1463,7 @@
     min-height: auto !important;
     max-height: 230px !important;
     height: auto !important;
-    padding: 1.1rem 1.25rem 0.75rem !important;
-    padding-top: max(1.1rem, calc(0.35rem + env(safe-area-inset-top, 0px))) !important;
+    padding: 1.15rem 1.25rem 0.85rem !important;
     position: relative;
     overflow: hidden !important;
     flex-shrink: 0;
@@ -1526,7 +1525,7 @@
 
   /* Right Login Section */
   .modern-login-right {
-    padding: 1.25rem 1rem max(1.5rem, env(safe-area-inset-bottom, 1.5rem)) !important;
+    padding: 1.25rem 1rem 1.5rem !important;
     min-height: auto;
     flex: 1;
     display: flex;
@@ -1684,8 +1683,7 @@
   .modern-login-left.super-admin-layout,
   .modern-login-left.cashier-layout,
   .modern-login-left.store-manager-layout {
-    padding: 1rem 1rem 0.75rem !important;
-    padding-top: max(1rem, calc(0.35rem + env(safe-area-inset-top, 0px))) !important;
+    padding: 1rem 1rem 0.8rem !important;
   }
 
   .modern-admin-illustration-area {
@@ -1704,7 +1702,7 @@
   }
 
   .modern-login-right {
-    padding: 1rem 1rem max(1.25rem, env(safe-area-inset-bottom, 1.25rem)) !important;
+    padding: 1rem 1rem 1.25rem !important;
   }
 }
 
@@ -1794,23 +1792,12 @@
     font-size: 0.82rem !important;
   }
 
-  .modern-login-left.super-admin-layout,
-  .modern-login-left.cashier-layout,
-  .modern-login-left.store-manager-layout {
-    min-height: auto !important;
-    padding: 2rem 1.25rem 0.5rem !important;
-  }
-
   .modern-admin-illustration-area {
     max-height: 200px !important;
   }
 
   .modern-admin-hero-img {
     max-height: 190px !important;
-  }
-
-  .modern-login-right {
-    padding: 2rem 1.25rem !important;
   }
 }
 
@@ -1825,16 +1812,6 @@
 
   .modern-left-heading {
     font-size: 1.3rem !important;
-  }
-
-  .modern-login-left.super-admin-layout,
-  .modern-login-left.cashier-layout,
-  .modern-login-left.store-manager-layout {
-    padding: 1.5rem 1rem 0.5rem !important;
-  }
-
-  .modern-login-right {
-    padding: 1.5rem 1rem !important;
   }
 
   .modern-form-input,
