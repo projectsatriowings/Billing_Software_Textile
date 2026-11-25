@@ -728,7 +728,7 @@ export const RecentBillsBentoView: React.FC<RecentBillsBentoViewProps> = ({
                     <div className="invoices-m-cust-row">
                       <div className="invoices-m-cust-info">
                         <div className="invoices-cust-name-row">
-                          <UserIcon size={13} style={{ color: '#64748b' }} />
+                          <UserIcon size={13} style={{ color: '#64748b', flexShrink: 0 }} />
                           <span className="invoices-cust-name">{inv.customerName || 'Walk-in Customer'}</span>
                         </div>
                         {inv.customerPhone && (
@@ -903,12 +903,12 @@ export const RecentBillsBentoView: React.FC<RecentBillsBentoViewProps> = ({
                       <td>
                         <div className="invoices-cust-wrap">
                           <div className="invoices-cust-name-row">
-                            <UserIcon size={13} style={{ color: '#64748b' }} />
+                            <UserIcon size={13} style={{ color: '#64748b', flexShrink: 0 }} />
                             <span className="invoices-cust-name">{inv.customerName || 'Walk-in Customer'}</span>
                           </div>
                           {inv.customerPhone && (
                             <div className="invoices-cust-phone-row">
-                              <PhoneIcon size={11} style={{ color: '#94a3b8' }} />
+                              <PhoneIcon size={11} style={{ color: '#94a3b8', flexShrink: 0 }} />
                               <span className="invoices-cust-phone">{inv.customerPhone}</span>
                             </div>
                           )}

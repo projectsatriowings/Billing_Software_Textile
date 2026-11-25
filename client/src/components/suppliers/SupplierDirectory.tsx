@@ -101,7 +101,6 @@ export const SupplierDirectory: React.FC<SupplierDirectoryProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [filterMode, setFilterMode] = useState<'all' | 'has_dues' | 'overdue' | 'zero_dues' | 'inactive'>('all');
   const [sortBy, setSortBy] = useState<'payable_desc' | 'due_date_asc' | 'name_asc'>('payable_desc');
-  const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
   const [selectedSupplier, setSelectedSupplier] = useState<Party | null>(null);
   const [actionMenuOpenId, setActionMenuOpenId] = useState<string | null>(null);
   const [menuPosition, setMenuPosition] = useState<{
@@ -599,41 +598,12 @@ export const SupplierDirectory: React.FC<SupplierDirectoryProps> = ({
                   <option value="name_asc">Name (A–Z)</option>
                 </select>
               </div>
-
-              {/* Mobile View Toggle Switcher (Cards vs Table) */}
-              <div className="supplier-view-toggle">
-                <button
-                  type="button"
-                  onClick={() => setViewMode('cards')}
-                  className={`supplier-toggle-btn ${viewMode === 'cards' ? 'active' : ''}`}
-                  title="Card View (Mobile Optimized)"
-                >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="3" width="7" height="7"></rect>
-                    <rect x="14" y="3" width="7" height="7"></rect>
-                    <rect x="14" y="14" width="7" height="7"></rect>
-                    <rect x="3" y="14" width="7" height="7"></rect>
-                  </svg>
-                  <span>Cards</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setViewMode('table')}
-                  className={`supplier-toggle-btn ${viewMode === 'table' ? 'active' : ''}`}
-                  title="Table View (Full Columns)"
-                >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M3 3h18v18H3zM3 9h18M3 15h18M9 3v18M15 3v18"></path>
-                  </svg>
-                  <span>Table</span>
-                </button>
-              </div>
             </div>
           </div>
         </div>
 
-        {/* 3A. MOBILE CARDS VIEW (Clean responsive touch layout) */}
-        <div className={`supplier-mobile-cards-wrap ${viewMode === 'cards' ? 'active' : ''}`}>
+        {/* 3A. MOBILE CARDS VIEW (Always active on <= 768px) */}
+        <div className="supplier-mobile-cards-wrap active">
           {filteredSuppliers.map((s) => {
             const avatarStyle = getAvatarColor(s.name);
             const payable = s.payableMinor || 0;
@@ -830,18 +800,8 @@ export const SupplierDirectory: React.FC<SupplierDirectoryProps> = ({
           )}
         </div>
 
-        {/* 3B. MODERN SUPPLIERS DATA TABLE */}
-        <div className={`supplier-table-container ${viewMode === 'cards' ? 'mobile-hidden' : 'mobile-active'}`}>
-          {viewMode === 'table' && (
-            <div className="supplier-scroll-hint">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="18 8 22 12 18 16" />
-                <polyline points="6 8 2 12 6 16" />
-                <line x1="2" y1="12" x2="22" y2="12" />
-              </svg>
-              <span>Swipe horizontally to view all columns</span>
-            </div>
-          )}
+        {/* 3B. DESKTOP SUPPLIERS DATA TABLE (Hidden on mobile <= 768px) */}
+        <div className="supplier-table-container">
           <table className="supplier-modern-table">
             <thead>
               <tr>

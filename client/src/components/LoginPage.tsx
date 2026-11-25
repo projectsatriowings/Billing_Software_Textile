@@ -642,7 +642,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 1000,
-            padding: 'max(1.5rem, calc(0.75rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))) max(1rem, calc(0.5rem + var(--safe-area-inset-right, env(safe-area-inset-right, 0px)))) max(1.5rem, calc(0.75rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)))) max(1rem, calc(0.5rem + var(--safe-area-inset-left, env(safe-area-inset-left, 0px))))',
+            padding: '1.5rem 1rem',
             boxSizing: 'border-box',
           }}
           onClick={() => setShowForgotModal(false)}
@@ -652,7 +652,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             style={{
               width: '100%',
               maxWidth: '460px',
-              maxHeight: 'calc(100dvh - 32px - var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) - var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)))',
+              maxHeight: 'calc(100dvh - 32px)',
               overflowY: 'auto',
               background: '#FFFFFF',
               borderRadius: '20px',
@@ -762,7 +762,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 1000,
-            padding: 'max(1.25rem, calc(0.75rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))) max(1rem, calc(0.5rem + var(--safe-area-inset-right, env(safe-area-inset-right, 0px)))) max(1.25rem, calc(0.75rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)))) max(1rem, calc(0.5rem + var(--safe-area-inset-left, env(safe-area-inset-left, 0px))))',
+            padding: '1.25rem 1rem',
             boxSizing: 'border-box',
           }}
           onClick={() => setShowDownloadModal(false)}
@@ -779,7 +779,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               display: 'flex',
               flexDirection: 'column',
               gap: '1.25rem',
-              maxHeight: 'calc(100dvh - 32px - var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) - var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)))',
+              maxHeight: 'calc(100dvh - 32px)',
               overflowY: 'auto',
               boxSizing: 'border-box',
             }}
