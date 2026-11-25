@@ -1464,7 +1464,7 @@
     max-height: 230px !important;
     height: auto !important;
     padding: 1.1rem 1.25rem 0.75rem !important;
-    padding-top: max(1rem, env(safe-area-inset-top, 1rem)) !important;
+    padding-top: max(1.1rem, calc(0.35rem + env(safe-area-inset-top, 0px))) !important;
     position: relative;
     overflow: hidden !important;
     flex-shrink: 0;
@@ -1685,7 +1685,7 @@
   .modern-login-left.cashier-layout,
   .modern-login-left.store-manager-layout {
     padding: 1rem 1rem 0.75rem !important;
-    padding-top: max(1rem, env(safe-area-inset-top, 1rem)) !important;
+    padding-top: max(1rem, calc(0.35rem + env(safe-area-inset-top, 0px))) !important;
   }
 
   .modern-admin-illustration-area {

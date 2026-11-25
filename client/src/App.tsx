@@ -4580,6 +4580,22 @@ export function App() {
             },
             () => { }
           );
+
+          // Force dimensions on html5-qrcode generated elements to prevent vertical stretching
+          const vEl = document.getElementById('pos-inline-camera-view');
+          if (vEl) {
+            vEl.style.width = '100%';
+            vEl.style.height = '100%';
+            vEl.style.maxHeight = '100%';
+            const vid = vEl.querySelector('video');
+            if (vid) {
+              vid.style.width = '100%';
+              vid.style.height = '100%';
+              vid.style.maxHeight = '100%';
+              vid.style.objectFit = 'cover';
+            }
+          }
+
           setIsPosCameraStarting(false);
           isPosCameraStartingRef.current = false;
         } catch (err: any) {
@@ -11289,7 +11305,17 @@ export function App() {
                       <div className="bento-scanner-body">
                         {/* Live In-Place Camera Scanner Viewfinder */}
                         {isPosCameraActive && (
-                          <div className={`pos-inline-camera-container ${cameraScanFlash ? 'scan-flash' : ''}`}>
+                          <div
+                            className={`pos-inline-camera-container ${cameraScanFlash ? 'scan-flash' : ''}`}
+                            style={{
+                              aspectRatio: '16 / 9',
+                              width: '100%',
+                              minHeight: '175px',
+                              maxHeight: '220px',
+                              position: 'relative',
+                              overflow: 'hidden',
+                            }}
+                          >
                             <div className="pos-inline-camera-header">
                               <div className="pos-cam-header-left">
                                 <span className="pos-cam-dot live"></span>
@@ -11322,7 +11348,18 @@ export function App() {
                               </div>
                             </div>
 
-                            <div id="pos-inline-camera-view" className="pos-inline-camera-view" />
+                            <div
+                              id="pos-inline-camera-view"
+                              className="pos-inline-camera-view"
+                              style={{
+                                position: 'absolute',
+                                inset: 0,
+                                width: '100%',
+                                height: '100%',
+                                maxHeight: '100%',
+                                overflow: 'hidden',
+                              }}
+                            />
 
                             {isPosCameraStarting && (
                               <div className="pos-cam-loading">

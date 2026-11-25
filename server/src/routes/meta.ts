@@ -24,6 +24,7 @@ function ensureReleaseFile(type: 'exe' | 'zip' | 'apk'): { filePath: string; siz
     path.resolve(process.cwd(), 'release', targetName),
     path.resolve(process.cwd(), 'client', 'public', 'downloads', targetName),
     path.resolve(process.cwd(), 'client', 'dist', 'downloads', targetName),
+    path.resolve(process.cwd(), 'android', 'app', 'build', 'outputs', 'apk', 'release', 'app-release.apk'),
     path.resolve(process.cwd(), 'android', 'app', 'build', 'outputs', 'apk', 'debug', 'app-debug.apk'),
     path.resolve(__dirname, '../../../../release', targetName),
     path.resolve(__dirname, '../../../release', targetName),

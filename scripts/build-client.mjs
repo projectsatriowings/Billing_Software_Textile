@@ -8,10 +8,19 @@ async function build() {
     fs.mkdirSync(distDir, { recursive: true });
   }
 
-  // Copy public assets recursively
+  // Copy public assets recursively (excluding large binary installers)
   const publicDir = path.resolve('client/public');
   if (fs.existsSync(publicDir)) {
-    fs.cpSync(publicDir, distDir, { recursive: true });
+    fs.cpSync(publicDir, distDir, {
+      recursive: true,
+      filter: (src) => {
+        const basename = path.basename(src).toLowerCase();
+        if (basename === 'downloads' || basename.endsWith('.apk') || basename.endsWith('.exe') || basename.endsWith('.zip')) {
+          return false;
+        }
+        return true;
+      },
+    });
   }
 
   const isDev = process.env.NODE_ENV === 'development';
