@@ -1565,14 +1565,14 @@ export function registerInventory(r: Router) {
     // 3. Duplicate Items & Barcode Collision Warnings (within the same branch)
     const barcodeDuplicates = await ctx.db.query(
       `SELECT 
-        barcode,
-        branch_id,
+        i.barcode,
+        i.branch_id,
         COUNT(*)::int AS count,
-        json_agg(json_build_object('id', id, 'name', name, 'sku', sku)) AS items
-      FROM items
-      WHERE tenant_id = ? AND active = true AND barcode IS NOT NULL AND TRIM(barcode) != ''
+        json_agg(json_build_object('id', i.id, 'name', i.name, 'sku', i.sku)) AS items
+      FROM items i
+      WHERE i.tenant_id = ? AND i.active = true AND i.barcode IS NOT NULL AND TRIM(i.barcode) != ''
         ${itemBranchFilter}
-      GROUP BY branch_id, barcode
+      GROUP BY i.branch_id, i.barcode
       HAVING COUNT(*) > 1
       LIMIT 10`,
       [tenantId, ...branchParams],

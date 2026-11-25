@@ -664,7 +664,7 @@ export const CustomerDirectory: React.FC<CustomerDirectoryProps> = ({
                             borderColor: avatarStyle.border,
                           }}
                         >
-                          {c.name.slice(0, 2).toUpperCase()}
+                          {(c.name || 'C').slice(0, 2).toUpperCase()}
                         </div>
                         <div className="customer-name-group">
                           <span className="customer-full-name">{c.name}</span>
@@ -796,7 +796,7 @@ export const CustomerDirectory: React.FC<CustomerDirectoryProps> = ({
                         borderColor: style.border,
                       }}
                     >
-                      {selectedCustomer.name.slice(0, 2).toUpperCase()}
+                      {(selectedCustomer.name || 'C').slice(0, 2).toUpperCase()}
                     </div>
                   );
                 })()}

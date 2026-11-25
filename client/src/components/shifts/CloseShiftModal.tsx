@@ -153,7 +153,7 @@ export const CloseShiftModal: React.FC<CloseShiftModalProps> = ({
             <div className="shift-bento-title-wrap">
               <h3>
                 <span>Close Shift & Day-End Reconcile</span>
-                <span className="shift-ref-pill">#{activeShift.shiftNumber || activeShift.id.slice(0, 8)}</span>
+                <span className="shift-ref-pill">#{activeShift.shiftNumber || (activeShift.id || '').slice(0, 8)}</span>
               </h3>
               <p>
                 <UserIcon size={12} />

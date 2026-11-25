@@ -835,7 +835,7 @@ export const SupplierDirectory: React.FC<SupplierDirectoryProps> = ({
                             borderColor: avatarStyle.border,
                           }}
                         >
-                          {s.name.slice(0, 2).toUpperCase()}
+                          {(s.name || 'S').slice(0, 2).toUpperCase()}
                         </div>
                         <div className="supplier-name-group">
                           <span className="supplier-full-name">{s.name}</span>
@@ -1044,7 +1044,7 @@ export const SupplierDirectory: React.FC<SupplierDirectoryProps> = ({
                         borderColor: style.border,
                       }}
                     >
-                      {selectedSupplier.name.slice(0, 2).toUpperCase()}
+                      {(selectedSupplier.name || 'S').slice(0, 2).toUpperCase()}
                     </div>
                   );
                 })()}

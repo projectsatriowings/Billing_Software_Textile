@@ -75,6 +75,16 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
     }
   };
 
+  // Prevent background page from scrolling while modal is open
+  useEffect(() => {
+    if (!isOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [isOpen]);
+
   useEffect(() => {
     if (!isOpen) return;
     let active = true;
@@ -206,8 +216,6 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
     return branchCountersList[0]?.code || 'MAIN-C01';
   });
 
-  const [isCustomMode, setIsCustomMode] = useState<boolean>(false);
-  const [customCounterText, setCustomCounterText] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
 
   // Check if a given counter option is currently occupied by another cashier
@@ -276,13 +284,11 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
   if (!isOpen) return null;
 
   const currentSelectedObj = branchCountersList.find(c => c.code === selectedCode);
-  const selectedOccupant = !isCustomMode && currentSelectedObj ? getOccupantForCounter(currentSelectedObj) : null;
+  const selectedOccupant = currentSelectedObj ? getOccupantForCounter(currentSelectedObj) : null;
 
-  const displaySelectedLabel = isCustomMode
-    ? (customCounterText.trim() || 'Custom Counter')
-    : currentSelectedObj
-      ? `${currentSelectedObj.name} (${currentSelectedObj.code})`
-      : (branchCountersList[0] ? `${branchCountersList[0].name} (${branchCountersList[0].code})` : 'Counter 1');
+  const displaySelectedLabel = currentSelectedObj
+    ? `${currentSelectedObj.name} (${currentSelectedObj.code})`
+    : (branchCountersList[0] ? `${branchCountersList[0].name} (${branchCountersList[0].code})` : 'Counter 1');
 
   const handleSelect = (counterCode: string) => {
     if (isLocked) {
@@ -298,7 +304,6 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
       return;
     }
     setSelectedCode(counterCode);
-    setIsCustomMode(false);
     setError(null);
   };
 
@@ -310,16 +315,6 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
     let finalCode = selectedCode;
     let finalName = currentSelectedObj?.name || selectedCode;
     let finalId = currentSelectedObj?.id;
-
-    if (isCustomMode) {
-      const trimmed = customCounterText.trim();
-      if (!trimmed) {
-        setError('Please enter a valid counter identifier or choose one from the branch counters list.');
-        return;
-      }
-      finalCode = trimmed;
-      finalName = trimmed;
-    }
 
     if (!finalCode) {
       setError('Please select an active checkout counter for this branch before continuing.');
@@ -354,7 +349,7 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
 
   return createPortal(
     <div
-      className="modal-overlay theme-cashier"
+      className="modal-overlay theme-cashier select-counter-backdrop"
       onClick={() => {
         if (canClose) onClose();
       }}
@@ -365,16 +360,13 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '1rem',
+        padding: '0.75rem',
       }}
     >
       <div
-        className="shift-bento-dialog wide-1040"
+        className="shift-bento-dialog wide-1040 select-counter-bento-dialog select-counter-dialog"
         onClick={(e) => e.stopPropagation()}
         style={{
-          maxWidth: '920px',
-          width: '92vw',
-          maxHeight: '90vh',
           display: 'flex',
           flexDirection: 'column',
           background: 'var(--surface, #FAF7F2)',
@@ -388,14 +380,35 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
         <div className="modal-top-accent green-accent" style={{ height: '4px', background: 'linear-gradient(90deg, var(--sidebar, #0F2D2E) 0%, var(--primary, #0F766E) 50%, var(--ring, #14B8A6) 100%)' }}></div>
 
         {/* 1. Bento Header */}
-        <div className="shift-bento-header" style={{ padding: '1.1rem 1.6rem', borderBottom: '1px solid var(--border, #D0C7B8)', background: 'var(--surface, #FAF7F2)' }}>
-          <div className="shift-bento-header-left" style={{ display: 'flex', alignItems: 'center', gap: '0.9rem' }}>
+        <div
+          className="shift-bento-header select-counter-header"
+          style={{
+            padding: '1.1rem 1.6rem',
+            borderBottom: '1px solid var(--border, #D0C7B8)',
+            background: 'var(--surface, #FAF7F2)',
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'space-between',
+            gap: '0.75rem',
+            position: 'relative',
+          }}
+        >
+          <div
+            className="shift-bento-header-left"
+            style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '0.85rem',
+              flex: '1 1 auto',
+              minWidth: 0,
+            }}
+          >
             <div
-              className="shift-bento-icon-badge green"
+              className="shift-bento-icon-badge green select-counter-icon-badge"
               style={{
-                width: '46px',
-                height: '46px',
-                borderRadius: '13px',
+                width: '44px',
+                height: '44px',
+                borderRadius: '12px',
                 background: 'var(--primary-soft, #E6F4F3)',
                 color: 'var(--primary, #0F766E)',
                 border: '1.2px solid rgba(20, 184, 166, 0.4)',
@@ -403,6 +416,7 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
                 alignItems: 'center',
                 justifyContent: 'center',
                 boxShadow: '0 2px 8px rgba(15, 118, 110, 0.15)',
+                flexShrink: 0,
               }}
             >
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -411,11 +425,13 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
                 <line x1="12" y1="17" x2="12" y2="21" />
               </svg>
             </div>
-            <div className="shift-bento-title-wrap">
-              <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: 'var(--sidebar, #0F2D2E)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span>{isLocked ? 'Billing Counter Station' : 'Select Billing Counter'}</span>
+            <div className="shift-bento-title-wrap" style={{ flex: '1 1 auto', minWidth: 0 }}>
+              <div className="select-counter-title-row" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+                <h3 style={{ margin: 0, fontSize: '1.18rem', fontWeight: 800, color: 'var(--sidebar, #0F2D2E)', lineHeight: 1.25 }}>
+                  {isLocked ? 'Billing Counter Station' : 'Select Billing Counter'}
+                </h3>
                 <span
-                  className="shift-ref-pill"
+                  className="shift-ref-pill select-counter-badge"
                   style={{
                     fontSize: '0.72rem',
                     fontWeight: 700,
@@ -427,13 +443,23 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '4px',
+                    flexShrink: 0,
                   }}
                 >
                   {isLocked && <LockIcon size={11} />}
                   <span>{isLocked ? 'Station Locked' : 'Branch Station'}</span>
                 </span>
-              </h3>
-              <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: 'var(--text-muted, #475569)' }}>
+              </div>
+              <p
+                className="select-counter-subtitle"
+                style={{
+                  margin: '0.25rem 0 0 0',
+                  fontSize: '0.78rem',
+                  color: 'var(--text-muted, #475569)',
+                  lineHeight: 1.35,
+                  wordBreak: 'break-word',
+                }}
+              >
                 {isLocked
                   ? 'This terminal is locked to this checkout counter for your active session. To change stations, close your shift or log out.'
                   : 'Choose the checkout station created in this branch for accurate counter sales tracking and shift data analysis.'}
@@ -441,8 +467,18 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
             </div>
           </div>
 
-          <div className="shift-bento-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+          <div
+            className="shift-bento-header-actions select-counter-header-actions"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              flexShrink: 0,
+              alignSelf: 'flex-start',
+            }}
+          >
             <div
+              className="select-counter-branch-chip"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -464,7 +500,7 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
             {canClose && (
               <button
                 type="button"
-                className="modal-close-btn"
+                className="modal-close-btn select-counter-close-btn"
                 onClick={onClose}
                 aria-label="Close"
                 title="Close"
@@ -472,17 +508,20 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
                   background: 'var(--surface, #FAF7F2)',
                   border: '1px solid var(--border, #D0C7B8)',
                   borderRadius: '10px',
-                  width: '32px',
-                  height: '32px',
+                  width: '40px',
+                  height: '40px',
+                  minWidth: '40px',
+                  minHeight: '40px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   cursor: 'pointer',
                   color: 'var(--text-muted, #475569)',
                   transition: 'all 0.15s ease',
+                  flexShrink: 0,
                 }}
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="18" y1="6" x2="6" y2="18"></line>
                   <line x1="6" y1="6" x2="18" y2="18"></line>
                 </svg>
@@ -492,28 +531,72 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
         </div>
 
         {/* 2. Bento Body */}
-        <div className="shift-bento-body" style={{ padding: '1.3rem 1.6rem', background: 'var(--bg, #E8E1D5)', flex: 1, overflowY: 'auto' }}>
+        <div
+          className="shift-bento-body select-counter-body"
+          style={{
+            padding: '1.2rem 1.6rem',
+            background: 'var(--bg, #E8E1D5)',
+            flex: '1 1 auto',
+            minHeight: 0,
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch',
+          }}
+        >
           {/* Top 3-Tile Context Ribbon */}
-          <div className="shift-bento-ribbon cols-3" style={{ marginBottom: '1.2rem' }}>
-            <div className="shift-bento-ribbon-tile">
+          <div className="shift-bento-ribbon cols-3 select-counter-ribbon" style={{ marginBottom: '1.15rem' }}>
+            <div className="shift-bento-ribbon-tile select-counter-ribbon-tile branch-tile">
               <div className="ribbon-tile-label">
                 <span>Active Branch</span>
                 <StoreIcon size={13} style={{ color: 'var(--primary, #0F766E)' }} />
               </div>
-              <div className="ribbon-tile-val" style={{ fontSize: '1.05rem', color: 'var(--sidebar, #0F2D2E)' }}>
+              <div
+                className="ribbon-tile-val branch-name-val"
+                style={{
+                  color: 'var(--sidebar, #0F2D2E)',
+                  fontSize: '1.05rem',
+                  fontWeight: 800,
+                  lineHeight: 1.25,
+                  whiteSpace: 'normal',
+                  wordBreak: 'break-word',
+                  overflow: 'visible',
+                  textOverflow: 'clip',
+                }}
+              >
                 {branchName || 'Main Branch'}
               </div>
-              <div className="ribbon-tile-sub">Location Code: {branchCode}</div>
+              <div
+                className="ribbon-tile-sub"
+                style={{
+                  fontSize: '0.72rem',
+                  lineHeight: 1.3,
+                  color: 'var(--text-muted, #475569)',
+                  whiteSpace: 'normal',
+                  wordBreak: 'break-word',
+                }}
+              >
+                Location Code: {branchCode}
+              </div>
             </div>
 
-            <div className="shift-bento-ribbon-tile">
-              <div className="ribbon-tile-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+            <div className="shift-bento-ribbon-tile select-counter-ribbon-tile station-tile">
+              <div
+                className="ribbon-tile-label station-tile-header"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: '4px',
+                  width: '100%',
+                }}
+              >
+                <span className="station-tile-title" style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
                   <span>Station Availability</span>
                   <LayersIcon size={13} style={{ color: 'var(--primary, #0F766E)' }} />
                 </span>
                 <button
                   type="button"
+                  className="station-sync-btn"
                   onClick={(e) => {
                     e.stopPropagation();
                     loadOccupied();
@@ -531,10 +614,11 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
                     gap: '4px',
                     fontSize: '0.68rem',
                     fontWeight: 700,
+                    flexShrink: 0,
                   }}
                 >
-                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: loadingOccupied ? '#f59e0b' : '#10b981', display: 'inline-block' }} />
-                  <span>{loadingOccupied ? 'Syncing...' : 'Live Sync'}</span>
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: loadingOccupied ? '#f59e0b' : '#10b981', display: 'inline-block', flexShrink: 0 }} />
+                  <span className="station-sync-text" style={{ whiteSpace: 'nowrap' }}>{loadingOccupied ? 'Syncing...' : 'Live Sync'}</span>
                   <svg
                     width="10"
                     height="10"
@@ -544,7 +628,7 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
                     strokeWidth="2.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    style={{ animation: loadingOccupied ? 'spin 1s linear infinite' : 'none' }}
+                    style={{ animation: loadingOccupied ? 'spin 1s linear infinite' : 'none', flexShrink: 0 }}
                   >
                     <path d="M21 2v6h-6"></path>
                     <path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path>
@@ -554,30 +638,68 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
                 </button>
               </div>
               <div
-                className="ribbon-tile-val"
+                className="ribbon-tile-val station-count-val"
                 style={{
-                  fontSize: '1.05rem',
                   color: availableCount > 0 ? 'var(--primary, #0F766E)' : '#b91c1c',
+                  fontSize: '1.05rem',
+                  fontWeight: 800,
+                  lineHeight: 1.25,
+                  whiteSpace: 'normal',
+                  wordBreak: 'break-word',
+                  overflow: 'visible',
+                  textOverflow: 'clip',
                 }}
               >
                 {availableCount} Available / {branchCountersList.length} Total
               </div>
-              <div className="ribbon-tile-sub">
+              <div
+                className="ribbon-tile-sub"
+                style={{
+                  fontSize: '0.72rem',
+                  lineHeight: 1.3,
+                  color: 'var(--text-muted, #475569)',
+                  whiteSpace: 'normal',
+                  wordBreak: 'break-word',
+                }}
+              >
                 {occupiedCount > 0
                   ? `${occupiedCount} ${occupiedCount === 1 ? 'station' : 'stations'} occupied by cashiers`
                   : `All stations free in ${branchCode}`}
               </div>
             </div>
 
-            <div className="shift-bento-ribbon-tile highlight">
+            <div className="shift-bento-ribbon-tile highlight select-counter-ribbon-tile dest-tile">
               <div className="ribbon-tile-label">
                 <span>Selected Destination</span>
                 <SparklesIcon size={13} style={{ color: 'var(--primary, #0F766E)' }} />
               </div>
-              <div className="ribbon-tile-val" style={{ fontSize: '1.05rem', color: 'var(--primary, #0F766E)' }}>
+              <div
+                className="ribbon-tile-val dest-name-val"
+                style={{
+                  color: 'var(--primary, #0F766E)',
+                  fontSize: '1.05rem',
+                  fontWeight: 800,
+                  lineHeight: 1.25,
+                  whiteSpace: 'normal',
+                  wordBreak: 'break-word',
+                  overflow: 'visible',
+                  textOverflow: 'clip',
+                }}
+              >
                 {displaySelectedLabel}
               </div>
-              <div className="ribbon-tile-sub">Sales Analytics & Shift Target</div>
+              <div
+                className="ribbon-tile-sub"
+                style={{
+                  fontSize: '0.72rem',
+                  lineHeight: 1.3,
+                  color: 'var(--text-muted, #475569)',
+                  whiteSpace: 'normal',
+                  wordBreak: 'break-word',
+                }}
+              >
+                Sales Analytics & Shift Target
+              </div>
             </div>
           </div>
 
@@ -648,7 +770,7 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
           )}
 
           {/* Section Heading */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+          <div className="select-counter-stations-heading" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
             <span style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--sidebar, #0F2D2E)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               Checkout Stations Created in {branchCode}
             </span>
@@ -659,6 +781,7 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
 
           {/* Bento Cards Grid for Available Counters created in this branch */}
           <div
+            className="select-counter-stations-grid"
             style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
@@ -670,7 +793,7 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
               const occupant = getOccupantForCounter(c);
               const isOccupied = Boolean(occupant);
               const isMyStation = isCurrentUserStation(c);
-              const isCardActive = !isCustomMode && selectedCode === c.code;
+              const isCardActive = selectedCode === c.code;
               const isLockedCard = isLocked && !isCardActive;
 
               return (
@@ -948,128 +1071,9 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
             })}
           </div>
 
-          {/* Custom Counter Option Bento Box */}
-          <div
-            style={{
-              background: 'var(--surface, #FAF7F2)',
-              border: isCustomMode ? '2px solid var(--primary, #0F766E)' : '1.5px solid var(--border, #D0C7B8)',
-              borderRadius: '14px',
-              padding: '1rem 1.2rem',
-              boxShadow: '0 1px 3px rgba(15, 45, 46, 0.04)',
-              marginBottom: '1rem',
-              transition: 'all 0.18s ease',
-            }}
-          >
-            <div
-              onClick={() => {
-                if (isLocked) {
-                  setError(`Billing station is locked to "${currentSelectedObj?.name || currentCounter}". Station cannot be changed while in active use.`);
-                  return;
-                }
-                setIsCustomMode(!isCustomMode);
-                if (!isCustomMode && !customCounterText) {
-                  setCustomCounterText(`${branchCode || 'MAIN'}-C05`);
-                }
-              }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                cursor: isLocked ? 'not-allowed' : 'pointer',
-                opacity: isLocked ? 0.6 : 1,
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                <div
-                  style={{
-                    width: '30px',
-                    height: '30px',
-                    borderRadius: '8px',
-                    background: isCustomMode ? 'var(--primary-soft, #E6F4F3)' : 'rgba(0, 0, 0, 0.04)',
-                    color: isCustomMode ? 'var(--primary, #0F766E)' : 'var(--text-muted, #475569)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <SparklesIcon size={16} />
-                </div>
-                <div>
-                  <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--sidebar, #0F2D2E)' }}>
-                    Other / Dedicated Terminal Code
-                  </div>
-                  <div style={{ fontSize: '0.74rem', color: 'var(--text-muted, #475569)' }}>
-                    {isLocked ? 'Manual station specification disabled while session is locked' : 'Manually specify a custom counter identifier or register lane'}
-                  </div>
-                </div>
-              </div>
-
-              <div
-                style={{
-                  fontSize: '0.75rem',
-                  fontWeight: 700,
-                  color: isCustomMode ? 'var(--primary, #0F766E)' : 'var(--text-muted, #475569)',
-                  background: isCustomMode ? 'var(--primary-soft, #E6F4F3)' : 'rgba(0, 0, 0, 0.05)',
-                  padding: '3px 8px',
-                  borderRadius: '6px',
-                }}
-              >
-                {isLocked ? 'Locked' : (isCustomMode ? 'Active' : 'Custom +')}
-              </div>
-            </div>
-
-            {isCustomMode && !isLocked && (
-              <div style={{ marginTop: '0.85rem', paddingTop: '0.85rem', borderTop: '1px solid var(--border, #D0C7B8)' }}>
-                <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center' }}>
-                  <input
-                    type="text"
-                    value={customCounterText}
-                    onChange={(e) => {
-                      setCustomCounterText(e.target.value);
-                      setError(null);
-                    }}
-                    placeholder={`e.g., ${branchCode || 'MAIN'}-C05, Kiosk 1, Drive-Through...`}
-                    style={{
-                      flex: 1,
-                      padding: '0.65rem 0.9rem',
-                      borderRadius: '10px',
-                      border: '1.5px solid var(--primary, #0F766E)',
-                      background: 'var(--surface, #FAF7F2)',
-                      color: 'var(--text, #0F172A)',
-                      fontSize: '0.88rem',
-                      fontWeight: 600,
-                      outline: 'none',
-                    }}
-                    autoFocus
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (customCounterText.trim()) {
-                        setSelectedCode(customCounterText.trim());
-                      }
-                    }}
-                    style={{
-                      padding: '0.65rem 1rem',
-                      borderRadius: '10px',
-                      background: 'var(--primary, #0F766E)',
-                      color: '#ffffff',
-                      border: 'none',
-                      fontWeight: 700,
-                      fontSize: '0.82rem',
-                      cursor: 'pointer',
-                      transition: 'background 0.15s ease',
-                    }}
-                  >
-                    Apply
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
           {/* Audit & Data Collection Notice */}
           <div
+            className="select-counter-analytics-notice"
             style={{
               background: 'var(--primary-soft, #E6F4F3)',
               border: '1px solid rgba(20, 184, 166, 0.35)',
@@ -1081,6 +1085,7 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
               color: 'var(--sidebar, #0F2D2E)',
               fontSize: '0.78rem',
               lineHeight: 1.4,
+              marginBottom: '0.75rem',
             }}
           >
             <InfoIcon size={16} style={{ flexShrink: 0, color: 'var(--primary, #0F766E)' }} />
@@ -1092,7 +1097,7 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
 
         {/* 3. Bento Footer */}
         <div
-          className="shift-bento-footer"
+          className="shift-bento-footer select-counter-footer"
           style={{
             padding: '1rem 1.6rem',
             borderTop: '1px solid var(--border, #D0C7B8)',
@@ -1102,42 +1107,34 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
             justifyContent: 'space-between',
             gap: '1rem',
             flexWrap: 'wrap',
+            flexShrink: 0,
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.84rem', color: 'var(--text-muted, #475569)' }}>
-            <span>Active Counter:</span>
+          <div className="select-counter-footer-counter-info" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.84rem', color: 'var(--text-muted, #475569)', minWidth: 0 }}>
+            <span style={{ flexShrink: 0 }}>Active Counter:</span>
             <span
-              className="shift-ref-pill"
+              className="shift-ref-pill select-counter-footer-pill"
               style={{
                 fontWeight: 800,
                 color: 'var(--primary, #0F766E)',
                 background: 'var(--primary-soft, #E6F4F3)',
-                padding: '3px 10px',
+                padding: '4px 10px',
                 borderRadius: '8px',
                 border: '1px solid rgba(20, 184, 166, 0.35)',
                 fontSize: '0.88rem',
+                wordBreak: 'break-word',
               }}
             >
               {displaySelectedLabel}
             </span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div className="select-counter-footer-actions">
             {canClose && (
               <button
                 type="button"
-                className="btn btn-secondary"
+                className="btn btn-secondary select-counter-btn-cancel"
                 onClick={onClose}
-                style={{
-                  padding: '0.65rem 1.15rem',
-                  borderRadius: '10px',
-                  fontWeight: 700,
-                  fontSize: '0.86rem',
-                  background: 'var(--surface, #FAF7F2)',
-                  border: '1px solid var(--border, #D0C7B8)',
-                  color: 'var(--text-muted, #475569)',
-                  cursor: 'pointer',
-                }}
               >
                 {isLocked ? 'Close' : 'Cancel'}
               </button>
@@ -1146,25 +1143,9 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
             {!isLocked ? (
               <button
                 type="button"
-                className="btn btn-primary"
+                className="btn btn-primary select-counter-btn-confirm"
                 onClick={handleConfirm}
                 disabled={Boolean(selectedOccupant)}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  padding: '0.65rem 1.4rem',
-                  borderRadius: '10px',
-                  background: selectedOccupant ? '#94a3b8' : 'var(--primary, #0F766E)',
-                  color: '#ffffff',
-                  border: 'none',
-                  fontWeight: 800,
-                  fontSize: '0.88rem',
-                  cursor: selectedOccupant ? 'not-allowed' : 'pointer',
-                  opacity: selectedOccupant ? 0.6 : 1,
-                  boxShadow: selectedOccupant ? 'none' : '0 4px 14px rgba(15, 118, 110, 0.35)',
-                  transition: 'all 0.15s ease',
-                }}
               >
                 <span>{selectedOccupant ? 'Station Occupied' : 'Confirm & Start Billing'}</span>
                 <ArrowRightIcon size={15} />
@@ -1172,23 +1153,8 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
             ) : (
               <button
                 type="button"
-                className="btn btn-primary"
+                className="btn btn-primary select-counter-btn-confirm"
                 onClick={onClose}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  padding: '0.65rem 1.4rem',
-                  borderRadius: '10px',
-                  background: 'var(--primary, #0F766E)',
-                  color: '#ffffff',
-                  border: 'none',
-                  fontWeight: 800,
-                  fontSize: '0.88rem',
-                  cursor: 'pointer',
-                  boxShadow: '0 4px 14px rgba(15, 118, 110, 0.35)',
-                  transition: 'all 0.15s ease',
-                }}
               >
                 <LockIcon size={14} />
                 <span>Station Locked • Keep Current Counter</span>
