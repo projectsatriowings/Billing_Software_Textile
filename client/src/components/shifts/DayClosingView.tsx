@@ -1950,6 +1950,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                       <span>Physical Cash</span>
                     </div>
                     <div className="tender-amount">{fmt(payments.cashCollectionsMinor)}</div>
+                    <div className="tender-subtext" style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '2px' }}>Cash in Drawer</div>
                   </div>
 
                   <div className="tender-kpi-card bento-card-3d upi">
@@ -1958,6 +1959,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                       <span>UPI / QR</span>
                     </div>
                     <div className="tender-amount">{fmt(payments.upiCollectionsMinor)}</div>
+                    <div className="tender-subtext" style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '2px' }}>GPay, PhonePe, Paytm</div>
                   </div>
 
                   <div className="tender-kpi-card bento-card-3d card">
@@ -1966,6 +1968,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                       <span>Card / POS</span>
                     </div>
                     <div className="tender-amount">{fmt(payments.cardCollectionsMinor)}</div>
+                    <div className="tender-subtext" style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '2px' }}>Swipe Terminal / EDC</div>
                   </div>
 
                   <div className="tender-kpi-card bento-card-3d credit">
@@ -1974,6 +1977,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                       <span>Store Credit</span>
                     </div>
                     <div className="tender-amount">{fmt(payments.storeCreditMinor)}</div>
+                    <div className="tender-subtext" style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '2px' }}>Vouchers / Non-Cash</div>
                   </div>
                 </div>
               </div>
