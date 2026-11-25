@@ -15,6 +15,11 @@ const config: CapacitorConfig = {
     webContentsDebuggingEnabled: true,
   },
   plugins: {
+    SystemBars: {
+      insetsHandling: 'css',
+      initialViewportFitValueHint: 'cover',
+      style: 'DARK',
+    },
     StatusBar: {
       style: 'DARK',
       backgroundColor: '#6D28D9',

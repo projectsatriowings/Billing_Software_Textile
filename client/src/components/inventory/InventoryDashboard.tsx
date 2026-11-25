@@ -2034,15 +2034,7 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
       {/* SUB-VIEW 4: Replenishment Suggestions */}
       {activeSubTab === 'replenish' && (
         <div className="inv-subview-content">
-          <div className="replenishment-header-card">
-            <div>
-              <h3 className="section-title">Replenishment & Purchase Recommendations</h3>
-              <p className="section-subtitle">
-                Target-stock policy formula: max(1 base unit, 2 × max(reorder point, min stock) − current stock). Calculates quantity to restore buffer up to 2× reorder threshold. Does not factor supplier lead times, pending purchase orders, or vendor pack sizes.
-              </p>
-            </div>
-          </div>
-
+          
           {isReplenishRefreshing && (
             <div className="refresh-progress-bar-wrap">
               <div className="progress-line" />
@@ -2088,7 +2080,6 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
             </div>
           ) : (
             <div className={`ledger-table-wrap ${isReplenishRefreshing ? 'table-refreshing-dim' : 'skeleton-fade-in'}`}>
-              <div className="visually-hidden" aria-live="polite">Replenishment suggestions loaded</div>
               <table className="inventory-data-table replenishment-table">
                 <thead>
                   <tr>
