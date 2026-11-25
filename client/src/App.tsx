@@ -18797,7 +18797,7 @@ export function App() {
             )}
 
             {user?.role !== 'cashier' && displayTab === 'expenses' && (
-              <div className="tab-content-wrapper" style={{ padding: '1.5rem' }}>
+              <div className="tab-content-wrapper expenses-tab-wrapper">
                 <ExpensesView
                   key={selectedBranchScope}
                   userRole={user.role}
