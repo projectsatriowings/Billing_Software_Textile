@@ -252,6 +252,12 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
   const [analyticsEndDate, setAnalyticsEndDate] = useState<string>(
     new Date().toISOString().slice(0, 10)
   );
+  const [appliedAnalyticsRange, setAppliedAnalyticsRange] = useState<{ startDate: string; endDate: string }>(() => {
+    const d = new Date();
+    const start = new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0, 10);
+    const end = d.toISOString().slice(0, 10);
+    return { startDate: start, endDate: end };
+  });
   const [analyticsPreset, setAnalyticsPreset] = useState<string>('this_month');
   const [analyticsData, setAnalyticsData] = useState<any | null>(null);
   const [loadingAnalytics, setLoadingAnalytics] = useState(false);
@@ -736,14 +742,21 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
     }
   };
 
-  const loadAnalytics = async () => {
+  const loadAnalytics = async (overrideStartDate?: string, overrideEndDate?: string) => {
+    const sDate = overrideStartDate ?? analyticsStartDate;
+    const eDate = overrideEndDate ?? analyticsEndDate;
+    if (sDate && eDate && sDate > eDate) {
+      setError('Start Date cannot be after End Date.');
+      return;
+    }
     try {
       setLoadingAnalytics(true);
       setError(null);
+      setAppliedAnalyticsRange({ startDate: sDate, endDate: eDate });
       const res = await fetchDayClosingAnalytics({
         branchId: activeBranchId,
-        startDate: analyticsStartDate,
-        endDate: analyticsEndDate,
+        startDate: sDate,
+        endDate: eDate,
       });
       setAnalyticsData(res);
     } catch (err: any) {
@@ -796,31 +809,37 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
     const d = new Date();
     const todayStr = d.toISOString().slice(0, 10);
 
+    let start = todayStr;
+    let end = todayStr;
+
     if (preset === 'today') {
-      setAnalyticsStartDate(todayStr);
-      setAnalyticsEndDate(todayStr);
+      start = todayStr;
+      end = todayStr;
     } else if (preset === 'yesterday') {
       const y = new Date(d.getTime() - 86400000).toISOString().slice(0, 10);
-      setAnalyticsStartDate(y);
-      setAnalyticsEndDate(y);
+      start = y;
+      end = y;
     } else if (preset === 'last_7_days') {
       const s = new Date(d.getTime() - 6 * 86400000).toISOString().slice(0, 10);
-      setAnalyticsStartDate(s);
-      setAnalyticsEndDate(todayStr);
+      start = s;
+      end = todayStr;
     } else if (preset === 'last_30_days') {
       const s = new Date(d.getTime() - 29 * 86400000).toISOString().slice(0, 10);
-      setAnalyticsStartDate(s);
-      setAnalyticsEndDate(todayStr);
+      start = s;
+      end = todayStr;
     } else if (preset === 'this_month') {
-      const start = new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0, 10);
-      setAnalyticsStartDate(start);
-      setAnalyticsEndDate(todayStr);
+      start = new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0, 10);
+      end = todayStr;
     } else if (preset === 'last_month') {
-      const start = new Date(d.getFullYear(), d.getMonth() - 1, 1).toISOString().slice(0, 10);
-      const end = new Date(d.getFullYear(), d.getMonth(), 0).toISOString().slice(0, 10);
-      setAnalyticsStartDate(start);
-      setAnalyticsEndDate(end);
+      start = new Date(d.getFullYear(), d.getMonth() - 1, 1).toISOString().slice(0, 10);
+      end = new Date(d.getFullYear(), d.getMonth(), 0).toISOString().slice(0, 10);
     }
+
+    setAnalyticsStartDate(start);
+    setAnalyticsEndDate(end);
+
+    // Immediately fetch & display data on preset click without requiring Calculate Range
+    loadAnalytics(start, end);
   };
 
   // --------------------------------------------------------------------------
@@ -3566,10 +3585,11 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
               </div>
 
               <button
-                onClick={loadAnalytics}
+                type="button"
+                onClick={() => loadAnalytics(analyticsStartDate, analyticsEndDate)}
                 disabled={loadingAnalytics}
                 className="btn-approve"
-                style={{ background: 'var(--dc-primary)' }}
+                style={{ background: 'var(--dc-primary)', display: 'flex', alignItems: 'center', gap: '0.45rem', cursor: loadingAnalytics ? 'not-allowed' : 'pointer' }}
               >
                 <RefreshCwIcon size={14} className={loadingAnalytics ? 'animate-spin' : ''} />
                 Calculate Range
@@ -3649,7 +3669,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                   <div className="day-closing-card-header">
                     <div className="day-closing-card-title-group">
                       <FileTextIcon size={18} style={{ color: 'var(--dc-primary)' }} />
-                      <span>Daily Breakdown in Range ({analyticsStartDate} to {analyticsEndDate})</span>
+                      <span>Daily Breakdown in Range ({appliedAnalyticsRange.startDate} to {appliedAnalyticsRange.endDate})</span>
                     </div>
                     <span className="day-closing-card-badge">
                       {analyticsData.dailySeries.length} Days Recorded
