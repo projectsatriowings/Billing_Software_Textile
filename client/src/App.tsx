@@ -1389,8 +1389,30 @@ export function App() {
   }, [user]);
 
   const [selectedBranchScope, setSelectedBranchScope] = useState<string>(() => {
+    if (user && user.role !== 'owner' && String(user.role).toUpperCase() !== 'SUPER_ADMIN') {
+      const enforced = user.branchId || (user as any).branch_id || user.assignedLocation;
+      if (enforced) return enforced;
+    }
     return getActiveBranchScope();
   });
+
+  // Ensure non-superadmin accounts (Store Managers, Cashiers) are strictly locked to their assigned branch
+  useEffect(() => {
+    if (!user) return;
+    const isSuperAdmin = user.role === 'owner' || String(user.role).toUpperCase() === 'SUPER_ADMIN';
+    if (!isSuperAdmin) {
+      const enforced = user.branchId || (user as any).branch_id || user.assignedLocation;
+      if (enforced && selectedBranchScope !== enforced) {
+        setSelectedBranchScope(enforced);
+        try {
+          localStorage.setItem('sa_selected_branch', enforced);
+          localStorage.setItem('selected_branch', enforced);
+          sessionStorage.setItem('sa_selected_branch', enforced);
+          sessionStorage.setItem('selected_branch', enforced);
+        } catch {}
+      }
+    }
+  }, [user?.id, user?.branchId, user?.role, selectedBranchScope]);
 
   // Day Closing Overdue Alert state for top global header bar
   const [topOverdueClosing, setTopOverdueClosing] = useState<{
@@ -9376,17 +9398,19 @@ export function App() {
         <main className="main-content">
           {/* Top Global Bar Matching Image 2 */}
           <div className={`top-global-bar ${isMobileViewport ? 'mobile-sticky-appbar' : ''} ${hideBusinessBar ? 'no-divider' : ''} ${displayTab === 'dashboard' ? 'dashboard-top-bar' : ''}`}>
-            {/* Mobile Header Menu Hamburger Toggle Button (visible on screens <= 900px) */}
-            <button
-              type="button"
-              className="mobile-header-menu-btn"
-              onClick={() => setIsMobileSidebarOpen(prev => !prev)}
-              aria-label="Toggle navigation menu"
-              title="Open Navigation Menu"
-            >
-              <Menu size={isMobileViewport ? 20 : 18} />
-              {!isMobileViewport && <span className="mobile-header-menu-text">Menu</span>}
-            </button>
+            {/* Mobile Header Menu Hamburger Toggle Button (visible on screens <= 900px, hidden for Cashier) */}
+            {user?.role !== 'cashier' && (
+              <button
+                type="button"
+                className="mobile-header-menu-btn"
+                onClick={() => setIsMobileSidebarOpen(prev => !prev)}
+                aria-label="Toggle navigation menu"
+                title="Open Navigation Menu"
+              >
+                <Menu size={isMobileViewport ? 20 : 18} />
+                {!isMobileViewport && <span className="mobile-header-menu-text">Menu</span>}
+              </button>
+            )}
             {isMobileViewport ? (
               <h1 className="mobile-appbar-title" title={mobileHeaderTitle}>
                 {mobileHeaderTitle}

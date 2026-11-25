@@ -1952,5 +1952,188 @@ div.app-container.theme-manager .promo-page-wrapper {
   box-shadow: none !important;
 }
 
+/* --------------------------------------------------------------------------
+   16. MANUAL STOCK ADJUSTMENT MODAL (STORE MANAGER THEME)
+   -------------------------------------------------------------------------- */
+body.theme-manager .modal-content.inventory-modal-card,
+.theme-manager .modal-content.inventory-modal-card,
+.modal-content.inventory-modal-card.theme-manager {
+  background: #FAF6F8 !important;
+  border: 1px solid #D9C8D0 !important;
+  box-shadow: 0 20px 48px rgba(45, 24, 34, 0.28) !important;
+}
+
+body.theme-manager .modal-content.inventory-modal-card .modal-header,
+.theme-manager .modal-content.inventory-modal-card .modal-header {
+  border-bottom: 1px solid #E8D6DE !important;
+}
+
+body.theme-manager .modal-icon-badge.stock-adjust-icon-badge,
+.theme-manager .modal-icon-badge.stock-adjust-icon-badge,
+.modal-content.inventory-modal-card.theme-manager .modal-icon-badge,
+body.theme-manager .modal-icon-badge.purple,
+.theme-manager .modal-icon-badge.purple {
+  background: #F5ECF0 !important;
+  color: #653B4B !important;
+  border: 1px solid #D9C8D0 !important;
+  box-shadow: 0 2px 8px rgba(101, 59, 75, 0.15) !important;
+}
+
+body.theme-manager .mode-segmented-control .segment-btn,
+.theme-manager .mode-segmented-control .segment-btn,
+.modal-content.theme-manager .mode-segmented-control .segment-btn {
+  background: #FAF6F8 !important;
+  border: 1px solid #D9C8D0 !important;
+  transition: all 0.2s ease !important;
+}
+
+body.theme-manager .mode-segmented-control .segment-btn span,
+.theme-manager .mode-segmented-control .segment-btn span,
+.modal-content.theme-manager .mode-segmented-control .segment-btn span {
+  color: #1A0F14 !important;
+}
+
+body.theme-manager .mode-segmented-control .segment-btn small,
+.theme-manager .mode-segmented-control .segment-btn small,
+.modal-content.theme-manager .mode-segmented-control .segment-btn small {
+  color: #64555E !important;
+}
+
+body.theme-manager .mode-segmented-control .segment-btn:hover:not(.active),
+.theme-manager .mode-segmented-control .segment-btn:hover:not(.active),
+.modal-content.theme-manager .mode-segmented-control .segment-btn:hover:not(.active) {
+  background: #F5ECF0 !important;
+  border-color: #653B4B !important;
+}
+
+body.theme-manager .mode-segmented-control .segment-btn.active,
+.theme-manager .mode-segmented-control .segment-btn.active,
+.modal-content.theme-manager .mode-segmented-control .segment-btn.active {
+  background: #653B4B !important;
+  border-color: #653B4B !important;
+  box-shadow: 0 0 0 2px rgba(101, 59, 75, 0.25) !important;
+}
+
+body.theme-manager .mode-segmented-control .segment-btn.active span,
+.theme-manager .mode-segmented-control .segment-btn.active span,
+.modal-content.theme-manager .mode-segmented-control .segment-btn.active span {
+  color: #FFFFFF !important;
+}
+
+body.theme-manager .mode-segmented-control .segment-btn.active small,
+.theme-manager .mode-segmented-control .segment-btn.active small,
+.modal-content.theme-manager .mode-segmented-control .segment-btn.active small {
+  color: rgba(255, 255, 255, 0.88) !important;
+}
+
+body.theme-manager .mode-segmented-control .segment-btn.active svg,
+.theme-manager .mode-segmented-control .segment-btn.active svg,
+.modal-content.theme-manager .mode-segmented-control .segment-btn.active svg {
+  color: #FFFFFF !important;
+  stroke: #FFFFFF !important;
+}
+
+body.theme-manager .input-unit-tag,
+.theme-manager .input-unit-tag,
+.modal-content.theme-manager .input-unit-tag {
+  background: #F5ECF0 !important;
+  color: #653B4B !important;
+  border: 1px solid #D9C8D0 !important;
+  font-weight: 700 !important;
+}
+
+body.theme-manager .adjustment-preview-box,
+.theme-manager .adjustment-preview-box,
+.modal-content.theme-manager .adjustment-preview-box {
+  background: #F5ECF0 !important;
+  border: 1px solid #E8D6DE !important;
+  border-radius: 10px !important;
+}
+
+body.theme-manager .preview-arrow,
+.theme-manager .preview-arrow,
+.modal-content.theme-manager .preview-arrow {
+  background: #FAF6F8 !important;
+  color: #653B4B !important;
+  border: 1px solid #D9C8D0 !important;
+}
+
+body.theme-manager .step-val.text-stock-result,
+body.theme-manager .step-val.text-purple,
+.theme-manager .step-val.text-stock-result,
+.theme-manager .step-val.text-purple,
+.modal-content.theme-manager .step-val.text-stock-result,
+.modal-content.theme-manager .step-val.text-purple {
+  color: #653B4B !important;
+  font-weight: 800 !important;
+}
+
+body.theme-manager .modal-form-body .form-input:focus,
+.theme-manager .modal-form-body .form-input:focus,
+.modal-content.theme-manager .form-input:focus,
+body.theme-manager .modal-form-body .form-input.select:focus,
+.theme-manager .modal-form-body .form-input.select:focus,
+.modal-content.theme-manager .form-input.select:focus,
+body.theme-manager .modal-form-body textarea.form-input:focus,
+.theme-manager .modal-form-body textarea.form-input:focus,
+.modal-content.theme-manager textarea.form-input:focus {
+  border-color: #653B4B !important;
+  box-shadow: 0 0 0 3px rgba(101, 59, 75, 0.2) !important;
+  outline: none !important;
+}
+
+body.theme-manager .selected-item-pill-card,
+.theme-manager .selected-item-pill-card,
+.modal-content.theme-manager .selected-item-pill-card {
+  background: #FAF6F8 !important;
+  border: 1px solid #D9C8D0 !important;
+}
+
+body.theme-manager .selected-item-pill-card .item-stock-stat-badge .badge-val,
+.theme-manager .selected-item-pill-card .item-stock-stat-badge .badge-val,
+.modal-content.theme-manager .selected-item-pill-card .item-stock-stat-badge .badge-val {
+  color: #653B4B !important;
+}
+
+body.theme-manager .current-stock-info-banner,
+.theme-manager .current-stock-info-banner,
+.modal-content.theme-manager .current-stock-info-banner {
+  background: #F5ECF0 !important;
+  border: 1px solid #E8D6DE !important;
+}
+
+body.theme-manager .modal-actions-footer .btn-primary,
+.theme-manager .modal-actions-footer .btn-primary,
+.modal-content.theme-manager .modal-actions-footer .btn-primary {
+  background: linear-gradient(135deg, #7A475B 0%, #653B4B 100%) !important;
+  color: #FFFFFF !important;
+  border: 1px solid #653B4B !important;
+  box-shadow: 0 4px 14px rgba(101, 59, 75, 0.35) !important;
+}
+
+body.theme-manager .modal-actions-footer .btn-primary:hover:not(:disabled),
+.theme-manager .modal-actions-footer .btn-primary:hover:not(:disabled),
+.modal-content.theme-manager .modal-actions-footer .btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #653B4B 0%, #522E3C 100%) !important;
+  box-shadow: 0 6px 18px rgba(101, 59, 75, 0.45) !important;
+}
+
+body.theme-manager .modal-actions-footer .btn-secondary,
+.theme-manager .modal-actions-footer .btn-secondary,
+.modal-content.theme-manager .modal-actions-footer .btn-secondary {
+  background: #FAF6F8 !important;
+  border: 1px solid #D9C8D0 !important;
+  color: #64555E !important;
+}
+
+body.theme-manager .modal-actions-footer .btn-secondary:hover:not(:disabled),
+.theme-manager .modal-actions-footer .btn-secondary:hover:not(:disabled),
+.modal-content.theme-manager .modal-actions-footer .btn-secondary:hover:not(:disabled) {
+  background: #EFE7EB !important;
+  color: #1A0F14 !important;
+  border-color: #653B4B !important;
+}
+
+
 
 
