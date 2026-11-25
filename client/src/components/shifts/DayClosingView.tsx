@@ -261,6 +261,8 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
   const [analyticsPreset, setAnalyticsPreset] = useState<string>('this_month');
   const [analyticsData, setAnalyticsData] = useState<any | null>(null);
   const [loadingAnalytics, setLoadingAnalytics] = useState(false);
+  const [analyticsLoadingSource, setAnalyticsLoadingSource] = useState<'preset' | 'calculate' | 'header' | 'initial' | null>(null);
+  const [activeLoadingPreset, setActiveLoadingPreset] = useState<string | null>(null);
 
   // Tab 4: History state
   const [history, setHistory] = useState<any[]>([]);
@@ -742,7 +744,11 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
     }
   };
 
-  const loadAnalytics = async (overrideStartDate?: string, overrideEndDate?: string) => {
+  const loadAnalytics = async (
+    overrideStartDate?: string,
+    overrideEndDate?: string,
+    source: 'preset' | 'calculate' | 'header' | 'initial' = 'initial'
+  ) => {
     const sDate = overrideStartDate ?? analyticsStartDate;
     const eDate = overrideEndDate ?? analyticsEndDate;
     if (sDate && eDate && sDate > eDate) {
@@ -751,6 +757,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
     }
     try {
       setLoadingAnalytics(true);
+      setAnalyticsLoadingSource(source);
       setError(null);
       setAppliedAnalyticsRange({ startDate: sDate, endDate: eDate });
       const res = await fetchDayClosingAnalytics({
@@ -763,6 +770,8 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
       setError(err.message || 'Failed to fetch date range analytics');
     } finally {
       setLoadingAnalytics(false);
+      setAnalyticsLoadingSource(null);
+      setActiveLoadingPreset(null);
     }
   };
 
@@ -806,6 +815,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
 
   const handleApplyPreset = (preset: string) => {
     setAnalyticsPreset(preset);
+    setActiveLoadingPreset(preset);
     const d = new Date();
     const todayStr = d.toISOString().slice(0, 10);
 
@@ -839,7 +849,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
     setAnalyticsEndDate(end);
 
     // Immediately fetch & display data on preset click without requiring Calculate Range
-    loadAnalytics(start, end);
+    loadAnalytics(start, end, 'preset');
   };
 
   // --------------------------------------------------------------------------
@@ -1156,13 +1166,13 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
               onClick={() => {
                 if (activeTab === 'closing') loadPreview();
                 else if (activeTab === 'comparison') loadComparison();
-                else if (activeTab === 'analytics') loadAnalytics();
+                else if (activeTab === 'analytics') loadAnalytics(undefined, undefined, 'header');
                 else if (activeTab === 'history') loadHistory();
               }}
-              disabled={loadingPreview || loadingComparison || loadingAnalytics || loadingHistory}
+              disabled={loadingPreview || loadingComparison || (loadingAnalytics && analyticsLoadingSource === 'header') || loadingHistory}
               className="cat-btn-primary"
             >
-              <RefreshCwIcon size={14} className={(loadingPreview || loadingComparison || loadingAnalytics || loadingHistory) ? 'animate-spin' : ''} />
+              <RefreshCwIcon size={14} className={(loadingPreview || loadingComparison || (loadingAnalytics && analyticsLoadingSource === 'header') || loadingHistory) ? 'animate-spin' : ''} />
               <span>Refresh</span>
             </button>
           </div>
@@ -3548,10 +3558,16 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                 ].map((p) => (
                   <button
                     key={p.id}
+                    type="button"
                     onClick={() => handleApplyPreset(p.id)}
                     className={`preset-pill-btn ${analyticsPreset === p.id ? 'active' : ''}`}
+                    disabled={loadingAnalytics}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
                   >
-                    {p.label}
+                    {loadingAnalytics && activeLoadingPreset === p.id && (
+                      <RefreshCwIcon size={12} className="animate-spin" />
+                    )}
+                    <span>{p.label}</span>
                   </button>
                 ))}
               </div>
@@ -3586,24 +3602,24 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
 
               <button
                 type="button"
-                onClick={() => loadAnalytics(analyticsStartDate, analyticsEndDate)}
+                onClick={() => loadAnalytics(analyticsStartDate, analyticsEndDate, 'calculate')}
                 disabled={loadingAnalytics}
                 className="btn-approve"
                 style={{ background: 'var(--dc-primary)', display: 'flex', alignItems: 'center', gap: '0.45rem', cursor: loadingAnalytics ? 'not-allowed' : 'pointer' }}
               >
-                <RefreshCwIcon size={14} className={loadingAnalytics ? 'animate-spin' : ''} />
+                <RefreshCwIcon size={14} className={(loadingAnalytics && analyticsLoadingSource === 'calculate') ? 'animate-spin' : ''} />
                 Calculate Range
               </button>
             </div>
           </div>
 
-          {loadingAnalytics ? (
+          {loadingAnalytics && !analyticsData ? (
             <div style={{ padding: '3rem', textAlign: 'center', background: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
               <RefreshCwIcon size={32} className="animate-spin" style={{ margin: '0 auto 12px auto', color: 'var(--dc-ring)' }} />
               <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#64748b' }}>Aggregating multi-day financial records...</p>
             </div>
           ) : analyticsData?.current ? (
-            <>
+            <div style={{ opacity: loadingAnalytics ? 0.6 : 1, transition: 'opacity 0.2s ease', pointerEvents: loadingAnalytics ? 'none' : 'auto' }}>
               {/* Range Financial Summary Grid */}
               <div className="financial-kpi-grid">
                 <div className="fin-kpi-card blue">
@@ -3702,7 +3718,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                   </div>
                 </div>
               )}
-            </>
+            </div>
           ) : null}
         </div>
       )}
