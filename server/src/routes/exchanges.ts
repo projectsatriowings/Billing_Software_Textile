@@ -6,6 +6,7 @@ import { audit } from '../audit.ts';
 import { calcReturn, type ReturnLineInput } from '../../../shared/returns.ts';
 import { calcBill } from '../../../shared/tax.ts';
 import { fmtMoney } from '../../../shared/money.ts';
+import { syncItemStockStatus } from '../services/stockStatus.ts';
 
 export function registerExchanges(r: Router) {
   // 1. Process an Exchange Transaction atomically
@@ -170,7 +171,7 @@ export function registerExchanges(r: Router) {
         const priceMinor = V.int(l.priceMinor, `New Item ${i + 1} price`, { min: 0, required: true });
         const discountMinor = V.int(l.discountMinor ?? 0, `New Item ${i + 1} discount`, { min: 0 });
         const taxRateBp = V.int(l.taxRateBp ?? 0, `New Item ${i + 1} tax rate`, { min: 0, max: 10000 });
-        const inclusive = V.bool(l.inclusive, true);
+        const inclusive = false;
         const itemId = V.optStr(l.itemId, 'Item ID', 50);
         const unit = V.optStr(l.unit, 'Unit', 20);
         const hsn = V.optStr(l.hsn, 'HSN', 20);
@@ -184,7 +185,7 @@ export function registerExchanges(r: Router) {
           priceMinor: l.priceMinor,
           discountMinor: l.discountMinor,
           taxRateBp: l.taxRateBp,
-          inclusive: l.inclusive,
+          inclusive: false,
         })),
         { intraState: isIntraState, roundTotal: 'rupee' },
       );
@@ -354,6 +355,11 @@ export function registerExchanges(r: Router) {
         }
       }
 
+      const exchangeReturnedItemIds = calcReturnResult.lines.map((cl: any) => cl.itemId).filter(Boolean) as string[];
+      if (exchangeReturnedItemIds.length > 0) {
+        await syncItemStockStatus(q, tenantId, exchangeReturnedItemIds, branchId);
+      }
+
       // 6. Insert New Sales Invoice
       const additionalPaid = customerPayableMinor > 0 ? customerPayableMinor : 0;
       await q.exec(
@@ -472,6 +478,11 @@ export function registerExchanges(r: Router) {
             ],
           );
         }
+      }
+
+      const exchangeSoldItemIds = formattedNewLines.map((fl: any) => fl.itemId).filter(Boolean) as string[];
+      if (exchangeSoldItemIds.length > 0) {
+        await syncItemStockStatus(q, tenantId, exchangeSoldItemIds, branchId);
       }
 
       // 7. Record Credit Allocation (Linking Return to New Bill)

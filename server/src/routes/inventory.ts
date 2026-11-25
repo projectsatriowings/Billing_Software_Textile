@@ -6,6 +6,7 @@ import { resolveBranchScope } from '../branchScope.ts';
 import type { Queryable } from '../db/index.ts';
 import { DEFAULT_CONFIG, can, formatStockDuration, type Rules, type StockAdjustmentReason } from '../../../shared/types.ts';
 import { PACKS } from '../../../shared/packs.ts';
+import { syncItemStockStatus } from '../services/stockStatus.ts';
 
 async function getTenantRules(q: Queryable, tenantId: string): Promise<Rules> {
   const published = await q.one<{ payload: unknown }>(
@@ -739,6 +740,9 @@ export function registerInventory(r: Router) {
         ],
       );
 
+      // Synchronize product active status based on updated stock
+      await syncItemStockStatus(q, tenantId, [itemId], itemBranchId);
+
       // 8. Audit log entry
       await audit(q, ctx, {
         action: 'inventory.adjust',
@@ -1248,6 +1252,13 @@ export function registerInventory(r: Router) {
         );
 
         appliedAdjustmentsCount++;
+      }
+
+      // Synchronize product active status for all counted products based on reconciled stock
+      const reconciledItemIds = lines.map((l: any) => l.itemId || l.item_id).filter(Boolean);
+      const countBranch = count.branch_id || count.branchId;
+      if (reconciledItemIds.length > 0) {
+        await syncItemStockStatus(q, tenantId, reconciledItemIds, countBranch);
       }
 
       // 8. Mark count session as completed

@@ -4,6 +4,7 @@ import { bad, conflict, type Router } from '../http.ts';
 import { newId } from '../security.ts';
 import { audit } from '../audit.ts';
 import { generateUniqueShortSku, generateUniqueInternalBarcode, parseImportNumeric } from '../../../shared/bulkImport.ts';
+import { syncItemStockStatus } from '../services/stockStatus.ts';
 
 // ── Supported GST rates (basis points) ──────────────────────────────────────
 const VALID_GST_RATES_BP = new Set([0, 250, 500, 1200, 1800, 2800]);
@@ -178,7 +179,7 @@ function validateRow(raw: Record<string, unknown>, rowIndex: number): { errors: 
       priceMinor: Math.round(priceRaw!),
       costMinor: costRaw !== null ? Math.round(costRaw) : 0,
       taxRateBp: taxRateBpRaw ?? 500,
-      taxInclusive: raw.taxInclusive === false || raw.taxInclusive === 'false' ? false : true,
+      taxInclusive: false,
       openingQtyMilli: openingQtyRaw !== null ? Math.round(openingQtyRaw) : 0,
       reorderMilli: reorderRaw !== null ? Math.round(reorderRaw) : null,
       isRestock,
@@ -645,13 +646,8 @@ export function registerItemsBulk(r: Router) {
             let lineTaxable = lineSubtotal;
             let lineTax = 0;
             if (taxRateBp > 0) {
-              if (row.taxInclusive) {
-                lineTaxable = Math.round(lineSubtotal / (1 + taxRateBp / 10000));
-                lineTax = lineSubtotal - lineTaxable;
-              } else {
-                lineTaxable = lineSubtotal;
-                lineTax = Math.round((lineTaxable * taxRateBp) / 10000);
-              }
+              lineTaxable = lineSubtotal;
+              lineTax = Math.round((lineTaxable * taxRateBp) / 10000);
             }
             const lineTotal = lineTaxable + lineTax;
             const lineCgst = Math.round(lineTax / 2);
@@ -724,9 +720,9 @@ export function registerItemsBulk(r: Router) {
           if (row.updatePrices) {
             await q.exec(
               `UPDATE items
-               SET price_minor = ?, cost_minor = ?, tax_rate_bp = ?, tax_inclusive = ?, updated_at = now()
+               SET price_minor = ?, cost_minor = ?, tax_rate_bp = ?, tax_inclusive = false, updated_at = now()
                WHERE id = ? AND tenant_id = ?`,
-              [row.priceMinor, row.costMinor ?? 0, row.taxRateBp ?? 500, row.taxInclusive ?? true, itemId, tenantId],
+              [row.priceMinor, row.costMinor ?? 0, row.taxRateBp ?? 500, itemId, tenantId],
             );
           }
 
@@ -879,19 +875,23 @@ export function registerItemsBulk(r: Router) {
 
         await q.exec('SAVEPOINT sp_bulk_row');
         try {
+          const hasOpeningStock = (row.openingQtyMilli ?? 0) > 0;
+          const initialActive = hasOpeningStock;
+          const initialDeactivationReason = hasOpeningStock ? null : 'out_of_stock';
+
           // Insert item with preferred supplier
           await q.exec(
             `INSERT INTO items (
               id, tenant_id, branch_id, name, sku, barcode, barcode_type, hsn, unit, category,
               price_minor, cost_minor, tax_rate_bp, tax_inclusive, track_stock,
-              reorder_milli, preferred_supplier_id, favorite, custom, active, image_url
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, true, ?, ?, false, '{}'::jsonb, true, ?)`,
+              reorder_milli, preferred_supplier_id, favorite, custom, active, deactivation_reason, image_url
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, true, ?, ?, false, '{}'::jsonb, ?, ?, ?)`,
             [
               id, tenantId, branchId, row.name, finalSku, finalBarcode, finalBarcode ? barcodeType : 'INTERNAL', row.hsn || null,
               row.unit || 'pcs', row.category || null,
-              row.priceMinor, row.costMinor ?? 0, row.taxRateBp ?? 500, row.taxInclusive ?? true,
+              row.priceMinor, row.costMinor ?? 0, row.taxRateBp ?? 500, false,
               row.reorderMilli ?? 0,
-              supplierId, row.imageUrl || null,
+              supplierId, initialActive, initialDeactivationReason, row.imageUrl || null,
             ],
           );
 
@@ -947,13 +947,8 @@ export function registerItemsBulk(r: Router) {
             let lineTaxable = lineSubtotal;
             let lineTax = 0;
             if (taxRateBp > 0) {
-              if (row.taxInclusive) {
-                lineTaxable = Math.round(lineSubtotal / (1 + taxRateBp / 10000));
-                lineTax = lineSubtotal - lineTaxable;
-              } else {
-                lineTaxable = lineSubtotal;
-                lineTax = Math.round((lineTaxable * taxRateBp) / 10000);
-              }
+              lineTaxable = lineSubtotal;
+              lineTax = Math.round((lineTaxable * taxRateBp) / 10000);
             }
             const lineTotal = lineTaxable + lineTax;
             const lineCgst = Math.round(lineTax / 2);
@@ -1025,6 +1020,14 @@ export function registerItemsBulk(r: Router) {
           purchaseId = null;
           purchaseNumber = null;
         }
+      }
+
+      // Synchronize product active status for all affected products
+      const allAffectedItemIds = results
+        .filter((r) => r.itemId && (r.status === 'created' || r.status === 'restocked'))
+        .map((r) => r.itemId) as string[];
+      if (allAffectedItemIds.length > 0) {
+        await syncItemStockStatus(q, tenantId, allAffectedItemIds, branchId);
       }
 
       // 4. Record in imports table

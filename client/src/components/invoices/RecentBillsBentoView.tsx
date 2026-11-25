@@ -652,7 +652,7 @@ export const RecentBillsBentoView: React.FC<RecentBillsBentoViewProps> = ({
             </span>
           </div>
 
-          <div style={{ fontSize: '0.76rem', color: '#64748b', fontWeight: 500 }}>
+          <div className="invoices-table-subtitle">
             {invoiceFilterDate ? `Date: ${invoiceFilterDate}` : 'All Recent Records'}
           </div>
         </div>

@@ -4,6 +4,7 @@ import { newId } from '../security.ts';
 import { audit } from '../audit.ts';
 import { resolveBranchScope } from '../branchScope.ts';
 import { generateUniqueInternalBarcode } from '../../../shared/bulkImport.ts';
+import { syncItemStockStatus, type DeactivationReason } from '../services/stockStatus.ts';
 
 function isInternalBarcode(barcode?: string | null, barcodeType?: string | null): boolean {
   if (!barcode) return false;
@@ -40,6 +41,15 @@ function validateCustom(raw: unknown): Record<string, string | number> {
 }
 
 function formatItem(r: any) {
+  const currentStockMilli = Number(r.currentStockMilli ?? r.current_stock_milli ?? 0);
+  const trackStock = Boolean(r.trackStock ?? r.track_stock ?? true);
+  const rawActive = Boolean(r.active);
+  // If stock tracking is enabled and stock reaches 0 (or <= 0), product is automatically inactive
+  const active = (!trackStock || currentStockMilli > 0) ? rawActive : false;
+  const deactivationReason = r.deactivationReason ?? r.deactivation_reason ?? (
+    (!active && trackStock && currentStockMilli <= 0) ? 'out_of_stock' : null
+  );
+
   return {
     id: r.id,
     tenantId: r.tenantId ?? r.tenant_id,
@@ -62,15 +72,16 @@ function formatItem(r: any) {
     costMinor: Number(r.costMinor ?? r.cost_minor ?? 0),
     taxRateBp: Number(r.taxRateBp ?? r.tax_rate_bp ?? 0),
     taxInclusive: Boolean(r.taxInclusive ?? r.tax_inclusive),
-    trackStock: Boolean(r.trackStock ?? r.track_stock),
+    trackStock,
     reorderMilli: Number(r.reorderMilli ?? r.reorder_milli ?? 0),
     preferredSupplierId: r.preferredSupplierId ?? r.preferred_supplier_id ?? null,
     favorite: Boolean(r.favorite),
     imageUrl: r.imageUrl ?? r.image_url ?? (typeof r.custom === 'object' && r.custom?.image ? r.custom.image : null),
     image: r.imageUrl ?? r.image_url ?? (typeof r.custom === 'object' && r.custom?.image ? r.custom.image : null),
     custom: typeof r.custom === 'string' ? JSON.parse(r.custom) : (r.custom ?? {}),
-    currentStockMilli: Number(r.currentStockMilli ?? r.current_stock_milli ?? 0),
-    active: Boolean(r.active),
+    currentStockMilli,
+    active,
+    deactivationReason,
     createdAt: r.createdAt ?? r.created_at,
     updatedAt: r.updatedAt ?? r.updated_at,
   };
@@ -976,7 +987,7 @@ export function registerItems(r: Router) {
     const hsn = V.optStr(b.hsn, 'HSN', 20);
     const unit = V.str(b.unit || 'pcs', 'Unit', { max: 20 });
     const category = V.optStr(b.category, 'Category', 60);
-    const taxInclusive = V.bool(b.taxInclusive, true);
+    const taxInclusive = false;
     const trackStock = V.bool(b.trackStock, true);
     const reorderMilli = V.int(b.reorderMilli ?? b.reorderLevelMilli ?? 0, 'Reorder quantity', { min: 0 });
     const preferredSupplierId = V.optStr(b.preferredSupplierId, 'Preferred supplier', 60);
@@ -1028,13 +1039,17 @@ export function registerItems(r: Router) {
         ? 'INTERNAL'
         : (rawType === 'MANUFACTURER' ? 'MANUFACTURER' : (barcode && barcode.startsWith('20') && barcode.length === 13 ? 'INTERNAL' : 'MANUFACTURER'));
 
+      const isTrackStock = Boolean(trackStock);
+      const initialActive = isTrackStock ? openingQtyMilli > 0 : true;
+      const initialDeactivationReason = isTrackStock && openingQtyMilli <= 0 ? 'out_of_stock' : null;
+
       await q.exec(
         `INSERT INTO items (
           id, tenant_id, branch_id, name, sku, barcode, barcode_type, hsn, unit, category,
           price_minor, wholesale_price_minor, min_wholesale_qty_milli, cost_minor, tax_rate_bp, tax_inclusive, track_stock,
-          reorder_milli, preferred_supplier_id, favorite, custom, active, image_url
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb, true, ?)`,
-        [id, tenantId, branchId, name, sku, barcode, barcode ? barcodeType : 'INTERNAL', hsn, unit, category, priceMinor, wholesalePriceMinor, minWholesaleQtyMilli, costMinor, taxRateBp, taxInclusive, trackStock, reorderMilli, preferredSupplierId || null, favorite, JSON.stringify(custom), imageUrl],
+          reorder_milli, preferred_supplier_id, favorite, custom, active, deactivation_reason, image_url
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?, ?, ?)`,
+        [id, tenantId, branchId, name, sku, barcode, barcode ? barcodeType : 'INTERNAL', hsn, unit, category, priceMinor, wholesalePriceMinor, minWholesaleQtyMilli, costMinor, taxRateBp, taxInclusive, trackStock, reorderMilli, preferredSupplierId || null, favorite, JSON.stringify(custom), initialActive, initialDeactivationReason, imageUrl],
       );
 
       if (barcode) {
@@ -1052,6 +1067,8 @@ export function registerItems(r: Router) {
           [newId('sm'), tenantId, branchId, id, openingQtyMilli, costMinor, ctx.user!.id],
         );
       }
+
+      await syncItemStockStatus(q, tenantId, [id], branchId);
 
       await audit(q, ctx, { action: 'item.create', entity: 'item', entityId: id, detail: { name, priceMinor, branchId } });
     });
@@ -1105,13 +1122,51 @@ export function registerItems(r: Router) {
     const hsn = b.hsn !== undefined ? V.optStr(b.hsn, 'HSN', 20) : (item.hsn ?? null);
     const unit = b.unit !== undefined ? V.str(b.unit, 'Unit', { max: 20 }) : (item.unit ?? 'pcs');
     const category = b.category !== undefined ? V.optStr(b.category, 'Category', 60) : (item.category ?? null);
-    const taxInclusive = b.taxInclusive !== undefined ? V.bool(b.taxInclusive) : Boolean(item.taxInclusive ?? item.tax_inclusive);
+    const taxInclusive = false;
     const trackStock = b.trackStock !== undefined ? V.bool(b.trackStock) : Boolean(item.trackStock ?? item.track_stock);
     const reorderMilli = (b.reorderMilli !== undefined || b.reorderLevelMilli !== undefined) ? V.int(b.reorderMilli ?? b.reorderLevelMilli, 'Reorder quantity', { min: 0 }) : Number(item.reorderMilli ?? item.reorder_milli ?? 0);
     const preferredSupplierId = b.preferredSupplierId !== undefined ? V.optStr(b.preferredSupplierId, 'Preferred supplier', 60) : (item.preferredSupplierId ?? item.preferred_supplier_id ?? null);
     const favorite = b.favorite !== undefined ? V.bool(b.favorite) : Boolean(item.favorite);
     const custom = b.custom !== undefined ? validateCustom(b.custom) : (typeof item.custom === 'string' ? JSON.parse(item.custom) : (item.custom ?? {}));
-    const active = b.active !== undefined ? V.bool(b.active) : Boolean(item.active);
+    const userActiveSpecified = b.active !== undefined;
+    let active = userActiveSpecified ? V.bool(b.active) : Boolean(item.active);
+    let deactivationReason: DeactivationReason = (item.deactivationReason ?? item.deactivation_reason) || null;
+
+    if (userActiveSpecified) {
+      if (!active) {
+        // Manually deactivating the product -> mark reason as manual
+        deactivationReason = 'manual';
+      } else {
+        // Manually activating the product -> ensure product has available stock if stock tracking is enabled
+        if (trackStock) {
+          const itemStockRow = await ctx.db.one<{ stock_milli: string | number }>(
+            `SELECT COALESCE((
+               SELECT SUM(sm.qty_milli)
+               FROM stock_moves sm
+               WHERE sm.item_id = ?
+                 AND sm.tenant_id = ?
+                 AND (
+                   (? IS NOT NULL AND (
+                     sm.branch_id = ?
+                     OR (sm.branch_id IS NULL AND (
+                       UPPER(sm.location) = UPPER(?)
+                       OR UPPER(sm.location) = UPPER(?)
+                     ))
+                   ))
+                   OR (? IS NULL)
+                 )
+                 AND (sm.location IS NULL OR UPPER(sm.location) NOT IN ('DAMAGED', 'DEFECTIVE'))
+             ), 0)::bigint AS stock_milli`,
+            [item.id, tenantId, branchId, branchId, branchId, targetBranch?.code || branchId, branchId],
+          );
+          const stockMilli = Number(itemStockRow?.stock_milli || 0);
+          if (stockMilli <= 0) {
+            throw bad('Cannot activate product with 0 stock. Please restock the product first.', 'VALIDATION', { field: 'active' });
+          }
+        }
+        deactivationReason = null;
+      }
+    }
     const hasImage = b.imageUrl !== undefined || b.image !== undefined;
     const imageUrl = hasImage ? ((b.imageUrl ?? b.image) ? String(b.imageUrl ?? b.image).trim() : null) : (item.imageUrl ?? item.image_url ?? null);
 
@@ -1160,10 +1215,14 @@ export function registerItems(r: Router) {
         `UPDATE items SET
           name = ?, price_minor = ?, wholesale_price_minor = ?, min_wholesale_qty_milli = ?, cost_minor = ?, tax_rate_bp = ?, sku = ?, barcode = ?, barcode_type = ?,
           hsn = ?, unit = ?, category = ?, tax_inclusive = ?, track_stock = ?, reorder_milli = ?,
-          preferred_supplier_id = ?, favorite = ?, custom = ?::jsonb, active = ?, image_url = ?, updated_at = now()
+          preferred_supplier_id = ?, favorite = ?, custom = ?::jsonb, active = ?, deactivation_reason = ?, image_url = ?, updated_at = now()
          WHERE id = ? AND tenant_id = ?`,
-        [name, priceMinor, wholesalePriceMinor, minWholesaleQtyMilli, costMinor, taxRateBp, sku, barcode, barcode ? bType : (item.barcode_type || 'INTERNAL'), hsn, unit, category, taxInclusive, trackStock, reorderMilli, preferredSupplierId || null, favorite, JSON.stringify(custom ?? {}), active, imageUrl, item.id, tenantId],
+        [name, priceMinor, wholesalePriceMinor, minWholesaleQtyMilli, costMinor, taxRateBp, sku, barcode, barcode ? bType : (item.barcode_type || 'INTERNAL'), hsn, unit, category, taxInclusive, trackStock, reorderMilli, preferredSupplierId || null, favorite, JSON.stringify(custom ?? {}), active, deactivationReason, imageUrl, item.id, tenantId],
       );
+
+      if (!userActiveSpecified) {
+        await syncItemStockStatus(q, tenantId, [item.id], branchId);
+      }
 
       // Keep product_barcodes table synchronized
       if (barcode !== item.barcode) {

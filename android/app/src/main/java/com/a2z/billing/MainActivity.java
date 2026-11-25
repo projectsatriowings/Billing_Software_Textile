@@ -15,7 +15,7 @@ import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
 
-    private static final int SYSTEM_BAR_BG = Color.parseColor("#49364A");
+    private static final int SYSTEM_BAR_BG = Color.parseColor("#0F2D2E");
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,6 +84,8 @@ public class MainActivity extends BridgeActivity {
     private void applySystemBarAppearance() {
         View decorView = getWindow().getDecorView();
         decorView.setBackgroundColor(SYSTEM_BAR_BG);
+        getWindow().setStatusBarColor(SYSTEM_BAR_BG);
+        getWindow().setNavigationBarColor(SYSTEM_BAR_BG);
 
         WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(getWindow(), decorView);
         if (controller != null) {

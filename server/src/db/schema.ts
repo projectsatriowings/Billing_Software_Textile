@@ -48,6 +48,7 @@ export const MIGRATIONS: Migration[] = [
         loyalty_points INTEGER NOT NULL DEFAULT 0,
         custom JSONB NOT NULL DEFAULT '{}',
         active BOOLEAN NOT NULL DEFAULT TRUE,
+        deactivation_reason TEXT,
         import_id TEXT,
         created_at TIMESTAMPTZ NOT NULL DEFAULT now()
       )`,
@@ -59,13 +60,14 @@ export const MIGRATIONS: Migration[] = [
         price_minor BIGINT NOT NULL DEFAULT 0,
         cost_minor BIGINT NOT NULL DEFAULT 0,
         tax_rate_bp INTEGER NOT NULL DEFAULT 0,
-        tax_inclusive BOOLEAN NOT NULL DEFAULT TRUE,
+        tax_inclusive BOOLEAN NOT NULL DEFAULT FALSE,
         track_stock BOOLEAN NOT NULL DEFAULT TRUE,
         track_batch BOOLEAN NOT NULL DEFAULT FALSE,
         reorder_milli BIGINT NOT NULL DEFAULT 0,
         favorite BOOLEAN NOT NULL DEFAULT FALSE,
         custom JSONB NOT NULL DEFAULT '{}',
         active BOOLEAN NOT NULL DEFAULT TRUE,
+        deactivation_reason TEXT,
         import_id TEXT,
         created_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
       )`,
@@ -2113,6 +2115,58 @@ export const MIGRATIONS: Migration[] = [
        WHERE EXISTS (
          SELECT 1 FROM counters c WHERE c.branch_id = b.id AND c.tenant_id = b.tenant_id
        )`,
+    ],
+  },
+  {
+    version: 78,
+    statements: [
+      `ALTER TABLE items ADD COLUMN IF NOT EXISTS deactivation_reason TEXT`,
+      // Synchronize existing items: If stock <= 0 and track_stock = true, set active = false, deactivation_reason = 'out_of_stock'
+      `UPDATE items
+       SET active = false, deactivation_reason = 'out_of_stock', updated_at = now()
+       WHERE track_stock = true
+         AND active = true
+         AND (
+           SELECT COALESCE(SUM(sm.qty_milli), 0)
+           FROM stock_moves sm
+           WHERE sm.item_id = items.id
+             AND sm.tenant_id = items.tenant_id
+             AND (
+               (items.branch_id IS NOT NULL AND (
+                 sm.branch_id = items.branch_id
+                 OR (sm.branch_id IS NULL AND (UPPER(sm.location) = UPPER(items.branch_id)))
+               ))
+               OR (items.branch_id IS NULL)
+             )
+             AND (sm.location IS NULL OR UPPER(sm.location) NOT IN ('DAMAGED', 'DEFECTIVE'))
+         ) <= 0`,
+      // If stock > 0, track_stock = true, and active is false due to out_of_stock, reactivate
+      `UPDATE items
+       SET active = true, deactivation_reason = NULL, updated_at = now()
+       WHERE track_stock = true
+         AND active = false
+         AND deactivation_reason = 'out_of_stock'
+         AND (
+           SELECT COALESCE(SUM(sm.qty_milli), 0)
+           FROM stock_moves sm
+           WHERE sm.item_id = items.id
+             AND sm.tenant_id = items.tenant_id
+             AND (
+               (items.branch_id IS NOT NULL AND (
+                 sm.branch_id = items.branch_id
+                 OR (sm.branch_id IS NULL AND (UPPER(sm.location) = UPPER(items.branch_id)))
+               ))
+               OR (items.branch_id IS NULL)
+             )
+             AND (sm.location IS NULL OR UPPER(sm.location) NOT IN ('DAMAGED', 'DEFECTIVE'))
+         ) > 0`,
+    ],
+  },
+  {
+    version: 79,
+    statements: [
+      `ALTER TABLE items ALTER COLUMN tax_inclusive SET DEFAULT FALSE`,
+      `UPDATE items SET tax_inclusive = FALSE WHERE tax_inclusive = TRUE`,
     ],
   },
 ];

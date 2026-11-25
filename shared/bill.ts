@@ -211,49 +211,33 @@ function thermalCopy(bill: PrintableBill, tpl: PrintTemplate, L: Record<string, 
       if (l.batchNo) metaParts.push(`B: ${esc(l.batchNo)}`);
 
       const lineMrp = (l.mrpMinor && l.mrpMinor > 0) ? l.mrpMinor : Math.max(l.priceMinor, Math.ceil((l.priceMinor * 1.15) / 100) * 100);
-      const { line1, line2 } = splitProductIntoTwoLines(l.name, 15);
-      const qtyStr = `${fmtQty(l.qtyMilli)}${tpl.showUnit && l.unit ? ' ' + esc(l.unit) : ''}`;
-      const mrpStr = `₹${money(lineMrp)}`;
-      const storePriceStr = `₹${money(l.priceMinor)}`;
-      const totalPriceStr = `₹${money(l.totalMinor)}`;
+      const qtyStr = `${fmtQty(l.qtyMilli)}`;
+      const mrpStr = `${money(lineMrp)}`;
+      const storePriceStr = `${money(l.priceMinor)}`;
+      const gstRate = l.taxRateBp ? bpToPct(l.taxRateBp) : '0';
+      const gstStr = `${gstRate}%`;
+      const totalPriceStr = `${money(l.totalMinor)}`;
 
       return `
         <tr class="th-item-tr">
           <td class="col-name">
-            <div class="name-l1"><span class="th-idx">${idx + 1}.</span> ${esc(line1)}</div>
-            ${line2 ? `<div class="name-l2">${esc(line2)}</div>` : ''}
-            ${metaParts.length ? `<div class="name-meta">${metaParts.join(' · ')}</div>` : ''}
+            <div class="th-item-name">
+              <span class="th-idx">${idx + 1}.</span>
+              <div class="th-name-text">
+                <div class="th-name-title">${esc(l.name ? l.name.trim() : '')}</div>
+                ${metaParts.length ? `<div class="name-meta">${metaParts.join(' · ')}</div>` : ''}
+              </div>
+            </div>
           </td>
           <td class="col-qty">${qtyStr}</td>
           <td class="col-mrp">${mrpStr}</td>
           <td class="col-store">${storePriceStr}</td>
+          <td class="col-gst">${gstStr}</td>
           <td class="col-total">${totalPriceStr}</td>
         </tr>
       `;
     })
     .join('');
-
-  // Tax Breakdown rows (Saravana Stores style GST Slab Table)
-  const br = taxBreakup(bill);
-  const totalGstMinor = t.cgstMinor + t.sgstMinor + t.igstMinor;
-  const gstBreakdownHtml = tpl.showTaxBreakup && br.length > 0 ? `
-    <div class="th-gst-box">
-      <div class="rw th-gst-header">
-        <span>GST %</span>
-        <span>GST Value</span>
-      </div>
-      ${br.map(([bp, e]) => `
-        <div class="rw th-gst-row">
-          <span>${bpToPct(bp)}%</span>
-          <span>₹${money(e.cgst + e.sgst + e.igst)}</span>
-        </div>
-      `).join('')}
-      <div class="rw th-gst-total">
-        <span>Inclusive all GST</span>
-        <b>₹${money(totalGstMinor)}</b>
-      </div>
-    </div>
-  ` : '';
 
   // Payment Breakdown
   const paymentRows = bill.payments
@@ -331,7 +315,7 @@ function thermalCopy(bill: PrintableBill, tpl: PrintTemplate, L: Record<string, 
 
   <div class="th-divider"></div>
 
-  <!-- ITEMS TABLE: NAME, QTY, MRP, RATE, TOTAL PRICE -->
+  <!-- ITEMS TABLE: NAME, QTY, MRP, RATE, GST, TOTAL PRICE -->
   <table class="th-bill-table">
     <thead>
       <tr>
@@ -339,7 +323,8 @@ function thermalCopy(bill: PrintableBill, tpl: PrintTemplate, L: Record<string, 
         <th class="col-qty">QTY</th>
         <th class="col-mrp">MRP</th>
         <th class="col-store">RATE</th>
-        <th class="col-total">TOTAL PRICE</th>
+        <th class="col-gst">%</th>
+        <th class="col-total">AMT</th>
       </tr>
     </thead>
     <tbody>
@@ -361,7 +346,6 @@ function thermalCopy(bill: PrintableBill, tpl: PrintTemplate, L: Record<string, 
       <div class="rw"><span>${L.subtotal}</span><span>₹${money(t.subtotalMinor)}</span></div>
       <div class="rw th-savings-line"><span>${L.discount}</span><span>-₹${money(t.discountMinor)}</span></div>
     ` : ''}
-    ${gstBreakdownHtml}
     ${t.roundOffMinor !== 0 ? `
       <div class="rw sm"><span>${L.roundOff}</span><span>${t.roundOffMinor > 0 ? '+' : '-'}₹${money(Math.abs(t.roundOffMinor))}</span></div>
     ` : ''}
@@ -807,36 +791,34 @@ const CSS = (paper: PrintTemplate['paper']) => {
 .th-cust-card{background:#f8fafc;border:1px dashed #64748b;border-radius:4px;padding:4px 6px;margin:4px 0;font-size:${fs - 0.5}px}
 .th-loyalty-row{color:#000;margin-top:2px}
 
-/* Product Table: NAME, QTY, MRP, STORE PRICE, TOTAL PRICE */
+/* Product Table: NAME, QTY, MRP, RATE, GST, TOTAL PRICE */
 .th-bill-table{width:100%;border-collapse:collapse;margin:4px 0;table-layout:fixed;font-variant-numeric:tabular-nums}
-.th-bill-table thead th{border-bottom:1px dashed #444;padding:3px 1px;font-size:${fs - 1.8}px;font-weight:800;letter-spacing:0.1px;color:#000;line-height:1.15}
-.th-bill-table thead th.col-name{text-align:left;width:34%}
-.th-bill-table thead th.col-qty{text-align:center;width:13%}
-.th-bill-table thead th.col-mrp{text-align:right;width:17%}
-.th-bill-table thead th.col-store{text-align:right;width:18%}
-.th-bill-table thead th.col-total{text-align:right;width:18%}
+.th-bill-table thead th{border-bottom:1px dashed #444;padding:3px 2px;font-size:${fs - 1.8}px;font-weight:800;letter-spacing:0.1px;color:#000;line-height:1.2}
+.th-bill-table thead th.col-name{text-align:left;width:33%}
+.th-bill-table thead th.col-qty{text-align:center;width:9%}
+.th-bill-table thead th.col-mrp{text-align:left;width:15%}
+.th-bill-table thead th.col-store{text-align:left;width:15%}
+.th-bill-table thead th.col-gst{text-align:right;width:11%;padding-right:3px}
+.th-bill-table thead th.col-total{text-align:right;width:17%}
 
-.th-bill-table tbody td{vertical-align:top;padding:4px 1px;border-bottom:1px dashed #e2e8f0}
+.th-bill-table tbody td{vertical-align:top;padding:4px 2px;border-bottom:1px dashed #e2e8f0}
 .th-bill-table tbody tr:last-child td{border-bottom:none}
 
-.th-bill-table td.col-name{text-align:left;font-size:${fs + 0.1}px;font-weight:700;color:#000;line-height:1.25;word-break:break-word}
-.th-idx{font-weight:800;margin-right:2px;color:#000}
-.name-l1{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.name-l2{color:#111;padding-left:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.name-meta{font-size:${fs - 2.2}px;color:#555;padding-left:10px;margin-top:1px;font-weight:normal}
+.th-bill-table td.col-name{text-align:left;word-break:break-word;overflow-wrap:break-word}
+.th-item-name{display:flex;align-items:flex-start;gap:3px;min-width:0}
+.th-idx{font-weight:800;color:#000;line-height:1.25;flex-shrink:0;font-size:${fs}px}
+.th-name-text{flex:1;min-width:0}
+.th-name-title{font-size:${fs}px;font-weight:700;color:#000;line-height:1.25;white-space:normal;word-break:break-word;overflow-wrap:break-word}
+.name-meta{font-size:${fs - 2.2}px;color:#555;margin-top:1px;font-weight:normal;line-height:1.2;white-space:normal;word-break:break-word}
+.name-l1,.name-l2{white-space:normal;overflow:visible;text-overflow:clip}
 
-.th-bill-table td.col-qty{text-align:center;font-size:${fs}px;color:#111;padding-top:4px}
-.th-bill-table td.col-mrp{text-align:right;font-size:${fs}px;color:#444;padding-top:4px}
-.th-bill-table td.col-store{text-align:right;font-size:${fs}px;color:#111;font-weight:600;padding-top:4px}
-.th-bill-table td.col-total{text-align:right;font-size:${fs}px;font-weight:700;color:#000;padding-top:4px}
+.th-bill-table td.col-qty{text-align:center;font-size:${fs}px;color:#111;line-height:1.25;padding-top:4px}
+.th-bill-table td.col-mrp{text-align:left;font-size:${fs}px;color:#444;line-height:1.25;padding-top:4px}
+.th-bill-table td.col-store{text-align:left;font-size:${fs}px;color:#111;font-weight:600;line-height:1.25;padding-top:4px}
+.th-bill-table td.col-gst{text-align:right;font-size:${fs - 0.5}px;color:#222;font-weight:600;line-height:1.25;padding-top:4px;padding-right:3px}
+.th-bill-table td.col-total{text-align:right;font-size:${fs}px;font-weight:700;color:#000;line-height:1.25;padding-top:4px}
 
 .th-item-summary{font-size:${fs - 0.8}px;color:#111;margin:3px 0}
-
-/* GST Breakdown */
-.th-gst-box{margin:4px 0;border-top:1px dashed #888;border-bottom:1px dashed #888;padding:3px 0;font-size:${fs - 1}px}
-.th-gst-header{font-weight:800;margin-bottom:2px}
-.th-gst-row{font-size:${fs - 1.2}px;color:#222}
-.th-gst-total{font-weight:800;border-top:1px dashed #ccc;padding-top:2px;margin-top:2px}
 
 /* Totals */
 .th-totals-box{margin-top:4px;font-size:${fs}px}
