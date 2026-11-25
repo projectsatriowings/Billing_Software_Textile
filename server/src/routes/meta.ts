@@ -1,5 +1,6 @@
 import path from 'node:path';
 import fs from 'node:fs';
+import os from 'node:os';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { BUSINESS_TYPES, PERMS, ROLES } from '../../../shared/types.ts';
@@ -45,6 +46,9 @@ function findBinDir(): string | null {
     path.resolve(process.cwd(), 'release', 'bin'),
     path.resolve(__dirname, '../../../../release', 'bin'),
     path.resolve(__dirname, '../../../release', 'bin'),
+    path.resolve(__dirname, '../../release', 'bin'),
+    path.resolve(__dirname, '../release', 'bin'),
+    '/var/www/Billing_Software_Textile/release/bin',
   ];
   for (const b of candidateBinDirs) {
     if (fs.existsSync(b)) return b;
@@ -91,8 +95,11 @@ function ensureReleaseFile(type: 'exe' | 'zip' | 'apk'): { filePath: string; siz
       : []),
     path.resolve(__dirname, '../../../../release', targetName),
     path.resolve(__dirname, '../../../release', targetName),
+    path.resolve(__dirname, '../../release', targetName),
+    path.resolve(__dirname, '../release', targetName),
     path.resolve(__dirname, '../../../../client/public/downloads', targetName),
     path.resolve(__dirname, '../../../client/public/downloads', targetName),
+    path.resolve(os.tmpdir(), targetName),
   ];
 
   for (const p of candidateFullPaths) {
@@ -118,11 +125,33 @@ function ensureReleaseFile(type: 'exe' | 'zip' | 'apk'): { filePath: string; siz
       }
     }
 
-    const targetDir = path.dirname(binDir);
-    const outPath = path.join(targetDir, targetName);
-    const tmpPath = path.join(targetDir, `${targetName}.tmp-${Date.now()}`);
+    // 2a. If there's only 1 part (e.g. a2z-apk.part1), that part IS the complete file!
+    if (manifestItem.parts.length === 1) {
+      const singlePartPath = path.join(binDir, manifestItem.parts[0].name);
+      if (fs.existsSync(singlePartPath)) {
+        const pSize = fs.statSync(singlePartPath).size;
+        if (pSize > 1000000) {
+          return { filePath: singlePartPath, size: manifestItem.totalSize || pSize };
+        }
+      }
+    }
 
-    const fdOut = fs.openSync(tmpPath, 'w');
+    // 2b. Multi-part reassembly
+    const targetDir = path.dirname(binDir);
+    let outPath = path.join(targetDir, targetName);
+    let tmpPath = path.join(targetDir, `${targetName}.tmp-${Date.now()}`);
+    let fdOut: number;
+
+    try {
+      fdOut = fs.openSync(tmpPath, 'w');
+    } catch {
+      // If target directory is read-only on production server, fall back to os.tmpdir()
+      const fallbackDir = os.tmpdir();
+      outPath = path.join(fallbackDir, targetName);
+      tmpPath = path.join(fallbackDir, `${targetName}.tmp-${Date.now()}`);
+      fdOut = fs.openSync(tmpPath, 'w');
+    }
+
     for (const part of manifestItem.parts) {
       const partBuf = fs.readFileSync(path.join(binDir, part.name));
       fs.writeSync(fdOut, partBuf);

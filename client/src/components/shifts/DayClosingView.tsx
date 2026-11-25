@@ -1950,6 +1950,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                       <span>Physical Cash</span>
                     </div>
                     <div className="tender-amount">{fmt(payments.cashCollectionsMinor)}</div>
+                    <div className="tender-subtext" style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '2px' }}>Cash in Drawer</div>
                   </div>
 
                   <div className="tender-kpi-card bento-card-3d upi">
@@ -1958,6 +1959,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                       <span>UPI / QR</span>
                     </div>
                     <div className="tender-amount">{fmt(payments.upiCollectionsMinor)}</div>
+                    <div className="tender-subtext" style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '2px' }}>GPay, PhonePe, Paytm</div>
                   </div>
 
                   <div className="tender-kpi-card bento-card-3d card">
@@ -1966,6 +1968,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                       <span>Card / POS</span>
                     </div>
                     <div className="tender-amount">{fmt(payments.cardCollectionsMinor)}</div>
+                    <div className="tender-subtext" style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '2px' }}>Swipe Terminal / EDC</div>
                   </div>
 
                   <div className="tender-kpi-card bento-card-3d credit">
@@ -1974,6 +1977,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                       <span>Store Credit</span>
                     </div>
                     <div className="tender-amount">{fmt(payments.storeCreditMinor)}</div>
+                    <div className="tender-subtext" style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '2px' }}>Vouchers / Non-Cash</div>
                   </div>
                 </div>
               </div>
@@ -3436,7 +3440,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                 <div className="day-closing-card-header">
                   <div className="day-closing-card-title-group">
                     <ScaleIcon size={18} style={{ color: 'var(--dc-primary)' }} />
-                    <span>Detailed Variance & Growth Comparison ({comparisonData.bdate} vs {comparisonData.previousDate})</span>
+                    <span>Detailed Variance & Growth Comparison ({comparisonData.bdate || comparisonData.currentDate} vs {comparisonData.previousDate})</span>
                   </div>
                 </div>
 
@@ -3445,7 +3449,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                     <thead>
                       <tr>
                         <th>Metric</th>
-                        <th>Current Period ({comparisonData.bdate})</th>
+                        <th>Current Period ({comparisonData.bdate || comparisonData.currentDate})</th>
                         <th>Previous Business Day ({comparisonData.previousDate})</th>
                         <th>Difference</th>
                         <th>Growth %</th>
@@ -3456,17 +3460,23 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                         const isCount = key.toLowerCase().includes('count');
                         const isGrowthPos = (m.growthPct || 0) > 0;
                         const isGrowthNeg = (m.growthPct || 0) < 0;
+                        const diff = m.diff ?? m.difference ?? ((m.current ?? 0) - (m.previous ?? 0));
 
                         const labelMap: Record<string, string> = {
                           grossSales: 'Gross Sales (excl. GST)',
+                          discounts: 'Total Discounts Given',
                           totalDiscounts: 'Total Discounts Given',
+                          returns: 'Sales Returns (Credit Notes)',
                           salesReturns: 'Sales Returns (Credit Notes)',
                           netSales: 'Net Sales Revenue',
+                          gstCollected: 'GST Collected',
                           cogs: 'Cost of Goods Sold (COGS)',
                           grossProfit: 'Gross Profit',
                           expenses: 'Operating Expenses',
+                          operatingProfit: 'Net Operating Profit',
                           netProfit: 'Net Operating Profit',
                           invoicesCount: 'Total Invoices Issued',
+                          invoiceCount: 'Total Invoices Issued',
                           averageBillValue: 'Average Bill Value',
                           refundsPaid: 'Refunds Paid Out',
                         };
@@ -3476,13 +3486,12 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                             <td style={{ fontWeight: 700, color: '#0f172a' }}>{labelMap[key] || key}</td>
                             <td style={{ fontWeight: 800 }}>{isCount ? m.current : fmt(m.current)}</td>
                             <td style={{ color: '#64748b' }}>{isCount ? m.previous : fmt(m.previous)}</td>
-                            <td style={{ fontWeight: 700, color: m.diff >= 0 ? '#15803d' : '#b91c1c' }}>
-                              {m.diff >= 0 ? '+' : ''}{isCount ? m.diff : fmt(m.diff)}
+                            <td style={{ fontWeight: 700, color: diff >= 0 ? '#15803d' : '#b91c1c' }}>
+                              {diff >= 0 ? '+' : ''}{isCount ? diff : fmt(diff)}
                             </td>
                             <td>
                               <span className={`growth-badge ${isGrowthPos ? 'positive' : isGrowthNeg ? 'negative' : 'neutral'}`}>
-                                {isGrowthPos ? '+ ' : isGrowthNeg ? '- ' : ''}
-                                {(m.growthPct || 0).toFixed(1)}%
+                                {isGrowthPos ? '+' : isGrowthNeg ? '-' : ''}{Math.abs(m.growthPct || 0).toFixed(1)}%
                               </span>
                             </td>
                           </tr>
@@ -3591,7 +3600,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                     <span className="fin-kpi-label">Returns</span>
                     <div className="fin-kpi-icon"><RotateCcwIcon size={14} /></div>
                   </div>
-                  <div className="fin-kpi-val" style={{ color: '#e11d48' }}>-{fmt(analyticsData.current.returnsMinor)}</div>
+                  <div className="fin-kpi-val" style={{ color: '#e11d48' }}>-{fmt(analyticsData.current.returnsMinor ?? analyticsData.current.returnsTotalMinor ?? 0)}</div>
                   <span className="fin-kpi-sub">Total returned goods</span>
                 </div>
 
@@ -3627,8 +3636,8 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                     <span className="fin-kpi-label">Operating Profit</span>
                     <div className="fin-kpi-icon"><RupeeIcon size={14} /></div>
                   </div>
-                  <div className="fin-kpi-val" style={{ color: (analyticsData.current.netProfitMinor || 0) >= 0 ? '#15803d' : '#b91c1c' }}>
-                    {fmt(analyticsData.current.netProfitMinor)}
+                  <div className="fin-kpi-val" style={{ color: ((analyticsData.current.netProfitMinor ?? analyticsData.current.operatingProfitMinor) || 0) >= 0 ? '#15803d' : '#b91c1c' }}>
+                    {fmt(analyticsData.current.netProfitMinor ?? analyticsData.current.operatingProfitMinor ?? 0)}
                   </div>
                   <span className="fin-kpi-sub">{((analyticsData.current.netMarginPct || 0)).toFixed(1)}% Net Margin</span>
                 </div>
@@ -3991,7 +4000,19 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                 </thead>
                 <tbody>
                   {history.map((h) => {
-                    const variance = h.variance_minor ?? 0;
+                    const grossSales = Number(h.grossSalesMinor ?? h.gross_sales_minor ?? 0);
+                    const returnsTotal = Number(h.returnsTotalMinor ?? h.returns_total_minor ?? h.sales_returns_minor ?? 0);
+                    const netSales = Number(h.netSalesMinor ?? h.net_sales_minor ?? Math.max(0, grossSales - returnsTotal));
+                    const expectedCash = Number(h.expectedCashMinor ?? h.expected_cash_minor ?? 0);
+                    const actualCash = Number(h.actualCashMinor ?? h.actual_cash_minor ?? 0);
+                    const variance = Number(h.varianceMinor ?? h.variance_minor ?? (actualCash - expectedCash));
+                    const grossProfit = Number(h.grossProfitMinor ?? h.gross_profit_minor ?? 0);
+                    const closedByName = h.closedByName || h.closed_by_name || 'Cashier';
+                    const approvedByName = h.approvedByName || h.approved_by_name || '—';
+                    const reopenedByName = h.reopenedByName || h.reopened_by_name;
+                    const reopenReason = h.reopenReason || h.reopen_reason;
+                    const closedAt = h.closedAt || h.closed_at;
+                    const approvedAt = h.approvedAt || h.approved_at;
                     const status = h.status || 'closed';
                     const isExpanded = expandedHistoryId === h.id;
 
@@ -4015,11 +4036,11 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                               {status}
                             </span>
                           </td>
-                          <td>{fmt(h.gross_sales_minor)}</td>
-                          <td style={{ color: '#e11d48' }}>-{fmt(h.returns_total_minor || h.sales_returns_minor)}</td>
-                          <td style={{ fontWeight: 700, color: '#15803d' }}>{fmt(h.net_sales_minor)}</td>
-                          <td>{fmt(h.expected_cash_minor)}</td>
-                          <td style={{ fontWeight: 700, color: '#0f172a' }}>{fmt(h.actual_cash_minor)}</td>
+                          <td>{fmt(grossSales)}</td>
+                          <td style={{ color: '#e11d48' }}>-{fmt(returnsTotal)}</td>
+                          <td style={{ fontWeight: 700, color: '#15803d' }}>{fmt(netSales)}</td>
+                          <td>{fmt(expectedCash)}</td>
+                          <td style={{ fontWeight: 700, color: '#0f172a' }}>{fmt(actualCash)}</td>
                           <td>
                             <span style={{
                               padding: '2px 8px',
@@ -4032,9 +4053,9 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                               {variance >= 0 ? '+' : ''}{fmt(variance)}
                             </span>
                           </td>
-                          <td style={{ fontWeight: 700, color: 'var(--dc-primary)' }}>{fmt(h.gross_profit_minor)}</td>
-                          <td style={{ color: '#64748b' }}>{h.closed_by_name || 'Cashier'}</td>
-                          <td style={{ color: '#64748b' }}>{h.approved_by_name || '—'}</td>
+                          <td style={{ fontWeight: 700, color: 'var(--dc-primary)' }}>{fmt(grossProfit)}</td>
+                          <td style={{ color: '#64748b' }}>{closedByName}</td>
+                          <td style={{ color: '#64748b' }}>{approvedByName}</td>
                           <td style={{ textAlign: 'right' }}>
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.4rem' }}>
                               <button
@@ -4084,28 +4105,28 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', fontSize: '0.8rem' }}>
                                 <div>
                                   <div style={{ color: '#64748b', fontWeight: 600 }}>Submitted By</div>
-                                  <div style={{ fontWeight: 800, color: '#0f172a' }}>{h.closed_by_name || 'Cashier'}</div>
+                                  <div style={{ fontWeight: 800, color: '#0f172a' }}>{closedByName}</div>
                                   <div style={{ color: '#94a3b8', fontSize: '0.75rem' }}>
-                                    {h.closed_at ? new Date(h.closed_at).toLocaleString('en-IN') : '—'}
+                                    {closedAt ? new Date(closedAt).toLocaleString('en-IN') : '—'}
                                   </div>
                                 </div>
 
                                 <div>
                                   <div style={{ color: '#64748b', fontWeight: 600 }}>Approved By</div>
-                                  <div style={{ fontWeight: 800, color: '#0f172a' }}>{h.approved_by_name || 'Pending Approval'}</div>
+                                  <div style={{ fontWeight: 800, color: '#0f172a' }}>{approvedByName || 'Pending Approval'}</div>
                                   <div style={{ color: '#94a3b8', fontSize: '0.75rem' }}>
-                                    {h.approved_at ? new Date(h.approved_at).toLocaleString('en-IN') : '—'}
+                                    {approvedAt ? new Date(approvedAt).toLocaleString('en-IN') : '—'}
                                   </div>
                                 </div>
 
                                 <div>
                                   <div style={{ color: '#64748b', fontWeight: 600 }}>Reopened By</div>
-                                  <div style={{ fontWeight: 800, color: h.reopened_by_name ? '#b91c1c' : '#0f172a' }}>
-                                    {h.reopened_by_name || 'Not Reopened'}
+                                  <div style={{ fontWeight: 800, color: reopenedByName ? '#b91c1c' : '#0f172a' }}>
+                                    {reopenedByName || 'Not Reopened'}
                                   </div>
-                                  {h.reopen_reason && (
+                                  {reopenReason && (
                                     <div style={{ color: '#991b1b', fontSize: '0.75rem', fontStyle: 'italic' }}>
-                                      "{h.reopen_reason}"
+                                      "{reopenReason}"
                                     </div>
                                   )}
                                 </div>

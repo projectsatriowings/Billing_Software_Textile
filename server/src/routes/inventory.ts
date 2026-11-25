@@ -31,8 +31,17 @@ export function registerInventory(r: Router) {
     const tenantId = ctx.user!.tenantId;
     const scope = await resolveBranchScope(ctx);
     const isAuthorizedForCost = ['owner', 'manager', 'accountant'].includes(ctx.user!.role) || String(ctx.user!.role).toUpperCase() === 'SUPER_ADMIN';
-    const branchClause = (!scope.isSuperAdminAll && scope.branchId) ? ' AND i.branch_id = ?' : '';
-    const branchParams = (!scope.isSuperAdminAll && scope.branchId) ? [scope.branchId] : [];
+    const branchClause = (!scope.isSuperAdminAll && scope.branchId)
+      ? ` AND (
+          i.branch_id = ?
+          OR i.branch_id = (SELECT b.code FROM branches b WHERE b.id = ? AND b.tenant_id = i.tenant_id LIMIT 1)
+          OR i.branch_id = (SELECT b.id FROM branches b WHERE UPPER(b.code) = UPPER(?) AND b.tenant_id = i.tenant_id LIMIT 1)
+          OR i.branch_id IS NULL
+        )`
+      : '';
+    const branchParams = (!scope.isSuperAdminAll && scope.branchId)
+      ? [scope.branchId, scope.branchId, scope.branchId]
+      : [];
 
     const supplierBranchFilter = (!scope.isSuperAdminAll && scope.branchId) ? 'AND (p.branch_id = ? OR p.branch_id IS NULL)' : '';
     const supplierBranchParams = (!scope.isSuperAdminAll && scope.branchId) ? [scope.branchId] : [];
@@ -319,8 +328,13 @@ export function registerInventory(r: Router) {
     const params: unknown[] = [tenantId];
 
     if (!scope.isSuperAdminAll && scope.branchId) {
-      whereSql += ` AND i.branch_id = ?`;
-      params.push(scope.branchId);
+      whereSql += ` AND (
+        i.branch_id = ?
+        OR i.branch_id = (SELECT b.code FROM branches b WHERE b.id = ? AND b.tenant_id = i.tenant_id LIMIT 1)
+        OR i.branch_id = (SELECT b.id FROM branches b WHERE UPPER(b.code) = UPPER(?) AND b.tenant_id = i.tenant_id LIMIT 1)
+        OR i.branch_id IS NULL
+      )`;
+      params.push(scope.branchId, scope.branchId, scope.branchId);
     }
 
     if (category && category !== 'ALL') {
