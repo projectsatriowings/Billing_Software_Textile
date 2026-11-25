@@ -1370,8 +1370,30 @@ export function App() {
   }, [user]);
 
   const [selectedBranchScope, setSelectedBranchScope] = useState<string>(() => {
+    if (user && user.role !== 'owner' && String(user.role).toUpperCase() !== 'SUPER_ADMIN') {
+      const enforced = user.branchId || (user as any).branch_id || user.assignedLocation;
+      if (enforced) return enforced;
+    }
     return getActiveBranchScope();
   });
+
+  // Ensure non-superadmin accounts (Store Managers, Cashiers) are strictly locked to their assigned branch
+  useEffect(() => {
+    if (!user) return;
+    const isSuperAdmin = user.role === 'owner' || String(user.role).toUpperCase() === 'SUPER_ADMIN';
+    if (!isSuperAdmin) {
+      const enforced = user.branchId || (user as any).branch_id || user.assignedLocation;
+      if (enforced && selectedBranchScope !== enforced) {
+        setSelectedBranchScope(enforced);
+        try {
+          localStorage.setItem('sa_selected_branch', enforced);
+          localStorage.setItem('selected_branch', enforced);
+          sessionStorage.setItem('sa_selected_branch', enforced);
+          sessionStorage.setItem('selected_branch', enforced);
+        } catch {}
+      }
+    }
+  }, [user?.id, user?.branchId, user?.role, selectedBranchScope]);
 
   // Day Closing Overdue Alert state for top global header bar
   const [topOverdueClosing, setTopOverdueClosing] = useState<{
@@ -3247,21 +3269,29 @@ export function App() {
       const res = await api<{ items: Item[] }>('/api/items?includeInactive=1');
       // Group products, keeping multi-branch products distinct so each branch's stock and identity are visible
       const raw = res.items || [];
+      // Duplicate records of the same product (same SKU/barcode) can exist in one branch, e.g. when a
+      // transfer was received under the source branch's item id. Show them as one card, but keep the
+      // identity (id) of the record that actually holds the most stock in this branch, because the bill
+      // is validated and deducted against that id only.
       const deduplicated: Item[] = [];
-      const seen = new Map<string, Item>();
+      const seen = new Map<string, { index: number; bestOwnStock: number; totalStock: number }>();
       for (const item of raw) {
         const branchKey = item.branchId || 'main';
         const skuKey = item.sku?.trim().toUpperCase();
         const barcodeKey = item.barcode?.trim();
         const key = `${branchKey}:${skuKey ? `sku:${skuKey}` : barcodeKey ? `bc:${barcodeKey}` : `id:${item.id}`}`;
+        const ownStock = item.currentStockMilli || 0;
         const existing = seen.get(key);
         if (existing) {
-          existing.currentStockMilli = (existing.currentStockMilli || 0) + (item.currentStockMilli || 0);
+          existing.totalStock += ownStock;
+          if (ownStock > existing.bestOwnStock) {
+            existing.bestOwnStock = ownStock;
+            deduplicated[existing.index] = { ...item };
+          }
+          deduplicated[existing.index].currentStockMilli = existing.totalStock;
         } else {
-          const itemCopy = { ...item };
-          seen.set(key, itemCopy);
-          seen.set(`id:${item.id}`, itemCopy);
-          deduplicated.push(itemCopy);
+          seen.set(key, { index: deduplicated.length, bestOwnStock: ownStock, totalStock: ownStock });
+          deduplicated.push({ ...item });
         }
       }
       setItems(deduplicated);
@@ -8928,7 +8958,7 @@ export function App() {
                   <span className="nav-text">My Cashier</span>
                   {activeShiftNumber ? (
                     <span className="nav-shift-badge active" title={`Active Shift: ${activeShiftNumber}`}>
-                      ● {activeShiftNumber}
+                      ● #{String(activeShiftNumber).split('-').pop()}
                     </span>
                   ) : (
                     <span className="nav-shift-badge closed">

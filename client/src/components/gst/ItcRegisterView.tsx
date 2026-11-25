@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import './ItcRegisterView.css';
 import {
   fetchItcRegister,
   submitItcReview,
@@ -179,159 +180,153 @@ export const ItcRegisterView: React.FC<ItcRegisterViewProps> = ({ onNavigate }) 
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
+    <div className="itc-register-wrapper">
       {/* Return Period Filter & Actions Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="itc-header-card">
         {onNavigate && (
-          <button
-            type="button"
-            onClick={() => onNavigate('gst-purchase-register')}
-            className="flex items-center gap-1.5 rounded-lg border border-[#D9C8D0] bg-white px-3 py-1.5 text-xs font-semibold shadow-sm hover:bg-[#FAF6F8]"
-            style={{ color: '#653B4B' }}
-            title="Open invoice-by-invoice detailed purchase and inward register"
-          >
-            📋 Itemized Purchase Register
-          </button>
+          <div className="itc-header-left">
+            <button
+              type="button"
+              onClick={() => onNavigate('gst-purchase-register')}
+              className="itc-nav-btn"
+              title="Open invoice-by-invoice detailed purchase and inward register"
+            >
+              📋 Itemized Purchase Register
+            </button>
+          </div>
         )}
-        <div className="flex flex-wrap items-center gap-3 ml-auto">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Return Period:</span>
+        <div className="itc-header-actions">
+          <div className="itc-period-group">
+            <span className="itc-period-label">Return Period:</span>
             <input
               type="month"
               value={period}
               onChange={(e) => setPeriod(e.target.value)}
-              className="rounded-lg border border-[#D9C8D0] bg-white px-3 py-1.5 text-sm font-medium text-slate-800 focus:border-[#653B4B] focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+              className="itc-period-input"
             />
           </div>
 
-          <button
-            onClick={() => setIsImportModalOpen(true)}
-            className="flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all"
-            style={{ background: 'linear-gradient(135deg, #7A475B 0%, #653B4B 100%)' }}
-          >
-            <UploadIcon className="h-4 w-4" />
-            <span>Import GSTR-2B</span>
-          </button>
+          <div className="itc-btn-row">
+            <button
+              onClick={() => setIsImportModalOpen(true)}
+              className="itc-import-btn"
+            >
+              <UploadIcon className="h-4 w-4" />
+              <span>Import GSTR-2B</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={async () => {
-              try {
-                setExporting(true);
-                await downloadFile(
-                  `/api/gst/itc-register/export?period=${encodeURIComponent(period)}`,
-                  `ITC_Reconciliation_Report_${period}.csv`
-                );
-              } catch (err: any) {
-                alert(`Export failed: ${err.message}`);
-              } finally {
-                setExporting(false);
-              }
-            }}
-            disabled={exporting}
-            className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-          >
-            {exporting ? <SpinnerIcon className="h-4 w-4 animate-spin text-slate-500" /> : <BarChartIcon className="h-4 w-4 text-slate-600" />}
-            <span>{exporting ? 'Exporting...' : 'Export CSV'}</span>
-          </button>
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  setExporting(true);
+                  await downloadFile(
+                    `/api/gst/itc-register/export?period=${encodeURIComponent(period)}`,
+                    `ITC_Reconciliation_Report_${period}.csv`
+                  );
+                } catch (err: any) {
+                  alert(`Export failed: ${err.message}`);
+                } finally {
+                  setExporting(false);
+                }
+              }}
+              disabled={exporting}
+              className="itc-export-btn"
+            >
+              {exporting ? <SpinnerIcon className="h-4 w-4 animate-spin text-slate-500" /> : <BarChartIcon className="h-4 w-4 text-slate-600" />}
+              <span>{exporting ? 'Exporting...' : 'Export CSV'}</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Summary Cards */}
+      {/* Summary Bento 3D Cards */}
       {summary && (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
-            gap: '1rem',
-            marginBottom: '1.25rem',
-          }}
-        >
+        <div className="itc-bento-grid">
           {/* Card 1: Total Book GST */}
-          <div className="flex flex-col justify-between rounded-2xl border border-[#D9C8D0] bg-white p-4 shadow-xs transition-all hover:border-[#653B4B] hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
-            <div className="flex items-center justify-between">
-              <h1 className="text-xs font-bold text-slate-500 uppercase tracking-wider dark:text-slate-400 m-0">Total Book GST</h1>
-              <span className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2 py-0.5 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+          <div className="itc-bento-card total-books">
+            <div className="itc-bento-card-top">
+              <span className="itc-bento-title">Total Book GST</span>
+              <span className="itc-bento-badge">
                 <BookOpenIcon className="h-3.5 w-3.5 text-slate-500" />
                 <span>Books</span>
               </span>
             </div>
-            <div className="mt-2 text-2xl font-black text-slate-900 tracking-tight dark:text-white">
+            <div className="itc-bento-val">
               ₹{(summary.totalPotentialItcMinor / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
             </div>
-            <div className="mt-2 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+            <div className="itc-bento-sub">
               {summary.totalRecords} records (Purchases + Expenses)
             </div>
           </div>
 
           {/* Card 2: Reviewed Eligible ITC */}
-          <div className="flex flex-col justify-between rounded-2xl border border-emerald-200/80 bg-gradient-to-br from-emerald-50/70 to-white p-4 shadow-xs transition-all hover:border-emerald-300 hover:shadow-md dark:border-emerald-900/50 dark:from-slate-900 dark:to-emerald-950/20">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-emerald-800 uppercase tracking-wider dark:text-emerald-300">Reviewed Eligible ITC</span>
-              <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-100/80 px-2 py-0.5 text-[11px] font-bold text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200">
-                <CheckCircleIcon className="h-3.5 w-3.5 text-emerald-700" />
+          <div className="itc-bento-card eligible-itc">
+            <div className="itc-bento-card-top">
+              <span className="itc-bento-title">Reviewed Eligible ITC</span>
+              <span className="itc-bento-badge">
+                <CheckCircleIcon className="h-3.5 w-3.5" />
                 <span>Claimable</span>
               </span>
             </div>
-            <div className="mt-2 text-2xl font-black text-emerald-600 tracking-tight dark:text-emerald-400">
+            <div className="itc-bento-val">
               ₹{(summary.totalReviewedEligibleItcMinor / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
             </div>
-            <div className="mt-2 text-[11px] font-medium text-emerald-700/80 dark:text-emerald-300/80">
+            <div className="itc-bento-sub">
               Approved for GSTR-3B Table 4
             </div>
           </div>
 
           {/* Card 3: Ineligible / Blocked ITC */}
-          <div className="flex flex-col justify-between rounded-2xl border border-rose-200/80 bg-gradient-to-br from-rose-50/70 to-white p-4 shadow-xs transition-all hover:border-rose-300 hover:shadow-md dark:border-rose-900/50 dark:from-slate-900 dark:to-rose-950/20">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-rose-800 uppercase tracking-wider dark:text-rose-300">Ineligible / Blocked ITC</span>
-              <span className="inline-flex items-center gap-1 rounded-lg bg-rose-100/80 px-2 py-0.5 text-[11px] font-bold text-rose-800 dark:bg-rose-900/60 dark:text-rose-200">
-                <BanIcon className="h-3.5 w-3.5 text-rose-700" />
+          <div className="itc-bento-card ineligible-itc">
+            <div className="itc-bento-card-top">
+              <span className="itc-bento-title">Ineligible / Blocked ITC</span>
+              <span className="itc-bento-badge">
+                <BanIcon className="h-3.5 w-3.5" />
                 <span>Sec 17(5)</span>
               </span>
             </div>
-            <div className="mt-2 text-2xl font-black text-rose-600 tracking-tight dark:text-rose-400">
+            <div className="itc-bento-val">
               ₹{(summary.totalIneligibleItcMinor / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
             </div>
-            <div className="mt-2 text-[11px] font-medium text-rose-700/80 dark:text-rose-300/80">
+            <div className="itc-bento-sub">
               Excluded per Sec 17(5) / Non-business
             </div>
           </div>
 
           {/* Card 4: Pending Review */}
-          <div className="flex flex-col justify-between rounded-2xl border border-amber-200/80 bg-gradient-to-br from-amber-50/70 to-white p-4 shadow-xs transition-all hover:border-amber-300 hover:shadow-md dark:border-amber-900/50 dark:from-slate-900 dark:to-amber-950/20">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-amber-800 uppercase tracking-wider dark:text-amber-300">Pending Review</span>
-              <span className="inline-flex items-center gap-1 rounded-lg bg-amber-100/80 px-2 py-0.5 text-[11px] font-bold text-amber-800 dark:bg-amber-900/60 dark:text-amber-200">
-                <ClockIcon className="h-3.5 w-3.5 text-amber-700" />
+          <div className="itc-bento-card pending-review">
+            <div className="itc-bento-card-top">
+              <span className="itc-bento-title">Pending Review</span>
+              <span className="itc-bento-badge">
+                <ClockIcon className="h-3.5 w-3.5" />
                 <span>Needs Action</span>
               </span>
             </div>
-            <div className="mt-2 text-2xl font-black text-amber-600 tracking-tight dark:text-amber-400">
+            <div className="itc-bento-val">
               {summary.pendingReviewCount}
             </div>
-            <div className="mt-2 text-[11px] font-medium text-amber-700/80 dark:text-amber-300/80">
+            <div className="itc-bento-sub">
               Transactions requiring tax decision
             </div>
           </div>
 
           {/* Card 5: 2B Matching Result */}
-          <div className="flex flex-col justify-between rounded-2xl border border-[#D9C8D0] bg-gradient-to-br from-[#FAF6F8] to-white p-4 shadow-xs transition-all hover:border-[#653B4B] hover:shadow-md dark:border-slate-800 dark:from-slate-900 dark:to-slate-800">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider" style={{ color: '#653B4B' }}>2B Matching Result</span>
-              <span className="inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[11px] font-bold" style={{ background: '#F5ECF0', color: '#653B4B' }}>
-                <ScaleIcon className="h-3.5 w-3.5" style={{ color: '#653B4B' }} />
+          <div className="itc-bento-card alignment-2b">
+            <div className="itc-bento-card-top">
+              <span className="itc-bento-title">2B Matching Result</span>
+              <span className="itc-bento-badge">
+                <ScaleIcon className="h-3.5 w-3.5" />
                 <span>Alignment</span>
               </span>
             </div>
-            <div className="mt-2 flex items-baseline gap-2">
-              <span className="text-2xl font-black text-emerald-600">{summary.matchedCount}</span>
-              <span className="text-xs font-semibold text-slate-500">matched /</span>
-              <span className="text-2xl font-black text-rose-600">{summary.mismatchCount + summary.missingIn2BCount}</span>
-              <span className="text-xs font-semibold text-slate-500">diffs</span>
+            <div className="itc-bento-val flex items-baseline gap-2">
+              <span className="text-emerald-600">{summary.matchedCount}</span>
+              <span className="text-xs font-semibold text-slate-500 font-sans">matched /</span>
+              <span className="text-rose-600">{summary.mismatchCount + summary.missingIn2BCount}</span>
+              <span className="text-xs font-semibold text-slate-500 font-sans">diffs</span>
             </div>
-            <div className="mt-2 text-[11px] font-medium" style={{ color: '#653B4B' }}>
+            <div className="itc-bento-sub">
               GSTR-2B portal comparison
             </div>
           </div>
@@ -339,56 +334,61 @@ export const ItcRegisterView: React.FC<ItcRegisterViewProps> = ({ onNavigate }) 
       )}
 
       {/* Filter Bar */}
-      <div className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <div className="flex-1 min-w-[200px]">
+      <div className="itc-filter-bar">
+        <div className="itc-search-wrap">
           <input
             type="text"
             placeholder="Search supplier, GSTIN, invoice no..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-lg border border-[#D9C8D0] bg-slate-50 px-3 py-1.5 text-sm focus:border-[#653B4B] focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+            className="itc-search-input"
           />
         </div>
 
-        <select
-          value={docTypeFilter}
-          onChange={(e) => setDocTypeFilter(e.target.value)}
-          className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
-        >
-          <option value="all">All Documents</option>
-          <option value="purchase">Stock Purchases Only</option>
-          <option value="expense">Business Expenses Only</option>
-        </select>
+        <div className="itc-filter-selects">
+          <select
+            value={docTypeFilter}
+            onChange={(e) => setDocTypeFilter(e.target.value)}
+            className="itc-select"
+          >
+            <option value="all">All Documents</option>
+            <option value="purchase">Stock Purchases Only</option>
+            <option value="expense">Business Expenses Only</option>
+          </select>
 
-        <select
-          value={matchingFilter}
-          onChange={(e) => setMatchingFilter(e.target.value)}
-          className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
-        >
-          <option value="all">All 2B Statuses</option>
-          <option value="matched">Matched in 2B</option>
-          <option value="missing_in_2b">Missing from 2B</option>
-          <option value="taxable_mismatch">Taxable Value Mismatch</option>
-          <option value="gst_mismatch">GST Amount Mismatch</option>
-        </select>
+          <select
+            value={matchingFilter}
+            onChange={(e) => setMatchingFilter(e.target.value)}
+            className="itc-select"
+          >
+            <option value="all">All 2B Statuses</option>
+            <option value="matched">Matched in 2B</option>
+            <option value="missing_in_2b">Missing from 2B</option>
+            <option value="taxable_mismatch">Taxable Value Mismatch</option>
+            <option value="gst_mismatch">GST Amount Mismatch</option>
+          </select>
 
-        <select
-          value={reviewFilter}
-          onChange={(e) => setReviewFilter(e.target.value)}
-          className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
-        >
-          <option value="all">All Review Statuses</option>
-          <option value="pending_review">Pending Review</option>
-          <option value="eligible_reviewed">Eligible (Reviewed)</option>
-          <option value="partially_eligible_reviewed">Partially Eligible</option>
-          <option value="ineligible_reviewed">Ineligible (Reviewed)</option>
-          <option value="blocked_17_5">Blocked Sec 17(5)</option>
-          <option value="requires_correction">Requires Correction</option>
-        </select>
+          <select
+            value={reviewFilter}
+            onChange={(e) => setReviewFilter(e.target.value)}
+            className="itc-select"
+          >
+            <option value="all">All Review Statuses</option>
+            <option value="pending_review">Pending Review</option>
+            <option value="eligible_reviewed">Eligible (Reviewed)</option>
+            <option value="partially_eligible_reviewed">Partially Eligible</option>
+            <option value="ineligible_reviewed">Ineligible (Reviewed)</option>
+            <option value="blocked_17_5">Blocked Sec 17(5)</option>
+            <option value="requires_correction">Requires Correction</option>
+          </select>
+        </div>
       </div>
 
+      {/* Table Scroll Hint on Mobile */}
+      <div className="itc-table-scroll-hint">Swipe horizontally to view full 12-column reconciliation ledger ↔</div>
+
       {/* ITC Register Table */}
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div className="itc-table-container">
         {loading ? (
           <div className="flex h-48 items-center justify-center text-sm text-slate-500">
             Loading ITC reconciliation items...
@@ -404,11 +404,11 @@ export const ItcRegisterView: React.FC<ItcRegisterViewProps> = ({ onNavigate }) 
             <p className="mt-1 text-xs">Purchases and GST expenses recorded in {period} will automatically appear here for ITC reconciliation.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="itc-table-scroller">
             <table className="w-full text-left text-xs">
               <thead className="border-b border-slate-200 bg-slate-50 font-semibold text-slate-600 dark:border-slate-800 dark:bg-slate-800/60 dark:text-slate-300">
                 <tr>
-                  <th className="py-3 px-3">Type</th>
+                  <th className="py-3 px-3 itc-col-sticky">Type</th>
                   <th className="py-3 px-3">Supplier / Vendor</th>
                   <th className="py-3 px-3">Supplier GSTIN</th>
                   <th className="py-3 px-3">Invoice Details</th>
@@ -425,7 +425,7 @@ export const ItcRegisterView: React.FC<ItcRegisterViewProps> = ({ onNavigate }) 
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
                 {filteredItems.map((item) => (
                   <tr key={`${item.docType}_${item.docId}`} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40">
-                    <td className="py-3 px-3">
+                    <td className="py-3 px-3 itc-col-sticky">
                       <span
                         className={`inline-block rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
                           item.docType === 'purchase'
@@ -512,7 +512,7 @@ export const ItcRegisterView: React.FC<ItcRegisterViewProps> = ({ onNavigate }) 
       {/* Review Modal */}
       {selectedItemForReview && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-lg rounded-2xl bg-white shadow-2xl dark:bg-slate-900">
+          <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-2xl dark:bg-slate-900">
             <div className="border-b border-slate-200 px-6 py-4 dark:border-slate-800">
               <h2 className="text-lg font-bold text-slate-900 dark:text-white">Review ITC Eligibility</h2>
               <p className="text-xs text-slate-500 dark:text-slate-400">

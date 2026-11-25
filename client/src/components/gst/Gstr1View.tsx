@@ -14,6 +14,8 @@ import {
   FileText,
   CheckCircle2,
   Sparkles,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { SpinnerIcon } from './GstIcons.tsx';
 import './Gstr1View.css';
@@ -29,6 +31,14 @@ export const Gstr1View: React.FC<Gstr1ViewProps> = ({ onNavigate }) => {
   const [error, setError] = useState<string | null>(null);
   const [salesData, setSalesData] = useState<any>(null);
   const [b2bSearch, setB2bSearch] = useState<string>('');
+
+  const changeMonth = (delta: number) => {
+    const [year, month] = period.split('-').map(Number);
+    const date = new Date(year, month - 1 + delta, 1);
+    const newYear = date.getFullYear();
+    const newMonth = String(date.getMonth() + 1).padStart(2, '0');
+    setPeriod(`${newYear}-${newMonth}`);
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -118,14 +128,34 @@ export const Gstr1View: React.FC<Gstr1ViewProps> = ({ onNavigate }) => {
 
         <div className="gstr1-control-right">
           <div className="gstr1-period-picker-wrap">
-            <Calendar size={15} className="text-slate-500" />
-            <span className="gstr1-period-label">Return Period:</span>
-            <input
-              type="month"
-              value={period}
-              onChange={(e) => setPeriod(e.target.value)}
-              className="gstr1-month-input"
-            />
+            <div className="gstr1-period-picker-left">
+              <Calendar size={15} className="text-slate-500 shrink-0" />
+              <span className="gstr1-period-label">Period</span>
+            </div>
+            <div className="gstr1-period-picker-nav">
+              <button
+                type="button"
+                onClick={() => changeMonth(-1)}
+                className="gstr1-period-nav-btn"
+                title="Previous Month"
+              >
+                <ChevronLeft size={14} />
+              </button>
+              <input
+                type="month"
+                value={period}
+                onChange={(e) => setPeriod(e.target.value)}
+                className="gstr1-month-input"
+              />
+              <button
+                type="button"
+                onClick={() => changeMonth(1)}
+                className="gstr1-period-nav-btn"
+                title="Next Month"
+              >
+                <ChevronRight size={14} />
+              </button>
+            </div>
           </div>
 
           <button
@@ -311,27 +341,29 @@ export const Gstr1View: React.FC<Gstr1ViewProps> = ({ onNavigate }) => {
                 </button>
               </div>
             ) : (
-              <div className="gstr1-table-scroll">
-                <table className="gstr1-table">
-                  <thead>
-                    <tr>
-                      <th>Invoice #</th>
-                      <th>Date</th>
-                      <th>Customer Name</th>
-                      <th>Recipient GSTIN</th>
-                      <th style={{ textAlign: 'right' }}>Taxable Value</th>
-                      <th style={{ textAlign: 'right' }}>CGST</th>
-                      <th style={{ textAlign: 'right' }}>SGST</th>
-                      <th style={{ textAlign: 'right' }}>IGST</th>
-                      <th style={{ textAlign: 'right', fontWeight: 800 }}>Invoice Total</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredB2bInvoices.map((inv: any) => (
-                      <tr key={inv.id || inv.invoiceNumber}>
-                        <td>
-                          <span className="gstr1-inv-pill">{inv.invoiceNumber}</span>
-                        </td>
+              <>
+                <div className="gstr1-table-scroll-hint">Swipe horizontally to view full table columns ↔</div>
+                <div className="gstr1-table-scroll">
+                  <table className="gstr1-table">
+                    <thead>
+                      <tr>
+                        <th className="gstr1-col-sticky">Invoice #</th>
+                        <th>Date</th>
+                        <th>Customer Name</th>
+                        <th>Recipient GSTIN</th>
+                        <th style={{ textAlign: 'right' }}>Taxable Value</th>
+                        <th style={{ textAlign: 'right' }}>CGST</th>
+                        <th style={{ textAlign: 'right' }}>SGST</th>
+                        <th style={{ textAlign: 'right' }}>IGST</th>
+                        <th style={{ textAlign: 'right', fontWeight: 800 }}>Invoice Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredB2bInvoices.map((inv: any) => (
+                        <tr key={inv.id || inv.invoiceNumber}>
+                          <td className="gstr1-col-sticky">
+                            <span className="gstr1-inv-pill">{inv.invoiceNumber}</span>
+                          </td>
                         <td className="font-mono text-slate-500">{inv.invoiceDate}</td>
                         <td className="font-semibold text-slate-800">{inv.customerName || '—'}</td>
                         <td>
@@ -389,7 +421,8 @@ export const Gstr1View: React.FC<Gstr1ViewProps> = ({ onNavigate }) => {
                   </tfoot>
                 </table>
               </div>
-            )}
+            </>
+          )}
           </div>
 
           {/* ── 4. TABLE 7: B2C (OTHERS) BENTO CARD & 4-TILE BENTO GRID ── */}

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { api, type Payment, type SupplierPaymentRecord } from '../../api.ts';
 import { fmtMoney } from '../../../../shared/money.ts';
 import {
-  ArrowRightIcon,
   ArrowDownLeftIcon,
   ArrowUpRightIcon,
   RefreshCwIcon,
@@ -10,7 +9,12 @@ import {
   TruckIcon,
   CheckCircle2Icon,
   SearchIcon,
+  WalletIcon,
+  CalendarIcon,
+  PhoneIcon,
+  CreditCardIcon,
 } from '../inventory/InventoryIcons.tsx';
+import { BentoHeaderCard, StatCard } from '../common/BentoUI.tsx';
 
 interface PaymentsViewProps {
   onOpenCustomerLedger?: (customerId: string) => void;
@@ -18,12 +22,20 @@ interface PaymentsViewProps {
 }
 
 export function PaymentsView({ onOpenCustomerLedger, onOpenSupplierLedger }: PaymentsViewProps) {
-  const [activeSubTab, setActiveSubTab] = useState<'customer' | 'supplier'>('supplier');
+  const [activeSubTab, setActiveSubTab] = useState<'customer' | 'supplier'>('customer');
   const [customerPayments, setCustomerPayments] = useState<Payment[]>([]);
   const [supplierPayments, setSupplierPayments] = useState<SupplierPaymentRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [modeFilter, setModeFilter] = useState('ALL');
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const handleCopy = (text: string, id: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
 
   const loadData = async () => {
     setLoading(true);
@@ -72,349 +84,478 @@ export function PaymentsView({ onOpenCustomerLedger, onOpenSupplierLedger }: Pay
 
   const totalCustomerReceived = customerPayments.reduce((sum, p) => sum + p.amountMinor, 0);
   const totalSupplierDisbursed = supplierPayments.reduce((sum, p) => sum + p.amountMinor, 0);
+  const netCashFlow = totalCustomerReceived - totalSupplierDisbursed;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-      {/* KPI Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
-        <div style={{
-          background: '#ffffff',
-          borderRadius: '14px',
-          border: '1px solid #bbf7d0',
-          padding: '1.25rem',
-          boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
-        }}>
-          <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#15803d', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Total Customer Collections (Inward)
-          </div>
-          <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#16a34a', marginTop: '0.35rem', fontFamily: 'monospace' }}>
-            {fmtMoney(totalCustomerReceived)}
-          </div>
-          <div style={{ fontSize: '0.75rem', color: '#166534', marginTop: '0.25rem' }}>
-            Customer dues collected &amp; cash advances
-          </div>
-        </div>
-
-        <div style={{
-          background: '#ffffff',
-          borderRadius: '14px',
-          border: '1px solid #fecdd3',
-          padding: '1.25rem',
-          boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
-        }}>
-          <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#be123c', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Total Supplier Payments (Outward)
-          </div>
-          <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#e11d48', marginTop: '0.35rem', fontFamily: 'monospace' }}>
-            {fmtMoney(totalSupplierDisbursed)}
-          </div>
-          <div style={{ fontSize: '0.75rem', color: '#9f1239', marginTop: '0.25rem' }}>
-            Disbursements for stock purchase bills
-          </div>
-        </div>
-
-        <div style={{
-          background: '#ffffff',
-          borderRadius: '14px',
-          border: '1px solid #e2e8f0',
-          padding: '1.25rem',
-          boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
-        }}>
-          <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Net Flow Difference
-          </div>
-          <div style={{
-            fontSize: '1.75rem',
-            fontWeight: 800,
-            color: totalCustomerReceived >= totalSupplierDisbursed ? '#6d4aff' : '#d97706',
-            marginTop: '0.35rem',
-            fontFamily: 'monospace',
-          }}>
-            {fmtMoney(totalCustomerReceived - totalSupplierDisbursed)}
-          </div>
-          <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.25rem' }}>
-            Inward receipts minus outward disbursements
-          </div>
-        </div>
-      </div>
-
-      {/* Tabs and Filters Bar */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
-        <div style={{
-          display: 'inline-flex',
-          background: '#ede9fe',
-          padding: '0.3rem',
-          borderRadius: '12px',
-          gap: '0.35rem',
-        }}>
+    <div className="cat-bento-module-wrapper finance-module-wrapper">
+      {/* 1. Bento Header Card with Live Status & Refresh Action */}
+      <BentoHeaderCard
+        icon={<WalletIcon size={22} />}
+        badgeText="Live Treasury"
+        badgeTooltip="Real-time synchronized inward collections & outward supplier payouts"
+        subtitle="Manage customer collection receipts, vendor disbursements, and track net cash flow positions."
+        actions={
           <button
             type="button"
-            onClick={() => setActiveSubTab('customer')}
-            style={{
-              padding: '0.5rem 1rem',
-              fontSize: '0.82rem',
-              fontWeight: 700,
-              borderRadius: '9px',
-              border: 'none',
-              cursor: 'pointer',
-              background: activeSubTab === 'customer' ? '#ffffff' : 'transparent',
-              color: activeSubTab === 'customer' ? '#6d4aff' : '#64748b',
-              boxShadow: activeSubTab === 'customer' ? '0 2px 6px rgba(109,74,255,0.15)' : 'none',
-              transition: 'all 0.15s ease',
-            }}
-          >
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><ArrowDownLeftIcon size={15} style={{ color: activeSubTab === 'customer' ? '#10b981' : '#64748b' }} /> Customer Receipts ({customerPayments.length})</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveSubTab('supplier')}
-            style={{
-              padding: '0.5rem 1rem',
-              fontSize: '0.82rem',
-              fontWeight: 700,
-              borderRadius: '9px',
-              border: 'none',
-              cursor: 'pointer',
-              background: activeSubTab === 'supplier' ? '#ffffff' : 'transparent',
-              color: activeSubTab === 'supplier' ? '#6d4aff' : '#64748b',
-              boxShadow: activeSubTab === 'supplier' ? '0 2px 6px rgba(109,74,255,0.15)' : 'none',
-              transition: 'all 0.15s ease',
-            }}
-          >
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><ArrowUpRightIcon size={15} style={{ color: activeSubTab === 'supplier' ? '#ef4444' : '#64748b' }} /> Supplier Payments ({supplierPayments.length})</span>
-          </button>
-        </div>
-
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-          <input
-            type="text"
-            placeholder={activeSubTab === 'customer' ? 'Search customer, receipt #...' : 'Search voucher, ref #...'}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={{
-              minWidth: '220px',
-              padding: '0.55rem 0.85rem',
-              fontSize: '0.82rem',
-              borderRadius: '10px',
-              border: '1px solid #cbd5e1',
-              background: '#ffffff',
-              color: '#1e293b',
-              outline: 'none',
-            }}
-          />
-
-          <select
-            value={modeFilter}
-            onChange={(e) => setModeFilter(e.target.value)}
-            style={{
-              padding: '0.55rem 0.85rem',
-              fontSize: '0.82rem',
-              borderRadius: '10px',
-              border: '1px solid #cbd5e1',
-              background: '#ffffff',
-              color: '#1e293b',
-              outline: 'none',
-            }}
-          >
-            <option value="ALL">All Modes</option>
-            <option value="cash">Cash</option>
-            <option value="upi">UPI / QR</option>
-            <option value="card">Card</option>
-            <option value="bank">Bank / NEFT</option>
-          </select>
-
-          <button
-            type="button"
+            className="cat-btn-outline"
             onClick={loadData}
-            className="btn btn-secondary"
-            style={{ padding: '0.55rem 0.85rem', fontSize: '0.8rem' }}
+            disabled={loading}
+            title="Refresh treasury ledger"
           >
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}><RefreshCwIcon size={14} /> Refresh</span>
+            <RefreshCwIcon size={14} className={loading ? 'animate-spin' : ''} />
+            <span>{loading ? 'Refreshing...' : 'Refresh'}</span>
           </button>
+        }
+      />
+
+      {/* 2. Bento 3D Elevation KPI Cards Grid */}
+      <div className="cat-bento-kpi-grid finance-kpi-grid" aria-label="Treasury Financial Overview">
+        <StatCard
+          icon={<ArrowDownLeftIcon size={18} />}
+          iconVariant="green"
+          label="CUSTOMER INWARD"
+          statusPill={{ text: "Inward Flow", variant: "green" }}
+          count={fmtMoney(totalCustomerReceived)}
+          countColor="#15803D"
+          hint={`${customerPayments.length} dues & advances collected`}
+          isSelected={activeSubTab === 'customer'}
+          onClick={() => setActiveSubTab('customer')}
+          title="Click to view Customer Receipts"
+          cardVariant="bento-cat-kpi-main"
+        />
+
+        <StatCard
+          icon={<ArrowUpRightIcon size={18} />}
+          iconVariant="red"
+          label="SUPPLIER OUTWARD"
+          statusPill={{ text: "Outward Payout", variant: "red" }}
+          count={fmtMoney(totalSupplierDisbursed)}
+          countColor="#BE123C"
+          hint={`${supplierPayments.length} purchase bills settled`}
+          isSelected={activeSubTab === 'supplier'}
+          onClick={() => setActiveSubTab('supplier')}
+          title="Click to view Supplier Payments"
+          cardVariant="bento-cat-kpi-active"
+        />
+
+        <StatCard
+          icon={<WalletIcon size={18} />}
+          iconVariant="indigo"
+          label="NET CASH FLOW"
+          statusPill={{
+            text: netCashFlow >= 0 ? 'Surplus' : 'Deficit',
+            variant: netCashFlow >= 0 ? 'purple' : 'amber',
+          }}
+          count={fmtMoney(netCashFlow)}
+          countColor={netCashFlow >= 0 ? '#4338CA' : '#D97706'}
+          hint="Inward collections minus payouts"
+          title="Net treasury cash flow"
+          cardVariant="bento-cat-kpi-total"
+        />
+      </div>
+
+      {/* 3. Bento Toolbar: Sub-tabs, Search, Payment Mode & View Toggle */}
+      <div className="finance-controls-bar bento-card-3d">
+        {/* Left: 3D Segmented Switcher */}
+        <div className="finance-segmented-nav">
+          <button
+            type="button"
+            className={`finance-segment-btn ${activeSubTab === 'customer' ? 'active inward' : ''}`}
+            onClick={() => setActiveSubTab('customer')}
+          >
+            <ArrowDownLeftIcon size={14} />
+            <span>Customer Receipts</span>
+            <span className="finance-count-badge inward">{customerPayments.length}</span>
+          </button>
+          <button
+            type="button"
+            className={`finance-segment-btn ${activeSubTab === 'supplier' ? 'active outward' : ''}`}
+            onClick={() => setActiveSubTab('supplier')}
+          >
+            <ArrowUpRightIcon size={14} />
+            <span>Supplier Payments</span>
+            <span className="finance-count-badge outward">{supplierPayments.length}</span>
+          </button>
+        </div>
+
+        {/* Right: Search, Mode Filter & Mobile Switcher */}
+        <div className="finance-toolbar-right">
+          <div className="finance-search-box">
+            <SearchIcon size={14} className="finance-search-icon" />
+            <input
+              type="text"
+              className="finance-search-input"
+              placeholder={activeSubTab === 'customer' ? 'Search customer, receipt #...' : 'Search voucher, ref #, supplier...'}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            {search && (
+              <button
+                type="button"
+                className="finance-search-clear"
+                onClick={() => setSearch('')}
+                title="Clear search"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
+          <div className="finance-mode-select-wrap">
+            <select
+              value={modeFilter}
+              onChange={(e) => setModeFilter(e.target.value)}
+              className="finance-mode-select"
+            >
+              <option value="ALL">All Modes</option>
+              <option value="cash">Cash</option>
+              <option value="upi">UPI / QR</option>
+              <option value="card">Card</option>
+              <option value="bank">Bank / NEFT</option>
+            </select>
+          </div>
+
+          {/* View Toggle (Cards vs Table on Mobile) */}
+          <div className="finance-view-toggle">
+            <button
+              type="button"
+              onClick={() => setViewMode('cards')}
+              className={`finance-toggle-btn ${viewMode === 'cards' ? 'active' : ''}`}
+              title="Card View (Mobile Optimized)"
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="7" height="7" />
+                <rect x="14" y="3" width="7" height="7" />
+                <rect x="14" y="14" width="7" height="7" />
+                <rect x="3" y="14" width="7" height="7" />
+              </svg>
+              <span>Cards</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('table')}
+              className={`finance-toggle-btn ${viewMode === 'table' ? 'active' : ''}`}
+              title="Table View (Full Columns)"
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 3h18v18H3z" />
+                <path d="M3 9h18" />
+                <path d="M3 15h18" />
+                <path d="M9 3v18" />
+              </svg>
+              <span>Table</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Main Ledger Table */}
-      <div style={{
-        background: '#ffffff',
-        borderRadius: '14px',
-        border: '1px solid #e2e8f0',
-        overflow: 'hidden',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
-      }}>
+      {/* 4. Ledger Content: Mobile Cards or Full Table View */}
+      <div className="finance-ledger-container bento-card-3d">
         {loading ? (
-          <div style={{ padding: '3.5rem', textAlign: 'center', color: '#64748b', fontSize: '0.9rem' }}>
-            ⏳ Loading payment vouchers...
+          <div className="finance-loading-state">
+            <div className="finance-spinner" />
+            <span>Loading treasury transactions...</span>
           </div>
         ) : activeSubTab === 'customer' ? (
-          filteredCustomerPayments.length === 0 ? (
-            <div style={{ padding: '3.5rem 1.5rem', textAlign: 'center', color: '#64748b' }}>
-              <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '56px', height: '56px', borderRadius: '50%', background: '#f8fafc', color: '#64748b', marginBottom: '0.75rem', border: '1px solid #e2e8f0' }}><ReceiptIcon size={28} /></div>
-              <div style={{ fontSize: '1rem', fontWeight: 700, color: '#1e293b' }}>No customer payment receipts found</div>
-              <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '0.25rem' }}>
-                Customer receipts recorded via collections will appear here automatically.
-              </div>
-            </div>
-          ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.84rem' }}>
-                <thead>
-                  <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569', fontWeight: 700 }}>
-                    <th style={{ padding: '0.85rem 1rem' }}>Receipt #</th>
-                    <th style={{ padding: '0.85rem 1rem' }}>Date</th>
-                    <th style={{ padding: '0.85rem 1rem' }}>Customer</th>
-                    <th style={{ padding: '0.85rem 1rem' }}>Payment Mode</th>
-                    <th style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>Amount Received</th>
-                    <th style={{ padding: '0.85rem 1rem', textAlign: 'center' }}>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredCustomerPayments.map((p) => (
-                    <tr
-                      key={p.id}
-                      style={{ borderBottom: '1px solid #f1f5f9', transition: 'background 0.15s' }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = '#f8faff')}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                    >
-                      <td style={{ padding: '0.85rem 1rem', fontFamily: 'monospace', fontWeight: 700, color: '#0f172a' }}>
-                        {p.receiptNumber}
-                      </td>
-                      <td style={{ padding: '0.85rem 1rem', color: '#64748b' }}>
-                        {p.paymentDate}
-                      </td>
-                      <td style={{ padding: '0.85rem 1rem', fontWeight: 700, color: '#1e293b' }}>
+          <>
+            {/* 4A. Customer Receipts - Mobile Touch Cards */}
+            <div className={`finance-mobile-cards-wrap ${viewMode === 'cards' ? 'active' : ''}`}>
+              {filteredCustomerPayments.map((p) => {
+                const modeClass = p.mode === 'cash' ? 'cash-mode' : p.mode === 'upi' ? 'upi-mode' : 'bank-mode';
+                return (
+                  <div key={p.id} className="finance-m-card inward-card">
+                    <div className="finance-m-header">
+                      <div className="finance-m-id-row">
+                        <span className="finance-m-chip mono bold">{p.receiptNumber}</span>
+                        <button
+                          type="button"
+                          className="finance-m-copy-btn"
+                          onClick={() => handleCopy(p.receiptNumber, p.id)}
+                          title="Copy Receipt #"
+                        >
+                          {copiedId === p.id ? 'Copied!' : '📋'}
+                        </button>
+                      </div>
+                      <span className={`finance-m-mode-badge ${modeClass}`}>
+                        {p.mode.toUpperCase()}
+                      </span>
+                    </div>
+
+                    <div className="finance-m-party-box">
+                      <div className="finance-m-party-name">
                         {p.customerName || 'Counter Customer'}
-                      </td>
-                      <td style={{ padding: '0.85rem 1rem' }}>
-                        <span style={{
-                          display: 'inline-block',
-                          padding: '0.2rem 0.55rem',
-                          borderRadius: '6px',
-                          fontSize: '0.75rem',
-                          fontWeight: 700,
-                          textTransform: 'uppercase',
-                          background: p.mode === 'cash' ? '#ecfdf5' : p.mode === 'upi' ? '#eff6ff' : '#f5f3ff',
-                          color: p.mode === 'cash' ? '#047857' : p.mode === 'upi' ? '#1d4ed8' : '#6d28d9',
-                          border: `1px solid ${p.mode === 'cash' ? '#a7f3d0' : '#bfdbfe'}`,
-                        }}>
-                          {p.mode}
-                        </span>
-                      </td>
-                      <td style={{ padding: '0.85rem 1rem', textAlign: 'right', fontWeight: 800, color: '#16a34a', fontFamily: 'monospace', fontSize: '0.9rem' }}>
-                        {fmtMoney(p.amountMinor)}
-                      </td>
-                      <td style={{ padding: '0.85rem 1rem', textAlign: 'center' }}>
-                        {p.customerId && (
-                          <button
-                            type="button"
-                            onClick={() => onOpenCustomerLedger && onOpenCustomerLedger(p.customerId)}
-                            className="btn btn-secondary"
-                            style={{ padding: '0.3rem 0.7rem', fontSize: '0.75rem' }}
-                          >
-                            View Customer
-                          </button>
+                      </div>
+                      <div className="finance-m-date-row">
+                        <CalendarIcon size={12} />
+                        <span>{p.paymentDate}</span>
+                        {p.referenceNo && (
+                          <span className="finance-m-ref mono">Ref: {p.referenceNo}</span>
                         )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </div>
+                      {p.note && (
+                        <div className="finance-m-note">Note: {p.note}</div>
+                      )}
+                    </div>
+
+                    <div className="finance-m-amount-row">
+                      <div className="finance-m-amount-col">
+                        <span className="finance-m-amount-label">Amount Received</span>
+                        <span className="finance-m-amount-val green mono bold">
+                          {fmtMoney(p.amountMinor)}
+                        </span>
+                      </div>
+                      {p.customerId && onOpenCustomerLedger && (
+                        <button
+                          type="button"
+                          className="cat-btn-outline finance-m-action-btn"
+                          onClick={() => onOpenCustomerLedger(p.customerId)}
+                        >
+                          <span>View Customer</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {filteredCustomerPayments.length === 0 && (
+                <div className="finance-empty-state">
+                  <div className="finance-empty-icon inward">
+                    <ReceiptIcon size={28} />
+                  </div>
+                  <div className="finance-empty-title">No customer receipts found</div>
+                  <div className="finance-empty-desc">
+                    Customer payment receipts matching your search or mode filter will appear here.
+                  </div>
+                </div>
+              )}
             </div>
-          )
-        ) : (
-          filteredSupplierPayments.length === 0 ? (
-            <div style={{ padding: '3.5rem 1.5rem', textAlign: 'center', color: '#64748b' }}>
-              <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '56px', height: '56px', borderRadius: '50%', background: '#f8fafc', color: '#6366f1', marginBottom: '0.75rem', border: '1px solid #e0e7ff' }}><TruckIcon size={28} /></div>
-              <div style={{ fontSize: '1rem', fontWeight: 700, color: '#1e293b' }}>No supplier disbursements found</div>
-              <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '0.25rem' }}>
-                Supplier payouts recorded against purchase orders will appear here automatically.
+
+            {/* 4B. Customer Receipts - Full Table View */}
+            <div className={`finance-table-container ${viewMode === 'cards' ? 'hide-on-mobile' : ''}`}>
+              <div className="finance-table-scroll-hint">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="18 8 22 12 18 16" />
+                  <polyline points="6 8 2 12 6 16" />
+                  <line x1="2" y1="12" x2="22" y2="12" />
+                </svg>
+                <span>Swipe horizontally to view all receipt columns ↔</span>
+              </div>
+
+              <div className="finance-table-scroller">
+                <table className="data-table finance-data-table">
+                  <thead>
+                    <tr>
+                      <th className="col-sticky-finance">Receipt #</th>
+                      <th>Date</th>
+                      <th>Customer Name</th>
+                      <th>Payment Mode</th>
+                      <th>Reference #</th>
+                      <th style={{ textAlign: 'right' }}>Amount Received</th>
+                      <th style={{ textAlign: 'center' }}>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredCustomerPayments.map((p) => (
+                      <tr key={p.id}>
+                        <td className="col-sticky-finance mono bold" style={{ color: '#0f172a' }}>
+                          {p.receiptNumber}
+                        </td>
+                        <td style={{ color: '#64748b' }}>{p.paymentDate}</td>
+                        <td style={{ fontWeight: 700, color: '#1e293b' }}>
+                          {p.customerName || 'Counter Customer'}
+                        </td>
+                        <td>
+                          <span className={`finance-table-mode-badge ${p.mode === 'cash' ? 'cash-mode' : p.mode === 'upi' ? 'upi-mode' : 'bank-mode'}`}>
+                            {p.mode.toUpperCase()}
+                          </span>
+                        </td>
+                        <td className="mono" style={{ color: '#64748b', fontSize: '0.8rem' }}>
+                          {p.referenceNo || '—'}
+                        </td>
+                        <td className="mono bold" style={{ textAlign: 'right', color: '#16a34a', fontSize: '0.9rem' }}>
+                          {fmtMoney(p.amountMinor)}
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
+                          {p.customerId && onOpenCustomerLedger && (
+                            <button
+                              type="button"
+                              onClick={() => onOpenCustomerLedger(p.customerId)}
+                              className="cat-btn-outline"
+                              style={{ padding: '0.28rem 0.65rem', fontSize: '0.74rem' }}
+                            >
+                              View Customer
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                    {filteredCustomerPayments.length === 0 && (
+                      <tr>
+                        <td colSpan={7} className="finance-table-empty-td">
+                          No customer receipts found matching the filter criteria.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
-          ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.84rem' }}>
-                <thead>
-                  <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569', fontWeight: 700 }}>
-                    <th style={{ padding: '0.85rem 1rem' }}>Voucher #</th>
-                    <th style={{ padding: '0.85rem 1rem' }}>Date</th>
-                    <th style={{ padding: '0.85rem 1rem' }}>Supplier</th>
-                    <th style={{ padding: '0.85rem 1rem' }}>Payment Method</th>
-                    <th style={{ padding: '0.85rem 1rem' }}>Reference #</th>
-                    <th style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>Amount Paid</th>
-                    <th style={{ padding: '0.85rem 1rem', textAlign: 'center' }}>Status</th>
-                    <th style={{ padding: '0.85rem 1rem', textAlign: 'center' }}>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredSupplierPayments.map((p) => (
-                    <tr
-                      key={p.id}
-                      style={{ borderBottom: '1px solid #f1f5f9', transition: 'background 0.15s' }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = '#f8faff')}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                    >
-                      <td style={{ padding: '0.85rem 1rem', fontFamily: 'monospace', fontWeight: 700, color: '#0f172a' }}>
-                        {p.paymentNumber}
-                      </td>
-                      <td style={{ padding: '0.85rem 1rem', color: '#64748b' }}>
-                        {p.date}
-                      </td>
-                      <td style={{ padding: '0.85rem 1rem', fontWeight: 700, color: '#1e293b' }}>
-                        {p.supplierName || 'Supplier'}
-                      </td>
-                      <td style={{ padding: '0.85rem 1rem' }}>
-                        <span style={{
-                          display: 'inline-block',
-                          padding: '0.2rem 0.55rem',
-                          borderRadius: '6px',
-                          fontSize: '0.75rem',
-                          fontWeight: 700,
-                          textTransform: 'uppercase',
-                          background: p.method === 'cash' ? '#ecfdf5' : '#eff6ff',
-                          color: p.method === 'cash' ? '#047857' : '#1d4ed8',
-                          border: `1px solid ${p.method === 'cash' ? '#a7f3d0' : '#bfdbfe'}`,
-                        }}>
-                          {p.method}
+          </>
+        ) : (
+          <>
+            {/* 4C. Supplier Payments - Mobile Touch Cards */}
+            <div className={`finance-mobile-cards-wrap ${viewMode === 'cards' ? 'active' : ''}`}>
+              {filteredSupplierPayments.map((p) => {
+                const methodClass = p.method === 'cash' ? 'cash-mode' : 'bank-mode';
+                return (
+                  <div key={p.id} className="finance-m-card outward-card">
+                    <div className="finance-m-header">
+                      <div className="finance-m-id-row">
+                        <span className="finance-m-chip mono bold">{p.paymentNumber}</span>
+                        <button
+                          type="button"
+                          className="finance-m-copy-btn"
+                          onClick={() => handleCopy(p.paymentNumber, p.id)}
+                          title="Copy Voucher #"
+                        >
+                          {copiedId === p.id ? 'Copied!' : '📋'}
+                        </button>
+                      </div>
+                      <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center' }}>
+                        <span className={`finance-m-mode-badge ${methodClass}`}>
+                          {p.method.toUpperCase()}
                         </span>
-                      </td>
-                      <td style={{ padding: '0.85rem 1rem', color: '#64748b' }}>
-                        {p.reference || '—'}
-                      </td>
-                      <td style={{ padding: '0.85rem 1rem', textAlign: 'right', fontWeight: 800, color: '#e11d48', fontFamily: 'monospace', fontSize: '0.9rem' }}>
-                        {fmtMoney(p.amountMinor)}
-                      </td>
-                      <td style={{ padding: '0.85rem 1rem', textAlign: 'center' }}>
-                        <span style={{
-                          display: 'inline-block',
-                          padding: '0.2rem 0.55rem',
-                          borderRadius: '6px',
-                          fontSize: '0.72rem',
-                          fontWeight: 700,
-                          background: '#f0fdf4',
-                          color: '#16a34a',
-                          border: '1px solid #bbf7d0',
-                        }}>
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><CheckCircle2Icon size={13} /> Settled</span>
+                        <span className="finance-m-status-badge settled">
+                          <CheckCircle2Icon size={11} /> Settled
                         </span>
-                      </td>
-                      <td style={{ padding: '0.85rem 1rem', textAlign: 'center' }}>
-                        {p.supplierId && (
-                          <button
-                            type="button"
-                            onClick={() => onOpenSupplierLedger && onOpenSupplierLedger(p.supplierId!)}
-                            className="btn btn-secondary"
-                            style={{ padding: '0.3rem 0.7rem', fontSize: '0.75rem' }}
-                          >
-                            View Ledger
-                          </button>
+                      </div>
+                    </div>
+
+                    <div className="finance-m-party-box">
+                      <div className="finance-m-party-name">
+                        {p.supplierName || 'Distributor / Vendor'}
+                      </div>
+                      <div className="finance-m-date-row">
+                        <CalendarIcon size={12} />
+                        <span>{p.date}</span>
+                        {p.reference && (
+                          <span className="finance-m-ref mono">Ref: {p.reference}</span>
                         )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </div>
+                    </div>
+
+                    <div className="finance-m-amount-row">
+                      <div className="finance-m-amount-col">
+                        <span className="finance-m-amount-label">Amount Disbursed</span>
+                        <span className="finance-m-amount-val red mono bold">
+                          {fmtMoney(p.amountMinor)}
+                        </span>
+                      </div>
+                      {p.supplierId && onOpenSupplierLedger && (
+                        <button
+                          type="button"
+                          className="cat-btn-outline finance-m-action-btn"
+                          onClick={() => onOpenSupplierLedger(p.supplierId!)}
+                        >
+                          <span>View Ledger</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {filteredSupplierPayments.length === 0 && (
+                <div className="finance-empty-state">
+                  <div className="finance-empty-icon outward">
+                    <TruckIcon size={28} />
+                  </div>
+                  <div className="finance-empty-title">No supplier payments found</div>
+                  <div className="finance-empty-desc">
+                    Supplier disbursements recorded against purchase orders will appear here.
+                  </div>
+                </div>
+              )}
             </div>
-          )
+
+            {/* 4D. Supplier Payments - Full Table View */}
+            <div className={`finance-table-container ${viewMode === 'cards' ? 'hide-on-mobile' : ''}`}>
+              <div className="finance-table-scroll-hint">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="18 8 22 12 18 16" />
+                  <polyline points="6 8 2 12 6 16" />
+                  <line x1="2" y1="12" x2="22" y2="12" />
+                </svg>
+                <span>Swipe horizontally to view all disbursement columns ↔</span>
+              </div>
+
+              <div className="finance-table-scroller">
+                <table className="data-table finance-data-table">
+                  <thead>
+                    <tr>
+                      <th className="col-sticky-finance">Voucher #</th>
+                      <th>Date</th>
+                      <th>Supplier / Vendor</th>
+                      <th>Payment Method</th>
+                      <th>Reference #</th>
+                      <th style={{ textAlign: 'right' }}>Amount Paid</th>
+                      <th style={{ textAlign: 'center' }}>Status</th>
+                      <th style={{ textAlign: 'center' }}>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredSupplierPayments.map((p) => (
+                      <tr key={p.id}>
+                        <td className="col-sticky-finance mono bold" style={{ color: '#0f172a' }}>
+                          {p.paymentNumber}
+                        </td>
+                        <td style={{ color: '#64748b' }}>{p.date}</td>
+                        <td style={{ fontWeight: 700, color: '#1e293b' }}>
+                          {p.supplierName || 'Distributor'}
+                        </td>
+                        <td>
+                          <span className={`finance-table-mode-badge ${p.method === 'cash' ? 'cash-mode' : 'bank-mode'}`}>
+                            {p.method.toUpperCase()}
+                          </span>
+                        </td>
+                        <td className="mono" style={{ color: '#64748b', fontSize: '0.8rem' }}>
+                          {p.reference || '—'}
+                        </td>
+                        <td className="mono bold" style={{ textAlign: 'right', color: '#e11d48', fontSize: '0.9rem' }}>
+                          {fmtMoney(p.amountMinor)}
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
+                          <span className="finance-m-status-badge settled">
+                            <CheckCircle2Icon size={12} /> Settled
+                          </span>
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
+                          {p.supplierId && onOpenSupplierLedger && (
+                            <button
+                              type="button"
+                              onClick={() => onOpenSupplierLedger(p.supplierId!)}
+                              className="cat-btn-outline"
+                              style={{ padding: '0.28rem 0.65rem', fontSize: '0.74rem' }}
+                            >
+                              View Ledger
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                    {filteredSupplierPayments.length === 0 && (
+                      <tr>
+                        <td colSpan={8} className="finance-table-empty-td">
+                          No supplier disbursements found matching the filter criteria.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
         )}
       </div>
     </div>

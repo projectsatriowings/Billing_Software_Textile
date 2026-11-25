@@ -771,7 +771,7 @@ export function ExpensesView({
         <div className="expense-datebar-tier">
           {/* Preset Buttons */}
           <div className="expense-preset-scroll">
-            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em', marginRight: '0.2rem', whiteSpace: 'nowrap' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em', marginRight: '0.2rem', whiteSpace: 'nowrap', flexShrink: 0 }}>
               Period:
             </span>
             {([
@@ -803,9 +803,10 @@ export function ExpensesView({
           </div>
 
           {/* Custom Date Range Trigger (replaces raw input calendar!) */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+          <div className="expense-custom-date-wrap">
             <button
               type="button"
+              className="expense-custom-date-btn"
               onClick={handleOpenDateModal}
               style={{
                 display: 'inline-flex',
@@ -814,7 +815,7 @@ export function ExpensesView({
                 background: datePreset === 'custom' || from || to ? primarySoft : '#ffffff',
                 border: datePreset === 'custom' || from || to ? (isStoreManager ? `1.5px solid ${primaryColor}` : '1.5px solid #6d4aff') : '1.5px solid #cbd5e1',
                 borderRadius: '8px',
-                padding: '0.4rem 0.85rem',
+                padding: '0.45rem 0.85rem',
                 fontSize: '0.82rem',
                 fontWeight: 600,
                 color: datePreset === 'custom' || from || to ? primaryColor : '#334155',
@@ -834,7 +835,7 @@ export function ExpensesView({
                       ? `Until ${formatDateDisplay(to)}`
                       : 'Pick Custom Date Range...'}
               </span>
-              <span style={{ fontSize: '0.65rem', marginLeft: '0.15rem', color: primaryColor }}>▼</span>
+              <span style={{ fontSize: '0.65rem', marginLeft: 'auto', color: primaryColor }}>▼</span>
             </button>
             {(from || to) && (
               <button
@@ -852,6 +853,7 @@ export function ExpensesView({
                   cursor: 'pointer',
                   fontSize: '0.75rem',
                   color: '#64748b',
+                  flexShrink: 0,
                 }}
                 title="Reset date filter"
               ><XIcon size={14} /></button>
@@ -878,8 +880,9 @@ export function ExpensesView({
                 }}
                 style={{
                   width: '100%',
+                  boxSizing: 'border-box',
                   padding: '0.5rem 0.65rem',
-                  fontSize: '0.85rem',
+                  fontSize: '0.84rem',
                   borderRadius: '8px',
                   border: '1.5px solid #cbd5e1',
                   background: '#f8fafc',
@@ -907,8 +910,9 @@ export function ExpensesView({
               onChange={(e) => { setCategoryFilter(e.target.value); setPage(1); }}
               style={{
                 width: '100%',
+                boxSizing: 'border-box',
                 padding: '0.5rem 0.65rem',
-                fontSize: '0.85rem',
+                fontSize: '0.84rem',
                 borderRadius: '8px',
                 border: '1.5px solid #cbd5e1',
                 background: '#ffffff',
@@ -932,8 +936,9 @@ export function ExpensesView({
               onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
               style={{
                 width: '100%',
+                boxSizing: 'border-box',
                 padding: '0.5rem 0.65rem',
-                fontSize: '0.85rem',
+                fontSize: '0.84rem',
                 borderRadius: '8px',
                 border: '1.5px solid #cbd5e1',
                 background: '#ffffff',
@@ -957,8 +962,9 @@ export function ExpensesView({
               onChange={(e) => { setItcFilter(e.target.value); setPage(1); }}
               style={{
                 width: '100%',
+                boxSizing: 'border-box',
                 padding: '0.5rem 0.65rem',
-                fontSize: '0.85rem',
+                fontSize: '0.84rem',
                 borderRadius: '8px',
                 border: '1.5px solid #cbd5e1',
                 background: '#ffffff',
@@ -974,7 +980,7 @@ export function ExpensesView({
             </select>
           </div>
 
-          <div>
+          <div className="expense-search-filter-col">
             <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               Search Records
             </label>
@@ -987,8 +993,9 @@ export function ExpensesView({
                 onKeyDown={(e) => e.key === 'Enter' && loadExpenses()}
                 style={{
                   width: '100%',
-                  padding: '0.5rem 0.65rem 0.5rem 2.2rem',
-                  fontSize: '0.85rem',
+                  boxSizing: 'border-box',
+                  padding: '0.5rem 2rem 0.5rem 2.2rem',
+                  fontSize: '0.84rem',
                   borderRadius: '8px',
                   border: '1.5px solid #cbd5e1',
                   background: '#ffffff',
@@ -1114,7 +1121,126 @@ export function ExpensesView({
             </div>
           </div>
         ) : (
-          <div style={{ overflowX: 'auto' }}>
+          <>
+          {/* Mobile Cards View (<= 768px) */}
+          <div className="expense-mobile-cards-list">
+            {expenses.map((exp) => {
+              const isVoided = exp.status === 'voided';
+              const catObj = STANDARD_EXPENSE_CATEGORIES.find((c) => c.id === exp.category);
+              const catLabel = catObj?.label || exp.category;
+              const gstTotal = exp.cgstMinor + exp.sgstMinor + exp.igstMinor;
+              const branchCode = branches.length > 0
+                ? (branches.find(b => b.id === (exp as any).branchId || b.code === (exp as any).branchId)?.code || 'MAIN')
+                : null;
+
+              return (
+                <div
+                  key={`m-${exp.id}`}
+                  className={`expense-mobile-card ${isVoided ? 'is-voided' : ''}`}
+                  onClick={() => setViewingExpense(exp)}
+                >
+                  <div className="expense-m-card-head">
+                    <div className="expense-m-title-wrap">
+                      <span className="expense-m-number">{exp.expenseNumber}</span>
+                      {isVoided && <span className="expense-m-voided-pill">Voided</span>}
+                      {branchCode && <span className="expense-m-branch-pill">{branchCode}</span>}
+                    </div>
+                    <span className="expense-m-date">{exp.expenseDate}</span>
+                  </div>
+
+                  <div className="expense-m-vendor-row">
+                    <div className="expense-m-vendor-info">
+                      <span className="expense-m-vendor-name">{exp.supplierName || 'General Expense'}</span>
+                      {(exp.supplierGstin || exp.supplierInvoiceNumber) && (
+                        <span className="expense-m-vendor-sub">
+                          {exp.supplierInvoiceNumber ? `Inv: ${exp.supplierInvoiceNumber}` : ''}
+                          {exp.supplierInvoiceNumber && exp.supplierGstin ? ' · ' : ''}
+                          {exp.supplierGstin ? exp.supplierGstin : ''}
+                        </span>
+                      )}
+                    </div>
+                    <span
+                      className="expense-m-cat-pill"
+                      style={{ background: primarySoft, color: primaryColor, borderColor: primaryBorder }}
+                    >
+                      {catLabel}
+                    </span>
+                  </div>
+
+                  <div className="expense-m-amounts-grid">
+                    <div>
+                      <span className="expense-m-amt-label">Taxable</span>
+                      <span className="expense-m-amt-val">{fmtMoney(exp.taxableMinor)}</span>
+                    </div>
+                    <div>
+                      <span className="expense-m-amt-label">GST</span>
+                      <span className="expense-m-amt-val amber">{fmtMoney(gstTotal)}</span>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <span className="expense-m-amt-label">Total</span>
+                      <span className="expense-m-amt-val total">{fmtMoney(exp.totalMinor)}</span>
+                    </div>
+                  </div>
+
+                  <div className="expense-m-footer" onClick={(e) => e.stopPropagation()}>
+                    <div className="expense-m-badges">
+                      <span
+                        className="expense-m-status-pill"
+                        style={{
+                          background: exp.paymentStatus === 'paid' ? '#dcfce7' : exp.paymentStatus === 'partial' ? '#fef3c7' : '#fee2e2',
+                          color: exp.paymentStatus === 'paid' ? '#166534' : exp.paymentStatus === 'partial' ? '#92400e' : '#991b1b',
+                        }}
+                      >
+                        {exp.paymentStatus} ({exp.paymentMethod})
+                      </span>
+                      <span
+                        className="expense-m-status-pill"
+                        style={{
+                          background: exp.itcEligibility === 'eligible' ? '#e0f2fe' : exp.itcEligibility === 'blocked_17_5' ? '#fee2e2' : '#f1f5f9',
+                          color: exp.itcEligibility === 'eligible' ? '#0369a1' : exp.itcEligibility === 'blocked_17_5' ? '#b91c1c' : '#475569',
+                        }}
+                      >
+                        {exp.itcEligibility === 'blocked_17_5' ? 'Blocked 17(5)' : `ITC: ${exp.itcEligibility}`}
+                      </span>
+                    </div>
+
+                    <div className="expense-m-actions">
+                      <button
+                        type="button"
+                        onClick={() => setViewingExpense(exp)}
+                        className="expense-m-action-btn"
+                        title="View Details"
+                      >
+                        <EyeIcon size={14} />
+                      </button>
+                      {canWrite && !isVoided && (
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEdit(exp)}
+                          className="expense-m-action-btn"
+                          title="Edit Expense"
+                        >
+                          <Edit3Icon size={14} />
+                        </button>
+                      )}
+                      {canVoid && !isVoided && (
+                        <button
+                          type="button"
+                          onClick={() => setVoidingExpense(exp)}
+                          className="expense-m-action-btn danger"
+                          title="Void Expense"
+                        >
+                          <XCircleIcon size={14} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="expense-desktop-table-wrap" style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
               <thead>
                 <tr style={{ background: '#f8fafc', borderBottom: '1.5px solid #e2e8f0', color: '#475569', fontWeight: '700', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
@@ -1325,22 +1451,16 @@ export function ExpensesView({
               </tbody>
             </table>
           </div>
+          </>
         )}
 
         {/* Pagination Strip */}
         {totalPages > 1 && (
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            padding: '0.85rem 1.25rem',
-            background: '#f8fafc',
-            borderTop: '1px solid #e2e8f0',
-          }}>
+          <div className="expense-pagination-strip">
             <span style={{ fontSize: '0.82rem', color: '#64748b' }}>
               Showing Page {page} of {totalPages} ({totalCount} total vouchers)
             </span>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <div className="expense-pagination-btns">
               <button
                 type="button"
                 disabled={page <= 1}

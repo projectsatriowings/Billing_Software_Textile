@@ -11,6 +11,7 @@ import './components/inventory/InventoryDashboard.css';
 import './components/cashier-login.css';
 import './components/manager-theme.css';
 import './components/superadmin-theme.css';
+import './components/common/mobile-topbar.css';
 
 interface ErrorBoundaryProps {
   children: ReactNode;

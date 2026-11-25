@@ -533,9 +533,10 @@ export function registerBranchUsers(r: Router) {
 
     await ctx.db.tx(async (q) => {
       await q.exec(
-        `INSERT INTO users (id, tenant_id, name, username, email, phone, password_hash, role, status, active, branch_id, counter_id, must_change_password, created_by, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, NULL, ?, 'cashier', 'INVITED', true, ?, NULL, false, ?, now(), now())`,
-        [cashierId, tenantId, name, username, email, passwordHash, branch.id, ctx.user!.id],
+        `INSERT INTO users (id, tenant_id, name, username, email, phone, password_hash, role, status, active, branch_id, counter_id, must_change_password, created_by, created_at, updated_at, assigned_location, allowed_locations)
+         VALUES (?, ?, ?, ?, ?, NULL, ?, 'cashier', 'INVITED', true, ?, NULL, false, ?, now(), now(), ?, ?::jsonb)`,
+        // Location follows the manager's branch (the column default would otherwise be 'MAIN').
+        [cashierId, tenantId, name, username, email, passwordHash, branch.id, ctx.user!.id, branch.code, JSON.stringify([branch.code])],
       );
 
       await audit(q, ctx, {

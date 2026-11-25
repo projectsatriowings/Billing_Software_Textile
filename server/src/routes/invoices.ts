@@ -285,6 +285,14 @@ export function registerInvoices(r: Router) {
     if (!invoiceBranchId) {
       throw bad('Branch is required for bill creation. Please link your shift or account to a branch.', 'BRANCH_REQUIRED');
     }
+    // Normalise the branch reference: shifts/users may store either the branch id or its code.
+    // Resolve to the canonical id and keep the code so stock lookups match the Products page.
+    const invoiceBranchRow = await ctx.db.one<{ id: string; code: string }>(
+      'SELECT id, code FROM branches WHERE tenant_id = ? AND (id = ? OR UPPER(code) = UPPER(?)) LIMIT 1',
+      [tenantId, invoiceBranchId, invoiceBranchId],
+    );
+    if (invoiceBranchRow?.id) invoiceBranchId = invoiceBranchRow.id;
+    const invoiceBranchCode: string = invoiceBranchRow?.code || String(invoiceBranchId);
     const linesInput = V.arr(b.lines, 'Bill items', { min: 1 });
     const paymentsInput = V.arr(b.payments ?? [], 'Payments');
     let partyId = V.optStr(b.partyId ?? b.party_id ?? b.customerId ?? b.customer_id, 'Customer party', 50);
@@ -513,11 +521,17 @@ export function registerInvoices(r: Router) {
         );
         const isTracked = itemRow && itemRow.trackStock !== false && itemRow.track_stock !== false;
         if (isTracked) {
+          // Must match the branch-stock formula used by GET /api/items (Products page / POS catalog):
+          // moves tagged with this branch, plus legacy moves with no branch_id whose location is this branch.
           const stockRow = await q.one<any>(
             `SELECT COALESCE(SUM(qty_milli), 0)::bigint AS current_stock_milli
              FROM stock_moves
-             WHERE tenant_id = ? AND item_id = ? AND (branch_id IS NOT DISTINCT FROM ?)`,
-            [tenantId, itemId, invoiceBranchId]
+             WHERE tenant_id = ? AND item_id = ? AND (
+               branch_id = ?
+               OR UPPER(branch_id) = UPPER(?)
+               OR (branch_id IS NULL AND (UPPER(location) = UPPER(?) OR UPPER(location) = UPPER(?)))
+             )`,
+            [tenantId, itemId, invoiceBranchId, invoiceBranchCode, invoiceBranchCode, invoiceBranchId]
           );
           const currentStockMilli = BigInt(stockRow?.currentStockMilli ?? stockRow?.current_stock_milli ?? 0);
           const reqMilli = BigInt(requestedMilli);

@@ -167,6 +167,13 @@
   flex-wrap: nowrap;
 }
 
+.supplier-sub-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-shrink: 0;
+}
+
 .btn-export-csv {
   display: flex;
   align-items: center;
@@ -388,6 +395,55 @@
   font-weight: 600;
   color: #1e293b;
   cursor: pointer;
+}
+
+.supplier-sort-and-view-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.supplier-view-toggle {
+  display: none;
+  align-items: center;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  padding: 2px;
+  border-radius: 8px;
+  gap: 2px;
+}
+
+.supplier-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.32rem 0.65rem;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.supplier-toggle-btn.active {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.supplier-scroll-hint {
+  display: none;
+}
+
+.supplier-mobile-cards-wrap {
+  display: none;
+}
+
+.col-sticky-supplier {
+  background: #ffffff;
 }
 
 /* 3. MODERN TABLE */
@@ -1309,4 +1365,461 @@
 
 .drawer-btn.edit-outline:hover {
   background: #e2e8f0;
+}
+
+/* ==========================================================================
+   MOBILE VIEW & RESPONSIVE DESIGN (<= 768px)
+   ========================================================================== */
+@media (max-width: 768px) {
+  .supplier-dir-root {
+    gap: 0.85rem;
+  }
+
+  /* Bento KPI grid: Stacked single column on mobile */
+  .supplier-kpi-grid {
+    grid-template-columns: 1fr;
+    gap: 0.65rem;
+  }
+
+  .supplier-kpi-card {
+    padding: 0.85rem 1rem;
+    border-radius: 12px;
+  }
+
+  .supplier-kpi-card .kpi-val {
+    font-size: 1.4rem;
+  }
+
+  /* Main Card & Header */
+  .supplier-main-card {
+    border-radius: 14px;
+  }
+
+  .supplier-card-header {
+    padding: 0.85rem 1rem !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.75rem !important;
+  }
+
+  .header-info-group {
+    gap: 0.65rem;
+  }
+
+  .header-actions-group {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 0.5rem !important;
+  }
+
+  .supplier-primary-add-btn {
+    width: 100% !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 0.88rem !important;
+    height: 42px !important;
+    min-height: 42px !important;
+    padding: 0.6rem 1rem !important;
+    order: 1 !important;
+    box-sizing: border-box !important;
+  }
+
+  .supplier-sub-actions-row {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    width: 100% !important;
+    gap: 0.5rem !important;
+    order: 2 !important;
+  }
+
+  .btn-add-bill {
+    width: 100% !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    white-space: nowrap !important;
+    padding: 0.48rem 0.6rem !important;
+    font-size: 0.78rem !important;
+    height: 38px !important;
+    min-height: 38px !important;
+    box-sizing: border-box !important;
+  }
+
+  .btn-export-csv {
+    width: 100% !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    white-space: nowrap !important;
+    padding: 0.48rem 0.6rem !important;
+    font-size: 0.78rem !important;
+    height: 38px !important;
+    min-height: 38px !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Filter Strip & Pills Row: Smooth Horizontal Scroll */
+  .supplier-filter-strip {
+    padding: 0.75rem 0.85rem;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .filter-pills-row {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 2px 0 4px;
+    margin: 0 -0.15rem;
+    width: 100%;
+  }
+
+  .filter-pills-row::-webkit-scrollbar {
+    display: none;
+  }
+
+  .filter-pill {
+    flex-shrink: 0;
+    white-space: nowrap;
+    padding: 0.38rem 0.75rem;
+    font-size: 0.78rem;
+  }
+
+  /* Search & Sort Group */
+  .search-and-sort-group {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.65rem;
+    width: 100%;
+  }
+
+  .supplier-search-input-wrap {
+    width: 100%;
+  }
+
+  .supplier-search-input-wrap input {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    font-size: 0.82rem;
+  }
+
+  .supplier-sort-and-view-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    gap: 0.5rem;
+  }
+
+  .sort-dropdown-wrap {
+    flex: 1;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .sort-dropdown-wrap select {
+    flex: 1;
+    width: 100%;
+    max-width: none;
+    font-size: 0.8rem;
+  }
+
+  .supplier-view-toggle,
+  .supplier-scroll-hint {
+    display: none !important;
+  }
+
+  /* Mobile Cards Container */
+  .supplier-mobile-cards-wrap.active {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    padding: 0.85rem;
+    background: #f8fafc;
+  }
+
+  .supplier-m-card {
+    background: #ffffff;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 0.85rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  }
+
+  .supplier-m-card:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  }
+
+  .supplier-m-card.inactive-card {
+    opacity: 0.65;
+    background: #fafafa;
+  }
+
+  .supplier-m-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.65rem;
+  }
+
+  .supplier-m-identity {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .supplier-m-name-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .supplier-m-name-row {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+  }
+
+  .supplier-m-name-row .supplier-full-name {
+    font-weight: 800;
+    color: #0f172a;
+    font-size: 0.94rem;
+  }
+
+  .supplier-address-snippet {
+    font-size: 0.74rem;
+    color: #64748b;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .supplier-m-quick-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-shrink: 0;
+  }
+
+  .btn-action-edit.mini {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.32rem 0.6rem;
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: #334155;
+    cursor: pointer;
+  }
+
+  .supplier-m-contact-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .supplier-m-contact-item {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .supplier-m-phone-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-family: monospace;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #2563eb;
+    background: #eff6ff;
+    border: 1px solid #dbeafe;
+    padding: 0.15rem 0.45rem;
+    border-radius: 6px;
+    text-decoration: none;
+  }
+
+  .supplier-m-phone-link:hover {
+    background: #dbeafe;
+    color: #1d4ed8;
+  }
+
+  .phone-copy-mini-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 0.74rem;
+    padding: 0.1rem;
+    line-height: 1;
+    color: #64748b;
+  }
+
+  .supplier-m-gstin-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: #475569;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    padding: 0.15rem 0.45rem;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+
+  .supplier-m-gstin-badge:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+  }
+
+  /* Payable Box */
+  .supplier-m-payable-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.65rem;
+    background: #f8fafc;
+    border: 1px solid #f1f5f9;
+    border-radius: 8px;
+    padding: 0.6rem 0.75rem;
+  }
+
+  .supplier-m-payable-left {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .supplier-m-payable-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .supplier-m-payable-val.due {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #dc2626;
+  }
+
+  .supplier-m-settled-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #059669;
+    background: #ecfdf5;
+    padding: 0.15rem 0.5rem;
+    border-radius: 6px;
+    border: 1px solid #a7f3d0;
+  }
+
+  .supplier-m-payable-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.25rem;
+  }
+
+  .supplier-m-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding-top: 0.45rem;
+    border-top: 1px solid #f1f5f9;
+  }
+
+  .supplier-m-footer-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+
+  .btn-action-pay.mini {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.32rem 0.65rem;
+    border-radius: 6px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #ffffff;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(16, 185, 129, 0.25);
+  }
+
+  .btn-action-inward.mini {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.32rem 0.65rem;
+    border-radius: 6px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    background: #f8fafc;
+    border: 1.5px solid #cbd5e1;
+    color: #334155;
+    cursor: pointer;
+  }
+
+  .supplier-m-view-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: #2563eb;
+    cursor: pointer;
+  }
+
+  /* Mobile uses Cards view exclusively; hide desktop table on mobile */
+  .supplier-table-container,
+  .supplier-table-container.mobile-hidden,
+  .supplier-table-container.mobile-active {
+    display: none !important;
+  }
+
+  /* Supplier Profile Drawer on mobile */
+  .supplier-drawer-panel {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 16px 16px 0 0;
+  }
+
+  @media (max-width: 360px) {
+    .supplier-sub-actions-row {
+      grid-template-columns: 1fr !important;
+    }
+  }
 }

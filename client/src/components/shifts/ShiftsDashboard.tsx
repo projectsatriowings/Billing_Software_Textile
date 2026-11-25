@@ -53,7 +53,15 @@ export const ShiftsDashboard: React.FC<ShiftsDashboardProps> = ({
   shop,
   onNavigateToPos,
   selectedBranch,
+  branches,
 }) => {
+  // The user's own branch (by id first, then by code), so the Open Shift window shows the real
+  // branch and its counters instead of falling back to MAIN / COUNTER-1.
+  const userBranch = (branches || []).find(
+    (b: any) =>
+      (user.branchId && b.id === user.branchId) ||
+      (user.assignedLocation && String(b.code || '').toUpperCase() === user.assignedLocation.toUpperCase()),
+  );
   const [activeShift, setActiveShift] = useState<Shift | null>(null);
   const [shiftHistory, setShiftHistory] = useState<Shift[]>([]);
   const [loadingActive, setLoadingActive] = useState<boolean>(true);
@@ -958,6 +966,10 @@ export const ShiftsDashboard: React.FC<ShiftsDashboardProps> = ({
           onSuccess={handleOpenSuccess}
           userName={user.name}
           userRole={user.role}
+          defaultLocation={userBranch?.code || user.assignedLocation}
+          defaultCounter={user.assignedCounter}
+          branches={branches}
+          counterDetails={userBranch?.counterDetails}
         />
       )}
 

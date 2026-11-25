@@ -1,0 +1,560 @@
+/* ==========================================================================
+   ITC REGISTER & RECONCILIATION - BENTO 3D DESIGN SYSTEM
+   ========================================================================== */
+
+.itc-register-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: 100%;
+}
+
+/* --------------------------------------------------------------------------
+   Top Header Card
+   -------------------------------------------------------------------------- */
+.itc-header-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 14px 18px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 2px 6px rgba(15, 23, 42, 0.02);
+  box-sizing: border-box;
+  flex-wrap: wrap;
+}
+
+.itc-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.itc-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 10px;
+  border: 1.5px solid #D9C8D0;
+  background: #ffffff;
+  padding: 6px 13px;
+  font-size: 0.785rem;
+  font-weight: 700;
+  color: #653B4B;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.itc-nav-btn:hover {
+  background: #FAF6F8;
+  border-color: #653B4B;
+  transform: translateY(-1px);
+}
+
+.itc-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.itc-period-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 4px 10px;
+  box-sizing: border-box;
+}
+
+.itc-period-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.itc-period-input {
+  border: none;
+  background: transparent;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #1e1b4b;
+  outline: none;
+  padding: 2px 4px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.itc-btn-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.itc-import-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 10px;
+  padding: 8px 16px;
+  font-size: 0.825rem;
+  font-weight: 700;
+  color: #ffffff;
+  background: linear-gradient(135deg, #7A475B 0%, #653B4B 100%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 12px rgba(101, 59, 75, 0.25);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+
+.itc-import-btn:hover {
+  background: linear-gradient(135deg, #653B4B 0%, #522E3C 100%);
+  box-shadow: 0 6px 16px rgba(101, 59, 75, 0.35);
+  transform: translateY(-1px);
+}
+
+.itc-export-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-size: 0.825rem;
+  font-weight: 700;
+  color: #334155;
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.itc-export-btn:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #94a3b8;
+  color: #0f172a;
+  transform: translateY(-1px);
+}
+
+.itc-export-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* --------------------------------------------------------------------------
+   Bento 3D Summary Cards Grid
+   -------------------------------------------------------------------------- */
+.itc-bento-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1rem;
+}
+
+@media (max-width: 1280px) {
+  .itc-bento-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.itc-bento-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 1.15rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.03);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.itc-bento-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  border-radius: 16px 16px 0 0;
+}
+
+.itc-bento-card:hover {
+  transform: translateY(-3px) scale(1.008);
+  box-shadow: 0 12px 28px -4px rgba(15, 23, 42, 0.09), 0 4px 10px -2px rgba(15, 23, 42, 0.04);
+}
+
+.itc-bento-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.itc-bento-title {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #475569;
+}
+
+.itc-bento-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.itc-bento-val {
+  font-size: 1.45rem;
+  font-weight: 800;
+  font-family: 'JetBrains Mono', monospace;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.itc-bento-sub {
+  font-size: 0.72rem;
+  color: #64748b;
+  margin-top: 0.35rem;
+  line-height: 1.35;
+}
+
+/* 3D Color Variants */
+.itc-bento-card.total-books::before {
+  background: linear-gradient(90deg, #6366f1, #4f46e5);
+}
+.itc-bento-card.total-books .itc-bento-badge {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.itc-bento-card.eligible-itc {
+  background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 100%);
+  border-color: #a7f3d0;
+}
+.itc-bento-card.eligible-itc::before {
+  background: linear-gradient(90deg, #10b981, #059669);
+}
+.itc-bento-card.eligible-itc .itc-bento-title {
+  color: #065f46;
+}
+.itc-bento-card.eligible-itc .itc-bento-badge {
+  background: #d1fae5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+.itc-bento-card.eligible-itc .itc-bento-val {
+  color: #059669;
+}
+.itc-bento-card.eligible-itc .itc-bento-sub {
+  color: #047857;
+  font-weight: 600;
+}
+
+.itc-bento-card.ineligible-itc {
+  background: linear-gradient(180deg, #fff1f2 0%, #ffffff 100%);
+  border-color: #fecdd3;
+}
+.itc-bento-card.ineligible-itc::before {
+  background: linear-gradient(90deg, #f43f5e, #e11d48);
+}
+.itc-bento-card.ineligible-itc .itc-bento-title {
+  color: #9f1239;
+}
+.itc-bento-card.ineligible-itc .itc-bento-badge {
+  background: #ffe4e6;
+  color: #be123c;
+  border: 1px solid #fecdd3;
+}
+.itc-bento-card.ineligible-itc .itc-bento-val {
+  color: #e11d48;
+}
+.itc-bento-card.ineligible-itc .itc-bento-sub {
+  color: #be123c;
+}
+
+.itc-bento-card.pending-review {
+  background: linear-gradient(180deg, #fffbeb 0%, #ffffff 100%);
+  border-color: #fde68a;
+}
+.itc-bento-card.pending-review::before {
+  background: linear-gradient(90deg, #f59e0b, #d97706);
+}
+.itc-bento-card.pending-review .itc-bento-title {
+  color: #92400e;
+}
+.itc-bento-card.pending-review .itc-bento-badge {
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+.itc-bento-card.pending-review .itc-bento-val {
+  color: #d97706;
+}
+.itc-bento-card.pending-review .itc-bento-sub {
+  color: #92400e;
+}
+
+.itc-bento-card.alignment-2b {
+  background: linear-gradient(180deg, #FAF6F8 0%, #ffffff 100%);
+  border-color: #D9C8D0;
+}
+.itc-bento-card.alignment-2b::before {
+  background: linear-gradient(90deg, #7A475B, #653B4B);
+}
+.itc-bento-card.alignment-2b .itc-bento-title {
+  color: #653B4B;
+}
+.itc-bento-card.alignment-2b .itc-bento-badge {
+  background: #F5ECF0;
+  color: #653B4B;
+  border: 1px solid #D9C8D0;
+}
+.itc-bento-card.alignment-2b .itc-bento-sub {
+  color: #653B4B;
+}
+
+/* --------------------------------------------------------------------------
+   Filter Bar
+   -------------------------------------------------------------------------- */
+.itc-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 10px 14px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+  flex-wrap: wrap;
+}
+
+.itc-search-wrap {
+  flex: 1;
+  min-width: 200px;
+}
+
+.itc-search-input {
+  width: 100%;
+  border-radius: 8px;
+  border: 1.5px solid #D9C8D0;
+  background: #f8fafc;
+  padding: 7px 12px;
+  font-size: 0.825rem;
+  color: #0f172a;
+  outline: none;
+  transition: all 0.15s ease;
+  box-sizing: border-box;
+}
+
+.itc-search-input:focus {
+  border-color: #653B4B;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(101, 59, 75, 0.1);
+}
+
+.itc-filter-selects {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.itc-select {
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  padding: 7px 10px;
+  font-size: 0.785rem;
+  font-weight: 600;
+  color: #334155;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.itc-select:focus {
+  border-color: #653B4B;
+  box-shadow: 0 0 0 2px rgba(101, 59, 75, 0.1);
+}
+
+/* --------------------------------------------------------------------------
+   Table & Sticky Column Styling
+   -------------------------------------------------------------------------- */
+.itc-table-scroll-hint {
+  display: none;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #4f46e5;
+  background: #eef2ff;
+  padding: 6px 12px;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  text-align: center;
+  border: 1px dashed #c7d2fe;
+}
+
+.itc-table-container {
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+}
+
+.itc-table-scroller {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Sticky column on table */
+.itc-col-sticky {
+  position: relative;
+}
+
+/* --------------------------------------------------------------------------
+   Mobile View Adaptations (< 768px)
+   -------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+  .itc-register-wrapper {
+    gap: 0.75rem;
+  }
+
+  .itc-header-card {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 12px 14px;
+    gap: 10px;
+  }
+
+  .itc-header-left {
+    width: 100%;
+  }
+
+  .itc-nav-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 7px 12px;
+  }
+
+  .itc-header-actions {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .itc-period-group {
+    width: 100%;
+    justify-content: space-between;
+    padding: 6px 10px;
+  }
+
+  .itc-btn-row {
+    width: 100%;
+    display: flex;
+    gap: 8px;
+  }
+
+  .itc-import-btn,
+  .itc-export-btn {
+    flex: 1;
+    justify-content: center;
+    padding: 7px 10px;
+    font-size: 0.785rem;
+  }
+
+  /* 2x2 Bento 3D Grid on Mobile */
+  .itc-bento-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.55rem !important;
+  }
+
+  .itc-bento-card {
+    padding: 0.75rem 0.85rem !important;
+    border-radius: 12px !important;
+  }
+
+  .itc-bento-card.alignment-2b {
+    grid-column: span 2;
+  }
+
+  .itc-bento-title {
+    font-size: 0.65rem !important;
+  }
+
+  .itc-bento-badge {
+    font-size: 0.62rem !important;
+    padding: 2px 5px !important;
+  }
+
+  .itc-bento-val {
+    font-size: 1.15rem !important;
+    word-break: break-all;
+  }
+
+  .itc-bento-sub {
+    font-size: 0.65rem !important;
+    margin-top: 0.2rem !important;
+  }
+
+  /* Filter Bar Mobile */
+  .itc-filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 10px;
+    gap: 8px;
+  }
+
+  .itc-search-wrap {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .itc-filter-selects {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 6px;
+    width: 100%;
+  }
+
+  .itc-select {
+    width: 100%;
+    font-size: 0.76rem;
+  }
+
+  /* Table Touch Indicator & Sticky */
+  .itc-table-scroll-hint {
+    display: block;
+  }
+
+  .itc-col-sticky {
+    position: sticky !important;
+    left: 0 !important;
+    z-index: 5 !important;
+    background: #ffffff !important;
+    box-shadow: 2px 0 6px -1px rgba(0, 0, 0, 0.08) !important;
+  }
+
+  thead th.itc-col-sticky {
+    z-index: 6 !important;
+    background: #f8fafc !important;
+  }
+}

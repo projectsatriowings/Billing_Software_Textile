@@ -1603,7 +1603,7 @@ export const ProductMovementAnalysisView: React.FC<ProductMovementAnalysisViewPr
                 </th>
                 <th>LAST SOLD</th>
                 <th>MOVEMENT STATUS</th>
-                <th className="col-sticky-action" style={{ textAlign: 'right' }}>ACTION</th>
+                <th style={{ textAlign: 'right' }}>ACTION</th>
               </tr>
             </thead>
             <tbody>
@@ -1695,7 +1695,7 @@ export const ProductMovementAnalysisView: React.FC<ProductMovementAnalysisViewPr
                       </td>
 
                       {/* Action */}
-                      <td className="col-sticky-action" style={{ textAlign: 'right' }}>
+                      <td style={{ textAlign: 'right' }}>
                         {onNavigateToPurchases &&
                           (p.movementStatus === 'fast_moving' || isLowStock) ? (
                           <button

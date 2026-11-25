@@ -72,7 +72,7 @@ export function GstOverviewView({ tenantGstin = '', onNavigateTab }: GstOverview
       {/* Top Filter and Actions Bar */}
       <div className="gst-header-card">
         <div className="gst-header-left">
-          <h2 className="gst-header-title flex items-center gap-2">
+          <h2 className="gst-header-title flex flex-wrap items-center gap-2">
             <span className="flex items-center" style={{ color: '#653B4B' }}><GstBuildingIcon size={22} /></span>
             <span>GST Compliance &amp; Return Summary</span>
             {(() => {
@@ -80,12 +80,12 @@ export function GstOverviewView({ tenantGstin = '', onNavigateTab }: GstOverview
               const isAll = !br || br.toLowerCase() === 'all';
               return (
                 <span
+                  className="gst-header-branch-badge"
                   style={{
                     fontSize: '0.72rem',
                     fontWeight: 700,
                     padding: '0.2rem 0.55rem',
                     borderRadius: '20px',
-                    marginLeft: '0.5rem',
                     background: isAll ? '#e0f2fe' : '#fef3c7',
                     color: isAll ? '#0369a1' : '#b45309',
                     border: `1px solid ${isAll ? '#bae6fd' : '#fde68a'}`,
@@ -129,26 +129,28 @@ export function GstOverviewView({ tenantGstin = '', onNavigateTab }: GstOverview
             </button>
           </div>
 
-          <button
-            type="button"
-            onClick={setThisMonth}
-            className="gst-pill-btn flex items-center gap-1.5"
-            title="Jump to current return month"
-          >
-            <CalendarIcon size={14} />
-            <span>Current</span>
-          </button>
+          <div className="gst-header-btn-row">
+            <button
+              type="button"
+              onClick={setThisMonth}
+              className="gst-pill-btn flex items-center gap-1.5"
+              title="Jump to current return month"
+            >
+              <CalendarIcon size={14} />
+              <span>Current</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={loadOverview}
-            disabled={loading}
-            className="gst-pill-btn flex items-center gap-1.5"
-            title="Refresh live figures"
-          >
-            {loading ? <SpinnerIcon size={14} /> : <RefreshIcon size={14} />}
-            <span>Refresh</span>
-          </button>
+            <button
+              type="button"
+              onClick={loadOverview}
+              disabled={loading}
+              className="gst-pill-btn flex items-center gap-1.5"
+              title="Refresh live figures"
+            >
+              {loading ? <SpinnerIcon size={14} /> : <RefreshIcon size={14} />}
+              <span>Refresh</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -376,8 +378,8 @@ export function GstOverviewView({ tenantGstin = '', onNavigateTab }: GstOverview
                     {metrics.gstr3bStatus === 'draft'
                       ? 'Draft Computation'
                       : metrics.gstr3bStatus === 'ready_to_file'
-                      ? 'Ready to File'
-                      : 'Pending Review'}
+                        ? 'Ready to File'
+                        : 'Pending Review'}
                   </span>
                 </span>
               </div>

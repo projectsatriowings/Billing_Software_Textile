@@ -90,8 +90,7 @@ function formatItem(r: any) {
 /**
  * Builds SQL condition to check if an item is associated with a specific branch:
  * 1) It was created in this branch (i.branch_id = branchId), OR
- * 2) It has stock moves recorded in this branch (transferred, counted, sold, adjusted), OR
- * 3) It was transferred to this branch via completed / received stock transfer
+ * 2) It has stock moves recorded in this branch (transferred, counted, sold, adjusted)
  */
 function buildBranchAssociationClause(branchId: string, branchCode: string) {
   return {
@@ -107,16 +106,10 @@ function buildBranchAssociationClause(branchId: string, branchCode: string) {
             OR (sm_assoc.branch_id IS NULL AND (UPPER(sm_assoc.location) = UPPER(?) OR UPPER(sm_assoc.location) = UPPER(?)))
           )
       )
-      OR EXISTS (
-        SELECT 1 FROM stock_transfers st_assoc
-        JOIN stock_transfer_lines stl_assoc ON stl_assoc.transfer_id = st_assoc.id
-        WHERE st_assoc.tenant_id = i.tenant_id
-          AND stl_assoc.item_id = i.id
-          AND st_assoc.status IN ('completed', 'received', 'partially_received')
-          AND (st_assoc.to_branch = ? OR st_assoc.to_branch = ?)
-      )
     )`,
-    params: [branchId, branchId, branchCode, branchId, branchCode, branchId, branchId, branchCode],
+    // Note: a transfer line alone no longer associates the SOURCE item with the destination branch.
+    // Received stock is booked under the destination's own product record, which (1) already covers.
+    params: [branchId, branchId, branchCode, branchId, branchCode, branchId],
   };
 }
 

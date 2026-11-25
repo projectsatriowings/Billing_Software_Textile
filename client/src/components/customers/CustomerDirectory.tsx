@@ -79,6 +79,7 @@ export const CustomerDirectory: React.FC<CustomerDirectoryProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [filterMode, setFilterMode] = useState<'all' | 'has_points' | 'zero_points' | 'inactive'>('all');
   const [sortBy, setSortBy] = useState<'points_desc' | 'points_asc' | 'name_asc'>('points_desc');
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
   const [selectedCustomer, setSelectedCustomer] = useState<Party | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -307,45 +308,6 @@ export const CustomerDirectory: React.FC<CustomerDirectoryProps> = ({
           </div>
 
           <div className="header-actions-group">
-            {onUpdateLoyaltySettings && (
-              <button
-                type="button"
-                className="btn-loyalty-rules"
-                onClick={() => setIsLoyaltyModalOpen(true)}
-                title="Configure custom loyalty points rules for your shop"
-              >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                  <circle cx="12" cy="12" r="3"></circle>
-                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-                </svg>
-                <span>Loyalty Scheme</span>
-                <span
-                  className="loyalty-rule-badge"
-                  style={{
-                    background: activeLoyaltyEnabled ? undefined : '#f1f5f9',
-                    color: activeLoyaltyEnabled ? undefined : '#64748b',
-                    borderColor: activeLoyaltyEnabled ? undefined : '#cbd5e1',
-                  }}
-                >
-                  {activeLoyaltyEnabled ? `₹100 = ${activePointsPer100} pts` : 'Disabled'}
-                </span>
-              </button>
-            )}
-
-            <button
-              type="button"
-              className="btn-export-csv"
-              onClick={handleExportCSV}
-              title="Download customer list as CSV"
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="7 10 12 15 17 10"></polyline>
-                <line x1="12" y1="15" x2="12" y2="3"></line>
-              </svg>
-              <span>Export CSV</span>
-            </button>
-
             <button
               type="button"
               className="customer-primary-add-btn"
@@ -357,6 +319,47 @@ export const CustomerDirectory: React.FC<CustomerDirectoryProps> = ({
               </svg>
               <span>Add Customer</span>
             </button>
+
+            <div className="customer-sub-actions-row">
+              {onUpdateLoyaltySettings && (
+                <button
+                  type="button"
+                  className="btn-loyalty-rules"
+                  onClick={() => setIsLoyaltyModalOpen(true)}
+                  title="Configure custom loyalty points rules for your shop"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                  </svg>
+                  <span className="loyalty-rule-text">Loyalty Scheme</span>
+                  <span
+                    className="loyalty-rule-badge"
+                    style={{
+                      background: activeLoyaltyEnabled ? undefined : '#f1f5f9',
+                      color: activeLoyaltyEnabled ? undefined : '#64748b',
+                      borderColor: activeLoyaltyEnabled ? undefined : '#cbd5e1',
+                    }}
+                  >
+                    {activeLoyaltyEnabled ? `₹100 = ${activePointsPer100} pts` : 'Disabled'}
+                  </span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                className="btn-export-csv"
+                onClick={handleExportCSV}
+                title="Download customer list as CSV"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                <span>Export CSV</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -415,29 +418,226 @@ export const CustomerDirectory: React.FC<CustomerDirectoryProps> = ({
               )}
             </div>
 
-            <div className="sort-dropdown-wrap">
-              <label htmlFor="customer-sort">Sort:</label>
-              <select
-                id="customer-sort"
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as any)}
-              >
-                <option value="points_desc">Highest Points</option>
-                <option value="points_asc">Lowest Points</option>
-                <option value="name_asc">Name (A–Z)</option>
-              </select>
+            <div className="customer-sort-and-view-row">
+              <div className="sort-dropdown-wrap">
+                <label htmlFor="customer-sort">Sort:</label>
+                <select
+                  id="customer-sort"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as any)}
+                >
+                  <option value="points_desc">Highest Points</option>
+                  <option value="points_asc">Lowest Points</option>
+                  <option value="name_asc">Name (A–Z)</option>
+                </select>
+              </div>
+
+              {/* Mobile View Toggle Switcher (Cards vs Table) */}
+              <div className="customer-view-toggle">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('cards')}
+                  className={`customer-toggle-btn ${viewMode === 'cards' ? 'active' : ''}`}
+                  title="Card View (Mobile Optimized)"
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
+                  </svg>
+                  <span>Cards</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('table')}
+                  className={`customer-toggle-btn ${viewMode === 'table' ? 'active' : ''}`}
+                  title="Table View (Full Columns)"
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 3h18v18H3zM3 9h18M3 15h18M9 3v18M15 3v18"></path>
+                  </svg>
+                  <span>Table</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* 3. CLEAN & SIMPLE GRID: NAME, NUMBER, POINTS & CLEAN ACTIONS */}
-        <div className="customer-table-container">
+        {/* 3A. MOBILE CARDS VIEW (Responsive view for touch/mobile screens) */}
+        <div className={`customer-mobile-cards-wrap ${viewMode === 'cards' ? 'active' : ''}`}>
+          {filteredCustomers.map((c) => {
+            const data = getCustomerPointsData(c);
+            const avatarStyle = getAvatarColor(c.name);
+            const pointsValueStr = formatPointsValue(data.points);
+
+            return (
+              <div
+                key={c.id}
+                className={`customer-m-card ${c.active === false ? 'inactive-card' : ''}`}
+                onClick={() => setSelectedCustomer(c)}
+                title="Tap to view customer profile & bills"
+              >
+                {/* Card Header: Avatar, Name, Phone & Quick Actions */}
+                <div className="customer-m-header">
+                  <div className="customer-m-identity">
+                    <div
+                      className="customer-avatar"
+                      style={{
+                        background: avatarStyle.bg,
+                        color: avatarStyle.text,
+                        borderColor: avatarStyle.border,
+                      }}
+                    >
+                      {c.name.slice(0, 2).toUpperCase()}
+                    </div>
+                    <div className="customer-m-name-group">
+                      <div className="customer-m-name-row">
+                        <span className="customer-full-name">{c.name}</span>
+                        {c.active === false && (
+                          <span className="badge-inactive-tag">Inactive</span>
+                        )}
+                      </div>
+                      {c.phone ? (
+                        <div className="customer-m-phone-row" onClick={(e) => e.stopPropagation()}>
+                          <a
+                            href={`tel:${c.phone}`}
+                            className="customer-m-phone-link"
+                            title="Tap to call"
+                          >
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                            </svg>
+                            <span>{c.phone}</span>
+                          </a>
+                          <button
+                            type="button"
+                            className="phone-copy-mini-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCopy(c.phone!, c.id);
+                            }}
+                            title="Copy mobile number"
+                          >
+                            {copiedId === c.id ? 'Copied!' : '📋'}
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-muted" style={{ fontSize: '0.74rem' }}>No mobile</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="customer-m-quick-actions" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      type="button"
+                      className="btn-action-edit mini"
+                      onClick={() => onEditCustomer(c)}
+                      title="Edit customer details"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                        <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+                      </svg>
+                      <span>Edit</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Card Body: Points badge & Spend metrics */}
+                <div className="customer-m-stats-row">
+                  <div className="customer-m-stat-box points">
+                    <span className="stat-label">Loyalty Points</span>
+                    <div className="stat-value-wrap">
+                      <span className="points-coin-icon">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="#f59e0b" stroke="#d97706" strokeWidth="2">
+                          <circle cx="12" cy="12" r="10"></circle>
+                          <path d="M12 6v12M15 9.5a2.5 2.5 0 0 0-5 0c0 4 5 2 5 6a2.5 2.5 0 0 1-5 0"></path>
+                        </svg>
+                      </span>
+                      <span className="stat-val-bold mono">{data.points.toLocaleString()}</span>
+                      <span className="stat-unit">pts</span>
+                    </div>
+                    <div className="customer-m-val-sub">
+                      ✓ Value: {pointsValueStr}
+                    </div>
+                  </div>
+
+                  <div className="customer-m-stat-box spend">
+                    <span className="stat-label">Total Spend</span>
+                    <div className="stat-val-bold mono" style={{ color: '#0f172a' }}>
+                      {formatRupees(data.totalSpendMinor)}
+                    </div>
+                    <div className="customer-m-val-sub">
+                      {data.purchaseCount} {data.purchaseCount === 1 ? 'order' : 'orders'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Card Footer: View profile link & toggle status */}
+                <div className="customer-m-footer">
+                  <span className="customer-m-view-link">
+                    <span>View Profile &amp; Bills</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                      <polyline points="9 18 15 12 9 6" />
+                    </svg>
+                  </span>
+                  <button
+                    type="button"
+                    className={`btn-action-toggle mini ${c.active !== false ? 'deactivate' : 'activate'}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleActive(c);
+                    }}
+                  >
+                    {c.active !== false ? 'Deactivate' : 'Activate'}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+
+          {filteredCustomers.length === 0 && (
+            <div className="customer-empty-state">
+              <div className="empty-icon-box">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.8">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+              </div>
+              <h3>No customers matched your search</h3>
+              <p>Try searching for a different customer name or mobile number.</p>
+              <button
+                type="button"
+                className="btn-reset-filters"
+                onClick={() => {
+                  setSearchTerm('');
+                  setFilterMode('all');
+                }}
+              >
+                Reset All Filters
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* 3B. CLEAN & SIMPLE GRID: NAME, NUMBER, POINTS & CLEAN ACTIONS (Desktop & Table View) */}
+        <div className={`customer-table-container ${viewMode === 'cards' ? 'mobile-hidden' : 'mobile-active'}`}>
+          {viewMode === 'table' && (
+            <div className="customer-scroll-hint">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="18 8 22 12 18 16" />
+                <polyline points="6 8 2 12 6 16" />
+                <line x1="2" y1="12" x2="22" y2="12" />
+              </svg>
+              <span>Swipe horizontally to view all columns</span>
+            </div>
+          )}
           <table className="customer-modern-table">
             <thead>
               <tr>
-                <th style={{ width: '38%', minWidth: '220px' }}>CUSTOMER NAME</th>
-                <th style={{ width: '28%', minWidth: '180px' }}>MOBILE NUMBER</th>
-                <th style={{ width: '22%', minWidth: '160px' }}>LOYALTY POINTS</th>
+                <th className="col-sticky-customer" style={{ width: '38%', minWidth: '200px' }}>CUSTOMER NAME</th>
+                <th style={{ width: '28%', minWidth: '170px' }}>MOBILE NUMBER</th>
+                <th style={{ width: '22%', minWidth: '150px' }}>LOYALTY POINTS</th>
                 <th style={{ width: '12%', minWidth: '130px', textAlign: 'right' }}>ACTIONS</th>
               </tr>
             </thead>
@@ -453,8 +653,8 @@ export const CustomerDirectory: React.FC<CustomerDirectoryProps> = ({
                     className={`customer-row ${c.active === false ? 'inactive-row' : ''}`}
                     onClick={() => setSelectedCustomer(c)}
                   >
-                    {/* Customer Name & Avatar (Clean without any # badge) */}
-                    <td>
+                    {/* Customer Name & Avatar (Sticky on horizontal scroll) */}
+                    <td className="col-sticky-customer">
                       <div className="customer-cell-identity">
                         <div
                           className="customer-avatar"

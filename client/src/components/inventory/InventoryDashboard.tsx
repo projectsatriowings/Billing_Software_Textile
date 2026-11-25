@@ -121,15 +121,25 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
     const matchBr = branches.find(
       (b) => b.id === selectedBranch || (b.code && b.code.toUpperCase() === selectedBranch.toUpperCase())
     );
-    const targetId = matchBr?.id;
+    const targetId = matchBr?.id || selectedBranch;
     const targetCode = matchBr?.code?.toUpperCase();
+
+    // Canonical alias check for main store (code: 'MAIN', id: 'br_main_store')
+    const isMainBranchTarget =
+      selectedBranch.toUpperCase() === 'MAIN' ||
+      selectedBranch === 'br_main_store' ||
+      targetCode === 'MAIN' ||
+      targetId === 'br_main_store';
 
     return rawItems.filter((it) => {
       if (it.active === false) return false;
+      // Global items without branch assignment are visible to all branches
       if (!it.branchId) return true;
       if (targetId && it.branchId === targetId) return true;
       if (targetCode && (it as any).branchCode && (it as any).branchCode.toUpperCase() === targetCode) return true;
+      if (targetCode && it.branchId.toUpperCase() === targetCode) return true;
       if (it.branchId === selectedBranch) return true;
+      if (isMainBranchTarget && (it.branchId === 'br_main_store' || it.branchId.toUpperCase() === 'MAIN')) return true;
       return false;
     });
   }, [branches, selectedBranch]);
@@ -361,27 +371,27 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
     },
     ...(isAuthorizedForCost
       ? [
-          {
-            header: 'Unit Cost',
-            minWidth: '85px',
-            align: 'right' as const,
-            renderSkeleton: () => (
-              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <Skeleton width={75} height={12} radius={4} />
-              </div>
-            ),
-          },
-          {
-            header: 'Total Value',
-            minWidth: '95px',
-            align: 'right' as const,
-            renderSkeleton: () => (
-              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <Skeleton width={85} height={12} radius={4} />
-              </div>
-            ),
-          },
-        ]
+        {
+          header: 'Unit Cost',
+          minWidth: '85px',
+          align: 'right' as const,
+          renderSkeleton: () => (
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Skeleton width={75} height={12} radius={4} />
+            </div>
+          ),
+        },
+        {
+          header: 'Total Value',
+          minWidth: '95px',
+          align: 'right' as const,
+          renderSkeleton: () => (
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Skeleton width={85} height={12} radius={4} />
+            </div>
+          ),
+        },
+      ]
       : []),
     {
       header: 'Supplier',
@@ -1099,8 +1109,8 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
             (stats?.negativeStockCount || 0) > 0
               ? { text: `${stats?.negativeStockCount} Neg`, variant: 'purple' }
               : outOfStockCount > 0
-              ? { text: 'Alert', variant: 'red' }
-              : { text: 'OK', variant: 'green' }
+                ? { text: 'Alert', variant: 'red' }
+                : { text: 'OK', variant: 'green' }
           }
           count={statsLoading ? <span className="skeleton-line" style={{ display: 'inline-block', width: '48px', height: '24px', borderRadius: '4px' }} /> : <AnimatedCounter value={outOfStockCount} triggerKey={outOfStockCount} />}
           countColor={outOfStockCount > 0 ? '#B91C1C' : '#0F172A'}
@@ -1501,23 +1511,22 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
                           <span>{catName}</span>
                         </span>
                         <span
-                          className={`status-pill ${
-                            status === 'negative_stock'
-                              ? 'purple'
-                              : status === 'out_of_stock'
+                          className={`status-pill ${status === 'negative_stock'
+                            ? 'purple'
+                            : status === 'out_of_stock'
                               ? 'red'
                               : status === 'low_stock'
-                              ? 'amber'
-                              : 'green'
-                          }`}
+                                ? 'amber'
+                                : 'green'
+                            }`}
                         >
                           {status === 'negative_stock'
                             ? 'Negative Stock'
                             : status === 'out_of_stock'
-                            ? 'Out of Stock'
-                            : status === 'low_stock'
-                            ? 'Low Stock'
-                            : 'In Stock'}
+                              ? 'Out of Stock'
+                              : status === 'low_stock'
+                                ? 'Low Stock'
+                                : 'In Stock'}
                         </span>
                       </div>
                     </div>
@@ -1809,23 +1818,22 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
                             const status = determineStockStatus(currentUnits, reorderUnits);
                             return (
                               <span
-                                className={`status-pill ${
-                                  status === 'negative_stock'
-                                    ? 'purple'
-                                    : status === 'out_of_stock'
+                                className={`status-pill ${status === 'negative_stock'
+                                  ? 'purple'
+                                  : status === 'out_of_stock'
                                     ? 'red'
                                     : status === 'low_stock'
-                                    ? 'amber'
-                                    : 'green'
-                                }`}
+                                      ? 'amber'
+                                      : 'green'
+                                  }`}
                               >
                                 {status === 'negative_stock'
                                   ? 'Negative Stock'
                                   : status === 'out_of_stock'
-                                  ? 'Out of Stock'
-                                  : status === 'low_stock'
-                                  ? 'Low Stock'
-                                  : 'In Stock'}
+                                    ? 'Out of Stock'
+                                    : status === 'low_stock'
+                                      ? 'Low Stock'
+                                      : 'In Stock'}
                               </span>
                             );
                           })()}
@@ -2034,7 +2042,7 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
       {/* SUB-VIEW 4: Replenishment Suggestions */}
       {activeSubTab === 'replenish' && (
         <div className="inv-subview-content">
-          
+
           {isReplenishRefreshing && (
             <div className="refresh-progress-bar-wrap">
               <div className="progress-line" />
@@ -2083,7 +2091,7 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
               <table className="inventory-data-table replenishment-table">
                 <thead>
                   <tr>
-                    <th style={{ width: '64px', minWidth: '64px', textAlign: 'center' }}>Image</th>
+                    <th style={{ width: '64px', minWidth: '64px', textAlign: 'center' }} className="col-sticky-img">Image</th>
                     <th>Product & Identifiers</th>
                     <th style={{ minWidth: '130px', textAlign: 'left', whiteSpace: 'nowrap' }}>Branch</th>
                     <th style={{ minWidth: '140px', width: '150px', textAlign: 'left', whiteSpace: 'nowrap' }}>Category</th>
@@ -2257,7 +2265,7 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
             </div>
           ) : showInsightsSkeleton ? (
             <div className={`insights-skeleton-wrapper ${isInsightsSlow ? 'slow-load-fade-mask' : ''}`} aria-busy="true" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginTop: '1rem' }}>
-              <div className="visually-hidden" aria-live="polite">Loading inventory intelligence and risk alerts…</div>
+
               {isInsightsSlow && (
                 <div className="slow-load-strip">
                   <div className="slow-load-strip-content">
@@ -2301,7 +2309,7 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
             </div>
           ) : (
             <div className={`insights-content-loaded ${isInsightsRefreshing ? 'table-refreshing-dim' : 'skeleton-fade-in'}`} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-              <div className="visually-hidden" aria-live="polite">Inventory intelligence loaded</div>
+
               {/* Row 1: Stock Alert & Days Remaining + Slow Moving Dead Stock */}
               <div className="insights-grid">
                 {/* 1. Stock Alert & Days Remaining */}

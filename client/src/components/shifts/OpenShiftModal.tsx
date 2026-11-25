@@ -22,6 +22,7 @@ interface OpenShiftModalProps {
   defaultLocation?: string;
   defaultCounter?: string;
   defaultCounterId?: string;
+  defaultOpeningCash?: number | string;
   branches?: Array<{ id?: string; code: string; name: string; counters?: string[]; counterDetails?: any[] }>;
   counterDetails?: any[];
 }
@@ -35,10 +36,17 @@ export const OpenShiftModal: React.FC<OpenShiftModalProps> = ({
   defaultLocation,
   defaultCounter,
   defaultCounterId,
+  defaultOpeningCash,
   branches,
   counterDetails,
 }) => {
-  const [openingRupees, setOpeningRupees] = useState<string>('1000');
+  const [openingRupees, setOpeningRupees] = useState<string>(() => {
+    if (defaultOpeningCash !== undefined && defaultOpeningCash !== null) {
+      return defaultOpeningCash.toString();
+    }
+    const saved = localStorage.getItem('a2z_preferred_opening_float');
+    return saved !== null ? saved : '';
+  });
   const [location, setLocation] = useState<string>(() => {
     if (defaultLocation && !['COUNTER-1', 'COUNTER-2', 'COUNTER-3', 'EXPRESS'].includes(defaultLocation.toUpperCase())) {
       return defaultLocation;
@@ -59,6 +67,26 @@ export const OpenShiftModal: React.FC<OpenShiftModalProps> = ({
     return 'COUNTER-1';
   });
 
+  // The modal can open before the user's branch/counter have loaded (it then starts on 'MAIN' /
+  // 'COUNTER-1'). Keep following the real branch and default counter as they arrive, until the
+  // user picks one by hand.
+  const locationTouchedRef = React.useRef(false);
+  const counterTouchedRef = React.useRef(false);
+  useEffect(() => {
+    if (locationTouchedRef.current) return;
+    const next = (defaultLocation || '').trim();
+    if (!next || next.toUpperCase() === 'ALL') return;
+    if (['COUNTER-1', 'COUNTER-2', 'COUNTER-3', 'EXPRESS'].includes(next.toUpperCase())) return;
+    setLocation((prev) => (prev === next ? prev : next));
+  }, [defaultLocation]);
+  useEffect(() => {
+    if (counterTouchedRef.current || userRole !== 'cashier') return;
+    const next = (defaultCounter || '').trim();
+    if (!next || next.toUpperCase().includes('ADMIN') || next.toUpperCase().includes('MGR')) return;
+    const m = next.match(/^counter[_\-\s]*(\d+)$/i);
+    setCounter(m ? `COUNTER-${m[1]}` : next);
+  }, [defaultCounter, userRole]);
+
   const [notes, setNotes] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -72,6 +100,12 @@ export const OpenShiftModal: React.FC<OpenShiftModalProps> = ({
   // Fetch occupied counters for current branch
   useEffect(() => {
     if (!isOpen) return;
+    if (defaultOpeningCash !== undefined && defaultOpeningCash !== null) {
+      setOpeningRupees(defaultOpeningCash.toString());
+    } else {
+      const saved = localStorage.getItem('a2z_preferred_opening_float');
+      setOpeningRupees(saved !== null ? saved : '');
+    }
     let active = true;
     fetchOccupiedCounters(activeBranchObj?.id)
       .then((res) => {
@@ -83,9 +117,9 @@ export const OpenShiftModal: React.FC<OpenShiftModalProps> = ({
     return () => {
       active = false;
     };
-  }, [isOpen, activeBranchObj?.id]);
+  }, [isOpen, activeBranchObj?.id, defaultOpeningCash]);
 
-  const quickAmounts = [500, 1000, 2000, 5000, 10000];
+  const quickAmounts = [0, 500, 1000, 2000, 5000, 10000];
 
   const branchCounters: Array<{ code: string; name: string; id?: string }> = React.useMemo(() => {
     let list: Array<{ code: string; name: string; id?: string }> = [];
@@ -193,6 +227,7 @@ export const OpenShiftModal: React.FC<OpenShiftModalProps> = ({
         counterId,
         notes: notes.trim() || undefined,
       });
+      localStorage.setItem('a2z_preferred_opening_float', openingRupees);
       onSuccess(res.shift);
       window.dispatchEvent(new CustomEvent('shift_status_changed', { detail: res.shift }));
       window.dispatchEvent(new CustomEvent('shift_opened', { detail: res.shift }));
@@ -346,9 +381,10 @@ export const OpenShiftModal: React.FC<OpenShiftModalProps> = ({
                       min="0"
                       step="0.01"
                       className="form-input rupee-input"
-                      placeholder="0.00"
+                      placeholder="e.g. 5000 or 0.00"
                       value={openingRupees}
                       onChange={(e) => setOpeningRupees(e.target.value)}
+                      onFocus={(e) => e.target.select()}
                       autoFocus
                       required
                     />
@@ -386,7 +422,7 @@ export const OpenShiftModal: React.FC<OpenShiftModalProps> = ({
                       <select
                         className="form-input form-select"
                         value={location}
-                        onChange={(e) => setLocation(e.target.value)}
+                        onChange={(e) => { locationTouchedRef.current = true; setLocation(e.target.value); }}
                       >
                         {branches.map((b) => (
                           <option key={b.code} value={b.code}>
@@ -405,7 +441,7 @@ export const OpenShiftModal: React.FC<OpenShiftModalProps> = ({
                     <select
                       className="form-input form-select"
                       value={counter}
-                      onChange={(e) => setCounter(e.target.value)}
+                      onChange={(e) => { counterTouchedRef.current = true; setCounter(e.target.value); }}
                     >
                       {branchCounters.map((c) => {
                         const occupant = getOccupantForCounter(c.code, c.id);

@@ -521,6 +521,8 @@
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+    position: sticky !important;
+    left: 0 !important;
     font-size: 0.75rem !important;
     color: #64748b !important;
     background: #f1f5f9 !important;
@@ -539,13 +541,14 @@
     padding: 0.65rem 0.75rem !important;
   }
 
-  /* Sticky First Column on Mobile Table */
+  /* Sticky First Column ONLY on Mobile Table */
   .stock-transfer-table th.sticky-col-left {
     position: sticky !important;
     left: 0 !important;
     z-index: 15 !important;
     background: #f8fafc !important;
-    box-shadow: 3px 0 6px rgba(0, 0, 0, 0.06) !important;
+    border-right: 1px solid #e2e8f0 !important;
+    box-shadow: 3px 0 8px rgba(15, 23, 42, 0.06) !important;
   }
 
   .stock-transfer-table td.sticky-col-left {
@@ -553,32 +556,20 @@
     left: 0 !important;
     z-index: 10 !important;
     background: #ffffff !important;
-    box-shadow: 3px 0 6px rgba(0, 0, 0, 0.06) !important;
+    border-right: 1px solid #e2e8f0 !important;
+    box-shadow: 3px 0 8px rgba(15, 23, 42, 0.06) !important;
   }
 
   .stock-transfer-table tr:hover td.sticky-col-left {
     background: #f8fafc !important;
   }
 
-  /* Sticky Actions Column on Mobile Table */
-  .stock-transfer-table th.sticky-col-right {
-    position: sticky !important;
-    right: 0 !important;
-    z-index: 15 !important;
-    background: #f8fafc !important;
-    box-shadow: -3px 0 6px rgba(0, 0, 0, 0.06) !important;
-  }
-
+  /* Do NOT lock Actions column on mobile so middle columns have full scroll space */
+  .stock-transfer-table th.sticky-col-right,
   .stock-transfer-table td.sticky-col-right {
-    position: sticky !important;
-    right: 0 !important;
-    z-index: 10 !important;
-    background: #ffffff !important;
-    box-shadow: -3px 0 6px rgba(0, 0, 0, 0.06) !important;
-  }
-
-  .stock-transfer-table tr:hover td.sticky-col-right {
-    background: #f8fafc !important;
+    position: static !important;
+    right: auto !important;
+    box-shadow: none !important;
   }
 
   .trf-mobile-subdate {
