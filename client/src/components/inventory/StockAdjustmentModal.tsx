@@ -153,16 +153,23 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
     }
   };
 
+  const themeClass =
+    (userRole as string) === 'manager' || (userRole as string) === 'store_manager'
+      ? 'theme-manager'
+      : userRole === 'cashier'
+      ? 'theme-cashier'
+      : '';
+
   return (
-    <div className="modal-overlay modal-backdrop" onClick={onClose} style={{ zIndex: 10000 }}>
+    <div className={`modal-overlay modal-backdrop ${themeClass}`} onClick={onClose} style={{ zIndex: 10000 }}>
       <div
-        className="modal-content inventory-modal-card"
+        className={`modal-content inventory-modal-card ${themeClass}`}
         onClick={(e) => e.stopPropagation()}
         style={{ maxWidth: '580px', width: '92%' }}
       >
         <div className="modal-header">
           <div className="modal-title-wrap">
-            <span className="modal-icon-badge purple"><SlidersIcon size={20} /></span>
+            <span className="modal-icon-badge stock-adjust-icon-badge"><SlidersIcon size={20} /></span>
             <div>
               <h2 className="modal-title">Manual Stock Adjustment</h2>
               <p className="modal-subtitle">Record damaged, expired, missing or counted variance</p>
@@ -363,7 +370,7 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
                       </div>
                       <div className="preview-step highlight">
                         <span className="step-lbl">Resulting Stock</span>
-                        <span className={`step-val ${willBeNegative ? 'text-red' : 'text-purple'}`}>
+                        <span className={`step-val ${willBeNegative ? 'text-red' : 'text-stock-result'}`}>
                           {newUnits.toFixed(1)} {unit}
                         </span>
                       </div>

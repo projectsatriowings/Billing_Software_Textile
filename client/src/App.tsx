@@ -1406,8 +1406,30 @@ export function App() {
   }, [user]);
 
   const [selectedBranchScope, setSelectedBranchScope] = useState<string>(() => {
+    if (user && user.role !== 'owner' && String(user.role).toUpperCase() !== 'SUPER_ADMIN') {
+      const enforced = user.branchId || (user as any).branch_id || user.assignedLocation;
+      if (enforced) return enforced;
+    }
     return getActiveBranchScope();
   });
+
+  // Ensure non-superadmin accounts (Store Managers, Cashiers) are strictly locked to their assigned branch
+  useEffect(() => {
+    if (!user) return;
+    const isSuperAdmin = user.role === 'owner' || String(user.role).toUpperCase() === 'SUPER_ADMIN';
+    if (!isSuperAdmin) {
+      const enforced = user.branchId || (user as any).branch_id || user.assignedLocation;
+      if (enforced && selectedBranchScope !== enforced) {
+        setSelectedBranchScope(enforced);
+        try {
+          localStorage.setItem('sa_selected_branch', enforced);
+          localStorage.setItem('selected_branch', enforced);
+          sessionStorage.setItem('sa_selected_branch', enforced);
+          sessionStorage.setItem('selected_branch', enforced);
+        } catch {}
+      }
+    }
+  }, [user?.id, user?.branchId, user?.role, selectedBranchScope]);
 
   // Day Closing Overdue Alert state for top global header bar
   const [topOverdueClosing, setTopOverdueClosing] = useState<{

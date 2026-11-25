@@ -121,15 +121,25 @@ export const InventoryDashboard: React.FC<InventoryDashboardProps> = ({
     const matchBr = branches.find(
       (b) => b.id === selectedBranch || (b.code && b.code.toUpperCase() === selectedBranch.toUpperCase())
     );
-    const targetId = matchBr?.id;
+    const targetId = matchBr?.id || selectedBranch;
     const targetCode = matchBr?.code?.toUpperCase();
+
+    // Canonical alias check for main store (code: 'MAIN', id: 'br_main_store')
+    const isMainBranchTarget =
+      selectedBranch.toUpperCase() === 'MAIN' ||
+      selectedBranch === 'br_main_store' ||
+      targetCode === 'MAIN' ||
+      targetId === 'br_main_store';
 
     return rawItems.filter((it) => {
       if (it.active === false) return false;
+      // Global items without branch assignment are visible to all branches
       if (!it.branchId) return true;
       if (targetId && it.branchId === targetId) return true;
       if (targetCode && (it as any).branchCode && (it as any).branchCode.toUpperCase() === targetCode) return true;
+      if (targetCode && it.branchId.toUpperCase() === targetCode) return true;
       if (it.branchId === selectedBranch) return true;
+      if (isMainBranchTarget && (it.branchId === 'br_main_store' || it.branchId.toUpperCase() === 'MAIN')) return true;
       return false;
     });
   }, [branches, selectedBranch]);
