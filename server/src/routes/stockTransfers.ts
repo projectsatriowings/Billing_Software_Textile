@@ -4,6 +4,7 @@ import { bad, conflict, notFound, forbidden, V, type Router } from '../http.ts';
 import { newId } from '../security.ts';
 import type { Queryable } from '../db/index.ts';
 import type { StockTransfer, StockTransferLine, StockTransferStatus, StockMove } from '../../../shared/types.ts';
+import { syncItemStockStatus } from '../services/stockStatus.ts';
 
 async function resolveBranch(
   db: { one: <T>(sql: string, params?: unknown[]) => Promise<T | null | undefined> },
@@ -62,6 +63,117 @@ async function getActiveOperatingBranch(
   }
 
   return await resolveBranch(db, tenantId, rawBranch);
+}
+
+/** All barcodes a product is known by: its own barcode plus any linked in product_barcodes. */
+async function getItemBarcodes(
+  q: Queryable,
+  tenantId: string,
+  itemId: string,
+): Promise<{ barcode: string; barcodeType: string }[]> {
+  const item = await q.one<any>('SELECT barcode, barcode_type FROM items WHERE id = ? AND tenant_id = ?', [itemId, tenantId]);
+  const rows = await q.query<any>(
+    'SELECT barcode, barcode_type FROM product_barcodes WHERE tenant_id = ? AND product_id = ?',
+    [tenantId, itemId],
+  );
+  const out = new Map<string, string>();
+  const ownBarcode = String(item?.barcode ?? '').trim();
+  if (ownBarcode) {
+    out.set(ownBarcode, item?.barcodeType ?? item?.barcode_type ?? (ownBarcode.startsWith('20') && ownBarcode.length === 13 ? 'INTERNAL' : 'MANUFACTURER'));
+  }
+  for (const r of rows) {
+    const bc = String(r.barcode ?? '').trim();
+    if (bc && !out.has(bc)) out.set(bc, r.barcodeType ?? r.barcode_type ?? 'MANUFACTURER');
+  }
+  return [...out.entries()].map(([barcode, barcodeType]) => ({ barcode, barcodeType }));
+}
+
+/**
+ * Finds the destination branch's own product record for a transferred item, creating one if the
+ * branch does not stock it yet. Matching order: same record, SKU, any barcode, then name.
+ * Never returns the source branch's item id (unless that item already belongs to the destination).
+ */
+async function resolveDestinationItem(
+  q: Queryable,
+  tenantId: string,
+  toBranchId: string,
+  sourceItemId: string,
+): Promise<string> {
+  const src = await q.one<any>('SELECT * FROM items WHERE id = ? AND tenant_id = ?', [sourceItemId, tenantId]);
+  if (!src) return sourceItemId;
+  if ((src.branchId ?? src.branch_id) === toBranchId) return sourceItemId;
+
+  const sku = String(src.sku ?? '').trim();
+  const name = String(src.name ?? '').trim();
+  const barcodes = (await getItemBarcodes(q, tenantId, sourceItemId)).map((b) => b.barcode);
+
+  const match = await q.one<{ id: string; active: boolean }>(
+    `SELECT i.id, i.active FROM items i
+     WHERE i.tenant_id = ? AND i.branch_id = ? AND (
+       (?::text <> '' AND i.sku IS NOT NULL AND UPPER(TRIM(i.sku)) = UPPER(?::text))
+       OR (i.barcode IS NOT NULL AND TRIM(i.barcode) = ANY(?::text[]))
+       OR EXISTS (
+         SELECT 1 FROM product_barcodes pb
+         WHERE pb.tenant_id = i.tenant_id AND pb.product_id = i.id AND pb.barcode = ANY(?::text[])
+       )
+       OR (?::text <> '' AND LOWER(TRIM(i.name)) = LOWER(?::text))
+     )
+     ORDER BY
+       i.active DESC,
+       CASE
+         WHEN ?::text <> '' AND i.sku IS NOT NULL AND UPPER(TRIM(i.sku)) = UPPER(?::text) THEN 0
+         WHEN i.barcode IS NOT NULL AND TRIM(i.barcode) = ANY(?::text[]) THEN 1
+         WHEN LOWER(TRIM(i.name)) = LOWER(?::text) THEN 3
+         ELSE 2
+       END,
+       i.created_at ASC
+     LIMIT 1`,
+    [tenantId, toBranchId, sku, sku, barcodes, barcodes, name, name, sku, sku, barcodes, name],
+  );
+  if (match?.id) {
+    if (match.active === false) {
+      await q.exec('UPDATE items SET active = true, updated_at = now() WHERE id = ? AND tenant_id = ?', [match.id, tenantId]);
+    }
+    return match.id;
+  }
+
+  // Destination does not stock this product yet: create its own record (copy of the source product).
+  const newItemId = newId('i');
+  await q.exec(
+    `INSERT INTO items (
+       id, tenant_id, branch_id, name, sku, barcode, barcode_type, hsn, unit, category,
+       price_minor, wholesale_price_minor, min_wholesale_qty_milli, cost_minor, tax_rate_bp, tax_inclusive, track_stock,
+       reorder_milli, preferred_supplier_id, favorite, custom, active, image_url
+     )
+     SELECT ?, tenant_id, ?, name, sku, barcode, barcode_type, hsn, unit, category,
+            price_minor, wholesale_price_minor, min_wholesale_qty_milli, cost_minor, tax_rate_bp, tax_inclusive, track_stock,
+            reorder_milli, preferred_supplier_id, false, custom, true, image_url
+     FROM items WHERE id = ? AND tenant_id = ?`,
+    [newItemId, toBranchId, sourceItemId, tenantId],
+  );
+  return newItemId;
+}
+
+/** Links every barcode of the source product to the destination's own product, skipping ones the branch already uses. */
+async function linkSourceBarcodesToDestination(
+  q: Queryable,
+  tenantId: string,
+  toBranchId: string,
+  sourceItemId: string,
+  destItemId: string,
+): Promise<void> {
+  for (const { barcode, barcodeType } of await getItemBarcodes(q, tenantId, sourceItemId)) {
+    const taken = await q.one(
+      'SELECT id FROM product_barcodes WHERE tenant_id = ? AND branch_id = ? AND barcode = ? LIMIT 1',
+      [tenantId, toBranchId, barcode],
+    );
+    if (taken) continue;
+    await q.exec(
+      `INSERT INTO product_barcodes (id, tenant_id, branch_id, product_id, barcode, barcode_type, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, now())`,
+      [newId('bc'), tenantId, toBranchId, destItemId, barcode, barcodeType === 'INTERNAL' ? 'INTERNAL' : 'MANUFACTURER'],
+    );
+  }
 }
 
 export function registerStockTransfers(r: Router) {
@@ -973,6 +1085,12 @@ export function registerStockTransfers(r: Router) {
         }
       }
 
+      // Synchronize product active status at source branch (deactivates if stock became 0)
+      const dispatchedItemIds = lines.map((l: any) => l.itemId || l.item_id).filter(Boolean);
+      if (dispatchedItemIds.length > 0) {
+        await syncItemStockStatus(q, tenantId, dispatchedItemIds, fromBranchId);
+      }
+
       // 4. Update transfer status
       await q.exec(
         `UPDATE stock_transfers
@@ -1161,19 +1279,11 @@ export function registerStockTransfers(r: Router) {
         // Calculate delta to add to destination branch
         const deltaToAddMilli = newReceivedMilli - previouslyReceivedMilli;
 
-        if (deltaToAddMilli > 0) {
-          // Check if destination branch has a primary matching item row
-          const destItem = await q.one<{ id: string }>(
-            `SELECT id FROM items WHERE tenant_id = ? AND active = true AND branch_id = ? AND (
-               id = ?
-               OR (sku IS NOT NULL AND sku != '' AND UPPER(TRIM(sku)) = UPPER(TRIM(?)))
-               OR (barcode IS NOT NULL AND barcode != '' AND TRIM(barcode) = TRIM(?))
-               OR (LOWER(TRIM(name)) = LOWER(TRIM(?)))
-             ) ORDER BY created_at ASC LIMIT 1`,
-            [tenantId, toBranchId, lineItemId, line.itemSku || line.sku || '', line.itemBarcode || line.barcode || '', lineItemName],
-          );
-          const destItemId = destItem?.id || lineItemId;
+        // Received stock always goes into the DESTINATION branch's own product record ("big box"),
+        // never under the source branch's item id. Barcodes from the source are linked to that record.
+        const destItemId = await resolveDestinationItem(q, tenantId, toBranchId, lineItemId);
 
+        if (deltaToAddMilli > 0) {
           // Append positive stock movement at destination branch
           const moveId = newId('sm');
           await q.exec(
@@ -1197,55 +1307,9 @@ export function registerStockTransfers(r: Router) {
           );
         }
 
-        // Destination branch product-inventory & barcode association synchronization:
-        // Ensure destination branch has access to product barcodes for POS scanning and catalogue lookup
-        const itemInfo = await q.one<{ barcode: string | null; barcode_type: string | null }>(
-          'SELECT barcode, barcode_type FROM items WHERE id = ? AND tenant_id = ?',
-          [lineItemId, tenantId],
-        );
-        if (itemInfo?.barcode) {
-          const bcType = itemInfo.barcode_type || (itemInfo.barcode.startsWith('20') && itemInfo.barcode.length === 13 ? 'INTERNAL' : 'MANUFACTURER');
-          const existingBc = await q.one(
-            'SELECT id FROM product_barcodes WHERE tenant_id = ? AND branch_id = ? AND product_id = ? AND barcode = ?',
-            [tenantId, toBranchId, lineItemId, itemInfo.barcode],
-          );
-          if (!existingBc) {
-            const conflictBc = await q.one(
-              "SELECT id FROM product_barcodes WHERE tenant_id = ? AND branch_id = ? AND barcode = ? AND product_id <> ? AND barcode_type = 'INTERNAL'",
-              [tenantId, toBranchId, itemInfo.barcode, lineItemId],
-            );
-            if (!conflictBc) {
-              await q.exec(
-                `INSERT INTO product_barcodes (id, tenant_id, branch_id, product_id, barcode, barcode_type, created_at)
-                 VALUES (?, ?, ?, ?, ?, ?, now())`,
-                [newId('bc'), tenantId, toBranchId, lineItemId, itemInfo.barcode, bcType],
-              );
-            }
-          }
-        }
-        const itemBarcodes = await q.query<{ barcode: string; barcode_type: string }>(
-          'SELECT barcode, barcode_type FROM product_barcodes WHERE tenant_id = ? AND product_id = ?',
-          [tenantId, lineItemId],
-        );
-        for (const pbRow of itemBarcodes) {
-          const existingBc = await q.one(
-            'SELECT id FROM product_barcodes WHERE tenant_id = ? AND branch_id = ? AND product_id = ? AND barcode = ?',
-            [tenantId, toBranchId, lineItemId, pbRow.barcode],
-          );
-          if (!existingBc) {
-            const conflictBc = await q.one(
-              "SELECT id FROM product_barcodes WHERE tenant_id = ? AND branch_id = ? AND barcode = ? AND product_id <> ? AND barcode_type = 'INTERNAL'",
-              [tenantId, toBranchId, pbRow.barcode, lineItemId],
-            );
-            if (!conflictBc) {
-              await q.exec(
-                `INSERT INTO product_barcodes (id, tenant_id, branch_id, product_id, barcode, barcode_type, created_at)
-                 VALUES (?, ?, ?, ?, ?, ?, now())`,
-                [newId('bc'), tenantId, toBranchId, lineItemId, pbRow.barcode, pbRow.barcode_type || 'MANUFACTURER'],
-              );
-            }
-          }
-        }
+        // Link the source product's barcodes to the destination's own product, so scanning the
+        // Anna Nagar barcode at Main finds Main's record. Barcodes the branch already uses are left alone.
+        await linkSourceBarcodesToDestination(q, tenantId, toBranchId, lineItemId, destItemId);
 
         // Update line record
         await q.exec(
@@ -1256,6 +1320,12 @@ export function registerStockTransfers(r: Router) {
            WHERE id = ?`,
           [newReceivedMilli, discrepancyMilli, lineReason, line.id],
         );
+      }
+
+      // Synchronize product active status at destination branch (reactivates if restocked)
+      const receivedItemIds = lines.map((l: any) => l.destItemId || l.itemId || l.item_id).filter(Boolean);
+      if (receivedItemIds.length > 0) {
+        await syncItemStockStatus(q, tenantId, receivedItemIds, toBranchId);
       }
 
       const finalStatus: StockTransferStatus = hasDiscrepancy ? 'partially_received' : 'completed';
@@ -1350,6 +1420,11 @@ export function registerStockTransfers(r: Router) {
               ctx.user!.id,
             ],
           );
+        }
+
+        const cancelledItemIds = dispatchMoves.map((dm: any) => dm.itemId ?? dm.item_id).filter(Boolean);
+        if (cancelledItemIds.length > 0) {
+          await syncItemStockStatus(q, tenantId, cancelledItemIds, fromBranchIdRev);
         }
       }
 

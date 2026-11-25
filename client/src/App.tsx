@@ -100,6 +100,7 @@ import type { Branch } from '../../shared/types.ts';
 import { TerminalManagementTab } from './components/terminal/TerminalManagementTab';
 import { UserManagementView } from './components/users/UserManagementView';
 import { BranchUserManagementView } from './components/users/BranchUserManagementView';
+import { PosCardCheckoutPanel } from './components/terminal/PosCardCheckoutPanel';
 import {
   CreditCardIcon,
   BanknoteIcon,
@@ -151,6 +152,7 @@ import {
   RotateCcwIcon,
   FileSpreadsheetIcon,
   ShoppingCartIcon,
+  ChevronRightIcon,
 } from './components/inventory/InventoryIcons.tsx';
 import { SalesAnalysisView } from './components/sales/SalesAnalysisView';
 import { ShiftsDashboard } from './components/shifts/ShiftsDashboard.tsx';
@@ -213,10 +215,15 @@ import { fetchPromotions } from './api';
 import { LoyaltySchemeModal } from './components/loyalty/LoyaltySchemeModal.tsx';
 import { PosReturnExchangeModal, type ReturnSelectedLine } from './components/pos/PosReturnExchangeModal.tsx';
 import { ConfirmModal } from './components/common/ConfirmModal.tsx';
+import { Tooltip } from './components/common/Tooltip';
 import { DayClosingView } from './components/shifts/DayClosingView.tsx';
 import { ReturnReportsView } from './components/reports/ReturnReportsView.tsx';
 import { NotificationsPageView } from './components/notifications/NotificationsPageView.tsx';
 import { submitExchange } from './api';
+import { ResponsiveNavbar } from './components/navigation/ResponsiveNavbar';
+import { Capacitor } from '@capacitor/core';
+import { App as CapApp } from '@capacitor/app';
+import { StatusBar, Style } from '@capacitor/status-bar';
 
 // Routes and tabs where the business info bar (green-dot pill) and its dividers are hidden
 export const HIDE_BUSINESS_BAR_ROUTES = [
@@ -595,7 +602,7 @@ export const getBusinessLabel = (type?: string) => {
   }
 };
 
-export const CASHIER_ALLOWED_TABS = new Set<string>(['pos', 'shifts', 'invoices', 'day-closing']);
+export const CASHIER_ALLOWED_TABS = new Set<string>(['pos', 'shifts', 'invoices', 'day-closing', 'notifications']);
 
 export interface PosCartItem {
   item: Item;
@@ -612,7 +619,12 @@ export function App() {
   const [user, setUser] = useState<User | null>(() => {
     try {
       const stored = localStorage.getItem('user') || sessionStorage.getItem('user');
-      return stored ? JSON.parse(stored) : null;
+      if (!stored) return null;
+      const parsed = JSON.parse(stored);
+      if (parsed && typeof parsed === 'object' && parsed.id && parsed.role) {
+        return parsed;
+      }
+      return null;
     } catch {
       return null;
     }
@@ -620,7 +632,12 @@ export function App() {
   const [shop, setShop] = useState<Shop | null>(() => {
     try {
       const stored = localStorage.getItem('shop') || sessionStorage.getItem('shop');
-      return stored ? JSON.parse(stored) : null;
+      if (!stored) return null;
+      const parsed = JSON.parse(stored);
+      if (parsed && typeof parsed === 'object' && parsed.id) {
+        return parsed;
+      }
+      return null;
     } catch {
       return null;
     }
@@ -836,42 +853,6 @@ export function App() {
     }
     return '';
   })();
-
-  const mobileHeaderTitle = (() => {
-    if (displayTab === 'dashboard' || activeTab === 'dashboard') return 'Dashboard';
-    if (displayTab === 'pos' || activeTab === 'pos') return 'Billing POS';
-    if ((displayTab === 'invoices' || activeTab === 'invoices') && user?.role === 'cashier') return 'Recent Bills';
-    if ((displayTab === 'shifts' || activeTab === 'shifts') && user?.role === 'cashier') return 'My Cashier Shift';
-    if (displayTab === 'inventory' || activeTab === 'inventory') return 'Inventory Hub';
-    if (displayTab === 'product-movement' || activeTab === 'product-movement') return 'Product Movement';
-    if (displayTab === 'stock-transfer' || activeTab === 'stock-transfer') return 'Stock Transfer';
-    if (displayTab === 'wholesale' || activeTab === 'wholesale') return 'Wholesale Billing';
-    if (displayTab === 'sales-analysis' || activeTab === 'sales-analysis') return 'Sales Analysis';
-    if (displayTab === 'user-management' || activeTab === 'user-management') return 'User Management';
-    if (displayTab === 'settings' || activeTab === 'settings') return 'Settings';
-    return currentHeaderTitle || shop?.name || 'Dashboard';
-  })();
-
-  const [isMobileViewport, setIsMobileViewport] = useState<boolean>(() => {
-    try {
-      return typeof window !== 'undefined' && window.matchMedia('(max-width: 900px)').matches;
-    } catch {
-      return false;
-    }
-  });
-
-  useEffect(() => {
-    if (typeof window === 'undefined' || !window.matchMedia) return;
-    const mql = window.matchMedia('(max-width: 900px)');
-    const handleChange = (e: MediaQueryListEvent) => setIsMobileViewport(e.matches);
-    setIsMobileViewport(mql.matches);
-    if (mql.addEventListener) {
-      mql.addEventListener('change', handleChange);
-      return () => mql.removeEventListener('change', handleChange);
-    }
-    mql.addListener(handleChange);
-    return () => mql.removeListener(handleChange);
-  }, []);
 
   // Synchronize browser tab title
   useEffect(() => {
@@ -1237,14 +1218,14 @@ export function App() {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       }
-    } catch {}
+    } catch { }
     return ['cash', 'upi', 'card', 'credit'];
   });
   const [payUpiEnabled, setPayUpiEnabled] = useState<boolean>(() => {
     try {
       const saved = localStorage.getItem('pos_upi_enabled');
       if (saved !== null) return saved === 'true';
-    } catch {}
+    } catch { }
     return true;
   });
   const [payQrType, setPayQrType] = useState<'static' | 'dynamic'>('static');
@@ -1274,7 +1255,7 @@ export function App() {
     try {
       const saved = localStorage.getItem('pos_bank_enabled');
       if (saved !== null) return saved === 'true';
-    } catch {}
+    } catch { }
     return false;
   });
   const [payBankAccountName, setPayBankAccountName] = useState('');
@@ -2174,6 +2155,7 @@ export function App() {
   const [selectedInvoiceDetailId, setSelectedInvoiceDetailId] = useState<string | null>(null);
   const [invoiceDetailData, setInvoiceDetailData] = useState<any | null>(null);
   const [invoiceDetailLoading, setInvoiceDetailLoading] = useState<boolean>(false);
+  const [isCreditNotesListOpen, setIsCreditNotesListOpen] = useState<boolean>(false);
 
   const [returnModalInvoiceId, setReturnModalInvoiceId] = useState<string | null>(null);
   const [returnInfo, setReturnInfo] = useState<ReturnInfo | null>(null);
@@ -2324,7 +2306,6 @@ export function App() {
   const [itemFormMinWholesaleQty, setItemFormMinWholesaleQty] = useState('');
   const [itemFormCost, setItemFormCost] = useState('');
   const [itemFormTax, setItemFormTax] = useState('500');
-  const [itemFormTaxInclusive, setItemFormTaxInclusive] = useState(true);
   const [itemFormStock, setItemFormStock] = useState('0');
   const [itemFormReorder, setItemFormReorder] = useState('0');
   const [itemFormSupplierId, setItemFormSupplierId] = useState('');
@@ -2445,7 +2426,6 @@ export function App() {
   const [purchasesLoading, setPurchasesLoading] = useState(false);
   const [purchaseSearch, setPurchaseSearch] = useState('');
   const [purchaseStatusFilter, setPurchaseStatusFilter] = useState<'ALL' | 'unpaid' | 'partial' | 'paid' | 'voided'>('ALL');
-  const [purchaseViewMode, setPurchaseViewMode] = useState<'cards' | 'table'>('cards');
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [selectedPurchaseDetails, setSelectedPurchaseDetails] = useState<Purchase | null>(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
@@ -2520,6 +2500,136 @@ export function App() {
   const [voidPaymentModal, setVoidPaymentModal] = useState<{ id: string; number: string; amountMinor: number; supplierName: string } | null>(null);
   const [voidPaymentReason, setVoidPaymentReason] = useState('');
   const [isSubmittingVoidPayment, setIsSubmittingVoidPayment] = useState(false);
+
+  // Capacitor Android Native Integrations: Status Bar & Hardware Back Button
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    try {
+      StatusBar.setStyle({ style: Style.Dark });
+      StatusBar.setBackgroundColor({ color: '#0F2D2E' });
+    } catch (err) {
+      console.warn('[Capacitor] StatusBar setup warning:', err);
+    }
+
+    const backSub = CapApp.addListener('backButton', ({ canGoBack }: { canGoBack: boolean }) => {
+      // 1. If any modal close button exists in the DOM, click it to safely trigger standard close flow
+      const activeModalCloseBtn = document.querySelector<HTMLElement>(
+        '.modal-close-btn, .btn-modal-close, button[aria-label="Close"], button.close, .drawer-close'
+      );
+      if (activeModalCloseBtn) {
+        activeModalCloseBtn.click();
+        return;
+      }
+
+      // 2. Close specific React modal states if open
+      if (showLogoutConfirmModal) {
+        setShowLogoutConfirmModal(false);
+        return;
+      }
+      if (bentoConfirm.isOpen) {
+        setBentoConfirm((prev) => ({ ...prev, isOpen: false }));
+        return;
+      }
+      if (showDevModeModal) {
+        setShowDevModeModal(false);
+        return;
+      }
+      if (showCounterModal) {
+        setShowCounterModal(false);
+        return;
+      }
+      if (showLogoutShiftModal) {
+        setShowLogoutShiftModal(false);
+        return;
+      }
+      if (showCustomerPickerModal) {
+        setShowCustomerPickerModal(false);
+        return;
+      }
+      if (showMobileScannerModal) {
+        setShowMobileScannerModal(false);
+        return;
+      }
+      if (showCfdModal) {
+        setShowCfdModal(false);
+        return;
+      }
+      if (showPartyModal) {
+        setShowPartyModal(false);
+        return;
+      }
+      if (showItemModal) {
+        setShowItemModal(false);
+        return;
+      }
+      if (showBulkImportModal) {
+        setShowBulkImportModal(false);
+        return;
+      }
+      if (showReturnExchangeModal) {
+        setShowReturnExchangeModal(false);
+        return;
+      }
+      if (categoryErrorModal.isOpen) {
+        setCategoryErrorModal((prev) => ({ ...prev, isOpen: false }));
+        return;
+      }
+      if (paySupplierModal) {
+        setPaySupplierModal(null);
+        return;
+      }
+      if (voidPurchaseModal) {
+        setVoidPurchaseModal(null);
+        return;
+      }
+      if (voidPaymentModal) {
+        setVoidPaymentModal(null);
+        return;
+      }
+      if (selectedSupplierLedger) {
+        setSelectedSupplierLedger(null);
+        return;
+      }
+
+      // 3. If on a sub-view / non-default tab, go back to main dashboard / POS
+      if (activeTab !== 'pos' && activeTab !== 'dashboard') {
+        setActiveTab(user?.role === 'cashier' ? 'pos' : 'dashboard');
+        return;
+      }
+
+      // 4. Default: exit or minimize app
+      if (canGoBack) {
+        window.history.back();
+      } else {
+        CapApp.exitApp();
+      }
+    });
+
+    return () => {
+      backSub.then((sub: any) => sub?.remove?.()).catch(() => { });
+    };
+  }, [
+    showLogoutConfirmModal,
+    bentoConfirm.isOpen,
+    showDevModeModal,
+    showCounterModal,
+    showLogoutShiftModal,
+    showCustomerPickerModal,
+    showMobileScannerModal,
+    showCfdModal,
+    showPartyModal,
+    showItemModal,
+    showBulkImportModal,
+    showReturnExchangeModal,
+    categoryErrorModal.isOpen,
+    paySupplierModal,
+    voidPurchaseModal,
+    voidPaymentModal,
+    selectedSupplierLedger,
+    activeTab,
+    user?.role,
+  ]);
 
   const dismissToast = useCallback((id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
@@ -3074,7 +3184,7 @@ export function App() {
       unit: c.item.unit,
       priceMinor: c.item.priceMinor,
       taxRateBp: c.item.taxRateBp,
-      taxInclusive: c.item.taxInclusive,
+      taxInclusive: false,
       qty: c.qty,
       isFreeItem: Boolean((c as any).isFreeItem),
       appliedPromotionId: (c as any).appliedPromotionId,
@@ -3177,21 +3287,29 @@ export function App() {
       const res = await api<{ items: Item[] }>('/api/items?includeInactive=1');
       // Group products, keeping multi-branch products distinct so each branch's stock and identity are visible
       const raw = res.items || [];
+      // Duplicate records of the same product (same SKU/barcode) can exist in one branch, e.g. when a
+      // transfer was received under the source branch's item id. Show them as one card, but keep the
+      // identity (id) of the record that actually holds the most stock in this branch, because the bill
+      // is validated and deducted against that id only.
       const deduplicated: Item[] = [];
-      const seen = new Map<string, Item>();
+      const seen = new Map<string, { index: number; bestOwnStock: number; totalStock: number }>();
       for (const item of raw) {
         const branchKey = item.branchId || 'main';
         const skuKey = item.sku?.trim().toUpperCase();
         const barcodeKey = item.barcode?.trim();
         const key = `${branchKey}:${skuKey ? `sku:${skuKey}` : barcodeKey ? `bc:${barcodeKey}` : `id:${item.id}`}`;
+        const ownStock = item.currentStockMilli || 0;
         const existing = seen.get(key);
         if (existing) {
-          existing.currentStockMilli = (existing.currentStockMilli || 0) + (item.currentStockMilli || 0);
+          existing.totalStock += ownStock;
+          if (ownStock > existing.bestOwnStock) {
+            existing.bestOwnStock = ownStock;
+            deduplicated[existing.index] = { ...item };
+          }
+          deduplicated[existing.index].currentStockMilli = existing.totalStock;
         } else {
-          const itemCopy = { ...item };
-          seen.set(key, itemCopy);
-          seen.set(`id:${item.id}`, itemCopy);
-          deduplicated.push(itemCopy);
+          seen.set(key, { index: deduplicated.length, bestOwnStock: ownStock, totalStock: ownStock });
+          deduplicated.push({ ...item });
         }
       }
       setItems(deduplicated);
@@ -4173,6 +4291,11 @@ export function App() {
   // Cart operations with stock validation
   const addToCart = (item: Item, qtyToAdd: number = 1): boolean => {
     manuallyDecreasedItemsRef.current.delete(item.id);
+    if (item.active === false || (item.trackStock !== false && (item.currentStockMilli ?? 0) <= 0)) {
+      playAlertTone();
+      showToast(`Cannot bill "${item.name}". Product is currently inactive or out of stock.`, 'warning');
+      return false;
+    }
     const avail = getAvailableStockUnits(item.id, item);
     if (avail <= 0) {
       playAlertTone();
@@ -4365,6 +4488,11 @@ export function App() {
     console.log('📱 Barcode received on desktop:', clean, 'Matched item:', matched?.name);
 
     if (matched) {
+      if (matched.active === false || (matched.trackStock !== false && (matched.currentStockMilli ?? 0) <= 0)) {
+        playAlertTone();
+        showToast(`⚠️ "${matched.name}" is inactive / out of stock and cannot be billed.`, 'warning');
+        return;
+      }
       // Automatically switch to POS Billing tab if user is currently on another tab (like Products catalog)!
       setActiveTab('pos');
       const added = addToCart(matched);
@@ -4694,39 +4822,39 @@ export function App() {
     return Math.max(fromCart, fromLines);
   }, [returnCartItems, activeExchangeLines]);
 
-  // New Items Subtotal & Taxes (for exchange or normal sale)
-  const newItemsSubtotalMinor = useMemo(() => {
+  // New Items Base (Taxable), Taxes & Subtotal (for exchange or normal sale)
+  const newItemsTaxableMinor = useMemo(() => {
     return normalCartItems.reduce((acc, c) => acc + c.item.priceMinor * c.qty, 0);
   }, [normalCartItems]);
 
   const newItemsTaxMinor = useMemo(() => {
     return normalCartItems.reduce((acc, c) => {
-      const gross = c.item.priceMinor * c.qty;
-      const taxable = Math.round((gross * 10000) / (10000 + (c.item.taxRateBp || 0)));
-      return acc + (gross - taxable);
+      const taxable = c.item.priceMinor * c.qty;
+      const tax = Math.round((taxable * (c.item.taxRateBp || 0)) / 10000);
+      return acc + tax;
     }, 0);
   }, [normalCartItems]);
 
-  const newItemsTaxableMinor = newItemsSubtotalMinor - newItemsTaxMinor;
+  const newItemsSubtotalMinor = newItemsTaxableMinor + newItemsTaxMinor;
   const newItemsCgstMinor = Math.floor(newItemsTaxMinor / 2);
   const newItemsSgstMinor = newItemsTaxMinor - newItemsCgstMinor;
 
-  // Cart Subtotal & Taxes for General POS or Exchange
-  const cartSubtotalMinor = isExchangeActive
-    ? newItemsSubtotalMinor
+  // Cart Taxable & Taxes for General POS or Exchange
+  const cartTaxableMinor = isExchangeActive
+    ? newItemsTaxableMinor
     : cart.reduce((acc, c) => acc + c.item.priceMinor * c.qty, 0);
 
   const cartTaxMinor = isExchangeActive
     ? newItemsTaxMinor
     : cart.reduce((acc, c) => {
-      const gross = c.item.priceMinor * c.qty;
-      const taxable = Math.round((gross * 10000) / (10000 + c.item.taxRateBp));
-      return acc + (gross - taxable);
+      const taxable = c.item.priceMinor * c.qty;
+      const tax = Math.round((taxable * (c.item.taxRateBp || 0)) / 10000);
+      return acc + tax;
     }, 0);
 
-  const cartTaxableMinor = isExchangeActive ? newItemsTaxableMinor : cartSubtotalMinor - cartTaxMinor;
   const cartCgstMinor = isExchangeActive ? newItemsCgstMinor : Math.floor(cartTaxMinor / 2);
   const cartSgstMinor = isExchangeActive ? newItemsSgstMinor : cartTaxMinor - cartCgstMinor;
+  const cartSubtotalMinor = cartTaxableMinor + cartTaxMinor;
   const cartTotalMinor = cartSubtotalMinor;
   const percentDiscountMinor = Math.round((cartTotalMinor * appliedDiscountPercent) / 100);
   const maxPointsDiscountMinor = Math.max(0, cartTotalMinor - percentDiscountMinor);
@@ -5118,7 +5246,7 @@ export function App() {
       priceMinor,
       costMinor: 0,
       taxRateBp: Number(customItemForm.taxRateBp) || 0,
-      taxInclusive: true,
+      taxInclusive: false,
       hsn: '9983',
       unit: 'unit',
       currentStockMilli: 999999000,
@@ -5273,12 +5401,12 @@ export function App() {
           setPayMethodsEnabled(cfg.enabledMethods);
           try {
             localStorage.setItem('pos_enabled_methods', JSON.stringify(cfg.enabledMethods));
-          } catch {}
+          } catch { }
         }
         try {
           localStorage.setItem('pos_bank_enabled', String(Boolean(cfg.bankEnabled)));
           localStorage.setItem('pos_upi_enabled', String(Boolean(cfg.upiEnabled)));
-        } catch {}
+        } catch { }
         if (cfg.upiEnabled === false && selectedPayMode === 'upi') {
           setSelectedPayMode('cash');
         }
@@ -5466,7 +5594,7 @@ export function App() {
         localStorage.setItem('pos_enabled_methods', JSON.stringify(methodsPayload));
         localStorage.setItem('pos_bank_enabled', String(bankActive));
         localStorage.setItem('pos_upi_enabled', String(upiActive));
-      } catch {}
+      } catch { }
 
       const updated = await updatePaymentSettings({
         target: 'methods',
@@ -5532,7 +5660,7 @@ export function App() {
       localStorage.setItem('pos_enabled_methods', JSON.stringify(nextMethods));
       localStorage.setItem('pos_bank_enabled', String(nextBank));
       localStorage.setItem('pos_upi_enabled', String(nextMethods.includes('upi')));
-    } catch {}
+    } catch { }
 
     // Auto-save silently in background without locking the button
     await handleSavePaymentMethods(nextMethods, nextBank, true);
@@ -5868,7 +5996,7 @@ export function App() {
           priceMinor: -Math.abs(l.priceMinor),
           costMinor: 0,
           taxRateBp: l.taxRateBp,
-          taxInclusive: l.inclusive,
+          taxInclusive: false,
           unit: l.unit || 'pcs',
           hsn: l.hsn,
           category: 'Return / Exchange',
@@ -5975,7 +6103,7 @@ export function App() {
           priceMinor: Math.round(c.item.priceMinor),
           discountMinor: promoEvalResult?.lineDiscounts[idx] || 0,
           taxRateBp: Math.round(c.item.taxRateBp || 0),
-          inclusive: c.item.taxInclusive,
+          inclusive: false,
           unit: c.item.unit,
           hsn: c.item.hsn,
         }));
@@ -6079,7 +6207,7 @@ export function App() {
         priceMinor: Math.round(c.item.priceMinor),
         discountMinor: promoEvalResult?.lineDiscounts[idx] || 0,
         taxRateBp: Math.round(c.item.taxRateBp || 0),
-        inclusive: c.item.taxInclusive,
+        inclusive: false,
         unit: c.item.unit,
         hsn: c.item.hsn,
       }));
@@ -6157,7 +6285,9 @@ export function App() {
           counter: selectedCounter,
           counterId: checkoutCounterId || selectedCounterId || undefined,
           branchId: activeBranch?.id || user?.branchId || undefined,
-          billDiscountMinor: Math.round(percentDiscountMinor + pointsDiscountMinor + (promoEvalResult?.billDiscountMinor || 0)),
+          billDiscountMinor: cartTotalMinor > 0
+            ? Math.round(((percentDiscountMinor + pointsDiscountMinor + (promoEvalResult?.billDiscountMinor || 0)) * cartTaxableMinor) / cartTotalMinor)
+            : 0,
           appliedPromotions: promoEvalResult?.appliedPromotions || [],
           promotionDiscountMinor: promoDiscountMinor,
           payments: paymentsPayload,
@@ -6843,7 +6973,6 @@ export function App() {
     setItemFormMinWholesaleQty('');
     setItemFormCost('');
     setItemFormTax('500');
-    setItemFormTaxInclusive(true);
     setItemFormStock('50');
     setItemFormReorder('10');
     setItemFormSupplierId('');
@@ -6868,7 +6997,6 @@ export function App() {
     setItemFormMinWholesaleQty(item.minWholesaleQtyMilli != null ? String(item.minWholesaleQtyMilli / 1000) : '');
     setItemFormCost(item.costMinor ? (item.costMinor / 100).toFixed(2) : '');
     setItemFormTax(String(item.taxRateBp));
-    setItemFormTaxInclusive(item.taxInclusive);
     setItemFormStock(String(item.currentStockMilli / 1000));
     setItemFormReorder(String(((item.reorderMilli ?? item.reorderLevelMilli) || 0) / 1000));
     setItemFormSupplierId(item.preferredSupplierId || '');
@@ -6940,7 +7068,7 @@ export function App() {
             minWholesaleQtyMilli: itemFormMinWholesaleQty && !isNaN(parseFloat(itemFormMinWholesaleQty)) ? Math.max(0, Math.round(parseFloat(itemFormMinWholesaleQty) * 1000)) : null,
             costMinor: itemFormCost ? Math.round(parseFloat(itemFormCost) * 100) : 0,
             taxRateBp: parseInt(itemFormTax, 10),
-            taxInclusive: itemFormTaxInclusive,
+            taxInclusive: false,
             reorderLevelMilli: Math.max(Math.round((parseFloat(itemFormReorder) || 0) * 1000), 0),
             preferredSupplierId: itemFormSupplierId || null,
             imageUrl: itemFormImageUrl.trim() || null,
@@ -6963,7 +7091,7 @@ export function App() {
             minWholesaleQtyMilli: itemFormMinWholesaleQty && !isNaN(parseFloat(itemFormMinWholesaleQty)) ? Math.max(0, Math.round(parseFloat(itemFormMinWholesaleQty) * 1000)) : null,
             costMinor: itemFormCost ? Math.round(parseFloat(itemFormCost) * 100) : 0,
             taxRateBp: parseInt(itemFormTax, 10),
-            taxInclusive: itemFormTaxInclusive,
+            taxInclusive: false,
             openingStockMilli: Math.max(Math.round((parseFloat(itemFormStock) || 0) * 1000), 0),
             reorderLevelMilli: Math.max(Math.round((parseFloat(itemFormReorder) || 0) * 1000), 0),
             preferredSupplierId: itemFormSupplierId || null,
@@ -6987,8 +7115,15 @@ export function App() {
     }
     if (togglingItemId === item.id) return;
 
-    const prevActive = item.active !== false;
+    const prevActive = item.active !== false && !(item.trackStock !== false && (item.currentStockMilli ?? 0) <= 0);
     const newActive = !prevActive;
+
+    // Prevent manually activating a product that has zero stock
+    if (newActive && item.trackStock !== false && (item.currentStockMilli ?? 0) <= 0) {
+      playAlertTone();
+      showToast(`Cannot activate "${item.name}" with 0 stock. Please restock the product first.`, 'warning');
+      return;
+    }
 
     // Turning off: ask for confirmation first
     if (prevActive && !skipConfirm) {
@@ -7006,7 +7141,7 @@ export function App() {
     setTogglingItemId(item.id);
     // Optimistically update item in local items state so switch flips immediately
     setItems((prevItems) =>
-      prevItems.map((it) => (it.id === item.id ? { ...it, active: newActive } : it))
+      prevItems.map((it) => (it.id === item.id ? { ...it, active: newActive, deactivationReason: newActive ? null : 'manual' } : it))
     );
 
     try {
@@ -7456,6 +7591,7 @@ export function App() {
   const openInvoiceDetail = async (invoiceId: string) => {
     setSelectedInvoiceDetailId(invoiceId);
     setInvoiceDetailLoading(true);
+    setIsCreditNotesListOpen(false);
     try {
       const res = await api(`/api/invoices/${invoiceId}`);
       setInvoiceDetailData(res);
@@ -7530,6 +7666,21 @@ export function App() {
         };
       }
       return next;
+    });
+  };
+
+  const handleStepReturnQty = (lineId: string, delta: number, maxQty: number) => {
+    setReturnLinesInput((prev) => {
+      const cur = prev[lineId] || { restock: true, reason: '', customReason: '' };
+      const curQty = parseFloat(cur.returnQty) || 0;
+      const nextQty = Math.min(maxQty, Math.max(0, Math.round((curQty + delta) * 1000) / 1000));
+      return {
+        ...prev,
+        [lineId]: {
+          ...cur,
+          returnQty: nextQty === 0 ? '' : String(nextQty),
+        },
+      };
     });
   };
 
@@ -8290,8 +8441,13 @@ export function App() {
     );
   }
 
-  // Filter items matching search & quick categories
+  // Filter items matching search & quick categories for POS Catalog Drawer
   const filteredItems = items.filter((item) => {
+    // Zero-stock and inactive products are not selectable for normal POS billing
+    if (item.active === false || (item.trackStock !== false && (item.currentStockMilli ?? 0) <= 0)) {
+      return false;
+    }
+
     const matchesCat =
       selectedCategory === 'ALL' ||
       item.category === selectedCategory ||
@@ -8382,40 +8538,52 @@ export function App() {
       setShowCounterModal(true);
     };
 
+    const counterTooltip = isOwner
+      ? 'Super Admin POS Terminal (ADMIN-POS)'
+      : isManager
+        ? `Store Manager POS Terminal (${currentBranchCode}-MGR)`
+        : activeShiftNumber
+          ? `Billing Counter: ${badgeVal} (Locked for Shift #${activeShiftNumber})`
+          : `Billing Counter: ${badgeVal} (Click to change)`;
+
     return (
-      <div
-        className={`top-pos-bento-badge top-pos-counter-badge ${isLockedState ? 'locked' : ''}`}
-        title={isOwner ? 'Super Admin POS Terminal (ADMIN-POS)' : isManager ? `Store Manager POS Terminal (${currentBranchCode}-MGR)` : (activeShiftNumber ? 'Counter locked for active shift' : 'Click to select counter station')}
-        onClick={handleClick}
-        style={{ cursor: isCashier && !activeShiftNumber ? 'pointer' : 'default' }}
-      >
-        <div className="top-pos-badge-icon counter">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
-            <line x1="8" y1="21" x2="16" y2="21" />
-            <line x1="12" y1="17" x2="12" y2="21" />
-          </svg>
-        </div>
-        <div className="top-pos-badge-text">
-          <span className="top-pos-badge-label">{badgeLabel}</span>
-          <div className="top-pos-badge-val-row">
-            <span className="top-pos-badge-val">{badgeVal}</span>
-            {isCashier && activeShiftNumber ? (
-              <span className="top-pos-lock-tag" title="Counter station is locked while shift is active">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                </svg>
-                <span>Locked</span>
-              </span>
-            ) : (
-              <span className="top-pos-code-tag" style={{ color: '#0d9488', background: '#ccfbf1', borderColor: '#99f6e4' }}>
-                {badgeTag}
-              </span>
-            )}
+      <Tooltip label={counterTooltip} position="bottom">
+        <div
+          className={`top-pos-bento-badge top-pos-counter-badge ${isLockedState ? 'locked' : ''}`}
+          onClick={handleClick}
+          style={{ cursor: isCashier && !activeShiftNumber ? 'pointer' : 'pointer' }}
+          role="button"
+          tabIndex={0}
+          aria-label={`Counter: ${badgeVal}`}
+        >
+          <div className="top-pos-badge-icon counter">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+              <line x1="8" y1="21" x2="16" y2="21" />
+              <line x1="12" y1="17" x2="12" y2="21" />
+            </svg>
+          </div>
+          <div className="top-pos-badge-text">
+            <span className="top-pos-badge-label">{badgeLabel}</span>
+            <div className="top-pos-badge-val-row">
+              <span className="top-pos-badge-val">{badgeVal}</span>
+              {isCashier && activeShiftNumber ? (
+                <span className="top-pos-lock-tag" title="Counter station is locked while shift is active">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
+                  <span>Locked</span>
+                </span>
+              ) : (
+                <span className="top-pos-code-tag" style={{ color: '#0d9488', background: '#ccfbf1', borderColor: '#99f6e4' }}>
+                  {badgeTag}
+                </span>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      </Tooltip>
     );
   };
 
@@ -8808,7 +8976,7 @@ export function App() {
                   <span className="nav-text">My Cashier</span>
                   {activeShiftNumber ? (
                     <span className="nav-shift-badge active" title={`Active Shift: ${activeShiftNumber}`}>
-                      ● {activeShiftNumber}
+                      ● #{String(activeShiftNumber).split('-').pop()}
                     </span>
                   ) : (
                     <span className="nav-shift-badge closed">
@@ -9329,14 +9497,14 @@ export function App() {
           {/* Sidebar Footer (User Profile & Utilities Matching Image 2) */}
           <div className="sidebar-footer">
             <div className="sidebar-user-card">
-              <div className="sidebar-user-avatar" title={user.name}>
-                {user.name.slice(0, 1).toUpperCase()}
+              <div className="sidebar-user-avatar" title={user?.name || user?.email || 'User'}>
+                {(user?.name || user?.email || 'User').slice(0, 1).toUpperCase()}
               </div>
               <div className="sidebar-user-meta">
-                <span className="sidebar-user-name">{user.name}</span>
+                <span className="sidebar-user-name">{user?.name || user?.email || 'User'}</span>
                 <span className="sidebar-user-role">
                   <span className="user-status-dot"></span>
-                  {user.role === 'owner' ? 'Super Admin' : user.role === 'manager' ? 'Store Manager' : user?.role === 'cashier' ? 'Cashier' : user.role}
+                  {user?.role === 'owner' ? 'Super Admin' : user?.role === 'manager' ? 'Store Manager' : user?.role === 'cashier' ? 'Cashier' : (user?.role || 'Staff')}
                 </span>
               </div>
             </div>
@@ -9404,10 +9572,33 @@ export function App() {
           </div>
         </aside>
 
+        {/* Responsive Navbar for Mobile and Tablet Viewports */}
+        <ResponsiveNavbar
+          user={user}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          shop={shop}
+          isModuleVisible={isModuleVisible}
+          activeShiftNumber={activeShiftNumber}
+          unreadShiftNotifCount={unreadShiftNotifCount}
+          itemsCount={items.length}
+          parties={parties}
+          onLogout={handleSidebarLogoutClick}
+          onOpenSettings={() => {
+            setActiveTab('settings');
+            setActiveSettingsTab(isDeveloperMode ? 'Module Management' : 'General');
+          }}
+          onInventoryClick={handleInventoryClick}
+          onPurchasesClick={() => {
+            setActiveTab('purchases');
+            loadPurchases();
+          }}
+        />
+
         {/* Main Body */}
-        <main className="main-content">
+        <main className={`main-content ${(isSuperAdminUser || user?.role === 'manager' || user?.role === 'store_manager' || String(user?.role || '').toLowerCase() === 'storemanager' || String(user?.role || '').toLowerCase() === 'manager') ? 'no-bottom-nav' : ''}`}>
           {/* Top Global Bar Matching Image 2 */}
-          <div className={`top-global-bar ${isMobileViewport ? 'mobile-sticky-appbar' : ''} ${hideBusinessBar ? 'no-divider' : ''} ${displayTab === 'dashboard' ? 'dashboard-top-bar' : ''}`}>
+          <div className={`top-global-bar ${hideBusinessBar ? 'no-divider' : ''} ${displayTab === 'dashboard' ? 'dashboard-top-bar' : ''}`}>
             {/* Mobile Header Menu Hamburger Toggle Button (visible on screens <= 900px, hidden for Cashier) */}
             {user?.role !== 'cashier' && (
               <button
@@ -9417,49 +9608,55 @@ export function App() {
                 aria-label="Toggle navigation menu"
                 title="Open Navigation Menu"
               >
-                <Menu size={isMobileViewport ? 20 : 18} />
-                {!isMobileViewport && <span className="mobile-header-menu-text">Menu</span>}
+                <Menu size={18} />
+                <span className="mobile-header-menu-text">Menu</span>
               </button>
             )}
-            {isMobileViewport ? (
-              <h1 className="mobile-appbar-title" title={mobileHeaderTitle}>
-                {mobileHeaderTitle}
-              </h1>
-            ) : displayTab === 'pos' || activeTab === 'pos' ? (
+            {displayTab === 'pos' || activeTab === 'pos' ? (
               <div className="top-pos-header-left">
-                <div className="top-pos-bento-badge top-pos-branch-badge" title={`Store Branch: ${currentBranchName} (${currentBranchCode})`}>
-                  <div className="top-pos-badge-icon branch">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                      <circle cx="12" cy="10" r="3" />
-                    </svg>
-                  </div>
-                  <div className="top-pos-badge-text">
-                    <span className="top-pos-badge-label">Branch</span>
-                    <div className="top-pos-badge-val-row">
-                      <span className="top-pos-badge-val">{currentBranchName}</span>
-                      <span className="top-pos-code-tag">{currentBranchCode}</span>
+                <Tooltip label={`Store Branch: ${currentBranchName} (${currentBranchCode})`} position="bottom">
+                  <div
+                    className="top-pos-bento-badge top-pos-branch-badge"
+                    onClick={() => showToast(`Store Branch: ${currentBranchName} (${currentBranchCode})`, 'info')}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Branch: ${currentBranchName} (${currentBranchCode})`}
+                  >
+                    <div className="top-pos-badge-icon branch">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                        <circle cx="12" cy="10" r="3" />
+                      </svg>
+                    </div>
+                    <div className="top-pos-badge-text">
+                      <span className="top-pos-badge-label">Branch</span>
+                      <div className="top-pos-badge-val-row">
+                        <span className="top-pos-badge-val">{currentBranchName}</span>
+                        <span className="top-pos-code-tag">{currentBranchCode}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
+                </Tooltip>
 
                 {renderPosCounterBadge()}
 
                 {/* Customer Screen Button in Top Bar right after Counter */}
-                <button
-                  type="button"
-                  className={`top-pos-cfd-btn ${isCfdConnected ? 'active' : ''}`}
-                  onClick={() => setShowCfdModal(true)}
-                  title="Open Customer-Facing Display (Secondary Monitor / Wireless Tablet)"
-                >
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
-                    <line x1="8" y1="21" x2="16" y2="21" />
-                    <line x1="12" y1="17" x2="12" y2="21" />
-                  </svg>
-                  <span>Customer Screen</span>
-                  {isCfdConnected && <span className="bento-cfd-dot" />}
-                </button>
+                <Tooltip label="Customer Screen (Customer-Facing Display)" position="bottom">
+                  <button
+                    type="button"
+                    className={`top-pos-cfd-btn ${isCfdConnected ? 'active' : ''}`}
+                    onClick={() => setShowCfdModal(true)}
+                    aria-label="Customer Screen"
+                  >
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+                      <line x1="8" y1="21" x2="16" y2="21" />
+                      <line x1="12" y1="17" x2="12" y2="21" />
+                    </svg>
+                    <span className="top-pos-cfd-label">Customer Screen</span>
+                    {isCfdConnected && <span className="bento-cfd-dot" />}
+                  </button>
+                </Tooltip>
               </div>
             ) : (displayTab === 'invoices' || activeTab === 'invoices') && user?.role === 'cashier' ? (
               <div className="top-invoices-header-left">
@@ -9471,49 +9668,55 @@ export function App() {
                     Live POS transactions, receipts & customer returns
                   </span>
                 </div>
-                <div className="top-pos-bento-badge top-pos-branch-badge" title={`Store Branch: ${currentBranchName} (${currentBranchCode})`}>
-                  <div className="top-pos-badge-icon branch">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                      <circle cx="12" cy="10" r="3" />
-                    </svg>
-                  </div>
-                  <div className="top-pos-badge-text">
-                    <span className="top-pos-badge-label">Branch</span>
-                    <div className="top-pos-badge-val-row">
-                      <span className="top-pos-badge-val">{currentBranchName}</span>
-                      <span className="top-pos-code-tag">{currentBranchCode}</span>
+                <Tooltip label={`Store Branch: ${currentBranchName} (${currentBranchCode})`} position="bottom">
+                  <div className="top-pos-bento-badge top-pos-branch-badge" aria-label={`Store Branch: ${currentBranchName} (${currentBranchCode})`}>
+                    <div className="top-pos-badge-icon branch">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                        <circle cx="12" cy="10" r="3" />
+                      </svg>
+                    </div>
+                    <div className="top-pos-badge-text">
+                      <span className="top-pos-badge-label">Branch</span>
+                      <div className="top-pos-badge-val-row">
+                        <span className="top-pos-badge-val">{currentBranchName}</span>
+                        <span className="top-pos-code-tag">{currentBranchCode}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
+                </Tooltip>
                 {renderPosCounterBadge()}
               </div>
             ) : (displayTab === 'shifts' || activeTab === 'shifts') && user?.role === 'cashier' ? (
-              <div className="top-invoices-header-left">
-                <div className="top-invoices-title-group">
-                  <h1 className="top-invoices-title">
+              <div className="top-invoices-header-left top-shifts-header-left">
+                <div className="top-invoices-title-group top-shifts-title-group">
+                  <h1 className="top-invoices-title top-shifts-title">
                     My Cashier Shift
                   </h1>
-                  <span className="top-invoices-subtitle">
+                  <span className="top-invoices-subtitle top-shifts-subtitle">
                     Manage shift register, drawer cash float, and day-end closing
                   </span>
                 </div>
-                <div className="top-pos-bento-badge top-pos-branch-badge" title={`Store Branch: ${currentBranchName} (${currentBranchCode})`}>
-                  <div className="top-pos-badge-icon branch">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                      <circle cx="12" cy="10" r="3" />
-                    </svg>
-                  </div>
-                  <div className="top-pos-badge-text">
-                    <span className="top-pos-badge-label">Branch</span>
-                    <div className="top-pos-badge-val-row">
-                      <span className="top-pos-badge-val">{currentBranchName}</span>
-                      <span className="top-pos-code-tag">{currentBranchCode}</span>
+                <div className="top-shifts-badges-row">
+                  <Tooltip label={`Store Branch: ${currentBranchName} (${currentBranchCode})`} position="bottom">
+                    <div className="top-pos-bento-badge top-pos-branch-badge" aria-label={`Store Branch: ${currentBranchName} (${currentBranchCode})`}>
+                      <div className="top-pos-badge-icon branch">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                          <circle cx="12" cy="10" r="3" />
+                        </svg>
+                      </div>
+                      <div className="top-pos-badge-text">
+                        <span className="top-pos-badge-label">Branch</span>
+                        <div className="top-pos-badge-val-row">
+                          <span className="top-pos-badge-val">{currentBranchName}</span>
+                          <span className="top-pos-code-tag">{currentBranchCode}</span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  </Tooltip>
+                  {renderPosCounterBadge()}
                 </div>
-                {renderPosCounterBadge()}
               </div>
             ) : displayTab === 'inventory' || activeTab === 'inventory' ? (
               <div className="top-inventory-header-left">
@@ -9588,21 +9791,23 @@ export function App() {
             ) : (
               <div className="top-header-title-spacer" />
             )}
-            <div className={`top-global-actions ${isMobileViewport ? 'mobile-appbar-actions' : ''}`}>
+            <div className="top-global-actions">
               {/* Overdue Day Closing Blinking Alert Pill */}
-              {!isMobileViewport && topOverdueClosing?.isOverdue && (
+              {topOverdueClosing?.isOverdue && (
                 <button
                   type="button"
                   className="top-overdue-closing-btn blink-alert"
                   onClick={() => setActiveTab('day-closing')}
                   title={`Overdue Register Alert: Expected closing time was ${topOverdueClosing.expectedClosingTime} (${topOverdueClosing.minutesOverdue} mins overdue). Click to open Day Closing.`}
+                  aria-label={`Closing Overdue: ${topOverdueClosing.expectedClosingTime}`}
                 >
                   <AlertTriangleIcon size={15} />
-                  <span>Closing Overdue ({topOverdueClosing.expectedClosingTime})</span>
+                  <span className="top-overdue-label-full">Closing Overdue ({topOverdueClosing.expectedClosingTime})</span>
+                  <span className="top-overdue-label-short">{topOverdueClosing.expectedClosingTime}</span>
                 </button>
               )}
 
-              {!isMobileViewport && (user.role === 'owner' || user.role === 'admin' || String(user.role).toUpperCase() === 'SUPER_ADMIN') && branches.length > 0 && (
+              {(user.role === 'owner' || user.role === 'admin' || String(user.role).toUpperCase() === 'SUPER_ADMIN') && branches.length > 0 && (
                 <BranchSelector
                   branches={branches}
                   selectedBranch={selectedBranchScope}
@@ -9624,676 +9829,681 @@ export function App() {
               />
               {user?.role !== 'cashier' && (
                 <div className="top-notif-wrapper" ref={notifPopoverRef}>
-                <button
-                  type="button"
-                  className={`top-notification-btn ${showTopNotifPopover ? 'active' : ''}`}
-                  aria-label="Notifications"
-                  title={
-                    unreadShiftNotifCount > 0
-                      ? `${unreadShiftNotifCount} New Shift Notification${unreadShiftNotifCount > 1 ? 's' : ''}`
-                      : user?.role === 'cashier'
-                        ? 'Terminal Notifications'
-                        : totalStockAlerts > 0
-                          ? `${totalStockAlerts} Inventory Alert${totalStockAlerts > 1 ? 's' : ''} (${outOfStockItems.length} out of stock, ${lowStockItems.length} low stock)`
-                          : 'Notifications'
-                  }
-                  onClick={() => {
-                    setShowTopNotifPopover((prev) => !prev);
-                    if (!showTopNotifPopover) {
-                      loadNotifications();
+                  <button
+                    type="button"
+                    className={`top-notification-btn ${showTopNotifPopover ? 'active' : ''}`}
+                    aria-label="Notifications"
+                    title={
+                      unreadShiftNotifCount > 0
+                        ? `${unreadShiftNotifCount} New Shift Notification${unreadShiftNotifCount > 1 ? 's' : ''}`
+                        : user?.role === 'cashier'
+                          ? 'Terminal Notifications'
+                          : totalStockAlerts > 0
+                            ? `${totalStockAlerts} Inventory Alert${totalStockAlerts > 1 ? 's' : ''} (${outOfStockItems.length} out of stock, ${lowStockItems.length} low stock)`
+                            : 'Notifications'
                     }
-                  }}
-                >
-                  <span className="notif-icon">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                      <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-                    </svg>
-                  </span>
-                  {unreadShiftNotifCount > 0 ? (
-                    <span className="notif-badge shift-unread-badge">
-                      {unreadShiftNotifCount}
+                    onClick={() => {
+                      setShowTopNotifPopover((prev) => !prev);
+                      if (!showTopNotifPopover) {
+                        loadNotifications();
+                      }
+                    }}
+                  >
+                    <span className="notif-icon">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                      </svg>
                     </span>
-                  ) : user?.role === 'cashier' ? (
-                    (!activeShiftNumber || totalStockAlerts > 0) && (
-                      <span className="notif-badge">
-                        {!activeShiftNumber ? 1 : totalStockAlerts}
+                    {unreadShiftNotifCount > 0 ? (
+                      <span className="notif-badge shift-unread-badge">
+                        {unreadShiftNotifCount}
                       </span>
-                    )
-                  ) : (
-                    totalStockAlerts > 0 && (
-                      <span className="notif-badge">
-                        {totalStockAlerts}
-                      </span>
-                    )
-                  )}
-                </button>
-
-                {showTopNotifPopover && (
-                  <div className="top-notif-popover bento-notif-popover">
-                    {/* Bento Popover Header */}
-                    <div className="bento-notif-header">
-                      <div className="bento-notif-title-row">
-                        <span className="bento-notif-icon-bubble">
-                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-                          </svg>
+                    ) : user?.role === 'cashier' ? (
+                      (!activeShiftNumber || totalStockAlerts > 0) && (
+                        <span className="notif-badge">
+                          {!activeShiftNumber ? 1 : totalStockAlerts}
                         </span>
-                        <span className="bento-notif-title">Notifications</span>
-                        {unreadShiftNotifCount > 0 && (
-                          <span className="bento-notif-unread-count-pill">{unreadShiftNotifCount} new</span>
-                        )}
-                      </div>
-                      <div className="bento-notif-header-actions">
-                        {unreadShiftNotifCount > 0 && (
+                      )
+                    ) : (
+                      totalStockAlerts > 0 && (
+                        <span className="notif-badge">
+                          {totalStockAlerts}
+                        </span>
+                      )
+                    )}
+                  </button>
+
+                  {showTopNotifPopover && (
+                    <div className="top-notif-popover bento-notif-popover">
+                      {/* Bento Popover Header */}
+                      <div className="bento-notif-header">
+                        <div className="bento-notif-title-row">
+                          <span className="bento-notif-icon-bubble">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                            </svg>
+                          </span>
+                          <span className="bento-notif-title">Notifications</span>
+                          {unreadShiftNotifCount > 0 && (
+                            <span className="bento-notif-unread-count-pill">{unreadShiftNotifCount} new</span>
+                          )}
+                        </div>
+                        <div className="bento-notif-header-actions">
+                          {unreadShiftNotifCount > 0 && (
+                            <button
+                              type="button"
+                              className="bento-notif-mark-read-btn"
+                              onClick={handleMarkAllNotificationsRead}
+                              title="Mark all notifications as read"
+                            >
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                              </svg>
+                              <span>Mark all read</span>
+                            </button>
+                          )}
                           <button
                             type="button"
-                            className="bento-notif-mark-read-btn"
-                            onClick={handleMarkAllNotificationsRead}
-                            title="Mark all notifications as read"
+                            className="bento-notif-open-full-btn"
+                            onClick={() => {
+                              setShowTopNotifPopover(false);
+                              setActiveTab('notifications');
+                            }}
+                            title="Open dedicated full Notifications page"
                           >
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                              <polyline points="20 6 9 17 4 12"></polyline>
-                            </svg>
-                            <span>Mark all read</span>
+                            <span>Full Page →</span>
                           </button>
+                          <span className={`bento-notif-role-badge ${user?.role === 'cashier' ? 'cashier' : 'admin'}`}>
+                            {user?.role === 'cashier' ? 'Cashier Station' : user?.role === 'manager' ? 'Store Manager' : 'Super Admin'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Bento Popover Cards */}
+                      <div className="bento-notif-body">
+                        {user?.role === 'cashier' ? (
+                          <>
+                            {/* Card 1: Shift Status */}
+                            <div className={`bento-notif-card ${activeShiftNumber ? 'active-shift' : 'warning-shift'}`}>
+                              <div className="bento-notif-card-head">
+                                <div className="bento-notif-card-icon">
+                                  {activeShiftNumber ? (
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                                      <circle cx="12" cy="12" r="10"></circle>
+                                      <polyline points="12 6 12 12 16 14"></polyline>
+                                    </svg>
+                                  ) : (
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                                      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                                      <line x1="12" y1="9" x2="12" y2="13"></line>
+                                      <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                                    </svg>
+                                  )}
+                                </div>
+                                <div className="bento-notif-card-title-group">
+                                  <span className="bento-notif-card-title">
+                                    {activeShiftNumber ? `Shift #${activeShiftNumber} Active` : 'Shift is Closed'}
+                                  </span>
+                                  <span className={`bento-notif-status-pill ${activeShiftNumber ? 'live' : 'warn'}`}>
+                                    {activeShiftNumber ? 'Live Shift' : 'Action Required'}
+                                  </span>
+                                </div>
+                              </div>
+                              <p className="bento-notif-card-desc">
+                                {activeShiftNumber
+                                  ? `Register drawer is active on ${selectedCounter || 'Assigned Counter'} at ${currentBranchName}.`
+                                  : 'Open a cashier register shift to record opening cash float and track bills.'}
+                              </p>
+                              <button
+                                type="button"
+                                className="bento-notif-action-btn"
+                                onClick={() => {
+                                  setActiveTab('shifts');
+                                  setShowTopNotifPopover(false);
+                                }}
+                              >
+                                <span>{activeShiftNumber ? 'Manage Shift & Drawer' : 'Open Register Shift'}</span>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                              </button>
+                            </div>
+
+                            {/* Section: Shift Activity Notifications for Cashier */}
+                            <div className="bento-notif-section-title">
+                              Shift & Register Notifications
+                            </div>
+
+                            {shiftNotifications.length > 0 ? (
+                              shiftNotifications.map((n) => {
+                                const isShiftOpen = n.type === 'shift_open';
+                                const isShiftClose = n.type === 'shift_close';
+                                let meta = n.metadata;
+                                if (typeof meta === 'string') {
+                                  try { meta = JSON.parse(meta); } catch { }
+                                }
+                                meta = meta || {};
+
+                                const isUnread = !n.isRead && !n.is_read;
+                                const createdAt = n.createdAt || n.created_at;
+                                const branchName = n.branchName || n.branch_name || meta.branchName || '';
+
+                                return (
+                                  <div
+                                    key={n.id}
+                                    className={`bento-notif-card ${isShiftOpen ? 'shift-open' : 'shift-close'} ${isUnread ? 'unread' : ''}`}
+                                    onClick={() => handleNotificationClick(n)}
+                                    style={{ cursor: 'pointer' }}
+                                  >
+                                    <div className="bento-notif-card-head">
+                                      <div className={`bento-notif-card-icon ${isShiftOpen ? 'shift-open-icon' : 'shift-close-icon'}`}>
+                                        {isShiftOpen ? (
+                                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                                            <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                                            <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                                          </svg>
+                                        ) : (
+                                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                                            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                                            <line x1="8" y1="21" x2="16" y2="21"></line>
+                                            <line x1="12" y1="17" x2="12" y2="21"></line>
+                                          </svg>
+                                        )}
+                                      </div>
+                                      <div className="bento-notif-card-title-group">
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0, overflow: 'hidden' }}>
+                                          {isUnread && <span className="bento-notif-unread-dot" title="Unread" />}
+                                          <span className="bento-notif-card-title" title={n.title}>
+                                            {n.title}
+                                          </span>
+                                        </div>
+                                        <span className={`bento-notif-status-pill ${isShiftOpen ? 'live' : n.severity === 'warning' ? 'warn' : 'ok'}`}>
+                                          {isShiftOpen ? 'Drawer Open' : (meta.varianceText || 'Shift Closed')}
+                                        </span>
+                                      </div>
+                                    </div>
+
+                                    <div className="bento-notif-branch-row">
+                                      {Boolean(branchName) && (
+                                        <span className="bento-notif-branch-badge">
+                                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                                          {branchName}
+                                        </span>
+                                      )}
+                                      <span className="bento-notif-time-ago" style={{ marginLeft: branchName ? 'auto' : '0' }}>
+                                        {formatNotifTimeAgo(createdAt)}
+                                      </span>
+                                    </div>
+
+                                    <p className="bento-notif-card-desc">{n.message}</p>
+
+                                    {isShiftOpen && (
+                                      <div className="bento-notif-stats-grid">
+                                        <div className="bento-notif-stat-box">
+                                          <span className="stat-label">Counter</span>
+                                          <span className="stat-val">{meta.counter || 'Counter 1'}</span>
+                                        </div>
+                                        <div className="bento-notif-stat-box full-width">
+                                          <span className="stat-label">Opening Float</span>
+                                          <span className="stat-val drawer">{meta.openingCashFormatted || '₹0.00'}</span>
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {isShiftClose && (
+                                      <div className="bento-notif-stats-grid">
+                                        <div className="bento-notif-stat-box">
+                                          <span className="stat-label">Sales</span>
+                                          <span className="stat-val sales">{meta.totalSalesFormatted || '₹0.00'}</span>
+                                        </div>
+                                        <div className="bento-notif-stat-box">
+                                          <span className="stat-label">Bills</span>
+                                          <span className="stat-val">{meta.invoicesCount ?? 0}</span>
+                                        </div>
+                                        <div className="bento-notif-stat-box">
+                                          <span className="stat-label">Returns</span>
+                                          <span className="stat-val returns">{meta.returnsCount ?? 0}</span>
+                                        </div>
+                                        <div className="bento-notif-stat-box">
+                                          <span className="stat-label">Drawer</span>
+                                          <span className="stat-val drawer">{meta.countedCashFormatted || '₹0.00'}</span>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })
+                            ) : (
+                              <div className="bento-notif-card" style={{ borderLeft: '4px solid #CBD5E1', background: '#F8FAFC' }}>
+                                <div className="bento-notif-card-head">
+                                  <div className="bento-notif-card-icon" style={{ background: '#F1F5F9' }}>
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                      <circle cx="12" cy="12" r="10"></circle>
+                                      <line x1="12" y1="8" x2="12" y2="12"></line>
+                                      <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                    </svg>
+                                  </div>
+                                  <div className="bento-notif-card-title-group">
+                                    <span className="bento-notif-card-title">No Shift Activity Yet</span>
+                                    <span className="bento-notif-status-pill" style={{ background: '#F1F5F9', color: '#64748B' }}>Ready</span>
+                                  </div>
+                                </div>
+                                <p className="bento-notif-card-desc">
+                                  Verified drawer opening cash float and shift closing sales summaries will be recorded and shown here.
+                                </p>
+                              </div>
+                            )}
+
+                            {/* Section: Counter Shortcuts */}
+                            <div className="bento-notif-section-title" style={{ marginTop: '4px' }}>
+                              Counter Shortcuts
+                            </div>
+
+                            {/* Card 2: Billing Counter Station */}
+                            <div className="bento-notif-card">
+                              <div className="bento-notif-card-head">
+                                <div className="bento-notif-card-icon pos">
+                                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                    <circle cx="9" cy="21" r="1"></circle>
+                                    <circle cx="20" cy="21" r="1"></circle>
+                                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                                  </svg>
+                                </div>
+                                <div className="bento-notif-card-title-group">
+                                  <span className="bento-notif-card-title">POS Billing Counter</span>
+                                  <span className="bento-notif-status-pill pos">Ready</span>
+                                </div>
+                              </div>
+                              <p className="bento-notif-card-desc">
+                                High-speed retail barcode terminal for checkout, customer lookup, and thermal printing.
+                              </p>
+                              <button
+                                type="button"
+                                className="bento-notif-action-btn"
+                                onClick={() => {
+                                  setActiveTab('pos');
+                                  setShowTopNotifPopover(false);
+                                }}
+                              >
+                                <span>Go to Billing Counter</span>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                              </button>
+                            </div>
+
+                            {/* Card 3: Recent Bills */}
+                            <div className="bento-notif-card">
+                              <div className="bento-notif-card-head">
+                                <div className="bento-notif-card-icon invoices">
+                                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                    <polyline points="14 2 14 8 20 8" />
+                                    <line x1="16" y1="13" x2="8" y2="13" />
+                                    <line x1="16" y1="17" x2="8" y2="17" />
+                                  </svg>
+                                </div>
+                                <div className="bento-notif-card-title-group">
+                                  <span className="bento-notif-card-title">Recent Invoices</span>
+                                  <span className="bento-notif-status-pill invoices">Receipts</span>
+                                </div>
+                              </div>
+                              <p className="bento-notif-card-desc">
+                                Review recent shift transactions, reprint thermal receipts, and handle customer sales returns.
+                              </p>
+                              <button
+                                type="button"
+                                className="bento-notif-action-btn"
+                                onClick={() => {
+                                  setActiveTab('invoices');
+                                  setShowTopNotifPopover(false);
+                                }}
+                              >
+                                <span>View Recent Bills</span>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                              </button>
+                            </div>
+
+                            {/* Card 4: Shelf Stock Advisory */}
+                            {totalStockAlerts > 0 ? (
+                              <div className="bento-notif-card stock-advisory">
+                                <div className="bento-notif-card-head">
+                                  <div className="bento-notif-card-icon advisory">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ea580c" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                                      <line x1="12" y1="9" x2="12" y2="13"></line>
+                                      <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                                    </svg>
+                                  </div>
+                                  <div className="bento-notif-card-title-group">
+                                    <span className="bento-notif-card-title">Shelf Stock Advisory</span>
+                                    <span className="bento-notif-status-pill advisory">{totalStockAlerts} items</span>
+                                  </div>
+                                </div>
+                                <p className="bento-notif-card-desc">
+                                  {totalStockAlerts} catalog items have low or zero floor stock ({outOfStockItems.length} out of stock, {lowStockItems.length} low stock). Inform Store Manager to replenish.
+                                </p>
+                                <span className="bento-notif-hint">
+                                  Inventory replenishment is managed by Store Managers.
+                                </span>
+                              </div>
+                            ) : (
+                              <div className="bento-notif-card stock-advisory ok">
+                                <div className="bento-notif-card-head">
+                                  <div className="bento-notif-card-icon ok">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                      <polyline points="20 6 9 17 4 12"></polyline>
+                                    </svg>
+                                  </div>
+                                  <div className="bento-notif-card-title-group">
+                                    <span className="bento-notif-card-title">Shelf Stock Healthy</span>
+                                    <span className="bento-notif-status-pill ok">Optimal</span>
+                                  </div>
+                                </div>
+                                <p className="bento-notif-card-desc">
+                                  All tracked retail inventory items have sufficient floor stock levels.
+                                </p>
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            {/* Live Cashier Shifts & Drawer Activity for Store Manager / Super Admin */}
+                            <div className="bento-notif-section-title">
+                              {isSuperAdminUser ? 'Cashier Shifts & Drawer (Branch-wise)' : 'Cashier Shifts & Drawer'}
+                            </div>
+
+                            {shiftNotifications.length > 0 ? (
+                              shiftNotifications.map((n) => {
+                                const isShiftOpen = n.type === 'shift_open';
+                                const isShiftClose = n.type === 'shift_close';
+                                let meta = n.metadata;
+                                if (typeof meta === 'string') {
+                                  try { meta = JSON.parse(meta); } catch { }
+                                }
+                                meta = meta || {};
+
+                                const isUnread = !n.isRead && !n.is_read;
+                                const createdAt = n.createdAt || n.created_at;
+                                const branchName = n.branchName || n.branch_name || meta.branchName || '';
+
+                                return (
+                                  <div
+                                    key={n.id}
+                                    className={`bento-notif-card ${isShiftOpen ? 'shift-open' : 'shift-close'} ${isUnread ? 'unread' : ''}`}
+                                    onClick={() => handleNotificationClick(n)}
+                                    style={{ cursor: 'pointer' }}
+                                  >
+                                    <div className="bento-notif-card-head">
+                                      <div className={`bento-notif-card-icon ${isShiftOpen ? 'shift-open-icon' : 'shift-close-icon'}`}>
+                                        {isShiftOpen ? (
+                                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                                            <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                                            <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                                          </svg>
+                                        ) : (
+                                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                                            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                                            <line x1="8" y1="21" x2="16" y2="21"></line>
+                                            <line x1="12" y1="17" x2="12" y2="21"></line>
+                                          </svg>
+                                        )}
+                                      </div>
+                                      <div className="bento-notif-card-title-group">
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0, overflow: 'hidden' }}>
+                                          {isUnread && <span className="bento-notif-unread-dot" title="Unread" />}
+                                          <span className="bento-notif-card-title" title={n.title}>
+                                            {n.title}
+                                          </span>
+                                        </div>
+                                        <span className={`bento-notif-status-pill ${isShiftOpen ? 'live' : n.severity === 'warning' ? 'warn' : 'ok'}`}>
+                                          {isShiftOpen ? 'Drawer Open' : (meta.varianceText || 'Shift Closed')}
+                                        </span>
+                                      </div>
+                                    </div>
+
+                                    {/* Branch Badge (always visible if branchName exists) & Time Ago */}
+                                    <div className="bento-notif-branch-row">
+                                      {Boolean(branchName) && (
+                                        <span className="bento-notif-branch-badge">
+                                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                                          {branchName}
+                                        </span>
+                                      )}
+                                      <span className="bento-notif-time-ago" style={{ marginLeft: branchName ? 'auto' : '0' }}>
+                                        {formatNotifTimeAgo(createdAt)}
+                                      </span>
+                                    </div>
+
+                                    {/* Message summary */}
+                                    <p className="bento-notif-card-desc">{n.message}</p>
+
+                                    {/* Stats Grid for Shift Close */}
+                                    {isShiftClose && (
+                                      <div className="bento-notif-stats-grid">
+                                        <div className="bento-notif-stat-box">
+                                          <span className="stat-label">Sales</span>
+                                          <span className="stat-val sales">{meta.totalSalesFormatted || '₹0.00'}</span>
+                                        </div>
+                                        <div className="bento-notif-stat-box">
+                                          <span className="stat-label">Bills</span>
+                                          <span className="stat-val">{meta.invoicesCount ?? 0}</span>
+                                        </div>
+                                        <div className="bento-notif-stat-box">
+                                          <span className="stat-label">Returns</span>
+                                          <span className="stat-val returns">{meta.returnsCount ?? 0}</span>
+                                        </div>
+                                        <div className="bento-notif-stat-box">
+                                          <span className="stat-label">Drawer</span>
+                                          <span className="stat-val drawer">{meta.countedCashFormatted || '₹0.00'}</span>
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {/* Stats Grid for Shift Open */}
+                                    {isShiftOpen && (
+                                      <div className="bento-notif-stats-grid">
+                                        <div className="bento-notif-stat-box">
+                                          <span className="stat-label">Cashier</span>
+                                          <span className="stat-val">{meta.cashierName || n.cashierName || n.cashier_name || 'Cashier'}</span>
+                                        </div>
+                                        <div className="bento-notif-stat-box">
+                                          <span className="stat-label">Counter</span>
+                                          <span className="stat-val">{meta.counter || 'Counter 1'}</span>
+                                        </div>
+                                        <div className="bento-notif-stat-box full-width">
+                                          <span className="stat-label">Opening Float</span>
+                                          <span className="stat-val drawer">{meta.openingCashFormatted || '₹0.00'}</span>
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    <button
+                                      type="button"
+                                      className="bento-notif-action-btn"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleNotificationClick(n);
+                                      }}
+                                    >
+                                      <span>View Shift & Day Closing</span>
+                                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                    </button>
+                                  </div>
+                                );
+                              })
+                            ) : (
+                              <div className="bento-notif-card" style={{ borderLeft: '4px solid #CBD5E1', background: '#F8FAFC' }}>
+                                <div className="bento-notif-card-head">
+                                  <div className="bento-notif-card-icon" style={{ background: '#F1F5F9' }}>
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                      <circle cx="12" cy="12" r="10"></circle>
+                                      <line x1="12" y1="8" x2="12" y2="12"></line>
+                                      <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                    </svg>
+                                  </div>
+                                  <div className="bento-notif-card-title-group">
+                                    <span className="bento-notif-card-title">No Shift Activity Today</span>
+                                    <span className="bento-notif-status-pill" style={{ background: '#F1F5F9', color: '#64748B' }}>Idle</span>
+                                  </div>
+                                </div>
+                                <p className="bento-notif-card-desc">
+                                  Cashier opening drawer float checks and shift closing sales summaries will appear here in real time.
+                                </p>
+                              </div>
+                            )}
+
+                            {/* Section: Inventory & POS Quick Links */}
+                            <div className="bento-notif-section-title" style={{ marginTop: '10px' }}>
+                              Store Terminal & Inventory
+                            </div>
+
+                            {/* Inventory Alerts Card */}
+                            {totalStockAlerts > 0 ? (
+                              <div className="bento-notif-card warning-shift">
+                                <div className="bento-notif-card-head">
+                                  <div className="bento-notif-card-icon advisory">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ea580c" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                                      <line x1="12" y1="9" x2="12" y2="13"></line>
+                                      <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                                    </svg>
+                                  </div>
+                                  <div className="bento-notif-card-title-group">
+                                    <span className="bento-notif-card-title">{totalStockAlerts} Inventory Alerts</span>
+                                    <span className="bento-notif-status-pill warn">Critical</span>
+                                  </div>
+                                </div>
+                                <p className="bento-notif-card-desc">
+                                  {outOfStockItems.length} items out of stock and {lowStockItems.length} items below minimum safety levels.
+                                </p>
+                                <button
+                                  type="button"
+                                  className="bento-notif-action-btn primary"
+                                  onClick={() => {
+                                    setActiveTab('inventory');
+                                    setShowInventoryDropdown(true);
+                                    setInventoryInitialTab('replenish');
+                                    setShowTopNotifPopover(false);
+                                  }}
+                                >
+                                  <span>Open Inventory Replenishment</span>
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="bento-notif-card stock-advisory ok">
+                                <div className="bento-notif-card-head">
+                                  <div className="bento-notif-card-icon ok">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                      <polyline points="20 6 9 17 4 12"></polyline>
+                                    </svg>
+                                  </div>
+                                  <div className="bento-notif-card-title-group">
+                                    <span className="bento-notif-card-title">Inventory Stock Healthy</span>
+                                    <span className="bento-notif-status-pill ok">Optimal</span>
+                                  </div>
+                                </div>
+                                <p className="bento-notif-card-desc">
+                                  Catalog inventory is fully stocked. No restock orders are currently pending.
+                                </p>
+                              </div>
+                            )}
+
+                            <div className="bento-notif-card">
+                              <div className="bento-notif-card-head">
+                                <div className="bento-notif-card-icon pos">
+                                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                    <circle cx="9" cy="21" r="1"></circle>
+                                    <circle cx="20" cy="21" r="1"></circle>
+                                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                                  </svg>
+                                </div>
+                                <div className="bento-notif-card-title-group">
+                                  <span className="bento-notif-card-title">POS Quick Terminal</span>
+                                  <span className="bento-notif-status-pill pos">Active</span>
+                                </div>
+                              </div>
+                              <p className="bento-notif-card-desc">
+                                Jump to high-speed POS billing counter for retail sales checkout.
+                              </p>
+                              <button
+                                type="button"
+                                className="bento-notif-action-btn"
+                                onClick={() => {
+                                  setActiveTab('pos');
+                                  setShowTopNotifPopover(false);
+                                }}
+                              >
+                                <span>Open POS Counter</span>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                              </button>
+                            </div>
+                          </>
                         )}
+                      </div>
+
+                      {/* Bento Popover Footer */}
+                      <div className="bento-notif-footer" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         <button
                           type="button"
-                          className="bento-notif-open-full-btn"
                           onClick={() => {
                             setShowTopNotifPopover(false);
                             setActiveTab('notifications');
                           }}
-                          title="Open dedicated full Notifications page"
+                          style={{
+                            width: '100%',
+                            background: 'var(--primary, #0F766E)',
+                            color: '#ffffff',
+                            border: 'none',
+                            borderRadius: '8px',
+                            padding: '7px 12px',
+                            fontSize: '0.8rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '6px',
+                            boxShadow: '0 2px 6px rgba(15, 118, 110, 0.25)',
+                            transition: 'all 0.15s ease',
+                          }}
                         >
-                          <span>Full Page →</span>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                          <span>Open Notifications Center (Full View)</span>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
                         </button>
-                        <span className={`bento-notif-role-badge ${user?.role === 'cashier' ? 'cashier' : 'admin'}`}>
-                          {user?.role === 'cashier' ? 'Cashier Station' : user?.role === 'manager' ? 'Store Manager' : 'Super Admin'}
-                        </span>
+                        {user?.role === 'cashier' ? (
+                          <span className="bento-notif-footer-text">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" style={{ verticalAlign: '-1px', marginRight: '5px' }}>
+                              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                            </svg>
+                            Cashier Workspace: POS Counter · My Cashier Shift · Recent Bills
+                          </span>
+                        ) : (
+                          <span className="bento-notif-footer-text">
+                            {isSuperAdminUser ? 'Super Admin Workspace · Multi-branch Controls Active' : 'Store Manager Workspace · Branch Activity Active'}
+                          </span>
+                        )}
                       </div>
                     </div>
-
-                    {/* Bento Popover Cards */}
-                    <div className="bento-notif-body">
-                      {user?.role === 'cashier' ? (
-                        <>
-                          {/* Card 1: Shift Status */}
-                          <div className={`bento-notif-card ${activeShiftNumber ? 'active-shift' : 'warning-shift'}`}>
-                            <div className="bento-notif-card-head">
-                              <div className="bento-notif-card-icon">
-                                {activeShiftNumber ? (
-                                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <polyline points="12 6 12 12 16 14"></polyline>
-                                  </svg>
-                                ) : (
-                                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                                    <line x1="12" y1="9" x2="12" y2="13"></line>
-                                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                                  </svg>
-                                )}
-                              </div>
-                              <div className="bento-notif-card-title-group">
-                                <span className="bento-notif-card-title">
-                                  {activeShiftNumber ? `Shift #${activeShiftNumber} Active` : 'Shift is Closed'}
-                                </span>
-                                <span className={`bento-notif-status-pill ${activeShiftNumber ? 'live' : 'warn'}`}>
-                                  {activeShiftNumber ? 'Live Shift' : 'Action Required'}
-                                </span>
-                              </div>
-                            </div>
-                            <p className="bento-notif-card-desc">
-                              {activeShiftNumber
-                                ? `Register drawer is active on ${selectedCounter || 'Assigned Counter'} at ${currentBranchName}.`
-                                : 'Open a cashier register shift to record opening cash float and track bills.'}
-                            </p>
-                            <button
-                              type="button"
-                              className="bento-notif-action-btn"
-                              onClick={() => {
-                                setActiveTab('shifts');
-                                setShowTopNotifPopover(false);
-                              }}
-                            >
-                              <span>{activeShiftNumber ? 'Manage Shift & Drawer' : 'Open Register Shift'}</span>
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                            </button>
-                          </div>
-
-                          {/* Section: Shift Activity Notifications for Cashier */}
-                          <div className="bento-notif-section-title">
-                            Shift & Register Notifications
-                          </div>
-
-                          {shiftNotifications.length > 0 ? (
-                            shiftNotifications.map((n) => {
-                              const isShiftOpen = n.type === 'shift_open';
-                              const isShiftClose = n.type === 'shift_close';
-                              let meta = n.metadata;
-                              if (typeof meta === 'string') {
-                                try { meta = JSON.parse(meta); } catch { }
-                              }
-                              meta = meta || {};
-
-                              const isUnread = !n.isRead && !n.is_read;
-                              const createdAt = n.createdAt || n.created_at;
-                              const branchName = n.branchName || n.branch_name || meta.branchName || '';
-
-                              return (
-                                <div
-                                  key={n.id}
-                                  className={`bento-notif-card ${isShiftOpen ? 'shift-open' : 'shift-close'} ${isUnread ? 'unread' : ''}`}
-                                  onClick={() => handleNotificationClick(n)}
-                                  style={{ cursor: 'pointer' }}
-                                >
-                                  <div className="bento-notif-card-head">
-                                    <div className={`bento-notif-card-icon ${isShiftOpen ? 'shift-open-icon' : 'shift-close-icon'}`}>
-                                      {isShiftOpen ? (
-                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                                          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-                                          <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-                                          <line x1="12" y1="22.08" x2="12" y2="12"></line>
-                                        </svg>
-                                      ) : (
-                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                                          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-                                          <line x1="8" y1="21" x2="16" y2="21"></line>
-                                          <line x1="12" y1="17" x2="12" y2="21"></line>
-                                        </svg>
-                                      )}
-                                    </div>
-                                    <div className="bento-notif-card-title-group">
-                                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0, overflow: 'hidden' }}>
-                                        {isUnread && <span className="bento-notif-unread-dot" title="Unread" />}
-                                        <span className="bento-notif-card-title" title={n.title}>
-                                          {n.title}
-                                        </span>
-                                      </div>
-                                      <span className={`bento-notif-status-pill ${isShiftOpen ? 'live' : n.severity === 'warning' ? 'warn' : 'ok'}`}>
-                                        {isShiftOpen ? 'Drawer Open' : (meta.varianceText || 'Shift Closed')}
-                                      </span>
-                                    </div>
-                                  </div>
-
-                                  <div className="bento-notif-branch-row">
-                                    {Boolean(branchName) && (
-                                      <span className="bento-notif-branch-badge">
-                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-                                        {branchName}
-                                      </span>
-                                    )}
-                                    <span className="bento-notif-time-ago" style={{ marginLeft: branchName ? 'auto' : '0' }}>
-                                      {formatNotifTimeAgo(createdAt)}
-                                    </span>
-                                  </div>
-
-                                  <p className="bento-notif-card-desc">{n.message}</p>
-
-                                  {isShiftOpen && (
-                                    <div className="bento-notif-stats-grid">
-                                      <div className="bento-notif-stat-box">
-                                        <span className="stat-label">Counter</span>
-                                        <span className="stat-val">{meta.counter || 'Counter 1'}</span>
-                                      </div>
-                                      <div className="bento-notif-stat-box full-width">
-                                        <span className="stat-label">Opening Float</span>
-                                        <span className="stat-val drawer">{meta.openingCashFormatted || '₹0.00'}</span>
-                                      </div>
-                                    </div>
-                                  )}
-
-                                  {isShiftClose && (
-                                    <div className="bento-notif-stats-grid">
-                                      <div className="bento-notif-stat-box">
-                                        <span className="stat-label">Sales</span>
-                                        <span className="stat-val sales">{meta.totalSalesFormatted || '₹0.00'}</span>
-                                      </div>
-                                      <div className="bento-notif-stat-box">
-                                        <span className="stat-label">Bills</span>
-                                        <span className="stat-val">{meta.invoicesCount ?? 0}</span>
-                                      </div>
-                                      <div className="bento-notif-stat-box">
-                                        <span className="stat-label">Returns</span>
-                                        <span className="stat-val returns">{meta.returnsCount ?? 0}</span>
-                                      </div>
-                                      <div className="bento-notif-stat-box">
-                                        <span className="stat-label">Drawer</span>
-                                        <span className="stat-val drawer">{meta.countedCashFormatted || '₹0.00'}</span>
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-                              );
-                            })
-                          ) : (
-                            <div className="bento-notif-card" style={{ borderLeft: '4px solid #CBD5E1', background: '#F8FAFC' }}>
-                              <div className="bento-notif-card-head">
-                                <div className="bento-notif-card-icon" style={{ background: '#F1F5F9' }}>
-                                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <line x1="12" y1="8" x2="12" y2="12"></line>
-                                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                                  </svg>
-                                </div>
-                                <div className="bento-notif-card-title-group">
-                                  <span className="bento-notif-card-title">No Shift Activity Yet</span>
-                                  <span className="bento-notif-status-pill" style={{ background: '#F1F5F9', color: '#64748B' }}>Ready</span>
-                                </div>
-                              </div>
-                              <p className="bento-notif-card-desc">
-                                Verified drawer opening cash float and shift closing sales summaries will be recorded and shown here.
-                              </p>
-                            </div>
-                          )}
-
-                          {/* Section: Counter Shortcuts */}
-                          <div className="bento-notif-section-title" style={{ marginTop: '4px' }}>
-                            Counter Shortcuts
-                          </div>
-
-                          {/* Card 2: Billing Counter Station */}
-                          <div className="bento-notif-card">
-                            <div className="bento-notif-card-head">
-                              <div className="bento-notif-card-icon pos">
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                                  <circle cx="9" cy="21" r="1"></circle>
-                                  <circle cx="20" cy="21" r="1"></circle>
-                                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-                                </svg>
-                              </div>
-                              <div className="bento-notif-card-title-group">
-                                <span className="bento-notif-card-title">POS Billing Counter</span>
-                                <span className="bento-notif-status-pill pos">Ready</span>
-                              </div>
-                            </div>
-                            <p className="bento-notif-card-desc">
-                              High-speed retail barcode terminal for checkout, customer lookup, and thermal printing.
-                            </p>
-                            <button
-                              type="button"
-                              className="bento-notif-action-btn"
-                              onClick={() => {
-                                setActiveTab('pos');
-                                setShowTopNotifPopover(false);
-                              }}
-                            >
-                              <span>Go to Billing Counter</span>
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                            </button>
-                          </div>
-
-                          {/* Card 3: Recent Bills */}
-                          <div className="bento-notif-card">
-                            <div className="bento-notif-card-head">
-                              <div className="bento-notif-card-icon invoices">
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                                  <polyline points="14 2 14 8 20 8" />
-                                  <line x1="16" y1="13" x2="8" y2="13" />
-                                  <line x1="16" y1="17" x2="8" y2="17" />
-                                </svg>
-                              </div>
-                              <div className="bento-notif-card-title-group">
-                                <span className="bento-notif-card-title">Recent Invoices</span>
-                                <span className="bento-notif-status-pill invoices">Receipts</span>
-                              </div>
-                            </div>
-                            <p className="bento-notif-card-desc">
-                              Review recent shift transactions, reprint thermal receipts, and handle customer sales returns.
-                            </p>
-                            <button
-                              type="button"
-                              className="bento-notif-action-btn"
-                              onClick={() => {
-                                setActiveTab('invoices');
-                                setShowTopNotifPopover(false);
-                              }}
-                            >
-                              <span>View Recent Bills</span>
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                            </button>
-                          </div>
-
-                          {/* Card 4: Shelf Stock Advisory */}
-                          {totalStockAlerts > 0 ? (
-                            <div className="bento-notif-card stock-advisory">
-                              <div className="bento-notif-card-head">
-                                <div className="bento-notif-card-icon advisory">
-                                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ea580c" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                                    <line x1="12" y1="9" x2="12" y2="13"></line>
-                                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                                  </svg>
-                                </div>
-                                <div className="bento-notif-card-title-group">
-                                  <span className="bento-notif-card-title">Shelf Stock Advisory</span>
-                                  <span className="bento-notif-status-pill advisory">{totalStockAlerts} items</span>
-                                </div>
-                              </div>
-                              <p className="bento-notif-card-desc">
-                                {totalStockAlerts} catalog items have low or zero floor stock ({outOfStockItems.length} out of stock, {lowStockItems.length} low stock). Inform Store Manager to replenish.
-                              </p>
-                              <span className="bento-notif-hint">
-                                Inventory replenishment is managed by Store Managers.
-                              </span>
-                            </div>
-                          ) : (
-                            <div className="bento-notif-card stock-advisory ok">
-                              <div className="bento-notif-card-head">
-                                <div className="bento-notif-card-icon ok">
-                                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                  </svg>
-                                </div>
-                                <div className="bento-notif-card-title-group">
-                                  <span className="bento-notif-card-title">Shelf Stock Healthy</span>
-                                  <span className="bento-notif-status-pill ok">Optimal</span>
-                                </div>
-                              </div>
-                              <p className="bento-notif-card-desc">
-                                All tracked retail inventory items have sufficient floor stock levels.
-                              </p>
-                            </div>
-                          )}
-                        </>
-                      ) : (
-                        <>
-                          {/* Live Cashier Shifts & Drawer Activity for Store Manager / Super Admin */}
-                          <div className="bento-notif-section-title">
-                            {isSuperAdminUser ? 'Cashier Shifts & Drawer (Branch-wise)' : 'Cashier Shifts & Drawer'}
-                          </div>
-
-                          {shiftNotifications.length > 0 ? (
-                            shiftNotifications.map((n) => {
-                              const isShiftOpen = n.type === 'shift_open';
-                              const isShiftClose = n.type === 'shift_close';
-                              let meta = n.metadata;
-                              if (typeof meta === 'string') {
-                                try { meta = JSON.parse(meta); } catch { }
-                              }
-                              meta = meta || {};
-
-                              const isUnread = !n.isRead && !n.is_read;
-                              const createdAt = n.createdAt || n.created_at;
-                              const branchName = n.branchName || n.branch_name || meta.branchName || '';
-
-                              return (
-                                <div
-                                  key={n.id}
-                                  className={`bento-notif-card ${isShiftOpen ? 'shift-open' : 'shift-close'} ${isUnread ? 'unread' : ''}`}
-                                  onClick={() => handleNotificationClick(n)}
-                                  style={{ cursor: 'pointer' }}
-                                >
-                                  <div className="bento-notif-card-head">
-                                    <div className={`bento-notif-card-icon ${isShiftOpen ? 'shift-open-icon' : 'shift-close-icon'}`}>
-                                      {isShiftOpen ? (
-                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                                          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-                                          <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-                                          <line x1="12" y1="22.08" x2="12" y2="12"></line>
-                                        </svg>
-                                      ) : (
-                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                                          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-                                          <line x1="8" y1="21" x2="16" y2="21"></line>
-                                          <line x1="12" y1="17" x2="12" y2="21"></line>
-                                        </svg>
-                                      )}
-                                    </div>
-                                    <div className="bento-notif-card-title-group">
-                                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0, overflow: 'hidden' }}>
-                                        {isUnread && <span className="bento-notif-unread-dot" title="Unread" />}
-                                        <span className="bento-notif-card-title" title={n.title}>
-                                          {n.title}
-                                        </span>
-                                      </div>
-                                      <span className={`bento-notif-status-pill ${isShiftOpen ? 'live' : n.severity === 'warning' ? 'warn' : 'ok'}`}>
-                                        {isShiftOpen ? 'Drawer Open' : (meta.varianceText || 'Shift Closed')}
-                                      </span>
-                                    </div>
-                                  </div>
-
-                                  {/* Branch Badge (always visible if branchName exists) & Time Ago */}
-                                  <div className="bento-notif-branch-row">
-                                    {Boolean(branchName) && (
-                                      <span className="bento-notif-branch-badge">
-                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-                                        {branchName}
-                                      </span>
-                                    )}
-                                    <span className="bento-notif-time-ago" style={{ marginLeft: branchName ? 'auto' : '0' }}>
-                                      {formatNotifTimeAgo(createdAt)}
-                                    </span>
-                                  </div>
-
-                                  {/* Message summary */}
-                                  <p className="bento-notif-card-desc">{n.message}</p>
-
-                                  {/* Stats Grid for Shift Close */}
-                                  {isShiftClose && (
-                                    <div className="bento-notif-stats-grid">
-                                      <div className="bento-notif-stat-box">
-                                        <span className="stat-label">Sales</span>
-                                        <span className="stat-val sales">{meta.totalSalesFormatted || '₹0.00'}</span>
-                                      </div>
-                                      <div className="bento-notif-stat-box">
-                                        <span className="stat-label">Bills</span>
-                                        <span className="stat-val">{meta.invoicesCount ?? 0}</span>
-                                      </div>
-                                      <div className="bento-notif-stat-box">
-                                        <span className="stat-label">Returns</span>
-                                        <span className="stat-val returns">{meta.returnsCount ?? 0}</span>
-                                      </div>
-                                      <div className="bento-notif-stat-box">
-                                        <span className="stat-label">Drawer</span>
-                                        <span className="stat-val drawer">{meta.countedCashFormatted || '₹0.00'}</span>
-                                      </div>
-                                    </div>
-                                  )}
-
-                                  {/* Stats Grid for Shift Open */}
-                                  {isShiftOpen && (
-                                    <div className="bento-notif-stats-grid">
-                                      <div className="bento-notif-stat-box">
-                                        <span className="stat-label">Cashier</span>
-                                        <span className="stat-val">{meta.cashierName || n.cashierName || n.cashier_name || 'Cashier'}</span>
-                                      </div>
-                                      <div className="bento-notif-stat-box">
-                                        <span className="stat-label">Counter</span>
-                                        <span className="stat-val">{meta.counter || 'Counter 1'}</span>
-                                      </div>
-                                      <div className="bento-notif-stat-box full-width">
-                                        <span className="stat-label">Opening Float</span>
-                                        <span className="stat-val drawer">{meta.openingCashFormatted || '₹0.00'}</span>
-                                      </div>
-                                    </div>
-                                  )}
-
-                                  <button
-                                    type="button"
-                                    className="bento-notif-action-btn"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleNotificationClick(n);
-                                    }}
-                                  >
-                                    <span>View Shift & Day Closing</span>
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                                  </button>
-                                </div>
-                              );
-                            })
-                          ) : (
-                            <div className="bento-notif-card" style={{ borderLeft: '4px solid #CBD5E1', background: '#F8FAFC' }}>
-                              <div className="bento-notif-card-head">
-                                <div className="bento-notif-card-icon" style={{ background: '#F1F5F9' }}>
-                                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <line x1="12" y1="8" x2="12" y2="12"></line>
-                                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                                  </svg>
-                                </div>
-                                <div className="bento-notif-card-title-group">
-                                  <span className="bento-notif-card-title">No Shift Activity Today</span>
-                                  <span className="bento-notif-status-pill" style={{ background: '#F1F5F9', color: '#64748B' }}>Idle</span>
-                                </div>
-                              </div>
-                              <p className="bento-notif-card-desc">
-                                Cashier opening drawer float checks and shift closing sales summaries will appear here in real time.
-                              </p>
-                            </div>
-                          )}
-
-                          {/* Section: Inventory & POS Quick Links */}
-                          <div className="bento-notif-section-title" style={{ marginTop: '10px' }}>
-                            Store Terminal & Inventory
-                          </div>
-
-                          {/* Inventory Alerts Card */}
-                          {totalStockAlerts > 0 ? (
-                            <div className="bento-notif-card warning-shift">
-                              <div className="bento-notif-card-head">
-                                <div className="bento-notif-card-icon advisory">
-                                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ea580c" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                                    <line x1="12" y1="9" x2="12" y2="13"></line>
-                                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                                  </svg>
-                                </div>
-                                <div className="bento-notif-card-title-group">
-                                  <span className="bento-notif-card-title">{totalStockAlerts} Inventory Alerts</span>
-                                  <span className="bento-notif-status-pill warn">Critical</span>
-                                </div>
-                              </div>
-                              <p className="bento-notif-card-desc">
-                                {outOfStockItems.length} items out of stock and {lowStockItems.length} items below minimum safety levels.
-                              </p>
-                              <button
-                                type="button"
-                                className="bento-notif-action-btn primary"
-                                onClick={() => {
-                                  setActiveTab('inventory');
-                                  setShowInventoryDropdown(true);
-                                  setInventoryInitialTab('replenish');
-                                  setShowTopNotifPopover(false);
-                                }}
-                              >
-                                <span>Open Inventory Replenishment</span>
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                              </button>
-                            </div>
-                          ) : (
-                            <div className="bento-notif-card stock-advisory ok">
-                              <div className="bento-notif-card-head">
-                                <div className="bento-notif-card-icon ok">
-                                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                  </svg>
-                                </div>
-                                <div className="bento-notif-card-title-group">
-                                  <span className="bento-notif-card-title">Inventory Stock Healthy</span>
-                                  <span className="bento-notif-status-pill ok">Optimal</span>
-                                </div>
-                              </div>
-                              <p className="bento-notif-card-desc">
-                                Catalog inventory is fully stocked. No restock orders are currently pending.
-                              </p>
-                            </div>
-                          )}
-
-                          <div className="bento-notif-card">
-                            <div className="bento-notif-card-head">
-                              <div className="bento-notif-card-icon pos">
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                                  <circle cx="9" cy="21" r="1"></circle>
-                                  <circle cx="20" cy="21" r="1"></circle>
-                                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-                                </svg>
-                              </div>
-                              <div className="bento-notif-card-title-group">
-                                <span className="bento-notif-card-title">POS Quick Terminal</span>
-                                <span className="bento-notif-status-pill pos">Active</span>
-                              </div>
-                            </div>
-                            <p className="bento-notif-card-desc">
-                              Jump to high-speed POS billing counter for retail sales checkout.
-                            </p>
-                            <button
-                              type="button"
-                              className="bento-notif-action-btn"
-                              onClick={() => {
-                                setActiveTab('pos');
-                                setShowTopNotifPopover(false);
-                              }}
-                            >
-                              <span>Open POS Counter</span>
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                            </button>
-                          </div>
-                        </>
-                      )}
-                    </div>
-
-                    {/* Bento Popover Footer */}
-                    <div className="bento-notif-footer" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowTopNotifPopover(false);
-                          setActiveTab('notifications');
-                        }}
-                        style={{
-                          width: '100%',
-                          background: 'var(--primary, #0F766E)',
-                          color: '#ffffff',
-                          border: 'none',
-                          borderRadius: '8px',
-                          padding: '7px 12px',
-                          fontSize: '0.8rem',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '6px',
-                          boxShadow: '0 2px 6px rgba(15, 118, 110, 0.25)',
-                          transition: 'all 0.15s ease',
-                        }}
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-                        <span>Open Notifications Center (Full View)</span>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                      </button>
-                      {user?.role === 'cashier' ? (
-                        <span className="bento-notif-footer-text">
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" style={{ verticalAlign: '-1px', marginRight: '5px' }}>
-                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                          </svg>
-                          Cashier Workspace: POS Counter · My Cashier Shift · Recent Bills
-                        </span>
-                      ) : (
-                        <span className="bento-notif-footer-text">
-                          {isSuperAdminUser ? 'Super Admin Workspace · Multi-branch Controls Active' : 'Store Manager Workspace · Branch Activity Active'}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
               )}
               <div
                 className={`top-user-chip ${user?.role === 'cashier' ? 'readonly' : ''}`}
                 onClick={() => {
                   if (user?.role !== 'cashier') {
                     setActiveTab('settings');
+                  } else {
+                    showToast(`Cashier on Duty: ${(user?.name || 'Cashier').replace(/\s*\([^)]*\)/g, '').trim()} (${user?.role || 'cashier'})`, 'info');
                   }
                 }}
-                title={user?.role === 'cashier' ? `Cashier on Duty: ${(user?.name || 'Cashier').replace(/\s*\([^)]*\)/g, '').trim()}` : 'Settings & Profile'}
+                title={user?.role === 'cashier' ? `Cashier on Duty: ${(user?.name || 'Cashier').replace(/\s*\([^)]*\)/g, '').trim()} (Cashier)` : 'Settings & Profile'}
+                role="button"
+                tabIndex={0}
+                aria-label={`User: ${(user?.name || 'Cashier').trim()}`}
               >
                 <div className="top-user-avatar">
                   {(user?.name || 'User').replace(/\s*\([^)]*\)/g, '').trim().slice(0, 1).toUpperCase()}
@@ -10308,7 +10518,7 @@ export function App() {
                         : user?.role === 'cashier'
                           ? 'Cashier'
                           : user?.role
-                            ? user.role.charAt(0).toUpperCase() + user.role.slice(1)
+                            ? String(user.role).charAt(0).toUpperCase() + String(user.role).slice(1)
                             : 'Staff'}
                   </span>
                 </div>
@@ -10316,115 +10526,12 @@ export function App() {
             </div>
           </div>
 
-          {/* Scrollable Mobile Context Sub-Header (Greeting, Branch Switcher, POS Counter, Overdue Alert) */}
-          {isMobileViewport && (() => {
-            const isDashView = displayTab === 'dashboard' && !!user;
-            const isPosView = displayTab === 'pos' || activeTab === 'pos';
-            const isCashierSubView = ((displayTab === 'invoices' || activeTab === 'invoices') || (displayTab === 'shifts' || activeTab === 'shifts')) && user?.role === 'cashier';
-            const showMobileBranch = (user.role === 'owner' || user.role === 'admin' || String(user.role).toUpperCase() === 'SUPER_ADMIN') && branches.length > 0;
-            const showMobileOverdue = !!topOverdueClosing?.isOverdue && displayTab !== 'dashboard';
-            if (!isDashView && !isPosView && !isCashierSubView && !showMobileBranch && !showMobileOverdue) {
-              return null;
-            }
-            return (
-              <div className="mobile-context-strip">
-                {isDashView && (
-                  <div className="mobile-dash-greeting-card">
-                    <h2 className="header-greeting-title">
-                      {dashboardGreeting}, {userFirstName}
-                    </h2>
-                    <div className="header-meta-line">
-                      <span className="header-meta-item header-shop-name">{shop?.name || 'Shree Krishna Supermarket & Retail'}</span>
-                      <span className="header-meta-item header-gstin-wrap">
-                        <span className="header-gstin-label">GSTIN </span>
-                        <span className="header-gstin-val">{shop?.gstin || '33AAAAA0000A1Z9'}</span>
-                      </span>
-                      <span className="header-meta-item header-date-wrap">
-                        <CalendarIcon size={13} className="header-calendar-icon" />
-                        <span>
-                          {new Date().toLocaleDateString('en-GB', {
-                            weekday: 'short',
-                            day: 'numeric',
-                            month: 'short',
-                            year: 'numeric',
-                            timeZone: 'Asia/Kolkata',
-                          })}
-                        </span>
-                      </span>
-                    </div>
-                  </div>
-                )}
-
-                {(isPosView || isCashierSubView) && (
-                  <div className="mobile-pos-badges-strip">
-                    <div className="top-pos-bento-badge top-pos-branch-badge" title={`Store Branch: ${currentBranchName} (${currentBranchCode})`}>
-                      <div className="top-pos-badge-icon branch">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                          <circle cx="12" cy="10" r="3" />
-                        </svg>
-                      </div>
-                      <div className="top-pos-badge-text">
-                        <span className="top-pos-badge-label">Branch</span>
-                        <div className="top-pos-badge-val-row">
-                          <span className="top-pos-badge-val">{currentBranchName}</span>
-                          <span className="top-pos-code-tag">{currentBranchCode}</span>
-                        </div>
-                      </div>
-                    </div>
-                    {renderPosCounterBadge()}
-                    {isPosView && (
-                      <button
-                        type="button"
-                        className={`top-pos-cfd-btn ${isCfdConnected ? 'active' : ''}`}
-                        onClick={() => setShowCfdModal(true)}
-                        title="Open Customer-Facing Display"
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                          <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
-                          <line x1="8" y1="21" x2="16" y2="21" />
-                          <line x1="12" y1="17" x2="12" y2="21" />
-                        </svg>
-                        <span>Customer Screen</span>
-                        {isCfdConnected && <span className="bento-cfd-dot" />}
-                      </button>
-                    )}
-                  </div>
-                )}
-
-                {showMobileBranch && (
-                  <BranchSelector
-                    branches={branches}
-                    selectedBranch={selectedBranchScope}
-                    onSelectBranch={handleGlobalBranchChange}
-                    canAccessOverall={user.role === 'owner' || user.role === 'admin' || String(user.role).toUpperCase() === 'SUPER_ADMIN'}
-                  />
-                )}
-
-                {showMobileOverdue && (
-                  <button
-                    type="button"
-                    className="mobile-overdue-strip-btn"
-                    onClick={() => setActiveTab('day-closing')}
-                  >
-                    <span className="mobile-overdue-strip-left">
-                      <AlertTriangleIcon size={15} />
-                      <span>Closing Overdue ({topOverdueClosing.expectedClosingTime})</span>
-                    </span>
-                    <span className="mobile-overdue-strip-cta">Reconcile &rarr;</span>
-                  </button>
-                )}
-              </div>
-            );
-          })()}
-
           {/* View Transition Stage (SPA Bento Transition) */}
           <div key={displayTab} className={`app-view-stage ${hideBusinessBar ? 'stage-business-bar-hidden' : ''}`}>
             {/* Tab Headers */}
             {!hideBusinessBar && displayTab !== 'pos' && displayTab !== 'shifts' && displayTab !== 'sales-analysis' && displayTab !== 'dashboard' && displayTab !== 'stock-transfer' && displayTab !== 'wholesale' && activeTab !== 'wholesale' && displayTab !== 'user-management' && activeTab !== 'user-management' && (
               <header className="content-top-header">
                 <div className="content-header-left">
-                  {!isMobileViewport && (
                   <h1 className="content-page-title">
                     {displayTab === 'items' && 'Product & Stock Catalog'}
                     {displayTab === 'purchases' && 'Purchases & Stock Inward'}
@@ -10446,7 +10553,6 @@ export function App() {
                     {displayTab === 'gst-import-export' && 'GST Import & Export Hub'}
                     {displayTab === 'gst-filing-history' && 'GST Returns & Audit Filing History'}
                   </h1>
-                  )}
                   <span className="content-page-subtitle">
                     {displayTab === 'items' && 'Manage your catalog, stock balances, tax rates, and barcodes'}
                     {displayTab === 'purchases' && 'Record supplier invoices, inward goods stock into ledger, and track purchase GST'}
@@ -10541,13 +10647,13 @@ export function App() {
                   <div className="bento-shift-warning-banner">
                     <div className="bento-warning-text">
                       <span className="warning-icon">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2.4">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2.4">
                           <circle cx="12" cy="12" r="10"></circle>
                           <line x1="12" y1="8" x2="12" y2="12"></line>
                           <line x1="12" y1="16" x2="12.01" y2="16"></line>
                         </svg>
                       </span>
-                      <div>
+                      <div className="bento-warning-message">
                         <strong>Cashier Register Shift is Closed.</strong> Cash collections will not be tracked to a drawer register. Open a shift to record initial cash float.
                       </div>
                     </div>
@@ -10556,7 +10662,7 @@ export function App() {
                       className="bento-open-shift-btn"
                       onClick={() => setShowPosOpenShiftModal(true)}
                     >
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
                         <rect x="2" y="4" width="20" height="16" rx="2"></rect>
                         <path d="M12 12h.01M6 16h12M10 8h4"></path>
                       </svg>
@@ -10614,7 +10720,7 @@ export function App() {
                               <polyline points="1 20 1 14 7 14"></polyline>
                               <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
                             </svg>
-                            <span>Return / Exchange</span>
+                            <span>Return</span>
                           </button>
                           <button
                             type="button"
@@ -10811,19 +10917,24 @@ export function App() {
                               <span className="th-item" title="Product & Category">Product</span>
                               <span className="th-qty" title="Quantity">Qty</span>
                               <span className="th-mrp" title="Maximum Retail Price">MRP</span>
-                              <span className="th-price" title="Selling Rate per unit">Rate</span>
-                              <span className="th-total" title="Total Product Price">Total Price</span>
+                              <span className="th-price" title="Selling Price before GST">Selling Price</span>
+                              <span className="th-total" title="Final POS Price including GST">Final Total</span>
                               <span className="th-action"></span>
                             </div>
 
-                            {/* Cart Rows: NO SEPARATE GST ON PRODUCT; SHOWS QTY, MRP, STORE PRICE, TOTAL PRICE, CATEGORY */}
+                            {/* Cart Rows: Base Selling Price + GST calculated separately */}
                             <div className="bento-cart-rows-scroll">
                               {cart.map((cartItem, cartIdx) => {
                                 const { item, qty, isReturn, origInvoiceNumber } = cartItem;
                                 const mrp = getItemMrp(item);
                                 const storePrice = item.priceMinor;
-                                const lineTotal = storePrice * qty;
-                                const lineSavings = isReturn ? 0 : Math.max(0, (mrp - storePrice) * qty);
+                                const lineTaxable = storePrice * qty;
+                                const taxRateBp = item.taxRateBp || 0;
+                                const lineGst = isReturn ? 0 : Math.round((lineTaxable * taxRateBp) / 10000);
+                                const lineTotal = lineTaxable + lineGst;
+                                const unitGst = isReturn ? 0 : Math.round((storePrice * taxRateBp) / 10000);
+                                const unitFinalPrice = storePrice + unitGst;
+                                const lineSavings = isReturn ? 0 : Math.max(0, (mrp - unitFinalPrice) * qty);
                                 const availStock = isReturn ? qty : getAvailableStockUnits(item.id, item);
                                 const isMaxStock = isReturn || (availStock !== Infinity && qty >= availStock);
 
@@ -10900,6 +11011,26 @@ export function App() {
                                             <span className="bento-cart-cat-badge">
                                               {item.category || 'General'}
                                             </span>
+                                            {taxRateBp > 0 && !isReturn && (
+                                              <span
+                                                className="bento-cart-tax-badge"
+                                                style={{
+                                                  background: '#f0fdfa',
+                                                  color: '#0f766e',
+                                                  border: '1px solid #99f6e4',
+                                                  borderRadius: '4px',
+                                                  padding: '1px 5px',
+                                                  fontSize: '0.68rem',
+                                                  fontWeight: 750,
+                                                  letterSpacing: '0.2px',
+                                                  display: 'inline-flex',
+                                                  alignItems: 'center',
+                                                  gap: '2px',
+                                                }}
+                                              >
+                                                GST {taxRateBp / 100}% (+{formatRupees(lineGst)})
+                                              </span>
+                                            )}
                                             {/* Promotion Badge directly below the product title (clean, without full product name) */}
                                             {promoBadgeText && (
                                               <span
@@ -10908,9 +11039,7 @@ export function App() {
                                                   background: linePromo ? '#eff6ff' : '#fffbeb',
                                                   color: linePromo ? '#1d4ed8' : '#b45309',
                                                   border: linePromo ? '1.5px solid #93c5fd' : '1.5px solid #fde68a',
-                                                  padding: '1px 6px',
                                                   borderRadius: '4px',
-                                                  fontSize: '0.68rem',
                                                   fontWeight: 800,
                                                   letterSpacing: '0.2px',
                                                   display: 'inline-flex',
@@ -10933,7 +11062,7 @@ export function App() {
                                             )}
                                             {promoDiscount > 0 && (
                                               <span
-                                                className="bento-cart-savings-tag"
+                                                className="bento-cart-savings-tag bento-cart-offer-tag"
                                                 style={{ background: '#dcfce7', color: '#15803d', border: '1px solid #86efac', fontWeight: 750 }}
                                               >
                                                 Offer: -{formatRupees(promoDiscount)}
@@ -10976,10 +11105,15 @@ export function App() {
                                     </div>
 
                                     {/* Col 4: Store Price */}
-                                    <div className="bento-row-store-col">
+                                    <div className="bento-row-store-col" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
                                       <span className="bento-store-val mono" style={isReturn ? { color: '#dc2626', fontWeight: 700 } : undefined}>
                                         {isReturn ? `-${formatRupees(Math.abs(storePrice))}` : formatRupees(storePrice)}
                                       </span>
+                                      {!isReturn && taxRateBp > 0 && (
+                                        <span style={{ fontSize: '0.67rem', color: '#0f766e', fontWeight: 600 }} title={`Final unit price including ${taxRateBp / 100}% GST`}>
+                                          +GST: {formatRupees(unitFinalPrice)}
+                                        </span>
+                                      )}
                                     </div>
 
                                     {/* Col 5: Total Product Price */}
@@ -10990,7 +11124,7 @@ export function App() {
                                         </span>
                                       ) : promoEvalResult?.lineDiscounts[cartIdx] && promoEvalResult.lineDiscounts[cartIdx] > 0 ? (
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                                          <span style={{ fontSize: '0.72rem', textDecoration: 'line-through', color: '#94a3b8' }} className="mono">
+                                          <span style={{ textDecoration: 'line-through', color: '#94a3b8' }} className="bento-total-orig-val mono">
                                             {formatRupees(lineTotal)}
                                           </span>
                                           <span className="bento-total-val mono text-success" style={{ fontWeight: 800 }}>
@@ -11047,7 +11181,7 @@ export function App() {
                           )}
 
                           <div className="bento-summary-row">
-                            <span className="summary-label">{isExchangeActive ? 'New Items Taxable Subtotal' : 'Taxable Subtotal'}</span>
+                            <span className="summary-label">{isExchangeActive ? 'New Items Taxable Subtotal' : 'Total Taxable Value'}</span>
                             <span className="summary-val mono">{formatRupees(cartTaxableMinor)}</span>
                           </div>
 
@@ -11083,33 +11217,24 @@ export function App() {
                           )}
                           {/* PROMOTION DISCOUNTS & OFFERS APPLIED */}
                           {promoEvalResult && promoEvalResult.totalDiscountMinor > 0 && (
-                            <div
-                              className="bento-summary-row discount-row"
-                              style={{
-                                background: '#eff6ff',
-                                border: '1px solid #bfdbfe',
-                                padding: '0.45rem 0.65rem',
-                                borderRadius: '8px',
-                                margin: '4px 0',
-                                flexDirection: 'column',
-                                alignItems: 'stretch',
-                                gap: '0.25rem',
-                              }}
-                            >
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ color: '#1d4ed8', fontWeight: 700, fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                                  <span>🏷️</span> Offers Applied ({promoEvalResult.appliedPromotions.length})
+                            <div className="bento-summary-row discount-row bento-offers-applied-card">
+                              <div className="offers-applied-header">
+                                <span className="offers-applied-title">
+                                  <span className="offers-applied-icon" aria-hidden="true">🏷️</span>
+                                  <span className="offers-applied-title-text">Offers Applied ({promoEvalResult.appliedPromotions.length})</span>
                                 </span>
-                                <span className="summary-val mono text-success" style={{ fontWeight: 800 }}>
+                                <span className="summary-val mono text-success offers-applied-total">
                                   -{formatRupees(promoEvalResult.totalDiscountMinor)}
                                 </span>
                               </div>
-                              {promoEvalResult.appliedPromotions.map((p, idx) => (
-                                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: '#1e40af' }}>
-                                  <span>• {p.promotionName}</span>
-                                  <span className="mono">-{formatRupees(p.discountMinor)}</span>
-                                </div>
-                              ))}
+                              <div className="offers-applied-list">
+                                {promoEvalResult.appliedPromotions.map((p, idx) => (
+                                  <div key={idx} className="offers-applied-item">
+                                    <span className="offers-applied-name">• {p.promotionName}</span>
+                                    <span className="mono offers-applied-amt">-{formatRupees(p.discountMinor)}</span>
+                                  </div>
+                                ))}
+                              </div>
                             </div>
                           )}
 
@@ -11138,12 +11263,12 @@ export function App() {
                           {/* CONSOLIDATED OVERALL GST WITH TAX BREAKDOWN */}
                           <div className="bento-summary-row tax-row">
                             <div className="tax-label-group">
-                              <span className="summary-label">{isExchangeActive ? 'New Items GST Tax' : 'Consolidated GST Tax'}</span>
+                              <span className="summary-label">{isExchangeActive ? 'New Items GST Tax' : 'Total GST Amount'}</span>
                               <span className="tax-sub-breakdown">
                                 (CGST: {formatRupees(cartCgstMinor)} + SGST: {formatRupees(cartSgstMinor)})
                               </span>
                             </div>
-                            <span className="summary-val mono tax-val">{formatRupees(cartTaxMinor)}</span>
+                            <span className="summary-val mono tax-val">+{formatRupees(cartTaxMinor)}</span>
                           </div>
 
                           {/* LOYALTY POINTS EARNED / ADJUSTED ON BILL */}
@@ -11158,23 +11283,49 @@ export function App() {
                                 margin: '3px 0',
                               }}
                             >
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={netLoyaltyPointsToEarn >= 0 ? '#86198f' : '#b91c1c'} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                                  <polyline points="20 12 20 22 4 22 4 12"></polyline>
-                                  <rect x="2" y="7" width="20" height="5"></rect>
-                                  <line x1="12" y1="22" x2="12" y2="7"></line>
-                                  <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path>
-                                  <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path>
+
+                              <div className="loyalty-label-row">
+                                <svg
+                                  className="loyalty-gift-icon"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke={netLoyaltyPointsToEarn >= 0 ? '#86198f' : '#b91c1c'}
+                                  strokeWidth="2.2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <polyline points="20 12 20 22 4 22 4 12" />
+                                  <rect x="2" y="7" width="20" height="5" />
+                                  <line x1="12" y1="22" x2="12" y2="7" />
+                                  <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" />
+                                  <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" />
                                 </svg>
-                                <span className="summary-label" style={{ color: netLoyaltyPointsToEarn >= 0 ? '#86198f' : '#b91c1c', fontWeight: 700 }}>
-                                  {isExchangeActive
-                                    ? (netLoyaltyPointsToEarn >= 0 ? 'Loyalty Points on Bill (Net)' : 'Loyalty Points Adjustment')
-                                    : 'Loyalty Points on Bill'}
-                                </span>
-                                <span style={{ fontSize: '0.68rem', color: netLoyaltyPointsToEarn >= 0 ? '#a21caf' : '#991b1b', fontWeight: 600 }}>
-                                  ({shopPointsPer100} pts/₹100)
-                                </span>
+
+                                <div className="loyalty-label-content">
+                                  <span
+                                    className="loyalty-summary-label"
+                                    style={{
+                                      color: netLoyaltyPointsToEarn >= 0 ? '#86198f' : '#b91c1c'
+                                    }}
+                                  >
+                                    {isExchangeActive
+                                      ? (netLoyaltyPointsToEarn >= 0
+                                        ? 'Loyalty Points on Bill (Net)'
+                                        : 'Loyalty Points Adjustment')
+                                      : 'Loyalty Points on Bill'}
+                                  </span>
+
+                                  <span
+                                    className="loyalty-conversion-rate"
+                                    style={{
+                                      color: netLoyaltyPointsToEarn >= 0 ? '#a21caf' : '#991b1b'
+                                    }}
+                                  >
+                                    ({shopPointsPer100} pts/₹100)
+                                  </span>
+                                </div>
                               </div>
+
                               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                                 <span className="summary-val mono" style={{ color: netLoyaltyPointsToEarn >= 0 ? '#86198f' : '#b91c1c', fontWeight: 800 }}>
                                   {netLoyaltyPointsToEarn >= 0 ? `+${netLoyaltyPointsToEarn} pts` : `${netLoyaltyPointsToEarn} pts`}
@@ -11524,7 +11675,7 @@ export function App() {
                                   ) : cleanDigits.length > 0 ? (
                                     <span>Enter 10 Digits ({cleanDigits.length}/10) *</span>
                                   ) : (
-                                    <span>10-Digit Mobile Required *</span>
+                                    <span>Mobile Required *</span>
                                   )}
                                 </span>
                               </div>
@@ -11595,7 +11746,7 @@ export function App() {
                             </div>
 
                             {/* Direct Inline Inputs: Mobile Number and Customer Name */}
-                            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '0.5rem' }}>
+                            <div className="bento-cust-inputs-grid">
                               {/* 1. Customer Mobile Input with Prefix and Suggestions */}
                               <div style={{ position: 'relative' }}>
                                 <div style={{ display: 'flex', alignItems: 'stretch' }}>
@@ -11886,8 +12037,7 @@ export function App() {
                               </div>
                             ) : (
                               <div style={{ marginTop: '0.35rem', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.71rem', color: '#64748b' }}>
-                                <span>🪙</span>
-                                <span>Enter customer mobile to link member & redeem loyalty points</span>
+
                               </div>
                             )}
                           </div>
@@ -11925,7 +12075,7 @@ export function App() {
                           },
                           {
                             id: 'upi',
-                            label: 'UPI / QR',
+                            label: 'UPI',
                             disabled: posPaymentConfig?.upiEnabled === false,
                             icon: (
                               <svg className="pay-mode-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -12782,6 +12932,19 @@ export function App() {
                             )}
                           </div>
                         </div>
+                      )}
+
+                      {/* CARD PAYMENT TERMINAL (INTEGRATED & STANDALONE EDC) */}
+                      {selectedPayMode === 'card' && cart.length > 0 && (
+                        <PosCardCheckoutPanel
+                          branchId={branches[0]?.id || 'b_main'}
+                          payableMinor={finalPayableMinor}
+                          cashierName={user?.name}
+                          onPaymentSuccess={(details) => {
+                            setPaymentCardRef(details.reference);
+                          }}
+                          showToast={showToast}
+                        />
                       )}
 
                       {/* SPLIT TENDER ASSISTANT CARD (MULTI-TENDER: HALF UPI / HALF CASH / CUSTOM) */}
@@ -13940,7 +14103,7 @@ export function App() {
                             )}
                             <div className="product-mobile-badges">
                               <span className="badge badge-blue">{i.category || 'General'}</span>
-                              {i.active !== false ? (
+                              {i.active !== false && !(i.trackStock !== false && (i.currentStockMilli ?? 0) <= 0) ? (
                                 <span className="badge badge-emerald">Active</span>
                               ) : (
                                 <span className="badge badge-amber">Inactive</span>
@@ -13970,7 +14133,7 @@ export function App() {
                           <div className="product-mobile-spec-item">
                             <span className="product-mobile-spec-label">GST Rate</span>
                             <span className="product-mobile-spec-val mono" style={{ fontSize: '0.8rem' }}>
-                              {i.taxRateBp / 100}% {i.taxInclusive ? '(Incl)' : '(Excl)'}
+                              {i.taxRateBp / 100}%
                             </span>
                           </div>
                           {can(user?.role as any, 'purchases') && (
@@ -14100,18 +14263,20 @@ export function App() {
                             </button>
                             <ToggleSwitch
                               id={`mobile-toggle-item-active-${i.id}`}
-                              checked={i.active !== false}
+                              checked={i.active !== false && !(i.trackStock !== false && (i.currentStockMilli ?? 0) <= 0)}
                               onChange={() => handleToggleItemActive(i)}
-                              disabled={!can(user?.role as any, 'items.write') || togglingItemId === i.id}
+                              disabled={!can(user?.role as any, 'items.write') || togglingItemId === i.id || (i.trackStock !== false && (i.currentStockMilli ?? 0) <= 0 && i.active === false)}
                               loading={togglingItemId === i.id}
                               title={
                                 !can(user?.role as any, 'items.write')
                                   ? "You don't have permission to change product status"
-                                  : i.active !== false
-                                    ? 'Active · click to deactivate'
-                                    : 'Inactive · click to activate'
+                                  : (i.trackStock !== false && (i.currentStockMilli ?? 0) <= 0)
+                                    ? 'Out of stock (Inactive) · Restock to activate'
+                                    : i.active !== false
+                                      ? 'Active · click to deactivate'
+                                      : 'Inactive · click to activate'
                               }
-                              ariaLabel={i.active !== false ? 'Active' : 'Inactive'}
+                              ariaLabel={i.active !== false && !(i.trackStock !== false && (i.currentStockMilli ?? 0) <= 0) ? 'Active' : 'Inactive'}
                             />
                           </div>
                           <button
@@ -14297,9 +14462,9 @@ export function App() {
                               {can(user?.role as any, 'purchases') && (
                                 <td className="mono col-nowrap" style={{ color: '#334155', fontWeight: 600 }}>{i.costMinor ? formatRupees(i.costMinor) : '—'}</td>
                               )}
-                              <td className="mono col-nowrap" style={{ color: '#334155', fontWeight: 500 }}>{i.taxRateBp / 100}% {i.taxInclusive ? '(Incl)' : '(Excl)'}</td>
+                              <td className="mono col-nowrap" style={{ color: '#334155', fontWeight: 500 }}>{i.taxRateBp / 100}%</td>
                               <td className="col-nowrap">
-                                {i.active !== false ? (
+                                {i.active !== false && !(i.trackStock !== false && (i.currentStockMilli ?? 0) <= 0) ? (
                                   <span className="badge badge-emerald" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>Active</span>
                                 ) : (
                                   <span className="badge badge-amber" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>Inactive</span>
@@ -14471,18 +14636,20 @@ export function App() {
                                   </button>
                                   <ToggleSwitch
                                     id={`toggle-item-active-${i.id}`}
-                                    checked={i.active !== false}
+                                    checked={i.active !== false && !(i.trackStock !== false && (i.currentStockMilli ?? 0) <= 0)}
                                     onChange={() => handleToggleItemActive(i)}
-                                    disabled={!can(user?.role as any, 'items.write') || togglingItemId === i.id}
+                                    disabled={!can(user?.role as any, 'items.write') || togglingItemId === i.id || (i.trackStock !== false && (i.currentStockMilli ?? 0) <= 0 && i.active === false)}
                                     loading={togglingItemId === i.id}
                                     title={
                                       !can(user?.role as any, 'items.write')
                                         ? "You don't have permission to change product status"
-                                        : i.active !== false
-                                          ? 'Active · click to deactivate'
-                                          : 'Inactive · click to activate'
+                                        : (i.trackStock !== false && (i.currentStockMilli ?? 0) <= 0)
+                                          ? 'Out of stock (Inactive) · Restock to activate'
+                                          : i.active !== false
+                                            ? 'Active · click to deactivate'
+                                            : 'Inactive · click to activate'
                                     }
-                                    ariaLabel={i.active !== false ? 'Active' : 'Inactive'}
+                                    ariaLabel={i.active !== false && !(i.trackStock !== false && (i.currentStockMilli ?? 0) <= 0) ? 'Active' : 'Inactive'}
                                   />
                                   <button
                                     className="btn btn-secondary btn-icon-delete"
@@ -15439,7 +15606,7 @@ export function App() {
 
             {/* TAB: RETURN, EXCHANGE & PROFIT REPORTS */}
             {(activeTab === 'return-reports' || displayTab === 'return-reports') && (
-              <div className="tab-content-wrapper returns-tab-content-wrapper" key={`return-reports-${selectedBranchScope}`}>
+              <div className="tab-content-wrapper" key={`return-reports-${selectedBranchScope}`}>
                 <ReturnReportsView
                   user={user}
                   shop={shop}
@@ -15555,203 +15722,170 @@ export function App() {
               const totalBalancePayable = nonVoidedPurchases.reduce((sum, p) => sum + (p.balanceMinor || 0), 0);
               const openBillsCount = nonVoidedPurchases.filter((p) => (p.balanceMinor || 0) > 0).length;
 
-              const unpaidCount = purchases.filter((p) => p.status !== 'voided' && (p.paidMinor || 0) === 0).length;
-              const partialCount = purchases.filter((p) => p.status !== 'voided' && (p.paidMinor || 0) > 0 && (p.balanceMinor || 0) > 0).length;
-              const paidCount = purchases.filter((p) => p.status !== 'voided' && (p.balanceMinor || 0) === 0).length;
-              const voidedCount = purchases.filter((p) => p.status === 'voided').length;
-
               return (
-                <div className="purchases-page-wrapper">
-                  {/* Purchases Metric Cards - Bento 3D Store Management Theme */}
-                  <div className="purchases-kpi-grid">
-                    <div className="purchases-bento-card bento-card-stock">
-                      <div className="purchases-bento-top">
-                        <div className="purchases-bento-icon icon-stock">
-                          <TruckIcon size={20} />
+                <div>
+                  {/* Purchases Metric Cards - Store Manager Deep Burgundy Theme */}
+                  <div className="kpi-grid" style={{ marginBottom: '1.25rem' }}>
+                    <div className="kpi-card" style={{ border: '1.5px solid #D9C8D0', borderRadius: '16px', background: '#FAF6F8', boxShadow: '0 4px 18px -2px rgba(101, 59, 75, 0.05)' }}>
+                      <div className="kpi-icon" style={{ background: '#F5ECF0', color: '#653B4B', border: '1px solid #D9C8D0', borderRadius: '12px' }}>
+                        <TruckIcon size={24} />
+                      </div>
+                      <div>
+                        <div className="kpi-val mono" style={{ color: '#2D1822' }}>
+                          {formatRupees(totalPurchasesVolume)}
                         </div>
-                        <span className="purchases-bento-badge badge-stock">Inward Stock</span>
+                        <div className="kpi-label" style={{ color: '#64555E' }}>Total Inward Stock Volume</div>
                       </div>
-                      <div className="purchases-bento-val mono">
-                        {formatRupees(totalPurchasesVolume)}
-                      </div>
-                      <div className="purchases-bento-label">Total Inward Stock</div>
                     </div>
 
-                    <div className="purchases-bento-card bento-card-itc">
-                      <div className="purchases-bento-top">
-                        <div className="purchases-bento-icon icon-itc">
-                          <LandmarkIcon size={20} />
+                    <div className="kpi-card" style={{ border: '1.5px solid #D9C8D0', borderRadius: '16px', background: '#FAF6F8', boxShadow: '0 4px 18px -2px rgba(101, 59, 75, 0.05)' }}>
+                      <div className="kpi-icon" style={{ background: '#F5ECF0', color: '#653B4B', border: '1px solid #D9C8D0', borderRadius: '12px' }}>
+                        <LandmarkIcon size={24} />
+                      </div>
+                      <div>
+                        <div className="kpi-val mono" style={{ color: '#2D1822' }}>
+                          {formatRupees(totalItcRecorded)}
                         </div>
-                        <span className="purchases-bento-badge badge-itc">Input Tax</span>
+                        <div className="kpi-label" style={{ color: '#64555E' }}>Input Tax Credit (ITC) Recorded</div>
                       </div>
-                      <div className="purchases-bento-val mono">
-                        {formatRupees(totalItcRecorded)}
-                      </div>
-                      <div className="purchases-bento-label">Input Tax Credit (ITC)</div>
                     </div>
 
-                    <div className="purchases-bento-card bento-card-payable">
-                      <div className="purchases-bento-top">
-                        <div className="purchases-bento-icon icon-payable">
-                          <CreditCardIcon size={20} />
+                    <div className="kpi-card" style={{ border: '1.5px solid #D9C8D0', borderRadius: '16px', background: '#FAF6F8', boxShadow: '0 4px 18px -2px rgba(101, 59, 75, 0.05)' }}>
+                      <div className="kpi-icon" style={{ background: '#F5ECF0', color: '#522E3C', border: '1px solid #D9C8D0', borderRadius: '12px' }}>
+                        <CreditCardIcon size={24} />
+                      </div>
+                      <div>
+                        <div className="kpi-val mono" style={{ color: '#522E3C' }}>
+                          {formatRupees(totalBalancePayable)}
                         </div>
-                        <span className="purchases-bento-badge badge-payable">Due to Pay</span>
+                        <div className="kpi-label" style={{ color: '#64555E' }}>Supplier Payable Balance</div>
                       </div>
-                      <div className="purchases-bento-val mono">
-                        {formatRupees(totalBalancePayable)}
-                      </div>
-                      <div className="purchases-bento-label">Supplier Payable</div>
                     </div>
 
-                    <div className="purchases-bento-card bento-card-bills">
-                      <div className="purchases-bento-top">
-                        <div className="purchases-bento-icon icon-bills">
-                          <FileTextIcon size={20} />
-                        </div>
-                        <span className="purchases-bento-badge badge-bills">Invoices</span>
+                    <div className="kpi-card" style={{ border: '1.5px solid #D9C8D0', borderRadius: '16px', background: '#FAF6F8', boxShadow: '0 4px 18px -2px rgba(101, 59, 75, 0.05)' }}>
+                      <div className="kpi-icon" style={{ background: '#F5ECF0', color: '#653B4B', border: '1px solid #D9C8D0', borderRadius: '12px' }}>
+                        <FileTextIcon size={24} />
                       </div>
-                      <div className="purchases-bento-val mono">
-                        {openBillsCount}
+                      <div>
+                        <div className="kpi-val mono" style={{ color: '#2D1822' }}>{openBillsCount}</div>
+                        <div className="kpi-label" style={{ color: '#64555E' }}>Open Supplier Bills</div>
                       </div>
-                      <div className="purchases-bento-label">Open Supplier Bills</div>
                     </div>
                   </div>
 
                   {/* Main Purchases Table Card */}
-                  <div className="card purchases-main-card" style={{ border: '1.5px solid #D9C8D0', borderRadius: '18px', background: '#ffffff', boxShadow: '0 4px 18px -2px rgba(101, 59, 75, 0.05)' }}>
-                    {/* Header & Controls Toolbar */}
-                    <div className="purchases-toolbar">
-                      {/* Row 1: Title, Subtitle, Count & Primary Button */}
-                      <div className="purchases-toolbar-top">
-                        <div className="purchases-title-group">
-                          <div className="purchases-main-heading">
-                            <span>Purchases & Stock Inward</span>
-                            <span className="purchases-count-pill">{filteredPurchases.length}</span>
-                          </div>
-                          <div className="purchases-subheading">
-                            Record supplier invoices, inward goods stock into ledger, and track input GST credit
-                          </div>
-                        </div>
-
-                        <button
-                          type="button"
-                          className="btn btn-primary purchases-new-btn"
-                          onClick={() => openNewPurchaseModal()}
-                        >
-                          <PlusIcon size={16} />
-                          <span>+ Inward Goods / New Bill</span>
-                        </button>
-                      </div>
-
-                      {/* Row 2: Search input, View Toggle (Cards/Table) */}
-                      <div className="purchases-toolbar-controls">
-                        <div className="purchases-search-box">
-                          <svg className="purchases-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <circle cx="11" cy="11" r="8" />
-                            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                          </svg>
-                          <input
-                            type="text"
-                            className="purchases-search-input"
-                            placeholder="Search bill #, supplier, invoice #..."
-                            value={purchaseSearch}
-                            onChange={(e) => setPurchaseSearch(e.target.value)}
-                          />
-                          {purchaseSearch && (
-                            <button
-                              type="button"
-                              className="purchases-search-clear"
-                              onClick={() => setPurchaseSearch('')}
-                              title="Clear search"
-                            >
-                              ✕
-                            </button>
-                          )}
-                        </div>
-
-                        {/* View Toggle (Cards vs Table on Mobile) */}
-                        <div className="purchases-view-toggle">
-                          <button
-                            type="button"
-                            onClick={() => setPurchaseViewMode('cards')}
-                            className={`purchases-toggle-btn ${purchaseViewMode === 'cards' ? 'active' : ''}`}
-                            title="Card View (Mobile Optimized)"
-                          >
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                              <rect x="3" y="3" width="7" height="7" />
-                              <rect x="14" y="3" width="7" height="7" />
-                              <rect x="14" y="14" width="7" height="7" />
-                              <rect x="3" y="14" width="7" height="7" />
-                            </svg>
-                            <span>Cards</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setPurchaseViewMode('table')}
-                            className={`purchases-toggle-btn ${purchaseViewMode === 'table' ? 'active' : ''}`}
-                            title="Table View (Full Columns)"
-                          >
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M3 3h18v18H3z" />
-                              <path d="M3 9h18" />
-                              <path d="M3 15h18" />
-                              <path d="M9 3v18" />
-                            </svg>
-                            <span>Table</span>
-                          </button>
+                  <div className="card" style={{ border: '1.5px solid #D9C8D0', borderRadius: '18px', background: '#ffffff', boxShadow: '0 4px 18px -2px rgba(101, 59, 75, 0.05)' }}>
+                    <div className="card-title" style={{ flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center' }}>
+                      <div>
+                        <div style={{ fontSize: '0.8rem', color: '#64555E', fontWeight: 500, margin: 0 }}>
+                          Record supplier invoices, inward goods stock into ledger, and track input GST credit
                         </div>
                       </div>
 
-                      {/* Row 3: Status Filter Tabs (Horizontal scroll on mobile) */}
-                      <div className="purchases-status-tabs-container">
-                        <div className="purchases-status-tabs-scroller">
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                        {/* Status Filter Tabs */}
+                        <div style={{ display: 'flex', background: '#F5ECF0', borderRadius: '10px', padding: '3px', border: '1px solid #D9C8D0' }}>
                           {([
-                            { id: 'ALL', label: 'All Bills', count: purchases.length },
-                            { id: 'unpaid', label: 'Unpaid', count: unpaidCount },
-                            { id: 'partial', label: 'Part-Paid', count: partialCount },
-                            { id: 'paid', label: 'Paid', count: paidCount },
-                            { id: 'voided', label: 'Voided', count: voidedCount },
+                            { id: 'ALL', label: 'All Bills' },
+                            { id: 'unpaid', label: 'Unpaid' },
+                            { id: 'partial', label: 'Part-Paid' },
+                            { id: 'paid', label: 'Paid' },
+                            { id: 'voided', label: 'Voided' },
                           ] as const).map((st) => (
                             <button
                               key={st.id}
                               type="button"
-                              className={`purchases-status-tab ${purchaseStatusFilter === st.id ? 'active' : ''}`}
+                              style={{
+                                padding: '0.35rem 0.75rem',
+                                fontSize: '0.8rem',
+                                border: 'none',
+                                borderRadius: '7px',
+                                cursor: 'pointer',
+                                fontWeight: 700,
+                                background: purchaseStatusFilter === st.id ? '#653B4B' : 'transparent',
+                                color: purchaseStatusFilter === st.id ? '#ffffff' : '#64555E',
+                                boxShadow: purchaseStatusFilter === st.id ? '0 1px 4px rgba(101, 59, 75, 0.3)' : 'none',
+                                transition: 'all 0.18s ease',
+                              }}
                               onClick={() => setPurchaseStatusFilter(st.id)}
                             >
-                              <span>{st.label}</span>
-                              <span className="purchases-tab-badge">{st.count}</span>
+                              {st.label}
                             </button>
                           ))}
                         </div>
+
+                        <input
+                          type="text"
+                          className="form-input"
+                          style={{ width: '230px', padding: '0.45rem 0.75rem', fontSize: '0.85rem', border: '1.5px solid #D9C8D0', borderRadius: '10px', background: '#FAF6F8', color: '#2D1822' }}
+                          placeholder="Search bill #, supplier, invoice #..."
+                          value={purchaseSearch}
+                          onChange={(e) => setPurchaseSearch(e.target.value)}
+                        />
+
+                        <button
+                          className="btn btn-primary"
+                          style={{ background: 'linear-gradient(135deg, #7A475B 0%, #653B4B 100%)', borderColor: '#653B4B', color: '#ffffff', borderRadius: '10px', fontWeight: 700 }}
+                          onClick={() => openNewPurchaseModal()}
+                        >
+                          + Inward Goods / New Bill
+                        </button>
                       </div>
                     </div>
 
-                    {/* 1. Mobile Cards View (Visible on mobile when Cards view is selected) */}
-                    <div className={`purchases-mobile-cards-wrap ${purchaseViewMode === 'cards' ? 'active' : ''}`}>
-                      {filteredPurchases.map((p) => {
-                        const isVoided = p.status === 'voided';
-                        const isPaid = !isVoided && (p.balanceMinor || 0) === 0;
-                        const isPartPaid = !isVoided && (p.paidMinor || 0) > 0 && (p.balanceMinor || 0) > 0;
-                        const isUnpaid = !isVoided && (p.paidMinor || 0) === 0;
-                        const pNumber = p.purchaseNumber || (p.billNo ? `#${p.billNo}` : `Ref: ${p.id.slice(-6)}`);
-                        const pDate = p.purchaseDate || p.bdate || (p.createdAt ? new Date(p.createdAt).toISOString().slice(0, 10) : '—');
-                        const invNumber = p.supplierInvoiceNumber || p.billNo || '—';
-                        const invDate = p.supplierInvoiceDate || p.bdate || '—';
-                        const gstItc = p.itcMinor ?? ((p.cgstMinor || 0) + (p.sgstMinor || 0) + (p.igstMinor || 0));
+                    <table className="data-table">
+                      <thead style={{ background: '#FAF6F8' }}>
+                        <tr>
+                          <th style={{ color: '#653B4B', fontWeight: 700, borderBottom: '1.5px solid #D9C8D0' }}>Purchase # & Date</th>
+                          <th style={{ color: '#653B4B', fontWeight: 700, borderBottom: '1.5px solid #D9C8D0' }}>Supplier Invoice # & Date</th>
+                          <th style={{ color: '#653B4B', fontWeight: 700, borderBottom: '1.5px solid #D9C8D0' }}>Supplier / Vendor</th>
+                          <th style={{ color: '#653B4B', fontWeight: 700, borderBottom: '1.5px solid #D9C8D0' }}>Status</th>
+                          <th style={{ color: '#653B4B', fontWeight: 700, borderBottom: '1.5px solid #D9C8D0' }}>Taxable Amount</th>
+                          <th style={{ color: '#653B4B', fontWeight: 700, borderBottom: '1.5px solid #D9C8D0' }}>GST (ITC)</th>
+                          <th style={{ color: '#653B4B', fontWeight: 700, borderBottom: '1.5px solid #D9C8D0' }}>Total Amount</th>
+                          <th style={{ color: '#653B4B', fontWeight: 700, borderBottom: '1.5px solid #D9C8D0' }}>Paid / Balance</th>
+                          <th style={{ color: '#653B4B', fontWeight: 700, borderBottom: '1.5px solid #D9C8D0' }}>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredPurchases.map((p) => {
+                          const isVoided = p.status === 'voided';
+                          const isPaid = !isVoided && (p.balanceMinor || 0) === 0;
+                          const isPartPaid = !isVoided && (p.paidMinor || 0) > 0 && (p.balanceMinor || 0) > 0;
+                          const isUnpaid = !isVoided && (p.paidMinor || 0) === 0;
 
-                        return (
-                          <div key={`m-pur-${p.id}`} className={`purchase-m-card ${isVoided ? 'is-voided' : ''}`}>
-                            {/* Card Header: Purchase Number + Date + Status */}
-                            <div className="purchase-m-card-header">
-                              <div className="purchase-m-id-block">
-                                <span className="purchase-m-number">{pNumber}</span>
-                                <span className="purchase-m-date">
-                                  <CalendarIcon size={12} />
-                                  <span>{pDate}</span>
-                                </span>
-                              </div>
-
-                              <div className="purchase-m-status-block">
+                          return (
+                            <tr key={p.id} style={{ opacity: isVoided ? 0.65 : 1 }}>
+                              <td>
+                                <div style={{ fontWeight: 700, color: isVoided ? '#94a3b8' : '#653B4B' }}>
+                                  {p.purchaseNumber || (p.billNo ? `#${p.billNo}` : `Ref: ${p.id.slice(-6)}`)}
+                                </div>
+                                <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                                  {p.purchaseDate || p.bdate || (p.createdAt ? new Date(p.createdAt).toISOString().slice(0, 10) : '—')}
+                                </div>
+                              </td>
+                              <td>
+                                <div style={{ fontWeight: 600 }}>{p.supplierInvoiceNumber || p.billNo || '—'}</div>
+                                <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                                  {p.supplierInvoiceDate || p.bdate || '—'}
+                                </div>
+                              </td>
+                              <td>
+                                <div style={{ fontWeight: 600 }}>{p.supplierName || 'Unknown Supplier'}</div>
+                                {p.supplierGstin ? (
+                                  <div className="mono" style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                                    GSTIN: {p.supplierGstin}
+                                  </div>
+                                ) : (
+                                  <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Unregistered Supplier</div>
+                                )}
+                                {p.supplierPhone && (
+                                  <div className="mono" style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><PhoneIcon size={12} /> {p.supplierPhone}</span>
+                                  </div>
+                                )}
+                              </td>
+                              <td>
                                 {isVoided ? (
                                   <span
                                     className="badge"
@@ -15782,375 +15916,126 @@ export function App() {
                                     <AlertTriangleIcon size={12} /> UNPAID
                                   </span>
                                 )}
-                              </div>
-                            </div>
-
-                            {/* Vendor & Invoice Details */}
-                            <div className="purchase-m-vendor-box">
-                              <div className="purchase-m-vendor-main">
-                                <div className="purchase-m-vendor-name">{p.supplierName || 'Unknown Supplier'}</div>
-                                <div className="purchase-m-invoice-meta">
-                                  <span className="purchase-m-inv-pill">
-                                    Inv: <strong>{invNumber}</strong>
-                                  </span>
-                                  <span className="purchase-m-inv-date">({invDate})</span>
+                              </td>
+                              <td className="mono" style={{ color: '#2D1822' }}>{formatRupees(p.taxableMinor)}</td>
+                              <td className="mono" style={{ color: '#653B4B', fontWeight: 600 }}>
+                                {formatRupees(p.itcMinor ?? (p.cgstMinor + p.sgstMinor + p.igstMinor))}
+                              </td>
+                              <td className="mono" style={{ fontWeight: 800, color: '#2D1822' }}>
+                                {formatRupees(p.totalMinor)}
+                              </td>
+                              <td>
+                                <div className="mono" style={{ color: '#653B4B', fontSize: '0.85rem', fontWeight: 600 }}>
+                                  Paid: {formatRupees(p.paidMinor)}
                                 </div>
-                              </div>
-
-                              <div className="purchase-m-vendor-sub">
-                                {p.supplierGstin ? (
-                                  <span className="purchase-m-gstin mono">
-                                    GSTIN: {p.supplierGstin}
-                                  </span>
-                                ) : (
-                                  <span className="purchase-m-unregistered">Unregistered Supplier</span>
+                                {(p.balanceMinor || 0) > 0 && !isVoided && (
+                                  <div className="mono" style={{ color: '#522E3C', fontSize: '0.8rem', fontWeight: 700 }}>
+                                    Bal: {formatRupees(p.balanceMinor)}
+                                  </div>
                                 )}
-
-                                {p.supplierPhone && (
-                                  <a href={`tel:${p.supplierPhone}`} className="purchase-m-phone mono" title="Tap to call">
-                                    <PhoneIcon size={12} />
-                                    <span>{p.supplierPhone}</span>
-                                  </a>
-                                )}
-                              </div>
-                            </div>
-
-                            {/* Financials Overview Box */}
-                            <div className="purchase-m-finance-box">
-                              <div className="purchase-m-finance-top">
-                                <div className="purchase-m-finance-col">
-                                  <span className="purchase-m-finance-label">Taxable</span>
-                                  <span className="purchase-m-finance-val mono">{formatRupees(p.taxableMinor)}</span>
-                                </div>
-                                <div className="purchase-m-finance-col">
-                                  <span className="purchase-m-finance-label">GST (ITC)</span>
-                                  <span className="purchase-m-finance-val mono" style={{ color: '#653B4B', fontWeight: 600 }}>
-                                    {formatRupees(gstItc)}
-                                  </span>
-                                </div>
-                                <div className="purchase-m-finance-col total-col">
-                                  <span className="purchase-m-finance-label">Total Amount</span>
-                                  <span className="purchase-m-finance-val total mono">{formatRupees(p.totalMinor)}</span>
-                                </div>
-                              </div>
-
-                              <div className="purchase-m-finance-bottom">
-                                <div className="purchase-m-pay-status">
-                                  <span className="mono">Paid: <strong>{formatRupees(p.paidMinor)}</strong></span>
-                                  {(p.balanceMinor || 0) > 0 && !isVoided ? (
-                                    <span className="purchase-m-balance-chip mono">
-                                      Bal: {formatRupees(p.balanceMinor)}
-                                    </span>
-                                  ) : isPaid ? (
-                                    <span className="purchase-m-settled-chip">Fully Settled</span>
-                                  ) : null}
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Actions Row */}
-                            <div className="purchase-m-actions">
-                              <button
-                                type="button"
-                                className="btn btn-secondary purchase-m-btn"
-                                onClick={() => handleViewPurchaseDetails(p.id)}
-                              >
-                                <EyeIcon size={13} />
-                                <span>View</span>
-                              </button>
-
-                              <button
-                                type="button"
-                                className="btn btn-secondary purchase-m-btn"
-                                onClick={() => window.open(`/api/purchases/${p.id}/print?format=a4`, '_blank')}
-                                title="Print A4 Purchase Document"
-                              >
-                                <PrinterIcon size={13} />
-                                <span>Print</span>
-                              </button>
-
-                              {!isVoided && (p.balanceMinor || 0) > 0 && can(user?.role as any, 'purchases.pay') && (
-                                <button
-                                  type="button"
-                                  className="btn btn-primary purchase-m-btn pay-btn"
-                                  onClick={() => {
-                                    const sup = parties.find((part) => part.id === p.supplierId);
-                                    if (sup) {
-                                      handleOpenPaySupplier(sup);
-                                    } else {
-                                      handleOpenPaySupplier({
-                                        id: p.supplierId,
-                                        name: p.supplierName || 'Supplier',
-                                        phone: p.supplierPhone,
-                                        payableMinor: p.balanceMinor,
-                                        openPurchasesCount: 1,
-                                        type: 'supplier',
-                                        creditLimitMinor: 0,
-                                      });
-                                    }
-                                  }}
-                                  title="Pay supplier balance"
-                                >
-                                  <CreditCardIcon size={13} />
-                                  <span>Pay</span>
-                                </button>
-                              )}
-
-                              {!isVoided && can(user?.role as any, 'purchases.void') && (
-                                <button
-                                  type="button"
-                                  className="btn btn-secondary purchase-m-btn void-btn"
-                                  onClick={() => handleOpenVoidPurchase(p)}
-                                  title="Void this purchase and reverse stock inward"
-                                >
-                                  <Trash2Icon size={13} />
-                                  <span>Void</span>
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-
-                      {filteredPurchases.length === 0 && (
-                        <div className="purchases-mobile-empty">
-                          <div className="purchases-mobile-empty-icon">
-                            <InboxIcon size={32} />
-                          </div>
-                          <div className="purchases-mobile-empty-title">No purchase bills found</div>
-                          <div className="purchases-mobile-empty-desc">
-                            No purchase bills match the selected status filter or search query.
-                          </div>
-                          <button
-                            type="button"
-                            className="btn btn-primary"
-                            style={{ background: 'linear-gradient(135deg, #7A475B 0%, #653B4B 100%)', borderColor: '#653B4B', color: '#ffffff', borderRadius: '10px', fontWeight: 700, padding: '0.55rem 1.25rem' }}
-                            onClick={() => openNewPurchaseModal()}
-                          >
-                            <PlusIcon size={16} />
-                            <span>+ Record New Purchase</span>
-                          </button>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* 2. Full Table View (Scrollable horizontally on mobile when Table view is active, and visible on desktop) */}
-                    <div className={`purchases-table-container ${purchaseViewMode === 'cards' ? 'hide-on-mobile' : ''}`}>
-                      <div className="purchases-table-scroll-hint">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="18 8 22 12 18 16" />
-                          <polyline points="6 8 2 12 6 16" />
-                          <line x1="2" y1="12" x2="22" y2="12" />
-                        </svg>
-                        <span>Swipe horizontally to view all columns (Taxable, GST, Total, Balance & Actions) ↔</span>
-                      </div>
-
-                      <div className="purchases-table-scroller">
-                        <table className="data-table purchases-data-table">
-                          <thead style={{ background: '#FAF6F8' }}>
-                            <tr>
-                              <th className="col-sticky-purchase" style={{ color: '#653B4B', fontWeight: 700, borderBottom: '1.5px solid #D9C8D0' }}>Purchase # & Date</th>
-                              <th style={{ color: '#653B4B', fontWeight: 700, borderBottom: '1.5px solid #D9C8D0' }}>Supplier Invoice # & Date</th>
-                              <th style={{ color: '#653B4B', fontWeight: 700, borderBottom: '1.5px solid #D9C8D0' }}>Supplier / Vendor</th>
-                              <th style={{ color: '#653B4B', fontWeight: 700, borderBottom: '1.5px solid #D9C8D0' }}>Status</th>
-                              <th style={{ color: '#653B4B', fontWeight: 700, borderBottom: '1.5px solid #D9C8D0' }}>Taxable Amount</th>
-                              <th style={{ color: '#653B4B', fontWeight: 700, borderBottom: '1.5px solid #D9C8D0' }}>GST (ITC)</th>
-                              <th style={{ color: '#653B4B', fontWeight: 700, borderBottom: '1.5px solid #D9C8D0' }}>Total Amount</th>
-                              <th style={{ color: '#653B4B', fontWeight: 700, borderBottom: '1.5px solid #D9C8D0' }}>Paid / Balance</th>
-                              <th style={{ color: '#653B4B', fontWeight: 700, borderBottom: '1.5px solid #D9C8D0' }}>Actions</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {filteredPurchases.map((p) => {
-                              const isVoided = p.status === 'voided';
-                              const isPaid = !isVoided && (p.balanceMinor || 0) === 0;
-                              const isPartPaid = !isVoided && (p.paidMinor || 0) > 0 && (p.balanceMinor || 0) > 0;
-                              const isUnpaid = !isVoided && (p.paidMinor || 0) === 0;
-
-                              return (
-                                <tr key={p.id} style={{ opacity: isVoided ? 0.65 : 1 }}>
-                                  <td className="col-sticky-purchase">
-                                    <div style={{ fontWeight: 700, color: isVoided ? '#94a3b8' : '#653B4B' }}>
-                                      {p.purchaseNumber || (p.billNo ? `#${p.billNo}` : `Ref: ${p.id.slice(-6)}`)}
-                                    </div>
-                                    <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-                                      {p.purchaseDate || p.bdate || (p.createdAt ? new Date(p.createdAt).toISOString().slice(0, 10) : '—')}
-                                    </div>
-                                  </td>
-                                  <td>
-                                    <div style={{ fontWeight: 600 }}>{p.supplierInvoiceNumber || p.billNo || '—'}</div>
-                                    <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-                                      {p.supplierInvoiceDate || p.bdate || '—'}
-                                    </div>
-                                  </td>
-                                  <td>
-                                    <div style={{ fontWeight: 600 }}>{p.supplierName || 'Unknown Supplier'}</div>
-                                    {p.supplierGstin ? (
-                                      <div className="mono" style={{ fontSize: '0.75rem', color: '#64748b' }}>
-                                        GSTIN: {p.supplierGstin}
-                                      </div>
-                                    ) : (
-                                      <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Unregistered Supplier</div>
-                                    )}
-                                    {p.supplierPhone && (
-                                      <div className="mono" style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-                                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><PhoneIcon size={12} /> {p.supplierPhone}</span>
-                                      </div>
-                                    )}
-                                  </td>
-                                  <td>
-                                    {isVoided ? (
-                                      <span
-                                        className="badge"
-                                        style={{ background: '#f8fafc', color: '#64748b', border: '1px solid #e2e8f0', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                                        title={p.voidReason ? `Voided: ${p.voidReason}` : 'Voided'}
-                                      >
-                                        <XCircleIcon size={12} /> Voided
-                                      </span>
-                                    ) : isPaid ? (
-                                      <span
-                                        className="badge"
-                                        style={{ background: '#FAF6F8', color: '#522E3C', border: '1px solid #D9C8D0', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                                      >
-                                        <CheckCircleIcon size={12} /> Paid
-                                      </span>
-                                    ) : isPartPaid ? (
-                                      <span
-                                        className="badge"
-                                        style={{ background: '#F5ECF0', color: '#7A475B', border: '1px solid #D9C8D0', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                                      >
-                                        <ClockIcon size={12} /> Part-Paid
-                                      </span>
-                                    ) : (
-                                      <span
-                                        className="badge"
-                                        style={{ background: '#F5ECF0', color: '#653B4B', border: '1px solid #D9C8D0', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                                      >
-                                        <AlertTriangleIcon size={12} /> UNPAID
-                                      </span>
-                                    )}
-                                  </td>
-                                  <td className="mono" style={{ color: '#2D1822' }}>{formatRupees(p.taxableMinor)}</td>
-                                  <td className="mono" style={{ color: '#653B4B', fontWeight: 600 }}>
-                                    {formatRupees(p.itcMinor ?? (p.cgstMinor + p.sgstMinor + p.igstMinor))}
-                                  </td>
-                                  <td className="mono" style={{ fontWeight: 800, color: '#2D1822' }}>
-                                    {formatRupees(p.totalMinor)}
-                                  </td>
-                                  <td>
-                                    <div className="mono" style={{ color: '#653B4B', fontSize: '0.85rem', fontWeight: 600 }}>
-                                      Paid: {formatRupees(p.paidMinor)}
-                                    </div>
-                                    {(p.balanceMinor || 0) > 0 && !isVoided && (
-                                      <div className="mono" style={{ color: '#522E3C', fontSize: '0.8rem', fontWeight: 700 }}>
-                                        Bal: {formatRupees(p.balanceMinor)}
-                                      </div>
-                                    )}
-                                  </td>
-                                  <td>
-                                    <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                                      <button
-                                        type="button"
-                                        className="btn btn-secondary"
-                                        style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', borderColor: '#D9C8D0', color: '#653B4B', background: '#FAF6F8' }}
-                                        onClick={() => handleViewPurchaseDetails(p.id)}
-                                      >
-                                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><EyeIcon size={13} /> View</span>
-                                      </button>
-                                      <button
-                                        type="button"
-                                        className="btn btn-secondary"
-                                        style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', borderColor: '#D9C8D0', color: '#653B4B', background: '#FAF6F8' }}
-                                        onClick={() => window.open(`/api/purchases/${p.id}/print?format=a4`, '_blank')}
-                                        title="Print A4 Purchase Document"
-                                      >
-                                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><PrinterIcon size={13} /> Print</span>
-                                      </button>
-                                      {!isVoided && (p.balanceMinor || 0) > 0 && can(user?.role as any, 'purchases.pay') && (
-                                        <button
-                                          type="button"
-                                          className="btn btn-primary"
-                                          style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', background: '#653B4B', borderColor: '#653B4B', color: '#ffffff', borderRadius: '6px', fontWeight: 600 }}
-                                          onClick={() => {
-                                            const sup = parties.find((part) => part.id === p.supplierId);
-                                            if (sup) {
-                                              handleOpenPaySupplier(sup);
-                                            } else {
-                                              handleOpenPaySupplier({
-                                                id: p.supplierId,
-                                                name: p.supplierName || 'Supplier',
-                                                phone: p.supplierPhone,
-                                                payableMinor: p.balanceMinor,
-                                                openPurchasesCount: 1,
-                                                type: 'supplier',
-                                                creditLimitMinor: 0,
-                                              });
-                                            }
-                                          }}
-                                          title="Pay supplier balance"
-                                        >
-                                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><CreditCardIcon size={13} /> Pay</span>
-                                        </button>
-                                      )}
-                                      {!isVoided && can(user?.role as any, 'purchases.void') && (
-                                        <button
-                                          type="button"
-                                          className="btn btn-secondary"
-                                          style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', color: '#ef4444' }}
-                                          onClick={() => handleOpenVoidPurchase(p)}
-                                          title="Void this purchase and reverse stock inward"
-                                        >
-                                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><Trash2Icon size={13} /> Void</span>
-                                        </button>
-                                      )}
-                                    </div>
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                            {filteredPurchases.length === 0 && (
-                              <tr>
-                                <td colSpan={9} style={{ textAlign: 'center', padding: '3.5rem 1.5rem', color: '#94a3b8' }}>
-                                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
-                                    <div
-                                      style={{
-                                        width: '54px',
-                                        height: '54px',
-                                        borderRadius: '14px',
-                                        background: '#F5ECF0',
-                                        color: '#653B4B',
-                                        border: '1px solid #D9C8D0',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        boxShadow: '0 2px 8px rgba(101, 59, 75, 0.08)',
-                                      }}
-                                    >
-                                      <InboxIcon size={28} />
-                                    </div>
-                                    <div style={{ fontWeight: 700, fontSize: '1rem', color: '#2D1822' }}>
-                                      No purchase bills found matching your filter
-                                    </div>
-                                    <div style={{ fontSize: '0.825rem', color: '#64555E', maxWidth: '380px', lineHeight: 1.5 }}>
-                                      Record supplier invoices to inward products into your stock ledger and track input GST credit.
-                                    </div>
+                              </td>
+                              <td>
+                                <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                                  <button
+                                    type="button"
+                                    className="btn btn-secondary"
+                                    style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', borderColor: '#D9C8D0', color: '#653B4B', background: '#FAF6F8' }}
+                                    onClick={() => handleViewPurchaseDetails(p.id)}
+                                  >
+                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><EyeIcon size={13} /> View</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="btn btn-secondary"
+                                    style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', borderColor: '#D9C8D0', color: '#653B4B', background: '#FAF6F8' }}
+                                    onClick={() => window.open(`/api/purchases/${p.id}/print?format=a4`, '_blank')}
+                                    title="Print A4 Purchase Document"
+                                  >
+                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><PrinterIcon size={13} /> Print</span>
+                                  </button>
+                                  {!isVoided && (p.balanceMinor || 0) > 0 && can(user?.role as any, 'purchases.pay') && (
                                     <button
                                       type="button"
                                       className="btn btn-primary"
-                                      style={{ marginTop: '0.4rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.55rem 1.25rem', fontWeight: 700, background: 'linear-gradient(135deg, #7A475B 0%, #653B4B 100%)', borderColor: '#653B4B', color: '#ffffff', borderRadius: '10px' }}
-                                      onClick={() => openNewPurchaseModal()}
+                                      style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', background: '#653B4B', borderColor: '#653B4B', color: '#ffffff', borderRadius: '6px', fontWeight: 600 }}
+                                      onClick={() => {
+                                        const sup = parties.find((part) => part.id === p.supplierId);
+                                        if (sup) {
+                                          handleOpenPaySupplier(sup);
+                                        } else {
+                                          handleOpenPaySupplier({
+                                            id: p.supplierId,
+                                            name: p.supplierName || 'Supplier',
+                                            phone: p.supplierPhone,
+                                            payableMinor: p.balanceMinor,
+                                            openPurchasesCount: 1,
+                                            type: 'supplier',
+                                            creditLimitMinor: 0,
+                                          });
+                                        }
+                                      }}
+                                      title="Pay supplier balance"
                                     >
-                                      <PlusIcon size={16} />
-                                      Record Your First Purchase Bill
+                                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><CreditCardIcon size={13} /> Pay</span>
                                     </button>
-                                  </div>
-                                </td>
-                              </tr>
-                            )}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
+                                  )}
+                                  {!isVoided && can(user?.role as any, 'purchases.void') && (
+                                    <button
+                                      type="button"
+                                      className="btn btn-secondary"
+                                      style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', color: '#ef4444' }}
+                                      onClick={() => handleOpenVoidPurchase(p)}
+                                      title="Void this purchase and reverse stock inward"
+                                    >
+                                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><Trash2Icon size={13} /> Void</span>
+                                    </button>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                        {filteredPurchases.length === 0 && (
+                          <tr>
+                            <td colSpan={9} style={{ textAlign: 'center', padding: '3.5rem 1.5rem', color: '#94a3b8' }}>
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
+                                <div
+                                  style={{
+                                    width: '54px',
+                                    height: '54px',
+                                    borderRadius: '14px',
+                                    background: '#F5ECF0',
+                                    color: '#653B4B',
+                                    border: '1px solid #D9C8D0',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    boxShadow: '0 2px 8px rgba(101, 59, 75, 0.08)',
+                                  }}
+                                >
+                                  <InboxIcon size={28} />
+                                </div>
+                                <div style={{ fontWeight: 700, fontSize: '1rem', color: '#2D1822' }}>
+                                  No purchase bills found matching your filter
+                                </div>
+                                <div style={{ fontSize: '0.825rem', color: '#64555E', maxWidth: '380px', lineHeight: 1.5 }}>
+                                  Record supplier invoices to inward products into your stock ledger and track input GST credit.
+                                </div>
+                                <button
+                                  type="button"
+                                  className="btn btn-primary"
+                                  style={{ marginTop: '0.4rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.55rem 1.25rem', fontWeight: 700, background: 'linear-gradient(135deg, #7A475B 0%, #653B4B 100%)', borderColor: '#653B4B', color: '#ffffff', borderRadius: '10px' }}
+                                  onClick={() => openNewPurchaseModal()}
+                                >
+                                  <PlusIcon size={16} />
+                                  Record Your First Purchase Bill
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               );
@@ -16709,909 +16594,1063 @@ export function App() {
                     {/* Section 1: Business Profile Editor (Only in General tab) */}
                     {activeSettingsTab === 'General' && (
                       <div className="card settings-section">
-                      <div className="card-title">
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.65rem' }}>
-                          <span style={{
-                            width: '32px',
-                            height: '32px',
-                            borderRadius: '8px',
-                            background: 'var(--primary-light, #ede9fe)',
-                            color: 'var(--primary, #6366f1)',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            boxShadow: '0 2px 6px rgba(99, 102, 241, 0.15)'
-                          }}>
-                            <SettingsIcon size={18} />
-                          </span>
-                          <span>Active Store Configuration & Profile</span>
-                        </span>
-                        <span className={`biz-badge biz-${shop?.businessType}`}>
-                          Current: {getBusinessLabel(shop?.businessType)}
-                        </span>
-                      </div>
-
-                      {settingsSavedMsg && (
-                        <div style={{ background: 'rgba(16, 185, 129, 0.2)', border: '1px solid #10b981', color: '#6ee7b7', padding: '0.6rem 1rem', borderRadius: '6px', fontSize: '0.85rem', marginBottom: '1rem' }}>
-                          ✓ {settingsSavedMsg}
-                        </div>
-                      )}
-
-                      <form onSubmit={handleSaveSettings}>
-                        {/* Advanced Brand Identity & Live Favicon Studio */}
-                        <div
-                          style={{
-                            background: '#ffffff',
-                            borderRadius: '14px',
-                            border: '1px solid #e2e8f0',
-                            boxShadow: '0 3px 12px rgba(15, 23, 42, 0.04)',
-                            padding: '1.25rem 1.5rem',
-                            marginBottom: '1.5rem',
-                          }}
-                        >
-                          {/* Header row with badges */}
-                          <div
-                            style={{
-                              display: 'flex',
+                        <div className="card-title">
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.65rem' }}>
+                            <span style={{
+                              width: '32px',
+                              height: '32px',
+                              borderRadius: '8px',
+                              background: 'var(--primary-light, #ede9fe)',
+                              color: 'var(--primary, #6366f1)',
+                              display: 'inline-flex',
                               alignItems: 'center',
-                              justifyContent: 'space-between',
-                              flexWrap: 'wrap',
-                              gap: '0.75rem',
-                              marginBottom: '1rem',
-                              paddingBottom: '0.75rem',
-                              borderBottom: '1px solid #f1f5f9',
-                            }}
-                          >
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                              <span
-                                style={{
-                                  width: '28px',
-                                  height: '28px',
-                                  borderRadius: '7px',
-                                  background: '#ede9fe',
-                                  color: '#6d4aff',
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                }}
-                              >
-                                <StoreIcon size={16} />
-                              </span>
-                              <div>
-                                <div style={{ fontWeight: 800, fontSize: '0.96rem', color: '#0f172a' }}>
-                                  Store Brand Logo &amp; Website Favicon Studio
-                                </div>
-                                <div style={{ fontSize: '0.76rem', color: '#64748b' }}>
-                                  Your logo automatically syncs across the browser tab favicon, dashboard, sidebar, and printed labels.
-                                </div>
-                              </div>
-                            </div>
+                              justifyContent: 'center',
+                              boxShadow: '0 2px 6px rgba(99, 102, 241, 0.15)'
+                            }}>
+                              <SettingsIcon size={18} />
+                            </span>
+                            <span>Active Store Configuration & Profile</span>
+                          </span>
+                          <span className={`biz-badge biz-${shop?.businessType}`}>
+                            Current: {getBusinessLabel(shop?.businessType)}
+                          </span>
+                        </div>
 
-                            <div
-                              style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '0.45rem',
-                                padding: '0.3rem 0.75rem',
-                                borderRadius: '9999px',
-                                background: settingsLogoUrl ? '#ecfdf5' : '#f8fafc',
-                                border: `1px solid ${settingsLogoUrl ? '#a7f3d0' : '#e2e8f0'}`,
-                                fontSize: '0.75rem',
-                                fontWeight: 700,
-                                color: settingsLogoUrl ? '#065f46' : '#64748b',
-                              }}
-                            >
-                              <span
-                                style={{
-                                  width: '8px',
-                                  height: '8px',
-                                  borderRadius: '50%',
-                                  backgroundColor: settingsLogoUrl ? '#10b981' : '#94a3b8',
-                                  boxShadow: settingsLogoUrl ? '0 0 0 2px rgba(16, 185, 129, 0.25)' : 'none',
-                                }}
-                              />
-                              <span>{settingsLogoUrl ? 'Live: Favicon, Dashboard, Sidebar & Labels' : 'Default Brand Active'}</span>
-                            </div>
+                        {settingsSavedMsg && (
+                          <div style={{ background: 'rgba(16, 185, 129, 0.2)', border: '1px solid #10b981', color: '#6ee7b7', padding: '0.6rem 1rem', borderRadius: '6px', fontSize: '0.85rem', marginBottom: '1rem' }}>
+                            ✓ {settingsSavedMsg}
                           </div>
+                        )}
 
-                          {/* Main 2-column Studio Grid */}
+                        <form onSubmit={handleSaveSettings}>
+                          {/* Advanced Brand Identity & Live Favicon Studio */}
                           <div
                             style={{
-                              display: 'grid',
-                              gridTemplateColumns: 'minmax(280px, 1fr) minmax(320px, 1.2fr)',
-                              gap: '1.25rem',
-                              alignItems: 'stretch',
+                              background: '#ffffff',
+                              borderRadius: '14px',
+                              border: '1px solid #e2e8f0',
+                              boxShadow: '0 3px 12px rgba(15, 23, 42, 0.04)',
+                              padding: '1.25rem 1.5rem',
+                              marginBottom: '1.5rem',
                             }}
                           >
-                            {/* Column 1: Upload & Drag Drop Zone */}
+                            {/* Header row with badges */}
                             <div
-                              onDragOver={(e) => {
-                                e.preventDefault();
-                                setIsDraggingLogo(true);
-                              }}
-                              onDragLeave={() => setIsDraggingLogo(false)}
-                              onDrop={(e) => {
-                                e.preventDefault();
-                                setIsDraggingLogo(false);
-                                const file = e.dataTransfer.files?.[0];
-                                if (file) handleLogoFileUpload(file);
-                              }}
                               style={{
-                                background: isDraggingLogo ? '#eff6ff' : '#f8fafc',
-                                border: `2px dashed ${isDraggingLogo ? '#3b82f6' : '#cbd5e1'}`,
-                                borderRadius: '12px',
-                                padding: '1.1rem',
                                 display: 'flex',
-                                flexDirection: 'column',
                                 alignItems: 'center',
-                                justifyContent: 'center',
-                                textAlign: 'center',
-                                transition: 'all 0.2s ease',
+                                justifyContent: 'space-between',
+                                flexWrap: 'wrap',
+                                gap: '0.75rem',
+                                marginBottom: '1rem',
+                                paddingBottom: '0.75rem',
+                                borderBottom: '1px solid #f1f5f9',
                               }}
                             >
-                              {/* Logo container */}
-                              <div
-                                style={{
-                                  width: '84px',
-                                  height: '84px',
-                                  borderRadius: '14px',
-                                  background: '#ffffff',
-                                  border: '1px solid #e2e8f0',
-                                  boxShadow: '0 4px 14px rgba(15, 23, 42, 0.08)',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  overflow: 'hidden',
-                                  marginBottom: '0.8rem',
-                                  padding: '6px',
-                                }}
-                              >
-                                {settingsLogoUrl ? (
-                                  <img
-                                    src={settingsLogoUrl}
-                                    alt="Store Logo"
-                                    style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
-                                  />
-                                ) : (
-                                  <StoreIcon size={38} style={{ color: '#94a3b8' }} />
-                                )}
-                              </div>
-
-                              <div style={{ fontWeight: 700, fontSize: '0.86rem', color: '#1e293b', marginBottom: '0.2rem' }}>
-                                {settingsLogoUrl ? 'Brand Logo Uploaded' : 'Drag & Drop Logo Image Here'}
-                              </div>
-                              <div style={{ fontSize: '0.74rem', color: '#64748b', marginBottom: '0.8rem', maxWidth: '240px' }}>
-                                Auto-optimizes PNG, JPG, WebP, SVG for instant web rendering &amp; thermal prints.
-                              </div>
-
-                              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-                                <label
-                                  className="btn btn-primary"
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                                <span
                                   style={{
-                                    padding: '0.4rem 0.9rem',
-                                    fontSize: '0.8rem',
-                                    cursor: 'pointer',
-                                    margin: 0,
+                                    width: '28px',
+                                    height: '28px',
+                                    borderRadius: '7px',
+                                    background: '#ede9fe',
+                                    color: '#6d4aff',
                                     display: 'inline-flex',
                                     alignItems: 'center',
-                                    gap: '0.4rem',
-                                    borderRadius: '8px',
+                                    justifyContent: 'center',
                                   }}
                                 >
-                                  <span>📷 {settingsLogoUrl ? 'Change Logo' : 'Upload Logo'}</span>
-                                  <input
-                                    type="file"
-                                    accept="image/png,image/jpeg,image/svg+xml,image/webp"
-                                    style={{ display: 'none' }}
-                                    onChange={(e) => {
-                                      const file = e.target.files?.[0];
-                                      if (file) handleLogoFileUpload(file);
-                                    }}
-                                  />
-                                </label>
-                                {settingsLogoUrl !== (shop?.logoUrl || '') && (
-                                  <button
-                                    type="button"
-                                    className="btn"
-                                    style={{
-                                      padding: '0.4rem 0.85rem',
-                                      fontSize: '0.8rem',
-                                      background: '#10b981',
-                                      color: '#ffffff',
-                                      border: 'none',
-                                      borderRadius: '8px',
-                                      fontWeight: 700,
-                                      cursor: 'pointer',
-                                    }}
-                                    onClick={() => handleSaveLogoDirectly()}
-                                  >
-                                    💾 Save Logo
-                                  </button>
-                                )}
-                                {Boolean(settingsLogoUrl || shop?.logoUrl) && (
-                                  <button
-                                    type="button"
-                                    className="btn"
-                                    style={{
-                                      padding: '0.4rem 0.8rem',
-                                      fontSize: '0.8rem',
-                                      background: '#fee2e2',
-                                      color: '#dc2626',
-                                      border: '1px solid #fecaca',
-                                      borderRadius: '8px',
-                                      fontWeight: 600,
-                                      cursor: 'pointer',
-                                    }}
-                                    onClick={handleRemoveLogo}
-                                  >
-                                    ✕ Remove
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-
-                            {/* Column 2: Live Multi-Surface Preview */}
-                            <div
-                              style={{
-                                background: '#f8fafc',
-                                borderRadius: '12px',
-                                border: '1px solid #e2e8f0',
-                                padding: '1rem',
-                                display: 'flex',
-                                flexDirection: 'column',
-                              }}
-                            >
-                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-                                <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                                  Live Multi-Surface Preview
+                                  <StoreIcon size={16} />
                                 </span>
-                                {/* Preview switcher tabs */}
-                                <div style={{ display: 'inline-flex', background: '#e2e8f0', borderRadius: '7px', padding: '2px' }}>
-                                  <button
-                                    type="button"
-                                    onClick={() => setLogoPreviewTab('favicon')}
-                                    style={{
-                                      border: 'none',
-                                      background: logoPreviewTab === 'favicon' ? '#ffffff' : 'transparent',
-                                      color: logoPreviewTab === 'favicon' ? '#0f172a' : '#64748b',
-                                      fontSize: '0.72rem',
-                                      fontWeight: 700,
-                                      padding: '0.25rem 0.55rem',
-                                      borderRadius: '5px',
-                                      cursor: 'pointer',
-                                      boxShadow: logoPreviewTab === 'favicon' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
-                                    }}
-                                  >
-                                    🌐 Favicon
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => setLogoPreviewTab('app')}
-                                    style={{
-                                      border: 'none',
-                                      background: logoPreviewTab === 'app' ? '#ffffff' : 'transparent',
-                                      color: logoPreviewTab === 'app' ? '#0f172a' : '#64748b',
-                                      fontSize: '0.72rem',
-                                      fontWeight: 700,
-                                      padding: '0.25rem 0.55rem',
-                                      borderRadius: '5px',
-                                      cursor: 'pointer',
-                                      boxShadow: logoPreviewTab === 'app' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
-                                    }}
-                                  >
-                                    📊 App &amp; Sidebar
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => setLogoPreviewTab('label')}
-                                    style={{
-                                      border: 'none',
-                                      background: logoPreviewTab === 'label' ? '#ffffff' : 'transparent',
-                                      color: logoPreviewTab === 'label' ? '#0f172a' : '#64748b',
-                                      fontSize: '0.72rem',
-                                      fontWeight: 700,
-                                      padding: '0.25rem 0.55rem',
-                                      borderRadius: '5px',
-                                      cursor: 'pointer',
-                                      boxShadow: logoPreviewTab === 'label' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
-                                    }}
-                                  >
-                                    🏷️ Label
-                                  </button>
+                                <div>
+                                  <div style={{ fontWeight: 800, fontSize: '0.96rem', color: '#0f172a' }}>
+                                    Store Brand Logo &amp; Website Favicon Studio
+                                  </div>
+                                  <div style={{ fontSize: '0.76rem', color: '#64748b' }}>
+                                    Your logo automatically syncs across the browser tab favicon, dashboard, sidebar, and printed labels.
+                                  </div>
                                 </div>
                               </div>
 
-                              {/* Preview Viewport */}
                               <div
                                 style={{
-                                  flex: 1,
-                                  display: 'flex',
+                                  display: 'inline-flex',
                                   alignItems: 'center',
-                                  justifyContent: 'center',
-                                  minHeight: '130px',
+                                  gap: '0.45rem',
+                                  padding: '0.3rem 0.75rem',
+                                  borderRadius: '9999px',
+                                  background: settingsLogoUrl ? '#ecfdf5' : '#f8fafc',
+                                  border: `1px solid ${settingsLogoUrl ? '#a7f3d0' : '#e2e8f0'}`,
+                                  fontSize: '0.75rem',
+                                  fontWeight: 700,
+                                  color: settingsLogoUrl ? '#065f46' : '#64748b',
                                 }}
                               >
-                                {/* Preview 1: Website Favicon & Browser Tab */}
-                                {logoPreviewTab === 'favicon' && (
-                                  <div
-                                    style={{
-                                      width: '100%',
-                                      background: '#e2e8f0',
-                                      borderRadius: '8px',
-                                      overflow: 'hidden',
-                                      boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                                      border: '1px solid #cbd5e1',
-                                    }}
-                                  >
-                                    {/* Browser Chrome Window Header */}
-                                    <div style={{ display: 'flex', alignItems: 'center', padding: '6px 10px', gap: '6px' }}>
-                                      <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444', display: 'inline-block' }} />
-                                      <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#f59e0b', display: 'inline-block' }} />
-                                      <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
-                                      <div
-                                        style={{
-                                          marginLeft: '6px',
-                                          background: '#ffffff',
-                                          borderRadius: '6px 6px 0 0',
-                                          padding: '4px 10px',
-                                          display: 'inline-flex',
-                                          alignItems: 'center',
-                                          gap: '7px',
-                                          maxWidth: '240px',
-                                          fontSize: '0.75rem',
-                                          fontWeight: 600,
-                                          color: '#0f172a',
-                                          boxShadow: '0 -1px 3px rgba(0,0,0,0.04)',
-                                        }}
-                                      >
-                                        <div
-                                          style={{
-                                            width: '16px',
-                                            height: '16px',
-                                            borderRadius: '3px',
-                                            background: '#f1f5f9',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            overflow: 'hidden',
-                                            flexShrink: 0,
-                                          }}
-                                        >
-                                          {settingsLogoUrl ? (
-                                            <img src={settingsLogoUrl} alt="Favicon" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                                          ) : (
-                                            <span style={{ fontSize: '10px' }}>⚡</span>
-                                          )}
-                                        </div>
-                                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                          {settingsName || 'Your Store'} | Cloud POS
-                                        </span>
-                                        <span style={{ color: '#94a3b8', fontSize: '0.7rem', marginLeft: 'auto' }}>✕</span>
-                                      </div>
-                                    </div>
-                                    {/* Mock URL address bar */}
-                                    <div style={{ background: '#ffffff', padding: '6px 12px', borderTop: '1px solid #cbd5e1', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                      <span style={{ fontSize: '0.68rem', color: '#10b981', fontWeight: 700 }}>🔒</span>
-                                      <span style={{ fontSize: '0.72rem', color: '#64748b', fontFamily: 'monospace' }}>
-                                        https://{((settingsName || 'store').toLowerCase().replace(/[^a-z0-9]/g, '')) || 'mybrand'}.billing.app
-                                      </span>
-                                    </div>
-                                  </div>
-                                )}
+                                <span
+                                  style={{
+                                    width: '8px',
+                                    height: '8px',
+                                    borderRadius: '50%',
+                                    backgroundColor: settingsLogoUrl ? '#10b981' : '#94a3b8',
+                                    boxShadow: settingsLogoUrl ? '0 0 0 2px rgba(16, 185, 129, 0.25)' : 'none',
+                                  }}
+                                />
+                                <span>{settingsLogoUrl ? 'Live: Favicon, Dashboard, Sidebar & Labels' : 'Default Brand Active'}</span>
+                              </div>
+                            </div>
 
-                                {/* Preview 2: App Sidebar & Top Header */}
-                                {logoPreviewTab === 'app' && (
-                                  <div
+                            {/* Main 2-column Studio Grid */}
+                            <div
+                              style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'minmax(280px, 1fr) minmax(320px, 1.2fr)',
+                                gap: '1.25rem',
+                                alignItems: 'stretch',
+                              }}
+                            >
+                              {/* Column 1: Upload & Drag Drop Zone */}
+                              <div
+                                onDragOver={(e) => {
+                                  e.preventDefault();
+                                  setIsDraggingLogo(true);
+                                }}
+                                onDragLeave={() => setIsDraggingLogo(false)}
+                                onDrop={(e) => {
+                                  e.preventDefault();
+                                  setIsDraggingLogo(false);
+                                  const file = e.dataTransfer.files?.[0];
+                                  if (file) handleLogoFileUpload(file);
+                                }}
+                                style={{
+                                  background: isDraggingLogo ? '#eff6ff' : '#f8fafc',
+                                  border: `2px dashed ${isDraggingLogo ? '#3b82f6' : '#cbd5e1'}`,
+                                  borderRadius: '12px',
+                                  padding: '1.1rem',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  textAlign: 'center',
+                                  transition: 'all 0.2s ease',
+                                }}
+                              >
+                                {/* Logo container */}
+                                <div
+                                  style={{
+                                    width: '84px',
+                                    height: '84px',
+                                    borderRadius: '14px',
+                                    background: '#ffffff',
+                                    border: '1px solid #e2e8f0',
+                                    boxShadow: '0 4px 14px rgba(15, 23, 42, 0.08)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    overflow: 'hidden',
+                                    marginBottom: '0.8rem',
+                                    padding: '6px',
+                                  }}
+                                >
+                                  {settingsLogoUrl ? (
+                                    <img
+                                      src={settingsLogoUrl}
+                                      alt="Store Logo"
+                                      style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+                                    />
+                                  ) : (
+                                    <StoreIcon size={38} style={{ color: '#94a3b8' }} />
+                                  )}
+                                </div>
+
+                                <div style={{ fontWeight: 700, fontSize: '0.86rem', color: '#1e293b', marginBottom: '0.2rem' }}>
+                                  {settingsLogoUrl ? 'Brand Logo Uploaded' : 'Drag & Drop Logo Image Here'}
+                                </div>
+                                <div style={{ fontSize: '0.74rem', color: '#64748b', marginBottom: '0.8rem', maxWidth: '240px' }}>
+                                  Auto-optimizes PNG, JPG, WebP, SVG for instant web rendering &amp; thermal prints.
+                                </div>
+
+                                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+                                  <label
+                                    className="btn btn-primary"
                                     style={{
-                                      width: '100%',
-                                      background: '#1e1b4b',
-                                      borderRadius: '8px',
-                                      padding: '10px 14px',
-                                      display: 'flex',
+                                      padding: '0.4rem 0.9rem',
+                                      fontSize: '0.8rem',
+                                      cursor: 'pointer',
+                                      margin: 0,
+                                      display: 'inline-flex',
                                       alignItems: 'center',
-                                      gap: '10px',
-                                      boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                                      gap: '0.4rem',
+                                      borderRadius: '8px',
                                     }}
                                   >
-                                    <div
+                                    <span>📷 {settingsLogoUrl ? 'Change Logo' : 'Upload Logo'}</span>
+                                    <input
+                                      type="file"
+                                      accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                                      style={{ display: 'none' }}
+                                      onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) handleLogoFileUpload(file);
+                                      }}
+                                    />
+                                  </label>
+                                  {settingsLogoUrl !== (shop?.logoUrl || '') && (
+                                    <button
+                                      type="button"
+                                      className="btn"
                                       style={{
-                                        width: '38px',
-                                        height: '38px',
+                                        padding: '0.4rem 0.85rem',
+                                        fontSize: '0.8rem',
+                                        background: '#10b981',
+                                        color: '#ffffff',
+                                        border: 'none',
                                         borderRadius: '8px',
-                                        background: '#ffffff',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        padding: '2px',
-                                        overflow: 'hidden',
-                                        flexShrink: 0,
+                                        fontWeight: 700,
+                                        cursor: 'pointer',
+                                      }}
+                                      onClick={() => handleSaveLogoDirectly()}
+                                    >
+                                      💾 Save Logo
+                                    </button>
+                                  )}
+                                  {Boolean(settingsLogoUrl || shop?.logoUrl) && (
+                                    <button
+                                      type="button"
+                                      className="btn"
+                                      style={{
+                                        padding: '0.4rem 0.8rem',
+                                        fontSize: '0.8rem',
+                                        background: '#fee2e2',
+                                        color: '#dc2626',
+                                        border: '1px solid #fecaca',
+                                        borderRadius: '8px',
+                                        fontWeight: 600,
+                                        cursor: 'pointer',
+                                      }}
+                                      onClick={handleRemoveLogo}
+                                    >
+                                      ✕ Remove
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Column 2: Live Multi-Surface Preview */}
+                              <div
+                                style={{
+                                  background: '#f8fafc',
+                                  borderRadius: '12px',
+                                  border: '1px solid #e2e8f0',
+                                  padding: '1rem',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                }}
+                              >
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                                  <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                                    Live Multi-Surface Preview
+                                  </span>
+                                  {/* Preview switcher tabs */}
+                                  <div style={{ display: 'inline-flex', background: '#e2e8f0', borderRadius: '7px', padding: '2px' }}>
+                                    <button
+                                      type="button"
+                                      onClick={() => setLogoPreviewTab('favicon')}
+                                      style={{
+                                        border: 'none',
+                                        background: logoPreviewTab === 'favicon' ? '#ffffff' : 'transparent',
+                                        color: logoPreviewTab === 'favicon' ? '#0f172a' : '#64748b',
+                                        fontSize: '0.72rem',
+                                        fontWeight: 700,
+                                        padding: '0.25rem 0.55rem',
+                                        borderRadius: '5px',
+                                        cursor: 'pointer',
+                                        boxShadow: logoPreviewTab === 'favicon' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
                                       }}
                                     >
-                                      {settingsLogoUrl ? (
-                                        <img src={settingsLogoUrl} alt="Logo" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
-                                      ) : (
-                                        <StoreIcon size={20} style={{ color: '#6d4aff' }} />
-                                      )}
-                                    </div>
-                                    <div style={{ overflow: 'hidden', flex: 1 }}>
-                                      <div style={{ color: '#ffffff', fontWeight: 800, fontSize: '0.84rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                        {settingsName || 'Adaptive Billing'}
-                                      </div>
-                                      <div style={{ color: '#c7d2fe', fontSize: '0.68rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                        {getBusinessLabel(settingsType)} · POS &amp; GST
-                                      </div>
-                                    </div>
+                                      🌐 Favicon
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setLogoPreviewTab('app')}
+                                      style={{
+                                        border: 'none',
+                                        background: logoPreviewTab === 'app' ? '#ffffff' : 'transparent',
+                                        color: logoPreviewTab === 'app' ? '#0f172a' : '#64748b',
+                                        fontSize: '0.72rem',
+                                        fontWeight: 700,
+                                        padding: '0.25rem 0.55rem',
+                                        borderRadius: '5px',
+                                        cursor: 'pointer',
+                                        boxShadow: logoPreviewTab === 'app' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                                      }}
+                                    >
+                                      📊 App &amp; Sidebar
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setLogoPreviewTab('label')}
+                                      style={{
+                                        border: 'none',
+                                        background: logoPreviewTab === 'label' ? '#ffffff' : 'transparent',
+                                        color: logoPreviewTab === 'label' ? '#0f172a' : '#64748b',
+                                        fontSize: '0.72rem',
+                                        fontWeight: 700,
+                                        padding: '0.25rem 0.55rem',
+                                        borderRadius: '5px',
+                                        cursor: 'pointer',
+                                        boxShadow: logoPreviewTab === 'label' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                                      }}
+                                    >
+                                      🏷️ Label
+                                    </button>
                                   </div>
-                                )}
+                                </div>
 
-                                {/* Preview 3: Barcode Label Sticker */}
-                                {logoPreviewTab === 'label' && (
-                                  <div
-                                    style={{
-                                      background: '#ffffff',
-                                      border: '1px solid #cbd5e1',
-                                      borderRadius: '6px',
-                                      padding: '8px 12px',
-                                      width: '190px',
-                                      textAlign: 'center',
-                                      boxShadow: '0 2px 6px rgba(0,0,0,0.06)',
-                                    }}
-                                  >
-                                    {settingsLogoUrl && (
-                                      <div style={{ marginBottom: '2px', display: 'flex', justifyContent: 'center' }}>
-                                        <img src={settingsLogoUrl} alt="Logo" style={{ maxHeight: '18px', maxWidth: '60px', objectFit: 'contain' }} />
+                                {/* Preview Viewport */}
+                                <div
+                                  style={{
+                                    flex: 1,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    minHeight: '130px',
+                                  }}
+                                >
+                                  {/* Preview 1: Website Favicon & Browser Tab */}
+                                  {logoPreviewTab === 'favicon' && (
+                                    <div
+                                      style={{
+                                        width: '100%',
+                                        background: '#e2e8f0',
+                                        borderRadius: '8px',
+                                        overflow: 'hidden',
+                                        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                                        border: '1px solid #cbd5e1',
+                                      }}
+                                    >
+                                      {/* Browser Chrome Window Header */}
+                                      <div style={{ display: 'flex', alignItems: 'center', padding: '6px 10px', gap: '6px' }}>
+                                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444', display: 'inline-block' }} />
+                                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#f59e0b', display: 'inline-block' }} />
+                                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
+                                        <div
+                                          style={{
+                                            marginLeft: '6px',
+                                            background: '#ffffff',
+                                            borderRadius: '6px 6px 0 0',
+                                            padding: '4px 10px',
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '7px',
+                                            maxWidth: '240px',
+                                            fontSize: '0.75rem',
+                                            fontWeight: 600,
+                                            color: '#0f172a',
+                                            boxShadow: '0 -1px 3px rgba(0,0,0,0.04)',
+                                          }}
+                                        >
+                                          <div
+                                            style={{
+                                              width: '16px',
+                                              height: '16px',
+                                              borderRadius: '3px',
+                                              background: '#f1f5f9',
+                                              display: 'flex',
+                                              alignItems: 'center',
+                                              justifyContent: 'center',
+                                              overflow: 'hidden',
+                                              flexShrink: 0,
+                                            }}
+                                          >
+                                            {settingsLogoUrl ? (
+                                              <img src={settingsLogoUrl} alt="Favicon" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                                            ) : (
+                                              <span style={{ fontSize: '10px' }}>⚡</span>
+                                            )}
+                                          </div>
+                                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                            {settingsName || 'Your Store'} | Cloud POS
+                                          </span>
+                                          <span style={{ color: '#94a3b8', fontSize: '0.7rem', marginLeft: 'auto' }}>✕</span>
+                                        </div>
                                       </div>
-                                    )}
-                                    <div style={{ fontSize: '0.62rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase' }}>
-                                      {settingsName || 'STORE NAME'}
+                                      {/* Mock URL address bar */}
+                                      <div style={{ background: '#ffffff', padding: '6px 12px', borderTop: '1px solid #cbd5e1', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <span style={{ fontSize: '0.68rem', color: '#10b981', fontWeight: 700 }}>🔒</span>
+                                        <span style={{ fontSize: '0.72rem', color: '#64748b', fontFamily: 'monospace' }}>
+                                          https://{((settingsName || 'store').toLowerCase().replace(/[^a-z0-9]/g, '')) || 'mybrand'}.billing.app
+                                        </span>
+                                      </div>
                                     </div>
-                                    <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>
-                                      Sample Product
+                                  )}
+
+                                  {/* Preview 2: App Sidebar & Top Header */}
+                                  {logoPreviewTab === 'app' && (
+                                    <div
+                                      style={{
+                                        width: '100%',
+                                        background: '#1e1b4b',
+                                        borderRadius: '8px',
+                                        padding: '10px 14px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '10px',
+                                        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                                      }}
+                                    >
+                                      <div
+                                        style={{
+                                          width: '38px',
+                                          height: '38px',
+                                          borderRadius: '8px',
+                                          background: '#ffffff',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          padding: '2px',
+                                          overflow: 'hidden',
+                                          flexShrink: 0,
+                                        }}
+                                      >
+                                        {settingsLogoUrl ? (
+                                          <img src={settingsLogoUrl} alt="Logo" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                                        ) : (
+                                          <StoreIcon size={20} style={{ color: '#6d4aff' }} />
+                                        )}
+                                      </div>
+                                      <div style={{ overflow: 'hidden', flex: 1 }}>
+                                        <div style={{ color: '#ffffff', fontWeight: 800, fontSize: '0.84rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                          {settingsName || 'Adaptive Billing'}
+                                        </div>
+                                        <div style={{ color: '#c7d2fe', fontSize: '0.68rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                          {getBusinessLabel(settingsType)} · POS &amp; GST
+                                        </div>
+                                      </div>
                                     </div>
-                                    <div style={{ fontSize: '0.55rem', fontFamily: 'monospace', color: '#64748b', letterSpacing: '1px', margin: '2px 0' }}>
-                                      ||| | |||| ||| || |
+                                  )}
+
+                                  {/* Preview 3: Barcode Label Sticker */}
+                                  {logoPreviewTab === 'label' && (
+                                    <div
+                                      style={{
+                                        background: '#ffffff',
+                                        border: '1px solid #cbd5e1',
+                                        borderRadius: '6px',
+                                        padding: '8px 12px',
+                                        width: '190px',
+                                        textAlign: 'center',
+                                        boxShadow: '0 2px 6px rgba(0,0,0,0.06)',
+                                      }}
+                                    >
+                                      {settingsLogoUrl && (
+                                        <div style={{ marginBottom: '2px', display: 'flex', justifyContent: 'center' }}>
+                                          <img src={settingsLogoUrl} alt="Logo" style={{ maxHeight: '18px', maxWidth: '60px', objectFit: 'contain' }} />
+                                        </div>
+                                      )}
+                                      <div style={{ fontSize: '0.62rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase' }}>
+                                        {settingsName || 'STORE NAME'}
+                                      </div>
+                                      <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>
+                                        Sample Product
+                                      </div>
+                                      <div style={{ fontSize: '0.55rem', fontFamily: 'monospace', color: '#64748b', letterSpacing: '1px', margin: '2px 0' }}>
+                                        ||| | |||| ||| || |
+                                      </div>
+                                      <div style={{ fontSize: '0.75rem', fontWeight: 900, color: '#0f172a' }}>
+                                        ₹199.00
+                                      </div>
                                     </div>
-                                    <div style={{ fontSize: '0.75rem', fontWeight: 900, color: '#0f172a' }}>
-                                      ₹199.00
-                                    </div>
-                                  </div>
-                                )}
+                                  )}
+                                </div>
                               </div>
                             </div>
                           </div>
-                        </div>
 
-                        <div className="business-profile-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                            <div className="form-group">
-                              <label className="form-label">Store / Enterprise Name</label>
-                              <input
-                                type="text"
-                                className="form-input"
-                                required
-                                value={settingsName}
-                                onChange={(e) => setSettingsName(e.target.value)}
-                              />
+                          <div className="business-profile-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                              <div className="form-group">
+                                <label className="form-label">Store / Enterprise Name</label>
+                                <input
+                                  type="text"
+                                  className="form-input"
+                                  required
+                                  value={settingsName}
+                                  onChange={(e) => setSettingsName(e.target.value)}
+                                />
+                              </div>
+                              <div className="form-group">
+                                <label className="form-label">Wholesale Business Name</label>
+                                <input
+                                  type="text"
+                                  className="form-input"
+                                  placeholder="Enter wholesale business name"
+                                  value={settingsWholesaleBusinessName}
+                                  onChange={(e) => setSettingsWholesaleBusinessName(e.target.value)}
+                                />
+                              </div>
+                              <div className="form-group">
+                                <label className="form-label">GSTIN (15-digit GST Number)</label>
+                                <input
+                                  type="text"
+                                  className="form-input"
+                                  value={settingsGstin}
+                                  onChange={(e) => setSettingsGstin(e.target.value)}
+                                />
+                              </div>
+                              <div className="form-group">
+                                <label className="form-label">Store Address</label>
+                                <input
+                                  type="text"
+                                  className="form-input"
+                                  value={settingsAddress}
+                                  onChange={(e) => setSettingsAddress(e.target.value)}
+                                />
+                              </div>
+                              <div className="form-group">
+                                <label className="form-label">UPI ID for Payment QR (VPA)</label>
+                                <input
+                                  type="text"
+                                  className="form-input"
+                                  value={settingsUpiId}
+                                  onChange={(e) => setSettingsUpiId(e.target.value)}
+                                />
+                              </div>
                             </div>
-                            <div className="form-group">
-                              <label className="form-label">Wholesale Business Name</label>
-                              <input
-                                type="text"
-                                className="form-input"
-                                placeholder="Enter wholesale business name"
-                                value={settingsWholesaleBusinessName}
-                                onChange={(e) => setSettingsWholesaleBusinessName(e.target.value)}
-                              />
-                            </div>
-                            <div className="form-group">
-                              <label className="form-label">GSTIN (15-digit GST Number)</label>
-                              <input
-                                type="text"
-                                className="form-input"
-                                value={settingsGstin}
-                                onChange={(e) => setSettingsGstin(e.target.value)}
-                              />
-                            </div>
-                            <div className="form-group">
-                              <label className="form-label">Store Address</label>
-                              <input
-                                type="text"
-                                className="form-input"
-                                value={settingsAddress}
-                                onChange={(e) => setSettingsAddress(e.target.value)}
-                              />
-                            </div>
-                            <div className="form-group">
-                              <label className="form-label">UPI ID for Payment QR (VPA)</label>
-                              <input
-                                type="text"
-                                className="form-input"
-                                value={settingsUpiId}
-                                onChange={(e) => setSettingsUpiId(e.target.value)}
-                              />
-                            </div>
-                          </div>
 
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                            <div className="form-group">
-                              <label className="form-label">Business Type (Switches POS Features)</label>
-                              <select
-                                className="form-input"
-                                value={settingsType}
-                                onChange={(e) => setSettingsType(e.target.value)}
-                              >
-                                <option value="retail">Retail / Kirana / Supermarket</option>
-                                <option value="pharmacy">Pharmacy & Healthcare</option>
-                                <option value="restaurant">Restaurant / Cafe / Bakery</option>
-                                <option value="wholesale">Wholesale & Distribution</option>
-                                <option value="service">Professional & Technical Services</option>
-                                <option value="general">General Business</option>
-                              </select>
-                            </div>
-                            <div className="form-group">
-                              <label className="form-label">Phone / WhatsApp Number</label>
-                              <input
-                                type="text"
-                                className="form-input"
-                                value={settingsPhone}
-                                onChange={(e) => setSettingsPhone(e.target.value)}
-                              />
-                            </div>
-                            <div className="form-group">
-                              <label className="form-label">
-                                Owner Email ID <span style={{ color: '#5B3BE8', fontSize: '0.8rem', fontWeight: 500 }}>(Receives critical deletion &amp; security alerts)</span>
-                              </label>
-                              <input
-                                type="email"
-                                className="form-input"
-                                placeholder="owner@supermarket.com"
-                                value={settingsOwnerEmail}
-                                onChange={(e) => setSettingsOwnerEmail(e.target.value)}
-                              />
-                            </div>
-                            <div className="form-group">
-                              <label className="form-label">Invoice Number Prefix</label>
-                              <input
-                                type="text"
-                                className="form-input"
-                                value={settingsPrefix}
-                                onChange={(e) => setSettingsPrefix(e.target.value)}
-                              />
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                              <div className="form-group">
+                                <label className="form-label">Business Type (Switches POS Features)</label>
+                                <select
+                                  className="form-input"
+                                  value={settingsType}
+                                  onChange={(e) => setSettingsType(e.target.value)}
+                                >
+                                  <option value="retail">Retail / Kirana / Supermarket</option>
+                                  <option value="pharmacy">Pharmacy & Healthcare</option>
+                                  <option value="restaurant">Restaurant / Cafe / Bakery</option>
+                                  <option value="wholesale">Wholesale & Distribution</option>
+                                  <option value="service">Professional & Technical Services</option>
+                                  <option value="general">General Business</option>
+                                </select>
+                              </div>
+                              <div className="form-group">
+                                <label className="form-label">Phone / WhatsApp Number</label>
+                                <input
+                                  type="text"
+                                  className="form-input"
+                                  value={settingsPhone}
+                                  onChange={(e) => setSettingsPhone(e.target.value)}
+                                />
+                              </div>
+                              <div className="form-group">
+                                <label className="form-label">
+                                  Owner Email ID <span style={{ color: '#5B3BE8', fontSize: '0.8rem', fontWeight: 500 }}>(Receives critical deletion &amp; security alerts)</span>
+                                </label>
+                                <input
+                                  type="email"
+                                  className="form-input"
+                                  placeholder="owner@supermarket.com"
+                                  value={settingsOwnerEmail}
+                                  onChange={(e) => setSettingsOwnerEmail(e.target.value)}
+                                />
+                              </div>
+                              <div className="form-group">
+                                <label className="form-label">Invoice Number Prefix</label>
+                                <input
+                                  type="text"
+                                  className="form-input"
+                                  value={settingsPrefix}
+                                  onChange={(e) => setSettingsPrefix(e.target.value)}
+                                />
+                              </div>
                             </div>
                           </div>
-                        </div>
-                        <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'flex-end' }}>
-                          <button type="submit" className="btn btn-primary" style={{ padding: '0.6rem 1.25rem' }}>
-                            Save Profile Changes
-                          </button>
-                        </div>
-                      </form>
-                    </div>
-                  )}
-
-                  {/* Developer Notice for Payments & Integrations (Only shown in General tab when Developer Mode is active) */}
-                  {activeSettingsTab === 'General' && isSuperAdminUser && isDeveloperMode && (
-                    <div
-                      style={{
-                        background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.06), rgba(217, 119, 6, 0.02))',
-                        border: '1px solid rgba(245, 158, 11, 0.25)',
-                        borderRadius: '12px',
-                        padding: '1rem 1.25rem',
-                        marginBottom: '2rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        gap: '1rem',
-                        flexWrap: 'wrap',
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <div
-                          style={{
-                            width: '34px',
-                            height: '34px',
-                            borderRadius: '8px',
-                            background: '#fef3c7',
-                            color: '#b45309',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            flexShrink: 0,
-                          }}
-                        >
-                          <KeyRound size={16} strokeWidth={2.4} />
-                        </div>
-                        <div>
-                          <div style={{ fontWeight: 700, fontSize: '0.88rem', color: '#1e293b' }}>
-                            Payment Gateways & Tenders (Developer Mode Protected)
+                          <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'flex-end' }}>
+                            <button type="submit" className="btn btn-primary" style={{ padding: '0.6rem 1.25rem' }}>
+                              Save Profile Changes
+                            </button>
                           </div>
-                          <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '2px' }}>
-                            Payment tender methods, Razorpay, Paytm, PhonePe, UPI QR, and terminal configurations are protected in Developer Mode and hidden from client view.
-                          </div>
-                        </div>
+                        </form>
                       </div>
-                      <button
-                        type="button"
-                        className="btn"
+                    )}
+
+                    {/* Developer Notice for Payments & Integrations (Only shown in General tab when Developer Mode is active) */}
+                    {activeSettingsTab === 'General' && isSuperAdminUser && isDeveloperMode && (
+                      <div
                         style={{
-                          background: '#49364A',
-                          color: '#ffffff',
-                          padding: '0.5rem 1.1rem',
-                          borderRadius: '8px',
-                          fontSize: '0.82rem',
-                          fontWeight: 700,
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          border: 'none',
-                          cursor: 'pointer',
-                        }}
-                        onClick={() => setActiveSettingsTab('Payment Integrations')}
-                      >
-                        <CreditCardIcon size={14} />
-                        Open Payment Integrations
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Section: Payments & Integrations (Shop Specific) - PROTECTED: ONLY visible when Developer Mode is active & Payment Integrations tab is selected */}
-                  {isDeveloperMode && isSuperAdminUser && activeSettingsTab === 'Payment Integrations' && (
-                    <div className="card settings-section" style={{ background: '#ffffff', borderRadius: '16px', border: '1px solid var(--border)', boxShadow: '0 4px 16px rgba(49, 46, 129, 0.05)', padding: '1.75rem', marginBottom: '2rem' }}>
-                      {/* Header with Title and Modern Status Badge */}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border)' }}>
-                        <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                            <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'var(--primary-light)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 6px rgba(109, 74, 255, 0.15)' }}>
-                              <CreditCardIcon size={20} />
-                            </div>
-                            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)', margin: 0, letterSpacing: '-0.01em' }}>
-                              Payments & Integrations
-                            </h3>
-                          </div>
-                          <div style={{ fontSize: '0.84rem', color: 'var(--text-muted)', marginTop: '5px' }}>
-                            Configure payment tender methods, dynamic UPI QR gateways, and merchant credentials for <strong style={{ color: 'var(--text-main)' }}>{shop?.name || 'this shop'}</strong>.
-                          </div>
-                        </div>
-
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>Status:</span>
-                          <span style={{
-                            fontSize: '0.78rem',
-                            fontWeight: 700,
-                            padding: '4px 12px',
-                            borderRadius: '999px',
-                            background: posPaymentConfig?.status === 'connected' ? '#ecfdf5' : posPaymentConfig?.status === 'error' ? '#fef2f2' : '#f8fafc',
-                            color: posPaymentConfig?.status === 'connected' ? '#047857' : posPaymentConfig?.status === 'error' ? '#b91c1c' : '#64748b',
-                            border: `1px solid ${posPaymentConfig?.status === 'connected' ? '#a7f3d0' : posPaymentConfig?.status === 'error' ? '#fecaca' : '#cbd5e1'}`,
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '5px'
-                          }}>
-                            {posPaymentConfig?.status === 'connected' ? '● Connected & Active' : posPaymentConfig?.status === 'error' ? '✕ Configuration Error' : '○ Not Configured'}
-                          </span>
-                        </div>
-                      </div>
-
-                      {paySettingsStatusMsg && (
-                        <div style={{
-                          background: paySettingsStatusMsg.type === 'success' ? '#ecfdf5' : '#fef2f2',
-                          border: `1px solid ${paySettingsStatusMsg.type === 'success' ? '#a7f3d0' : '#fecaca'}`,
-                          color: paySettingsStatusMsg.type === 'success' ? '#065f46' : '#991b1b',
-                          padding: '0.75rem 1.15rem',
-                          borderRadius: '10px',
-                          fontSize: '0.86rem',
-                          fontWeight: 600,
-                          marginBottom: '1.25rem',
+                          background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.06), rgba(217, 119, 6, 0.02))',
+                          border: '1px solid rgba(245, 158, 11, 0.25)',
+                          borderRadius: '12px',
+                          padding: '1rem 1.25rem',
+                          marginBottom: '2rem',
                           display: 'flex',
                           alignItems: 'center',
-                          gap: '0.5rem'
-                        }}>
-                          <span>{paySettingsStatusMsg.type === 'success' ? '✓' : '✕'}</span>
-                          <span>{paySettingsStatusMsg.text}</span>
-                        </div>
-                      )}
-
-                      {/* Subtabs Bar with Responsive Horizontal Scroll */}
-                      <div style={{
-                        display: 'flex',
-                        gap: '0.5rem',
-                        borderBottom: '1px solid var(--border)',
-                        marginBottom: '1.5rem',
-                        paddingBottom: '0.75rem',
-                        overflowX: 'auto',
-                        WebkitOverflowScrolling: 'touch',
-                        scrollbarWidth: 'none'
-                      }}>
-                        {[
-                          { id: 'methods', label: 'Payment Methods', icon: <CreditCardIcon size={16} /> },
-                          { id: 'razorpay', label: 'Razorpay', icon: <ZapIcon size={16} /> },
-                          { id: 'paytm', label: 'Paytm Gateway', icon: <PaytmIcon size={16} /> },
-                          { id: 'phonepe', label: 'PhonePe Gateway', icon: <PhonePeIcon size={16} /> },
-                          { id: 'qr', label: 'UPI QR', icon: <QrCodeIcon size={16} /> },
-                          { id: 'bank', label: 'Bank Transfer', icon: <LandmarkIcon size={16} /> },
-                          { id: 'terminal', label: 'Card Terminal', icon: <TerminalIcon size={16} /> },
-                        ].map((tab) => {
-                          const isActive = paySettingsSubTab === tab.id;
-                          return (
-                            <button
-                              key={tab.id}
-                              type="button"
-                              onClick={() => setPaySettingsSubTab(tab.id as any)}
-                              className="btn"
-                              style={{
-                                background: isActive ? 'var(--primary)' : '#ffffff',
-                                color: isActive ? '#ffffff' : 'var(--text-main)',
-                                border: isActive ? '1px solid var(--primary)' : '1px solid var(--border)',
-                                padding: '0.55rem 1.1rem',
-                                fontSize: '0.86rem',
-                                fontWeight: isActive ? 700 : 500,
-                                borderRadius: '10px',
-                                cursor: 'pointer',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '0.45rem',
-                                whiteSpace: 'nowrap',
-                                boxShadow: isActive ? '0 4px 12px rgba(109, 74, 255, 0.28)' : '0 1px 3px rgba(0,0,0,0.02)',
-                                transition: 'all 0.18s ease',
-                              }}
-                            >
-                              <span>{tab.icon}</span>
-                              <span>{tab.label}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
-
-                      {/* Subtab 1: Payment Methods (Responsive 2-Column Layout) */}
-                      {paySettingsSubTab === 'methods' && (
-                        <div style={{
-                          display: 'grid',
-                          gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
-                          gap: '1.75rem',
-                          alignItems: 'start'
-                        }}>
-                          {/* Left Column: Enable Payment Methods */}
+                          justifyContent: 'space-between',
+                          gap: '1rem',
+                          flexWrap: 'wrap',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          <div
+                            style={{
+                              width: '34px',
+                              height: '34px',
+                              borderRadius: '8px',
+                              background: '#fef3c7',
+                              color: '#b45309',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              flexShrink: 0,
+                            }}
+                          >
+                            <KeyRound size={16} strokeWidth={2.4} />
+                          </div>
                           <div>
-                            <div style={{ marginBottom: '1rem' }}>
-                              <h4 style={{ fontSize: '1.02rem', fontWeight: 700, color: 'var(--text-main)', margin: '0 0 4px 0' }}>
-                                Enable Payment Methods
-                              </h4>
-                              <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: 0 }}>
-                                Active methods toggled on here will appear directly in your POS counter checkout.
-                              </p>
+                            <div style={{ fontWeight: 700, fontSize: '0.88rem', color: '#1e293b' }}>
+                              Payment Gateways & Tenders (Developer Mode Protected)
                             </div>
-
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                              {[
-                                { id: 'cash', label: 'Cash', desc: 'Physical currency & change drawer tracking', icon: <BanknoteIcon size={20} />, color: '#16a34a', bg: '#f0fdf4' },
-                                { id: 'upi', label: 'UPI / QR', desc: 'Scan & Pay via Google Pay, PhonePe, Paytm, BHIM', icon: <QrCodeIcon size={20} />, color: '#2563eb', bg: '#eff6ff' },
-                                { id: 'card', label: 'Debit / Credit Card', desc: 'Swipe / Tap terminal card processing', icon: <CreditCardIcon size={20} />, color: '#6366f1', bg: '#f5f3ff' },
-                                { id: 'bank', label: 'Bank Transfer', desc: 'Direct NEFT, RTGS, IMPS & Net Banking to shop account', icon: <LandmarkIcon size={20} />, color: '#0d9488', bg: '#f0fdfa' },
-                                { id: 'credit', label: 'Customer Credit / Udhaar', desc: 'Account ledger credit billing & customer dues', icon: <BookUserIcon size={20} />, color: '#9333ea', bg: '#faf5ff' },
-                              ].map((item) => {
-                                const isChecked = item.id === 'bank' ? payBankEnabled : payMethodsEnabled.includes(item.id);
-                                return (
-                                  <div
-                                    key={item.id}
-                                    style={{
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'space-between',
-                                      padding: '0.9rem 1.15rem',
-                                      background: isChecked ? '#faf9ff' : '#ffffff',
-                                      borderRadius: '12px',
-                                      border: isChecked ? '1.5px solid var(--primary)' : '1px solid var(--border)',
-                                      boxShadow: isChecked ? '0 2px 8px rgba(109, 74, 255, 0.08)' : '0 1px 3px rgba(0,0,0,0.02)',
-                                      transition: 'all 0.2s ease',
-                                    }}
-                                  >
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                                      <div style={{
-                                        width: '42px',
-                                        height: '42px',
-                                        borderRadius: '10px',
-                                        background: isChecked ? item.bg : '#f8fafc',
-                                        color: isChecked ? item.color : '#64748b',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        flexShrink: 0,
-                                        border: `1px solid ${isChecked ? item.color + '33' : '#e2e8f0'}`,
-                                      }}>
-                                        {item.icon}
-                                      </div>
-                                      <div>
-                                        <div style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--text-main)' }}>
-                                          {item.label}
-                                        </div>
-                                        <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                                          {item.desc}
-                                        </div>
-                                      </div>
-                                    </div>
-                                    <ToggleSwitch
-                                      checked={isChecked}
-                                      disabled={item.id === 'cash' || user?.role === 'cashier'}
-                                      onChange={() => handleTogglePaymentMethod(item.id)}
-                                    />
-                                  </div>
-                                );
-                              })}
+                            <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '2px' }}>
+                              Payment tender methods, Razorpay, Paytm, PhonePe, UPI QR, and terminal configurations are protected in Developer Mode and hidden from client view.
                             </div>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          className="btn"
+                          style={{
+                            background: '#49364A',
+                            color: '#ffffff',
+                            padding: '0.5rem 1.1rem',
+                            borderRadius: '8px',
+                            fontSize: '0.82rem',
+                            fontWeight: 700,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            border: 'none',
+                            cursor: 'pointer',
+                          }}
+                          onClick={() => setActiveSettingsTab('Payment Integrations')}
+                        >
+                          <CreditCardIcon size={14} />
+                          Open Payment Integrations
+                        </button>
+                      </div>
+                    )}
 
-                            <div style={{ marginTop: '1.15rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem', padding: '0.75rem 1rem', background: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
-                              <span style={{ fontSize: '0.8rem', color: '#059669', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                                <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
-                                Auto-saves on toggle & persists across refresh
-                              </span>
-                              <button
-                                type="button"
-                                className="btn btn-primary"
-                                style={{
-                                  padding: '0.48rem 1.25rem',
-                                  fontSize: '0.84rem',
-                                  fontWeight: 700,
-                                  background: 'var(--primary)',
-                                  color: '#ffffff',
-                                  border: 'none',
-                                  borderRadius: '8px',
-                                  cursor: isSavingMethods ? 'not-allowed' : 'pointer',
-                                  boxShadow: '0 2px 6px rgba(109, 74, 255, 0.25)',
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: '6px',
-                                  transition: 'all 0.15s ease',
-                                }}
-                                disabled={isSavingMethods || user?.role === 'cashier'}
-                                onClick={() => handleSavePaymentMethods()}
-                              >
-                                {isSavingMethods ? (
-                                  <>
-                                    <span style={{ width: '12px', height: '12px', borderRadius: '50%', border: '2px solid #ffffff', borderTopColor: 'transparent', display: 'inline-block', animation: 'spin 0.6s linear infinite' }} />
-                                    <span>Saving...</span>
-                                  </>
-                                ) : (
-                                  <span>Save Payment Methods</span>
-                                )}
-                              </button>
+                    {/* Section: Payments & Integrations (Shop Specific) - PROTECTED: ONLY visible when Developer Mode is active & Payment Integrations tab is selected */}
+                    {isDeveloperMode && isSuperAdminUser && activeSettingsTab === 'Payment Integrations' && (
+                      <div className="card settings-section" style={{ background: '#ffffff', borderRadius: '16px', border: '1px solid var(--border)', boxShadow: '0 4px 16px rgba(49, 46, 129, 0.05)', padding: '1.75rem', marginBottom: '2rem' }}>
+                        {/* Header with Title and Modern Status Badge */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border)' }}>
+                          <div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                              <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'var(--primary-light)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 6px rgba(109, 74, 255, 0.15)' }}>
+                                <CreditCardIcon size={20} />
+                              </div>
+                              <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)', margin: 0, letterSpacing: '-0.01em' }}>
+                                Payments & Integrations
+                              </h3>
+                            </div>
+                            <div style={{ fontSize: '0.84rem', color: 'var(--text-muted)', marginTop: '5px' }}>
+                              Configure payment tender methods, dynamic UPI QR gateways, and merchant credentials for <strong style={{ color: 'var(--text-main)' }}>{shop?.name || 'this shop'}</strong>.
                             </div>
                           </div>
 
-                          {/* Right Column: Quick Setup Card (Razorpay Preview) */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>Status:</span>
+                            <span style={{
+                              fontSize: '0.78rem',
+                              fontWeight: 700,
+                              padding: '4px 12px',
+                              borderRadius: '999px',
+                              background: posPaymentConfig?.status === 'connected' ? '#ecfdf5' : posPaymentConfig?.status === 'error' ? '#fef2f2' : '#f8fafc',
+                              color: posPaymentConfig?.status === 'connected' ? '#047857' : posPaymentConfig?.status === 'error' ? '#b91c1c' : '#64748b',
+                              border: `1px solid ${posPaymentConfig?.status === 'connected' ? '#a7f3d0' : posPaymentConfig?.status === 'error' ? '#fecaca' : '#cbd5e1'}`,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '5px'
+                            }}>
+                              {posPaymentConfig?.status === 'connected' ? '● Connected & Active' : posPaymentConfig?.status === 'error' ? '✕ Configuration Error' : '○ Not Configured'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {paySettingsStatusMsg && (
+                          <div style={{
+                            background: paySettingsStatusMsg.type === 'success' ? '#ecfdf5' : '#fef2f2',
+                            border: `1px solid ${paySettingsStatusMsg.type === 'success' ? '#a7f3d0' : '#fecaca'}`,
+                            color: paySettingsStatusMsg.type === 'success' ? '#065f46' : '#991b1b',
+                            padding: '0.75rem 1.15rem',
+                            borderRadius: '10px',
+                            fontSize: '0.86rem',
+                            fontWeight: 600,
+                            marginBottom: '1.25rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem'
+                          }}>
+                            <span>{paySettingsStatusMsg.type === 'success' ? '✓' : '✕'}</span>
+                            <span>{paySettingsStatusMsg.text}</span>
+                          </div>
+                        )}
+
+                        {/* Subtabs Bar with Responsive Horizontal Scroll */}
+                        <div style={{
+                          display: 'flex',
+                          gap: '0.5rem',
+                          borderBottom: '1px solid var(--border)',
+                          marginBottom: '1.5rem',
+                          paddingBottom: '0.75rem',
+                          overflowX: 'auto',
+                          WebkitOverflowScrolling: 'touch',
+                          scrollbarWidth: 'none'
+                        }}>
+                          {[
+                            { id: 'methods', label: 'Payment Methods', icon: <CreditCardIcon size={16} /> },
+                            { id: 'razorpay', label: 'Razorpay', icon: <ZapIcon size={16} /> },
+                            { id: 'paytm', label: 'Paytm Gateway', icon: <PaytmIcon size={16} /> },
+                            { id: 'phonepe', label: 'PhonePe Gateway', icon: <PhonePeIcon size={16} /> },
+                            { id: 'qr', label: 'UPI QR', icon: <QrCodeIcon size={16} /> },
+                            { id: 'bank', label: 'Bank Transfer', icon: <LandmarkIcon size={16} /> },
+                            { id: 'terminal', label: 'Card Terminal', icon: <TerminalIcon size={16} /> },
+                          ].map((tab) => {
+                            const isActive = paySettingsSubTab === tab.id;
+                            return (
+                              <button
+                                key={tab.id}
+                                type="button"
+                                onClick={() => setPaySettingsSubTab(tab.id as any)}
+                                className="btn"
+                                style={{
+                                  background: isActive ? 'var(--primary)' : '#ffffff',
+                                  color: isActive ? '#ffffff' : 'var(--text-main)',
+                                  border: isActive ? '1px solid var(--primary)' : '1px solid var(--border)',
+                                  padding: '0.55rem 1.1rem',
+                                  fontSize: '0.86rem',
+                                  fontWeight: isActive ? 700 : 500,
+                                  borderRadius: '10px',
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '0.45rem',
+                                  whiteSpace: 'nowrap',
+                                  boxShadow: isActive ? '0 4px 12px rgba(109, 74, 255, 0.28)' : '0 1px 3px rgba(0,0,0,0.02)',
+                                  transition: 'all 0.18s ease',
+                                }}
+                              >
+                                <span>{tab.icon}</span>
+                                <span>{tab.label}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        {/* Subtab 1: Payment Methods (Responsive 2-Column Layout) */}
+                        {paySettingsSubTab === 'methods' && (
+                          <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
+                            gap: '1.75rem',
+                            alignItems: 'start'
+                          }}>
+                            {/* Left Column: Enable Payment Methods */}
+                            <div>
+                              <div style={{ marginBottom: '1rem' }}>
+                                <h4 style={{ fontSize: '1.02rem', fontWeight: 700, color: 'var(--text-main)', margin: '0 0 4px 0' }}>
+                                  Enable Payment Methods
+                                </h4>
+                                <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: 0 }}>
+                                  Active methods toggled on here will appear directly in your POS counter checkout.
+                                </p>
+                              </div>
+
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                                {[
+                                  { id: 'cash', label: 'Cash', desc: 'Physical currency & change drawer tracking', icon: <BanknoteIcon size={20} />, color: '#16a34a', bg: '#f0fdf4' },
+                                  { id: 'upi', label: 'UPI / QR', desc: 'Scan & Pay via Google Pay, PhonePe, Paytm, BHIM', icon: <QrCodeIcon size={20} />, color: '#2563eb', bg: '#eff6ff' },
+                                  { id: 'card', label: 'Debit / Credit Card', desc: 'Swipe / Tap terminal card processing', icon: <CreditCardIcon size={20} />, color: '#6366f1', bg: '#f5f3ff' },
+                                  { id: 'bank', label: 'Bank Transfer', desc: 'Direct NEFT, RTGS, IMPS & Net Banking to shop account', icon: <LandmarkIcon size={20} />, color: '#0d9488', bg: '#f0fdfa' },
+                                  { id: 'credit', label: 'Customer Credit / Udhaar', desc: 'Account ledger credit billing & customer dues', icon: <BookUserIcon size={20} />, color: '#9333ea', bg: '#faf5ff' },
+                                ].map((item) => {
+                                  const isChecked = item.id === 'bank' ? payBankEnabled : payMethodsEnabled.includes(item.id);
+                                  return (
+                                    <div
+                                      key={item.id}
+                                      style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between',
+                                        padding: '0.9rem 1.15rem',
+                                        background: isChecked ? '#faf9ff' : '#ffffff',
+                                        borderRadius: '12px',
+                                        border: isChecked ? '1.5px solid var(--primary)' : '1px solid var(--border)',
+                                        boxShadow: isChecked ? '0 2px 8px rgba(109, 74, 255, 0.08)' : '0 1px 3px rgba(0,0,0,0.02)',
+                                        transition: 'all 0.2s ease',
+                                      }}
+                                    >
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                                        <div style={{
+                                          width: '42px',
+                                          height: '42px',
+                                          borderRadius: '10px',
+                                          background: isChecked ? item.bg : '#f8fafc',
+                                          color: isChecked ? item.color : '#64748b',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          flexShrink: 0,
+                                          border: `1px solid ${isChecked ? item.color + '33' : '#e2e8f0'}`,
+                                        }}>
+                                          {item.icon}
+                                        </div>
+                                        <div>
+                                          <div style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                                            {item.label}
+                                          </div>
+                                          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                                            {item.desc}
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <ToggleSwitch
+                                        checked={isChecked}
+                                        disabled={item.id === 'cash' || user?.role === 'cashier'}
+                                        onChange={() => handleTogglePaymentMethod(item.id)}
+                                      />
+                                    </div>
+                                  );
+                                })}
+                              </div>
+
+                              <div style={{ marginTop: '1.15rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem', padding: '0.75rem 1rem', background: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                                <span style={{ fontSize: '0.8rem', color: '#059669', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                                  <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
+                                  Auto-saves on toggle & persists across refresh
+                                </span>
+                                <button
+                                  type="button"
+                                  className="btn btn-primary"
+                                  style={{
+                                    padding: '0.48rem 1.25rem',
+                                    fontSize: '0.84rem',
+                                    fontWeight: 700,
+                                    background: 'var(--primary)',
+                                    color: '#ffffff',
+                                    border: 'none',
+                                    borderRadius: '8px',
+                                    cursor: isSavingMethods ? 'not-allowed' : 'pointer',
+                                    boxShadow: '0 2px 6px rgba(109, 74, 255, 0.25)',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    transition: 'all 0.15s ease',
+                                  }}
+                                  disabled={isSavingMethods || user?.role === 'cashier'}
+                                  onClick={() => handleSavePaymentMethods()}
+                                >
+                                  {isSavingMethods ? (
+                                    <>
+                                      <span style={{ width: '12px', height: '12px', borderRadius: '50%', border: '2px solid #ffffff', borderTopColor: 'transparent', display: 'inline-block', animation: 'spin 0.6s linear infinite' }} />
+                                      <span>Saving...</span>
+                                    </>
+                                  ) : (
+                                    <span>Save Payment Methods</span>
+                                  )}
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Right Column: Quick Setup Card (Razorpay Preview) */}
+                            <div style={{
+                              background: '#ffffff',
+                              borderRadius: '14px',
+                              border: '1px solid var(--border)',
+                              boxShadow: '0 4px 14px rgba(49, 46, 129, 0.04)',
+                              padding: '1.4rem'
+                            }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', paddingBottom: '0.75rem', borderBottom: '1px solid #f1f5f9' }}>
+                                <div>
+                                  <h4 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-main)', margin: 0 }}>
+                                    Razorpay Configuration
+                                  </h4>
+                                  <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                                    Quick credentials setup & mode toggle
+                                  </div>
+                                </div>
+                                <ToggleSwitch
+                                  checked={payRzpEnabled}
+                                  disabled={user?.role === 'cashier'}
+                                  onChange={handleToggleRazorpay}
+                                />
+                              </div>
+
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                  <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-muted)' }}>Mode:</span>
+                                  <div style={{ display: 'inline-flex', background: '#f1f5f9', borderRadius: '8px', padding: '3px', gap: '3px' }}>
+                                    <button
+                                      type="button"
+                                      disabled={user?.role === 'cashier'}
+                                      onClick={() => setPayRzpMode('test')}
+                                      style={{
+                                        padding: '4px 14px',
+                                        fontSize: '0.8rem',
+                                        fontWeight: payRzpMode === 'test' ? 700 : 500,
+                                        borderRadius: '6px',
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        background: payRzpMode === 'test' ? '#ffffff' : 'transparent',
+                                        color: payRzpMode === 'test' ? '#2563eb' : '#64748b',
+                                        boxShadow: payRzpMode === 'test' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                                        transition: 'all 0.15s ease',
+                                      }}
+                                    >
+                                      Test Mode
+                                    </button>
+                                    <button
+                                      type="button"
+                                      disabled={user?.role === 'cashier'}
+                                      onClick={() => setPayRzpMode('live')}
+                                      style={{
+                                        padding: '4px 14px',
+                                        fontSize: '0.8rem',
+                                        fontWeight: payRzpMode === 'live' ? 700 : 500,
+                                        borderRadius: '6px',
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        background: payRzpMode === 'live' ? '#10b981' : 'transparent',
+                                        color: payRzpMode === 'live' ? '#ffffff' : '#64748b',
+                                        boxShadow: payRzpMode === 'live' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                                        transition: 'all 0.15s ease',
+                                      }}
+                                    >
+                                      Live Mode
+                                    </button>
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', display: 'block', marginBottom: '4px' }}>
+                                    Key ID
+                                  </label>
+                                  <input
+                                    type="text"
+                                    className="form-input"
+                                    style={{
+                                      width: '100%',
+                                      padding: '0.55rem 0.75rem',
+                                      fontSize: '0.86rem',
+                                      borderRadius: '8px',
+                                      border: '1.5px solid #cbd5e1',
+                                      background: '#ffffff',
+                                      color: 'var(--text-main)',
+                                    }}
+                                    placeholder={payRzpMode === 'live' ? 'rzp_live_7XXXXXX' : 'rzp_test_...'}
+                                    value={payRzpKeyId}
+                                    onChange={(e) => setPayRzpKeyId(e.target.value)}
+                                    disabled={user?.role === 'cashier'}
+                                  />
+                                </div>
+
+                                <div>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                                    <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)' }}>
+                                      Key Secret {posPaymentConfig?.hasKeySecret && <span style={{ color: '#059669', fontSize: '0.78rem' }}>(✓ Configured)</span>}
+                                    </label>
+                                    <span
+                                      style={{ fontSize: '0.76rem', color: 'var(--primary)', cursor: 'pointer', fontWeight: 600 }}
+                                      onClick={() => setShowRzpSecret(!showRzpSecret)}
+                                    >
+                                      {showRzpSecret ? 'Hide' : 'Show'}
+                                    </span>
+                                  </div>
+                                  <input
+                                    type={showRzpSecret ? 'text' : 'password'}
+                                    className="form-input"
+                                    style={{
+                                      width: '100%',
+                                      padding: '0.55rem 0.75rem',
+                                      fontSize: '0.86rem',
+                                      borderRadius: '8px',
+                                      border: '1.5px solid #cbd5e1',
+                                      background: '#ffffff',
+                                      color: 'var(--text-main)',
+                                    }}
+                                    placeholder={posPaymentConfig?.hasKeySecret ? '••••••••••••••••••••• (Enter to rotate)' : 'Enter Razorpay Key Secret'}
+                                    value={payRzpKeySecret}
+                                    onChange={(e) => setPayRzpKeySecret(e.target.value)}
+                                    disabled={user?.role === 'cashier'}
+                                  />
+                                </div>
+
+                                <button
+                                  type="button"
+                                  className="btn btn-primary"
+                                  style={{
+                                    width: '100%',
+                                    padding: '0.7rem',
+                                    fontSize: '0.9rem',
+                                    fontWeight: 700,
+                                    background: 'linear-gradient(135deg, #6d4aff 0%, #5b3ee0 100%)',
+                                    color: '#ffffff',
+                                    border: 'none',
+                                    borderRadius: '8px',
+                                    boxShadow: '0 4px 14px rgba(109, 74, 255, 0.3)',
+                                    cursor: 'pointer',
+                                    marginTop: '0.5rem',
+                                  }}
+                                  disabled={isSavingRzp || user?.role === 'cashier'}
+                                  onClick={() => handleSaveRazorpaySettings()}
+                                >
+                                  {isSavingRzp ? 'Saving...' : 'Save Settings'}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Subtab 2: Razorpay Full Configuration (Matching Image 3: Live Key Change) */}
+                        {paySettingsSubTab === 'razorpay' && (
                           <div style={{
                             background: '#ffffff',
                             borderRadius: '14px',
                             border: '1px solid var(--border)',
-                            boxShadow: '0 4px 14px rgba(49, 46, 129, 0.04)',
-                            padding: '1.4rem'
+                            boxShadow: '0 4px 16px rgba(49, 46, 129, 0.04)',
+                            padding: '1.6rem',
+                            maxWidth: '680px'
                           }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', paddingBottom: '0.75rem', borderBottom: '1px solid #f1f5f9' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', paddingBottom: '0.85rem', borderBottom: '1px solid #f1f5f9' }}>
                               <div>
-                                <h4 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-main)', margin: 0 }}>
+                                <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-main)', margin: '0 0 3px 0' }}>
                                   Razorpay Configuration
                                 </h4>
-                                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                                  Quick credentials setup & mode toggle
+                                <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                                  Shop owner can update Razorpay live keys anytime without downtime.
                                 </div>
                               </div>
-                              <ToggleSwitch
-                                checked={payRzpEnabled}
-                                disabled={user?.role === 'cashier'}
-                                onChange={handleToggleRazorpay}
-                              />
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                                <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-muted)' }}>Enable Razorpay</span>
+                                <ToggleSwitch
+                                  checked={payRzpEnabled}
+                                  disabled={user?.role === 'cashier'}
+                                  onChange={handleToggleRazorpay}
+                                />
+                              </div>
                             </div>
 
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-muted)' }}>Mode:</span>
+                                <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-muted)', width: '60px' }}>Mode:</span>
                                 <div style={{ display: 'inline-flex', background: '#f1f5f9', borderRadius: '8px', padding: '3px', gap: '3px' }}>
                                   <button
                                     type="button"
                                     disabled={user?.role === 'cashier'}
                                     onClick={() => setPayRzpMode('test')}
                                     style={{
-                                      padding: '4px 14px',
-                                      fontSize: '0.8rem',
+                                      padding: '5px 16px',
+                                      fontSize: '0.82rem',
                                       fontWeight: payRzpMode === 'test' ? 700 : 500,
                                       borderRadius: '6px',
                                       border: 'none',
@@ -17629,8 +17668,8 @@ export function App() {
                                     disabled={user?.role === 'cashier'}
                                     onClick={() => setPayRzpMode('live')}
                                     style={{
-                                      padding: '4px 14px',
-                                      fontSize: '0.8rem',
+                                      padding: '5px 16px',
+                                      fontSize: '0.82rem',
                                       fontWeight: payRzpMode === 'live' ? 700 : 500,
                                       borderRadius: '6px',
                                       border: 'none',
@@ -17693,751 +17732,19 @@ export function App() {
                                     background: '#ffffff',
                                     color: 'var(--text-main)',
                                   }}
-                                  placeholder={posPaymentConfig?.hasKeySecret ? '••••••••••••••••••••• (Enter to rotate)' : 'Enter Razorpay Key Secret'}
+                                  placeholder={posPaymentConfig?.hasKeySecret ? '••••••••••••••••••••• (Enter new secret to rotate)' : 'Enter Razorpay Key Secret'}
                                   value={payRzpKeySecret}
                                   onChange={(e) => setPayRzpKeySecret(e.target.value)}
                                   disabled={user?.role === 'cashier'}
                                 />
                               </div>
 
-                              <button
-                                type="button"
-                                className="btn btn-primary"
-                                style={{
-                                  width: '100%',
-                                  padding: '0.7rem',
-                                  fontSize: '0.9rem',
-                                  fontWeight: 700,
-                                  background: 'linear-gradient(135deg, #6d4aff 0%, #5b3ee0 100%)',
-                                  color: '#ffffff',
-                                  border: 'none',
-                                  borderRadius: '8px',
-                                  boxShadow: '0 4px 14px rgba(109, 74, 255, 0.3)',
-                                  cursor: 'pointer',
-                                  marginTop: '0.5rem',
-                                }}
-                                disabled={isSavingRzp || user?.role === 'cashier'}
-                                onClick={() => handleSaveRazorpaySettings()}
-                              >
-                                {isSavingRzp ? 'Saving...' : 'Save Settings'}
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Subtab 2: Razorpay Full Configuration (Matching Image 3: Live Key Change) */}
-                      {paySettingsSubTab === 'razorpay' && (
-                        <div style={{
-                          background: '#ffffff',
-                          borderRadius: '14px',
-                          border: '1px solid var(--border)',
-                          boxShadow: '0 4px 16px rgba(49, 46, 129, 0.04)',
-                          padding: '1.6rem',
-                          maxWidth: '680px'
-                        }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', paddingBottom: '0.85rem', borderBottom: '1px solid #f1f5f9' }}>
-                            <div>
-                              <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-main)', margin: '0 0 3px 0' }}>
-                                Razorpay Configuration
-                              </h4>
-                              <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-                                Shop owner can update Razorpay live keys anytime without downtime.
-                              </div>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                              <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-muted)' }}>Enable Razorpay</span>
-                              <ToggleSwitch
-                                checked={payRzpEnabled}
-                                disabled={user?.role === 'cashier'}
-                                onChange={handleToggleRazorpay}
-                              />
-                            </div>
-                          </div>
-
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                              <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-muted)', width: '60px' }}>Mode:</span>
-                              <div style={{ display: 'inline-flex', background: '#f1f5f9', borderRadius: '8px', padding: '3px', gap: '3px' }}>
-                                <button
-                                  type="button"
-                                  disabled={user?.role === 'cashier'}
-                                  onClick={() => setPayRzpMode('test')}
-                                  style={{
-                                    padding: '5px 16px',
-                                    fontSize: '0.82rem',
-                                    fontWeight: payRzpMode === 'test' ? 700 : 500,
-                                    borderRadius: '6px',
-                                    border: 'none',
-                                    cursor: 'pointer',
-                                    background: payRzpMode === 'test' ? '#ffffff' : 'transparent',
-                                    color: payRzpMode === 'test' ? '#2563eb' : '#64748b',
-                                    boxShadow: payRzpMode === 'test' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
-                                    transition: 'all 0.15s ease',
-                                  }}
-                                >
-                                  Test Mode
-                                </button>
-                                <button
-                                  type="button"
-                                  disabled={user?.role === 'cashier'}
-                                  onClick={() => setPayRzpMode('live')}
-                                  style={{
-                                    padding: '5px 16px',
-                                    fontSize: '0.82rem',
-                                    fontWeight: payRzpMode === 'live' ? 700 : 500,
-                                    borderRadius: '6px',
-                                    border: 'none',
-                                    cursor: 'pointer',
-                                    background: payRzpMode === 'live' ? '#10b981' : 'transparent',
-                                    color: payRzpMode === 'live' ? '#ffffff' : '#64748b',
-                                    boxShadow: payRzpMode === 'live' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
-                                    transition: 'all 0.15s ease',
-                                  }}
-                                >
-                                  Live Mode
-                                </button>
-                              </div>
-                            </div>
-
-                            <div>
-                              <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', display: 'block', marginBottom: '4px' }}>
-                                Key ID
-                              </label>
-                              <input
-                                type="text"
-                                className="form-input"
-                                style={{
-                                  width: '100%',
-                                  padding: '0.55rem 0.75rem',
-                                  fontSize: '0.86rem',
-                                  borderRadius: '8px',
-                                  border: '1.5px solid #cbd5e1',
-                                  background: '#ffffff',
-                                  color: 'var(--text-main)',
-                                }}
-                                placeholder={payRzpMode === 'live' ? 'rzp_live_7XXXXXX' : 'rzp_test_...'}
-                                value={payRzpKeyId}
-                                onChange={(e) => setPayRzpKeyId(e.target.value)}
-                                disabled={user?.role === 'cashier'}
-                              />
-                            </div>
-
-                            <div>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                                <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)' }}>
-                                  Key Secret {posPaymentConfig?.hasKeySecret && <span style={{ color: '#059669', fontSize: '0.78rem' }}>(✓ Configured)</span>}
-                                </label>
-                                <span
-                                  style={{ fontSize: '0.76rem', color: 'var(--primary)', cursor: 'pointer', fontWeight: 600 }}
-                                  onClick={() => setShowRzpSecret(!showRzpSecret)}
-                                >
-                                  {showRzpSecret ? 'Hide' : 'Show'}
-                                </span>
-                              </div>
-                              <input
-                                type={showRzpSecret ? 'text' : 'password'}
-                                className="form-input"
-                                style={{
-                                  width: '100%',
-                                  padding: '0.55rem 0.75rem',
-                                  fontSize: '0.86rem',
-                                  borderRadius: '8px',
-                                  border: '1.5px solid #cbd5e1',
-                                  background: '#ffffff',
-                                  color: 'var(--text-main)',
-                                }}
-                                placeholder={posPaymentConfig?.hasKeySecret ? '••••••••••••••••••••• (Enter new secret to rotate)' : 'Enter Razorpay Key Secret'}
-                                value={payRzpKeySecret}
-                                onChange={(e) => setPayRzpKeySecret(e.target.value)}
-                                disabled={user?.role === 'cashier'}
-                              />
-                            </div>
-
-                            <div>
-                              <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', display: 'block', marginBottom: '4px' }}>
-                                Webhook Secret {posPaymentConfig?.hasWebhookSecret && <span style={{ color: '#059669', fontSize: '0.78rem' }}>(✓ Configured)</span>}
-                              </label>
-                              <input
-                                type="password"
-                                className="form-input"
-                                style={{
-                                  width: '100%',
-                                  padding: '0.55rem 0.75rem',
-                                  fontSize: '0.86rem',
-                                  borderRadius: '8px',
-                                  border: '1.5px solid #cbd5e1',
-                                  background: '#ffffff',
-                                  color: 'var(--text-main)',
-                                }}
-                                placeholder="Webhook secret for signature validation"
-                                value={payRzpWebhookSecret}
-                                onChange={(e) => setPayRzpWebhookSecret(e.target.value)}
-                                disabled={user?.role === 'cashier'}
-                              />
-                              <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: '5px', background: '#f8f7ff', border: '1px solid #ede9fe', padding: '6px 10px', borderRadius: '6px' }}>
-                                Webhook URL: <code style={{ color: '#4338ca', fontWeight: 600 }}>{`${window.location.origin}/api/webhooks/razorpay/${shop?.id || 'tenantId'}`}</code>
-                              </div>
-                            </div>
-
-                            <div>
-                              <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', display: 'block', marginBottom: '4px' }}>
-                                Dynamic QR Expiry (Minutes)
-                              </label>
-                              <input
-                                type="number"
-                                min="5"
-                                max="60"
-                                className="form-input"
-                                style={{
-                                  width: '130px',
-                                  padding: '0.55rem 0.75rem',
-                                  fontSize: '0.86rem',
-                                  borderRadius: '8px',
-                                  border: '1.5px solid #cbd5e1',
-                                  background: '#ffffff',
-                                  color: 'var(--text-main)',
-                                }}
-                                value={payRzpExpiryMinutes}
-                                onChange={(e) => setPayRzpExpiryMinutes(Number(e.target.value))}
-                                disabled={user?.role === 'cashier'}
-                              />
-                            </div>
-
-                            <div style={{ marginTop: '0.5rem' }}>
-                              <button
-                                type="button"
-                                className="btn btn-primary"
-                                style={{
-                                  padding: '0.7rem 1.6rem',
-                                  fontSize: '0.9rem',
-                                  fontWeight: 700,
-                                  background: 'linear-gradient(135deg, #6d4aff 0%, #5b3ee0 100%)',
-                                  color: '#ffffff',
-                                  border: 'none',
-                                  borderRadius: '8px',
-                                  boxShadow: '0 4px 14px rgba(109, 74, 255, 0.3)',
-                                  cursor: 'pointer'
-                                }}
-                                disabled={isSavingRzp || user?.role === 'cashier'}
-                                onClick={() => handleSaveRazorpaySettings()}
-                              >
-                                {isSavingRzp ? 'Validating & Saving...' : 'Update Keys'}
-                              </button>
-                              <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: '8px' }}>
-                                Changes will be effective immediately for this shop only. Keys are validated server-side before activation.
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Subtab 3: Paytm Full Configuration */}
-                      {paySettingsSubTab === 'paytm' && (
-                        <div style={{
-                          background: '#ffffff',
-                          borderRadius: '14px',
-                          border: '1px solid var(--border)',
-                          boxShadow: '0 4px 16px rgba(49, 46, 129, 0.04)',
-                          padding: '1.6rem',
-                          maxWidth: '680px'
-                        }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', paddingBottom: '0.85rem', borderBottom: '1px solid #f1f5f9' }}>
-                            <div>
-                              <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-main)', margin: '0 0 3px 0' }}>
-                                Paytm Payment Gateway
-                              </h4>
-                              <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-                                Configure Paytm Merchant account for Dynamic UPI QR & online payments.
-                              </div>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                              <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-muted)' }}>Enable Paytm</span>
-                              <ToggleSwitch
-                                checked={payPaytmEnabled}
-                                disabled={user?.role === 'cashier'}
-                                onChange={handleTogglePaytm}
-                              />
-                            </div>
-                          </div>
-
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                              <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-muted)', width: '60px' }}>Mode:</span>
-                              <div style={{ display: 'inline-flex', background: '#f1f5f9', borderRadius: '8px', padding: '3px', gap: '3px' }}>
-                                <button
-                                  type="button"
-                                  disabled={user?.role === 'cashier'}
-                                  onClick={() => {
-                                    setPayPaytmMode('test');
-                                    if (!payPaytmWebsite || payPaytmWebsite === 'DEFAULT') setPayPaytmWebsite('WEBSTAGING');
-                                  }}
-                                  style={{
-                                    padding: '5px 16px',
-                                    fontSize: '0.82rem',
-                                    fontWeight: payPaytmMode === 'test' ? 700 : 500,
-                                    borderRadius: '6px',
-                                    border: 'none',
-                                    cursor: 'pointer',
-                                    background: payPaytmMode === 'test' ? '#ffffff' : 'transparent',
-                                    color: payPaytmMode === 'test' ? '#2563eb' : '#64748b',
-                                    boxShadow: payPaytmMode === 'test' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
-                                    transition: 'all 0.15s ease',
-                                  }}
-                                >
-                                  Staging / Test
-                                </button>
-                                <button
-                                  type="button"
-                                  disabled={user?.role === 'cashier'}
-                                  onClick={() => {
-                                    setPayPaytmMode('live');
-                                    if (!payPaytmWebsite || payPaytmWebsite === 'WEBSTAGING') setPayPaytmWebsite('DEFAULT');
-                                  }}
-                                  style={{
-                                    padding: '5px 16px',
-                                    fontSize: '0.82rem',
-                                    fontWeight: payPaytmMode === 'live' ? 700 : 500,
-                                    borderRadius: '6px',
-                                    border: 'none',
-                                    cursor: 'pointer',
-                                    background: payPaytmMode === 'live' ? '#10b981' : 'transparent',
-                                    color: payPaytmMode === 'live' ? '#ffffff' : '#64748b',
-                                    boxShadow: payPaytmMode === 'live' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
-                                    transition: 'all 0.15s ease',
-                                  }}
-                                >
-                                  Production / Live
-                                </button>
-                              </div>
-                            </div>
-
-                            <div>
-                              <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', display: 'block', marginBottom: '4px' }}>
-                                Merchant ID (MID)
-                              </label>
-                              <input
-                                type="text"
-                                className="form-input"
-                                style={{
-                                  width: '100%',
-                                  padding: '0.55rem 0.75rem',
-                                  fontSize: '0.86rem',
-                                  borderRadius: '8px',
-                                  border: '1.5px solid #cbd5e1',
-                                  background: '#ffffff',
-                                  color: 'var(--text-main)',
-                                }}
-                                placeholder="e.g. YOUR_PAYTM_MID_123"
-                                value={payPaytmMid}
-                                onChange={(e) => setPayPaytmMid(e.target.value)}
-                                disabled={user?.role === 'cashier'}
-                              />
-                            </div>
-
-                            <div>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                                <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)' }}>
-                                  Merchant Key {posPaymentConfig?.hasPaytmKey && <span style={{ color: '#059669', fontSize: '0.78rem' }}>(✓ Configured)</span>}
-                                </label>
-                                <span
-                                  style={{ fontSize: '0.76rem', color: 'var(--primary)', cursor: 'pointer', fontWeight: 600 }}
-                                  onClick={() => setShowPaytmSecret(!showPaytmSecret)}
-                                >
-                                  {showPaytmSecret ? 'Hide' : 'Show'}
-                                </span>
-                              </div>
-                              <input
-                                type={showPaytmSecret ? 'text' : 'password'}
-                                className="form-input"
-                                style={{
-                                  width: '100%',
-                                  padding: '0.55rem 0.75rem',
-                                  fontSize: '0.86rem',
-                                  borderRadius: '8px',
-                                  border: '1.5px solid #cbd5e1',
-                                  background: '#ffffff',
-                                  color: 'var(--text-main)',
-                                }}
-                                placeholder={posPaymentConfig?.hasPaytmKey ? '••••••••••••••••••••• (Enter new key to rotate)' : 'Enter Paytm Merchant Key'}
-                                value={payPaytmMerchantKey}
-                                onChange={(e) => setPayPaytmMerchantKey(e.target.value)}
-                                disabled={user?.role === 'cashier'}
-                              />
-                            </div>
-
-                            <div>
-                              <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', display: 'block', marginBottom: '4px' }}>
-                                Website Name
-                              </label>
-                              <input
-                                type="text"
-                                className="form-input"
-                                style={{
-                                  width: '100%',
-                                  padding: '0.55rem 0.75rem',
-                                  fontSize: '0.86rem',
-                                  borderRadius: '8px',
-                                  border: '1.5px solid #cbd5e1',
-                                  background: '#ffffff',
-                                  color: 'var(--text-main)',
-                                }}
-                                placeholder={payPaytmMode === 'live' ? 'DEFAULT' : 'WEBSTAGING'}
-                                value={payPaytmWebsite}
-                                onChange={(e) => setPayPaytmWebsite(e.target.value)}
-                                disabled={user?.role === 'cashier'}
-                              />
-                            </div>
-
-                            <div>
-                              <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', display: 'block', marginBottom: '4px' }}>
-                                Paytm Callback / Webhook URL
-                              </label>
-                              <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', background: '#f8f7ff', border: '1px solid #ede9fe', padding: '6px 10px', borderRadius: '6px' }}>
-                                <code>{`${window.location.origin}/api/webhooks/paytm/${shop?.id || 'tenantId'}`}</code>
-                              </div>
-                            </div>
-
-                            <div style={{ marginTop: '0.5rem' }}>
-                              <button
-                                type="button"
-                                className="btn btn-primary"
-                                style={{
-                                  padding: '0.7rem 1.6rem',
-                                  fontSize: '0.9rem',
-                                  fontWeight: 700,
-                                  background: 'linear-gradient(135deg, #6d4aff 0%, #5b3ee0 100%)',
-                                  color: '#ffffff',
-                                  border: 'none',
-                                  borderRadius: '8px',
-                                  boxShadow: '0 4px 14px rgba(109, 74, 255, 0.3)',
-                                  cursor: 'pointer'
-                                }}
-                                disabled={isSavingPaytm || user?.role === 'cashier'}
-                                onClick={() => handleSavePaytmSettings()}
-                              >
-                                {isSavingPaytm ? 'Validating & Saving...' : 'Update Paytm Keys'}
-                              </button>
-                              <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: '8px' }}>
-                                Credentials are encrypted at rest with AES-256-GCM and validated before activation.
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Subtab 4: PhonePe Full Configuration */}
-                      {paySettingsSubTab === 'phonepe' && (
-                        <div style={{
-                          background: '#ffffff',
-                          borderRadius: '14px',
-                          border: '1px solid var(--border)',
-                          boxShadow: '0 4px 16px rgba(49, 46, 129, 0.04)',
-                          padding: '1.6rem',
-                          maxWidth: '680px'
-                        }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', paddingBottom: '0.85rem', borderBottom: '1px solid #f1f5f9' }}>
-                            <div>
-                              <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-main)', margin: '0 0 3px 0' }}>
-                                PhonePe Payment Gateway
-                              </h4>
-                              <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-                                Configure PhonePe Merchant account for Dynamic UPI QR & online payments.
-                              </div>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                              <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-muted)' }}>Enable PhonePe</span>
-                              <ToggleSwitch
-                                checked={payPhonePeEnabled}
-                                disabled={user?.role === 'cashier'}
-                                onChange={handleTogglePhonePe}
-                              />
-                            </div>
-                          </div>
-
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                              <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-muted)', width: '60px' }}>Mode:</span>
-                              <div style={{ display: 'inline-flex', background: '#f1f5f9', borderRadius: '8px', padding: '3px', gap: '3px' }}>
-                                <button
-                                  type="button"
-                                  disabled={user?.role === 'cashier'}
-                                  onClick={() => setPayPhonePeMode('test')}
-                                  style={{
-                                    padding: '5px 16px',
-                                    fontSize: '0.82rem',
-                                    fontWeight: payPhonePeMode === 'test' ? 700 : 500,
-                                    borderRadius: '6px',
-                                    border: 'none',
-                                    cursor: 'pointer',
-                                    background: payPhonePeMode === 'test' ? '#ffffff' : 'transparent',
-                                    color: payPhonePeMode === 'test' ? '#2563eb' : '#64748b',
-                                    boxShadow: payPhonePeMode === 'test' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
-                                    transition: 'all 0.15s ease',
-                                  }}
-                                >
-                                  Sandbox / Test (UAT)
-                                </button>
-                                <button
-                                  type="button"
-                                  disabled={user?.role === 'cashier'}
-                                  onClick={() => setPayPhonePeMode('live')}
-                                  style={{
-                                    padding: '5px 16px',
-                                    fontSize: '0.82rem',
-                                    fontWeight: payPhonePeMode === 'live' ? 700 : 500,
-                                    borderRadius: '6px',
-                                    border: 'none',
-                                    cursor: 'pointer',
-                                    background: payPhonePeMode === 'live' ? '#10b981' : 'transparent',
-                                    color: payPhonePeMode === 'live' ? '#ffffff' : '#64748b',
-                                    boxShadow: payPhonePeMode === 'live' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
-                                    transition: 'all 0.15s ease',
-                                  }}
-                                >
-                                  Production / Live
-                                </button>
-                              </div>
-                            </div>
-
-                            <div>
-                              <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', display: 'block', marginBottom: '4px' }}>
-                                Merchant ID (MID)
-                              </label>
-                              <input
-                                type="text"
-                                className="form-input"
-                                style={{
-                                  width: '100%',
-                                  padding: '0.55rem 0.75rem',
-                                  fontSize: '0.86rem',
-                                  borderRadius: '8px',
-                                  border: '1.5px solid #cbd5e1',
-                                  background: '#ffffff',
-                                  color: 'var(--text-main)',
-                                }}
-                                placeholder="e.g. PGTESTPAYUAT or Your Live MID"
-                                value={payPhonePeMid}
-                                onChange={(e) => setPayPhonePeMid(e.target.value)}
-                                disabled={user?.role === 'cashier'}
-                              />
-                            </div>
-
-                            <div>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                                <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)' }}>
-                                  Salt Key {posPaymentConfig?.hasPhonePeSaltKey && <span style={{ color: '#059669', fontSize: '0.78rem' }}>(✓ Configured)</span>}
-                                </label>
-                                <span
-                                  style={{ fontSize: '0.76rem', color: 'var(--primary)', cursor: 'pointer', fontWeight: 600 }}
-                                  onClick={() => setShowPhonePeSecret(!showPhonePeSecret)}
-                                >
-                                  {showPhonePeSecret ? 'Hide' : 'Show'}
-                                </span>
-                              </div>
-                              <input
-                                type={showPhonePeSecret ? 'text' : 'password'}
-                                className="form-input"
-                                style={{
-                                  width: '100%',
-                                  padding: '0.55rem 0.75rem',
-                                  fontSize: '0.86rem',
-                                  borderRadius: '8px',
-                                  border: '1.5px solid #cbd5e1',
-                                  background: '#ffffff',
-                                  color: 'var(--text-main)',
-                                }}
-                                placeholder={posPaymentConfig?.hasPhonePeSaltKey ? '••••••••••••••••••••• (Enter new salt key to rotate)' : 'Enter PhonePe Salt Key'}
-                                value={payPhonePeSaltKey}
-                                onChange={(e) => setPayPhonePeSaltKey(e.target.value)}
-                                disabled={user?.role === 'cashier'}
-                              />
-                            </div>
-
-                            <div>
-                              <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', display: 'block', marginBottom: '4px' }}>
-                                Salt Index
-                              </label>
-                              <input
-                                type="text"
-                                className="form-input"
-                                style={{
-                                  width: '120px',
-                                  padding: '0.55rem 0.75rem',
-                                  fontSize: '0.86rem',
-                                  borderRadius: '8px',
-                                  border: '1.5px solid #cbd5e1',
-                                  background: '#ffffff',
-                                  color: 'var(--text-main)',
-                                }}
-                                placeholder="e.g. 1"
-                                value={payPhonePeSaltIndex}
-                                onChange={(e) => setPayPhonePeSaltIndex(e.target.value)}
-                                disabled={user?.role === 'cashier'}
-                              />
-                            </div>
-
-                            <div>
-                              <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', display: 'block', marginBottom: '4px' }}>
-                                PhonePe Callback / Webhook URL
-                              </label>
-                              <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', background: '#f8f7ff', border: '1px solid #ede9fe', padding: '6px 10px', borderRadius: '6px' }}>
-                                <code>{`${window.location.origin}/api/webhooks/phonepe/${shop?.id || 'tenantId'}`}</code>
-                              </div>
-                            </div>
-
-                            <div style={{ marginTop: '0.5rem' }}>
-                              <button
-                                type="button"
-                                className="btn btn-primary"
-                                style={{
-                                  padding: '0.7rem 1.6rem',
-                                  fontSize: '0.9rem',
-                                  fontWeight: 700,
-                                  background: 'linear-gradient(135deg, #6d4aff 0%, #5b3ee0 100%)',
-                                  color: '#ffffff',
-                                  border: 'none',
-                                  borderRadius: '8px',
-                                  boxShadow: '0 4px 14px rgba(109, 74, 255, 0.3)',
-                                  cursor: 'pointer'
-                                }}
-                                disabled={isSavingPhonePe || user?.role === 'cashier'}
-                                onClick={() => handleSavePhonePeSettings()}
-                              >
-                                {isSavingPhonePe ? 'Validating & Saving...' : 'Update PhonePe Keys'}
-                              </button>
-                              <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: '8px' }}>
-                                Salt keys are encrypted at rest with AES-256-GCM and validated before activation.
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Subtab 5: UPI / QR Configuration (Responsive 2-Column) */}
-                      {paySettingsSubTab === 'qr' && (
-                        <div style={{
-                          display: 'grid',
-                          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-                          gap: '1.75rem',
-                          alignItems: 'start'
-                        }}>
-                          <div style={{
-                            background: '#ffffff',
-                            borderRadius: '14px',
-                            border: '1px solid var(--border)',
-                            boxShadow: '0 4px 16px rgba(49, 46, 129, 0.04)',
-                            padding: '1.6rem',
-                          }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', paddingBottom: '0.85rem', borderBottom: '1px solid #f1f5f9' }}>
-                              <div>
-                                <span style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-main)' }}>Enable UPI Payments</span>
-                                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Toggle UPI QR tender in POS checkout</div>
-                              </div>
-                              <ToggleSwitch
-                                checked={payUpiEnabled}
-                                disabled={user?.role === 'cashier'}
-                                onChange={handleToggleUpi}
-                              />
-                            </div>
-
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
-                              <div>
-                                <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', display: 'block', marginBottom: '6px' }}>
-                                  QR Mode Type
-                                </label>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                                  <div
-                                    onClick={() => { if (user?.role !== 'cashier') setPayQrType('dynamic'); }}
-                                    style={{
-                                      padding: '0.75rem 0.9rem',
-                                      borderRadius: '10px',
-                                      border: payQrType === 'dynamic' ? '1.5px solid var(--primary)' : '1px solid var(--border)',
-                                      background: payQrType === 'dynamic' ? '#faf9ff' : '#ffffff',
-                                      cursor: user?.role === 'cashier' ? 'not-allowed' : 'pointer',
-                                      transition: 'all 0.15s ease',
-                                    }}
-                                  >
-                                    <div style={{ fontSize: '0.88rem', fontWeight: 700, color: payQrType === 'dynamic' ? 'var(--primary)' : 'var(--text-main)' }}>
-                                      ⚡ Dynamic QR
-                                    </div>
-                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                                      Auto-generated & locked to bill amount
-                                    </div>
-                                  </div>
-
-                                  <div
-                                    onClick={() => { if (user?.role !== 'cashier') setPayQrType('static'); }}
-                                    style={{
-                                      padding: '0.75rem 0.9rem',
-                                      borderRadius: '10px',
-                                      border: payQrType === 'static' ? '1.5px solid var(--primary)' : '1px solid var(--border)',
-                                      background: payQrType === 'static' ? '#faf9ff' : '#ffffff',
-                                      cursor: user?.role === 'cashier' ? 'not-allowed' : 'pointer',
-                                      transition: 'all 0.15s ease',
-                                    }}
-                                  >
-                                    <div style={{ fontSize: '0.88rem', fontWeight: 700, color: payQrType === 'static' ? 'var(--primary)' : 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                      <QrCodeIcon size={16} /> Static QR
-                                    </div>
-                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                                      Shop VPA with manual cashier verification
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-
-                              {payQrType === 'dynamic' && (
-                                <div style={{ padding: '0.9rem', background: '#faf9ff', borderRadius: '10px', border: '1px solid #ede9fe' }}>
-                                  <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-main)', display: 'block', marginBottom: '8px' }}>
-                                    Dynamic QR Gateway Provider
-                                  </label>
-                                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.6rem' }}>
-                                    {[
-                                      { id: 'razorpay', label: 'Razorpay', icon: <ZapIcon size={14} />, active: posPaymentConfig?.rzpEnabled },
-                                      { id: 'paytm', label: 'Paytm', icon: <PaytmIcon size={14} />, active: posPaymentConfig?.paytmEnabled },
-                                      { id: 'phonepe', label: 'PhonePe', icon: <PhonePeIcon size={14} />, active: posPaymentConfig?.phonepeEnabled },
-                                    ].map((prov) => {
-                                      const isSel = payProvider === prov.id;
-                                      return (
-                                        <button
-                                          key={prov.id}
-                                          type="button"
-                                          disabled={user?.role === 'cashier'}
-                                          onClick={() => setPayProvider(prov.id as any)}
-                                          style={{
-                                            padding: '0.6rem 0.8rem',
-                                            borderRadius: '8px',
-                                            border: isSel ? '1.5px solid var(--primary)' : '1px solid var(--border)',
-                                            background: isSel ? '#ffffff' : 'transparent',
-                                            color: isSel ? 'var(--primary)' : 'var(--text-main)',
-                                            fontWeight: isSel ? 700 : 500,
-                                            fontSize: '0.82rem',
-                                            cursor: 'pointer',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'space-between',
-                                            boxShadow: isSel ? '0 2px 6px rgba(109, 74, 255, 0.15)' : 'none',
-                                            transition: 'all 0.15s ease',
-                                          }}
-                                        >
-                                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>{prov.icon}<span>{prov.label}</span></span>
-                                          <span style={{ fontSize: '0.7rem', color: prov.active ? '#059669' : '#94a3b8', fontWeight: 600 }}>
-                                            {prov.active ? '●' : '○'}
-                                          </span>
-                                        </button>
-                                      );
-                                    })}
-                                  </div>
-                                </div>
-                              )}
-
                               <div>
                                 <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', display: 'block', marginBottom: '4px' }}>
-                                  Shop UPI ID / VPA
+                                  Webhook Secret {posPaymentConfig?.hasWebhookSecret && <span style={{ color: '#059669', fontSize: '0.78rem' }}>(✓ Configured)</span>}
                                 </label>
                                 <input
-                                  type="text"
+                                  type="password"
                                   className="form-input"
                                   style={{
                                     width: '100%',
@@ -18448,22 +17755,27 @@ export function App() {
                                     background: '#ffffff',
                                     color: 'var(--text-main)',
                                   }}
-                                  placeholder="e.g. yourstore@okaxis or 9876543210@paytm"
-                                  value={payStaticUpiId}
-                                  onChange={(e) => setPayStaticUpiId(e.target.value)}
+                                  placeholder="Webhook secret for signature validation"
+                                  value={payRzpWebhookSecret}
+                                  onChange={(e) => setPayRzpWebhookSecret(e.target.value)}
                                   disabled={user?.role === 'cashier'}
                                 />
+                                <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: '5px', background: '#f8f7ff', border: '1px solid #ede9fe', padding: '6px 10px', borderRadius: '6px' }}>
+                                  Webhook URL: <code style={{ color: '#4338ca', fontWeight: 600 }}>{`${window.location.origin}/api/webhooks/razorpay/${shop?.id || 'tenantId'}`}</code>
+                                </div>
                               </div>
 
                               <div>
                                 <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', display: 'block', marginBottom: '4px' }}>
-                                  Merchant Display Name
+                                  Dynamic QR Expiry (Minutes)
                                 </label>
                                 <input
-                                  type="text"
+                                  type="number"
+                                  min="5"
+                                  max="60"
                                   className="form-input"
                                   style={{
-                                    width: '100%',
+                                    width: '130px',
                                     padding: '0.55rem 0.75rem',
                                     fontSize: '0.86rem',
                                     borderRadius: '8px',
@@ -18471,386 +17783,959 @@ export function App() {
                                     background: '#ffffff',
                                     color: 'var(--text-main)',
                                   }}
-                                  placeholder={shop?.name || 'Retail Store'}
-                                  value={payStaticMerchantName}
-                                  onChange={(e) => setPayStaticMerchantName(e.target.value)}
+                                  value={payRzpExpiryMinutes}
+                                  onChange={(e) => setPayRzpExpiryMinutes(Number(e.target.value))}
                                   disabled={user?.role === 'cashier'}
                                 />
                               </div>
 
-                              {/* Manual verification safety note */}
-                              <div style={{ background: '#fffbeb', border: '1px solid #fef3c7', padding: '0.85rem 1rem', borderRadius: '10px', fontSize: '0.8rem', color: '#92400e', lineHeight: 1.45 }}>
-                                <strong style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><AlertTriangleIcon size={14} style={{ color: '#d97706' }} /> Manual Verification Note:</strong> When using Static QR, cashier must verify payment received in bank/UPI app. System will never mark invoice Paid based solely on a customer screenshot.
+                              <div style={{ marginTop: '0.5rem' }}>
+                                <button
+                                  type="button"
+                                  className="btn btn-primary"
+                                  style={{
+                                    padding: '0.7rem 1.6rem',
+                                    fontSize: '0.9rem',
+                                    fontWeight: 700,
+                                    background: 'linear-gradient(135deg, #6d4aff 0%, #5b3ee0 100%)',
+                                    color: '#ffffff',
+                                    border: 'none',
+                                    borderRadius: '8px',
+                                    boxShadow: '0 4px 14px rgba(109, 74, 255, 0.3)',
+                                    cursor: 'pointer'
+                                  }}
+                                  disabled={isSavingRzp || user?.role === 'cashier'}
+                                  onClick={() => handleSaveRazorpaySettings()}
+                                >
+                                  {isSavingRzp ? 'Validating & Saving...' : 'Update Keys'}
+                                </button>
+                                <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: '8px' }}>
+                                  Changes will be effective immediately for this shop only. Keys are validated server-side before activation.
+                                </div>
                               </div>
-
-                              <button
-                                type="button"
-                                className="btn btn-primary"
-                                style={{
-                                  width: 'fit-content',
-                                  padding: '0.65rem 1.4rem',
-                                  fontSize: '0.88rem',
-                                  fontWeight: 700,
-                                  background: 'linear-gradient(135deg, #6d4aff 0%, #5b3ee0 100%)',
-                                  color: '#ffffff',
-                                  border: 'none',
-                                  borderRadius: '8px',
-                                  boxShadow: '0 4px 14px rgba(109, 74, 255, 0.3)',
-                                  cursor: 'pointer'
-                                }}
-                                disabled={isSavingQr || user?.role === 'cashier'}
-                                onClick={() => handleSaveQrSettings()}
-                              >
-                                {isSavingQr ? 'Saving...' : 'Save QR Settings'}
-                              </button>
                             </div>
                           </div>
+                        )}
 
-                          {/* Right side: Live QR Preview Card */}
-                          <div style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            padding: '2rem 1.5rem',
-                            background: '#ffffff',
-                            borderRadius: '14px',
-                            border: '1px solid var(--border)',
-                            boxShadow: '0 4px 16px rgba(49, 46, 129, 0.05)',
-                          }}>
-                            <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.75rem' }}>
-                              Live QR Preview ({payQrType === 'dynamic' ? 'Dynamic Amount-Locked' : 'Static Shop VPA'})
-                            </div>
-                            <div
-                              style={{
-                                padding: '12px',
-                                background: '#ffffff',
-                                borderRadius: '12px',
-                                border: '1px solid #e2e8f0',
-                                boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
-                              }}
-                              dangerouslySetInnerHTML={{
-                                __html: qrSvg(
-                                  `upi://pay?pa=${encodeURIComponent(payStaticUpiId.trim() || 'merchant@okaxis')}&pn=${encodeURIComponent(payStaticMerchantName.trim() || shop?.name || 'Store')}&cu=INR`,
-                                  { size: 150, margin: 1 }
-                                ),
-                              }}
-                            />
-                            <div style={{ fontSize: '0.82rem', color: 'var(--primary)', marginTop: '0.85rem', fontWeight: 700 }}>
-                              {payStaticUpiId.trim() || 'merchant@okaxis'}
-                            </div>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                              {payStaticMerchantName.trim() || shop?.name || 'Store'}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Subtab: Bank Transfer Details Section */}
-                      {paySettingsSubTab === 'bank' && (
-                        <div style={{
-                          display: 'grid',
-                          gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
-                          gap: '1.75rem',
-                          alignItems: 'start'
-                        }}>
-                          {/* Left Column: Bank Account Details Form */}
+                        {/* Subtab 3: Paytm Full Configuration */}
+                        {paySettingsSubTab === 'paytm' && (
                           <div style={{
                             background: '#ffffff',
                             borderRadius: '14px',
                             border: '1px solid var(--border)',
                             boxShadow: '0 4px 16px rgba(49, 46, 129, 0.04)',
                             padding: '1.6rem',
+                            maxWidth: '680px'
                           }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', paddingBottom: '0.85rem', borderBottom: '1px solid #f1f5f9' }}>
                               <div>
                                 <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-main)', margin: '0 0 3px 0' }}>
-                                  Bank Account Details
+                                  Paytm Payment Gateway
                                 </h4>
-                                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                                  Direct Bank Transfer / NEFT / IMPS / RTGS
+                                <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                                  Configure Paytm Merchant account for Dynamic UPI QR & online payments.
                                 </div>
                               </div>
-                              <ToggleSwitch
-                                checked={payBankEnabled}
-                                disabled={user?.role === 'cashier'}
-                                onChange={handleToggleBankTransfer}
-                              />
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                                <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-muted)' }}>Enable Paytm</span>
+                                <ToggleSwitch
+                                  checked={payPaytmEnabled}
+                                  disabled={user?.role === 'cashier'}
+                                  onChange={handleTogglePaytm}
+                                />
+                              </div>
                             </div>
 
-                            <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', lineHeight: 1.5, marginBottom: '1.25rem' }}>
-                              These bank details will be shown to cashiers and customers at the POS counter when "Bank Transfer" tender is selected.
-                            </p>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-muted)', width: '60px' }}>Mode:</span>
+                                <div style={{ display: 'inline-flex', background: '#f1f5f9', borderRadius: '8px', padding: '3px', gap: '3px' }}>
+                                  <button
+                                    type="button"
+                                    disabled={user?.role === 'cashier'}
+                                    onClick={() => {
+                                      setPayPaytmMode('test');
+                                      if (!payPaytmWebsite || payPaytmWebsite === 'DEFAULT') setPayPaytmWebsite('WEBSTAGING');
+                                    }}
+                                    style={{
+                                      padding: '5px 16px',
+                                      fontSize: '0.82rem',
+                                      fontWeight: payPaytmMode === 'test' ? 700 : 500,
+                                      borderRadius: '6px',
+                                      border: 'none',
+                                      cursor: 'pointer',
+                                      background: payPaytmMode === 'test' ? '#ffffff' : 'transparent',
+                                      color: payPaytmMode === 'test' ? '#2563eb' : '#64748b',
+                                      boxShadow: payPaytmMode === 'test' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                                      transition: 'all 0.15s ease',
+                                    }}
+                                  >
+                                    Staging / Test
+                                  </button>
+                                  <button
+                                    type="button"
+                                    disabled={user?.role === 'cashier'}
+                                    onClick={() => {
+                                      setPayPaytmMode('live');
+                                      if (!payPaytmWebsite || payPaytmWebsite === 'WEBSTAGING') setPayPaytmWebsite('DEFAULT');
+                                    }}
+                                    style={{
+                                      padding: '5px 16px',
+                                      fontSize: '0.82rem',
+                                      fontWeight: payPaytmMode === 'live' ? 700 : 500,
+                                      borderRadius: '6px',
+                                      border: 'none',
+                                      cursor: 'pointer',
+                                      background: payPaytmMode === 'live' ? '#10b981' : 'transparent',
+                                      color: payPaytmMode === 'live' ? '#ffffff' : '#64748b',
+                                      boxShadow: payPaytmMode === 'live' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                                      transition: 'all 0.15s ease',
+                                    }}
+                                  >
+                                    Production / Live
+                                  </button>
+                                </div>
+                              </div>
 
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                               <div>
                                 <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', display: 'block', marginBottom: '4px' }}>
-                                  Account Holder Name
+                                  Merchant ID (MID)
                                 </label>
                                 <input
                                   type="text"
                                   className="form-input"
-                                  placeholder="e.g. Sri Krishna Supermarket"
-                                  value={payBankAccountName}
+                                  style={{
+                                    width: '100%',
+                                    padding: '0.55rem 0.75rem',
+                                    fontSize: '0.86rem',
+                                    borderRadius: '8px',
+                                    border: '1.5px solid #cbd5e1',
+                                    background: '#ffffff',
+                                    color: 'var(--text-main)',
+                                  }}
+                                  placeholder="e.g. YOUR_PAYTM_MID_123"
+                                  value={payPaytmMid}
+                                  onChange={(e) => setPayPaytmMid(e.target.value)}
                                   disabled={user?.role === 'cashier'}
-                                  onChange={(e) => setPayBankAccountName(e.target.value)}
                                 />
                               </div>
 
-                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.75rem' }}>
-                                <div>
-                                  <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', display: 'block', marginBottom: '4px' }}>
-                                    Bank Name
+                              <div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                                  <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)' }}>
+                                    Merchant Key {posPaymentConfig?.hasPaytmKey && <span style={{ color: '#059669', fontSize: '0.78rem' }}>(✓ Configured)</span>}
                                   </label>
-                                  <input
-                                    type="text"
-                                    className="form-input"
-                                    placeholder="e.g. State Bank of India"
-                                    value={payBankName}
-                                    disabled={user?.role === 'cashier'}
-                                    onChange={(e) => setPayBankName(e.target.value)}
-                                  />
+                                  <span
+                                    style={{ fontSize: '0.76rem', color: 'var(--primary)', cursor: 'pointer', fontWeight: 600 }}
+                                    onClick={() => setShowPaytmSecret(!showPaytmSecret)}
+                                  >
+                                    {showPaytmSecret ? 'Hide' : 'Show'}
+                                  </span>
                                 </div>
-
-                                <div>
-                                  <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', display: 'block', marginBottom: '4px' }}>
-                                    Branch Name
-                                  </label>
-                                  <input
-                                    type="text"
-                                    className="form-input"
-                                    placeholder="e.g. Main Branch, MG Road"
-                                    value={payBankBranch}
-                                    disabled={user?.role === 'cashier'}
-                                    onChange={(e) => setPayBankBranch(e.target.value)}
-                                  />
-                                </div>
+                                <input
+                                  type={showPaytmSecret ? 'text' : 'password'}
+                                  className="form-input"
+                                  style={{
+                                    width: '100%',
+                                    padding: '0.55rem 0.75rem',
+                                    fontSize: '0.86rem',
+                                    borderRadius: '8px',
+                                    border: '1.5px solid #cbd5e1',
+                                    background: '#ffffff',
+                                    color: 'var(--text-main)',
+                                  }}
+                                  placeholder={posPaymentConfig?.hasPaytmKey ? '••••••••••••••••••••• (Enter new key to rotate)' : 'Enter Paytm Merchant Key'}
+                                  value={payPaytmMerchantKey}
+                                  onChange={(e) => setPayPaytmMerchantKey(e.target.value)}
+                                  disabled={user?.role === 'cashier'}
+                                />
                               </div>
 
-                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.75rem' }}>
-                                <div>
-                                  <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', display: 'block', marginBottom: '4px' }}>
-                                    Account Number
-                                  </label>
-                                  <input
-                                    type="text"
-                                    className="form-input"
-                                    placeholder="e.g. 123456789012"
-                                    value={payBankAccountNo}
-                                    disabled={user?.role === 'cashier'}
-                                    onChange={(e) => setPayBankAccountNo(e.target.value)}
-                                    style={{ fontFamily: 'monospace', letterSpacing: '0.5px' }}
-                                  />
-                                </div>
+                              <div>
+                                <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', display: 'block', marginBottom: '4px' }}>
+                                  Website Name
+                                </label>
+                                <input
+                                  type="text"
+                                  className="form-input"
+                                  style={{
+                                    width: '100%',
+                                    padding: '0.55rem 0.75rem',
+                                    fontSize: '0.86rem',
+                                    borderRadius: '8px',
+                                    border: '1.5px solid #cbd5e1',
+                                    background: '#ffffff',
+                                    color: 'var(--text-main)',
+                                  }}
+                                  placeholder={payPaytmMode === 'live' ? 'DEFAULT' : 'WEBSTAGING'}
+                                  value={payPaytmWebsite}
+                                  onChange={(e) => setPayPaytmWebsite(e.target.value)}
+                                  disabled={user?.role === 'cashier'}
+                                />
+                              </div>
 
-                                <div>
-                                  <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', display: 'block', marginBottom: '4px' }}>
-                                    IFSC Code
-                                  </label>
-                                  <input
-                                    type="text"
-                                    className="form-input"
-                                    placeholder="e.g. SBIN0001234"
-                                    value={payBankIfsc}
-                                    disabled={user?.role === 'cashier'}
-                                    onChange={(e) => setPayBankIfsc(e.target.value.toUpperCase())}
-                                    style={{ fontFamily: 'monospace', textTransform: 'uppercase' }}
-                                  />
+                              <div>
+                                <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', display: 'block', marginBottom: '4px' }}>
+                                  Paytm Callback / Webhook URL
+                                </label>
+                                <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', background: '#f8f7ff', border: '1px solid #ede9fe', padding: '6px 10px', borderRadius: '6px' }}>
+                                  <code>{`${window.location.origin}/api/webhooks/paytm/${shop?.id || 'tenantId'}`}</code>
                                 </div>
                               </div>
 
                               <div style={{ marginTop: '0.5rem' }}>
                                 <button
                                   type="button"
-                                  className="btn"
+                                  className="btn btn-primary"
                                   style={{
-                                    padding: '9px 24px',
-                                    background: 'var(--primary)',
-                                    color: '#ffffff',
+                                    padding: '0.7rem 1.6rem',
+                                    fontSize: '0.9rem',
                                     fontWeight: 700,
-                                    fontSize: '0.88rem',
+                                    background: 'linear-gradient(135deg, #6d4aff 0%, #5b3ee0 100%)',
+                                    color: '#ffffff',
                                     border: 'none',
                                     borderRadius: '8px',
                                     boxShadow: '0 4px 14px rgba(109, 74, 255, 0.3)',
                                     cursor: 'pointer'
                                   }}
-                                  disabled={isSavingBank || user?.role === 'cashier'}
-                                  onClick={() => handleSaveBankSettings()}
+                                  disabled={isSavingPaytm || user?.role === 'cashier'}
+                                  onClick={() => handleSavePaytmSettings()}
                                 >
-                                  {isSavingBank ? 'Saving...' : 'Save Bank Settings'}
+                                  {isSavingPaytm ? 'Validating & Saving...' : 'Update Paytm Keys'}
+                                </button>
+                                <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: '8px' }}>
+                                  Credentials are encrypted at rest with AES-256-GCM and validated before activation.
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Subtab 4: PhonePe Full Configuration */}
+                        {paySettingsSubTab === 'phonepe' && (
+                          <div style={{
+                            background: '#ffffff',
+                            borderRadius: '14px',
+                            border: '1px solid var(--border)',
+                            boxShadow: '0 4px 16px rgba(49, 46, 129, 0.04)',
+                            padding: '1.6rem',
+                            maxWidth: '680px'
+                          }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', paddingBottom: '0.85rem', borderBottom: '1px solid #f1f5f9' }}>
+                              <div>
+                                <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-main)', margin: '0 0 3px 0' }}>
+                                  PhonePe Payment Gateway
+                                </h4>
+                                <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                                  Configure PhonePe Merchant account for Dynamic UPI QR & online payments.
+                                </div>
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                                <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-muted)' }}>Enable PhonePe</span>
+                                <ToggleSwitch
+                                  checked={payPhonePeEnabled}
+                                  disabled={user?.role === 'cashier'}
+                                  onChange={handleTogglePhonePe}
+                                />
+                              </div>
+                            </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-muted)', width: '60px' }}>Mode:</span>
+                                <div style={{ display: 'inline-flex', background: '#f1f5f9', borderRadius: '8px', padding: '3px', gap: '3px' }}>
+                                  <button
+                                    type="button"
+                                    disabled={user?.role === 'cashier'}
+                                    onClick={() => setPayPhonePeMode('test')}
+                                    style={{
+                                      padding: '5px 16px',
+                                      fontSize: '0.82rem',
+                                      fontWeight: payPhonePeMode === 'test' ? 700 : 500,
+                                      borderRadius: '6px',
+                                      border: 'none',
+                                      cursor: 'pointer',
+                                      background: payPhonePeMode === 'test' ? '#ffffff' : 'transparent',
+                                      color: payPhonePeMode === 'test' ? '#2563eb' : '#64748b',
+                                      boxShadow: payPhonePeMode === 'test' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                                      transition: 'all 0.15s ease',
+                                    }}
+                                  >
+                                    Sandbox / Test (UAT)
+                                  </button>
+                                  <button
+                                    type="button"
+                                    disabled={user?.role === 'cashier'}
+                                    onClick={() => setPayPhonePeMode('live')}
+                                    style={{
+                                      padding: '5px 16px',
+                                      fontSize: '0.82rem',
+                                      fontWeight: payPhonePeMode === 'live' ? 700 : 500,
+                                      borderRadius: '6px',
+                                      border: 'none',
+                                      cursor: 'pointer',
+                                      background: payPhonePeMode === 'live' ? '#10b981' : 'transparent',
+                                      color: payPhonePeMode === 'live' ? '#ffffff' : '#64748b',
+                                      boxShadow: payPhonePeMode === 'live' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                                      transition: 'all 0.15s ease',
+                                    }}
+                                  >
+                                    Production / Live
+                                  </button>
+                                </div>
+                              </div>
+
+                              <div>
+                                <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', display: 'block', marginBottom: '4px' }}>
+                                  Merchant ID (MID)
+                                </label>
+                                <input
+                                  type="text"
+                                  className="form-input"
+                                  style={{
+                                    width: '100%',
+                                    padding: '0.55rem 0.75rem',
+                                    fontSize: '0.86rem',
+                                    borderRadius: '8px',
+                                    border: '1.5px solid #cbd5e1',
+                                    background: '#ffffff',
+                                    color: 'var(--text-main)',
+                                  }}
+                                  placeholder="e.g. PGTESTPAYUAT or Your Live MID"
+                                  value={payPhonePeMid}
+                                  onChange={(e) => setPayPhonePeMid(e.target.value)}
+                                  disabled={user?.role === 'cashier'}
+                                />
+                              </div>
+
+                              <div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                                  <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)' }}>
+                                    Salt Key {posPaymentConfig?.hasPhonePeSaltKey && <span style={{ color: '#059669', fontSize: '0.78rem' }}>(✓ Configured)</span>}
+                                  </label>
+                                  <span
+                                    style={{ fontSize: '0.76rem', color: 'var(--primary)', cursor: 'pointer', fontWeight: 600 }}
+                                    onClick={() => setShowPhonePeSecret(!showPhonePeSecret)}
+                                  >
+                                    {showPhonePeSecret ? 'Hide' : 'Show'}
+                                  </span>
+                                </div>
+                                <input
+                                  type={showPhonePeSecret ? 'text' : 'password'}
+                                  className="form-input"
+                                  style={{
+                                    width: '100%',
+                                    padding: '0.55rem 0.75rem',
+                                    fontSize: '0.86rem',
+                                    borderRadius: '8px',
+                                    border: '1.5px solid #cbd5e1',
+                                    background: '#ffffff',
+                                    color: 'var(--text-main)',
+                                  }}
+                                  placeholder={posPaymentConfig?.hasPhonePeSaltKey ? '••••••••••••••••••••• (Enter new salt key to rotate)' : 'Enter PhonePe Salt Key'}
+                                  value={payPhonePeSaltKey}
+                                  onChange={(e) => setPayPhonePeSaltKey(e.target.value)}
+                                  disabled={user?.role === 'cashier'}
+                                />
+                              </div>
+
+                              <div>
+                                <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', display: 'block', marginBottom: '4px' }}>
+                                  Salt Index
+                                </label>
+                                <input
+                                  type="text"
+                                  className="form-input"
+                                  style={{
+                                    width: '120px',
+                                    padding: '0.55rem 0.75rem',
+                                    fontSize: '0.86rem',
+                                    borderRadius: '8px',
+                                    border: '1.5px solid #cbd5e1',
+                                    background: '#ffffff',
+                                    color: 'var(--text-main)',
+                                  }}
+                                  placeholder="e.g. 1"
+                                  value={payPhonePeSaltIndex}
+                                  onChange={(e) => setPayPhonePeSaltIndex(e.target.value)}
+                                  disabled={user?.role === 'cashier'}
+                                />
+                              </div>
+
+                              <div>
+                                <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', display: 'block', marginBottom: '4px' }}>
+                                  PhonePe Callback / Webhook URL
+                                </label>
+                                <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', background: '#f8f7ff', border: '1px solid #ede9fe', padding: '6px 10px', borderRadius: '6px' }}>
+                                  <code>{`${window.location.origin}/api/webhooks/phonepe/${shop?.id || 'tenantId'}`}</code>
+                                </div>
+                              </div>
+
+                              <div style={{ marginTop: '0.5rem' }}>
+                                <button
+                                  type="button"
+                                  className="btn btn-primary"
+                                  style={{
+                                    padding: '0.7rem 1.6rem',
+                                    fontSize: '0.9rem',
+                                    fontWeight: 700,
+                                    background: 'linear-gradient(135deg, #6d4aff 0%, #5b3ee0 100%)',
+                                    color: '#ffffff',
+                                    border: 'none',
+                                    borderRadius: '8px',
+                                    boxShadow: '0 4px 14px rgba(109, 74, 255, 0.3)',
+                                    cursor: 'pointer'
+                                  }}
+                                  disabled={isSavingPhonePe || user?.role === 'cashier'}
+                                  onClick={() => handleSavePhonePeSettings()}
+                                >
+                                  {isSavingPhonePe ? 'Validating & Saving...' : 'Update PhonePe Keys'}
+                                </button>
+                                <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: '8px' }}>
+                                  Salt keys are encrypted at rest with AES-256-GCM and validated before activation.
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Subtab 5: UPI / QR Configuration (Responsive 2-Column) */}
+                        {paySettingsSubTab === 'qr' && (
+                          <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                            gap: '1.75rem',
+                            alignItems: 'start'
+                          }}>
+                            <div style={{
+                              background: '#ffffff',
+                              borderRadius: '14px',
+                              border: '1px solid var(--border)',
+                              boxShadow: '0 4px 16px rgba(49, 46, 129, 0.04)',
+                              padding: '1.6rem',
+                            }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', paddingBottom: '0.85rem', borderBottom: '1px solid #f1f5f9' }}>
+                                <div>
+                                  <span style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-main)' }}>Enable UPI Payments</span>
+                                  <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Toggle UPI QR tender in POS checkout</div>
+                                </div>
+                                <ToggleSwitch
+                                  checked={payUpiEnabled}
+                                  disabled={user?.role === 'cashier'}
+                                  onChange={handleToggleUpi}
+                                />
+                              </div>
+
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
+                                <div>
+                                  <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', display: 'block', marginBottom: '6px' }}>
+                                    QR Mode Type
+                                  </label>
+                                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                                    <div
+                                      onClick={() => { if (user?.role !== 'cashier') setPayQrType('dynamic'); }}
+                                      style={{
+                                        padding: '0.75rem 0.9rem',
+                                        borderRadius: '10px',
+                                        border: payQrType === 'dynamic' ? '1.5px solid var(--primary)' : '1px solid var(--border)',
+                                        background: payQrType === 'dynamic' ? '#faf9ff' : '#ffffff',
+                                        cursor: user?.role === 'cashier' ? 'not-allowed' : 'pointer',
+                                        transition: 'all 0.15s ease',
+                                      }}
+                                    >
+                                      <div style={{ fontSize: '0.88rem', fontWeight: 700, color: payQrType === 'dynamic' ? 'var(--primary)' : 'var(--text-main)' }}>
+                                        ⚡ Dynamic QR
+                                      </div>
+                                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                                        Auto-generated & locked to bill amount
+                                      </div>
+                                    </div>
+
+                                    <div
+                                      onClick={() => { if (user?.role !== 'cashier') setPayQrType('static'); }}
+                                      style={{
+                                        padding: '0.75rem 0.9rem',
+                                        borderRadius: '10px',
+                                        border: payQrType === 'static' ? '1.5px solid var(--primary)' : '1px solid var(--border)',
+                                        background: payQrType === 'static' ? '#faf9ff' : '#ffffff',
+                                        cursor: user?.role === 'cashier' ? 'not-allowed' : 'pointer',
+                                        transition: 'all 0.15s ease',
+                                      }}
+                                    >
+                                      <div style={{ fontSize: '0.88rem', fontWeight: 700, color: payQrType === 'static' ? 'var(--primary)' : 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <QrCodeIcon size={16} /> Static QR
+                                      </div>
+                                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                                        Shop VPA with manual cashier verification
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {payQrType === 'dynamic' && (
+                                  <div style={{ padding: '0.9rem', background: '#faf9ff', borderRadius: '10px', border: '1px solid #ede9fe' }}>
+                                    <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-main)', display: 'block', marginBottom: '8px' }}>
+                                      Dynamic QR Gateway Provider
+                                    </label>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.6rem' }}>
+                                      {[
+                                        { id: 'razorpay', label: 'Razorpay', icon: <ZapIcon size={14} />, active: posPaymentConfig?.rzpEnabled },
+                                        { id: 'paytm', label: 'Paytm', icon: <PaytmIcon size={14} />, active: posPaymentConfig?.paytmEnabled },
+                                        { id: 'phonepe', label: 'PhonePe', icon: <PhonePeIcon size={14} />, active: posPaymentConfig?.phonepeEnabled },
+                                      ].map((prov) => {
+                                        const isSel = payProvider === prov.id;
+                                        return (
+                                          <button
+                                            key={prov.id}
+                                            type="button"
+                                            disabled={user?.role === 'cashier'}
+                                            onClick={() => setPayProvider(prov.id as any)}
+                                            style={{
+                                              padding: '0.6rem 0.8rem',
+                                              borderRadius: '8px',
+                                              border: isSel ? '1.5px solid var(--primary)' : '1px solid var(--border)',
+                                              background: isSel ? '#ffffff' : 'transparent',
+                                              color: isSel ? 'var(--primary)' : 'var(--text-main)',
+                                              fontWeight: isSel ? 700 : 500,
+                                              fontSize: '0.82rem',
+                                              cursor: 'pointer',
+                                              display: 'flex',
+                                              alignItems: 'center',
+                                              justifyContent: 'space-between',
+                                              boxShadow: isSel ? '0 2px 6px rgba(109, 74, 255, 0.15)' : 'none',
+                                              transition: 'all 0.15s ease',
+                                            }}
+                                          >
+                                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>{prov.icon}<span>{prov.label}</span></span>
+                                            <span style={{ fontSize: '0.7rem', color: prov.active ? '#059669' : '#94a3b8', fontWeight: 600 }}>
+                                              {prov.active ? '●' : '○'}
+                                            </span>
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                )}
+
+                                <div>
+                                  <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', display: 'block', marginBottom: '4px' }}>
+                                    Shop UPI ID / VPA
+                                  </label>
+                                  <input
+                                    type="text"
+                                    className="form-input"
+                                    style={{
+                                      width: '100%',
+                                      padding: '0.55rem 0.75rem',
+                                      fontSize: '0.86rem',
+                                      borderRadius: '8px',
+                                      border: '1.5px solid #cbd5e1',
+                                      background: '#ffffff',
+                                      color: 'var(--text-main)',
+                                    }}
+                                    placeholder="e.g. yourstore@okaxis or 9876543210@paytm"
+                                    value={payStaticUpiId}
+                                    onChange={(e) => setPayStaticUpiId(e.target.value)}
+                                    disabled={user?.role === 'cashier'}
+                                  />
+                                </div>
+
+                                <div>
+                                  <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', display: 'block', marginBottom: '4px' }}>
+                                    Merchant Display Name
+                                  </label>
+                                  <input
+                                    type="text"
+                                    className="form-input"
+                                    style={{
+                                      width: '100%',
+                                      padding: '0.55rem 0.75rem',
+                                      fontSize: '0.86rem',
+                                      borderRadius: '8px',
+                                      border: '1.5px solid #cbd5e1',
+                                      background: '#ffffff',
+                                      color: 'var(--text-main)',
+                                    }}
+                                    placeholder={shop?.name || 'Retail Store'}
+                                    value={payStaticMerchantName}
+                                    onChange={(e) => setPayStaticMerchantName(e.target.value)}
+                                    disabled={user?.role === 'cashier'}
+                                  />
+                                </div>
+
+                                {/* Manual verification safety note */}
+                                <div style={{ background: '#fffbeb', border: '1px solid #fef3c7', padding: '0.85rem 1rem', borderRadius: '10px', fontSize: '0.8rem', color: '#92400e', lineHeight: 1.45 }}>
+                                  <strong style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><AlertTriangleIcon size={14} style={{ color: '#d97706' }} /> Manual Verification Note:</strong> When using Static QR, cashier must verify payment received in bank/UPI app. System will never mark invoice Paid based solely on a customer screenshot.
+                                </div>
+
+                                <button
+                                  type="button"
+                                  className="btn btn-primary"
+                                  style={{
+                                    width: 'fit-content',
+                                    padding: '0.65rem 1.4rem',
+                                    fontSize: '0.88rem',
+                                    fontWeight: 700,
+                                    background: 'linear-gradient(135deg, #6d4aff 0%, #5b3ee0 100%)',
+                                    color: '#ffffff',
+                                    border: 'none',
+                                    borderRadius: '8px',
+                                    boxShadow: '0 4px 14px rgba(109, 74, 255, 0.3)',
+                                    cursor: 'pointer'
+                                  }}
+                                  disabled={isSavingQr || user?.role === 'cashier'}
+                                  onClick={() => handleSaveQrSettings()}
+                                >
+                                  {isSavingQr ? 'Saving...' : 'Save QR Settings'}
                                 </button>
                               </div>
                             </div>
-                          </div>
 
-                          {/* Right Column: Bank Details Live Preview Card */}
-                          <div style={{
-                            background: '#f8fafc',
-                            borderRadius: '14px',
-                            border: '1.5px solid #e2e8f0',
-                            padding: '1.5rem',
-                            position: 'sticky',
-                            top: '1rem',
-                          }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '1rem' }}>
-                              <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: '#e0f2fe', color: '#0284c7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                <LandmarkIcon size={20} />
-                              </div>
-                              <div>
-                                <h4 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 800, color: 'var(--text-main)' }}>
-                                  Customer Payment Slip Preview
-                                </h4>
-                                <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
-                                  How bank details appear on invoice & counter
-                                </div>
-                              </div>
-                            </div>
-
+                            {/* Right side: Live QR Preview Card */}
                             <div style={{
-                              background: '#ffffff',
-                              borderRadius: '10px',
-                              border: '1px solid #cbd5e1',
-                              padding: '1rem',
                               display: 'flex',
                               flexDirection: 'column',
-                              gap: '0.65rem',
-                              fontSize: '0.82rem',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              padding: '2rem 1.5rem',
+                              background: '#ffffff',
+                              borderRadius: '14px',
+                              border: '1px solid var(--border)',
+                              boxShadow: '0 4px 16px rgba(49, 46, 129, 0.05)',
                             }}>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed #e2e8f0', paddingBottom: '0.35rem' }}>
-                                <span style={{ color: 'var(--text-muted)' }}>Beneficiary:</span>
-                                <strong style={{ color: 'var(--text-main)' }}>{payBankAccountName || shop?.name || '—'}</strong>
+                              <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.75rem' }}>
+                                Live QR Preview ({payQrType === 'dynamic' ? 'Dynamic Amount-Locked' : 'Static Shop VPA'})
                               </div>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed #e2e8f0', paddingBottom: '0.35rem' }}>
-                                <span style={{ color: 'var(--text-muted)' }}>Account No:</span>
-                                <strong className="mono" style={{ color: 'var(--text-main)', letterSpacing: '0.5px' }}>{payBankAccountNo || '—'}</strong>
+                              <div
+                                style={{
+                                  padding: '12px',
+                                  background: '#ffffff',
+                                  borderRadius: '12px',
+                                  border: '1px solid #e2e8f0',
+                                  boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
+                                }}
+                                dangerouslySetInnerHTML={{
+                                  __html: qrSvg(
+                                    `upi://pay?pa=${encodeURIComponent(payStaticUpiId.trim() || 'merchant@okaxis')}&pn=${encodeURIComponent(payStaticMerchantName.trim() || shop?.name || 'Store')}&cu=INR`,
+                                    { size: 150, margin: 1 }
+                                  ),
+                                }}
+                              />
+                              <div style={{ fontSize: '0.82rem', color: 'var(--primary)', marginTop: '0.85rem', fontWeight: 700 }}>
+                                {payStaticUpiId.trim() || 'merchant@okaxis'}
                               </div>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed #e2e8f0', paddingBottom: '0.35rem' }}>
-                                <span style={{ color: 'var(--text-muted)' }}>IFSC:</span>
-                                <strong className="mono" style={{ color: 'var(--text-main)' }}>{payBankIfsc || '—'}</strong>
-                              </div>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed #e2e8f0', paddingBottom: '0.35rem' }}>
-                                <span style={{ color: 'var(--text-muted)' }}>Bank Name:</span>
-                                <strong style={{ color: 'var(--text-main)' }}>{payBankName || '—'}</strong>
-                              </div>
-                              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                <span style={{ color: 'var(--text-muted)' }}>Branch:</span>
-                                <strong style={{ color: 'var(--text-main)' }}>{payBankBranch || '—'}</strong>
+                              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                                {payStaticMerchantName.trim() || shop?.name || 'Store'}
                               </div>
                             </div>
                           </div>
-                        </div>
-                      )}
-
-                      {/* Subtab 6: Card Terminal */}
-                      {paySettingsSubTab === 'terminal' && (
-                        <TerminalManagementTab
-                          userRole={user?.role}
-                          payMethodsEnabled={payMethodsEnabled}
-                          setPayMethodsEnabled={setPayMethodsEnabled}
-                          onSavePaymentSettings={handleSavePaymentSettings}
-                          showToast={showToast}
-                        />
-                      )}
-                    </div>
-                  )}
-
-                  {/* WhatsApp Bill Sharing Settings Card (Section 9.1 - Only in General tab) */}
-                  {activeSettingsTab === 'General' && (
-                    <div className="card settings-section">
-                      <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                        <span style={{ color: '#16a34a', display: 'inline-flex', alignItems: 'center' }}>
-                          <WhatsAppIcon size={20} />
-                        </span>
-                        <span style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--text-main)' }}>WhatsApp Bill Sharing</span>
-                        <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
-                          Configure click-to-chat WhatsApp receipts for POS checkout and invoice resends
-                        </span>
-                      </div>
-
-                      <form onSubmit={handleSaveSettings}>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
-                          {/* Enable WhatsApp sharing */}
-                          <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
-                            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', cursor: user?.role === 'owner' ? 'pointer' : 'default' }}>
-                              <input
-                                type="checkbox"
-                                style={{ width: '18px', height: '18px', marginTop: '2px', accentColor: '#16a34a' }}
-                                disabled={user?.role !== 'owner'}
-                                checked={settingsWhatsAppEnabled}
-                                onChange={(e) => setSettingsWhatsAppEnabled(e.target.checked)}
-                              />
-                              <div>
-                                <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>Enable WhatsApp Sharing</div>
-                                <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '2px' }}>
-                                  Show WhatsApp share button and options upon completing checkout
-                                </div>
-                              </div>
-                            </label>
-                          </div>
-
-                          {/* Language selection */}
-                          <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
-                            <label style={{ fontWeight: 600, fontSize: '0.95rem', display: 'block', marginBottom: '6px' }}>
-                              Default Message Language
-                            </label>
-                            <select
-                              className="form-input"
-                              style={{ width: '100%' }}
-                              disabled={user?.role !== 'owner' || !settingsWhatsAppEnabled}
-                              value={settingsWhatsAppDefaultLang}
-                              onChange={(e) => setSettingsWhatsAppDefaultLang(e.target.value as 'en' | 'hi' | 'ta')}
-                            >
-                              <option value="en">English (EN)</option>
-                              <option value="hi">Hindi (हिन्दी)</option>
-                              <option value="ta">Tamil (தமிழ்)</option>
-                            </select>
-                            <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '4px' }}>
-                              Auto-composes customer message in this language
-                            </div>
-                          </div>
-
-                          {/* Include digital bill link */}
-                          <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
-                            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', cursor: user?.role === 'owner' ? 'pointer' : 'default' }}>
-                              <input
-                                type="checkbox"
-                                style={{ width: '18px', height: '18px', marginTop: '2px', accentColor: '#16a34a' }}
-                                disabled={user?.role !== 'owner' || !settingsWhatsAppEnabled}
-                                checked={settingsWhatsAppIncludeLink}
-                                onChange={(e) => setSettingsWhatsAppIncludeLink(e.target.checked)}
-                              />
-                              <div>
-                                <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>Include Digital Bill Link</div>
-                                <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '2px' }}>
-                                  Append public web link to the online receipt in message
-                                </div>
-                              </div>
-                            </label>
-                          </div>
-                        </div>
-
-                        {user?.role === 'owner' && (
-                          <button type="submit" className="btn btn-primary" disabled={isSavingSettings}>
-                            {isSavingSettings ? 'Saving...' : 'Save WhatsApp Settings'}
-                          </button>
                         )}
-                      </form>
-                    </div>
-                  )}
 
-                  {/* Strict Multi-Tenant Data Isolation Banner (Settings Tab Only - General tab) */}
-                  {activeSettingsTab === 'General' && (
-                    <StrictIsolationBanner />
-                  )}
-                </div>
-              )}
+                        {/* Subtab: Bank Transfer Details Section */}
+                        {paySettingsSubTab === 'bank' && (
+                          <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
+                            gap: '1.75rem',
+                            alignItems: 'start'
+                          }}>
+                            {/* Left Column: Bank Account Details Form */}
+                            <div style={{
+                              background: '#ffffff',
+                              borderRadius: '14px',
+                              border: '1px solid var(--border)',
+                              boxShadow: '0 4px 16px rgba(49, 46, 129, 0.04)',
+                              padding: '1.6rem',
+                            }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', paddingBottom: '0.85rem', borderBottom: '1px solid #f1f5f9' }}>
+                                <div>
+                                  <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-main)', margin: '0 0 3px 0' }}>
+                                    Bank Account Details
+                                  </h4>
+                                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                                    Direct Bank Transfer / NEFT / IMPS / RTGS
+                                  </div>
+                                </div>
+                                <ToggleSwitch
+                                  checked={payBankEnabled}
+                                  disabled={user?.role === 'cashier'}
+                                  onChange={handleToggleBankTransfer}
+                                />
+                              </div>
+
+                              <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', lineHeight: 1.5, marginBottom: '1.25rem' }}>
+                                These bank details will be shown to cashiers and customers at the POS counter when "Bank Transfer" tender is selected.
+                              </p>
+
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                <div>
+                                  <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', display: 'block', marginBottom: '4px' }}>
+                                    Account Holder Name
+                                  </label>
+                                  <input
+                                    type="text"
+                                    className="form-input"
+                                    placeholder="e.g. Sri Krishna Supermarket"
+                                    value={payBankAccountName}
+                                    disabled={user?.role === 'cashier'}
+                                    onChange={(e) => setPayBankAccountName(e.target.value)}
+                                  />
+                                </div>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.75rem' }}>
+                                  <div>
+                                    <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', display: 'block', marginBottom: '4px' }}>
+                                      Bank Name
+                                    </label>
+                                    <input
+                                      type="text"
+                                      className="form-input"
+                                      placeholder="e.g. State Bank of India"
+                                      value={payBankName}
+                                      disabled={user?.role === 'cashier'}
+                                      onChange={(e) => setPayBankName(e.target.value)}
+                                    />
+                                  </div>
+
+                                  <div>
+                                    <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', display: 'block', marginBottom: '4px' }}>
+                                      Branch Name
+                                    </label>
+                                    <input
+                                      type="text"
+                                      className="form-input"
+                                      placeholder="e.g. Main Branch, MG Road"
+                                      value={payBankBranch}
+                                      disabled={user?.role === 'cashier'}
+                                      onChange={(e) => setPayBankBranch(e.target.value)}
+                                    />
+                                  </div>
+                                </div>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.75rem' }}>
+                                  <div>
+                                    <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', display: 'block', marginBottom: '4px' }}>
+                                      Account Number
+                                    </label>
+                                    <input
+                                      type="text"
+                                      className="form-input"
+                                      placeholder="e.g. 123456789012"
+                                      value={payBankAccountNo}
+                                      disabled={user?.role === 'cashier'}
+                                      onChange={(e) => setPayBankAccountNo(e.target.value)}
+                                      style={{ fontFamily: 'monospace', letterSpacing: '0.5px' }}
+                                    />
+                                  </div>
+
+                                  <div>
+                                    <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', display: 'block', marginBottom: '4px' }}>
+                                      IFSC Code
+                                    </label>
+                                    <input
+                                      type="text"
+                                      className="form-input"
+                                      placeholder="e.g. SBIN0001234"
+                                      value={payBankIfsc}
+                                      disabled={user?.role === 'cashier'}
+                                      onChange={(e) => setPayBankIfsc(e.target.value.toUpperCase())}
+                                      style={{ fontFamily: 'monospace', textTransform: 'uppercase' }}
+                                    />
+                                  </div>
+                                </div>
+
+                                <div style={{ marginTop: '0.5rem' }}>
+                                  <button
+                                    type="button"
+                                    className="btn"
+                                    style={{
+                                      padding: '9px 24px',
+                                      background: 'var(--primary)',
+                                      color: '#ffffff',
+                                      fontWeight: 700,
+                                      fontSize: '0.88rem',
+                                      border: 'none',
+                                      borderRadius: '8px',
+                                      boxShadow: '0 4px 14px rgba(109, 74, 255, 0.3)',
+                                      cursor: 'pointer'
+                                    }}
+                                    disabled={isSavingBank || user?.role === 'cashier'}
+                                    onClick={() => handleSaveBankSettings()}
+                                  >
+                                    {isSavingBank ? 'Saving...' : 'Save Bank Settings'}
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Right Column: Bank Details Live Preview Card */}
+                            <div style={{
+                              background: '#f8fafc',
+                              borderRadius: '14px',
+                              border: '1.5px solid #e2e8f0',
+                              padding: '1.5rem',
+                              position: 'sticky',
+                              top: '1rem',
+                            }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '1rem' }}>
+                                <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: '#e0f2fe', color: '#0284c7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                  <LandmarkIcon size={20} />
+                                </div>
+                                <div>
+                                  <h4 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                                    Customer Payment Slip Preview
+                                  </h4>
+                                  <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+                                    How bank details appear on invoice & counter
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div style={{
+                                background: '#ffffff',
+                                borderRadius: '10px',
+                                border: '1px solid #cbd5e1',
+                                padding: '1rem',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '0.65rem',
+                                fontSize: '0.82rem',
+                              }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed #e2e8f0', paddingBottom: '0.35rem' }}>
+                                  <span style={{ color: 'var(--text-muted)' }}>Beneficiary:</span>
+                                  <strong style={{ color: 'var(--text-main)' }}>{payBankAccountName || shop?.name || '—'}</strong>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed #e2e8f0', paddingBottom: '0.35rem' }}>
+                                  <span style={{ color: 'var(--text-muted)' }}>Account No:</span>
+                                  <strong className="mono" style={{ color: 'var(--text-main)', letterSpacing: '0.5px' }}>{payBankAccountNo || '—'}</strong>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed #e2e8f0', paddingBottom: '0.35rem' }}>
+                                  <span style={{ color: 'var(--text-muted)' }}>IFSC:</span>
+                                  <strong className="mono" style={{ color: 'var(--text-main)' }}>{payBankIfsc || '—'}</strong>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed #e2e8f0', paddingBottom: '0.35rem' }}>
+                                  <span style={{ color: 'var(--text-muted)' }}>Bank Name:</span>
+                                  <strong style={{ color: 'var(--text-main)' }}>{payBankName || '—'}</strong>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                  <span style={{ color: 'var(--text-muted)' }}>Branch:</span>
+                                  <strong style={{ color: 'var(--text-main)' }}>{payBankBranch || '—'}</strong>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Subtab 6: Card Terminal */}
+                        {paySettingsSubTab === 'terminal' && (
+                          <TerminalManagementTab
+                            userRole={user?.role}
+                            payMethodsEnabled={payMethodsEnabled}
+                            setPayMethodsEnabled={setPayMethodsEnabled}
+                            onSavePaymentSettings={handleSavePaymentSettings}
+                            showToast={showToast}
+                          />
+                        )}
+                      </div>
+                    )}
+
+                    {/* WhatsApp Bill Sharing Settings Card (Section 9.1 - Only in General tab) */}
+                    {activeSettingsTab === 'General' && (
+                      <div className="card settings-section">
+                        <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                          <span style={{ color: '#16a34a', display: 'inline-flex', alignItems: 'center' }}>
+                            <WhatsAppIcon size={20} />
+                          </span>
+                          <span style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--text-main)' }}>WhatsApp Bill Sharing</span>
+                          <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                            Configure click-to-chat WhatsApp receipts for POS checkout and invoice resends
+                          </span>
+                        </div>
+
+                        <form onSubmit={handleSaveSettings}>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
+                            {/* Enable WhatsApp sharing */}
+                            <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                              <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', cursor: user?.role === 'owner' ? 'pointer' : 'default' }}>
+                                <input
+                                  type="checkbox"
+                                  style={{ width: '18px', height: '18px', marginTop: '2px', accentColor: '#16a34a' }}
+                                  disabled={user?.role !== 'owner'}
+                                  checked={settingsWhatsAppEnabled}
+                                  onChange={(e) => setSettingsWhatsAppEnabled(e.target.checked)}
+                                />
+                                <div>
+                                  <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>Enable WhatsApp Sharing</div>
+                                  <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '2px' }}>
+                                    Show WhatsApp share button and options upon completing checkout
+                                  </div>
+                                </div>
+                              </label>
+                            </div>
+
+                            {/* Language selection */}
+                            <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                              <label style={{ fontWeight: 600, fontSize: '0.95rem', display: 'block', marginBottom: '6px' }}>
+                                Default Message Language
+                              </label>
+                              <select
+                                className="form-input"
+                                style={{ width: '100%' }}
+                                disabled={user?.role !== 'owner' || !settingsWhatsAppEnabled}
+                                value={settingsWhatsAppDefaultLang}
+                                onChange={(e) => setSettingsWhatsAppDefaultLang(e.target.value as 'en' | 'hi' | 'ta')}
+                              >
+                                <option value="en">English (EN)</option>
+                                <option value="hi">Hindi (हिन्दी)</option>
+                                <option value="ta">Tamil (தமிழ்)</option>
+                              </select>
+                              <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '4px' }}>
+                                Auto-composes customer message in this language
+                              </div>
+                            </div>
+
+                            {/* Include digital bill link */}
+                            <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                              <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', cursor: user?.role === 'owner' ? 'pointer' : 'default' }}>
+                                <input
+                                  type="checkbox"
+                                  style={{ width: '18px', height: '18px', marginTop: '2px', accentColor: '#16a34a' }}
+                                  disabled={user?.role !== 'owner' || !settingsWhatsAppEnabled}
+                                  checked={settingsWhatsAppIncludeLink}
+                                  onChange={(e) => setSettingsWhatsAppIncludeLink(e.target.checked)}
+                                />
+                                <div>
+                                  <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>Include Digital Bill Link</div>
+                                  <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '2px' }}>
+                                    Append public web link to the online receipt in message
+                                  </div>
+                                </div>
+                              </label>
+                            </div>
+                          </div>
+
+                          {user?.role === 'owner' && (
+                            <button type="submit" className="btn btn-primary" disabled={isSavingSettings}>
+                              {isSavingSettings ? 'Saving...' : 'Save WhatsApp Settings'}
+                            </button>
+                          )}
+                        </form>
+                      </div>
+                    )}
+
+                    {/* Strict Multi-Tenant Data Isolation Banner (Settings Tab Only - General tab) */}
+                    {activeSettingsTab === 'General' && (
+                      <StrictIsolationBanner />
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
 
             {/* ACCOUNTS & FINANCE TAB VIEWS */}
             {user?.role !== 'cashier' && displayTab === 'payments' && (
-              <div className="tab-content-wrapper finance-bento-tab-wrapper">
+              <div className="tab-content-wrapper" style={{ padding: '1.5rem' }}>
                 <PaymentsView
                   key={selectedBranchScope}
                   onOpenCustomerLedger={(cid) => {
@@ -18876,7 +18761,7 @@ export function App() {
             )}
 
             {user?.role !== 'cashier' && displayTab === 'expenses' && (
-              <div className="tab-content-wrapper expenses-tab-wrapper">
+              <div className="tab-content-wrapper" style={{ padding: '1.5rem' }}>
                 <ExpensesView
                   key={selectedBranchScope}
                   userRole={user.role}
@@ -18907,7 +18792,7 @@ export function App() {
             )}
 
             {user?.role !== 'cashier' && displayTab === 'payables' && (
-              <div className="tab-content-wrapper finance-bento-tab-wrapper">
+              <div className="tab-content-wrapper" style={{ padding: '1.5rem' }}>
                 <PayablesView
                   key={selectedBranchScope}
                   onPaySupplier={(sid) => {
@@ -18925,49 +18810,49 @@ export function App() {
 
             {/* GST FILING TAB VIEWS */}
             {user?.role !== 'cashier' && displayTab === 'gst-overview' && (
-              <div className="tab-content-wrapper gst-tab-content-wrapper">
+              <div className="tab-content-wrapper" style={{ padding: '1.5rem' }}>
                 <GstOverviewView key={selectedBranchScope} tenantGstin={shop?.gstin || ''} onNavigateTab={(tab) => setActiveTab(tab as any)} />
               </div>
             )}
 
             {user?.role !== 'cashier' && displayTab === 'gst-sales-register' && (
-              <div className="tab-content-wrapper gst-tab-content-wrapper">
+              <div className="tab-content-wrapper" style={{ padding: '16px 1.5rem 1.5rem' }}>
                 <GstSalesRegisterView key={selectedBranchScope} onNavigate={(tab) => setActiveTab(tab as any)} />
               </div>
             )}
 
             {user?.role !== 'cashier' && displayTab === 'gst-purchase-register' && (
-              <div className="tab-content-wrapper gst-tab-content-wrapper">
+              <div className="tab-content-wrapper" style={{ padding: '1.5rem' }}>
                 <GstPurchaseRegisterView key={selectedBranchScope} onNavigate={(tab) => setActiveTab(tab as any)} />
               </div>
             )}
 
             {user?.role !== 'cashier' && displayTab === 'gst-itc-reconciliation' && (
-              <div className="tab-content-wrapper gst-tab-content-wrapper">
+              <div className="tab-content-wrapper" style={{ padding: '1.5rem' }}>
                 <ItcRegisterView key={selectedBranchScope} onNavigate={(tab) => setActiveTab(tab as any)} />
               </div>
             )}
 
             {user?.role !== 'cashier' && displayTab === 'gst-gstr3b' && (
-              <div className="tab-content-wrapper gst-tab-content-wrapper">
+              <div className="tab-content-wrapper" style={{ padding: '1.5rem' }}>
                 <Gstr3bView key={selectedBranchScope} onNavigate={(tab) => setActiveTab(tab as any)} />
               </div>
             )}
 
             {user?.role !== 'cashier' && displayTab === 'gst-gstr1' && (
-              <div className="tab-content-wrapper gst-tab-content-wrapper">
+              <div className="tab-content-wrapper" style={{ padding: '1.5rem' }}>
                 <Gstr1View key={selectedBranchScope} onNavigate={(tab) => setActiveTab(tab as any)} />
               </div>
             )}
 
             {user?.role !== 'cashier' && displayTab === 'gst-import-export' && (
-              <div className="tab-content-wrapper gst-tab-content-wrapper">
+              <div className="tab-content-wrapper" style={{ padding: '1.5rem' }}>
                 <GstImportExportView key={selectedBranchScope} onNavigate={(tab) => setActiveTab(tab as any)} />
               </div>
             )}
 
             {user?.role !== 'cashier' && displayTab === 'gst-filing-history' && (
-              <div className="tab-content-wrapper gst-tab-content-wrapper">
+              <div className="tab-content-wrapper" style={{ padding: '1.5rem' }}>
                 <GstFilingHistoryView key={selectedBranchScope} onNavigate={(tab) => setActiveTab(tab as any)} />
               </div>
             )}
@@ -19533,6 +19418,7 @@ export function App() {
             items={items}
             shopName={shop?.name}
             shopLogoUrl={shop?.logoUrl}
+            role={user?.role}
             onClose={() => setShowBulkBarcodeModal(false)}
           />
         )}
@@ -20410,18 +20296,6 @@ export function App() {
                             <option value="2800">28% GST (14% CGST + 14% SGST)</option>
                           </select>
                         </div>
-                      </div>
-
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', paddingTop: '0.2rem' }}>
-                        <input
-                          type="checkbox"
-                          id="itemTaxInclusive"
-                          checked={itemFormTaxInclusive}
-                          onChange={(e) => setItemFormTaxInclusive(e.target.checked)}
-                        />
-                        <label htmlFor="itemTaxInclusive" style={{ fontSize: '0.85rem', color: '#475569', cursor: 'pointer', fontWeight: 500 }}>
-                          Selling price is inclusive of GST (recommended for retail / supermarket)
-                        </label>
                       </div>
                     </div>
                   </div>
@@ -25129,7 +25003,7 @@ export function App() {
         {/* ========================================================= */}
         {selectedInvoiceDetailId && (
           <div
-            className="modal-overlay theme-cashier"
+            className="modal-overlay theme-cashier invoice-detail-overlay"
             style={{
               position: 'fixed',
               inset: 0,
@@ -25147,24 +25021,12 @@ export function App() {
             }}
           >
             <div
-              className="shift-bento-dialog"
+              className="shift-bento-dialog invoice-detail-dialog"
               onClick={(e) => e.stopPropagation()}
-              style={{
-                width: '100%',
-                maxWidth: '880px',
-                maxHeight: '92vh',
-                display: 'flex',
-                flexDirection: 'column',
-                background: 'var(--surface, #FAF7F2)',
-                borderRadius: '20px',
-                border: '1.5px solid var(--border, #D0C7B8)',
-                boxShadow: '0 25px 60px -15px rgba(15, 45, 46, 0.28), 0 10px 24px -5px rgba(15, 45, 46, 0.08)',
-                overflow: 'hidden',
-              }}
             >
               {/* Top Accent Gradient Bar */}
               <div
-                className="modal-top-accent green-accent"
+                className="modal-top-accent green-accent invoice-detail-top-accent"
                 style={{
                   height: '4px',
                   background: 'linear-gradient(90deg, var(--sidebar, #0F2D2E) 0%, var(--primary, #0F766E) 50%, var(--ring, #14B8A6) 100%)',
@@ -25172,50 +25034,21 @@ export function App() {
               />
 
               {/* Bento Header */}
-              <div
-                className="shift-bento-header"
-                style={{
-                  padding: '1.1rem 1.6rem',
-                  borderBottom: '1px solid var(--border, #D0C7B8)',
-                  background: 'var(--surface, #FAF7F2)',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}
-              >
-                <div className="shift-bento-header-left" style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                  <div
-                    className="shift-bento-icon-badge green"
-                    style={{
-                      width: '46px',
-                      height: '46px',
-                      borderRadius: '13px',
-                      background: 'var(--primary-soft, #E6F4F3)',
-                      color: 'var(--primary, #0F766E)',
-                      border: '1.2px solid rgba(20, 184, 166, 0.4)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      boxShadow: '0 2px 8px rgba(15, 118, 110, 0.15)',
-                    }}
-                  >
+              <div className="shift-bento-header invoice-detail-header">
+                <div className="shift-bento-header-left invoice-detail-header-left">
+                  <div className="shift-bento-icon-badge green invoice-detail-icon-badge">
                     <ReceiptIcon size={22} />
                   </div>
-                  <div className="shift-bento-title-wrap">
-                    <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: 'var(--sidebar, #0F2D2E)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div className="shift-bento-title-wrap invoice-detail-title-wrap">
+                    <h3 className="invoice-detail-title">
                       <span>Bill #{invoiceDetailData?.invoice?.number || selectedInvoiceDetailId}</span>
                       {invoiceDetailData?.invoice?.status && (
                         <span
-                          className="shift-ref-pill"
+                          className="shift-ref-pill invoice-detail-status-pill"
                           style={{
-                            fontSize: '0.72rem',
-                            fontWeight: 700,
-                            padding: '2px 9px',
-                            borderRadius: '20px',
                             background: invoiceDetailData.invoice.status === 'posted' ? 'var(--primary-soft, #E6F4F3)' : '#FEE2E2',
                             color: invoiceDetailData.invoice.status === 'posted' ? 'var(--primary, #0F766E)' : '#B91C1C',
                             border: invoiceDetailData.invoice.status === 'posted' ? '1px solid rgba(20, 184, 166, 0.35)' : '1px solid #FECACA',
-                            textTransform: 'uppercase',
                           }}
                         >
                           {invoiceDetailData.invoice.status}
@@ -25223,53 +25056,37 @@ export function App() {
                       )}
                       {invoiceDetailData?.invoice?.kind === 'credit_note' && (
                         <span
+                          className="shift-ref-pill invoice-detail-kind-pill"
                           style={{
-                            fontSize: '0.72rem',
-                            fontWeight: 700,
-                            padding: '2px 9px',
-                            borderRadius: '20px',
                             background: '#FEF3C7',
                             color: '#92400E',
                             border: '1px solid #FDE68A',
-                            textTransform: 'uppercase',
                           }}
                         >
                           Credit Note
                         </span>
                       )}
                     </h3>
-                    <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: 'var(--text-muted, #475569)', display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
+                    <p className="invoice-detail-subtitle">
                       <span>Issued on {invoiceDetailData?.invoice?.bdate ? new Date(invoiceDetailData.invoice.bdate).toLocaleDateString('en-IN') : '—'}</span>
                       {invoiceDetailData?.invoice?.customerName && (
-                        <span>• Customer: <strong style={{ color: 'var(--sidebar, #0F2D2E)' }}>{invoiceDetailData.invoice.customerName}</strong></span>
-                      )}
-                      {invoiceDetailData?.invoice?.customerPhone && (
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--text-muted, #475569)' }}>
-                          <PhoneIcon size={12} style={{ color: 'var(--primary, #0F766E)' }} /> {invoiceDetailData.invoice.customerPhone}
-                        </span>
+                        <span>• Customer: <strong>{invoiceDetailData.invoice.customerName}</strong></span>
                       )}
                     </p>
+                    {invoiceDetailData?.invoice?.customerPhone && (
+                      <div className="invoice-detail-phone">
+                        <PhoneIcon size={12} style={{ color: 'var(--primary, #0F766E)' }} />
+                        <span>{invoiceDetailData.invoice.customerPhone}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
                 <button
                   type="button"
-                  className="modal-close-btn"
+                  className="modal-close-btn invoice-detail-close-btn"
                   onClick={() => setSelectedInvoiceDetailId(null)}
                   aria-label="Close"
-                  style={{
-                    background: 'var(--surface, #FAF7F2)',
-                    border: '1px solid var(--border, #D0C7B8)',
-                    borderRadius: '10px',
-                    width: '32px',
-                    height: '32px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    color: 'var(--text-muted, #475569)',
-                    transition: 'all 0.15s ease',
-                  }}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -25279,7 +25096,7 @@ export function App() {
               </div>
 
               {/* Bento Body */}
-              <div className="shift-bento-body" style={{ padding: '1.25rem 1.6rem', background: 'var(--bg, #E8E1D5)', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+              <div className="shift-bento-body invoice-detail-body">
                 {invoiceDetailLoading || !invoiceDetailData ? (
                   <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted, #475569)', background: 'var(--surface, #FAF7F2)', borderRadius: '16px', border: '1px solid var(--border, #D0C7B8)' }}>
                     <div style={{ display: 'inline-block', width: '28px', height: '28px', border: '3px solid var(--border, #D0C7B8)', borderTopColor: 'var(--primary, #0F766E)', borderRadius: '50%', animation: 'spin 0.8s linear infinite', marginBottom: '0.75rem' }} />
@@ -25287,97 +25104,113 @@ export function App() {
                   </div>
                 ) : (
                   <>
-                    {/* Bento Ribbon (Summary Tiles) */}
-                    <div className="shift-bento-ribbon" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem' }}>
-                      <div className="shift-bento-ribbon-tile highlight" style={{ background: 'linear-gradient(135deg, var(--primary-soft, #E6F4F3) 0%, #FAF7F2 100%)', border: '1.5px solid var(--primary, #0F766E)', borderRadius: '14px', padding: '0.85rem 1rem' }}>
-                        <div className="ribbon-tile-label" style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--primary, #0F766E)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                          Total Bill
+                    {/* Bento Ribbon (Summary Tiles - 2x2 on Mobile, 4x1 on Tablet/Desktop) */}
+                    <div className="invoice-detail-ribbon">
+                      {/* 1. Total Bill */}
+                      <div className="invoice-detail-ribbon-tile">
+                        <div className="invoice-tile-icon-badge">
+                          <ReceiptIcon size={16} />
                         </div>
-                        <div className="ribbon-tile-val" style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--sidebar, #0F2D2E)', fontFamily: "'JetBrains Mono', monospace", marginTop: '2px' }}>
+                        <div className="ribbon-tile-label">Total Bill</div>
+                        <div className="ribbon-tile-val">
                           {formatRupees(invoiceDetailData.invoice.totalMinor)}
                         </div>
-                        <div className="ribbon-tile-sub" style={{ fontSize: '0.72rem', color: 'var(--text-muted, #475569)', marginTop: '2px' }}>
-                          Taxable {formatRupees(invoiceDetailData.invoice.taxableMinor)}
+                        <div className="ribbon-tile-sub">
+                          Taxable: {formatRupees(invoiceDetailData.invoice.taxableMinor)}
                         </div>
                       </div>
 
-                      <div className="shift-bento-ribbon-tile" style={{ background: 'var(--surface, #FAF7F2)', border: '1px solid var(--border, #D0C7B8)', borderRadius: '14px', padding: '0.85rem 1rem' }}>
-                        <div className="ribbon-tile-label" style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted, #475569)', textTransform: 'uppercase' }}>
-                          Paid Amount
+                      {/* 2. Paid Amount */}
+                      <div className="invoice-detail-ribbon-tile">
+                        <div className="invoice-tile-icon-badge">
+                          <CreditCardIcon size={16} />
                         </div>
-                        <div className="ribbon-tile-val" style={{ fontSize: '1.4rem', fontWeight: 800, color: '#15803D', fontFamily: "'JetBrains Mono', monospace", marginTop: '2px' }}>
+                        <div className="ribbon-tile-label">Paid Amount</div>
+                        <div className="ribbon-tile-val" style={{ color: '#0F2D2E' }}>
                           {formatRupees(invoiceDetailData.invoice.paidMinor)}
                         </div>
-                        <div className="ribbon-tile-sub" style={{ fontSize: '0.72rem', color: 'var(--text-muted, #475569)', marginTop: '2px' }}>
+                        <div className="ribbon-tile-sub">
                           GST: {formatRupees(invoiceDetailData.invoice.cgstMinor + invoiceDetailData.invoice.sgstMinor)}
                         </div>
                       </div>
 
-                      <div className="shift-bento-ribbon-tile" style={{ background: 'var(--surface, #FAF7F2)', border: '1px solid var(--border, #D0C7B8)', borderRadius: '14px', padding: '0.85rem 1rem' }}>
-                        <div className="ribbon-tile-label" style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted, #475569)', textTransform: 'uppercase' }}>
-                          Balance Due
+                      {/* 3. Balance Due */}
+                      <div className="invoice-detail-ribbon-tile">
+                        <div className="invoice-tile-icon-badge">
+                          <RupeeIcon size={16} />
                         </div>
-                        <div className="ribbon-tile-val" style={{ fontSize: '1.4rem', fontWeight: 800, color: invoiceDetailData.invoice.balanceMinor > 0 ? '#EA580C' : '#15803D', fontFamily: "'JetBrains Mono', monospace", marginTop: '2px' }}>
+                        <div className="ribbon-tile-label">Balance Due</div>
+                        <div className="ribbon-tile-val" style={{ color: invoiceDetailData.invoice.balanceMinor > 0 ? '#EA580C' : '#0F2D2E' }}>
                           {formatRupees(invoiceDetailData.invoice.balanceMinor)}
                         </div>
-                        <div className="ribbon-tile-sub" style={{ fontSize: '0.72rem', color: 'var(--text-muted, #475569)', marginTop: '2px' }}>
+                        <div className="ribbon-tile-sub">
                           {invoiceDetailData.invoice.balanceMinor > 0 ? 'Pending collection' : 'Fully Settled'}
                         </div>
                       </div>
 
-                      <div className="shift-bento-ribbon-tile" style={{ background: 'var(--surface, #FAF7F2)', border: '1px solid var(--border, #D0C7B8)', borderRadius: '14px', padding: '0.85rem 1rem' }}>
-                        <div className="ribbon-tile-label" style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted, #475569)', textTransform: 'uppercase' }}>
+                      {/* 4. Tender / Change */}
+                      <div className="invoice-detail-ribbon-tile">
+                        <div className="invoice-tile-icon-badge">
+                          <WalletIcon size={16} />
+                        </div>
+                        <div className="ribbon-tile-label">
                           {invoiceDetailData.invoice.tender?.cashReceivedMinor > 0 ? 'Tender / Change' : 'Round Off & Tax'}
                         </div>
-                        <div className="ribbon-tile-val" style={{ fontSize: '1.3rem', fontWeight: 800, color: 'var(--sidebar, #0F2D2E)', fontFamily: "'JetBrains Mono', monospace", marginTop: '2px' }}>
-                          {invoiceDetailData.invoice.tender?.cashReceivedMinor > 0 ? formatRupees(invoiceDetailData.invoice.tender.changeReturnedMinor) : (invoiceDetailData.invoice.roundOffMinor !== 0 ? `${invoiceDetailData.invoice.roundOffMinor > 0 ? '+' : ''}${formatRupees(invoiceDetailData.invoice.roundOffMinor)}` : '₹0.00')}
+                        <div className="ribbon-tile-val">
+                          {invoiceDetailData.invoice.tender?.cashReceivedMinor > 0
+                            ? formatRupees(invoiceDetailData.invoice.tender.changeReturnedMinor)
+                            : (invoiceDetailData.invoice.roundOffMinor !== 0
+                                ? `${invoiceDetailData.invoice.roundOffMinor > 0 ? '+' : ''}${formatRupees(invoiceDetailData.invoice.roundOffMinor)}`
+                                : '₹0.00')}
                         </div>
-                        <div className="ribbon-tile-sub" style={{ fontSize: '0.72rem', color: invoiceDetailData.invoice.tender?.cashReceivedMinor > 0 ? '#047857' : 'var(--text-muted, #475569)', marginTop: '2px' }}>
-                          {invoiceDetailData.invoice.tender?.cashReceivedMinor > 0 ? `Cash Recv: ${formatRupees(invoiceDetailData.invoice.tender.cashReceivedMinor)}` : `CGST+SGST: ${formatRupees(invoiceDetailData.invoice.cgstMinor + invoiceDetailData.invoice.sgstMinor)}`}
+                        <div className="ribbon-tile-sub">
+                          {invoiceDetailData.invoice.tender?.cashReceivedMinor > 0
+                            ? `Cash Recv: ${formatRupees(invoiceDetailData.invoice.tender.cashReceivedMinor)}`
+                            : `CGST+SGST: ${formatRupees(invoiceDetailData.invoice.cgstMinor + invoiceDetailData.invoice.sgstMinor)}`}
                         </div>
                       </div>
                     </div>
 
-                    {/* Billed Items Panel */}
-                    <div className="shift-bento-panel" style={{ background: 'var(--surface, #FAF7F2)', border: '1px solid var(--border, #D0C7B8)', borderRadius: '16px', padding: '1.15rem 1.35rem', boxShadow: '0 1px 3px rgba(15, 45, 46, 0.04)' }}>
-                      <div className="shift-bento-panel-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border, #D0C7B8)', marginBottom: '0.85rem' }}>
+                    {/* Billed Items Section */}
+                    <div className="shift-bento-panel invoice-billed-items-panel">
+                      <div className="shift-bento-panel-header invoice-billed-items-header">
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <span style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--sidebar, #0F2D2E)' }}>
+                          <span className="invoice-billed-items-title">
                             Billed Items
                           </span>
-                          <span style={{ fontSize: '0.72rem', fontWeight: 700, padding: '2px 8px', borderRadius: '12px', background: 'var(--primary-soft, #E6F4F3)', color: 'var(--primary, #0F766E)', border: '1px solid rgba(20, 184, 166, 0.35)' }}>
-                            {invoiceDetailData.lines?.length || 0} items
+                          <span className="invoice-billed-items-badge">
+                            {invoiceDetailData.lines?.length || 0} Items
                           </span>
                         </div>
                       </div>
 
-                      <div style={{ overflowX: 'auto' }}>
-                        <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0', fontSize: '0.82rem' }}>
+                      <div className="invoice-billed-items-table-wrap">
+                        <table className="invoice-billed-items-table">
                           <thead>
-                            <tr style={{ background: 'var(--primary-soft, #E6F4F3)', color: 'var(--sidebar, #0F2D2E)' }}>
-                              <th style={{ padding: '8px 10px', textAlign: 'left', borderRadius: '8px 0 0 8px', fontWeight: 700 }}>#</th>
-                              <th style={{ padding: '8px 10px', textAlign: 'left', fontWeight: 700 }}>Item</th>
-                              <th style={{ padding: '8px 10px', textAlign: 'left', fontWeight: 700 }}>HSN</th>
-                              <th style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 700 }}>Qty</th>
-                              <th style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 700 }}>Price</th>
-                              <th style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 700 }}>Taxable</th>
-                              <th style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 700 }}>Tax</th>
-                              <th style={{ padding: '8px 10px', textAlign: 'right', borderRadius: '0 8px 8px 0', fontWeight: 800 }}>Total</th>
+                            <tr>
+                              <th className="col-sno">#</th>
+                              <th className="col-item">Item</th>
+                              <th className="col-hsn">HSN</th>
+                              <th className="col-qty">Qty</th>
+                              <th className="col-rate">Rate</th>
+                              <th className="col-taxable">Taxable</th>
+                              <th className="col-tax">Tax</th>
+                              <th className="col-amount">Amount</th>
                             </tr>
                           </thead>
                           <tbody>
                             {invoiceDetailData.lines?.map((l: any, idx: number) => (
-                              <tr key={l.id || idx} style={{ borderBottom: '1px solid var(--border, #E8E1D5)' }}>
-                                <td style={{ padding: '9px 10px', color: 'var(--text-muted, #475569)' }}>{idx + 1}</td>
-                                <td style={{ padding: '9px 10px' }}>
-                                  <div style={{ fontWeight: 700, color: 'var(--sidebar, #0F2D2E)' }}>{l.name}</div>
+                              <tr key={l.id || idx}>
+                                <td className="col-sno">{idx + 1}</td>
+                                <td className="col-item">
+                                  <div className="invoice-item-name">{l.name}</div>
                                 </td>
-                                <td style={{ padding: '9px 10px', color: 'var(--text-muted, #475569)', fontFamily: "'JetBrains Mono', monospace", fontSize: '0.78rem' }}>{l.hsn || '—'}</td>
-                                <td style={{ padding: '9px 10px', textAlign: 'right', fontWeight: 600, color: 'var(--sidebar, #0F2D2E)' }}>{(l.qtyMilli / 1000).toLocaleString()} {l.unit || ''}</td>
-                                <td style={{ padding: '9px 10px', textAlign: 'right', color: 'var(--text-muted, #475569)' }}>{formatRupees(l.priceMinor)}</td>
-                                <td style={{ padding: '9px 10px', textAlign: 'right', color: 'var(--text-muted, #475569)' }}>{formatRupees(l.taxableMinor)}</td>
-                                <td style={{ padding: '9px 10px', textAlign: 'right', color: 'var(--text-muted, #475569)' }}>{formatRupees(l.cgstMinor + l.sgstMinor)}</td>
-                                <td style={{ padding: '9px 10px', textAlign: 'right', fontWeight: 800, color: 'var(--sidebar, #0F2D2E)', fontFamily: "'JetBrains Mono', monospace" }}>{formatRupees(l.totalMinor)}</td>
+                                <td className="col-hsn">{l.hsn || '—'}</td>
+                                <td className="col-qty">{(l.qtyMilli / 1000).toLocaleString()} {l.unit || ''}</td>
+                                <td className="col-rate">{formatRupees(l.priceMinor)}</td>
+                                <td className="col-taxable">{formatRupees(l.taxableMinor)}</td>
+                                <td className="col-tax">{formatRupees(l.cgstMinor + l.sgstMinor)}</td>
+                                <td className="col-amount">{formatRupees(l.totalMinor)}</td>
                               </tr>
                             ))}
                           </tbody>
@@ -25385,244 +25218,222 @@ export function App() {
                       </div>
                     </div>
 
-                    {/* Returns & Credit Notes Zone */}
-                    <div className="shift-bento-panel" style={{ background: 'var(--surface, #FAF7F2)', border: '1px solid var(--border, #D0C7B8)', borderRadius: '16px', padding: '1.15rem 1.35rem', boxShadow: '0 1px 3px rgba(15, 45, 46, 0.04)' }}>
-                      <div className="shift-bento-panel-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border, #D0C7B8)', marginBottom: '0.85rem' }}>
-                        <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <RotateCcwIcon size={16} style={{ color: 'var(--primary, #0F766E)' }} />
-                            <span style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--sidebar, #0F2D2E)' }}>
-                              Returns & Credit Notes
-                            </span>
-                          </div>
+                    {/* Returns & Credit Notes Section */}
+                    <div className="invoice-returns-section">
+                      <div
+                        className="invoice-returns-toggle-row"
+                        onClick={() => setIsCreditNotesListOpen((prev) => !prev)}
+                        role="button"
+                        tabIndex={0}
+                      >
+                        <div className="invoice-returns-toggle-left">
+                          <RotateCcwIcon size={16} className="invoice-returns-icon" />
+                          <span className="invoice-returns-label">Returns & Credit Notes</span>
                           {invoiceDetailData.creditNotes && invoiceDetailData.creditNotes.length > 0 && (
-                            <div style={{ fontSize: '0.76rem', color: 'var(--text-muted, #475569)', marginTop: '2px' }}>
-                              Returned {formatRupees(invoiceDetailData.invoice.returnedMinor || 0)} of {formatRupees(invoiceDetailData.invoice.totalMinor)} • {invoiceDetailData.creditNotes.length} credit note(s) issued
-                            </div>
+                            <span className="invoice-returns-badge">
+                              {invoiceDetailData.creditNotes.length}
+                            </span>
                           )}
                         </div>
-
-                        {/* Return Action button */}
-                        {invoiceDetailData.invoice.kind !== 'credit_note' && invoiceDetailData.invoice.status !== 'cancelled' && (
-                          <button
-                            type="button"
-                            disabled={Boolean(invoiceDetailData.invoice.fullyReturned)}
-                            style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '6px',
-                              padding: '0.45rem 1rem',
-                              fontSize: '0.8rem',
-                              fontWeight: 700,
-                              borderRadius: '10px',
-                              cursor: invoiceDetailData.invoice.fullyReturned ? 'not-allowed' : 'pointer',
-                              background: invoiceDetailData.invoice.fullyReturned ? '#F1F5F9' : 'var(--primary, #0F766E)',
-                              color: invoiceDetailData.invoice.fullyReturned ? '#94A3B8' : '#FFFFFF',
-                              border: invoiceDetailData.invoice.fullyReturned ? '1px solid #CBD5E1' : 'none',
-                              boxShadow: invoiceDetailData.invoice.fullyReturned ? 'none' : '0 2px 8px rgba(15, 118, 110, 0.25)',
-                              transition: 'all 0.15s ease',
-                            }}
-                            onClick={() => {
-                              setSelectedInvoiceDetailId(null);
-                              openReturnModal(invoiceDetailData.invoice.id);
-                            }}
-                            title={invoiceDetailData.invoice.fullyReturned ? 'Fully returned' : 'Issue a return against this bill'}
-                          >
-                            <RotateCcwIcon size={13} />
-                            <span>Issue Return / Credit Note</span>
-                          </button>
-                        )}
+                        <ChevronRightIcon
+                          size={18}
+                          className={`invoice-returns-chevron ${isCreditNotesListOpen ? 'open' : ''}`}
+                        />
                       </div>
 
-                      {/* Credit notes list */}
-                      {invoiceDetailData.creditNotes && invoiceDetailData.creditNotes.length > 0 ? (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                          {invoiceDetailData.creditNotes.map((cn: any) => (
-                            <div
-                              key={cn.id}
-                              style={{
-                                border: cn.status === 'voided' ? '1.5px dashed #EF4444' : '1.5px solid var(--border, #D0C7B8)',
-                                borderRadius: '12px',
-                                padding: '0.9rem 1.1rem',
-                                background: cn.status === 'voided' ? '#FFF5F5' : 'var(--surface, #FAF7F2)',
-                              }}
-                            >
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                  <span style={{ fontWeight: 800, color: 'var(--primary, #0F766E)', fontSize: '0.95rem', fontFamily: "'JetBrains Mono', monospace" }}>
-                                    {cn.number}
-                                  </span>
-                                  <span
-                                    style={{
-                                      fontSize: '0.68rem',
-                                      fontWeight: 800,
-                                      padding: '2px 7px',
-                                      borderRadius: '12px',
-                                      background: cn.status === 'voided' ? '#FEE2E2' : 'var(--primary-soft, #E6F4F3)',
-                                      color: cn.status === 'voided' ? '#B91C1C' : 'var(--primary, #0F766E)',
-                                      border: cn.status === 'voided' ? '1px solid #FECACA' : '1px solid rgba(20, 184, 166, 0.35)',
-                                      textTransform: 'uppercase',
-                                    }}
-                                  >
-                                    {cn.status}
-                                  </span>
-                                  <span style={{ fontSize: '0.78rem', color: 'var(--text-muted, #475569)' }}>
-                                    {new Date(cn.createdAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
-                                  </span>
-                                  {cn.createdByName && (
-                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted, #475569)' }}>
-                                      by <strong>{cn.createdByName}</strong>
-                                    </span>
-                                  )}
-                                </div>
-
-                                <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
-                                  <a
-                                    href={`/api/credit-notes/${cn.id}/print?paper=thermal80&autoprint=true`}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    style={{
-                                      padding: '0.25rem 0.6rem',
-                                      fontSize: '0.74rem',
-                                      fontWeight: 700,
-                                      textDecoration: 'none',
-                                      borderRadius: '8px',
-                                      background: 'var(--surface, #FAF7F2)',
-                                      border: '1px solid var(--border, #D0C7B8)',
-                                      color: 'var(--sidebar, #0F2D2E)',
-                                      display: 'inline-flex',
-                                      alignItems: 'center',
-                                      gap: '4px',
-                                    }}
-                                  >
-                                    🖨️ Thermal
-                                  </a>
-                                  <a
-                                    href={`/api/credit-notes/${cn.id}/print?paper=a4`}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    style={{
-                                      padding: '0.25rem 0.6rem',
-                                      fontSize: '0.74rem',
-                                      fontWeight: 700,
-                                      textDecoration: 'none',
-                                      borderRadius: '8px',
-                                      background: 'var(--surface, #FAF7F2)',
-                                      border: '1px solid var(--border, #D0C7B8)',
-                                      color: 'var(--sidebar, #0F2D2E)',
-                                      display: 'inline-flex',
-                                      alignItems: 'center',
-                                      gap: '4px',
-                                    }}
-                                  >
-                                    📄 A4
-                                  </a>
-                                  {shop?.whatsappEnabled !== false && cn.status !== 'voided' && (
-                                    <button
-                                      type="button"
-                                      style={{
-                                        padding: '0.25rem 0.6rem',
-                                        fontSize: '0.74rem',
-                                        fontWeight: 700,
-                                        borderRadius: '8px',
-                                        border: '1px solid #86EFAC',
-                                        background: '#F0FDF4',
-                                        color: '#15803D',
-                                        cursor: 'pointer',
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        gap: '4px',
-                                      }}
-                                      onClick={() => handleOpenCreditNoteWhatsApp({
-                                        id: cn.id,
-                                        number: cn.number,
-                                        originalInvoiceNumber: invoiceDetailData.invoice.number,
-                                        phone: invoiceDetailData.invoice.customerPhone || '',
-                                        customerName: invoiceDetailData.invoice.customerName,
-                                        totalCreditMinor: cn.totalCreditMinor,
-                                        settlementSummary: 'Credit Note issued',
-                                        shareToken: cn.shareToken,
-                                      })}
-                                    >
-                                      <WhatsAppIcon size={13} />
-                                      <span>WhatsApp</span>
-                                    </button>
-                                  )}
-                                  {cn.status !== 'voided' && (user?.role === 'owner' || user?.role === 'manager') && (
-                                    <button
-                                      type="button"
-                                      style={{
-                                        padding: '0.25rem 0.6rem',
-                                        fontSize: '0.74rem',
-                                        fontWeight: 700,
-                                        borderRadius: '8px',
-                                        background: '#FEE2E2',
-                                        color: '#B91C1C',
-                                        border: '1px solid #FCA5A5',
-                                        cursor: 'pointer',
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        gap: '4px',
-                                      }}
-                                      onClick={() => handleOpenVoidModal({
-                                        id: cn.id,
-                                        number: cn.number,
-                                        totalCreditMinor: cn.totalCreditMinor,
-                                        advanceAmountMinor: cn.advanceAmountMinor || 0,
-                                      })}
-                                      title="Void this credit note (Owner/Manager only)"
-                                    >
-                                      <XCircleIcon size={12} />
-                                      <span>Void</span>
-                                    </button>
-                                  )}
-                                </div>
-                              </div>
-
-                              {/* Voided Details Banner */}
-                              {cn.status === 'voided' && (
-                                <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '8px', padding: '0.5rem 0.75rem', fontSize: '0.78rem', color: '#B91C1C', marginBottom: '0.5rem' }}>
-                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><AlertTriangleIcon size={13} /> <b>Voided</b></span> on {new Date(cn.voidedAt).toLocaleString('en-IN')}{cn.voidedByName ? ` by ${cn.voidedByName}` : ''}: "{cn.voidReason || 'No reason provided'}"
-                                </div>
-                              )}
-
-                              {/* Returned Lines */}
-                              <div style={{ fontSize: '0.8rem', marginBottom: '0.4rem' }}>
-                                {cn.lines?.map((cl: any, cidx: number) => (
-                                  <div key={cidx} style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', borderBottom: '1px dashed var(--border, #E8E1D5)' }}>
-                                    <div>
-                                      <strong style={{ color: 'var(--sidebar, #0F2D2E)' }}>{cl.name}</strong> × {(cl.qtyMilli / 1000).toLocaleString()} · Reason: <em>{cl.reason}</em> · Restock: <span style={{ fontWeight: 800, color: cl.restock ? '#16A34A' : '#DC2626' }}>{cl.restock ? 'YES' : 'NO'}</span>
+                      {/* Expandable Credit Notes Details */}
+                      {isCreditNotesListOpen && (
+                        <div className="invoice-credit-notes-container">
+                          {invoiceDetailData.creditNotes && invoiceDetailData.creditNotes.length > 0 ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                              {invoiceDetailData.creditNotes.map((cn: any) => (
+                                <div
+                                  key={cn.id}
+                                  style={{
+                                    border: cn.status === 'voided' ? '1.5px dashed #EF4444' : '1.5px solid var(--border, #D0C7B8)',
+                                    borderRadius: '12px',
+                                    padding: '0.9rem 1.1rem',
+                                    background: cn.status === 'voided' ? '#FFF5F5' : 'var(--surface, #FAF7F2)',
+                                  }}
+                                >
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                      <span style={{ fontWeight: 800, color: 'var(--primary, #0F766E)', fontSize: '0.95rem', fontFamily: "'JetBrains Mono', monospace" }}>
+                                        {cn.number}
+                                      </span>
+                                      <span
+                                        style={{
+                                          fontSize: '0.68rem',
+                                          fontWeight: 800,
+                                          padding: '2px 7px',
+                                          borderRadius: '12px',
+                                          background: cn.status === 'voided' ? '#FEE2E2' : 'var(--primary-soft, #E6F4F3)',
+                                          color: cn.status === 'voided' ? '#B91C1C' : 'var(--primary, #0F766E)',
+                                          border: cn.status === 'voided' ? '1px solid #FECACA' : '1px solid rgba(20, 184, 166, 0.35)',
+                                          textTransform: 'uppercase',
+                                        }}
+                                      >
+                                        {cn.status}
+                                      </span>
+                                      <span style={{ fontSize: '0.78rem', color: 'var(--text-muted, #475569)' }}>
+                                        {new Date(cn.createdAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
+                                      </span>
+                                      {cn.createdByName && (
+                                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted, #475569)' }}>
+                                          by <strong>{cn.createdByName}</strong>
+                                        </span>
+                                      )}
                                     </div>
-                                    <div style={{ fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", color: 'var(--sidebar, #0F2D2E)' }}>{formatRupees(cl.totalMinor)}</div>
-                                  </div>
-                                ))}
-                              </div>
 
-                              {/* Settlement Summary */}
-                              <div style={{ paddingTop: '0.4rem', fontSize: '0.78rem', color: 'var(--text-muted, #475569)' }}>
-                                <strong style={{ color: 'var(--sidebar, #0F2D2E)' }}>Settlement:</strong> Total Credit <strong style={{ color: 'var(--primary, #0F766E)' }}>{formatRupees(cn.totalCreditMinor)}</strong>
-                                {cn.allocations?.map((a: any, aidx: number) => (
-                                  <span key={aidx} style={{ marginLeft: '6px' }}>
-                                    • {formatRupees(a.amountMinor)} adjusted on Bill #{a.invoiceNumber}
-                                  </span>
-                                ))}
-                                {cn.advanceAmountMinor > 0 && (
-                                  <span style={{ marginLeft: '6px', color: '#0369A1', fontWeight: 700 }}>
-                                    • {formatRupees(cn.advanceAmountMinor)} kept as Customer Advance
-                                  </span>
-                                )}
-                                {cn.refundAmountMinor > 0 && (
-                                  <span style={{ marginLeft: '6px', color: 'var(--sidebar, #0F2D2E)', fontWeight: 700 }}>
-                                    • {formatRupees(cn.refundAmountMinor)} refunded via {(cn.refundMode || 'cash').toUpperCase()}{cn.refundReference ? ` (Ref: ${cn.refundReference})` : ''}
-                                  </span>
-                                )}
-                              </div>
+                                    <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                                      <a
+                                        href={`/api/credit-notes/${cn.id}/print?paper=thermal80&autoprint=true`}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        style={{
+                                          padding: '0.25rem 0.6rem',
+                                          fontSize: '0.74rem',
+                                          fontWeight: 700,
+                                          textDecoration: 'none',
+                                          borderRadius: '8px',
+                                          background: 'var(--surface, #FAF7F2)',
+                                          border: '1px solid var(--border, #D0C7B8)',
+                                          color: 'var(--sidebar, #0F2D2E)',
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          gap: '4px',
+                                        }}
+                                      >
+                                        🖨️ Thermal
+                                      </a>
+                                      <a
+                                        href={`/api/credit-notes/${cn.id}/print?paper=a4`}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        style={{
+                                          padding: '0.25rem 0.6rem',
+                                          fontSize: '0.74rem',
+                                          fontWeight: 700,
+                                          textDecoration: 'none',
+                                          borderRadius: '8px',
+                                          background: 'var(--surface, #FAF7F2)',
+                                          border: '1px solid var(--border, #D0C7B8)',
+                                          color: 'var(--sidebar, #0F2D2E)',
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          gap: '4px',
+                                        }}
+                                      >
+                                        📄 A4
+                                      </a>
+                                      {shop?.whatsappEnabled !== false && cn.status !== 'voided' && (
+                                        <button
+                                          type="button"
+                                          style={{
+                                            padding: '0.25rem 0.6rem',
+                                            fontSize: '0.74rem',
+                                            fontWeight: 700,
+                                            borderRadius: '8px',
+                                            border: '1px solid #86EFAC',
+                                            background: '#F0FDF4',
+                                            color: '#15803D',
+                                            cursor: 'pointer',
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '4px',
+                                          }}
+                                          onClick={() => handleOpenCreditNoteWhatsApp({
+                                            id: cn.id,
+                                            number: cn.number,
+                                            originalInvoiceNumber: invoiceDetailData.invoice.number,
+                                            phone: invoiceDetailData.invoice.customerPhone || '',
+                                            customerName: invoiceDetailData.invoice.customerName,
+                                            totalCreditMinor: cn.totalCreditMinor,
+                                            settlementSummary: 'Credit Note issued',
+                                            shareToken: cn.shareToken,
+                                          })}
+                                        >
+                                          <WhatsAppIcon size={13} />
+                                          <span>WhatsApp</span>
+                                        </button>
+                                      )}
+                                      {cn.status !== 'voided' && (user?.role === 'owner' || user?.role === 'manager') && (
+                                        <button
+                                          type="button"
+                                          style={{
+                                            padding: '0.25rem 0.6rem',
+                                            fontSize: '0.74rem',
+                                            fontWeight: 700,
+                                            borderRadius: '8px',
+                                            background: '#FEE2E2',
+                                            color: '#B91C1C',
+                                            border: '1px solid #FCA5A5',
+                                            cursor: 'pointer',
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '4px',
+                                          }}
+                                          onClick={() => handleOpenVoidModal({
+                                            id: cn.id,
+                                            number: cn.number,
+                                            totalCreditMinor: cn.totalCreditMinor,
+                                            advanceAmountMinor: cn.advanceAmountMinor || 0,
+                                          })}
+                                          title="Void this credit note (Owner/Manager only)"
+                                        >
+                                          <XCircleIcon size={12} />
+                                          <span>Void</span>
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  {/* Voided Details Banner */}
+                                  {cn.status === 'voided' && (
+                                    <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '8px', padding: '0.5rem 0.75rem', fontSize: '0.78rem', color: '#B91C1C', marginBottom: '0.5rem' }}>
+                                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><AlertTriangleIcon size={13} /> <b>Voided</b></span> on {new Date(cn.voidedAt).toLocaleString('en-IN')}{cn.voidedByName ? ` by ${cn.voidedByName}` : ''}: "{cn.voidReason || 'No reason provided'}"
+                                    </div>
+                                  )}
+
+                                  {/* Returned Lines */}
+                                  <div style={{ fontSize: '0.8rem', marginBottom: '0.4rem' }}>
+                                    {cn.lines?.map((cl: any, cidx: number) => (
+                                      <div key={cidx} style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', borderBottom: '1px dashed var(--border, #E8E1D5)' }}>
+                                        <div>
+                                          <strong style={{ color: 'var(--sidebar, #0F2D2E)' }}>{cl.name}</strong> × {(cl.qtyMilli / 1000).toLocaleString()} · Reason: <em>{cl.reason}</em> · Restock: <span style={{ fontWeight: 800, color: cl.restock ? '#16A34A' : '#DC2626' }}>{cl.restock ? 'YES' : 'NO'}</span>
+                                        </div>
+                                        <div style={{ fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", color: 'var(--sidebar, #0F2D2E)' }}>{formatRupees(cl.totalMinor)}</div>
+                                      </div>
+                                    ))}
+                                  </div>
+
+                                  {/* Settlement Summary */}
+                                  <div style={{ paddingTop: '0.4rem', fontSize: '0.78rem', color: 'var(--text-muted, #475569)' }}>
+                                    <strong style={{ color: 'var(--sidebar, #0F2D2E)' }}>Settlement:</strong> Total Credit <strong style={{ color: 'var(--primary, #0F766E)' }}>{formatRupees(cn.totalCreditMinor)}</strong>
+                                    {cn.allocations?.map((a: any, aidx: number) => (
+                                      <span key={aidx} style={{ marginLeft: '6px' }}>
+                                        • {formatRupees(a.amountMinor)} adjusted on Bill #{a.invoiceNumber}
+                                      </span>
+                                    ))}
+                                    {cn.advanceAmountMinor > 0 && (
+                                      <span style={{ marginLeft: '6px', color: '#0369A1', fontWeight: 700 }}>
+                                        • {formatRupees(cn.advanceAmountMinor)} kept as Customer Advance
+                                      </span>
+                                    )}
+                                    {cn.refundAmountMinor > 0 && (
+                                      <span style={{ marginLeft: '6px', color: 'var(--sidebar, #0F2D2E)', fontWeight: 700 }}>
+                                        • {formatRupees(cn.refundAmountMinor)} refunded via {(cn.refundMode || 'cash').toUpperCase()}{cn.refundReference ? ` (Ref: ${cn.refundReference})` : ''}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
                             </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div style={{ background: 'var(--bg, #E8E1D5)', padding: '1rem', borderRadius: '10px', textAlign: 'center', color: 'var(--text-muted, #475569)', fontSize: '0.82rem', border: '1px dashed var(--border, #D0C7B8)' }}>
-                          No returns or credit notes have been issued against this bill.
+                          ) : (
+                            <div className="invoice-credit-notes-empty">
+                              No returns or credit notes have been issued against this bill.
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -25630,31 +25441,27 @@ export function App() {
                 )}
               </div>
 
-              {/* Bento Footer */}
-              <div
-                className="shift-bento-footer"
-                style={{
-                  display: 'flex',
-                  justifyContent: 'flex-end',
-                  padding: '0.85rem 1.6rem',
-                  borderTop: '1px solid var(--border, #D0C7B8)',
-                  background: 'var(--surface, #FAF7F2)',
-                }}
-              >
+              {/* Bento Footer: Bottom Action Buttons */}
+              <div className="shift-bento-footer invoice-detail-footer">
+                {invoiceDetailData?.invoice?.kind !== 'credit_note' && invoiceDetailData?.invoice?.status !== 'cancelled' && (
+                  <button
+                    type="button"
+                    className="invoice-detail-btn invoice-detail-btn-primary"
+                    disabled={Boolean(invoiceDetailData?.invoice?.fullyReturned)}
+                    onClick={() => {
+                      setSelectedInvoiceDetailId(null);
+                      openReturnModal(invoiceDetailData.invoice.id);
+                    }}
+                    title={invoiceDetailData?.invoice?.fullyReturned ? 'Fully returned' : 'Issue a return against this bill'}
+                  >
+                    <RotateCcwIcon size={16} />
+                    <span>Issue Return / Credit Note</span>
+                  </button>
+                )}
                 <button
                   type="button"
+                  className="invoice-detail-btn invoice-detail-btn-secondary"
                   onClick={() => setSelectedInvoiceDetailId(null)}
-                  style={{
-                    padding: '0.5rem 1.4rem',
-                    fontSize: '0.84rem',
-                    fontWeight: 700,
-                    borderRadius: '10px',
-                    background: 'var(--surface, #FAF7F2)',
-                    border: '1.5px solid var(--border, #D0C7B8)',
-                    color: 'var(--sidebar, #0F2D2E)',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease',
-                  }}
                 >
                   Close
                 </button>
@@ -25668,100 +25475,37 @@ export function App() {
         {/* ========================================================= */}
         {returnModalInvoiceId && (
           <div
-            className="modal-overlay theme-cashier"
-            style={{
-              position: 'fixed',
-              inset: 0,
-              background: 'rgba(15, 23, 42, 0.65)',
-              backdropFilter: 'blur(8px)',
-              WebkitBackdropFilter: 'blur(8px)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 1050,
-              padding: '1rem',
-            }}
+            className="modal-overlay theme-cashier return-modal-overlay"
             onClick={(e) => {
               if (e.target === e.currentTarget) handleCloseReturnModal();
             }}
           >
             <div
-              className="shift-bento-dialog"
+              className="return-modal-dialog"
               onClick={(e) => e.stopPropagation()}
-              style={{
-                width: '100%',
-                maxWidth: '900px',
-                maxHeight: '92vh',
-                display: 'flex',
-                flexDirection: 'column',
-                background: 'var(--surface, #FAF7F2)',
-                borderRadius: '20px',
-                border: '1.5px solid var(--border, #D0C7B8)',
-                boxShadow: '0 25px 60px -15px rgba(15, 45, 46, 0.28), 0 10px 24px -5px rgba(15, 45, 46, 0.08)',
-                overflow: 'hidden',
-              }}
             >
               {/* Top Accent Gradient Bar */}
               <div
-                className="modal-top-accent green-accent"
-                style={{
-                  height: '4px',
-                  background: 'linear-gradient(90deg, var(--sidebar, #0F2D2E) 0%, var(--primary, #0F766E) 50%, var(--ring, #14B8A6) 100%)',
-                }}
+                className="modal-top-accent green-accent return-modal-top-accent"
               />
 
-              {/* Bento Header */}
-              <div
-                className="shift-bento-header"
-                style={{
-                  padding: '1.1rem 1.6rem',
-                  borderBottom: '1px solid var(--border, #D0C7B8)',
-                  background: 'var(--surface, #FAF7F2)',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}
-              >
-                <div className="shift-bento-header-left" style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                  <div
-                    className="shift-bento-icon-badge green"
-                    style={{
-                      width: '46px',
-                      height: '46px',
-                      borderRadius: '13px',
-                      background: 'var(--primary-soft, #E6F4F3)',
-                      color: 'var(--primary, #0F766E)',
-                      border: '1.2px solid rgba(20, 184, 166, 0.4)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      boxShadow: '0 2px 8px rgba(15, 118, 110, 0.15)',
-                    }}
-                  >
+              {/* Return Modal Header */}
+              <div className="return-modal-header">
+                <div className="return-modal-header-left">
+                  <div className="return-modal-icon-badge">
                     <RotateCcwIcon size={22} />
                   </div>
-                  <div className="shift-bento-title-wrap">
-                    <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: 'var(--sidebar, #0F2D2E)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div className="return-modal-title-wrap">
+                    <h3 className="return-modal-title">
                       <span>Create Return / Credit Note</span>
-                      <span
-                        className="shift-ref-pill"
-                        style={{
-                          fontSize: '0.72rem',
-                          fontWeight: 700,
-                          padding: '2px 9px',
-                          borderRadius: '20px',
-                          background: 'var(--primary-soft, #E6F4F3)',
-                          color: 'var(--primary, #0F766E)',
-                          border: '1px solid rgba(20, 184, 166, 0.35)',
-                        }}
-                      >
+                      <span className="shift-ref-pill return-modal-ref-pill">
                         Bill #{returnInfo?.invoice?.number || ''}
                       </span>
                     </h3>
-                    <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: 'var(--text-muted, #475569)', display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
-                      <span>Customer: <strong style={{ color: 'var(--sidebar, #0F2D2E)' }}>{returnInfo?.customer?.name || returnInfo?.invoice?.customerName || 'Walk-in Customer'}</strong></span>
+                    <p className="return-modal-subtitle">
+                      <span>Customer: <strong>{returnInfo?.customer?.name || returnInfo?.invoice?.customerName || 'Walk-in Customer'}</strong></span>
                       {returnInfo?.invoice?.bdate && <span>· Bill Date: {new Date(returnInfo.invoice.bdate).toLocaleDateString('en-IN')}</span>}
-                      {returnInfo && <span>· Bill Total: <strong style={{ color: 'var(--sidebar, #0F2D2E)' }}>{formatRupees(returnInfo.invoice.totalMinor)}</strong></span>}
+                      {returnInfo && <span>· Bill Total: <strong>{formatRupees(returnInfo.invoice.totalMinor)}</strong></span>}
                       {returnInfo && <span>· Dues: <strong style={{ color: returnInfo.invoice.balanceMinor > 0 ? '#EA580C' : '#15803D' }}>{formatRupees(returnInfo.invoice.balanceMinor)}</strong></span>}
                     </p>
                   </div>
@@ -25769,22 +25513,9 @@ export function App() {
 
                 <button
                   type="button"
-                  className="modal-close-btn"
+                  className="modal-close-btn return-modal-close-btn"
                   onClick={handleCloseReturnModal}
                   aria-label="Close"
-                  style={{
-                    background: 'var(--surface, #FAF7F2)',
-                    border: '1px solid var(--border, #D0C7B8)',
-                    borderRadius: '10px',
-                    width: '32px',
-                    height: '32px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    color: 'var(--text-muted, #475569)',
-                    transition: 'all 0.15s ease',
-                  }}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -25793,8 +25524,8 @@ export function App() {
                 </button>
               </div>
 
-              {/* Bento Body */}
-              <div className="shift-bento-body" style={{ padding: '1.25rem 1.6rem', background: 'var(--bg, #E8E1D5)', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+              {/* Return Modal Body */}
+              <div className="return-modal-body">
                 {returnInfoLoading || !returnInfo ? (
                   <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted, #475569)', background: 'var(--surface, #FAF7F2)', borderRadius: '16px', border: '1px solid var(--border, #D0C7B8)' }}>
                     <div style={{ display: 'inline-block', width: '28px', height: '28px', border: '3px solid var(--border, #D0C7B8)', borderTopColor: 'var(--primary, #0F766E)', borderRadius: '50%', animation: 'spin 0.8s linear infinite', marginBottom: '0.75rem' }} />
@@ -25838,9 +25569,9 @@ export function App() {
                     )}
 
                     {/* Return Items Panel */}
-                    <div className="shift-bento-panel" style={{ background: 'var(--surface, #FAF7F2)', border: '1px solid var(--border, #D0C7B8)', borderRadius: '16px', padding: '1.15rem 1.35rem', boxShadow: '0 1px 3px rgba(15, 45, 46, 0.04)' }}>
-                      <div className="shift-bento-panel-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border, #D0C7B8)', marginBottom: '0.85rem' }}>
-                        <div style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--sidebar, #0F2D2E)' }}>
+                    <div className="return-modal-panel">
+                      <div className="return-modal-panel-header">
+                        <div className="return-modal-panel-title">
                           Return Items & Restock Options
                         </div>
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -25880,8 +25611,8 @@ export function App() {
                       </div>
 
                       {/* Lines Table */}
-                      <div style={{ overflowX: 'auto', marginBottom: '0.5rem' }}>
-                        <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0', fontSize: '0.82rem' }}>
+                      <div className="return-modal-table-wrap">
+                        <table className="return-modal-table">
                           <thead>
                             <tr style={{ background: 'var(--primary-soft, #E6F4F3)', color: 'var(--sidebar, #0F2D2E)' }}>
                               <th style={{ padding: '8px 10px', textAlign: 'left', borderRadius: '8px 0 0 8px', fontWeight: 700 }}>Item</th>
@@ -26074,7 +25805,7 @@ export function App() {
                       const isWalkIn = !returnInfo.customer;
 
                       return (
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1rem', marginBottom: '0.5rem' }}>
+                        <div className="return-modal-calc-grid">
                           {/* Tax Reversal Card */}
                           <div style={{ background: 'var(--surface, #FAF7F2)', border: '1.5px solid var(--border, #D0C7B8)', borderRadius: '16px', padding: '1.1rem 1.25rem', boxShadow: '0 1px 3px rgba(15, 45, 46, 0.04)' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', margin: '0 0 0.65rem 0', color: 'var(--primary, #0F766E)' }}>
@@ -26254,32 +25985,13 @@ export function App() {
                 )}
               </div>
 
-              {/* Bento Footer */}
-              <div
-                className="shift-bento-footer"
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '0.85rem 1.6rem',
-                  borderTop: '1px solid var(--border, #D0C7B8)',
-                  background: 'var(--surface, #FAF7F2)',
-                }}
-              >
+              {/* Footer */}
+              <div className="return-modal-footer">
                 <button
                   type="button"
                   onClick={handleCloseReturnModal}
                   disabled={returnSaving}
-                  style={{
-                    padding: '0.55rem 1.3rem',
-                    fontSize: '0.84rem',
-                    fontWeight: 700,
-                    borderRadius: '10px',
-                    background: 'var(--surface, #FAF7F2)',
-                    border: '1.5px solid var(--border, #D0C7B8)',
-                    color: 'var(--sidebar, #0F2D2E)',
-                    cursor: returnSaving ? 'not-allowed' : 'pointer',
-                  }}
+                  className="return-modal-btn return-modal-btn-secondary"
                 >
                   Cancel
                 </button>
@@ -26288,18 +26000,7 @@ export function App() {
                   type="button"
                   onClick={handleSaveReturn}
                   disabled={returnSaving || !calculateReturnPreview()}
-                  style={{
-                    padding: '0.55rem 1.5rem',
-                    fontSize: '0.86rem',
-                    fontWeight: 800,
-                    borderRadius: '10px',
-                    border: 'none',
-                    background: (returnSaving || !calculateReturnPreview()) ? '#CBD5E1' : 'var(--primary, #0F766E)',
-                    color: '#FFFFFF',
-                    cursor: (returnSaving || !calculateReturnPreview()) ? 'not-allowed' : 'pointer',
-                    boxShadow: (returnSaving || !calculateReturnPreview()) ? 'none' : '0 4px 14px rgba(15, 118, 110, 0.3)',
-                    transition: 'all 0.15s ease',
-                  }}
+                  className="return-modal-btn return-modal-btn-primary"
                 >
                   {returnSaving
                     ? 'Issuing Credit Note...'

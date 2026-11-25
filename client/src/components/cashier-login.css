@@ -4212,11 +4212,70 @@ body:is(.theme-cashier, .theme-manager) .invoices-bento-root,
   background-color: var(--bg);
 }
 
-@media (max-width: 1439px) {
+@media (min-width: 768px) and (max-width: 1439px) {
   body:is(.theme-cashier, .theme-manager) .invoices-bento-root,
   :is(.theme-cashier, .theme-manager) .invoices-bento-root,
   :is(.theme-cashier, .theme-manager).invoices-bento-root {
     padding-bottom: 30px !important;
+  }
+}
+
+@media (max-width: 767px) {
+  body:is(.theme-cashier, .theme-manager) .invoices-bento-root,
+  :is(.theme-cashier, .theme-manager) .invoices-bento-root,
+  :is(.theme-cashier, .theme-manager).invoices-bento-root {
+    gap: 0.45rem !important;
+    padding-bottom: 12px !important;
+  }
+
+  body:is(.theme-cashier, .theme-manager) .invoices-kpi-grid,
+  :is(.theme-cashier, .theme-manager) .invoices-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.45rem !important;
+  }
+
+  body:is(.theme-cashier, .theme-manager) .invoices-kpi-card,
+  :is(.theme-cashier, .theme-manager) .invoices-kpi-card {
+    padding: 0.45rem 0.6rem !important;
+    border-radius: 12px !important;
+    gap: 0.25rem !important;
+  }
+
+  body:is(.theme-cashier, .theme-manager) .invoices-controls-bar,
+  :is(.theme-cashier, .theme-manager) .invoices-controls-bar {
+    padding: 0.4rem 0.5rem !important;
+    gap: 0.3rem !important;
+    border-radius: 12px !important;
+  }
+
+  body:is(.theme-cashier, .theme-manager) .invoices-table-header-bar,
+  :is(.theme-cashier, .theme-manager) .invoices-table-header-bar {
+    padding: 0.45rem 0.65rem !important;
+    gap: 0.35rem !important;
+  }
+
+  body:is(.theme-cashier, .theme-manager) .invoices-mobile-cards-list,
+  :is(.theme-cashier, .theme-manager) .invoices-mobile-cards-list {
+    gap: 0.45rem !important;
+    padding: 0.45rem 0.55rem !important;
+  }
+
+  body:is(.theme-cashier, .theme-manager) .invoices-mobile-card,
+  :is(.theme-cashier, .theme-manager) .invoices-mobile-card {
+    padding: 0.55rem 0.65rem !important;
+    gap: 0.4rem !important;
+    border-radius: 11px !important;
+  }
+
+  body:is(.theme-cashier, .theme-manager) .invoices-card-top-row,
+  :is(.theme-cashier, .theme-manager) .invoices-card-top-row {
+    padding-bottom: 0.4rem !important;
+  }
+
+  body:is(.theme-cashier, .theme-manager) .invoices-card-actions-row,
+  :is(.theme-cashier, .theme-manager) .invoices-card-actions-row {
+    padding-top: 0.4rem !important;
+    gap: 0.35rem !important;
   }
 }
 
@@ -4494,6 +4553,11 @@ body:is(.theme-cashier, .theme-manager) .invoices-count-badge,
   color: var(--primary) !important;
   border: 1px solid rgba(20, 184, 166, 0.35) !important;
   font-weight: 800 !important;
+}
+
+body:is(.theme-cashier, .theme-manager) .invoices-table-subtitle,
+:is(.theme-cashier, .theme-manager) .invoices-table-subtitle {
+  color: var(--text-muted) !important;
 }
 
 body:is(.theme-cashier, .theme-manager) .invoices-bento-table thead th,

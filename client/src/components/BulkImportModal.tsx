@@ -332,18 +332,17 @@ export const TEMPLATE_COLUMNS = [
   'Cost Price',
   'HSN',
   'GST Rate',
-  'Price Inclusive of GST',
   'Opening Stock',
   'Barcode',
   'Drive Link / Image URL',
 ];
 
 export const SAMPLE_SUPPLIER_ROWS = [
-  ['Toor Dal 1kg', 'kg', '145.50', '120', '0713', '5%', 'Yes', '50', '8901030384812', 'https://drive.google.com/file/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs/view'],
-  ['Basmati Rice 1kg', 'kg', '89', '65', '1006', '5%', 'Yes', '100', '8901030384850', ''],
-  ['Amul Butter 100g', 'pcs', '55', '48', '0401', '12%', 'Yes', '40', '8901262010011', ''],
-  ['Surf Excel 1kg', 'pcs', '200', '165', '3402', '18%', 'Yes', '25', '', ''],
-  ['Moong Dal 1kg', 'kg', '110', '95', '0713', '5%', 'Yes', '30', '', ''],
+  ['Toor Dal 1kg', 'kg', '145.50', '120', '0713', '5%', '50', '8901030384812', 'https://drive.google.com/file/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs/view'],
+  ['Basmati Rice 1kg', 'kg', '89', '65', '1006', '5%', '100', '8901030384850', ''],
+  ['Amul Butter 100g', 'pcs', '55', '48', '0401', '12%', '40', '8901262010011', ''],
+  ['Surf Excel 1kg', 'pcs', '200', '165', '3402', '18%', '25', '', ''],
+  ['Moong Dal 1kg', 'kg', '110', '95', '0713', '5%', '30', '', ''],
 ];
 
 export function isUrlOrDriveLink(val: string | null | undefined): boolean {
@@ -662,7 +661,7 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
       costMinor: it.costMinor ?? 0,
       currentStockMilli: it.currentStockMilli ?? 0,
       taxRateBp: it.taxRateBp ?? 500,
-      taxInclusive: it.taxInclusive ?? true,
+      taxInclusive: false,
       hsn: it.hsn || null,
       packSize: extractPackSize(it.name)?.raw || it.unit,
       imageUrl: it.imageUrl || (it as any).image || null,
@@ -1115,7 +1114,7 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
         (u) => u.code.toLowerCase() === unitRaw.toLowerCase() || u.label.toLowerCase().includes(unitRaw.toLowerCase())
       );
       const unit = unitMatch ? unitMatch.code : (unitRaw || 'pcs');
-      const taxInclusive = !incl || ['yes', 'y', 'true', '1'].includes(incl.toLowerCase());
+      const taxInclusive = false;
 
       // Classify against existing catalog (passing selling and cost prices for comparison)
       const matchResult = matchProductToCatalog(name, unit, catalogCandidates, {
@@ -1358,7 +1357,7 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
         costPrice: '80',
         hsn: '1006',
         gstRate: '5%',
-        taxInclusive: true,
+        taxInclusive: false,
         openingStock: '20',
         reorderLevel: globalReorderLevel || '20',
         reorderLevelModified: false,
@@ -1679,7 +1678,7 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
         costPrice: '',
         hsn: '',
         gstRate: '5%',
-        taxInclusive: true,
+        taxInclusive: false,
         openingStock: '0',
         reorderLevel: globalReorderLevel || '20',
         reorderLevelModified: false,
@@ -2031,7 +2030,7 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
           priceMinor: price,
           costMinor: cost,
           taxRateBp,
-          taxInclusive: r.taxInclusive,
+          taxInclusive: false,
           openingQtyMilli: stock,
           reorderMilli,
           isRestock,
@@ -2062,7 +2061,6 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
       r.costPrice,
       r.hsn,
       r.gstRate,
-      r.taxInclusive ? 'Yes' : 'No',
       r.openingStock,
       r.barcode || '',
       r.imageUrl || '',
@@ -2686,7 +2684,7 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
                         id="bulk-paste-area"
                         value={pasteText}
                         onChange={(e) => setPasteText(e.target.value)}
-                        placeholder={'Product Name\tUOM\tSelling Price\tCost Price\tHSN\tGST Rate\tPrice Inclusive of GST\tOpening Stock\nToor Dal 1kg\tkg\t145.50\t120\t0713\t5%\tYes\t50\nBasmati Rice 1kg\tkg\t89\t65\t1006\t5%\tYes\t100'}
+                        placeholder={'Product Name\tUOM\tSelling Price\tCost Price\tHSN\tGST Rate\tOpening Stock\nToor Dal 1kg\tkg\t145.50\t120\t0713\t5%\t50\nBasmati Rice 1kg\tkg\t89\t65\t1006\t5%\t100'}
                         style={{
                           width: '100%', minHeight: '190px', padding: '0.75rem',
                           borderRadius: '8px', border: '1px solid var(--border)',
@@ -3492,7 +3490,6 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
                         <th style={{ ...thStyle, minWidth: 85 }}>COST ₹</th>
                         <th style={{ ...thStyle, minWidth: 75 }}>HSN</th>
                         <th style={{ ...thStyle, minWidth: 75 }}>GST</th>
-                        <th style={{ ...thStyle, minWidth: 45, textAlign: 'center' }}>INCL.</th>
                         <th style={{ ...thStyle, minWidth: 80 }}>INCOMING</th>
                         <th style={{ ...thStyle, minWidth: 80 }}>CURRENT</th>
                         <th style={{ ...thStyle, minWidth: 80 }}>FINAL STOCK</th>
@@ -3503,7 +3500,7 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
                     <tbody>
                       {visibleRows.length === 0 ? (
                         <tr>
-                          <td colSpan={19} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
+                          <td colSpan={18} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
                             No rows match the selected &quot;{filter}&quot; filter.
                           </td>
                         </tr>
@@ -4045,16 +4042,6 @@ export function BulkImportModal({ categories, existingItems = [], shopName, bran
                                       <option key={g.bp} value={String(g.bp)}>{g.label}</option>
                                     ))}
                                   </select>
-                                </td>
-
-                                {/* INCL */}
-                                <td style={{ padding: '0.45rem 0.35rem', textAlign: 'center' }}>
-                                  <input
-                                    type="checkbox"
-                                    checked={row.taxInclusive}
-                                    onChange={(e) => updateRowField(row._id, 'taxInclusive', e.target.checked)}
-                                    style={{ accentColor: 'var(--primary)', cursor: 'pointer' }}
-                                  />
                                 </td>
 
                                 {/* INCOMING STOCK */}

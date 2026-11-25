@@ -13,6 +13,7 @@ import { resolveBranchScope } from '../branchScope.ts';
 import { invalidateTodayDashboardCache } from './dashboard.ts';
 import { sendInvoiceBillSms } from '../services/smsService.ts';
 import { generateInvoicePdf } from '../services/invoicePdfGenerator.ts';
+import { syncItemStockStatus } from '../services/stockStatus.ts';
 
 export function registerInvoices(r: Router) {
   // List invoices
@@ -284,6 +285,14 @@ export function registerInvoices(r: Router) {
     if (!invoiceBranchId) {
       throw bad('Branch is required for bill creation. Please link your shift or account to a branch.', 'BRANCH_REQUIRED');
     }
+    // Normalise the branch reference: shifts/users may store either the branch id or its code.
+    // Resolve to the canonical id and keep the code so stock lookups match the Products page.
+    const invoiceBranchRow = await ctx.db.one<{ id: string; code: string }>(
+      'SELECT id, code FROM branches WHERE tenant_id = ? AND (id = ? OR UPPER(code) = UPPER(?)) LIMIT 1',
+      [tenantId, invoiceBranchId, invoiceBranchId],
+    );
+    if (invoiceBranchRow?.id) invoiceBranchId = invoiceBranchRow.id;
+    const invoiceBranchCode: string = invoiceBranchRow?.code || String(invoiceBranchId);
     const linesInput = V.arr(b.lines, 'Bill items', { min: 1 });
     const paymentsInput = V.arr(b.payments ?? [], 'Payments');
     let partyId = V.optStr(b.partyId ?? b.party_id ?? b.customerId ?? b.customer_id, 'Customer party', 50);
@@ -400,7 +409,7 @@ export function registerInvoices(r: Router) {
       const priceMinor = V.int(l.priceMinor, `Item ${i + 1} price`, { min: 0, required: true });
       const discountMinor = V.int(l.discountMinor ?? 0, `Item ${i + 1} discount`, { min: 0 });
       const taxRateBp = V.int(l.taxRateBp ?? 0, `Item ${i + 1} tax rate`, { min: 0, max: 10000 });
-      const inclusive = V.bool(l.inclusive, true);
+      const inclusive = false;
       const itemId = V.optStr(l.itemId, 'Item ID', 50);
       const unit = V.optStr(l.unit, 'Unit', 20);
       const hsn = V.optStr(l.hsn, 'HSN', 20);
@@ -414,7 +423,7 @@ export function registerInvoices(r: Router) {
         priceMinor: l.priceMinor,
         discountMinor: l.discountMinor,
         taxRateBp: l.taxRateBp,
-        inclusive: l.inclusive,
+        inclusive: false,
       })),
       {
         intraState: isIntra,
@@ -512,11 +521,17 @@ export function registerInvoices(r: Router) {
         );
         const isTracked = itemRow && itemRow.trackStock !== false && itemRow.track_stock !== false;
         if (isTracked) {
+          // Must match the branch-stock formula used by GET /api/items (Products page / POS catalog):
+          // moves tagged with this branch, plus legacy moves with no branch_id whose location is this branch.
           const stockRow = await q.one<any>(
             `SELECT COALESCE(SUM(qty_milli), 0)::bigint AS current_stock_milli
              FROM stock_moves
-             WHERE tenant_id = ? AND item_id = ? AND (branch_id IS NOT DISTINCT FROM ?)`,
-            [tenantId, itemId, invoiceBranchId]
+             WHERE tenant_id = ? AND item_id = ? AND (
+               branch_id = ?
+               OR UPPER(branch_id) = UPPER(?)
+               OR (branch_id IS NULL AND (UPPER(location) = UPPER(?) OR UPPER(location) = UPPER(?)))
+             )`,
+            [tenantId, itemId, invoiceBranchId, invoiceBranchCode, invoiceBranchCode, invoiceBranchId]
           );
           const currentStockMilli = BigInt(stockRow?.currentStockMilli ?? stockRow?.current_stock_milli ?? 0);
           const reqMilli = BigInt(requestedMilli);
@@ -840,6 +855,12 @@ export function registerInvoices(r: Router) {
             );
           }
         }
+      }
+
+      // Synchronize product status based on remaining stock (auto-deactivates zero-stock items)
+      const billedItemIds = formattedLines.map((l) => l.itemId).filter(Boolean) as string[];
+      if (billedItemIds.length > 0) {
+        await syncItemStockStatus(q, tenantId, billedItemIds, invoiceBranchId);
       }
 
       // 5. Insert payments

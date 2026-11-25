@@ -143,6 +143,52 @@ test('GSTIN checksum', () => {
   assert.equal(gstinCheckChar('27AAPFU0939F1Z'), 'V');
 });
 
+test('new GST model: selling price 10.00 at 25% GST yields base 10.00, GST 2.50, final 12.50', () => {
+  const r = calcBill(
+    [{ qtyMilli: 1000, priceMinor: 1000, taxRateBp: 2500, inclusive: false }],
+    { intraState: true, roundTotal: 'none' },
+  );
+  assert.equal(r.taxableMinor, 1000); // Base selling price ₹10.00
+  assert.equal(r.taxMinor, 250); // GST Amount ₹2.50
+  assert.equal(r.cgstMinor, 125); // CGST ₹1.25 (50%)
+  assert.equal(r.sgstMinor, 125); // SGST ₹1.25 (50%)
+  assert.equal(r.totalMinor, 1250); // Final POS price ₹12.50
+});
+
+test('new GST model: inter-state selling price 10.00 at 25% GST yields IGST 2.50, final 12.50', () => {
+  const r = calcBill(
+    [{ qtyMilli: 1000, priceMinor: 1000, taxRateBp: 2500, inclusive: false }],
+    { intraState: false, roundTotal: 'none' },
+  );
+  assert.equal(r.taxableMinor, 1000);
+  assert.equal(r.taxMinor, 250);
+  assert.equal(r.igstMinor, 250);
+  assert.equal(r.cgstMinor, 0);
+  assert.equal(r.sgstMinor, 0);
+  assert.equal(r.totalMinor, 1250);
+});
+
+test('new GST model: multi-product cart with different GST rates (0%, 5%, 12%, 18%, 28%)', () => {
+  const r = calcBill(
+    [
+      { qtyMilli: 1000, priceMinor: 10000, taxRateBp: 0, inclusive: false }, // ₹100 @ 0% -> tax 0
+      { qtyMilli: 2000, priceMinor: 5000, taxRateBp: 500, inclusive: false }, // 2x ₹50 = ₹100 @ 5% -> tax 500 (₹5)
+      { qtyMilli: 1000, priceMinor: 20000, taxRateBp: 1200, inclusive: false }, // ₹200 @ 12% -> tax 2400 (₹24)
+      { qtyMilli: 1000, priceMinor: 15000, taxRateBp: 1800, inclusive: false }, // ₹150 @ 18% -> tax 2700 (₹27)
+      { qtyMilli: 1000, priceMinor: 10000, taxRateBp: 2800, inclusive: false }, // ₹100 @ 28% -> tax 2800 (₹28)
+    ],
+    { intraState: true, roundTotal: 'none' },
+  );
+  // Total Taxable Value = 100 + 100 + 200 + 150 + 100 = ₹650 (65000 paise)
+  assert.equal(r.taxableMinor, 65000);
+  // Total GST = 0 + 5 + 24 + 27 + 28 = ₹84 (8400 paise)
+  assert.equal(r.taxMinor, 8400);
+  assert.equal(r.cgstMinor, 4200);
+  assert.equal(r.sgstMinor, 4200);
+  // Total Payable Amount = 650 + 84 = ₹734 (73400 paise)
+  assert.equal(r.totalMinor, 73400);
+});
+
 test('money helpers', () => {
   assert.equal(fmtMoney(123456789), '₹12,34,567.89');
   assert.equal(fmtMoney(5), '₹0.05');

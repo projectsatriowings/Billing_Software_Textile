@@ -7,6 +7,7 @@ import { calcReturn, planSettlement, type ReturnLineInput } from '../../../share
 import { renderCreditNoteDoc, type PrintableCreditNote } from '../../../shared/bill.ts';
 import { DEFAULT_CONFIG } from '../../../shared/types.ts';
 import { normalizePhone } from '../../../shared/whatsapp.ts';
+import { syncItemStockStatus } from '../services/stockStatus.ts';
 
 export function registerCreditNotes(r: Router) {
   // 0. Search posted sales invoices by invoice number, customer phone, or customer name
@@ -663,6 +664,12 @@ export function registerCreditNotes(r: Router) {
         }
       }
 
+      // Synchronize product status based on returned stock (reactivates out-of-stock items if stock > 0)
+      const returnedItemIds = calculated.lines.map((cl: any) => cl.itemId).filter(Boolean) as string[];
+      if (returnedItemIds.length > 0) {
+        await syncItemStockStatus(q, tenantId, returnedItemIds, cnBranchId);
+      }
+
       // 10. Record credit allocations and update invoice balances
       for (const alloc of settlement.allocations) {
         await q.exec(
@@ -1248,6 +1255,11 @@ export function registerCreditNotes(r: Router) {
             `Voided Credit Note ${cn.number}: ${reason}`,
           ],
         );
+      }
+
+      const voidedItemIds = lines.map((l: any) => l.itemId ?? l.item_id).filter(Boolean) as string[];
+      if (voidedItemIds.length > 0) {
+        await syncItemStockStatus(q, tenantId, voidedItemIds, cn.branchId ?? cn.branch_id);
       }
 
       // 5. Update credit note status to voided

@@ -6,6 +6,7 @@ import { audit } from '../audit.ts';
 import { calcPurchase, planSupplierPayment } from '../../../shared/purchases.ts';
 import { renderPurchaseDoc, type PrintablePurchase } from '../../../shared/bill.ts';
 import { fmtMoney } from '../../../shared/money.ts';
+import { syncItemStockStatus } from '../services/stockStatus.ts';
 
 function formatPurchase(r: any, lines: any[] = [], payments: any[] = []) {
   const totalMinor = Number(r.totalMinor ?? r.total_minor ?? 0);
@@ -512,6 +513,12 @@ export function registerPurchases(r: Router) {
         }
       }
 
+      // Synchronize product active status based on newly received stock (auto-reactivates out-of-stock items)
+      const purchaseItemIds = formattedLines.map((it: any) => it.itemId).filter(Boolean);
+      if (purchaseItemIds.length > 0) {
+        await syncItemStockStatus(q, tenantId, purchaseItemIds, branchId);
+      }
+
       // 6. Record Payment at purchase time if paidMinor > 0
       if (paidMinor > 0) {
         const paySeriesRow = await q.one<{ assignedNo?: number; assigned_no?: number }>(
@@ -836,6 +843,11 @@ export function registerPurchases(r: Router) {
             ],
           );
         }
+      }
+
+      const voidPurchaseItemIds = lines.map((l: any) => l.itemId ?? l.item_id).filter(Boolean);
+      if (voidPurchaseItemIds.length > 0) {
+        await syncItemStockStatus(q, tenantId, voidPurchaseItemIds, purchase.branchId ?? purchase.branch_id);
       }
 
       await audit(q, ctx, {

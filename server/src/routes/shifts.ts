@@ -1,6 +1,6 @@
 import { requirePerm, requireUser } from '../auth.ts';
 import { resolveBranchScope } from '../branchScope.ts';
-import { bad, forbidden, notFound, HtmlResponse, V, type Router } from '../http.ts';
+import { bad, conflict, forbidden, notFound, HtmlResponse, V, type Router } from '../http.ts';
 import { newId } from '../security.ts';
 import { j, type Queryable } from '../db/index.ts';
 import { audit } from '../audit.ts';
@@ -391,16 +391,31 @@ export function registerShifts(r: Router) {
         );
       }
 
-      // 2. Generate sequential shift number (SHF-1001) using number_series
-      const seriesRow = await q.one<{ assignedNo?: number; assigned_no?: number }>(
-        `INSERT INTO number_series (tenant_id, branch_id, series, next_no)
-         VALUES (?, ?, 'SHF', 2)
-         ON CONFLICT (tenant_id, branch_id, series) DO UPDATE SET next_no = number_series.next_no + 1
-         RETURNING (next_no - 1) AS assigned_no`,
+      // 2. Generate the shift number. Each branch counts its own shifts, so the branch code is part of
+      //    the number (like bill numbers): MAIN -> SHF-1046, SKS_ANNANAGAR -> SHF-SKS_ANNANAGAR-1001.
+      //    Numbers stay unique across the whole shop, so the admin never sees two identical shift numbers.
+      const shiftBranch = await q.one<{ code: string }>(
+        'SELECT code FROM branches WHERE tenant_id = ? AND id = ?',
         [tenantId, branchId],
       );
-      const seqNo = Number(seriesRow?.assignedNo ?? seriesRow?.assigned_no ?? 1);
-      const shiftNumber = `SHF-${1000 + seqNo}`;
+      const branchCode = String(shiftBranch?.code ?? '').trim().toUpperCase();
+      const shiftPrefix = branchCode && branchCode !== 'MAIN' ? `SHF-${branchCode}` : 'SHF';
+      let shiftNumber = '';
+      for (let attempt = 0; attempt < 1000 && !shiftNumber; attempt++) {
+        const seriesRow = await q.one<{ assignedNo?: number; assigned_no?: number }>(
+          `INSERT INTO number_series (tenant_id, branch_id, series, next_no)
+           VALUES (?, ?, 'SHF', 2)
+           ON CONFLICT (tenant_id, branch_id, series) DO UPDATE SET next_no = number_series.next_no + 1
+           RETURNING (next_no - 1) AS assigned_no`,
+          [tenantId, branchId],
+        );
+        const seqNo = Number(seriesRow?.assignedNo ?? seriesRow?.assigned_no ?? 1);
+        const candidate = `${shiftPrefix}-${1000 + Math.max(seqNo, 1)}`;
+        // Skip any number already used anywhere in the shop (e.g. older shifts numbered before this rule).
+        const taken = await q.one('SELECT id FROM shifts WHERE tenant_id = ? AND shift_number = ? LIMIT 1', [tenantId, candidate]);
+        if (!taken) shiftNumber = candidate;
+      }
+      if (!shiftNumber) throw conflict('Could not assign a unique shift number. Please try again.', 'SHIFT_NUMBER_EXHAUSTED');
 
       const shiftId = newId('shf');
       const now = new Date().toISOString();

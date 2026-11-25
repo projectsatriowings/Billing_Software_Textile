@@ -67,6 +67,26 @@ export const OpenShiftModal: React.FC<OpenShiftModalProps> = ({
     return 'COUNTER-1';
   });
 
+  // The modal can open before the user's branch/counter have loaded (it then starts on 'MAIN' /
+  // 'COUNTER-1'). Keep following the real branch and default counter as they arrive, until the
+  // user picks one by hand.
+  const locationTouchedRef = React.useRef(false);
+  const counterTouchedRef = React.useRef(false);
+  useEffect(() => {
+    if (locationTouchedRef.current) return;
+    const next = (defaultLocation || '').trim();
+    if (!next || next.toUpperCase() === 'ALL') return;
+    if (['COUNTER-1', 'COUNTER-2', 'COUNTER-3', 'EXPRESS'].includes(next.toUpperCase())) return;
+    setLocation((prev) => (prev === next ? prev : next));
+  }, [defaultLocation]);
+  useEffect(() => {
+    if (counterTouchedRef.current || userRole !== 'cashier') return;
+    const next = (defaultCounter || '').trim();
+    if (!next || next.toUpperCase().includes('ADMIN') || next.toUpperCase().includes('MGR')) return;
+    const m = next.match(/^counter[_\-\s]*(\d+)$/i);
+    setCounter(m ? `COUNTER-${m[1]}` : next);
+  }, [defaultCounter, userRole]);
+
   const [notes, setNotes] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -402,7 +422,7 @@ export const OpenShiftModal: React.FC<OpenShiftModalProps> = ({
                       <select
                         className="form-input form-select"
                         value={location}
-                        onChange={(e) => setLocation(e.target.value)}
+                        onChange={(e) => { locationTouchedRef.current = true; setLocation(e.target.value); }}
                       >
                         {branches.map((b) => (
                           <option key={b.code} value={b.code}>
@@ -421,7 +441,7 @@ export const OpenShiftModal: React.FC<OpenShiftModalProps> = ({
                     <select
                       className="form-input form-select"
                       value={counter}
-                      onChange={(e) => setCounter(e.target.value)}
+                      onChange={(e) => { counterTouchedRef.current = true; setCounter(e.target.value); }}
                     >
                       {branchCounters.map((c) => {
                         const occupant = getOccupantForCounter(c.code, c.id);
