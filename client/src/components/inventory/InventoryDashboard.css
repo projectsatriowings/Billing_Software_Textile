@@ -466,41 +466,39 @@
     -webkit-overflow-scrolling: touch !important;
   }
 
-  /* Sticky Columns for Table View on Mobile */
+  .ledger-table-wrap.mobile-active .inventory-data-table {
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+  }
+
+  /* Lock ONLY First Column (Image) on Mobile Table so all remaining columns
+     (Product, Branch, Category, Stock, Status, Cost, Supplier, Actions) scroll freely */
   .inventory-data-table th.col-sticky-img,
   .inventory-data-table td.col-sticky-img {
     position: sticky !important;
     left: 0 !important;
-    z-index: 5 !important;
+    z-index: 6 !important;
     background: #ffffff !important;
+    border-right: 1px solid #e2e8f0 !important;
+    box-shadow: 3px 0 8px rgba(15, 23, 42, 0.06) !important;
+  }
+
+  .inventory-data-table tr:hover td.col-sticky-img {
+    background: #faf9ff !important;
+  }
+
+  .inventory-data-table thead th.col-sticky-img {
+    background: #f8fafc !important;
+    z-index: 16 !important;
   }
 
   .inventory-data-table th.col-sticky-prod,
-  .inventory-data-table td.col-sticky-prod {
-    position: sticky !important;
-    left: 64px !important;
-    z-index: 5 !important;
-    background: #ffffff !important;
-    box-shadow: 2px 0 6px rgba(0, 0, 0, 0.06) !important;
-  }
-
-  .inventory-data-table thead th.col-sticky-img,
-  .inventory-data-table thead th.col-sticky-prod {
-    background: #f8fafc !important;
-    z-index: 15 !important;
-  }
-
+  .inventory-data-table td.col-sticky-prod,
   .inventory-data-table th.col-sticky-actions,
   .inventory-data-table td.col-sticky-actions {
-    position: sticky !important;
-    right: 0 !important;
-    z-index: 5 !important;
-    background: #ffffff !important;
-    box-shadow: -2px 0 6px rgba(0, 0, 0, 0.06) !important;
-  }
-
-  .inventory-data-table thead th.col-sticky-actions {
-    background: #f8fafc !important;
-    z-index: 15 !important;
+    position: static !important;
+    left: auto !important;
+    right: auto !important;
+    box-shadow: none !important;
   }
 }
