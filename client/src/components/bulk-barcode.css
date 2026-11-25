@@ -1,0 +1,1251 @@
+/* ==========================================================================
+   BULK BARCODE LABEL PRINTING MODAL STYLES
+   Role-Based Themes:
+   - Admin Theme: Deep Plum (#49364A / #3B1E36)
+   - Store Manager Theme: Deep Burgundy (#653B4B)
+   Responsive Viewports:
+   - Desktop (1440px, 1024px)
+   - Tablet (768px, 600px)
+   - Mobile (430px, 390px, 360px)
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. THEME TOKENS
+   -------------------------------------------------------------------------- */
+.bulk-barcode-dialog {
+  /* Default: Admin Deep Plum */
+  --bb-primary: #49364A;
+  --bb-primary-hover: #3B2B3C;
+  --bb-primary-active: #2E212F;
+  --bb-primary-soft: #F5EDF4;
+  --bb-primary-light: #FBF7FA;
+  --bb-primary-border: #D8CBD8;
+  --bb-primary-border-light: #EADFEA;
+  --bb-primary-glow: rgba(73, 54, 74, 0.22);
+  --bb-text-main: #1D151F;
+  --bb-text-muted: #64555E;
+  --bb-text-on-primary: #FFFFFF;
+  --bb-surface: #FFFFFF;
+  --bb-surface-subtle: #F8F5F8;
+}
+
+/* Store Manager Theme: Deep Burgundy */
+body.theme-manager .bulk-barcode-dialog,
+.theme-manager .bulk-barcode-dialog,
+.bulk-barcode-dialog.theme-manager {
+  --bb-primary: #653B4B;
+  --bb-primary-hover: #522E3C;
+  --bb-primary-active: #432431;
+  --bb-primary-soft: #F5ECF0;
+  --bb-primary-light: #FAF6F8;
+  --bb-primary-border: #D9C8D0;
+  --bb-primary-border-light: #E8D6DE;
+  --bb-primary-glow: rgba(101, 59, 75, 0.25);
+  --bb-text-main: #1A0F14;
+  --bb-text-muted: #64555E;
+  --bb-text-on-primary: #FFFFFF;
+  --bb-surface: #FFFFFF;
+  --bb-surface-subtle: #F8F4F6;
+}
+
+/* Super Admin / Admin Theme: Deep Plum */
+body.theme-super-admin .bulk-barcode-dialog,
+.theme-super-admin .bulk-barcode-dialog,
+body.theme-admin .bulk-barcode-dialog,
+.theme-admin .bulk-barcode-dialog,
+.bulk-barcode-dialog.theme-admin {
+  --bb-primary: #49364A;
+  --bb-primary-hover: #3B2B3C;
+  --bb-primary-active: #2E212F;
+  --bb-primary-soft: #F5EDF4;
+  --bb-primary-light: #FBF7FA;
+  --bb-primary-border: #D8CBD8;
+  --bb-primary-border-light: #EADFEA;
+  --bb-primary-glow: rgba(73, 54, 74, 0.22);
+  --bb-text-main: #1D151F;
+  --bb-text-muted: #64555E;
+  --bb-text-on-primary: #FFFFFF;
+  --bb-surface: #FFFFFF;
+  --bb-surface-subtle: #F8F5F8;
+}
+
+/* --------------------------------------------------------------------------
+   2. BACKDROP & DIALOG SHELL
+   -------------------------------------------------------------------------- */
+.bulk-barcode-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.bulk-barcode-dialog {
+  background: var(--bb-surface);
+  border-radius: 14px;
+  width: 100%;
+  max-width: 1040px;
+  height: 90vh;
+  max-height: 860px;
+  min-height: 480px;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.28), 0 4px 16px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--bb-primary-border);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: bbModalScale 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+}
+
+@keyframes bbModalScale {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   3. HEADER
+   -------------------------------------------------------------------------- */
+.bulk-barcode-header {
+  padding: 0.9rem 1.25rem;
+  border-bottom: 1px solid var(--bb-primary-border);
+  background: linear-gradient(135deg, var(--bb-primary-light) 0%, #FFFFFF 100%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.bulk-barcode-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.bulk-barcode-icon-badge {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--bb-primary-soft);
+  border: 1px solid var(--bb-primary-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--bb-primary);
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px var(--bb-primary-glow);
+}
+
+.bulk-barcode-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.bulk-barcode-title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--bb-text-main);
+  letter-spacing: -0.01em;
+}
+
+.bulk-barcode-counter-badge {
+  background: var(--bb-primary);
+  color: var(--bb-text-on-primary);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.18rem 0.55rem;
+  border-radius: 999px;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.bulk-barcode-subtitle {
+  font-size: 0.78rem;
+  color: var(--bb-text-muted);
+  margin-top: 1px;
+  line-height: 1.35;
+}
+
+.bulk-barcode-header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-shrink: 0;
+}
+
+/* Primary Tabs (Select & Quantities vs Preview) */
+.bulk-barcode-tabs {
+  display: inline-flex;
+  background: var(--bb-primary-soft);
+  border: 1px solid var(--bb-primary-border);
+  border-radius: 8px;
+  padding: 3px;
+  gap: 3px;
+}
+
+.bulk-barcode-tab-btn {
+  border: none;
+  background: transparent;
+  color: var(--bb-text-muted);
+  font-weight: 600;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+}
+
+.bulk-barcode-tab-btn:hover {
+  color: var(--bb-text-main);
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.bulk-barcode-tab-btn.active {
+  background: var(--bb-primary);
+  color: var(--bb-text-on-primary);
+  font-weight: 700;
+  box-shadow: 0 1px 4px var(--bb-primary-glow);
+}
+
+.bulk-barcode-close-btn {
+  border: 1px solid var(--bb-primary-border);
+  background: var(--bb-surface);
+  color: var(--bb-text-muted);
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.bulk-barcode-close-btn:hover {
+  background: var(--bb-primary-soft);
+  color: var(--bb-primary);
+  border-color: var(--bb-primary);
+}
+
+/* --------------------------------------------------------------------------
+   4. VALIDATION ALERT
+   -------------------------------------------------------------------------- */
+.bulk-barcode-alert {
+  padding: 0.6rem 1.25rem;
+  background: #FEF2F2;
+  border-bottom: 1px solid #FEE2E2;
+  color: #991B1B;
+  font-size: 0.82rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-shrink: 0;
+  animation: bbFadeIn 0.2s ease;
+}
+
+@keyframes bbFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.bulk-barcode-alert-close {
+  border: none;
+  background: transparent;
+  color: #991B1B;
+  cursor: pointer;
+  padding: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+.bulk-barcode-alert-close:hover {
+  background: rgba(153, 27, 27, 0.1);
+}
+
+/* --------------------------------------------------------------------------
+   5. LABEL CONFIGURATION & TOOLBAR
+   -------------------------------------------------------------------------- */
+.bulk-barcode-config {
+  padding: 0.65rem 1.25rem;
+  background: var(--bb-surface);
+  border-bottom: 1px solid var(--bb-primary-border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  font-size: 0.82rem;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.bulk-barcode-config-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.bulk-barcode-format-picker {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.bulk-barcode-format-label {
+  font-weight: 700;
+  color: var(--bb-text-main);
+  white-space: nowrap;
+}
+
+.bulk-barcode-select {
+  padding: 0.38rem 0.65rem;
+  font-size: 0.82rem;
+  border-radius: 6px;
+  border: 1px solid var(--bb-primary-border);
+  background: var(--bb-surface);
+  color: var(--bb-text-main);
+  font-weight: 600;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  max-width: 100%;
+}
+
+.bulk-barcode-select:focus {
+  border-color: var(--bb-primary);
+  box-shadow: 0 0 0 2px var(--bb-primary-glow);
+}
+
+.bulk-barcode-checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.bulk-barcode-checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  color: var(--bb-text-main);
+  font-weight: 500;
+  font-size: 0.8rem;
+  user-select: none;
+}
+
+.bulk-barcode-checkbox-label input[type="checkbox"] {
+  accent-color: var(--bb-primary);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
+/* Guidance Tip Bar */
+.bulk-barcode-guidance {
+  width: 100%;
+  padding: 0.45rem 0.8rem;
+  border-radius: 6px;
+  font-size: 0.76rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+  box-sizing: border-box;
+}
+
+.bulk-barcode-guidance.thermal {
+  background: #FFFBEB;
+  border: 1px solid #FEF3C7;
+  color: #92400E;
+}
+
+.bulk-barcode-guidance.sheet {
+  background: var(--bb-primary-soft);
+  border: 1px solid var(--bb-primary-border);
+  color: var(--bb-primary);
+}
+
+.bulk-barcode-guidance-btn {
+  border: 1px solid currentColor;
+  background: #FFFFFF;
+  padding: 3px 8px;
+  border-radius: 5px;
+  font-weight: 700;
+  font-size: 0.72rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.bulk-barcode-guidance.thermal .bulk-barcode-guidance-btn {
+  color: #B45309;
+  border-color: #D97706;
+}
+
+.bulk-barcode-guidance.sheet .bulk-barcode-guidance-btn {
+  color: var(--bb-primary);
+  border-color: var(--bb-primary);
+}
+
+.bulk-barcode-guidance-btn:hover {
+  background: var(--bb-primary);
+  color: #FFFFFF !important;
+  border-color: var(--bb-primary) !important;
+}
+
+/* --------------------------------------------------------------------------
+   6. MAIN BODY (TWO-COLUMN DESKTOP / RESPONSIVE)
+   -------------------------------------------------------------------------- */
+.bulk-barcode-body {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  background: var(--bb-surface);
+}
+
+/* Mobile & Tablet Segmented Switcher (Visible only on <= 860px) */
+.bulk-barcode-mobile-nav {
+  display: none;
+  background: var(--bb-primary-soft);
+  border-bottom: 1px solid var(--bb-primary-border);
+  padding: 6px 12px;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.bulk-barcode-mobile-nav-btn {
+  flex: 1;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--bb-text-muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.45rem 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.bulk-barcode-mobile-nav-btn.active {
+  background: var(--bb-surface);
+  color: var(--bb-primary);
+  font-weight: 700;
+  border-color: var(--bb-primary-border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+/* Grid Container for Desktop */
+.bulk-barcode-columns {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Panels */
+.bulk-barcode-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+  background: var(--bb-surface);
+}
+
+.bulk-barcode-panel-left {
+  border-right: 1px solid var(--bb-primary-border);
+  background: var(--bb-surface-subtle);
+}
+
+.bulk-barcode-panel-right {
+  background: var(--bb-surface);
+}
+
+/* Toolbar inside panels */
+.bulk-barcode-panel-toolbar {
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid var(--bb-primary-border);
+  background: var(--bb-surface);
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  flex-shrink: 0;
+}
+
+.bulk-barcode-search-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.bulk-barcode-search-input {
+  flex: 1;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.85rem;
+  border-radius: 6px;
+  border: 1px solid var(--bb-primary-border);
+  outline: none;
+  color: var(--bb-text-main);
+  background: #FFFFFF;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.bulk-barcode-search-input:focus {
+  border-color: var(--bb-primary);
+  box-shadow: 0 0 0 2px var(--bb-primary-glow);
+}
+
+.bulk-barcode-cat-select {
+  width: 140px;
+  padding: 0.45rem 0.5rem;
+  font-size: 0.82rem;
+  border-radius: 6px;
+  border: 1px solid var(--bb-primary-border);
+  background: #FFFFFF;
+  color: var(--bb-text-main);
+  outline: none;
+}
+
+.bulk-barcode-cat-select:focus {
+  border-color: var(--bb-primary);
+  box-shadow: 0 0 0 2px var(--bb-primary-glow);
+}
+
+.bulk-barcode-filter-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.76rem;
+  color: var(--bb-text-muted);
+}
+
+.bulk-barcode-link-btn {
+  background: none;
+  border: none;
+  color: var(--bb-primary);
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  font-size: 0.76rem;
+  transition: opacity 0.15s ease;
+}
+
+.bulk-barcode-link-btn:hover {
+  text-decoration: underline;
+  opacity: 0.85;
+}
+
+/* Scrollable container for items */
+.bulk-barcode-scroll-list {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0.6rem;
+}
+
+/* Individual Product Selection Card */
+.bulk-barcode-item-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 8px;
+  margin-bottom: 6px;
+  background: #FFFFFF;
+  border: 1px solid var(--bb-primary-border-light);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.bulk-barcode-item-card:hover {
+  border-color: var(--bb-primary-border);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.bulk-barcode-item-card.selected {
+  background: var(--bb-primary-soft);
+  border-color: var(--bb-primary);
+  box-shadow: 0 2px 8px var(--bb-primary-glow);
+}
+
+.bulk-barcode-item-card.disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.bulk-barcode-item-card input[type="checkbox"] {
+  accent-color: var(--bb-primary);
+  width: 17px;
+  height: 17px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.bulk-barcode-item-card.disabled input[type="checkbox"] {
+  cursor: not-allowed;
+}
+
+.bulk-barcode-item-info {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.bulk-barcode-item-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+
+.bulk-barcode-item-name {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--bb-text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bulk-barcode-item-price {
+  font-weight: 800;
+  font-size: 0.85rem;
+  color: #047857;
+  white-space: nowrap;
+}
+
+.bulk-barcode-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 2px;
+  font-size: 0.74rem;
+  color: var(--bb-text-muted);
+}
+
+.bulk-barcode-item-barcode {
+  margin-top: 3px;
+  font-size: 0.74rem;
+}
+
+.bulk-barcode-barcode-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  color: var(--bb-primary);
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.bulk-barcode-qty-pill {
+  background: var(--bb-primary);
+  color: var(--bb-text-on-primary);
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Right Panel: Selected Products Header */
+.bulk-barcode-selected-header {
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid var(--bb-primary-border);
+  background: var(--bb-surface-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.bulk-barcode-quick-btns {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.bulk-barcode-quick-btn {
+  background: var(--bb-surface);
+  border: 1px solid var(--bb-primary-border);
+  border-radius: 5px;
+  padding: 2px 7px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--bb-text-main);
+  transition: all 0.12s ease;
+}
+
+.bulk-barcode-quick-btn:hover {
+  background: var(--bb-primary-soft);
+  color: var(--bb-primary);
+  border-color: var(--bb-primary);
+}
+
+.bulk-barcode-clear-btn {
+  background: #FEE2E2;
+  border: 1px solid #FCA5A5;
+  color: #991B1B;
+  border-radius: 5px;
+  padding: 2px 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.bulk-barcode-clear-btn:hover {
+  background: #FCA5A5;
+}
+
+/* Selected List Item Card */
+.bulk-barcode-selected-card {
+  background: #FFFFFF;
+  border: 1px solid var(--bb-primary-border-light);
+  border-radius: 8px;
+  padding: 0.65rem 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  margin-bottom: 6px;
+  transition: all 0.12s ease;
+}
+
+.bulk-barcode-selected-card:hover {
+  border-color: var(--bb-primary-border);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.bulk-barcode-selected-index {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--bb-text-muted);
+  width: 20px;
+  flex-shrink: 0;
+}
+
+/* Quantity Control Widget */
+.bulk-barcode-qty-control {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.bulk-barcode-qty-btn {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--bb-primary-border);
+  background: var(--bb-surface);
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--bb-text-main);
+  transition: all 0.12s ease;
+  user-select: none;
+}
+
+.bulk-barcode-qty-btn:hover:not(:disabled) {
+  background: var(--bb-primary-soft);
+  color: var(--bb-primary);
+  border-color: var(--bb-primary);
+}
+
+.bulk-barcode-qty-btn:disabled {
+  background: #F1F5F9;
+  color: #CBD5E1;
+  border-color: #E2E8F0;
+  cursor: not-allowed;
+}
+
+.bulk-barcode-qty-input {
+  width: 52px;
+  height: 28px;
+  text-align: center;
+  border-radius: 6px;
+  border: 1px solid var(--bb-primary-border);
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--bb-text-main);
+  background: #FFFFFF;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.bulk-barcode-qty-input:focus {
+  border-color: var(--bb-primary);
+  box-shadow: 0 0 0 2px var(--bb-primary-glow);
+}
+
+.bulk-barcode-remove-btn {
+  width: 28px;
+  height: 28px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #94A3B8;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.12s ease;
+  margin-left: 4px;
+}
+
+.bulk-barcode-remove-btn:hover {
+  background: #FEE2E2;
+  color: #DC2626;
+  border-color: #FCA5A5;
+}
+
+/* Empty States */
+.bulk-barcode-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2.5rem 1.5rem;
+  color: var(--bb-text-muted);
+  height: 100%;
+}
+
+.bulk-barcode-empty-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--bb-primary-soft);
+  border: 1px solid var(--bb-primary-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--bb-primary);
+  margin-bottom: 0.6rem;
+}
+
+.bulk-barcode-empty-title {
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--bb-text-main);
+}
+
+.bulk-barcode-empty-desc {
+  font-size: 0.78rem;
+  color: var(--bb-text-muted);
+  max-width: 260px;
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+/* --------------------------------------------------------------------------
+   7. PREVIEW VIEW
+   -------------------------------------------------------------------------- */
+.bulk-barcode-preview-container {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  background: var(--bb-surface-subtle);
+  padding: 1.25rem;
+  box-sizing: border-box;
+}
+
+.bulk-barcode-preview-card {
+  max-width: 880px;
+  margin: 0 auto;
+  background: #FFFFFF;
+  border-radius: 10px;
+  border: 1px solid var(--bb-primary-border);
+  padding: 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.bulk-barcode-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--bb-primary-border);
+  padding-bottom: 0.75rem;
+  margin-bottom: 1rem;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.bulk-barcode-preview-grid {
+  display: grid;
+  gap: 12px;
+  max-height: 480px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 4px;
+}
+
+.bulk-barcode-preview-item {
+  background: #FFFFFF;
+  border: 1px dashed var(--bb-primary-border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  text-align: center;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+}
+
+/* --------------------------------------------------------------------------
+   8. FOOTER
+   -------------------------------------------------------------------------- */
+.bulk-barcode-footer {
+  padding: 0.85rem 1.25rem;
+  border-top: 1px solid var(--bb-primary-border);
+  background: var(--bb-surface);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-shrink: 0;
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  box-sizing: border-box;
+}
+
+.bulk-barcode-footer-summary {
+  font-size: 0.85rem;
+  color: var(--bb-text-muted);
+}
+
+.bulk-barcode-footer-summary strong {
+  color: var(--bb-text-main);
+}
+
+.bulk-barcode-footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+/* Buttons */
+.bulk-barcode-btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  user-select: none;
+  min-height: 38px;
+  border: 1px solid transparent;
+}
+
+.bulk-barcode-btn-secondary {
+  background: var(--bb-surface);
+  border-color: var(--bb-primary-border);
+  color: var(--bb-text-main);
+}
+
+.bulk-barcode-btn-secondary:hover {
+  background: var(--bb-primary-soft);
+  color: var(--bb-primary);
+  border-color: var(--bb-primary);
+}
+
+.bulk-barcode-btn-primary {
+  background: var(--bb-primary);
+  color: var(--bb-text-on-primary);
+  font-weight: 700;
+  box-shadow: 0 2px 8px var(--bb-primary-glow);
+}
+
+.bulk-barcode-btn-primary:hover:not(:disabled) {
+  background: var(--bb-primary-hover);
+  box-shadow: 0 4px 12px var(--bb-primary-glow);
+  transform: translateY(-1px);
+}
+
+.bulk-barcode-btn-primary:active:not(:disabled) {
+  background: var(--bb-primary-active);
+  transform: translateY(0);
+}
+
+.bulk-barcode-btn:disabled,
+.bulk-barcode-btn-primary:disabled {
+  background: #E2E8F0 !important;
+  color: #94A3B8 !important;
+  border-color: #CBD5E1 !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   9. RESPONSIVE BREAKPOINTS: TABLET (<= 860px, 768px, 600px)
+   -------------------------------------------------------------------------- */
+@media screen and (max-width: 860px) {
+  .bulk-barcode-dialog {
+    width: 96vw;
+    max-width: 760px;
+    height: 92vh;
+    max-height: 92vh;
+  }
+
+  .bulk-barcode-header {
+    padding: 0.75rem 1rem;
+    gap: 0.6rem;
+  }
+
+  .bulk-barcode-title {
+    font-size: 1.05rem;
+  }
+
+  .bulk-barcode-subtitle {
+    display: none; /* Hide subtitle on tablet to save vertical space */
+  }
+
+  .bulk-barcode-config {
+    padding: 0.55rem 1rem;
+    gap: 0.45rem;
+  }
+
+  .bulk-barcode-checkbox-group {
+    gap: 0.65rem;
+  }
+
+  /* Show the mobile segmented navigation switcher */
+  .bulk-barcode-mobile-nav {
+    display: flex;
+  }
+
+  /* Stack columns into tabbed view so lists are wide and legible */
+  .bulk-barcode-columns {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .bulk-barcode-panel {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .bulk-barcode-panel-left {
+    border-right: none;
+  }
+
+  /* Hide the panel not currently selected via the segmented switcher */
+  .bulk-barcode-panel.mobile-hidden {
+    display: none !important;
+  }
+
+  .bulk-barcode-footer {
+    padding: 0.65rem 1rem;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   10. RESPONSIVE BREAKPOINTS: MOBILE (<= 600px, 430px, 390px, 360px)
+   -------------------------------------------------------------------------- */
+@media screen and (max-width: 600px) {
+  .bulk-barcode-backdrop {
+    padding: 0; /* Full screen dialog */
+  }
+
+  .bulk-barcode-dialog {
+    width: 100vw;
+    height: 100%;
+    max-height: 100dvh;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+  }
+
+  .bulk-barcode-header {
+    padding: max(0.65rem, env(safe-area-inset-top)) 0.85rem 0.65rem 0.85rem;
+  }
+
+  .bulk-barcode-icon-badge {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+  }
+
+  .bulk-barcode-icon-badge svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  .bulk-barcode-title {
+    font-size: 0.98rem;
+  }
+
+  .bulk-barcode-tabs {
+    padding: 2px;
+  }
+
+  .bulk-barcode-tab-btn {
+    padding: 0.35rem 0.55rem;
+    font-size: 0.74rem;
+  }
+
+  .bulk-barcode-tab-btn span {
+    font-size: 0.74rem;
+  }
+
+  .bulk-barcode-config {
+    padding: 0.5rem 0.85rem;
+    gap: 0.4rem;
+  }
+
+  .bulk-barcode-config-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.45rem;
+  }
+
+  .bulk-barcode-format-picker {
+    width: 100%;
+  }
+
+  .bulk-barcode-select {
+    width: 100%;
+    flex: 1;
+  }
+
+  .bulk-barcode-checkbox-group {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.4rem 0.6rem;
+    width: 100%;
+  }
+
+  .bulk-barcode-guidance {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4rem;
+  }
+
+  .bulk-barcode-guidance-btn {
+    width: 100%;
+    text-align: center;
+    padding: 4px 8px;
+  }
+
+  .bulk-barcode-panel-toolbar {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .bulk-barcode-search-row {
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .bulk-barcode-cat-select {
+    width: 100%;
+  }
+
+  .bulk-barcode-item-card {
+    padding: 0.55rem 0.65rem;
+  }
+
+  .bulk-barcode-selected-card {
+    padding: 0.55rem 0.65rem;
+  }
+
+  .bulk-barcode-footer {
+    padding: 0.6rem 0.85rem max(0.6rem, env(safe-area-inset-bottom)) 0.85rem;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .bulk-barcode-footer-summary {
+    text-align: center;
+    font-size: 0.78rem;
+  }
+
+  .bulk-barcode-footer-actions {
+    display: flex;
+    width: 100%;
+    gap: 0.5rem;
+  }
+
+  .bulk-barcode-footer-actions .bulk-barcode-btn {
+    flex: 1;
+    min-height: 42px;
+    font-size: 0.82rem;
+    padding: 0.45rem 0.65rem;
+  }
+}
+
+/* Extra small devices (<= 380px) */
+@media screen and (max-width: 380px) {
+  .bulk-barcode-checkbox-group {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .bulk-barcode-title {
+    font-size: 0.92rem;
+  }
+
+  .bulk-barcode-footer-actions {
+    flex-direction: column;
+  }
+
+  .bulk-barcode-footer-actions .bulk-barcode-btn {
+    width: 100%;
+  }
+}

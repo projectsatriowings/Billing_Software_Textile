@@ -1664,7 +1664,6 @@ export async function generateTemplateExcel(products: ExtractedProductItem[]): P
     { header: 'Cost Price', key: 'costPrice', width: 16 },
     { header: 'HSN', key: 'hsn', width: 14 },
     { header: 'GST Rate', key: 'gstRate', width: 14 },
-    { header: 'Price Inclusive of GST', key: 'priceInclusive', width: 24 },
     { header: 'Opening Stock', key: 'openingStock', width: 16 },
   ];
 
@@ -1699,7 +1698,6 @@ export async function generateTemplateExcel(products: ExtractedProductItem[]): P
       costPrice: cpNum !== null && !isNaN(cpNum) ? cpNum : '',
       hsn: p.hsn ? String(p.hsn) : '',
       gstRate: p.gstRate || '5%',
-      priceInclusive: p.priceInclusive || 'Yes',
       openingStock: !isNaN(stockNum) ? stockNum : 0,
     });
 
@@ -1711,8 +1709,7 @@ export async function generateTemplateExcel(products: ExtractedProductItem[]): P
     row.getCell(4).alignment = { vertical: 'middle', horizontal: 'right' };
     row.getCell(5).alignment = { vertical: 'middle', horizontal: 'center' };
     row.getCell(6).alignment = { vertical: 'middle', horizontal: 'center' };
-    row.getCell(7).alignment = { vertical: 'middle', horizontal: 'center' };
-    row.getCell(8).alignment = { vertical: 'middle', horizontal: 'right' };
+    row.getCell(7).alignment = { vertical: 'middle', horizontal: 'right' };
 
     if (spNum !== null && !isNaN(spNum)) {
       row.getCell(3).numFmt = '#,##0.00';

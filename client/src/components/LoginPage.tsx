@@ -614,8 +614,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   <line x1="12" y1="15" x2="12" y2="3" />
                 </svg>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', textAlign: 'left', lineHeight: 1.25 }}>
-                  <span style={{ fontWeight: 800 }}>Download A2Z Desktop App (.exe)</span>
-                  <span style={{ fontSize: '0.72rem', color: '#7E22CE', fontWeight: 500 }}>Setup Wizard • Choose Install Location</span>
+                  <span style={{ fontWeight: 800 }}>Download A2Z </span>
+                  <span style={{ fontSize: '0.72rem', color: 'black', fontWeight: 500 }}>Setup Wizard • Choose Install Location</span>
                 </div>
               </button>
             )}
@@ -802,7 +802,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 <div>
                   <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800, color: '#0F172A', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     A2Z Software Download
-                    <span style={{ fontSize: '0.7rem', background: '#EDE9FE', color: '#6D28D9', padding: '2px 8px', borderRadius: '9999px', fontWeight: 700 }}>
+                    <span style={{ fontSize: '0.7rem', background: '#EDE9FE', color: '#352737', padding: '2px 8px', borderRadius: '9999px', fontWeight: 700 }}>
                       v0.1.0
                     </span>
                   </h3>
@@ -844,7 +844,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   gap: '0.65rem',
                   padding: '0.9rem 1.25rem',
                   borderRadius: '14px',
-                  background: 'linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%)',
+                  backgroundColor: '#352737',
                   color: '#FFFFFF',
                   border: 'none',
                   fontSize: '0.95rem',
@@ -912,15 +912,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 Setup &amp; Installation Steps
               </div>
               <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'flex-start', fontSize: '0.82rem', color: '#475569', lineHeight: 1.45 }}>
-                <span style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#6D28D9', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.72rem', fontWeight: 800, flexShrink: 0, marginTop: '1px' }}>1</span>
+                <span style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#352737', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.72rem', fontWeight: 800, flexShrink: 0, marginTop: '1px' }}>1</span>
                 <div><strong>Windows (.exe):</strong> Double-click <strong>A2Z Setup 0.1.0.exe</strong> after download completes and follow the setup wizard.</div>
               </div>
               <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'flex-start', fontSize: '0.82rem', color: '#475569', lineHeight: 1.45 }}>
-                <span style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#059669', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.72rem', fontWeight: 800, flexShrink: 0, marginTop: '1px' }}>2</span>
+                <span style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#352737', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.72rem', fontWeight: 800, flexShrink: 0, marginTop: '1px' }}>2</span>
                 <div><strong>Android (.apk):</strong> Open <strong>A2Z-Billing.apk</strong> on your device, enable <em>"Install unknown apps"</em> when prompted, and tap <strong>Install</strong>.</div>
               </div>
               <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'flex-start', fontSize: '0.82rem', color: '#475569', lineHeight: 1.45 }}>
-                <span style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#6D28D9', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.72rem', fontWeight: 800, flexShrink: 0, marginTop: '1px' }}>3</span>
+                <span style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#352737', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.72rem', fontWeight: 800, flexShrink: 0, marginTop: '1px' }}>3</span>
                 <div>Launch the official <strong>A2Z shortcut</strong> on your Desktop or Android Home Screen to begin billing!</div>
               </div>
             </div>
@@ -936,22 +936,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 </div>
               </div>
             </div>
-
-            {/* Alternative PWA link if available */}
-            {installPrompt && (
-              <div style={{ textAlign: 'center', paddingTop: '0.25rem', borderTop: '1px solid #F1F5F9' }}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    handleInstallApp();
-                    setShowDownloadModal(false);
-                  }}
-                  style={{ background: 'none', border: 'none', color: '#6D28D9', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}
-                >
-                  Or install instant browser app (PWA)
-                </button>
-              </div>
-            )}
           </div>
         </div>
       )}

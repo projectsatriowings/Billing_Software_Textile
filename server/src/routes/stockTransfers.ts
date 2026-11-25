@@ -4,6 +4,7 @@ import { bad, conflict, notFound, forbidden, V, type Router } from '../http.ts';
 import { newId } from '../security.ts';
 import type { Queryable } from '../db/index.ts';
 import type { StockTransfer, StockTransferLine, StockTransferStatus, StockMove } from '../../../shared/types.ts';
+import { syncItemStockStatus } from '../services/stockStatus.ts';
 
 async function resolveBranch(
   db: { one: <T>(sql: string, params?: unknown[]) => Promise<T | null | undefined> },
@@ -1084,6 +1085,12 @@ export function registerStockTransfers(r: Router) {
         }
       }
 
+      // Synchronize product active status at source branch (deactivates if stock became 0)
+      const dispatchedItemIds = lines.map((l: any) => l.itemId || l.item_id).filter(Boolean);
+      if (dispatchedItemIds.length > 0) {
+        await syncItemStockStatus(q, tenantId, dispatchedItemIds, fromBranchId);
+      }
+
       // 4. Update transfer status
       await q.exec(
         `UPDATE stock_transfers
@@ -1315,6 +1322,12 @@ export function registerStockTransfers(r: Router) {
         );
       }
 
+      // Synchronize product active status at destination branch (reactivates if restocked)
+      const receivedItemIds = lines.map((l: any) => l.destItemId || l.itemId || l.item_id).filter(Boolean);
+      if (receivedItemIds.length > 0) {
+        await syncItemStockStatus(q, tenantId, receivedItemIds, toBranchId);
+      }
+
       const finalStatus: StockTransferStatus = hasDiscrepancy ? 'partially_received' : 'completed';
 
       await q.exec(
@@ -1407,6 +1420,11 @@ export function registerStockTransfers(r: Router) {
               ctx.user!.id,
             ],
           );
+        }
+
+        const cancelledItemIds = dispatchMoves.map((dm: any) => dm.itemId ?? dm.item_id).filter(Boolean);
+        if (cancelledItemIds.length > 0) {
+          await syncItemStockStatus(q, tenantId, cancelledItemIds, fromBranchIdRev);
         }
       }
 
