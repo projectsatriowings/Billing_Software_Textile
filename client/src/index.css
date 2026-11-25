@@ -47536,3 +47536,41 @@ tbody tr:hover td.col-sticky-invoice {
     font-size: 1.35rem !important;
   }
 }
+
+/* ==========================================================================
+   My Cashier: Expected Cash Formula — keep the original single row and let it
+   scroll horizontally when the card is narrower than the row (it was clipped).
+   ========================================================================== */
+/* Tablet & desktop only; phones keep the original stacked layout. */
+@media (min-width: 769px) {
+  .formula-detailed-flow.shifts-formula-flow {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    padding-bottom: 0.85rem !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+
+  .formula-detailed-flow.shifts-formula-flow > .formula-step-box {
+    flex: 0 0 auto !important;
+    width: 165px !important;
+    min-width: 165px !important;
+  }
+
+  .formula-detailed-flow.shifts-formula-flow > .formula-op-pill {
+    flex: 0 0 auto !important;
+  }
+}
+
+/* The card is a grid item: let it shrink so the row scrolls inside it instead of being cut off. */
+.shifts-overview-layout > .formula-container-card {
+  min-width: 0 !important;
+}

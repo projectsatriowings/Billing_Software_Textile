@@ -96,6 +96,7 @@ import {
   type RoleModuleAccessConfig,
 } from '../../shared/modules.ts';
 import { fetchModuleAccess, getDeveloperToken, clearDeveloperToken } from './api.ts';
+import { clearCachedViews } from './utils/viewCache';
 import type { Branch } from '../../shared/types.ts';
 import { TerminalManagementTab } from './components/terminal/TerminalManagementTab';
 import { UserManagementView } from './components/users/UserManagementView';
@@ -3849,6 +3850,7 @@ export function App() {
 
   const performLogout = async (shouldCloseShift = false) => {
     setShowLogoutShiftModal(false);
+    clearCachedViews();
     try {
       await api('/api/auth/logout', {
         method: 'POST',

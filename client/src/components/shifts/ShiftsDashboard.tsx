@@ -9,6 +9,7 @@ import {
   type Shop,
 } from '../../api.ts';
 import { formatMoney } from '../../../../shared/shifts.ts';
+import { getCachedView, setCachedView } from '../../utils/viewCache';
 import { OpenShiftModal } from './OpenShiftModal.tsx';
 import { CashMovementModal } from './CashMovementModal.tsx';
 import { CloseShiftModal } from './CloseShiftModal.tsx';
@@ -62,9 +63,13 @@ export const ShiftsDashboard: React.FC<ShiftsDashboardProps> = ({
       (user.branchId && b.id === user.branchId) ||
       (user.assignedLocation && String(b.code || '').toUpperCase() === user.assignedLocation.toUpperCase()),
   );
-  const [activeShift, setActiveShift] = useState<Shift | null>(null);
-  const [shiftHistory, setShiftHistory] = useState<Shift[]>([]);
-  const [loadingActive, setLoadingActive] = useState<boolean>(true);
+  // Show what this page loaded last time instantly; fresh data replaces it in the background.
+  const activeCacheKey = `shift-active:${user.id}`;
+  const historyCacheKey = `shift-history:${user.id}`;
+  const cachedActive = getCachedView<{ shift: Shift | null; movements: CashMovement[] }>(activeCacheKey);
+  const [activeShift, setActiveShift] = useState<Shift | null>(cachedActive?.shift ?? null);
+  const [shiftHistory, setShiftHistory] = useState<Shift[]>(() => getCachedView<Shift[]>(`${historyCacheKey}:ALL`) ?? []);
+  const [loadingActive, setLoadingActive] = useState<boolean>(!cachedActive);
   const [loadingHistory, setLoadingHistory] = useState<boolean>(false);
   const [selectedTab, setSelectedTab] = useState<'overview' | 'payments' | 'movements' | 'history'>('overview');
   const [historyStatusFilter, setHistoryStatusFilter] = useState<string>('ALL');
@@ -76,7 +81,7 @@ export const ShiftsDashboard: React.FC<ShiftsDashboardProps> = ({
   const [reportModalShiftId, setReportModalShiftId] = useState<string | null>(null);
 
   // Active shift detail cache
-  const [movements, setMovements] = useState<CashMovement[]>([]);
+  const [movements, setMovements] = useState<CashMovement[]>(cachedActive?.movements ?? []);
 
   useEffect(() => {
     loadActiveShift();
@@ -99,16 +104,18 @@ export const ShiftsDashboard: React.FC<ShiftsDashboardProps> = ({
   }, [historyStatusFilter]);
 
   const loadActiveShift = async () => {
-    setLoadingActive(true);
+    // Keep showing what is on screen (cached or current) while refreshing; spinner only when empty.
+    if (!getCachedView(activeCacheKey)) setLoadingActive(true);
     try {
       const res = await fetchActiveShift();
       setActiveShift(res.activeShift);
+      let nextMovements: CashMovement[] = [];
       if (res.activeShift) {
         const det = await fetchShiftDetails(res.activeShift.id);
-        setMovements(det.movements || (det.shift as any)?.cashMovements || []);
-      } else {
-        setMovements([]);
+        nextMovements = det.movements || (det.shift as any)?.cashMovements || [];
       }
+      setMovements(nextMovements);
+      setCachedView(activeCacheKey, { shift: res.activeShift ?? null, movements: nextMovements });
     } catch (err: any) {
       console.error('Failed to load active shift:', err);
     } finally {
@@ -117,10 +124,14 @@ export const ShiftsDashboard: React.FC<ShiftsDashboardProps> = ({
   };
 
   const loadHistory = async () => {
-    setLoadingHistory(true);
+    const historyKey = `${historyCacheKey}:${historyStatusFilter}`;
+    const cachedHistory = getCachedView<Shift[]>(historyKey);
+    if (cachedHistory) setShiftHistory(cachedHistory);
+    else setLoadingHistory(true);
     try {
       const res = await fetchShifts({ status: historyStatusFilter, limit: 50 });
       setShiftHistory(res.shifts || []);
+      setCachedView(historyKey, res.shifts || []);
     } catch (err: any) {
       console.error('Failed to load shift history:', err);
     } finally {
