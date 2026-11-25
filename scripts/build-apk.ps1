@@ -1,4 +1,4 @@
-﻿# scripts/build-apk.ps1
+# scripts/build-apk.ps1
 # Automates Android APK build for A2Z Billing on Windows
 
 $ErrorActionPreference = "Stop"

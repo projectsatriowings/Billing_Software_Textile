@@ -13,6 +13,7 @@ import { resolveBranchScope } from '../branchScope.ts';
 import { invalidateTodayDashboardCache } from './dashboard.ts';
 import { sendInvoiceBillSms } from '../services/smsService.ts';
 import { generateInvoicePdf } from '../services/invoicePdfGenerator.ts';
+import { syncItemStockStatus } from '../services/stockStatus.ts';
 
 export function registerInvoices(r: Router) {
   // List invoices
@@ -408,7 +409,7 @@ export function registerInvoices(r: Router) {
       const priceMinor = V.int(l.priceMinor, `Item ${i + 1} price`, { min: 0, required: true });
       const discountMinor = V.int(l.discountMinor ?? 0, `Item ${i + 1} discount`, { min: 0 });
       const taxRateBp = V.int(l.taxRateBp ?? 0, `Item ${i + 1} tax rate`, { min: 0, max: 10000 });
-      const inclusive = V.bool(l.inclusive, true);
+      const inclusive = false;
       const itemId = V.optStr(l.itemId, 'Item ID', 50);
       const unit = V.optStr(l.unit, 'Unit', 20);
       const hsn = V.optStr(l.hsn, 'HSN', 20);
@@ -422,7 +423,7 @@ export function registerInvoices(r: Router) {
         priceMinor: l.priceMinor,
         discountMinor: l.discountMinor,
         taxRateBp: l.taxRateBp,
-        inclusive: l.inclusive,
+        inclusive: false,
       })),
       {
         intraState: isIntra,
@@ -854,6 +855,12 @@ export function registerInvoices(r: Router) {
             );
           }
         }
+      }
+
+      // Synchronize product status based on remaining stock (auto-deactivates zero-stock items)
+      const billedItemIds = formattedLines.map((l) => l.itemId).filter(Boolean) as string[];
+      if (billedItemIds.length > 0) {
+        await syncItemStockStatus(q, tenantId, billedItemIds, invoiceBranchId);
       }
 
       // 5. Insert payments

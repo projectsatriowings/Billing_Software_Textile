@@ -405,6 +405,7 @@ export interface Item {
 
   favorite: boolean;
   active?: boolean;
+  deactivationReason?: 'out_of_stock' | 'manual' | null;
   imageUrl?: string | null;
   image?: string | null;
   custom?: Record<string, any>;

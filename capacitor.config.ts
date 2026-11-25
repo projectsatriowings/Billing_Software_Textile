@@ -22,11 +22,11 @@ const config: CapacitorConfig = {
     StatusBar: {
       overlaysWebView: true,
       style: 'DARK',
-      backgroundColor: '#49364A',
+      backgroundColor: '#0F2D2E',
     },
     SplashScreen: {
       launchShowDuration: 2000,
-      backgroundColor: '#49364A',
+      backgroundColor: '#0F2D2E',
       showSpinner: false,
     },
   },
