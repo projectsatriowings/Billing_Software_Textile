@@ -1521,32 +1521,20 @@
 
   .sort-dropdown-wrap {
     flex: 1;
+    width: 100%;
     min-width: 0;
   }
 
   .sort-dropdown-wrap select {
+    flex: 1;
     width: 100%;
-    max-width: 155px;
-    font-size: 0.78rem;
+    max-width: none;
+    font-size: 0.8rem;
   }
 
-  .supplier-view-toggle {
-    display: inline-flex;
-    flex-shrink: 0;
-  }
-
-  /* Scroll hint for table view */
+  .supplier-view-toggle,
   .supplier-scroll-hint {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.45rem;
-    padding: 0.45rem 0.75rem;
-    background: #eff6ff;
-    color: #2563eb;
-    font-size: 0.73rem;
-    font-weight: 700;
-    border-bottom: 1px solid #dbeafe;
+    display: none !important;
   }
 
   /* Mobile Cards Container */
@@ -1815,74 +1803,11 @@
     cursor: pointer;
   }
 
-  /* Table mode when in table view on mobile */
-  .supplier-table-container.mobile-hidden {
-    display: none;
-  }
-
+  /* Mobile uses Cards view exclusively; hide desktop table on mobile */
+  .supplier-table-container,
+  .supplier-table-container.mobile-hidden,
   .supplier-table-container.mobile-active {
-    display: block;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    position: relative;
-  }
-
-  .supplier-modern-table {
-    min-width: 680px !important;
-    border-collapse: separate !important;
-    border-spacing: 0 !important;
-  }
-
-  .supplier-modern-table th:not(.col-sticky-supplier),
-  .supplier-modern-table td:not(.col-sticky-supplier) {
-    padding: 0.7rem 0.85rem !important;
-  }
-
-  .supplier-modern-table th.col-sticky-supplier,
-  .supplier-modern-table td.col-sticky-supplier {
-    position: sticky !important;
-    left: 0 !important;
-    z-index: 6 !important;
-    background: #ffffff !important;
-    width: 155px !important;
-    min-width: 155px !important;
-    max-width: 165px !important;
-    padding: 0.7rem 0.65rem !important;
-    border-right: 1px solid #e2e8f0 !important;
-    box-shadow: 3px 0 8px rgba(15, 23, 42, 0.06) !important;
-  }
-
-  .supplier-modern-table thead th.col-sticky-supplier {
-    background: #f8fafc !important;
-    z-index: 16 !important;
-  }
-
-  .supplier-modern-table tr:hover td.col-sticky-supplier {
-    background: #f8fafc !important;
-  }
-
-  .supplier-modern-table .supplier-cell-identity {
-    gap: 0.5rem !important;
-  }
-
-  .supplier-modern-table .supplier-avatar {
     display: none !important;
-  }
-
-  .supplier-modern-table .supplier-full-name {
-    font-size: 0.8rem !important;
-    line-height: 1.25 !important;
-    display: -webkit-box !important;
-    -webkit-line-clamp: 2 !important;
-    -webkit-box-orient: vertical !important;
-    overflow: hidden !important;
-    white-space: normal !important;
-    word-break: break-word !important;
-  }
-
-  .supplier-modern-table .supplier-address-snippet {
-    max-width: 135px !important;
-    font-size: 0.68rem !important;
   }
 
   /* Supplier Profile Drawer on mobile */
