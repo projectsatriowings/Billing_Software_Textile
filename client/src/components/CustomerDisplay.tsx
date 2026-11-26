@@ -329,9 +329,9 @@ export const CustomerDisplay: React.FC<CustomerDisplayProps> = ({ counterId = 'c
       <header
         className="cfd-header"
         style={{
-          background: 'var(--bg, #E8E1D5)',
-          backgroundColor: 'var(--bg, #E8E1D5)',
-          borderBottom: '1.5px solid var(--border, #D0C7B8)',
+          background: 'var(--bg, #f8fafc)',
+          backgroundColor: 'var(--bg, #f8fafc)',
+          borderBottom: '1.5px solid var(--border, #e2e8f0)',
         }}
       >
         <div className="cfd-header-left">
@@ -384,8 +384,8 @@ export const CustomerDisplay: React.FC<CustomerDisplayProps> = ({ counterId = 'c
           <div
             className="cfd-time-pill cfd-num"
             style={{
-              background: 'var(--surface, #FAF7F2)',
-              border: '1.5px solid var(--border, #D0C7B8)',
+              background: 'var(--surface, #ffffff)',
+              border: '1.5px solid var(--border, #e2e8f0)',
               color: 'var(--sidebar, #0F2D2E)',
             }}
           >
@@ -402,8 +402,8 @@ export const CustomerDisplay: React.FC<CustomerDisplayProps> = ({ counterId = 'c
             onClick={toggleFullscreen}
             title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
             style={{
-              background: 'var(--surface, #FAF7F2)',
-              border: '1.5px solid var(--border, #D0C7B8)',
+              background: 'var(--surface, #ffffff)',
+              border: '1.5px solid var(--border, #e2e8f0)',
               color: 'var(--sidebar, #0F2D2E)',
             }}
           >
