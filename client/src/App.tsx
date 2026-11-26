@@ -782,6 +782,9 @@ export function App() {
         try {
           localStorage.setItem('app_active_tab', resolved);
           sessionStorage.setItem('app_active_tab', resolved);
+          if (typeof window !== 'undefined' && resolved !== 'user-management' && window.location.pathname === '/user-management') {
+            window.history.replaceState({}, '', '/');
+          }
         } catch { }
         return resolved;
       });
