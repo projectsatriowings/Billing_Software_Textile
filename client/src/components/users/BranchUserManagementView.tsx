@@ -1868,7 +1868,7 @@ export const BranchUserManagementView: React.FC<BranchUserManagementViewProps> =
             ================================================================== */}
         {toast && (
           <div className="um-toast-container" role="status" aria-live="polite">
-            <span className="um-toast-tick">✓</span>
+            <span className={`um-toast-tick${toast.danger ? " um-toast-tick--danger" : ""}`} aria-hidden="true">{toast.danger ? "✕" : "✓"}</span>
             <span>{toast.text}</span>
           </div>
         )}

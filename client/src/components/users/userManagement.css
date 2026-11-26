@@ -1285,6 +1285,11 @@
   font-weight: 700;
 }
 
+.um-toast-tick.um-toast-tick--danger {
+  color: #B42318;
+  background-color: #FEE4E2;
+}
+
 
 /* --------------------------------------------------------------------------
    DELETE ACTIONS, MODAL & EMAIL STATUS

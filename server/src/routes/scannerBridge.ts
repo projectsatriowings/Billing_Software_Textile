@@ -24,7 +24,8 @@ export interface ScannerSession {
 
 const sessions = new Map<string, ScannerSession>();
 
-// Cleanup stale sessions older than 24 hours
+// Cleanup stale sessions older than 24 hours.
+// unref(): this timer alone must not keep a process alive (the running server keeps itself alive).
 setInterval(() => {
   const now = Date.now();
   for (const [id, sess] of sessions) {
@@ -32,7 +33,7 @@ setInterval(() => {
       sessions.delete(id);
     }
   }
-}, 60 * 60 * 1000);
+}, 60 * 60 * 1000).unref?.();
 
 export function getAllLocalIps(): string[] {
   const interfaces = os.networkInterfaces();
@@ -184,8 +185,11 @@ export function launchTunnel(port = 3001, force = false): Promise<string> {
   return tunnelLaunchPromise;
 }
 
-// Keep Cloudflare Tunnel alive & auto-heal dead tunnels
+// Keep Cloudflare Tunnel alive & auto-heal dead tunnels.
+// Not under the automated test runner (node --test sets NODE_TEST_CONTEXT): tests must not spawn
+// cloudflared, and the spawned process kept test runs from ever exiting.
 setInterval(async () => {
+  if (process.env.NODE_TEST_CONTEXT) return;
   if (activeTunnelUrl && activeTunnelUrl.startsWith('https://')) {
     const alive = await isTunnelHealthy(activeTunnelUrl);
     if (!alive) {
@@ -198,7 +202,7 @@ setInterval(async () => {
     const port = Number(process.env.PORT ?? 3001);
     launchTunnel(port, false).catch(() => { });
   }
-}, 25_000);
+}, 25_000).unref?.();
 
 export function setTunnelUrl(url: string) {
   activeTunnelUrl = url.trim();

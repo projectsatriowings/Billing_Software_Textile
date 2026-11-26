@@ -45,6 +45,7 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
   const [confirmInput, setConfirmInput] = useState<string>('');
 
   const inputRef = useRef<HTMLInputElement>(null);
+  const inFlightRef = useRef(false);
 
   const typeLabels: Record<DeleteEntityType, string> = {
     branch: 'branch',
@@ -72,10 +73,21 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
       try {
         if (type === 'branch') {
           const res = await fetchBranchDeleteImpact(id);
-          setImpactText(
-            `This permanently deletes the branch, its ${res.countersCount} counters, ${res.counterLoginsCount} counter logins and ${res.cashiersCount} cashiers. The store manager ${res.managerName ? res.managerName : 'None'
-            } will be unassigned (not deleted). Past bills are kept but will show the branch name only.`,
-          );
+          const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+          if (res.blockers && res.blockers.length > 0) {
+            // Known in advance that the server will refuse: say why, and offer Disable instead.
+            setCannotDeleteDueToHistory(true);
+            setImpactText(
+              `This branch can't be permanently deleted because it still has ${res.blockers
+                .map((b) => `${b.count} ${b.label}`)
+                .join(', ')}. Disable the branch instead to keep these records intact.`,
+            );
+          } else {
+            setImpactText(
+              `This permanently deletes the branch, its ${plural(res.countersCount, 'counter', 'counters')}, ${plural(res.counterLoginsCount, 'counter login', 'counter logins')} and ${plural(res.cashiersCount, 'cashier', 'cashiers')}. ${res.managerName ? `The store manager ${res.managerName} will be unassigned (not deleted).` : 'No store manager is assigned.'
+              } ${res.billsCount ? `Its ${plural(res.billsCount, 'past bill is', 'past bills are')} kept and will show the branch name only.` : 'Past bills are kept and will show the branch name only.'}`,
+            );
+          }
         } else if (type === 'manager') {
           const res = await fetchManagerDeleteImpact(id);
           setImpactText(
@@ -121,13 +133,15 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
   if (!isOpen) return null;
 
   const handleDelete = async () => {
-    if (!isConfirmed || deleting) return;
+    // The ref blocks a second click that lands before React re-renders with deleting=true.
+    if (!isConfirmed || deleting || inFlightRef.current) return;
+    inFlightRef.current = true;
     try {
       setDeleting(true);
       setErrorMessage('');
 
       if (type === 'branch') {
-        await deleteBranch(id);
+        await deleteBranch(id, confirmInput.trim());
       } else if (type === 'manager') {
         await deleteManager(id);
       } else if (type === 'counter') {
@@ -142,6 +156,7 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
       setErrorMessage(err.message || 'Could not delete item. Please check permissions.');
       onError?.(err);
     } finally {
+      inFlightRef.current = false;
       setDeleting(false);
     }
   };
@@ -258,7 +273,7 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
                 onDisableInstead?.(id);
               }}
             >
-              Deactivate counter instead
+              {type === 'counter' ? 'Deactivate counter instead' : `Disable ${typeLabels[type]} instead`}
             </button>
           ) : (
             <button

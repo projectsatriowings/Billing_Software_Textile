@@ -2498,6 +2498,9 @@ export interface BranchDeleteImpact {
   counterLoginsCount: number;
   cashiersCount: number;
   managerName: string | null;
+  billsCount?: number;
+  canDelete?: boolean;
+  blockers?: Array<{ key: string; label: string; count: number }>;
 }
 
 export interface ManagerDeleteImpact {
@@ -2551,10 +2554,12 @@ export const fetchCashierDeleteImpact = (id: string, isBranchScope = false) =>
   api<CashierDeleteImpact>(isBranchScope ? `/api/branch/cashiers/${id}/delete-impact` : `/api/cashiers/${id}/delete-impact`);
 
 // Permanent Deletes
-export const deleteBranch = (id: string) =>
-  api<{ ok: boolean; deleted: string; branchName?: string }>(`/api/branches/${id}`, {
-    method: 'DELETE',
-  });
+/** `confirm` is the branch code the user typed; the server checks it before deleting. */
+export const deleteBranch = (id: string, confirm: string) =>
+  api<{ ok: boolean; deleted: string; branchName?: string }>(
+    `/api/branches/${encodeURIComponent(id)}?confirm=${encodeURIComponent(confirm)}`,
+    { method: 'DELETE' },
+  );
 
 export const deleteManager = (id: string) =>
   api<{ ok: boolean; deleted: string; name?: string }>(`/api/managers/${id}`, {
