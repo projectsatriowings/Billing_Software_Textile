@@ -43975,7 +43975,7 @@ select.expense-input-control {
 }
 
 .logout-modal-btn-cancel:hover {
-  background: var(--surface-muted, #F3EDE3) !important;
+  background: var(--surface-muted, #f1f5f9) !important;
   color: var(--sidebar, #0F2D2E) !important;
 }
 
@@ -44518,7 +44518,7 @@ select.expense-input-control {
 }
 
 .invoice-detail-close-btn:hover {
-  background: var(--surface-muted, #F3EDE3) !important;
+  background: var(--surface-muted, #f1f5f9) !important;
   color: var(--sidebar, #0F2D2E) !important;
 }
 
@@ -44858,7 +44858,7 @@ select.expense-input-control {
 }
 
 .invoice-detail-btn-secondary:hover {
-  background: var(--surface-muted, #F3EDE3) !important;
+  background: var(--surface-muted, #f1f5f9) !important;
 }
 
 /* ==========================================================================
@@ -45303,7 +45303,7 @@ select.expense-input-control {
 }
 
 .return-modal-close-btn:hover {
-  background: var(--surface-muted, #F3EDE3) !important;
+  background: var(--surface-muted, #f1f5f9) !important;
   color: var(--sidebar, #0F2D2E) !important;
 }
 
@@ -45427,7 +45427,7 @@ select.expense-input-control {
 }
 
 .return-modal-btn-secondary:hover {
-  background: var(--surface-muted, #F3EDE3) !important;
+  background: var(--surface-muted, #f1f5f9) !important;
 }
 
 /* ==========================================================================
