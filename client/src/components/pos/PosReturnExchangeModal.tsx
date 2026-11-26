@@ -376,10 +376,10 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
           maxHeight: '90vh',
           display: 'flex',
           flexDirection: 'column',
-          background: 'var(--surface, #FAF7F2)',
+          background: 'var(--surface, #ffffff)',
           borderRadius: '20px',
           boxShadow: '0 25px 60px -15px rgba(15, 45, 46, 0.28), 0 10px 24px -5px rgba(15, 45, 46, 0.08)',
-          border: '1.5px solid var(--border, #D0C7B8)',
+          border: '1.5px solid var(--border, #e2e8f0)',
           overflow: 'hidden',
           transition: 'max-width 0.25s ease',
         }}
@@ -398,8 +398,8 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
         <div
           style={{
             padding: '1.2rem 1.6rem',
-            background: 'var(--surface, #FAF7F2)',
-            borderBottom: '1px solid var(--border, #D0C7B8)',
+            background: 'var(--surface, #ffffff)',
+            borderBottom: '1px solid var(--border, #e2e8f0)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -484,8 +484,8 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
               onClose();
             }}
             style={{
-              background: 'var(--surface, #FAF7F2)',
-              border: '1px solid var(--border, #D0C7B8)',
+              background: 'var(--surface, #ffffff)',
+              border: '1px solid var(--border, #e2e8f0)',
               color: 'var(--text-muted, #475569)',
               width: '32px',
               height: '32px',
@@ -506,7 +506,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
         </div>
 
         {/* ================= BENTO MODAL BODY ================= */}
-        <div style={{ padding: '1.25rem 1.6rem', overflowY: 'auto', flex: 1, background: 'var(--surface, #FAF7F2)' }}>
+        <div style={{ padding: '1.25rem 1.6rem', overflowY: 'auto', flex: 1, background: 'var(--surface, #ffffff)' }}>
           {errorMsg && (
             <div
               style={{
@@ -539,8 +539,8 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
               <div
                 style={{
                   display: 'flex',
-                  background: 'var(--bg, #E8E1D5)',
-                  border: '1px solid var(--border, #D0C7B8)',
+                  background: 'var(--bg, #f8fafc)',
+                  border: '1px solid var(--border, #e2e8f0)',
                   padding: '4px',
                   borderRadius: '12px',
                   marginBottom: '1.25rem',
@@ -559,7 +559,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                     padding: '0.6rem 0.8rem',
                     borderRadius: '9px',
                     border: lookupMode === 'barcode' ? '1px solid rgba(20, 184, 166, 0.3)' : '1px solid transparent',
-                    background: lookupMode === 'barcode' ? 'var(--surface, #FAF7F2)' : 'transparent',
+                    background: lookupMode === 'barcode' ? 'var(--surface, #ffffff)' : 'transparent',
                     color: lookupMode === 'barcode' ? 'var(--primary, #0F766E)' : 'var(--text-muted, #475569)',
                     fontWeight: lookupMode === 'barcode' ? 800 : 650,
                     fontSize: '0.84rem',
@@ -590,7 +590,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                     padding: '0.6rem 0.8rem',
                     borderRadius: '9px',
                     border: lookupMode === 'phone' ? '1px solid rgba(20, 184, 166, 0.3)' : '1px solid transparent',
-                    background: lookupMode === 'phone' ? 'var(--surface, #FAF7F2)' : 'transparent',
+                    background: lookupMode === 'phone' ? 'var(--surface, #ffffff)' : 'transparent',
                     color: lookupMode === 'phone' ? 'var(--primary, #0F766E)' : 'var(--text-muted, #475569)',
                     fontWeight: lookupMode === 'phone' ? 800 : 650,
                     fontSize: '0.84rem',
@@ -622,7 +622,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                     padding: '0.6rem 0.8rem',
                     borderRadius: '9px',
                     border: lookupMode === 'invoice' ? '1px solid rgba(20, 184, 166, 0.3)' : '1px solid transparent',
-                    background: lookupMode === 'invoice' ? 'var(--surface, #FAF7F2)' : 'transparent',
+                    background: lookupMode === 'invoice' ? 'var(--surface, #ffffff)' : 'transparent',
                     color: lookupMode === 'invoice' ? 'var(--primary, #0F766E)' : 'var(--text-muted, #475569)',
                     fontWeight: lookupMode === 'invoice' ? 800 : 650,
                     fontSize: '0.84rem',
@@ -649,7 +649,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
               {lookupMode === 'barcode' && (
                 <div
                   style={{
-                    border: '2px dashed var(--border, #D0C7B8)',
+                    border: '2px dashed var(--border, #e2e8f0)',
                     borderRadius: '16px',
                     background: 'rgba(255, 255, 255, 0.75)',
                     padding: '1.5rem',
@@ -665,7 +665,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                         width: '120px',
                         height: '70px',
                         margin: '0 auto',
-                        border: '1.5px solid var(--border, #D0C7B8)',
+                        border: '1.5px solid var(--border, #e2e8f0)',
                         borderRadius: '8px',
                         background: '#ffffff',
                         display: 'flex',
@@ -820,7 +820,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                         }}
                         style={{
                           background: '#ffffff',
-                          border: '1px solid var(--border, #D0C7B8)',
+                          border: '1px solid var(--border, #e2e8f0)',
                           color: 'var(--text-muted, #475569)',
                           borderRadius: '9px',
                           padding: '0.45rem 0.85rem',
@@ -863,7 +863,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                     <div
                       style={{
                         background: '#ffffff',
-                        border: '1.5px solid var(--border, #D0C7B8)',
+                        border: '1.5px solid var(--border, #e2e8f0)',
                         borderRadius: '14px',
                         padding: '1.25rem',
                         marginTop: '1rem',
@@ -894,7 +894,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                           </div>
 
                           {scannerPairingUrl ? (
-                            <div style={{ display: 'inline-block', background: '#ffffff', padding: '10px', borderRadius: '12px', border: '1.5px solid var(--border, #D0C7B8)', boxShadow: '0 4px 12px rgba(15, 45, 46, 0.08)' }}>
+                            <div style={{ display: 'inline-block', background: '#ffffff', padding: '10px', borderRadius: '12px', border: '1.5px solid var(--border, #e2e8f0)', boxShadow: '0 4px 12px rgba(15, 45, 46, 0.08)' }}>
                               <div dangerouslySetInnerHTML={{ __html: qrSvg(scannerPairingUrl, { size: 145, margin: 1 }) }} />
                               <div style={{ fontSize: '0.72rem', color: 'var(--primary, #0F766E)', fontWeight: 750, marginTop: '4px' }}>
                                 Point Phone Camera Here
@@ -916,8 +916,8 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                               <button
                                 type="button"
                                 style={{
-                                  background: 'var(--surface, #FAF7F2)',
-                                  border: '1px solid var(--border, #D0C7B8)',
+                                  background: 'var(--surface, #ffffff)',
+                                  border: '1px solid var(--border, #e2e8f0)',
                                   borderRadius: '6px',
                                   fontSize: '0.74rem',
                                   fontWeight: 700,
@@ -1024,7 +1024,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
               {lookupMode === 'phone' && (
                 <div
                   style={{
-                    border: '1.5px solid var(--border, #D0C7B8)',
+                    border: '1.5px solid var(--border, #e2e8f0)',
                     borderRadius: '16px',
                     background: 'rgba(255, 255, 255, 0.75)',
                     padding: '1.5rem',
@@ -1050,7 +1050,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                           padding: '0.75rem 1rem 0.75rem 3.4rem',
                           fontSize: '0.94rem',
                           borderRadius: '10px',
-                          border: '1.5px solid var(--border, #D0C7B8)',
+                          border: '1.5px solid var(--border, #e2e8f0)',
                           fontWeight: 700,
                           letterSpacing: '0.5px',
                         }}
@@ -1100,7 +1100,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
               {lookupMode === 'invoice' && (
                 <div
                   style={{
-                    border: '1.5px solid var(--border, #D0C7B8)',
+                    border: '1.5px solid var(--border, #e2e8f0)',
                     borderRadius: '16px',
                     background: 'rgba(255, 255, 255, 0.75)',
                     padding: '1.5rem',
@@ -1126,7 +1126,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                           padding: '0.75rem 1rem 0.75rem 2.4rem',
                           fontSize: '0.94rem',
                           borderRadius: '10px',
-                          border: '1.5px solid var(--border, #D0C7B8)',
+                          border: '1.5px solid var(--border, #e2e8f0)',
                           fontWeight: 700,
                         }}
                       />
@@ -1179,7 +1179,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                         style={{
                           padding: '0.85rem 1.1rem',
                           borderRadius: '12px',
-                          border: '1px solid var(--border, #D0C7B8)',
+                          border: '1px solid var(--border, #e2e8f0)',
                           background: '#ffffff',
                           display: 'flex',
                           alignItems: 'center',
@@ -1193,7 +1193,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                           e.currentTarget.style.background = 'var(--primary-soft, #E6F4F3)';
                         }}
                         onMouseLeave={(e) => {
-                          e.currentTarget.style.borderColor = 'var(--border, #D0C7B8)';
+                          e.currentTarget.style.borderColor = 'var(--border, #e2e8f0)';
                           e.currentTarget.style.background = '#ffffff';
                         }}
                       >
@@ -1313,8 +1313,8 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                       setSearchQuery('');
                     }}
                     style={{
-                      background: 'var(--surface, #FAF7F2)',
-                      border: '1px solid var(--border, #D0C7B8)',
+                      background: 'var(--surface, #ffffff)',
+                      border: '1px solid var(--border, #e2e8f0)',
                       padding: '0.45rem 0.85rem',
                       borderRadius: '8px',
                       fontSize: '0.78rem',
@@ -1343,10 +1343,10 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                 </span>
               </div>
 
-              <div style={{ border: '1.5px solid var(--border, #D0C7B8)', borderRadius: '12px', overflow: 'hidden', marginBottom: '1.25rem', boxShadow: '0 1px 3px rgba(15, 45, 46, 0.04)', background: '#ffffff' }}>
+              <div style={{ border: '1.5px solid var(--border, #e2e8f0)', borderRadius: '12px', overflow: 'hidden', marginBottom: '1.25rem', boxShadow: '0 1px 3px rgba(15, 45, 46, 0.04)', background: '#ffffff' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
                   <thead>
-                    <tr style={{ background: 'var(--bg, #E8E1D5)', color: 'var(--sidebar, #0F2D2E)', textAlign: 'left', borderBottom: '1px solid var(--border, #D0C7B8)' }}>
+                    <tr style={{ background: 'var(--bg, #f8fafc)', color: 'var(--sidebar, #0F2D2E)', textAlign: 'left', borderBottom: '1px solid var(--border, #e2e8f0)' }}>
                       <th style={{ padding: '0.65rem 0.75rem', width: '38px', textAlign: 'center' }}>Select</th>
                       <th style={{ padding: '0.65rem 0.75rem' }}>Product</th>
                       <th style={{ padding: '0.65rem 0.75rem', textAlign: 'center' }}>Sold / Ret.</th>
@@ -1366,7 +1366,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                         <tr
                           key={l.id}
                           style={{
-                            borderBottom: '1px solid var(--border, #D0C7B8)',
+                            borderBottom: '1px solid var(--border, #e2e8f0)',
                             background: st.selected ? '#fef2f2' : '#ffffff',
                             opacity: isReturnable ? 1 : 0.6,
                             transition: 'background 0.15s ease',
@@ -1408,7 +1408,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                                     width: '60px',
                                     padding: '3px 6px',
                                     borderRadius: '6px',
-                                    border: '1px solid var(--border, #D0C7B8)',
+                                    border: '1px solid var(--border, #e2e8f0)',
                                     fontWeight: 750,
                                     fontSize: '0.84rem',
                                     textAlign: 'center',
@@ -1420,8 +1420,8 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                                   disabled={!st.selected}
                                   onClick={() => updateLine(l.id, { returnQtyUnits: maxUnits })}
                                   style={{
-                                    background: 'var(--bg, #E8E1D5)',
-                                    border: '1px solid var(--border, #D0C7B8)',
+                                    background: 'var(--bg, #f8fafc)',
+                                    border: '1px solid var(--border, #e2e8f0)',
                                     borderRadius: '4px',
                                     padding: '2px 5px',
                                     fontSize: '0.68rem',
@@ -1445,7 +1445,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                               style={{
                                 padding: '4px 7px',
                                 borderRadius: '6px',
-                                border: '1px solid var(--border, #D0C7B8)',
+                                border: '1px solid var(--border, #e2e8f0)',
                                 fontSize: '0.78rem',
                                 fontWeight: 700,
                                 color: st.condition === 'resellable' ? '#15803d' : st.condition === 'damaged' ? '#b45309' : '#b91c1c',
@@ -1466,7 +1466,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                                 style={{
                                   padding: '3px 6px',
                                   borderRadius: '6px',
-                                  border: '1px solid var(--border, #D0C7B8)',
+                                  border: '1px solid var(--border, #e2e8f0)',
                                   fontSize: '0.75rem',
                                   background: '#ffffff',
                                 }}
@@ -1484,7 +1484,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                                 style={{
                                   padding: '2px 5px',
                                   borderRadius: '6px',
-                                  border: '1px solid var(--border, #D0C7B8)',
+                                  border: '1px solid var(--border, #e2e8f0)',
                                   fontSize: '0.72rem',
                                 }}
                               />
@@ -1504,7 +1504,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
               <div
                 style={{
                   background: 'rgba(255, 255, 255, 0.8)',
-                  border: '1.5px solid var(--border, #D0C7B8)',
+                  border: '1.5px solid var(--border, #e2e8f0)',
                   borderRadius: '14px',
                   padding: '1.25rem',
                 }}
@@ -1532,7 +1532,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                       flex: 1,
                       padding: '0.75rem',
                       borderRadius: '10px',
-                      border: actionTab === 'exchange' ? '2px solid var(--primary, #0F766E)' : '1px solid var(--border, #D0C7B8)',
+                      border: actionTab === 'exchange' ? '2px solid var(--primary, #0F766E)' : '1px solid var(--border, #e2e8f0)',
                       background: actionTab === 'exchange' ? 'var(--primary-soft, #E6F4F3)' : '#ffffff',
                       color: actionTab === 'exchange' ? 'var(--primary, #0F766E)' : 'var(--text-muted, #475569)',
                       fontWeight: 750,
@@ -1560,7 +1560,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                       flex: 1,
                       padding: '0.75rem',
                       borderRadius: '10px',
-                      border: actionTab === 'refund' ? '2px solid #059669' : '1px solid var(--border, #D0C7B8)',
+                      border: actionTab === 'refund' ? '2px solid #059669' : '1px solid var(--border, #e2e8f0)',
                       background: actionTab === 'refund' ? '#dcfce7' : '#ffffff',
                       color: actionTab === 'refund' ? '#14532d' : 'var(--text-muted, #475569)',
                       fontWeight: 750,
@@ -1632,7 +1632,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                             width: '100%',
                             padding: '0.6rem 0.8rem',
                             borderRadius: '8px',
-                            border: '1px solid var(--border, #D0C7B8)',
+                            border: '1px solid var(--border, #e2e8f0)',
                             fontSize: '0.84rem',
                             fontWeight: 700,
                             background: '#ffffff',
@@ -1658,7 +1658,7 @@ export const PosReturnExchangeModal: React.FC<PosReturnExchangeModalProps> = ({
                             width: '100%',
                             padding: '0.6rem 0.8rem',
                             borderRadius: '8px',
-                            border: '1px solid var(--border, #D0C7B8)',
+                            border: '1px solid var(--border, #e2e8f0)',
                             fontSize: '0.84rem',
                             boxSizing: 'border-box',
                           }}

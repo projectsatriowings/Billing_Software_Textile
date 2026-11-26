@@ -71,11 +71,11 @@ export const LogoutShiftModal: React.FC<LogoutShiftModalProps> = ({
           maxHeight: '90vh',
           display: 'flex',
           flexDirection: 'column',
-          background: 'var(--surface, #FAF7F2)',
+          background: 'var(--surface, #ffffff)',
           borderRadius: '20px',
           overflow: 'hidden',
           boxShadow: '0 25px 60px -15px rgba(15, 45, 46, 0.3), 0 10px 24px -5px rgba(15, 45, 46, 0.1)',
-          border: '1.5px solid var(--border, #D0C7B8)',
+          border: '1.5px solid var(--border, #e2e8f0)',
           animation: 'scaleInModal 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
         }}
       >
@@ -91,8 +91,8 @@ export const LogoutShiftModal: React.FC<LogoutShiftModalProps> = ({
         <div
           style={{
             padding: '1.2rem 1.6rem',
-            borderBottom: '1px solid var(--border, #D0C7B8)',
-            background: 'var(--surface, #FAF7F2)',
+            borderBottom: '1px solid var(--border, #e2e8f0)',
+            background: 'var(--surface, #ffffff)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -157,8 +157,8 @@ export const LogoutShiftModal: React.FC<LogoutShiftModalProps> = ({
             aria-label="Close"
             title="Close"
             style={{
-              background: 'var(--surface, #FAF7F2)',
-              border: '1px solid var(--border, #D0C7B8)',
+              background: 'var(--surface, #ffffff)',
+              border: '1px solid var(--border, #e2e8f0)',
               borderRadius: '10px',
               width: '32px',
               height: '32px',
@@ -179,7 +179,7 @@ export const LogoutShiftModal: React.FC<LogoutShiftModalProps> = ({
         </div>
 
         {/* 2. Body */}
-        <div style={{ padding: '1.4rem 1.6rem', background: 'var(--bg, #E8E1D5)', flex: 1, overflowY: 'auto' }}>
+        <div style={{ padding: '1.4rem 1.6rem', background: 'var(--bg, #f8fafc)', flex: 1, overflowY: 'auto' }}>
           {/* Context Ribbon (Station & Shift Info) */}
           <div
             style={{
@@ -191,8 +191,8 @@ export const LogoutShiftModal: React.FC<LogoutShiftModalProps> = ({
           >
             <div
               style={{
-                background: 'var(--surface, #FAF7F2)',
-                border: '1px solid var(--border, #D0C7B8)',
+                background: 'var(--surface, #ffffff)',
+                border: '1px solid var(--border, #e2e8f0)',
                 borderRadius: '12px',
                 padding: '0.85rem 1rem',
               }}
@@ -213,8 +213,8 @@ export const LogoutShiftModal: React.FC<LogoutShiftModalProps> = ({
 
             <div
               style={{
-                background: 'var(--surface, #FAF7F2)',
-                border: '1px solid var(--border, #D0C7B8)',
+                background: 'var(--surface, #ffffff)',
+                border: '1px solid var(--border, #e2e8f0)',
                 borderRadius: '12px',
                 padding: '0.85rem 1rem',
               }}
@@ -238,8 +238,8 @@ export const LogoutShiftModal: React.FC<LogoutShiftModalProps> = ({
           {/* Explanation Alert Bento Box */}
           <div
             style={{
-              background: 'var(--surface, #FAF7F2)',
-              border: '1.5px solid var(--border, #D0C7B8)',
+              background: 'var(--surface, #ffffff)',
+              border: '1.5px solid var(--border, #e2e8f0)',
               borderRadius: '14px',
               padding: '1.1rem 1.25rem',
               marginBottom: '1rem',
@@ -283,7 +283,7 @@ export const LogoutShiftModal: React.FC<LogoutShiftModalProps> = ({
             <div
               onClick={onConfirmCloseAndLogout}
               style={{
-                background: 'var(--surface, #FAF7F2)',
+                background: 'var(--surface, #ffffff)',
                 border: '1.5px solid rgba(20, 184, 166, 0.45)',
                 borderRadius: '12px',
                 padding: '0.9rem 1.1rem',
@@ -334,8 +334,8 @@ export const LogoutShiftModal: React.FC<LogoutShiftModalProps> = ({
             <div
               onClick={onReconcileFirst}
               style={{
-                background: 'var(--surface, #FAF7F2)',
-                border: '1.5px solid var(--border, #D0C7B8)',
+                background: 'var(--surface, #ffffff)',
+                border: '1.5px solid var(--border, #e2e8f0)',
                 borderRadius: '12px',
                 padding: '0.9rem 1.1rem',
                 cursor: 'pointer',
@@ -350,7 +350,7 @@ export const LogoutShiftModal: React.FC<LogoutShiftModalProps> = ({
                 e.currentTarget.style.transform = 'translateY(-1px)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = 'var(--border, #D0C7B8)';
+                e.currentTarget.style.borderColor = 'var(--border, #e2e8f0)';
                 e.currentTarget.style.transform = 'none';
               }}
             >

@@ -11863,7 +11863,7 @@ export function App() {
                                       overflowY: 'auto',
                                     }}
                                   >
-                                    <div style={{ padding: '4px 8px', background: user?.role === 'cashier' ? '#EFE9DE' : '#f8fafc', fontSize: '0.68rem', fontWeight: 750, color: '#64748b', borderBottom: user?.role === 'cashier' ? '1px solid var(--border)' : '1px solid #f1f5f9' }}>
+                                    <div style={{ padding: '4px 8px', background: user?.role === 'cashier' ? '#f8fafc' : '#f8fafc', fontSize: '0.68rem', fontWeight: 750, color: '#64748b', borderBottom: user?.role === 'cashier' ? '1px solid var(--border)' : '1px solid #f1f5f9' }}>
                                       Matching Customers (Click to select):
                                     </div>
                                     {phoneSuggestions.slice(0, 5).map((item, idx) => (
@@ -13577,7 +13577,7 @@ export function App() {
                             <button
                               type="button"
                               className="btn btn-secondary"
-                              style={{ marginTop: '1rem', padding: '0.4rem 0.85rem', fontSize: '0.8rem' }}
+                              style={{ marginTop: '1rem', padding: '0.4rem 0.85rem', fontSize: '0.8rem', background: '#f1f5f9', border: '1px solid #cbd5e1', color: '#0f172a', borderRadius: '8px', fontWeight: 600 }}
                               onClick={() => {
                                 setSearchQuery('');
                                 setSelectedCategory('ALL');
@@ -13640,7 +13640,7 @@ export function App() {
                                       height: '54px',
                                       borderRadius: '10px',
                                       border: user?.role === 'cashier' ? '1.5px solid var(--border)' : '1px solid #e2e8f0',
-                                      background: user?.role === 'cashier' ? '#EFE9DE' : '#f8fafc',
+                                      background: user?.role === 'cashier' ? '#f8fafc' : '#f8fafc',
                                       overflow: 'hidden',
                                       display: 'flex',
                                       alignItems: 'center',
@@ -19597,7 +19597,7 @@ export function App() {
                 <button
                   type="button"
                   style={{
-                    background: user?.role === 'cashier' ? '#EFE9DE' : '#f1f5f9',
+                    background: user?.role === 'cashier' ? '#f8fafc' : '#f1f5f9',
                     border: user?.role === 'cashier' ? '1px solid var(--border)' : 'none',
                     color: user?.role === 'cashier' ? 'var(--sidebar)' : '#64748b',
                     cursor: 'pointer',
@@ -19664,7 +19664,7 @@ export function App() {
                           height: '150px',
                           borderRadius: '10px',
                           border: user?.role === 'cashier' ? '2px dashed var(--border)' : itemFormImageUrl ? '1.5px solid #818cf8' : '2px dashed #cbd5e1',
-                          background: user?.role === 'cashier' ? '#FAF7F2' : '#ffffff',
+                          background: user?.role === 'cashier' ? '#ffffff' : '#ffffff',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -20336,11 +20336,11 @@ export function App() {
               style={{
                 maxWidth: '540px',
                 width: '95vw',
-                background: 'var(--surface, #FAF7F2)',
+                background: 'var(--surface, #ffffff)',
                 borderRadius: '20px',
                 overflow: 'hidden',
                 boxShadow: '0 25px 60px -15px rgba(15, 45, 46, 0.28), 0 10px 24px -5px rgba(15, 45, 46, 0.08)',
-                border: '1.5px solid var(--border, #D0C7B8)',
+                border: '1.5px solid var(--border, #e2e8f0)',
                 display: 'flex',
                 flexDirection: 'column',
               }}
@@ -20359,8 +20359,8 @@ export function App() {
                 className="modal-header"
                 style={{
                   padding: '1.2rem 1.6rem',
-                  borderBottom: '1px solid var(--border, #D0C7B8)',
-                  background: 'var(--surface, #FAF7F2)',
+                  borderBottom: '1px solid var(--border, #e2e8f0)',
+                  background: 'var(--surface, #ffffff)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
@@ -20401,8 +20401,8 @@ export function App() {
                   className="modal-close-icon-btn"
                   onClick={() => setShowCfdModal(false)}
                   style={{
-                    background: 'var(--surface, #FAF7F2)',
-                    border: '1px solid var(--border, #D0C7B8)',
+                    background: 'var(--surface, #ffffff)',
+                    border: '1px solid var(--border, #e2e8f0)',
                     borderRadius: '10px',
                     width: '32px',
                     height: '32px',
@@ -20422,12 +20422,12 @@ export function App() {
                 </button>
               </div>
 
-              <div className="scanner-modal-body" style={{ padding: '1.4rem 1.6rem', background: 'var(--surface, #FAF7F2)' }}>
+              <div className="scanner-modal-body" style={{ padding: '1.4rem 1.6rem', background: 'var(--surface, #ffffff)' }}>
                 <div
                   className="cfd-control-status-row"
                   style={{
                     background: 'rgba(255, 255, 255, 0.8)',
-                    border: '1.5px solid var(--border, #D0C7B8)',
+                    border: '1.5px solid var(--border, #e2e8f0)',
                     padding: '0.85rem 1.1rem',
                     borderRadius: '12px',
                     marginBottom: '1.15rem',
@@ -20450,9 +20450,9 @@ export function App() {
                       fontSize: '0.8rem',
                       padding: '0.35rem 0.75rem',
                       borderRadius: '20px',
-                      background: isCfdConnected ? '#dcfce7' : 'var(--bg, #E8E1D5)',
+                      background: isCfdConnected ? '#dcfce7' : 'var(--bg, #f8fafc)',
                       color: isCfdConnected ? '#15803d' : 'var(--text-muted, #475569)',
-                      border: isCfdConnected ? '1px solid #bbf7d0' : '1px solid var(--border, #D0C7B8)',
+                      border: isCfdConnected ? '1px solid #bbf7d0' : '1px solid var(--border, #e2e8f0)',
                     }}
                   >
                     <span
@@ -20518,7 +20518,7 @@ export function App() {
                       gap: '0.5rem',
                       padding: '1.15rem 0.9rem',
                       background: '#ffffff',
-                      border: '1.5px solid var(--border, #D0C7B8)',
+                      border: '1.5px solid var(--border, #e2e8f0)',
                       borderRadius: '14px',
                       fontWeight: 800,
                       fontSize: '0.88rem',
@@ -20541,7 +20541,7 @@ export function App() {
                   className="cfd-url-share-box"
                   style={{
                     background: 'rgba(255, 255, 255, 0.8)',
-                    border: '1.5px solid var(--border, #D0C7B8)',
+                    border: '1.5px solid var(--border, #e2e8f0)',
                     padding: '1rem',
                     borderRadius: '12px',
                     fontSize: '0.78rem',
@@ -20558,7 +20558,7 @@ export function App() {
                       style={{
                         flex: 1,
                         background: '#ffffff',
-                        border: '1.5px solid var(--border, #D0C7B8)',
+                        border: '1.5px solid var(--border, #e2e8f0)',
                         padding: '0.55rem 0.75rem',
                         borderRadius: '8px',
                         fontSize: '0.84rem',
@@ -20706,8 +20706,8 @@ export function App() {
                                 type="button"
                                 style={{
                                   marginTop: '0.25rem',
-                                  background: user?.role === 'cashier' ? 'var(--surface, #FAF7F2)' : '#ffffff',
-                                  border: user?.role === 'cashier' ? '1px solid var(--border, #D0C7B8)' : '1px solid #cbd5e1',
+                                  background: user?.role === 'cashier' ? 'var(--surface, #ffffff)' : '#ffffff',
+                                  border: user?.role === 'cashier' ? '1px solid var(--border, #e2e8f0)' : '1px solid #cbd5e1',
                                   borderRadius: '4px',
                                   fontSize: '0.7rem',
                                   fontWeight: 700,
@@ -25082,8 +25082,8 @@ export function App() {
               {/* Bento Body */}
               <div className="shift-bento-body invoice-detail-body">
                 {invoiceDetailLoading || !invoiceDetailData ? (
-                  <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted, #475569)', background: 'var(--surface, #FAF7F2)', borderRadius: '16px', border: '1px solid var(--border, #D0C7B8)' }}>
-                    <div style={{ display: 'inline-block', width: '28px', height: '28px', border: '3px solid var(--border, #D0C7B8)', borderTopColor: 'var(--primary, #0F766E)', borderRadius: '50%', animation: 'spin 0.8s linear infinite', marginBottom: '0.75rem' }} />
+                  <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted, #475569)', background: 'var(--surface, #ffffff)', borderRadius: '16px', border: '1px solid var(--border, #e2e8f0)' }}>
+                    <div style={{ display: 'inline-block', width: '28px', height: '28px', border: '3px solid var(--border, #e2e8f0)', borderTopColor: 'var(--primary, #0F766E)', borderRadius: '50%', animation: 'spin 0.8s linear infinite', marginBottom: '0.75rem' }} />
                     <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>Loading bill details...</div>
                   </div>
                 ) : (
@@ -25234,10 +25234,10 @@ export function App() {
                                 <div
                                   key={cn.id}
                                   style={{
-                                    border: cn.status === 'voided' ? '1.5px dashed #EF4444' : '1.5px solid var(--border, #D0C7B8)',
+                                    border: cn.status === 'voided' ? '1.5px dashed #EF4444' : '1.5px solid var(--border, #e2e8f0)',
                                     borderRadius: '12px',
                                     padding: '0.9rem 1.1rem',
-                                    background: cn.status === 'voided' ? '#FFF5F5' : 'var(--surface, #FAF7F2)',
+                                    background: cn.status === 'voided' ? '#FFF5F5' : 'var(--surface, #ffffff)',
                                   }}
                                 >
                                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
@@ -25280,8 +25280,8 @@ export function App() {
                                           fontWeight: 700,
                                           textDecoration: 'none',
                                           borderRadius: '8px',
-                                          background: 'var(--surface, #FAF7F2)',
-                                          border: '1px solid var(--border, #D0C7B8)',
+                                          background: 'var(--surface, #ffffff)',
+                                          border: '1px solid var(--border, #e2e8f0)',
                                           color: 'var(--sidebar, #0F2D2E)',
                                           display: 'inline-flex',
                                           alignItems: 'center',
@@ -25300,8 +25300,8 @@ export function App() {
                                           fontWeight: 700,
                                           textDecoration: 'none',
                                           borderRadius: '8px',
-                                          background: 'var(--surface, #FAF7F2)',
-                                          border: '1px solid var(--border, #D0C7B8)',
+                                          background: 'var(--surface, #ffffff)',
+                                          border: '1px solid var(--border, #e2e8f0)',
                                           color: 'var(--sidebar, #0F2D2E)',
                                           display: 'inline-flex',
                                           alignItems: 'center',
@@ -25382,7 +25382,7 @@ export function App() {
                                   {/* Returned Lines */}
                                   <div style={{ fontSize: '0.8rem', marginBottom: '0.4rem' }}>
                                     {cn.lines?.map((cl: any, cidx: number) => (
-                                      <div key={cidx} style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', borderBottom: '1px dashed var(--border, #E8E1D5)' }}>
+                                      <div key={cidx} style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', borderBottom: '1px dashed var(--border, #f8fafc)' }}>
                                         <div>
                                           <strong style={{ color: 'var(--sidebar, #0F2D2E)' }}>{cl.name}</strong> × {(cl.qtyMilli / 1000).toLocaleString()} · Reason: <em>{cl.reason}</em> · Restock: <span style={{ fontWeight: 800, color: cl.restock ? '#16A34A' : '#DC2626' }}>{cl.restock ? 'YES' : 'NO'}</span>
                                         </div>
@@ -25511,8 +25511,8 @@ export function App() {
               {/* Return Modal Body */}
               <div className="return-modal-body">
                 {returnInfoLoading || !returnInfo ? (
-                  <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted, #475569)', background: 'var(--surface, #FAF7F2)', borderRadius: '16px', border: '1px solid var(--border, #D0C7B8)' }}>
-                    <div style={{ display: 'inline-block', width: '28px', height: '28px', border: '3px solid var(--border, #D0C7B8)', borderTopColor: 'var(--primary, #0F766E)', borderRadius: '50%', animation: 'spin 0.8s linear infinite', marginBottom: '0.75rem' }} />
+                  <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted, #475569)', background: 'var(--surface, #ffffff)', borderRadius: '16px', border: '1px solid var(--border, #e2e8f0)' }}>
+                    <div style={{ display: 'inline-block', width: '28px', height: '28px', border: '3px solid var(--border, #e2e8f0)', borderTopColor: 'var(--primary, #0F766E)', borderRadius: '50%', animation: 'spin 0.8s linear infinite', marginBottom: '0.75rem' }} />
                     <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>Loading returnable items...</div>
                   </div>
                 ) : (
@@ -25533,7 +25533,7 @@ export function App() {
                           <button
                             type="button"
                             onClick={() => setReturnDiscardConfirm(false)}
-                            style={{ padding: '4px 10px', borderRadius: '8px', border: '1.5px solid var(--border, #D0C7B8)', background: 'var(--surface, #FAF7F2)', color: 'var(--sidebar, #0F2D2E)', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600 }}
+                            style={{ padding: '4px 10px', borderRadius: '8px', border: '1.5px solid var(--border, #e2e8f0)', background: 'var(--surface, #ffffff)', color: 'var(--sidebar, #0F2D2E)', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600 }}
                           >
                             Continue Editing
                           </button>
@@ -25583,9 +25583,9 @@ export function App() {
                               fontSize: '0.76rem',
                               fontWeight: 600,
                               borderRadius: '8px',
-                              background: 'var(--surface, #FAF7F2)',
+                              background: 'var(--surface, #ffffff)',
                               color: 'var(--text-muted, #475569)',
-                              border: '1px solid var(--border, #D0C7B8)',
+                              border: '1px solid var(--border, #e2e8f0)',
                               cursor: 'pointer',
                             }}
                           >
@@ -25614,7 +25614,7 @@ export function App() {
                               const isFullyReturned = l.returnableQtyMilli === 0;
 
                               return (
-                                <tr key={l.id} style={{ opacity: isFullyReturned ? 0.55 : 1, borderBottom: '1px solid var(--border, #E8E1D5)' }}>
+                                <tr key={l.id} style={{ opacity: isFullyReturned ? 0.55 : 1, borderBottom: '1px solid var(--border, #f8fafc)' }}>
                                   <td style={{ padding: '9px 10px' }}>
                                     <div style={{ fontWeight: 700, color: 'var(--sidebar, #0F2D2E)' }}>{l.name}</div>
                                     <div style={{ fontSize: '0.72rem', color: 'var(--text-muted, #475569)' }}>
@@ -25649,11 +25649,11 @@ export function App() {
                                         style={{
                                           width: '100%',
                                           padding: '5px 8px',
-                                          border: parseFloat(inp.returnQty) > returnableUnits ? '1.5px solid #EF4444' : '1.5px solid var(--border, #D0C7B8)',
+                                          border: parseFloat(inp.returnQty) > returnableUnits ? '1.5px solid #EF4444' : '1.5px solid var(--border, #e2e8f0)',
                                           borderRadius: '8px',
                                           fontSize: '0.82rem',
                                           fontWeight: parseFloat(inp.returnQty) > 0 ? 700 : 400,
-                                          background: 'var(--surface, #FAF7F2)',
+                                          background: 'var(--surface, #ffffff)',
                                           color: 'var(--sidebar, #0F2D2E)',
                                           outline: 'none',
                                         }}
@@ -25719,10 +25719,10 @@ export function App() {
                                       style={{
                                         width: '100%',
                                         padding: '5px 8px',
-                                        border: parseFloat(inp.returnQty) > 0 && !inp.reason ? '1.5px solid #EF4444' : '1.5px solid var(--border, #D0C7B8)',
+                                        border: parseFloat(inp.returnQty) > 0 && !inp.reason ? '1.5px solid #EF4444' : '1.5px solid var(--border, #e2e8f0)',
                                         borderRadius: '8px',
                                         fontSize: '0.8rem',
-                                        background: isFullyReturned ? '#F1F5F9' : 'var(--surface, #FAF7F2)',
+                                        background: isFullyReturned ? '#F1F5F9' : 'var(--surface, #ffffff)',
                                         color: 'var(--sidebar, #0F2D2E)',
                                         cursor: isFullyReturned ? 'not-allowed' : 'pointer',
                                         outline: 'none',
@@ -25756,10 +25756,10 @@ export function App() {
                                           width: '100%',
                                           marginTop: '4px',
                                           padding: '4px 8px',
-                                          border: !inp.customReason ? '1.5px solid #EF4444' : '1.5px solid var(--border, #D0C7B8)',
+                                          border: !inp.customReason ? '1.5px solid #EF4444' : '1.5px solid var(--border, #e2e8f0)',
                                           borderRadius: '8px',
                                           fontSize: '0.78rem',
-                                          background: 'var(--surface, #FAF7F2)',
+                                          background: 'var(--surface, #ffffff)',
                                           color: 'var(--sidebar, #0F2D2E)',
                                           outline: 'none',
                                         }}
@@ -25779,7 +25779,7 @@ export function App() {
                       const preview = calculateReturnPreview();
                       if (!preview) {
                         return (
-                          <div style={{ background: 'var(--surface, #FAF7F2)', border: '1.5px dashed var(--border, #D0C7B8)', borderRadius: '14px', padding: '1.25rem', textAlign: 'center', color: 'var(--text-muted, #475569)', fontSize: '0.84rem' }}>
+                          <div style={{ background: 'var(--surface, #ffffff)', border: '1.5px dashed var(--border, #e2e8f0)', borderRadius: '14px', padding: '1.25rem', textAlign: 'center', color: 'var(--text-muted, #475569)', fontSize: '0.84rem' }}>
                             Enter return quantity above to see live tax reversal and settlement calculation.
                           </div>
                         );
@@ -25791,7 +25791,7 @@ export function App() {
                       return (
                         <div className="return-modal-calc-grid">
                           {/* Tax Reversal Card */}
-                          <div style={{ background: 'var(--surface, #FAF7F2)', border: '1.5px solid var(--border, #D0C7B8)', borderRadius: '16px', padding: '1.1rem 1.25rem', boxShadow: '0 1px 3px rgba(15, 45, 46, 0.04)' }}>
+                          <div style={{ background: 'var(--surface, #ffffff)', border: '1.5px solid var(--border, #e2e8f0)', borderRadius: '16px', padding: '1.1rem 1.25rem', boxShadow: '0 1px 3px rgba(15, 45, 46, 0.04)' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', margin: '0 0 0.65rem 0', color: 'var(--primary, #0F766E)' }}>
                               <ReceiptIcon size={16} />
                               <h4 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 800, color: 'var(--sidebar, #0F2D2E)' }}>
@@ -25826,7 +25826,7 @@ export function App() {
                                   <span style={{ fontFamily: "'JetBrains Mono', monospace" }}>{calculated.roundOffMinor > 0 ? '+' : ''}{formatRupees(calculated.roundOffMinor)}</span>
                                 </div>
                               )}
-                              <div style={{ borderTop: '1.5px solid var(--border, #D0C7B8)', marginTop: '6px', paddingTop: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <div style={{ borderTop: '1.5px solid var(--border, #e2e8f0)', marginTop: '6px', paddingTop: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <span style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--sidebar, #0F2D2E)' }}>TOTAL CREDIT:</span>
                                 <span style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--primary, #0F766E)', fontFamily: "'JetBrains Mono', monospace" }}>{formatRupees(calculated.totalCreditMinor)}</span>
                               </div>
@@ -25834,7 +25834,7 @@ export function App() {
                           </div>
 
                           {/* Settlement Plan Card */}
-                          <div style={{ background: 'var(--surface, #FAF7F2)', border: '1.5px solid var(--border, #D0C7B8)', borderRadius: '16px', padding: '1.1rem 1.25rem', boxShadow: '0 1px 3px rgba(15, 45, 46, 0.04)' }}>
+                          <div style={{ background: 'var(--surface, #ffffff)', border: '1.5px solid var(--border, #e2e8f0)', borderRadius: '16px', padding: '1.1rem 1.25rem', boxShadow: '0 1px 3px rgba(15, 45, 46, 0.04)' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', margin: '0 0 0.65rem 0', color: 'var(--primary, #0F766E)' }}>
                               <WalletIcon size={16} />
                               <h4 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 800, color: 'var(--sidebar, #0F2D2E)' }}>
@@ -25855,7 +25855,7 @@ export function App() {
                               )}
 
                               {settlement.remainderMinor > 0 && (
-                                <div style={{ marginTop: '4px', borderTop: '1px dashed var(--border, #D0C7B8)', paddingTop: '8px' }}>
+                                <div style={{ marginTop: '4px', borderTop: '1px dashed var(--border, #e2e8f0)', paddingTop: '8px' }}>
                                   <div style={{ fontWeight: 800, color: 'var(--sidebar, #0F2D2E)', marginBottom: '6px' }}>
                                     Remainder Credit: <span style={{ color: 'var(--primary, #0F766E)', fontFamily: "'JetBrains Mono', monospace" }}>{formatRupees(settlement.remainderMinor)}</span>
                                   </div>
@@ -25867,7 +25867,7 @@ export function App() {
                                       </div>
                                       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                                         <select
-                                          style={{ padding: '6px 8px', fontSize: '0.78rem', width: '110px', borderRadius: '8px', border: '1.5px solid var(--border, #D0C7B8)', background: 'var(--surface, #FAF7F2)', color: 'var(--sidebar, #0F2D2E)' }}
+                                          style={{ padding: '6px 8px', fontSize: '0.78rem', width: '110px', borderRadius: '8px', border: '1.5px solid var(--border, #e2e8f0)', background: 'var(--surface, #ffffff)', color: 'var(--sidebar, #0F2D2E)' }}
                                           value={returnRefundMode}
                                           onChange={(e) => setReturnRefundMode(e.target.value as any)}
                                         >
@@ -25881,7 +25881,7 @@ export function App() {
                                           placeholder="UTR / Ref (optional)"
                                           value={returnRefundReference}
                                           onChange={(e) => setReturnRefundReference(e.target.value)}
-                                          style={{ padding: '6px 8px', fontSize: '0.78rem', flex: 1, border: '1.5px solid var(--border, #D0C7B8)', borderRadius: '8px', background: 'var(--surface, #FAF7F2)', color: 'var(--sidebar, #0F2D2E)' }}
+                                          style={{ padding: '6px 8px', fontSize: '0.78rem', flex: 1, border: '1.5px solid var(--border, #e2e8f0)', borderRadius: '8px', background: 'var(--surface, #ffffff)', color: 'var(--sidebar, #0F2D2E)' }}
                                         />
                                       </div>
                                     </div>
@@ -25917,7 +25917,7 @@ export function App() {
                                       {returnSettlementType === 'refund' && (
                                         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '8px', marginLeft: '22px' }}>
                                           <select
-                                            style={{ padding: '5px 8px', fontSize: '0.78rem', width: '100px', borderRadius: '8px', border: '1.5px solid var(--border, #D0C7B8)', background: 'var(--surface, #FAF7F2)', color: 'var(--sidebar, #0F2D2E)' }}
+                                            style={{ padding: '5px 8px', fontSize: '0.78rem', width: '100px', borderRadius: '8px', border: '1.5px solid var(--border, #e2e8f0)', background: 'var(--surface, #ffffff)', color: 'var(--sidebar, #0F2D2E)' }}
                                             value={returnRefundMode}
                                             onChange={(e) => setReturnRefundMode(e.target.value as any)}
                                           >
@@ -25931,7 +25931,7 @@ export function App() {
                                             placeholder="Payment Ref (optional)"
                                             value={returnRefundReference}
                                             onChange={(e) => setReturnRefundReference(e.target.value)}
-                                            style={{ padding: '5px 8px', fontSize: '0.78rem', flex: 1, border: '1.5px solid var(--border, #D0C7B8)', borderRadius: '8px', background: 'var(--surface, #FAF7F2)', color: 'var(--sidebar, #0F2D2E)' }}
+                                            style={{ padding: '5px 8px', fontSize: '0.78rem', flex: 1, border: '1.5px solid var(--border, #e2e8f0)', borderRadius: '8px', background: 'var(--surface, #ffffff)', color: 'var(--sidebar, #0F2D2E)' }}
                                           />
                                         </div>
                                       )}
@@ -25946,7 +25946,7 @@ export function App() {
                     })()}
 
                     {/* Note input */}
-                    <div style={{ background: 'var(--surface, #FAF7F2)', border: '1px solid var(--border, #D0C7B8)', borderRadius: '14px', padding: '0.85rem 1rem' }}>
+                    <div style={{ background: 'var(--surface, #ffffff)', border: '1px solid var(--border, #e2e8f0)', borderRadius: '14px', padding: '0.85rem 1rem' }}>
                       <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--sidebar, #0F2D2E)', display: 'block', marginBottom: '4px' }}>
                         Overall Note (Optional)
                       </label>
@@ -25955,7 +25955,7 @@ export function App() {
                         placeholder="e.g. Customer returned items within 7 days with receipt"
                         value={returnNote}
                         onChange={(e) => setReturnNote(e.target.value)}
-                        style={{ width: '100%', padding: '0.55rem 0.75rem', fontSize: '0.82rem', borderRadius: '8px', border: '1.5px solid var(--border, #D0C7B8)', background: 'var(--surface, #FAF7F2)', color: 'var(--sidebar, #0F2D2E)', outline: 'none' }}
+                        style={{ width: '100%', padding: '0.55rem 0.75rem', fontSize: '0.82rem', borderRadius: '8px', border: '1.5px solid var(--border, #e2e8f0)', background: 'var(--surface, #ffffff)', color: 'var(--sidebar, #0F2D2E)', outline: 'none' }}
                       />
                     </div>
 
@@ -26025,8 +26025,8 @@ export function App() {
                 maxWidth: '520px',
                 borderRadius: '20px',
                 overflow: 'hidden',
-                background: 'var(--surface, #FAF7F2)',
-                border: '1.5px solid var(--border, #D0C7B8)',
+                background: 'var(--surface, #ffffff)',
+                border: '1.5px solid var(--border, #e2e8f0)',
                 boxShadow: '0 25px 60px -15px rgba(15, 45, 46, 0.28)',
               }}
             >
@@ -26042,8 +26042,8 @@ export function App() {
               {/* Success Header */}
               <div
                 style={{
-                  background: 'linear-gradient(135deg, var(--primary-soft, #E6F4F3) 0%, #FAF7F2 100%)',
-                  borderBottom: '1px solid var(--border, #D0C7B8)',
+                  background: 'linear-gradient(135deg, var(--primary-soft, #E6F4F3) 0%, #ffffff 100%)',
+                  borderBottom: '1px solid var(--border, #e2e8f0)',
                   padding: '1.5rem',
                   textAlign: 'center',
                 }}
@@ -26074,7 +26074,7 @@ export function App() {
               </div>
 
               {/* Content */}
-              <div style={{ padding: '1.4rem', background: 'var(--surface, #FAF7F2)' }}>
+              <div style={{ padding: '1.4rem', background: 'var(--surface, #ffffff)' }}>
                 <div style={{ textAlign: 'center', marginBottom: '1.25rem', background: 'var(--primary-soft, #E6F4F3)', border: '1.2px solid rgba(20, 184, 166, 0.35)', borderRadius: '14px', padding: '1rem' }}>
                   <div style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--primary, #0F766E)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                     Total Credit Amount
@@ -26104,8 +26104,8 @@ export function App() {
                       textDecoration: 'none',
                       fontWeight: 700,
                       borderRadius: '10px',
-                      background: 'var(--surface, #FAF7F2)',
-                      border: '1.5px solid var(--border, #D0C7B8)',
+                      background: 'var(--surface, #ffffff)',
+                      border: '1.5px solid var(--border, #e2e8f0)',
                       color: 'var(--sidebar, #0F2D2E)',
                     }}
                   >
@@ -26122,8 +26122,8 @@ export function App() {
                       textDecoration: 'none',
                       fontWeight: 700,
                       borderRadius: '10px',
-                      background: 'var(--surface, #FAF7F2)',
-                      border: '1.5px solid var(--border, #D0C7B8)',
+                      background: 'var(--surface, #ffffff)',
+                      border: '1.5px solid var(--border, #e2e8f0)',
                       color: 'var(--sidebar, #0F2D2E)',
                     }}
                   >
@@ -26143,8 +26143,8 @@ export function App() {
                     textDecoration: 'none',
                     fontWeight: 700,
                     borderRadius: '10px',
-                    background: 'var(--surface, #FAF7F2)',
-                    border: '1.5px solid var(--border, #D0C7B8)',
+                    background: 'var(--surface, #ffffff)',
+                    border: '1.5px solid var(--border, #e2e8f0)',
                     color: 'var(--sidebar, #0F2D2E)',
                     marginBottom: '0.75rem',
                   }}
@@ -26205,8 +26205,8 @@ export function App() {
                     fontSize: '0.84rem',
                     fontWeight: 700,
                     borderRadius: '10px',
-                    background: 'var(--surface, #FAF7F2)',
-                    border: '1.5px solid var(--border, #D0C7B8)',
+                    background: 'var(--surface, #ffffff)',
+                    border: '1.5px solid var(--border, #e2e8f0)',
                     color: 'var(--sidebar, #0F2D2E)',
                     cursor: 'pointer',
                   }}
@@ -26248,8 +26248,8 @@ export function App() {
                 maxWidth: '480px',
                 borderRadius: '20px',
                 overflow: 'hidden',
-                background: 'var(--surface, #FAF7F2)',
-                border: '1.5px solid var(--border, #D0C7B8)',
+                background: 'var(--surface, #ffffff)',
+                border: '1.5px solid var(--border, #e2e8f0)',
                 boxShadow: '0 25px 60px -15px rgba(15, 45, 46, 0.28)',
               }}
             >
@@ -26304,8 +26304,8 @@ export function App() {
                       padding: '0.6rem',
                       fontSize: '0.82rem',
                       borderRadius: '10px',
-                      border: '1.5px solid var(--border, #D0C7B8)',
-                      background: 'var(--surface, #FAF7F2)',
+                      border: '1.5px solid var(--border, #e2e8f0)',
+                      background: 'var(--surface, #ffffff)',
                       color: 'var(--sidebar, #0F2D2E)',
                       outline: 'none',
                     }}
@@ -26328,8 +26328,8 @@ export function App() {
                       fontSize: '0.82rem',
                       fontWeight: 700,
                       borderRadius: '10px',
-                      background: 'var(--surface, #FAF7F2)',
-                      border: '1.5px solid var(--border, #D0C7B8)',
+                      background: 'var(--surface, #ffffff)',
+                      border: '1.5px solid var(--border, #e2e8f0)',
                       color: 'var(--sidebar, #0F2D2E)',
                       cursor: voidSaving ? 'not-allowed' : 'pointer',
                     }}
@@ -26390,8 +26390,8 @@ export function App() {
                 maxWidth: '460px',
                 borderRadius: '20px',
                 overflow: 'hidden',
-                background: 'var(--surface, #FAF7F2)',
-                border: '1.5px solid var(--border, #D0C7B8)',
+                background: 'var(--surface, #ffffff)',
+                border: '1.5px solid var(--border, #e2e8f0)',
                 boxShadow: '0 25px 60px -15px rgba(15, 45, 46, 0.28)',
               }}
             >
@@ -26405,7 +26405,7 @@ export function App() {
               />
 
               {/* Header */}
-              <div style={{ padding: '1.1rem 1.4rem', borderBottom: '1px solid var(--border, #D0C7B8)', background: 'var(--surface, #FAF7F2)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ padding: '1.1rem 1.4rem', borderBottom: '1px solid var(--border, #e2e8f0)', background: 'var(--surface, #ffffff)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
                   <div
                     style={{
@@ -26433,8 +26433,8 @@ export function App() {
                   className="modal-close-btn"
                   onClick={() => setCreditNoteWhatsAppTarget(null)}
                   style={{
-                    background: 'var(--surface, #FAF7F2)',
-                    border: '1px solid var(--border, #D0C7B8)',
+                    background: 'var(--surface, #ffffff)',
+                    border: '1px solid var(--border, #e2e8f0)',
                     borderRadius: '10px',
                     width: '32px',
                     height: '32px',
@@ -26468,8 +26468,8 @@ export function App() {
                         type="button"
                         onClick={() => setCnWhatsAppLang(l)}
                         style={{
-                          border: cnWhatsAppLang === l ? '2px solid var(--primary, #0F766E)' : '1.5px solid var(--border, #D0C7B8)',
-                          background: cnWhatsAppLang === l ? 'var(--primary-soft, #E6F4F3)' : 'var(--surface, #FAF7F2)',
+                          border: cnWhatsAppLang === l ? '2px solid var(--primary, #0F766E)' : '1.5px solid var(--border, #e2e8f0)',
+                          background: cnWhatsAppLang === l ? 'var(--primary-soft, #E6F4F3)' : 'var(--surface, #ffffff)',
                           color: cnWhatsAppLang === l ? 'var(--primary, #0F766E)' : 'var(--text-muted, #475569)',
                           fontWeight: cnWhatsAppLang === l ? 800 : 600,
                           padding: '0.5rem',
@@ -26503,8 +26503,8 @@ export function App() {
                       padding: '0.6rem 0.75rem',
                       fontSize: '0.84rem',
                       borderRadius: '10px',
-                      border: cnWhatsAppPhoneError ? '1.5px solid #EF4444' : '1.5px solid var(--border, #D0C7B8)',
-                      background: 'var(--surface, #FAF7F2)',
+                      border: cnWhatsAppPhoneError ? '1.5px solid #EF4444' : '1.5px solid var(--border, #e2e8f0)',
+                      background: 'var(--surface, #ffffff)',
                       color: 'var(--sidebar, #0F2D2E)',
                       outline: 'none',
                     }}

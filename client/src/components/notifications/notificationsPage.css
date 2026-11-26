@@ -4,10 +4,10 @@
 
 :root,
 .notif-page-wrapper {
-  --notif-bg: var(--bg, #E8E1D5);
-  --notif-surface: var(--surface, #FAF7F2);
-  --notif-surface-inner: var(--surface-inner, #F3ECE1);
-  --notif-border: var(--border, #D0C7B8);
+  --notif-bg: var(--bg, #f8fafc);
+  --notif-surface: var(--surface, #ffffff);
+  --notif-surface-inner: var(--surface-inner, #f1f5f9);
+  --notif-border: var(--border, #e2e8f0);
   --notif-primary: var(--primary, #0F766E);
   --notif-primary-hover: var(--primary-hover, #115E59);
   --notif-primary-soft: var(--primary-soft, #E6F4F3);
@@ -22,10 +22,10 @@ body.theme-cashier .notif-page-wrapper,
 .theme-cashier .notif-page-wrapper,
 body.theme-cashier,
 .theme-cashier {
-  --notif-bg: #E8E1D5 !important;
-  --notif-surface: #FAF7F2 !important;
-  --notif-surface-inner: #F3ECE1 !important;
-  --notif-border: #D0C7B8 !important;
+  --notif-bg: #f8fafc !important;
+  --notif-surface: #ffffff !important;
+  --notif-surface-inner: #f1f5f9 !important;
+  --notif-border: #e2e8f0 !important;
   --notif-primary: #0F766E !important;
   --notif-primary-hover: #115E59 !important;
   --notif-primary-soft: #E6F4F3 !important;

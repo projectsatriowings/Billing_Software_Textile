@@ -369,11 +369,11 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
         style={{
           display: 'flex',
           flexDirection: 'column',
-          background: 'var(--surface, #FAF7F2)',
+          background: 'var(--surface, #ffffff)',
           borderRadius: '20px',
           overflow: 'hidden',
           boxShadow: '0 25px 60px -15px rgba(15, 45, 46, 0.28), 0 10px 24px -5px rgba(15, 45, 46, 0.08)',
-          border: '1.5px solid var(--border, #D0C7B8)',
+          border: '1.5px solid var(--border, #e2e8f0)',
         }}
       >
         {/* Top Accent Gradient Bar */}
@@ -384,8 +384,8 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
           className="shift-bento-header select-counter-header"
           style={{
             padding: '1.1rem 1.6rem',
-            borderBottom: '1px solid var(--border, #D0C7B8)',
-            background: 'var(--surface, #FAF7F2)',
+            borderBottom: '1px solid var(--border, #e2e8f0)',
+            background: 'var(--surface, #ffffff)',
             display: 'flex',
             alignItems: 'flex-start',
             justifyContent: 'space-between',
@@ -485,8 +485,8 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
                 gap: '0.4rem',
                 padding: '0.25rem 0.65rem',
                 borderRadius: '20px',
-                background: 'var(--surface, #FAF7F2)',
-                border: '1px solid var(--border, #D0C7B8)',
+                background: 'var(--surface, #ffffff)',
+                border: '1px solid var(--border, #e2e8f0)',
                 fontSize: '0.74rem',
                 fontWeight: 700,
                 color: 'var(--text-muted, #475569)',
@@ -505,8 +505,8 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
                 aria-label="Close"
                 title="Close"
                 style={{
-                  background: 'var(--surface, #FAF7F2)',
-                  border: '1px solid var(--border, #D0C7B8)',
+                  background: 'var(--surface, #ffffff)',
+                  border: '1px solid var(--border, #e2e8f0)',
                   borderRadius: '10px',
                   width: '40px',
                   height: '40px',
@@ -535,7 +535,7 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
           className="shift-bento-body select-counter-body"
           style={{
             padding: '1.2rem 1.6rem',
-            background: 'var(--bg, #E8E1D5)',
+            background: 'var(--bg, #f8fafc)',
             flex: '1 1 auto',
             minHeight: 0,
             overflowY: 'auto',
@@ -820,15 +820,15 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
                   }
                   style={{
                     background: isOccupied || isLockedCard
-                      ? 'var(--surface-muted, #F3EDE3)'
+                      ? 'var(--surface-muted, #f1f5f9)'
                       : isCardActive
-                        ? 'linear-gradient(135deg, var(--primary-soft, #E6F4F3) 0%, var(--surface, #FAF7F2) 100%)'
-                        : 'var(--surface, #FAF7F2)',
+                        ? 'linear-gradient(135deg, var(--primary-soft, #E6F4F3) 0%, var(--surface, #ffffff) 100%)'
+                        : 'var(--surface, #ffffff)',
                     border: isOccupied || isLockedCard
-                      ? '1.5px dashed #D0C7B8'
+                      ? '1.5px dashed #e2e8f0'
                       : isCardActive
                         ? '2px solid var(--primary, #0F766E)'
-                        : '1.5px solid var(--border, #D0C7B8)',
+                        : '1.5px solid var(--border, #e2e8f0)',
                     borderRadius: '14px',
                     padding: '1.05rem',
                     cursor: isLockedCard || isOccupied ? 'not-allowed' : 'pointer',
@@ -1009,7 +1009,7 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
                       paddingTop: '0.55rem',
                       borderTop: isCardActive && !isOccupied
                         ? '1px solid rgba(15, 118, 110, 0.25)'
-                        : '1px solid var(--border, #D0C7B8)',
+                        : '1px solid var(--border, #e2e8f0)',
                     }}
                   >
                     <span
@@ -1045,14 +1045,14 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
                             ? '1.5px solid #cbd5e1'
                             : isCardActive
                               ? '2px solid var(--primary, #0F766E)'
-                              : '1.5px solid var(--border, #D0C7B8)',
+                              : '1.5px solid var(--border, #e2e8f0)',
                         background: isOccupied
                           ? '#fee2e2'
                           : isLockedCard
                             ? '#f1f5f9'
                             : isCardActive
                               ? 'var(--primary, #0F766E)'
-                              : 'var(--surface, #FAF7F2)',
+                              : 'var(--surface, #ffffff)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -1100,8 +1100,8 @@ export const SelectCounterModal: React.FC<SelectCounterModalProps> = ({
           className="shift-bento-footer select-counter-footer"
           style={{
             padding: '1rem 1.6rem',
-            borderTop: '1px solid var(--border, #D0C7B8)',
-            background: 'var(--surface, #FAF7F2)',
+            borderTop: '1px solid var(--border, #e2e8f0)',
+            background: 'var(--surface, #ffffff)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',

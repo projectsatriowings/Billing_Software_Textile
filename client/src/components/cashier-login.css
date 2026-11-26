@@ -1809,34 +1809,72 @@ body:is(.theme-cashier, .theme-manager) #pos-catalog-search-input:focus,
 }
 
 body:is(.theme-cashier, .theme-manager) .bento-drawer-cats,
-:is(.theme-cashier, .theme-manager) .bento-drawer-cats {
+:is(.theme-cashier, .theme-manager) .bento-drawer-cats,
+.bento-catalog-drawer .bento-drawer-cats {
   background: #f8fafc !important;
   background-color: #f8fafc !important;
   border-bottom: 1px solid var(--border) !important;
 }
 
 body:is(.theme-cashier, .theme-manager) .bento-drawer-cat-pill,
-:is(.theme-cashier, .theme-manager) .bento-drawer-cat-pill {
-  background: var(--surface) !important;
-  background-color: var(--surface) !important;
+:is(.theme-cashier, .theme-manager) .bento-drawer-cat-pill,
+.bento-catalog-drawer .bento-drawer-cat-pill {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
   border: 1.5px solid var(--border) !important;
   color: var(--sidebar) !important;
   font-weight: 600 !important;
 }
 
 body:is(.theme-cashier, .theme-manager) .bento-drawer-cat-pill:hover,
-:is(.theme-cashier, .theme-manager) .bento-drawer-cat-pill:hover {
+:is(.theme-cashier, .theme-manager) .bento-drawer-cat-pill:hover,
+.bento-catalog-drawer .bento-drawer-cat-pill:hover {
   border-color: var(--primary) !important;
   color: var(--primary) !important;
 }
 
 body:is(.theme-cashier, .theme-manager) .bento-drawer-cat-pill.active,
-:is(.theme-cashier, .theme-manager) .bento-drawer-cat-pill.active {
+:is(.theme-cashier, .theme-manager) .bento-drawer-cat-pill.active,
+.bento-catalog-drawer .bento-drawer-cat-pill.active {
   background: var(--primary) !important;
   background-color: var(--primary) !important;
   border-color: var(--primary-hover) !important;
   color: #FFFFFF !important;
   box-shadow: 0 2px 8px rgba(15, 118, 110, 0.3) !important;
+}
+
+/* Empty Catalog State & Reset Button */
+body:is(.theme-cashier, .theme-manager) .bento-empty-catalog,
+:is(.theme-cashier, .theme-manager) .bento-empty-catalog,
+.bento-catalog-drawer .bento-empty-catalog {
+  background: transparent !important;
+}
+
+body:is(.theme-cashier, .theme-manager) .bento-empty-catalog .btn,
+body:is(.theme-cashier, .theme-manager) .bento-empty-catalog .btn-secondary,
+:is(.theme-cashier, .theme-manager) .bento-empty-catalog .btn,
+:is(.theme-cashier, .theme-manager) .bento-empty-catalog .btn-secondary,
+.bento-catalog-drawer .bento-empty-catalog .btn,
+.bento-catalog-drawer .bento-empty-catalog .btn-secondary {
+  background: #f1f5f9 !important;
+  background-color: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+body:is(.theme-cashier, .theme-manager) .bento-empty-catalog .btn:hover,
+body:is(.theme-cashier, .theme-manager) .bento-empty-catalog .btn-secondary:hover,
+:is(.theme-cashier, .theme-manager) .bento-empty-catalog .btn:hover,
+:is(.theme-cashier, .theme-manager) .bento-empty-catalog .btn-secondary:hover,
+.bento-catalog-drawer .bento-empty-catalog .btn:hover,
+.bento-catalog-drawer .bento-empty-catalog .btn-secondary:hover {
+  background: #e2e8f0 !important;
+  background-color: #e2e8f0 !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
 }
 
 body:is(.theme-cashier, .theme-manager) .bento-drawer-grid,
