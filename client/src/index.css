@@ -22751,8 +22751,8 @@ select.expense-input-control {
 /* TOP HEADER */
 .cfd-header {
   height: 64px;
-  background: var(--bg, #E8E1D5);
-  border-bottom: 1.5px solid var(--border, #D0C7B8);
+  background: var(--bg, #f8fafc);
+  border-bottom: 1.5px solid var(--border, #e2e8f0);
   box-shadow: 0 1px 3px 0 rgba(15, 45, 46, 0.04);
   display: flex;
   align-items: center;
@@ -22845,8 +22845,8 @@ select.expense-input-control {
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  background: var(--surface, #FAF7F2);
-  border: 1.5px solid var(--border, #D0C7B8);
+  background: var(--surface, #ffffff);
+  border: 1.5px solid var(--border, #e2e8f0);
   padding: 0.35rem 0.75rem;
   border-radius: 8px;
   font-size: 0.82rem;
@@ -22856,8 +22856,8 @@ select.expense-input-control {
 }
 
 .cfd-fullscreen-btn {
-  background: var(--surface, #FAF7F2);
-  border: 1.5px solid var(--border, #D0C7B8);
+  background: var(--surface, #ffffff);
+  border: 1.5px solid var(--border, #e2e8f0);
   color: var(--sidebar, #0F2D2E);
   width: 38px;
   height: 38px;
@@ -23980,7 +23980,7 @@ select.expense-input-control {
   align-items: center;
   justify-content: space-between;
   background: rgba(255, 255, 255, 0.75);
-  border: 1.5px solid var(--border, #D0C7B8);
+  border: 1.5px solid var(--border, #e2e8f0);
   padding: 0.75rem 1rem;
   border-radius: 12px;
   margin-bottom: 1rem;
@@ -24017,7 +24017,7 @@ select.expense-input-control {
   gap: 0.4rem;
   padding: 1rem 0.75rem;
   background: #ffffff;
-  border: 1.5px solid var(--border, #D0C7B8);
+  border: 1.5px solid var(--border, #e2e8f0);
   border-radius: 12px;
   font-weight: 700;
   font-size: 0.85rem;
@@ -24049,7 +24049,7 @@ select.expense-input-control {
 
 .cfd-url-share-box {
   background: rgba(255, 255, 255, 0.75);
-  border: 1.5px solid var(--border, #D0C7B8);
+  border: 1.5px solid var(--border, #e2e8f0);
   padding: 0.85rem;
   border-radius: 12px;
   font-size: 0.78rem;
@@ -24070,7 +24070,7 @@ select.expense-input-control {
 .cfd-url-input-wrap input {
   flex: 1;
   background: #ffffff;
-  border: 1.5px solid var(--border, #D0C7B8);
+  border: 1.5px solid var(--border, #e2e8f0);
   padding: 0.45rem 0.65rem;
   border-radius: 8px;
   font-size: 0.82rem;
@@ -34449,7 +34449,7 @@ select.expense-input-control {
 
 .bento-notif-card.shift-close {
   border-left: 4px solid var(--primary, #0F766E);
-  background: var(--surface, #FAF7F2);
+  background: var(--surface, #ffffff);
 }
 
 .bento-notif-card.unread {
@@ -42125,8 +42125,8 @@ select.expense-input-control {
     font-size: 0.86rem !important;
     font-weight: 700 !important;
     border-radius: 10px !important;
-    background: var(--surface, #FAF7F2) !important;
-    border: 1px solid var(--border, #D0C7B8) !important;
+    background: var(--surface, #ffffff) !important;
+    border: 1px solid var(--border, #e2e8f0) !important;
     color: var(--text-muted, #475569) !important;
   }
 
@@ -43919,8 +43919,8 @@ select.expense-input-control {
   width: 92vw !important;
   max-height: 90vh !important;
   border-radius: 20px !important;
-  background: var(--surface, #FAF7F2) !important;
-  border: 1.5px solid var(--border, #D0C7B8) !important;
+  background: var(--surface, #ffffff) !important;
+  border: 1.5px solid var(--border, #e2e8f0) !important;
   box-shadow: 0 25px 60px -15px rgba(15, 45, 46, 0.3), 0 10px 24px -5px rgba(15, 45, 46, 0.1) !important;
   overflow: hidden !important;
   display: flex !important;
@@ -43929,8 +43929,8 @@ select.expense-input-control {
 
 .logout-shift-modal-footer {
   padding: 1rem 1.6rem !important;
-  border-top: 1px solid var(--border, #D0C7B8) !important;
-  background: var(--surface, #FAF7F2) !important;
+  border-top: 1px solid var(--border, #e2e8f0) !important;
+  background: var(--surface, #ffffff) !important;
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
@@ -43967,15 +43967,15 @@ select.expense-input-control {
 
 .logout-modal-btn-cancel {
   padding: 0.65rem 1.15rem !important;
-  background: var(--surface, #FAF7F2) !important;
-  border: 1px solid var(--border, #D0C7B8) !important;
+  background: var(--surface, #ffffff) !important;
+  border: 1px solid var(--border, #e2e8f0) !important;
   color: var(--text-muted, #475569) !important;
   font-weight: 700 !important;
   font-size: 0.86rem !important;
 }
 
 .logout-modal-btn-cancel:hover {
-  background: var(--surface-muted, #F3EDE3) !important;
+  background: var(--surface-muted, #f1f5f9) !important;
   color: var(--sidebar, #0F2D2E) !important;
 }
 
@@ -44403,8 +44403,8 @@ select.expense-input-control {
 }
 
 .invoice-detail-dialog {
-  background: var(--surface, #FAF7F2) !important;
-  border: 1.5px solid var(--border, #D0C7B8) !important;
+  background: var(--surface, #ffffff) !important;
+  border: 1.5px solid var(--border, #e2e8f0) !important;
   border-radius: 20px !important;
   box-shadow: 0 25px 60px -15px rgba(15, 45, 46, 0.28), 0 10px 24px -5px rgba(15, 45, 46, 0.08) !important;
   overflow: hidden !important;
@@ -44420,8 +44420,8 @@ select.expense-input-control {
 }
 
 .invoice-detail-header {
-  background: var(--surface, #FAF7F2) !important;
-  border-bottom: 1px solid var(--border, #D0C7B8) !important;
+  background: var(--surface, #ffffff) !important;
+  border-bottom: 1px solid var(--border, #e2e8f0) !important;
   display: flex !important;
   flex-direction: row !important;
   justify-content: space-between !important;
@@ -44499,8 +44499,8 @@ select.expense-input-control {
 }
 
 .invoice-detail-close-btn {
-  background: var(--surface, #FAF7F2) !important;
-  border: 1px solid var(--border, #D0C7B8) !important;
+  background: var(--surface, #ffffff) !important;
+  border: 1px solid var(--border, #e2e8f0) !important;
   border-radius: 9px !important;
   width: 32px !important;
   height: 32px !important;
@@ -44518,12 +44518,12 @@ select.expense-input-control {
 }
 
 .invoice-detail-close-btn:hover {
-  background: var(--surface-muted, #F3EDE3) !important;
+  background: var(--surface-muted, #f1f5f9) !important;
   color: var(--sidebar, #0F2D2E) !important;
 }
 
 .invoice-detail-body {
-  background: var(--bg, #E8E1D5) !important;
+  background: var(--bg, #f8fafc) !important;
   overflow-y: auto !important;
   -webkit-overflow-scrolling: touch !important;
   flex: 1 1 auto !important;
@@ -44557,7 +44557,7 @@ select.expense-input-control {
 
 .invoice-detail-ribbon-tile {
   background: #FFFFFF !important;
-  border: 1px solid var(--border, #D0C7B8) !important;
+  border: 1px solid var(--border, #e2e8f0) !important;
   border-radius: 14px !important;
   padding: 0.75rem 0.85rem !important;
   display: flex !important;
@@ -44606,7 +44606,7 @@ select.expense-input-control {
 /* Billed Items Section */
 .invoice-billed-items-panel {
   background: #FFFFFF !important;
-  border: 1px solid var(--border, #D0C7B8) !important;
+  border: 1px solid var(--border, #e2e8f0) !important;
   border-radius: 14px !important;
   box-shadow: 0 1px 3px rgba(15, 45, 46, 0.04) !important;
   display: flex !important;
@@ -44644,7 +44644,7 @@ select.expense-input-control {
   -webkit-overflow-scrolling: touch !important;
   width: 100% !important;
   border-radius: 10px !important;
-  border: 1px solid var(--border, #D0C7B8) !important;
+  border: 1px solid var(--border, #e2e8f0) !important;
   background: #FFFFFF !important;
   box-sizing: border-box !important;
 }
@@ -44658,7 +44658,7 @@ select.expense-input-control {
 
 .invoice-billed-items-table thead tr {
   background: #F8FAFC !important;
-  border-bottom: 1px solid var(--border, #D0C7B8) !important;
+  border-bottom: 1px solid var(--border, #e2e8f0) !important;
 }
 
 .invoice-billed-items-table th {
@@ -44671,7 +44671,7 @@ select.expense-input-control {
 
 .invoice-billed-items-table td {
   padding: 9px 10px !important;
-  border-bottom: 1px solid var(--border, #E8E1D5) !important;
+  border-bottom: 1px solid var(--border, #f8fafc) !important;
   vertical-align: middle !important;
 }
 
@@ -44733,7 +44733,7 @@ select.expense-input-control {
 
 .invoice-returns-toggle-row {
   background: #FFFFFF !important;
-  border: 1px solid var(--border, #D0C7B8) !important;
+  border: 1px solid var(--border, #e2e8f0) !important;
   border-radius: 12px !important;
   padding: 0.85rem 1rem !important;
   display: flex !important;
@@ -44799,7 +44799,7 @@ select.expense-input-control {
   text-align: center !important;
   color: var(--text-muted, #475569) !important;
   font-size: 0.8rem !important;
-  border: 1px dashed var(--border, #D0C7B8) !important;
+  border: 1px dashed var(--border, #e2e8f0) !important;
 }
 
 /* Bottom Action Buttons (Footer) */
@@ -44807,8 +44807,8 @@ select.expense-input-control {
   display: flex !important;
   flex-direction: column !important;
   gap: 0.55rem !important;
-  border-top: 1px solid var(--border, #D0C7B8) !important;
-  background: var(--surface, #FAF7F2) !important;
+  border-top: 1px solid var(--border, #e2e8f0) !important;
+  background: var(--surface, #ffffff) !important;
   flex-shrink: 0 !important;
   box-sizing: border-box !important;
   width: 100% !important;
@@ -44853,12 +44853,12 @@ select.expense-input-control {
 
 .invoice-detail-btn-secondary {
   background: #FFFFFF !important;
-  border: 1.5px solid var(--border, #D0C7B8) !important;
+  border: 1.5px solid var(--border, #e2e8f0) !important;
   color: var(--sidebar, #0F2D2E) !important;
 }
 
 .invoice-detail-btn-secondary:hover {
-  background: var(--surface-muted, #F3EDE3) !important;
+  background: var(--surface-muted, #f1f5f9) !important;
 }
 
 /* ==========================================================================
@@ -45186,8 +45186,8 @@ select.expense-input-control {
 }
 
 .return-modal-dialog {
-  background: var(--surface, #FAF7F2) !important;
-  border: 1.5px solid var(--border, #D0C7B8) !important;
+  background: var(--surface, #ffffff) !important;
+  border: 1.5px solid var(--border, #e2e8f0) !important;
   border-radius: 20px !important;
   box-shadow: 0 25px 60px -15px rgba(15, 45, 46, 0.28), 0 10px 24px -5px rgba(15, 45, 46, 0.08) !important;
   overflow: hidden !important;
@@ -45206,8 +45206,8 @@ select.expense-input-control {
 }
 
 .return-modal-header {
-  background: var(--surface, #FAF7F2) !important;
-  border-bottom: 1px solid var(--border, #D0C7B8) !important;
+  background: var(--surface, #ffffff) !important;
+  border-bottom: 1px solid var(--border, #e2e8f0) !important;
   display: flex !important;
   flex-direction: row !important;
   justify-content: space-between !important;
@@ -45284,8 +45284,8 @@ select.expense-input-control {
 }
 
 .return-modal-close-btn {
-  background: var(--surface, #FAF7F2) !important;
-  border: 1px solid var(--border, #D0C7B8) !important;
+  background: var(--surface, #ffffff) !important;
+  border: 1px solid var(--border, #e2e8f0) !important;
   border-radius: 9px !important;
   width: 32px !important;
   height: 32px !important;
@@ -45303,12 +45303,12 @@ select.expense-input-control {
 }
 
 .return-modal-close-btn:hover {
-  background: var(--surface-muted, #F3EDE3) !important;
+  background: var(--surface-muted, #f1f5f9) !important;
   color: var(--sidebar, #0F2D2E) !important;
 }
 
 .return-modal-body {
-  background: var(--bg, #E8E1D5) !important;
+  background: var(--bg, #f8fafc) !important;
   overflow-y: auto !important;
   -webkit-overflow-scrolling: touch !important;
   flex: 1 1 auto !important;
@@ -45321,8 +45321,8 @@ select.expense-input-control {
 }
 
 .return-modal-panel {
-  background: var(--surface, #FAF7F2) !important;
-  border: 1px solid var(--border, #D0C7B8) !important;
+  background: var(--surface, #ffffff) !important;
+  border: 1px solid var(--border, #e2e8f0) !important;
   border-radius: 16px !important;
   padding: 1.15rem 1.35rem !important;
   box-shadow: 0 1px 3px rgba(15, 45, 46, 0.04) !important;
@@ -45336,7 +45336,7 @@ select.expense-input-control {
   justify-content: space-between !important;
   align-items: center !important;
   padding-bottom: 0.75rem !important;
-  border-bottom: 1px solid var(--border, #D0C7B8) !important;
+  border-bottom: 1px solid var(--border, #e2e8f0) !important;
   margin-bottom: 0.85rem !important;
   flex-wrap: wrap !important;
   gap: 0.5rem !important;
@@ -45353,7 +45353,7 @@ select.expense-input-control {
   -webkit-overflow-scrolling: touch !important;
   width: 100% !important;
   border-radius: 10px !important;
-  border: 1px solid var(--border, #D0C7B8) !important;
+  border: 1px solid var(--border, #e2e8f0) !important;
   background: #FFFFFF !important;
   margin-bottom: 0.5rem !important;
   box-sizing: border-box !important;
@@ -45381,8 +45381,8 @@ select.expense-input-control {
   justify-content: space-between !important;
   align-items: center !important;
   padding: 0.85rem 1.6rem !important;
-  border-top: 1px solid var(--border, #D0C7B8) !important;
-  background: var(--surface, #FAF7F2) !important;
+  border-top: 1px solid var(--border, #e2e8f0) !important;
+  background: var(--surface, #ffffff) !important;
   flex-shrink: 0 !important;
   box-sizing: border-box !important;
   width: 100% !important;
@@ -45421,13 +45421,13 @@ select.expense-input-control {
 }
 
 .return-modal-btn-secondary {
-  background: var(--surface, #FAF7F2) !important;
-  border: 1.5px solid var(--border, #D0C7B8) !important;
+  background: var(--surface, #ffffff) !important;
+  border: 1.5px solid var(--border, #e2e8f0) !important;
   color: var(--sidebar, #0F2D2E) !important;
 }
 
 .return-modal-btn-secondary:hover {
-  background: var(--surface-muted, #F3EDE3) !important;
+  background: var(--surface-muted, #f1f5f9) !important;
 }
 
 /* ==========================================================================
@@ -47680,4 +47680,42 @@ tbody tr:hover td.col-sticky-invoice {
   .finance-bento-kpi-grid .cat-kpi-num {
     font-size: 1.35rem !important;
   }
+}
+
+/* ==========================================================================
+   My Cashier: Expected Cash Formula — keep the original single row and let it
+   scroll horizontally when the card is narrower than the row (it was clipped).
+   ========================================================================== */
+/* Tablet & desktop only; phones keep the original stacked layout. */
+@media (min-width: 769px) {
+  .formula-detailed-flow.shifts-formula-flow {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    padding-bottom: 0.85rem !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+
+  .formula-detailed-flow.shifts-formula-flow > .formula-step-box {
+    flex: 0 0 auto !important;
+    width: 165px !important;
+    min-width: 165px !important;
+  }
+
+  .formula-detailed-flow.shifts-formula-flow > .formula-op-pill {
+    flex: 0 0 auto !important;
+  }
+}
+
+/* The card is a grid item: let it shrink so the row scrolls inside it instead of being cut off. */
+.shifts-overview-layout > .formula-container-card {
+  min-width: 0 !important;
 }

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getCachedView, setCachedView } from '../../utils/viewCache';
 import {
   fetchDayClosingPreview,
   fetchDayClosingAudit,
@@ -207,6 +208,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
   // Tab 1: Day Closing Live Preview & Reconciliation state
   const [loadingPreview, setLoadingPreview] = useState(true);
   const [preview, setPreview] = useState<any | null>(null);
+  const previewLoadedRef = React.useRef(false);
   const [actualCashStr, setActualCashStr] = useState<string>('');
   const [closingRemarks, setClosingRemarks] = useState<string>('');
   const [submitting, setSubmitting] = useState(false);
@@ -372,17 +374,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
   // --------------------------------------------------------------------------
   // Data Fetchers
   // --------------------------------------------------------------------------
-  const loadPreview = async () => {
-    try {
-      setLoadingPreview(true);
-      setError(null);
-      const res = await fetchDayClosingPreview({
-        branchId: activeBranchId,
-        date: selectedDate,
-        shiftId: selectedShiftId || undefined,
-        cashierId: selectedCashierId || undefined,
-        counterId: selectedCounterId || undefined,
-      });
+  const applyPreview = (res: any) => {
       setPreview(res);
       if (res.closedRecord?.audit_summary && Object.keys(res.closedRecord.audit_summary).length > 0) {
         setAuditData(res.closedRecord.audit_summary);
@@ -399,6 +391,31 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
       } else {
         setActualCashStr(((expected || 0) / 100).toFixed(2));
       }
+  };
+
+  const loadPreview = async () => {
+    const params = {
+      branchId: activeBranchId,
+      date: selectedDate,
+      shiftId: selectedShiftId || undefined,
+      cashierId: selectedCashierId || undefined,
+      counterId: selectedCounterId || undefined,
+    };
+    const cacheKey = `day-closing-preview:${JSON.stringify(params)}`;
+    // On opening the page, show the last loaded figures instantly, then refresh them in the
+    // background. Later reloads (after submit/approve/filters) always wait for fresh data.
+    const cached = previewLoadedRef.current ? undefined : getCachedView<any>(cacheKey);
+    previewLoadedRef.current = true;
+    if (cached) {
+      applyPreview(cached);
+      setLoadingPreview(false);
+    }
+    try {
+      if (!cached) setLoadingPreview(true);
+      setError(null);
+      const res = await fetchDayClosingPreview(params);
+      setCachedView(cacheKey, res);
+      applyPreview(res);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch day closing preview');
     } finally {

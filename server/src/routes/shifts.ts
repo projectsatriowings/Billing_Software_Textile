@@ -2,7 +2,7 @@ import { requirePerm, requireUser } from '../auth.ts';
 import { resolveBranchScope } from '../branchScope.ts';
 import { bad, conflict, forbidden, notFound, HtmlResponse, V, type Router } from '../http.ts';
 import { newId } from '../security.ts';
-import { j, type Queryable } from '../db/index.ts';
+import { j, runWithParallelReads, type Queryable } from '../db/index.ts';
 import { audit } from '../audit.ts';
 import {
   calcExpectedCash,
@@ -21,18 +21,33 @@ import type { CashMovement, Shift, ShiftClosingReport, ShiftSummary } from '../.
  * 2. Cash movements (authorized cash-in & cash-out)
  * 3. Cash refunds paid from the drawer on sales returns
  */
+type ShiftFinancials = {
+  summary: ShiftSummary;
+  cashMovements: CashMovement[];
+  recentTransactions: any[];
+  refundsRows: any[];
+};
+
+/** Its five queries are independent (given the shop timezone), so they are sent to the database together. */
 export async function computeShiftFinancials(
   q: Queryable,
   shift: any,
   tenantId: string,
   countedCashMinor?: number | null,
   targetBdate?: string | null,
-): Promise<{
-  summary: ShiftSummary;
-  cashMovements: CashMovement[];
-  recentTransactions: any[];
-  refundsRows: any[];
-}> {
+): Promise<ShiftFinancials> {
+  // For an open shift the window ends "now": fix that instant once so both passes use the same query.
+  const fixedShift = (shift.closedAt ?? shift.closed_at) ? shift : { ...shift, closedAt: new Date().toISOString() };
+  return runWithParallelReads(q, (rq) => computeShiftFinancialsCore(rq, fixedShift, tenantId, countedCashMinor, targetBdate));
+}
+
+async function computeShiftFinancialsCore(
+  q: Queryable,
+  shift: any,
+  tenantId: string,
+  countedCashMinor?: number | null,
+  targetBdate?: string | null,
+): Promise<ShiftFinancials> {
   const shiftId = shift.id;
   const shiftUserId = shift.userId ?? shift.user_id;
   const openedAt = shift.openedAt ?? shift.opened_at ?? new Date(0).toISOString();

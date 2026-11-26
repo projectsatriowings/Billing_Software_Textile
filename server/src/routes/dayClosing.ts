@@ -1,7 +1,7 @@
 import { requirePerm, requireUser } from '../auth.ts';
 import { bad, notFound, forbidden, HtmlResponse, FileResponse, V, type Router } from '../http.ts';
 import { newId, verifyPassword } from '../security.ts';
-import { j, type Queryable } from '../db/index.ts';
+import { j, runWithParallelReads, type Queryable } from '../db/index.ts';
 import { audit } from '../audit.ts';
 import { fmtMoney } from '../../../shared/money.ts';
 import { resolveBranchScope } from '../branchScope.ts';
@@ -86,18 +86,22 @@ export interface SmartAuditResult {
   detectorSummary: Record<SmartAuditDetectorId, { status: 'passed' | 'warning' | 'failed'; issueCount: number }>;
 }
 
-export async function runSmartClosingAudit(
-  db: Queryable,
-  params: {
-    tenantId: string;
-    branchId: string;
-    bdate: string;
-    counterId?: string | null;
-    cashierId?: string | null;
-    shiftId?: string | null;
-    actualCashMinor?: number | null;
-  },
-): Promise<SmartAuditResult> {
+type SmartAuditParams = {
+  tenantId: string;
+  branchId: string;
+  bdate: string;
+  counterId?: string | null;
+  cashierId?: string | null;
+  shiftId?: string | null;
+  actualCashMinor?: number | null;
+};
+
+/** The 12 audit detectors' queries are independent, so they are sent to the database together. */
+export async function runSmartClosingAudit(db: Queryable, params: SmartAuditParams): Promise<SmartAuditResult> {
+  return runWithParallelReads(db, (q) => smartClosingAuditCore(q, params));
+}
+
+async function smartClosingAuditCore(db: Queryable, params: SmartAuditParams): Promise<SmartAuditResult> {
   const { tenantId, branchId, bdate, counterId, cashierId, shiftId, actualCashMinor } = params;
 
   const issues: SmartAuditIssue[] = [];
@@ -781,6 +785,9 @@ export function registerDayClosing(r: Router) {
     const branchId = branchRecord?.id || scope.branchId || rawBranch;
     const branchCode = branchRecord?.code || rawBranch;
 
+    // Everything below only reads, and its ~25 queries do not depend on each other, so they are
+    // sent to the database together instead of one by one (see runWithParallelReads).
+    return runWithParallelReads(ctx.db, async (db) => {
     const shiftId = ctx.query.shiftId ? String(ctx.query.shiftId).trim() : null;
     const userRole = String(ctx.user!.role || '').toUpperCase();
     const isCashier = userRole === 'CASHIER' || userRole === 'COUNTER';
@@ -826,10 +833,10 @@ export function registerDayClosing(r: Router) {
       closedRecordQuery += ` ORDER BY (dc.cashier_id IS NULL) DESC, dc.created_at DESC LIMIT 1`;
     }
 
-    const closedRecord = await ctx.db.one<any>(closedRecordQuery, closedRecordParams);
+    const closedRecord = await db.one<any>(closedRecordQuery, closedRecordParams);
 
     // List shifts available on this day for the branch
-    const availableShifts = await ctx.db.query<any>(
+    const availableShifts = await db.query<any>(
       `SELECT s.id, s.user_id, u.name AS cashier_name, s.status,
               s.opening_cash_minor, s.expected_cash_minor, s.counted_cash_minor AS closing_cash_minor,
               s.variance_minor AS difference_minor, s.opened_at, s.closed_at
@@ -842,7 +849,7 @@ export function registerDayClosing(r: Router) {
     );
 
     // List cashiers who billed or opened shifts on this day
-    const availableCashiers = await ctx.db.query<any>(
+    const availableCashiers = await db.query<any>(
       `SELECT DISTINCT u.id, u.name, u.role
        FROM users u
        WHERE u.tenant_id = ?
@@ -862,7 +869,7 @@ export function registerDayClosing(r: Router) {
     );
 
     // List counters configured or used for billing
-    const availableCounters = await ctx.db.query<any>(
+    const availableCounters = await db.query<any>(
       `SELECT DISTINCT c.id, c.name, c.code
        FROM (
          SELECT id, name, code, tenant_id, branch_id FROM counters WHERE status = 'ACTIVE'
@@ -876,7 +883,7 @@ export function registerDayClosing(r: Router) {
     );
 
     // Day Closing Schedule & Overdue status calculation
-    const schedule = await ctx.db.one<any>(
+    const schedule = await db.one<any>(
       `SELECT * FROM day_closing_schedules
        WHERE tenant_id = ? AND (branch_id = ? OR branch_id = ? OR branch_id = ?) AND (counter_id = ? OR counter_id IS NULL)
        ORDER BY (counter_id IS NOT NULL) DESC LIMIT 1`,
@@ -926,7 +933,7 @@ export function registerDayClosing(r: Router) {
     };
 
     // Sales Summary (kind = 'sale')
-    const salesRow = await ctx.db.one<any>(
+    const salesRow = await db.one<any>(
       `SELECT
         COUNT(*)::int AS invoices_count,
         COALESCE(SUM(total_minor), 0)::bigint AS gross_sales_minor,
@@ -941,7 +948,7 @@ export function registerDayClosing(r: Router) {
     );
 
     // Returns Summary (kind = 'credit_note')
-    const returnsRow = await ctx.db.one<any>(
+    const returnsRow = await db.one<any>(
       `SELECT
         COUNT(*)::int AS returns_count,
         COALESCE(SUM(total_minor), 0)::bigint AS returns_total_minor,
@@ -953,7 +960,7 @@ export function registerDayClosing(r: Router) {
     );
 
     // Cancelled / Voided Invoices
-    const voidedRow = await ctx.db.one<any>(
+    const voidedRow = await db.one<any>(
       `SELECT COUNT(*)::int AS voided_count, COALESCE(SUM(i.total_minor), 0)::bigint AS voided_total_minor
        FROM invoices i
        WHERE i.tenant_id = ? AND i.branch_id = ? AND i.bdate = ? AND i.status = 'voided'
@@ -962,7 +969,7 @@ export function registerDayClosing(r: Router) {
     );
 
     // Customer Outstanding (Credit / Partial unpaid invoices for this date)
-    const outstandingRow = await ctx.db.one<any>(
+    const outstandingRow = await db.one<any>(
       `SELECT COALESCE(SUM(i.total_minor - i.paid_minor), 0)::bigint AS outstanding_minor
        FROM invoices i
        WHERE i.tenant_id = ? AND i.branch_id = ? AND i.bdate = ? AND i.status = 'posted' AND i.total_minor > i.paid_minor
@@ -971,7 +978,7 @@ export function registerDayClosing(r: Router) {
     );
 
     // Product Quantity & Lines Totals
-    const itemsRow = await ctx.db.one<any>(
+    const itemsRow = await db.one<any>(
       `SELECT
         COUNT(DISTINCT il.item_id)::int AS distinct_items_count,
         COALESCE(SUM(il.qty_milli), 0)::bigint AS total_qty_milli
@@ -998,7 +1005,7 @@ export function registerDayClosing(r: Router) {
     const averageBillValueMinor = invoicesCount > 0 ? Math.round(netSalesMinor / invoicesCount) : 0;
 
     // Refunds Breakdown
-    const refundsRow = await ctx.db.one<any>(
+    const refundsRow = await db.one<any>(
       `SELECT
         COUNT(*)::int AS refunds_count,
         COALESCE(SUM(CASE WHEN method = 'cash' THEN amount_minor ELSE 0 END), 0)::bigint AS cash_refunds_minor,
@@ -1013,7 +1020,7 @@ export function registerDayClosing(r: Router) {
       [tenantId, bdate, bdate, ...(shiftId ? [shiftId] : []), ...(cashierId ? [cashierId] : [])],
     );
 
-    const storeCreditRow = await ctx.db.one<any>(
+    const storeCreditRow = await db.one<any>(
       `SELECT COALESCE(SUM(amount_minor), 0)::bigint AS store_credits_issued_minor
        FROM store_credits
        WHERE tenant_id = ? AND DATE(created_at) = ?::date
@@ -1021,7 +1028,7 @@ export function registerDayClosing(r: Router) {
       [tenantId, bdate, ...(cashierId ? [cashierId] : [])],
     );
 
-    const exchangeAdjustRow = await ctx.db.one<any>(
+    const exchangeAdjustRow = await db.one<any>(
       `SELECT COALESCE(SUM(i.exchange_adjusted_minor), 0)::bigint AS exchange_adjusted_minor
        FROM invoices i
        WHERE i.tenant_id = ? AND i.branch_id = ? AND i.bdate = ? AND i.is_exchange = TRUE AND i.kind = 'sale'
@@ -1036,7 +1043,7 @@ export function registerDayClosing(r: Router) {
     const exchangeCreditAdjustedMinor = Number(exchangeAdjustRow?.exchangeAdjustedMinor ?? exchangeAdjustRow?.exchange_adjusted_minor ?? 0);
 
     // Exchanges Summary
-    const exchangeStatsRow = await ctx.db.one<any>(
+    const exchangeStatsRow = await db.one<any>(
       `SELECT
         COUNT(DISTINCT i.exchange_id)::int AS exchanges_count,
         COALESCE(SUM(CASE WHEN i.kind = 'sale' THEN i.total_minor ELSE 0 END), 0)::bigint AS new_sold_minor,
@@ -1083,7 +1090,7 @@ export function registerDayClosing(r: Router) {
     }
     paymentSql += ` GROUP BY COALESCE(p.method, 'cash')`;
 
-    const paymentRows = await ctx.db.query<any>(paymentSql, paymentParams);
+    const paymentRows = await db.query<any>(paymentSql, paymentParams);
 
     let cashCollectionsMinor = 0;
     let upiCollectionsMinor = 0;
@@ -1110,7 +1117,7 @@ export function registerDayClosing(r: Router) {
       shiftFilterSql += ' AND user_id = ?';
       shiftFilterParams.push(cashierId);
     }
-    const shiftsRow = await ctx.db.one<any>(
+    const shiftsRow = await db.one<any>(
       `SELECT COALESCE(SUM(opening_cash_minor), 0)::bigint AS opening_cash_minor
        FROM shifts
        WHERE tenant_id = ? AND (location = ? OR branch_id = ?)
@@ -1121,7 +1128,7 @@ export function registerDayClosing(r: Router) {
     const openingCashMinor = Number(shiftsRow?.openingCashMinor ?? shiftsRow?.opening_cash_minor ?? 0);
 
     // Cash Expenses
-    const expensesRow = await ctx.db.one<any>(
+    const expensesRow = await db.one<any>(
       `SELECT
         COALESCE(SUM(total_minor), 0)::bigint AS total_expenses_minor,
         COALESCE(SUM(CASE WHEN payment_method = 'cash' THEN total_minor ELSE 0 END), 0)::bigint AS cash_expenses_minor
@@ -1149,7 +1156,7 @@ export function registerDayClosing(r: Router) {
       cashMoveSql += ' AND s.user_id = ?';
       cashMoveParams.push(cashierId);
     }
-    const cashMovesRow = await ctx.db.one<any>(cashMoveSql, cashMoveParams);
+    const cashMovesRow = await db.one<any>(cashMoveSql, cashMoveParams);
     const cashInMinor = Number(cashMovesRow?.cashInMinor ?? cashMovesRow?.cash_in_minor ?? 0);
     const cashOutMinor = Number(cashMovesRow?.cashOutMinor ?? cashMovesRow?.cash_out_minor ?? 0);
 
@@ -1159,7 +1166,7 @@ export function registerDayClosing(r: Router) {
 
     // Profit & COGS Summary
     // COGS for sales using historical snapshot cost on invoice_lines
-    const salesCogsRow = await ctx.db.one<any>(
+    const salesCogsRow = await db.one<any>(
       `SELECT COALESCE(SUM(il.qty_milli * COALESCE(NULLIF(il.cost_minor, 0), it.cost_minor, 0) / 1000), 0)::bigint AS cogs_minor
        FROM invoice_lines il
        JOIN invoices i ON i.id = il.invoice_id
@@ -1171,7 +1178,7 @@ export function registerDayClosing(r: Router) {
     const cogsMinor = Number(salesCogsRow?.cogsMinor ?? salesCogsRow?.cogs_minor ?? 0);
 
     // Returned COGS: ONLY for resellable items
-    const returnedCogsRow = await ctx.db.one<any>(
+    const returnedCogsRow = await db.one<any>(
       `SELECT COALESCE(SUM(il.qty_milli * COALESCE(NULLIF(il.cost_minor, 0), it.cost_minor, 0) / 1000), 0)::bigint AS returned_cogs_minor
        FROM invoice_lines il
        JOIN invoices i ON i.id = il.invoice_id
@@ -1188,7 +1195,7 @@ export function registerDayClosing(r: Router) {
     const netProfitMinor = grossProfitMinor - operatingExpensesMinor;
 
     // Duplicate Invoices Detection: Check for potential duplicate billing events on this date
-    const duplicateInvoices = await ctx.db.query<any>(
+    const duplicateInvoices = await db.query<any>(
       `SELECT i1.id AS invoice_id_1, i1.number AS number_1,
               i2.id AS invoice_id_2, i2.number AS number_2,
               i1.total_minor, i1.customer_phone, i1.created_at
@@ -1210,11 +1217,11 @@ export function registerDayClosing(r: Router) {
 
     // Closing Reminder: Check if previous business day was unclosed
     const yesterdayDate = new Date(new Date(bdate).getTime() - 86400000).toISOString().slice(0, 10);
-    const prevDayRecord = await ctx.db.one<any>(
+    const prevDayRecord = await db.one<any>(
       `SELECT id, status FROM day_closings WHERE tenant_id = ? AND branch_id = ? AND bdate = ?`,
       [tenantId, branchId, yesterdayDate],
     );
-    const prevDayInvoices = await ctx.db.one<any>(
+    const prevDayInvoices = await db.one<any>(
       `SELECT COUNT(*)::int AS count FROM invoices WHERE tenant_id = ? AND branch_id = ? AND bdate = ? AND status = 'posted'`,
       [tenantId, branchId, yesterdayDate],
     );
@@ -1223,7 +1230,7 @@ export function registerDayClosing(r: Router) {
       (!prevDayRecord || prevDayRecord.status === 'open' || prevDayRecord.status === 'submitted')
     );
 
-    const audit = await runSmartClosingAudit(ctx.db, {
+    const audit = await runSmartClosingAudit(db, {
       tenantId,
       branchId,
       bdate,
@@ -1340,6 +1347,7 @@ export function registerDayClosing(r: Router) {
       // H. Smart Closing Audit & Detector Results
       audit,
     };
+    });
   });
 
   // --------------------------------------------------------------------------
@@ -3496,6 +3504,8 @@ export function registerDayClosing(r: Router) {
     const branchId = branchRecord?.id || scope.branchId || rawBranch;
     const branchCode = branchRecord?.code || rawBranch;
 
+    // Read-only: send the independent queries below to the database together.
+    return runWithParallelReads(ctx.db, async (db) => {
     const now = new Date();
     const istDate = new Date(now.getTime() + 5.5 * 3600000);
     const todayIstStr = istDate.toISOString().slice(0, 10);
@@ -3503,7 +3513,7 @@ export function registerDayClosing(r: Router) {
     const date = String(ctx.query.date || ctx.query.bdate || todayIstStr).trim();
 
     // 1. Fetch Schedule
-    const schedule = await ctx.db.one<any>(
+    const schedule = await db.one<any>(
       `SELECT * FROM day_closing_schedules
        WHERE tenant_id = ? AND (branch_id = ? OR branch_id = ? OR branch_id = ?) AND counter_id IS NULL
        ORDER BY updated_at DESC LIMIT 1`,
@@ -3514,7 +3524,7 @@ export function registerDayClosing(r: Router) {
     const isAutoAlertEnabled = schedule ? ((schedule.autoAlertOverdue ?? schedule.auto_alert_overdue) !== false) : true;
 
     // 2. Fetch all Active Counters for this branch
-    const counters = await ctx.db.query<any>(
+    const counters = await db.query<any>(
       `SELECT c.id, c.name, c.code, c.status
        FROM counters c
        WHERE c.tenant_id = ? AND (c.branch_id = ? OR c.branch_id = ?) AND c.status = 'ACTIVE'
@@ -3523,7 +3533,7 @@ export function registerDayClosing(r: Router) {
     );
 
     // 3. Fetch all Cashiers active or with sales on this date
-    const cashiers = await ctx.db.query<any>(
+    const cashiers = await db.query<any>(
       `SELECT DISTINCT u.id, u.name, u.role
        FROM users u
        WHERE u.tenant_id = ?
@@ -3537,7 +3547,7 @@ export function registerDayClosing(r: Router) {
     );
 
     // 4. Fetch Day Closings for this date
-    const dayClosings = await ctx.db.query<any>(
+    const dayClosings = await db.query<any>(
       `SELECT dc.*, u.name AS cashier_name, su.name AS submitted_by_name, au.name AS approved_by_name
        FROM day_closings dc
        LEFT JOIN users u ON u.id = dc.cashier_id
@@ -3626,6 +3636,7 @@ export function registerDayClosing(r: Router) {
       cashierMatrix,
       counters,
     };
+    });
   });
 
   // --------------------------------------------------------------------------

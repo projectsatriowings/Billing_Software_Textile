@@ -2,8 +2,8 @@
   "version": "0.1.0",
   "exe": {
     "fileName": "A2Z Setup 0.1.0.exe",
-    "totalSize": 128589894,
-    "sha256": "90b5d69d2d08874f1018c22e1c887746396d4a3d46353a35794de9dc2ba546ca",
+    "totalSize": 129753690,
+    "sha256": "08c25e71461ba1a7dc91c751587449cfcb2a123dc02fd8bd6b2a1154b3211874",
     "parts": [
       {
         "name": "a2z-setup.part1",
@@ -15,14 +15,14 @@
       },
       {
         "name": "a2z-setup.part3",
-        "size": 2760774
+        "size": 3924570
       }
     ]
   },
   "zip": {
     "fileName": "A2Z-Billing-Windows-Setup.zip",
-    "totalSize": 128598739,
-    "sha256": "ab02991df55def3a85a0fe9fbd2b4c5fb67ef57112702e75a144c02a1e4c8eda",
+    "totalSize": 129761574,
+    "sha256": "a665601cfcfc6a0e778ccd21569555330e842ac91f73dd28def6f56f5ba929ec",
     "parts": [
       {
         "name": "a2z-zip.part1",
@@ -34,18 +34,18 @@
       },
       {
         "name": "a2z-zip.part3",
-        "size": 2769619
+        "size": 3932454
       }
     ]
   },
   "apk": {
     "fileName": "A2Z-Billing.apk",
-    "totalSize": 16268416,
-    "sha256": "7798621108ac141a4c6e1f16877992c6d040530686a89b49aa91a64775d64516",
+    "totalSize": 16354732,
+    "sha256": "8875a22f6805288983fe19e426aa09d9b9aaae0808e67f5e0f4ecb1aac35595d",
     "parts": [
       {
         "name": "a2z-apk.part1",
-        "size": 16268416
+        "size": 16354732
       }
     ]
   }
