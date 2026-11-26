@@ -782,11 +782,6 @@ export function App() {
         try {
           localStorage.setItem('app_active_tab', resolved);
           sessionStorage.setItem('app_active_tab', resolved);
-          if (typeof window !== 'undefined') {
-            if (resolved !== 'user-management' && window.location.pathname === '/user-management') {
-              window.history.replaceState({}, '', '/');
-            }
-          }
         } catch { }
         return resolved;
       });
@@ -949,24 +944,6 @@ export function App() {
     } catch { }
   };
 
-  useEffect(() => {
-    if (shop) {
-      try {
-        localStorage.setItem('shop', JSON.stringify(shop));
-        sessionStorage.setItem('shop', JSON.stringify(shop));
-      } catch { }
-    }
-  }, [shop]);
-
-  useEffect(() => {
-    if (user) {
-      try {
-        localStorage.setItem('user', JSON.stringify(user));
-        sessionStorage.setItem('user', JSON.stringify(user));
-      } catch { }
-    }
-  }, [user]);
-
   // Synchronize role themes (.theme-cashier / .theme-manager / .theme-super-admin) on document.body for session & portaled modals
   // and dynamically update native Android status bar and navigation bar background and icon appearance
   useEffect(() => {
@@ -1004,6 +981,24 @@ export function App() {
       document.body.classList.remove('theme-super-admin');
     };
   }, [user?.role, view]);
+
+  useEffect(() => {
+    if (shop) {
+      try {
+        localStorage.setItem('shop', JSON.stringify(shop));
+        sessionStorage.setItem('shop', JSON.stringify(shop));
+      } catch { }
+    }
+  }, [shop]);
+
+  useEffect(() => {
+    if (user) {
+      try {
+        localStorage.setItem('user', JSON.stringify(user));
+        sessionStorage.setItem('user', JSON.stringify(user));
+      } catch { }
+    }
+  }, [user]);
   const [regSelectedBusinessType, setRegSelectedBusinessType] = useState<string>('grocery');
   const [changePasswordData, setChangePasswordData] = useState<{ changeToken: string; tempPassword?: string; identifier?: string } | null>(null);
   const [resetPasswordToken, setResetPasswordToken] = useState<string>('');
@@ -1474,7 +1469,7 @@ export function App() {
           localStorage.setItem('selected_branch', enforced);
           sessionStorage.setItem('sa_selected_branch', enforced);
           sessionStorage.setItem('selected_branch', enforced);
-        } catch {}
+        } catch { }
       }
     }
   }, [user?.id, user?.branchId, user?.role, selectedBranchScope]);
@@ -2906,17 +2901,9 @@ export function App() {
         try { sessionStorage.removeItem('app_entered'); } catch { }
         setView('landing');
       } else if (path === '/user-management' || hash === 'user-management') {
-        const savedTab = (() => {
-          try { return localStorage.getItem('app_active_tab') || sessionStorage.getItem('app_active_tab'); } catch { return null; }
-        })();
         try { sessionStorage.setItem('app_entered', 'true'); } catch { }
         setView('dashboard');
-        if (savedTab && savedTab !== 'user-management' && path === '/user-management' && !hash) {
-          setActiveTab(savedTab as any);
-          try { window.history.replaceState({}, '', '/'); } catch { }
-        } else {
-          setActiveTab('user-management');
-        }
+        setActiveTab('user-management');
       } else if (hash === 'cashier-login' || hash.startsWith('login')) {
         if (hasAuth) {
           setView('dashboard');
@@ -3040,12 +3027,7 @@ export function App() {
           const rUpper = String(res.user?.role || '').toUpperCase();
           if (rUpper === 'OWNER' || rUpper === 'SUPER_ADMIN' || rUpper === 'MANAGER' || rUpper === 'STORE_MANAGER') {
             setView('dashboard');
-            if (savedTab && savedTab !== 'user-management' && window.location.pathname === '/user-management' && !currentHash && !tabParam) {
-              setActiveTab(savedTab as any);
-              try { window.history.replaceState({}, '', '/'); } catch { }
-            } else {
-              setActiveTab('user-management');
-            }
+            setActiveTab('user-management');
           } else {
             setView('dashboard');
             setActiveTab('pos');
@@ -25235,8 +25217,8 @@ export function App() {
                           {invoiceDetailData.invoice.tender?.cashReceivedMinor > 0
                             ? formatRupees(invoiceDetailData.invoice.tender.changeReturnedMinor)
                             : (invoiceDetailData.invoice.roundOffMinor !== 0
-                                ? `${invoiceDetailData.invoice.roundOffMinor > 0 ? '+' : ''}${formatRupees(invoiceDetailData.invoice.roundOffMinor)}`
-                                : '₹0.00')}
+                              ? `${invoiceDetailData.invoice.roundOffMinor > 0 ? '+' : ''}${formatRupees(invoiceDetailData.invoice.roundOffMinor)}`
+                              : '₹0.00')}
                         </div>
                         <div className="ribbon-tile-sub">
                           {invoiceDetailData.invoice.tender?.cashReceivedMinor > 0
