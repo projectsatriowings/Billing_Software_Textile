@@ -181,7 +181,19 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
   onNavigateToNotifications,
 }) => {
   // Navigation: Clean, dedicated tabs
-  const [activeTab, setActiveTab] = useState<TabType>('closing');
+  const [activeTab, setActiveTabRaw] = useState<TabType>(() => {
+    try {
+      const saved = localStorage.getItem('day_closing_active_tab');
+      if (saved && ['closing', 'breakdown', 'comparison', 'analytics', 'compliance', 'history'].includes(saved)) {
+        return saved as TabType;
+      }
+    } catch { }
+    return 'closing';
+  });
+  const setActiveTab = (tab: TabType) => {
+    setActiveTabRaw(tab);
+    try { localStorage.setItem('day_closing_active_tab', tab); } catch { }
+  };
 
   // Branch & Filter states
   const [selectedBranchId, setSelectedBranchId] = useState<string>(
@@ -254,9 +266,17 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
   const [analyticsEndDate, setAnalyticsEndDate] = useState<string>(
     new Date().toISOString().slice(0, 10)
   );
+  const [appliedAnalyticsRange, setAppliedAnalyticsRange] = useState<{ startDate: string; endDate: string }>(() => {
+    const d = new Date();
+    const start = new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0, 10);
+    const end = d.toISOString().slice(0, 10);
+    return { startDate: start, endDate: end };
+  });
   const [analyticsPreset, setAnalyticsPreset] = useState<string>('this_month');
   const [analyticsData, setAnalyticsData] = useState<any | null>(null);
   const [loadingAnalytics, setLoadingAnalytics] = useState(false);
+  const [analyticsLoadingSource, setAnalyticsLoadingSource] = useState<'preset' | 'calculate' | 'header' | 'initial' | null>(null);
+  const [activeLoadingPreset, setActiveLoadingPreset] = useState<string | null>(null);
 
   // Tab 4: History state
   const [history, setHistory] = useState<any[]>([]);
@@ -753,20 +773,34 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
     }
   };
 
-  const loadAnalytics = async () => {
+  const loadAnalytics = async (
+    overrideStartDate?: string,
+    overrideEndDate?: string,
+    source: 'preset' | 'calculate' | 'header' | 'initial' = 'initial'
+  ) => {
+    const sDate = overrideStartDate ?? analyticsStartDate;
+    const eDate = overrideEndDate ?? analyticsEndDate;
+    if (sDate && eDate && sDate > eDate) {
+      setError('Start Date cannot be after End Date.');
+      return;
+    }
     try {
       setLoadingAnalytics(true);
+      setAnalyticsLoadingSource(source);
       setError(null);
+      setAppliedAnalyticsRange({ startDate: sDate, endDate: eDate });
       const res = await fetchDayClosingAnalytics({
         branchId: activeBranchId,
-        startDate: analyticsStartDate,
-        endDate: analyticsEndDate,
+        startDate: sDate,
+        endDate: eDate,
       });
       setAnalyticsData(res);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch date range analytics');
     } finally {
       setLoadingAnalytics(false);
+      setAnalyticsLoadingSource(null);
+      setActiveLoadingPreset(null);
     }
   };
 
@@ -810,34 +844,41 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
 
   const handleApplyPreset = (preset: string) => {
     setAnalyticsPreset(preset);
+    setActiveLoadingPreset(preset);
     const d = new Date();
     const todayStr = d.toISOString().slice(0, 10);
 
+    let start = todayStr;
+    let end = todayStr;
+
     if (preset === 'today') {
-      setAnalyticsStartDate(todayStr);
-      setAnalyticsEndDate(todayStr);
+      start = todayStr;
+      end = todayStr;
     } else if (preset === 'yesterday') {
       const y = new Date(d.getTime() - 86400000).toISOString().slice(0, 10);
-      setAnalyticsStartDate(y);
-      setAnalyticsEndDate(y);
+      start = y;
+      end = y;
     } else if (preset === 'last_7_days') {
       const s = new Date(d.getTime() - 6 * 86400000).toISOString().slice(0, 10);
-      setAnalyticsStartDate(s);
-      setAnalyticsEndDate(todayStr);
+      start = s;
+      end = todayStr;
     } else if (preset === 'last_30_days') {
       const s = new Date(d.getTime() - 29 * 86400000).toISOString().slice(0, 10);
-      setAnalyticsStartDate(s);
-      setAnalyticsEndDate(todayStr);
+      start = s;
+      end = todayStr;
     } else if (preset === 'this_month') {
-      const start = new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0, 10);
-      setAnalyticsStartDate(start);
-      setAnalyticsEndDate(todayStr);
+      start = new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0, 10);
+      end = todayStr;
     } else if (preset === 'last_month') {
-      const start = new Date(d.getFullYear(), d.getMonth() - 1, 1).toISOString().slice(0, 10);
-      const end = new Date(d.getFullYear(), d.getMonth(), 0).toISOString().slice(0, 10);
-      setAnalyticsStartDate(start);
-      setAnalyticsEndDate(end);
+      start = new Date(d.getFullYear(), d.getMonth() - 1, 1).toISOString().slice(0, 10);
+      end = new Date(d.getFullYear(), d.getMonth(), 0).toISOString().slice(0, 10);
     }
+
+    setAnalyticsStartDate(start);
+    setAnalyticsEndDate(end);
+
+    // Immediately fetch & display data on preset click without requiring Calculate Range
+    loadAnalytics(start, end, 'preset');
   };
 
   // --------------------------------------------------------------------------
@@ -1154,13 +1195,13 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
               onClick={() => {
                 if (activeTab === 'closing') loadPreview();
                 else if (activeTab === 'comparison') loadComparison();
-                else if (activeTab === 'analytics') loadAnalytics();
+                else if (activeTab === 'analytics') loadAnalytics(undefined, undefined, 'header');
                 else if (activeTab === 'history') loadHistory();
               }}
-              disabled={loadingPreview || loadingComparison || loadingAnalytics || loadingHistory}
+              disabled={loadingPreview || loadingComparison || (loadingAnalytics && analyticsLoadingSource === 'header') || loadingHistory}
               className="cat-btn-primary"
             >
-              <RefreshCwIcon size={14} className={(loadingPreview || loadingComparison || loadingAnalytics || loadingHistory) ? 'animate-spin' : ''} />
+              <RefreshCwIcon size={14} className={(loadingPreview || loadingComparison || (loadingAnalytics && analyticsLoadingSource === 'header') || loadingHistory) ? 'animate-spin' : ''} />
               <span>Refresh</span>
             </button>
           </div>
@@ -3546,10 +3587,16 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                 ].map((p) => (
                   <button
                     key={p.id}
+                    type="button"
                     onClick={() => handleApplyPreset(p.id)}
                     className={`preset-pill-btn ${analyticsPreset === p.id ? 'active' : ''}`}
+                    disabled={loadingAnalytics}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
                   >
-                    {p.label}
+                    {loadingAnalytics && activeLoadingPreset === p.id && (
+                      <RefreshCwIcon size={12} className="animate-spin" />
+                    )}
+                    <span>{p.label}</span>
                   </button>
                 ))}
               </div>
@@ -3583,24 +3630,25 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
               </div>
 
               <button
-                onClick={loadAnalytics}
+                type="button"
+                onClick={() => loadAnalytics(analyticsStartDate, analyticsEndDate, 'calculate')}
                 disabled={loadingAnalytics}
                 className="btn-approve"
-                style={{ background: 'var(--dc-primary)' }}
+                style={{ background: 'var(--dc-primary)', display: 'flex', alignItems: 'center', gap: '0.45rem', cursor: loadingAnalytics ? 'not-allowed' : 'pointer' }}
               >
-                <RefreshCwIcon size={14} className={loadingAnalytics ? 'animate-spin' : ''} />
+                <RefreshCwIcon size={14} className={(loadingAnalytics && analyticsLoadingSource === 'calculate') ? 'animate-spin' : ''} />
                 Calculate Range
               </button>
             </div>
           </div>
 
-          {loadingAnalytics ? (
+          {loadingAnalytics && !analyticsData ? (
             <div style={{ padding: '3rem', textAlign: 'center', background: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
               <RefreshCwIcon size={32} className="animate-spin" style={{ margin: '0 auto 12px auto', color: 'var(--dc-ring)' }} />
               <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#64748b' }}>Aggregating multi-day financial records...</p>
             </div>
           ) : analyticsData?.current ? (
-            <>
+            <div style={{ opacity: loadingAnalytics ? 0.6 : 1, transition: 'opacity 0.2s ease', pointerEvents: loadingAnalytics ? 'none' : 'auto' }}>
               {/* Range Financial Summary Grid */}
               <div className="financial-kpi-grid">
                 <div className="fin-kpi-card blue">
@@ -3666,7 +3714,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                   <div className="day-closing-card-header">
                     <div className="day-closing-card-title-group">
                       <FileTextIcon size={18} style={{ color: 'var(--dc-primary)' }} />
-                      <span>Daily Breakdown in Range ({analyticsStartDate} to {analyticsEndDate})</span>
+                      <span>Daily Breakdown in Range ({appliedAnalyticsRange.startDate} to {appliedAnalyticsRange.endDate})</span>
                     </div>
                     <span className="day-closing-card-badge">
                       {analyticsData.dailySeries.length} Days Recorded
@@ -3699,7 +3747,7 @@ export const DayClosingView: React.FC<DayClosingViewProps> = ({
                   </div>
                 </div>
               )}
-            </>
+            </div>
           ) : null}
         </div>
       )}

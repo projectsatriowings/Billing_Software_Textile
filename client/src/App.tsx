@@ -782,6 +782,11 @@ export function App() {
         try {
           localStorage.setItem('app_active_tab', resolved);
           sessionStorage.setItem('app_active_tab', resolved);
+          if (typeof window !== 'undefined') {
+            if (resolved !== 'user-management' && window.location.pathname === '/user-management') {
+              window.history.replaceState({}, '', '/');
+            }
+          }
         } catch { }
         return resolved;
       });
@@ -2901,9 +2906,17 @@ export function App() {
         try { sessionStorage.removeItem('app_entered'); } catch { }
         setView('landing');
       } else if (path === '/user-management' || hash === 'user-management') {
+        const savedTab = (() => {
+          try { return localStorage.getItem('app_active_tab') || sessionStorage.getItem('app_active_tab'); } catch { return null; }
+        })();
         try { sessionStorage.setItem('app_entered', 'true'); } catch { }
         setView('dashboard');
-        setActiveTab('user-management');
+        if (savedTab && savedTab !== 'user-management' && path === '/user-management' && !hash) {
+          setActiveTab(savedTab as any);
+          try { window.history.replaceState({}, '', '/'); } catch { }
+        } else {
+          setActiveTab('user-management');
+        }
       } else if (hash === 'cashier-login' || hash.startsWith('login')) {
         if (hasAuth) {
           setView('dashboard');
@@ -3027,7 +3040,12 @@ export function App() {
           const rUpper = String(res.user?.role || '').toUpperCase();
           if (rUpper === 'OWNER' || rUpper === 'SUPER_ADMIN' || rUpper === 'MANAGER' || rUpper === 'STORE_MANAGER') {
             setView('dashboard');
-            setActiveTab('user-management');
+            if (savedTab && savedTab !== 'user-management' && window.location.pathname === '/user-management' && !currentHash && !tabParam) {
+              setActiveTab(savedTab as any);
+              try { window.history.replaceState({}, '', '/'); } catch { }
+            } else {
+              setActiveTab('user-management');
+            }
           } else {
             setView('dashboard');
             setActiveTab('pos');
