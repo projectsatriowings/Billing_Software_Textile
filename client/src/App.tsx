@@ -274,6 +274,23 @@ export const applyRoleSystemBars = (role?: string | null, isLoginPage?: boolean)
     const androidBridge = (window as any).AndroidSystemBars;
     if (androidBridge && typeof androidBridge.setSystemBars === 'function') {
       androidBridge.setSystemBars(hexColor, isLightBackground);
+    } else {
+      setTimeout(() => {
+        try {
+          const retryBridge = (window as any).AndroidSystemBars;
+          if (retryBridge && typeof retryBridge.setSystemBars === 'function') {
+            retryBridge.setSystemBars(hexColor, isLightBackground);
+          }
+        } catch { }
+      }, 100);
+      setTimeout(() => {
+        try {
+          const retryBridge = (window as any).AndroidSystemBars;
+          if (retryBridge && typeof retryBridge.setSystemBars === 'function') {
+            retryBridge.setSystemBars(hexColor, isLightBackground);
+          }
+        } catch { }
+      }, 400);
     }
   } catch (err) {
     console.warn('[SystemBars] AndroidSystemBars bridge warning:', err);

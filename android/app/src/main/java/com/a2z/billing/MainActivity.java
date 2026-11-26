@@ -4,8 +4,10 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.view.View;
+import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
 import androidx.activity.EdgeToEdge;
@@ -132,17 +134,29 @@ public class MainActivity extends BridgeActivity {
     }
 
     private void applySystemBarAppearance() {
+        // Set the window background drawable to currentBarColor so the insets area matches
+        getWindow().setBackgroundDrawable(new ColorDrawable(currentBarColor));
+
         View decorView = getWindow().getDecorView();
         decorView.setBackgroundColor(currentBarColor);
+
+        // Ensure flags allow custom system bar coloring
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+
+        // Explicit status and nav bar colors
         getWindow().setStatusBarColor(currentBarColor);
         getWindow().setNavigationBarColor(currentBarColor);
 
+        // Update EdgeToEdge with currentBarColor as the scrim
         EdgeToEdge.enable(
             this,
-            currentLightBackground ? SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT) : SystemBarStyle.dark(Color.TRANSPARENT),
-            currentLightBackground ? SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT) : SystemBarStyle.dark(Color.TRANSPARENT)
+            currentLightBackground ? SystemBarStyle.light(currentBarColor, currentBarColor) : SystemBarStyle.dark(currentBarColor),
+            currentLightBackground ? SystemBarStyle.light(currentBarColor, currentBarColor) : SystemBarStyle.dark(currentBarColor)
         );
 
+        // Update light/dark status bar and navigation bar icon appearance
         WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(getWindow(), decorView);
         if (controller != null) {
             controller.setAppearanceLightStatusBars(currentLightBackground);
