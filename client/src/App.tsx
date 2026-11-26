@@ -226,6 +226,77 @@ import { Capacitor } from '@capacitor/core';
 import { App as CapApp } from '@capacitor/app';
 import { StatusBar, Style } from '@capacitor/status-bar';
 
+/**
+ * Synchronize Android status bar and navigation bar colors dynamically by role:
+ * - Super Admin (owner / admin / SUPER_ADMIN): #FAF8FA with dark status/nav bar icons
+ * - Store Manager (manager / store_manager): #EFE7EB with dark status/nav bar icons
+ * - Cashier / Unauthenticated / Login page: #0F2D2E with light status/nav bar icons
+ */
+export const applyRoleSystemBars = (role?: string | null, isLoginPage?: boolean) => {
+  const r = String(role || '').toLowerCase();
+  const isSuperAdmin = !isLoginPage && (r === 'owner' || r === 'admin' || r === 'super_admin');
+  const isStoreManager = !isLoginPage && (r === 'manager' || r === 'store_manager');
+
+  let hexColor = '#0F2D2E';
+  let isLightBackground = false;
+
+  if (isSuperAdmin) {
+    hexColor = '#FAF8FA';
+    isLightBackground = true;
+  } else if (isStoreManager) {
+    hexColor = '#EFE7EB';
+    isLightBackground = true;
+  } else {
+    hexColor = '#0F2D2E';
+    isLightBackground = false;
+  }
+
+  // Update HTML meta theme-color tag for browser/PWA/web wrappers
+  try {
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute('content', hexColor);
+    }
+  } catch { }
+
+  if (!Capacitor.isNativePlatform()) return;
+
+  // 1. Update Capacitor StatusBar
+  try {
+    StatusBar.setStyle({ style: isLightBackground ? Style.Light : Style.Dark });
+    StatusBar.setBackgroundColor({ color: hexColor });
+  } catch (err) {
+    console.warn('[SystemBars] StatusBar plugin warning:', err);
+  }
+
+  // 2. Call Native AndroidSystemBars bridge (covers both status bar & navigation bar)
+  try {
+    const androidBridge = (window as any).AndroidSystemBars;
+    if (androidBridge && typeof androidBridge.setSystemBars === 'function') {
+      androidBridge.setSystemBars(hexColor, isLightBackground);
+    } else {
+      setTimeout(() => {
+        try {
+          const retryBridge = (window as any).AndroidSystemBars;
+          if (retryBridge && typeof retryBridge.setSystemBars === 'function') {
+            retryBridge.setSystemBars(hexColor, isLightBackground);
+          }
+        } catch { }
+      }, 100);
+      setTimeout(() => {
+        try {
+          const retryBridge = (window as any).AndroidSystemBars;
+          if (retryBridge && typeof retryBridge.setSystemBars === 'function') {
+            retryBridge.setSystemBars(hexColor, isLightBackground);
+          }
+        } catch { }
+      }, 400);
+    }
+  } catch (err) {
+    console.warn('[SystemBars] AndroidSystemBars bridge warning:', err);
+  }
+};
+
 // Routes and tabs where the business info bar (green-dot pill) and its dividers are hidden
 export const HIDE_BUSINESS_BAR_ROUTES = [
   '/products',
@@ -711,6 +782,11 @@ export function App() {
         try {
           localStorage.setItem('app_active_tab', resolved);
           sessionStorage.setItem('app_active_tab', resolved);
+          if (typeof window !== 'undefined') {
+            if (resolved !== 'user-management' && window.location.pathname === '/user-management') {
+              window.history.replaceState({}, '', '/');
+            }
+          }
         } catch { }
         return resolved;
       });
@@ -737,37 +813,6 @@ export function App() {
       }
     } catch { }
   }, [user?.role, activeTabRaw]);
-
-  // Synchronize role themes (.theme-cashier / .theme-manager / .theme-super-admin) on document.body for session & portaled modals
-  useEffect(() => {
-    const isSuperAdmin = Boolean(
-      user && (user.role === 'owner' || user.role === 'admin' || String(user.role).toUpperCase() === 'SUPER_ADMIN')
-    );
-
-    if (user?.role === 'cashier') {
-      document.body.classList.add('theme-cashier');
-    } else {
-      document.body.classList.remove('theme-cashier');
-    }
-
-    if (user?.role === 'manager' || user?.role === 'store_manager') {
-      document.body.classList.add('theme-manager');
-    } else {
-      document.body.classList.remove('theme-manager');
-    }
-
-    if (isSuperAdmin) {
-      document.body.classList.add('theme-super-admin');
-    } else {
-      document.body.classList.remove('theme-super-admin');
-    }
-
-    return () => {
-      document.body.classList.remove('theme-cashier');
-      document.body.classList.remove('theme-manager');
-      document.body.classList.remove('theme-super-admin');
-    };
-  }, [user?.role]);
 
   // Collapsible sidebar accordion sections
   const isAccountsTabActive = [
@@ -921,6 +966,44 @@ export function App() {
       } catch { }
     }
   }, [user]);
+
+  // Synchronize role themes (.theme-cashier / .theme-manager / .theme-super-admin) on document.body for session & portaled modals
+  // and dynamically update native Android status bar and navigation bar background and icon appearance
+  useEffect(() => {
+    const isLoginPage = view === 'login' || view === 'landing' || view === 'register';
+    const isSuperAdmin = Boolean(
+      !isLoginPage && user && (user.role === 'owner' || user.role === 'admin' || String(user.role).toUpperCase() === 'SUPER_ADMIN')
+    );
+    const isStoreManager = Boolean(
+      !isLoginPage && user && (user.role === 'manager' || user.role === 'store_manager')
+    );
+
+    if (user?.role === 'cashier' && !isLoginPage) {
+      document.body.classList.add('theme-cashier');
+    } else {
+      document.body.classList.remove('theme-cashier');
+    }
+
+    if (isStoreManager) {
+      document.body.classList.add('theme-manager');
+    } else {
+      document.body.classList.remove('theme-manager');
+    }
+
+    if (isSuperAdmin) {
+      document.body.classList.add('theme-super-admin');
+    } else {
+      document.body.classList.remove('theme-super-admin');
+    }
+
+    applyRoleSystemBars(user?.role, isLoginPage);
+
+    return () => {
+      document.body.classList.remove('theme-cashier');
+      document.body.classList.remove('theme-manager');
+      document.body.classList.remove('theme-super-admin');
+    };
+  }, [user?.role, view]);
   const [regSelectedBusinessType, setRegSelectedBusinessType] = useState<string>('grocery');
   const [changePasswordData, setChangePasswordData] = useState<{ changeToken: string; tempPassword?: string; identifier?: string } | null>(null);
   const [resetPasswordToken, setResetPasswordToken] = useState<string>('');
@@ -2501,12 +2584,7 @@ export function App() {
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
 
-    try {
-      StatusBar.setStyle({ style: Style.Dark });
-      StatusBar.setBackgroundColor({ color: '#0F2D2E' });
-    } catch (err) {
-      console.warn('[Capacitor] StatusBar setup warning:', err);
-    }
+    applyRoleSystemBars(user?.role, view === 'login' || view === 'landing' || view === 'register');
 
     const backSub = CapApp.addListener('backButton', ({ canGoBack }: { canGoBack: boolean }) => {
       // 1. If any modal close button exists in the DOM, click it to safely trigger standard close flow
@@ -2828,9 +2906,17 @@ export function App() {
         try { sessionStorage.removeItem('app_entered'); } catch { }
         setView('landing');
       } else if (path === '/user-management' || hash === 'user-management') {
+        const savedTab = (() => {
+          try { return localStorage.getItem('app_active_tab') || sessionStorage.getItem('app_active_tab'); } catch { return null; }
+        })();
         try { sessionStorage.setItem('app_entered', 'true'); } catch { }
         setView('dashboard');
-        setActiveTab('user-management');
+        if (savedTab && savedTab !== 'user-management' && path === '/user-management' && !hash) {
+          setActiveTab(savedTab as any);
+          try { window.history.replaceState({}, '', '/'); } catch { }
+        } else {
+          setActiveTab('user-management');
+        }
       } else if (hash === 'cashier-login' || hash.startsWith('login')) {
         if (hasAuth) {
           setView('dashboard');
@@ -2954,7 +3040,12 @@ export function App() {
           const rUpper = String(res.user?.role || '').toUpperCase();
           if (rUpper === 'OWNER' || rUpper === 'SUPER_ADMIN' || rUpper === 'MANAGER' || rUpper === 'STORE_MANAGER') {
             setView('dashboard');
-            setActiveTab('user-management');
+            if (savedTab && savedTab !== 'user-management' && window.location.pathname === '/user-management' && !currentHash && !tabParam) {
+              setActiveTab(savedTab as any);
+              try { window.history.replaceState({}, '', '/'); } catch { }
+            } else {
+              setActiveTab('user-management');
+            }
           } else {
             setView('dashboard');
             setActiveTab('pos');
