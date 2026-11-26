@@ -8,12 +8,12 @@
   --primary: #0F766E;
   --primary-hover: #115E59;
   --primary-soft: #E6F4F3;
-  --bg: #E8E1D5;
+  --bg: #f8fafc;
   /* Deeper warm sand/oat cream canvas to contrast with bento cards */
-  --bg-cream: #E8E1D5;
-  --surface: #FAF7F2;
+  --bg-cream: #f8fafc;
+  --surface: #ffffff;
   /* Light cream for all elevated bento cards */
-  --border: #D0C7B8;
+  --border: #e2e8f0;
   /* Warm defined border for card boundaries */
   --text: #0F172A;
   --text-muted: #475569;
@@ -771,7 +771,7 @@ body:is(.theme-cashier, .theme-manager) .notif-badge,
 :is(.theme-cashier, .theme-manager) .notif-badge {
   background: var(--primary, #0F766E) !important;
   color: #FFFFFF !important;
-  border: 2px solid var(--surface, #FAF7F2) !important;
+  border: 2px solid var(--surface, #ffffff) !important;
   box-shadow: 0 2px 8px rgba(15, 118, 110, 0.45) !important;
   font-weight: 800 !important;
 }
@@ -781,7 +781,7 @@ body:is(.theme-cashier, .theme-manager) .notif-badge.shift-unread-badge,
 :is(.theme-cashier, .theme-manager) .notif-badge.shift-unread-badge {
   background: var(--primary, #0F766E) !important;
   color: #FFFFFF !important;
-  border: 2px solid var(--surface, #FAF7F2) !important;
+  border: 2px solid var(--surface, #ffffff) !important;
 }
 
 div.app-container:is(.theme-cashier, .theme-manager) .app-sidebar.icon-only .sidebar-nav-item.has-badge .nav-icon::after,
@@ -1117,8 +1117,8 @@ body:is(.theme-cashier, .theme-manager) .bento-qty-value,
 div.app-container:is(.theme-cashier, .theme-manager) .bento-discount-bar,
 body:is(.theme-cashier, .theme-manager) .bento-discount-bar,
 :is(.theme-cashier, .theme-manager) .bento-discount-bar {
-  background: #FAF7F2 !important;
-  background-color: #FAF7F2 !important;
+  background: #ffffff !important;
+  background-color: #ffffff !important;
   border: 1px solid var(--border) !important;
 }
 
@@ -1195,8 +1195,8 @@ body:is(.theme-cashier, .theme-manager) .bento-savings-alert,
 div.app-container:is(.theme-cashier, .theme-manager) .bento-billing-customer-box,
 body:is(.theme-cashier, .theme-manager) .bento-billing-customer-box,
 :is(.theme-cashier, .theme-manager) .bento-billing-customer-box {
-  background: #FAF7F2 !important;
-  background-color: #FAF7F2 !important;
+  background: #ffffff !important;
+  background-color: #ffffff !important;
   border: 1.5px solid var(--border) !important;
 }
 
@@ -1221,8 +1221,8 @@ body:is(.theme-cashier, .theme-manager) .bento-billing-customer-box input[type="
 :is(.theme-cashier, .theme-manager) .bento-cust-input,
 :is(.theme-cashier, .theme-manager) .bento-billing-customer-box input[type="tel"],
 :is(.theme-cashier, .theme-manager) .bento-billing-customer-box input[type="text"] {
-  background: #FAF7F2 !important;
-  background-color: #FAF7F2 !important;
+  background: #ffffff !important;
+  background-color: #ffffff !important;
   border: 1.5px solid var(--border) !important;
   color: var(--text) !important;
 }
@@ -1260,8 +1260,8 @@ body:is(.theme-cashier, .theme-manager) .bento-payment-modes,
 div.app-container:is(.theme-cashier, .theme-manager) .bento-pay-mode-btn,
 body:is(.theme-cashier, .theme-manager) .bento-pay-mode-btn,
 :is(.theme-cashier, .theme-manager) .bento-pay-mode-btn {
-  background: #FAF7F2 !important;
-  background-color: #FAF7F2 !important;
+  background: #ffffff !important;
+  background-color: #ffffff !important;
   border: 1.5px solid var(--border) !important;
   color: var(--text) !important;
 }
@@ -1312,7 +1312,7 @@ body:is(.theme-cashier, .theme-manager) .bento-split-tender-card,
 div.app-container:is(.theme-cashier, .theme-manager) .bento-tender-input,
 body:is(.theme-cashier, .theme-manager) .bento-tender-input,
 :is(.theme-cashier, .theme-manager) .bento-tender-input {
-  background: #FAF7F2 !important;
+  background: #ffffff !important;
   border: 1.5px solid var(--border) !important;
   color: var(--sidebar) !important;
 }
@@ -1365,7 +1365,7 @@ body:is(.theme-cashier, .theme-manager) .split-row-box,
 div.app-container:is(.theme-cashier, .theme-manager) .split-method-select,
 body:is(.theme-cashier, .theme-manager) .split-method-select,
 :is(.theme-cashier, .theme-manager) .split-method-select {
-  background: #FAF7F2 !important;
+  background: #ffffff !important;
   border: 1px solid var(--border) !important;
   color: var(--text) !important;
 }
@@ -1479,8 +1479,8 @@ body:is(.theme-cashier, .theme-manager) .bento-input.scanner-input,
 body:is(.theme-cashier, .theme-manager) #pos-product-search-input,
 :is(.theme-cashier, .theme-manager) .bento-input.scanner-input,
 :is(.theme-cashier, .theme-manager) #pos-product-search-input {
-  background: #FAF7F2 !important;
-  background-color: #FAF7F2 !important;
+  background: #ffffff !important;
+  background-color: #ffffff !important;
   border: 1.5px solid var(--border) !important;
   color: var(--text) !important;
 }
@@ -1493,7 +1493,7 @@ body:is(.theme-cashier, .theme-manager) #pos-product-search-input:focus,
 :is(.theme-cashier, .theme-manager) #pos-product-search-input:focus {
   border-color: var(--primary) !important;
   box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.2) !important;
-  background: #FAF7F2 !important;
+  background: #ffffff !important;
 }
 
 div.app-container:is(.theme-cashier, .theme-manager) .scanner-laser-icon svg,
@@ -1514,8 +1514,8 @@ body:is(.theme-cashier, .theme-manager) .bento-trigger-scan-btn,
 div.app-container:is(.theme-cashier, .theme-manager) .bento-mobile-scanner-btn,
 body:is(.theme-cashier, .theme-manager) .bento-mobile-scanner-btn,
 :is(.theme-cashier, .theme-manager) .bento-mobile-scanner-btn {
-  background: #FAF7F2 !important;
-  background-color: #FAF7F2 !important;
+  background: #ffffff !important;
+  background-color: #ffffff !important;
   border: 1.5px solid var(--border) !important;
   color: var(--primary) !important;
 }
@@ -1586,8 +1586,8 @@ body:is(.theme-cashier, .theme-manager) .bento-cell-unit,
 div.app-container:is(.theme-cashier, .theme-manager) .bento-action-tile,
 body:is(.theme-cashier, .theme-manager) .bento-action-tile,
 :is(.theme-cashier, .theme-manager) .bento-action-tile {
-  background: #FAF7F2 !important;
-  background-color: #FAF7F2 !important;
+  background: #ffffff !important;
+  background-color: #ffffff !important;
   border: 1.5px solid var(--border) !important;
   border-radius: 11px !important;
   transition: all 0.15s ease !important;
@@ -1794,8 +1794,8 @@ body:is(.theme-cashier, .theme-manager) .bento-drawer-search-input,
 body:is(.theme-cashier, .theme-manager) #pos-catalog-search-input,
 :is(.theme-cashier, .theme-manager) .bento-drawer-search-input,
 :is(.theme-cashier, .theme-manager) #pos-catalog-search-input {
-  background: #FAF7F2 !important;
-  background-color: #FAF7F2 !important;
+  background: #ffffff !important;
+  background-color: #ffffff !important;
   border: 1.5px solid var(--border) !important;
   color: var(--text) !important;
 }
@@ -1864,7 +1864,7 @@ body:is(.theme-cashier, .theme-manager) .bento-product-tile:hover,
 body:is(.theme-cashier, .theme-manager) .bento-product-tile.in-cart,
 :is(.theme-cashier, .theme-manager) .bento-product-tile.in-cart {
   border-color: var(--primary) !important;
-  background: #FAF7F2 !important;
+  background: #ffffff !important;
   box-shadow: 0 0 0 1.5px var(--primary), 0 6px 18px rgba(15, 118, 110, 0.16) !important;
 }
 
@@ -2048,8 +2048,8 @@ body:is(.theme-cashier, .theme-manager) .product-edit-rectangle-modal .form-inpu
 :is(.theme-cashier, .theme-manager) .product-edit-rectangle-modal .form-input,
 body:is(.theme-cashier, .theme-manager) .product-edit-rectangle-modal select.form-input,
 :is(.theme-cashier, .theme-manager) .product-edit-rectangle-modal select.form-input {
-  background: #FAF7F2 !important;
-  background-color: #FAF7F2 !important;
+  background: #ffffff !important;
+  background-color: #ffffff !important;
   border: 1.5px solid var(--border) !important;
   color: var(--text) !important;
 }
@@ -3078,7 +3078,7 @@ body:is(.theme-cashier, .theme-manager) .shift-bento-ribbon-tile,
 
 body:is(.theme-cashier, .theme-manager) .shift-bento-ribbon-tile.highlight,
 :is(.theme-cashier, .theme-manager) .shift-bento-ribbon-tile.highlight {
-  background: linear-gradient(135deg, var(--primary-soft) 0%, #FAF7F2 100%) !important;
+  background: linear-gradient(135deg, var(--primary-soft) 0%, #ffffff 100%) !important;
   border: 1.5px solid var(--primary) !important;
   box-shadow: 0 2px 8px rgba(15, 118, 110, 0.12) !important;
 }
@@ -3491,7 +3491,7 @@ body:is(.theme-cashier, .theme-manager) .tender-kpi-card,
     0 6px 18px -2px rgba(15, 45, 46, 0.06),
     0 16px 32px -4px rgba(15, 45, 46, 0.08),
     inset 0 1px 0 0 rgba(255, 255, 255, 0.95),
-    inset 0 -1px 0 0 rgba(208, 199, 184, 0.35) !important;
+    inset 0 -1px 0 0 rgba(226, 232, 240, 0.35) !important;
   transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease !important;
 }
 
@@ -4499,8 +4499,8 @@ body:is(.theme-cashier, .theme-manager) .invoices-bento-table-card,
 /* Mobile Invoices Card Theme for Cashier & Manager */
 body:is(.theme-cashier, .theme-manager) .invoices-mobile-card,
 :is(.theme-cashier, .theme-manager) .invoices-mobile-card {
-  background: var(--surface, #FAF7F2) !important;
-  border: 1.2px solid var(--border, #D0C7B8) !important;
+  background: var(--surface, #ffffff) !important;
+  border: 1.2px solid var(--border, #e2e8f0) !important;
   box-shadow: 0 1px 4px rgba(15, 45, 46, 0.05) !important;
 }
 
@@ -4512,12 +4512,12 @@ body:is(.theme-cashier, .theme-manager) .invoices-mobile-card:hover,
 
 body:is(.theme-cashier, .theme-manager) .invoices-card-top-row,
 :is(.theme-cashier, .theme-manager) .invoices-card-top-row {
-  border-bottom: 1px solid rgba(208, 199, 184, 0.45) !important;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.45) !important;
 }
 
 body:is(.theme-cashier, .theme-manager) .invoices-card-actions-row,
 :is(.theme-cashier, .theme-manager) .invoices-card-actions-row {
-  border-top: 1px dashed rgba(208, 199, 184, 0.6) !important;
+  border-top: 1px dashed rgba(226, 232, 240, 0.6) !important;
 }
 
 body:is(.theme-cashier, .theme-manager) .invoices-card-label,
@@ -4570,7 +4570,7 @@ body:is(.theme-cashier, .theme-manager) .invoices-bento-table thead th,
 
 body:is(.theme-cashier, .theme-manager) .invoices-bento-table tbody tr,
 :is(.theme-cashier, .theme-manager) .invoices-bento-table tbody tr {
-  border-bottom: 1px solid rgba(208, 199, 184, 0.45) !important;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.45) !important;
 }
 
 body:is(.theme-cashier, .theme-manager) .invoices-bento-table tbody tr:hover,
@@ -4728,16 +4728,16 @@ body:is(.theme-cashier, .theme-manager) .cfd-header,
 body.theme-cashier .mobile-scanner-modal,
 .theme-cashier .mobile-scanner-modal,
 div.app-container.theme-cashier .mobile-scanner-modal {
-  background: var(--surface, #FAF7F2) !important;
-  border: 1.5px solid var(--border, #D0C7B8) !important;
+  background: var(--surface, #ffffff) !important;
+  border: 1.5px solid var(--border, #e2e8f0) !important;
   color: var(--text, #0F172A) !important;
   box-shadow: 0 25px 50px -12px rgba(15, 45, 46, 0.35) !important;
 }
 
 body.theme-cashier .mobile-scanner-modal .modal-header,
 .theme-cashier .mobile-scanner-modal .modal-header {
-  background: var(--surface, #FAF7F2) !important;
-  border-bottom: 1px solid var(--border, #D0C7B8) !important;
+  background: var(--surface, #ffffff) !important;
+  border-bottom: 1px solid var(--border, #e2e8f0) !important;
   color: var(--text, #0F172A) !important;
 }
 
@@ -4768,8 +4768,8 @@ body.theme-cashier .mobile-scanner-modal .bento-icon-circle svg,
 body.theme-cashier .mobile-scanner-modal .modal-close-icon-btn,
 .theme-cashier .mobile-scanner-modal .modal-close-icon-btn {
   color: var(--text-muted, #475569) !important;
-  border: 1px solid var(--border, #D0C7B8) !important;
-  background: var(--surface, #FAF7F2) !important;
+  border: 1px solid var(--border, #e2e8f0) !important;
+  background: var(--surface, #ffffff) !important;
   border-radius: 6px !important;
 }
 
@@ -4782,8 +4782,8 @@ body.theme-cashier .mobile-scanner-modal .modal-close-icon-btn:hover,
 
 body.theme-cashier .mobile-scanner-modal .modal-footer,
 .theme-cashier .mobile-scanner-modal .modal-footer {
-  background: var(--surface, #FAF7F2) !important;
-  border-top: 1px solid var(--border, #D0C7B8) !important;
+  background: var(--surface, #ffffff) !important;
+  border-top: 1px solid var(--border, #e2e8f0) !important;
 }
 
 /* Step list: 1, 2, 3 numbered badges & cards */
@@ -4796,8 +4796,8 @@ body.theme-cashier .step-num,
 
 body.theme-cashier .scanner-step-item,
 .theme-cashier .scanner-step-item {
-  background: var(--surface, #FAF7F2) !important;
-  border: 1.5px solid var(--border, #D0C7B8) !important;
+  background: var(--surface, #ffffff) !important;
+  border: 1.5px solid var(--border, #e2e8f0) !important;
 }
 
 body.theme-cashier .scanner-step-item:hover,
@@ -4818,8 +4818,8 @@ body.theme-cashier .scanner-step-item p,
 /* Direct Browser Link section */
 body.theme-cashier .scanner-link-box,
 .theme-cashier .scanner-link-box {
-  background: var(--surface-inner, #F3ECE1) !important;
-  border: 1.5px solid var(--border, #D0C7B8) !important;
+  background: var(--surface-inner, #f1f5f9) !important;
+  border: 1.5px solid var(--border, #e2e8f0) !important;
 }
 
 body.theme-cashier .scanner-link-label,
@@ -4830,15 +4830,15 @@ body.theme-cashier .scanner-link-label,
 
 body.theme-cashier .scanner-url-input,
 .theme-cashier .scanner-url-input {
-  background: var(--surface, #FAF7F2) !important;
-  border: 1px solid var(--border, #D0C7B8) !important;
+  background: var(--surface, #ffffff) !important;
+  border: 1px solid var(--border, #e2e8f0) !important;
   color: var(--text, #0F172A) !important;
 }
 
 body.theme-cashier .scanner-copy-btn,
 .theme-cashier .scanner-copy-btn {
-  background: var(--surface, #FAF7F2) !important;
-  border: 1px solid var(--border, #D0C7B8) !important;
+  background: var(--surface, #ffffff) !important;
+  border: 1px solid var(--border, #e2e8f0) !important;
   color: var(--sidebar, #0F2D2E) !important;
 }
 
@@ -4866,8 +4866,8 @@ body.theme-cashier .scanner-open-btn:hover,
 /* QR Box & Protocols */
 body.theme-cashier .scanner-qr-box,
 .theme-cashier .scanner-qr-box {
-  background: var(--surface, #FAF7F2) !important;
-  border: 1.5px solid var(--border, #D0C7B8) !important;
+  background: var(--surface, #ffffff) !important;
+  border: 1.5px solid var(--border, #e2e8f0) !important;
 }
 
 body.theme-cashier .scanner-qr-caption,
@@ -4878,8 +4878,8 @@ body.theme-cashier .scanner-qr-caption,
 
 body.theme-cashier .scanner-protocol-toggle,
 .theme-cashier .scanner-protocol-toggle {
-  background: var(--surface-inner, #F3ECE1) !important;
-  border: 1px solid var(--border, #D0C7B8) !important;
+  background: var(--surface-inner, #f1f5f9) !important;
+  border: 1px solid var(--border, #e2e8f0) !important;
 }
 
 body.theme-cashier .proto-btn,
@@ -4889,11 +4889,11 @@ body.theme-cashier .proto-btn,
 
 body.theme-cashier .proto-btn.active,
 .theme-cashier .proto-btn.active {
-  background: var(--surface, #FAF7F2) !important;
+  background: var(--surface, #ffffff) !important;
   color: var(--primary, #0F766E) !important;
   font-weight: 700 !important;
   box-shadow: 0 2px 6px rgba(15, 45, 46, 0.08) !important;
-  border: 1px solid var(--border, #D0C7B8) !important;
+  border: 1px solid var(--border, #e2e8f0) !important;
 }
 
 /* Troubleshooting Box */
@@ -4917,14 +4917,14 @@ body.theme-cashier .troubleshoot-list,
 /* Simulator & Sound Toggle */
 body.theme-cashier .scanner-simulate-btn,
 .theme-cashier .scanner-simulate-btn {
-  background: var(--surface, #FAF7F2) !important;
-  border: 1px solid var(--border, #D0C7B8) !important;
+  background: var(--surface, #ffffff) !important;
+  border: 1px solid var(--border, #e2e8f0) !important;
   color: var(--text, #0F172A) !important;
 }
 
 body.theme-cashier .scanner-simulate-btn:hover,
 .theme-cashier .scanner-simulate-btn:hover {
-  background: var(--surface-inner, #F3ECE1) !important;
+  background: var(--surface-inner, #f1f5f9) !important;
   border-color: var(--primary, #0F766E) !important;
   color: var(--primary, #0F766E) !important;
 }
@@ -4941,22 +4941,22 @@ body.theme-cashier .scanner-sound-toggle input[type="checkbox"],
 
 body.theme-cashier .scanner-session-pill,
 .theme-cashier .scanner-session-pill {
-  background: var(--surface-inner, #F3ECE1) !important;
-  border: 1px solid var(--border, #D0C7B8) !important;
+  background: var(--surface-inner, #f1f5f9) !important;
+  border: 1px solid var(--border, #e2e8f0) !important;
   color: var(--text-muted, #475569) !important;
 }
 
 body.theme-cashier .mobile-scanner-modal .btn-secondary,
 .theme-cashier .mobile-scanner-modal .btn-secondary {
-  background: var(--surface, #FAF7F2) !important;
-  border: 1px solid var(--border, #D0C7B8) !important;
+  background: var(--surface, #ffffff) !important;
+  border: 1px solid var(--border, #e2e8f0) !important;
   color: var(--sidebar, #0F2D2E) !important;
   font-weight: 700 !important;
 }
 
 body.theme-cashier .mobile-scanner-modal .btn-secondary:hover,
 .theme-cashier .mobile-scanner-modal .btn-secondary:hover {
-  background: var(--surface-inner, #F3ECE1) !important;
+  background: var(--surface-inner, #f1f5f9) !important;
   border-color: var(--primary, #0F766E) !important;
   color: var(--primary, #0F766E) !important;
 }
@@ -4964,7 +4964,7 @@ body.theme-cashier .mobile-scanner-modal .btn-secondary:hover,
 /* Top Bar Customer Screen Button Theme Overrides */
 div.app-container.theme-cashier .top-pos-cfd-btn,
 .theme-cashier .top-pos-cfd-btn {
-  background: var(--surface, #FAF7F2) !important;
+  background: var(--surface, #ffffff) !important;
   border: 1.2px solid var(--border, #ded5c6) !important;
   color: var(--sidebar, #0F766E) !important;
 }
@@ -4989,7 +4989,7 @@ div.app-container.theme-cashier .top-pos-cfd-btn:hover,
   border-radius: 20px !important;
   overflow: hidden !important;
   box-sizing: border-box !important;
-  background: var(--surface, #FAF7F2) !important;
+  background: var(--surface, #ffffff) !important;
   box-shadow: 0 25px 60px -15px rgba(15, 45, 46, 0.28), 0 10px 24px -5px rgba(15, 45, 46, 0.08) !important;
 }
 
@@ -5001,8 +5001,8 @@ div.app-container.theme-cashier .top-pos-cfd-btn:hover,
   align-items: flex-start !important;
   justify-content: space-between !important;
   padding: 1.1rem 1.6rem !important;
-  border-bottom: 1px solid var(--border, #D0C7B8) !important;
-  background: var(--surface, #FAF7F2) !important;
+  border-bottom: 1px solid var(--border, #e2e8f0) !important;
+  background: var(--surface, #ffffff) !important;
   gap: 0.75rem !important;
   position: relative !important;
   flex-shrink: 0 !important;
@@ -5093,8 +5093,8 @@ div.app-container.theme-cashier .top-pos-cfd-btn:hover,
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  background: var(--surface, #FAF7F2) !important;
-  border: 1px solid var(--border, #D0C7B8) !important;
+  background: var(--surface, #ffffff) !important;
+  border: 1px solid var(--border, #e2e8f0) !important;
   color: var(--text-muted, #475569) !important;
   cursor: pointer !important;
   flex-shrink: 0 !important;
@@ -5110,7 +5110,7 @@ div.app-container.theme-cashier .top-pos-cfd-btn:hover,
 /* Modal Body */
 .select-counter-body {
   padding: 1.2rem 1.6rem !important;
-  background: var(--bg, #E8E1D5) !important;
+  background: var(--bg, #f8fafc) !important;
   flex: 1 1 auto !important;
   min-height: 0 !important;
   overflow-y: auto !important;
@@ -5138,7 +5138,7 @@ div.app-container.theme-cashier .top-pos-cfd-btn:hover,
   flex-direction: column !important;
   justify-content: space-between !important;
   background: #ffffff !important;
-  border: 1px solid var(--border, #D0C7B8) !important;
+  border: 1px solid var(--border, #e2e8f0) !important;
 }
 
 .select-counter-ribbon .shift-bento-ribbon-tile.highlight,
@@ -5250,8 +5250,8 @@ div.app-container.theme-cashier .top-pos-cfd-btn:hover,
 /* Modal Footer */
 .select-counter-footer {
   padding: 1rem 1.6rem !important;
-  border-top: 1px solid var(--border, #D0C7B8) !important;
-  background: var(--surface, #FAF7F2) !important;
+  border-top: 1px solid var(--border, #e2e8f0) !important;
+  background: var(--surface, #ffffff) !important;
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
@@ -5563,8 +5563,8 @@ div.app-container.theme-cashier .top-pos-cfd-btn:hover,
     text-align: center !important;
     justify-content: center !important;
     padding: 0 0.5rem !important;
-    background: var(--surface, #FAF7F2) !important;
-    border: 1px solid var(--border, #D0C7B8) !important;
+    background: var(--surface, #ffffff) !important;
+    border: 1px solid var(--border, #e2e8f0) !important;
     color: var(--text-muted, #475569) !important;
     font-weight: 700 !important;
   }
@@ -6357,8 +6357,8 @@ div.app-container.theme-cashier .top-pos-cfd-btn:hover,
   width: 92vw !important;
   max-height: 90vh !important;
   border-radius: 20px !important;
-  background: var(--surface, #FAF7F2) !important;
-  border: 1.5px solid var(--border, #D0C7B8) !important;
+  background: var(--surface, #ffffff) !important;
+  border: 1.5px solid var(--border, #e2e8f0) !important;
   box-shadow: 0 25px 60px -15px rgba(15, 45, 46, 0.3), 0 10px 24px -5px rgba(15, 45, 46, 0.1) !important;
   overflow: hidden !important;
   display: flex !important;
@@ -6367,8 +6367,8 @@ div.app-container.theme-cashier .top-pos-cfd-btn:hover,
 
 .logout-shift-modal-footer {
   padding: 1rem 1.6rem !important;
-  border-top: 1px solid var(--border, #D0C7B8) !important;
-  background: var(--surface, #FAF7F2) !important;
+  border-top: 1px solid var(--border, #e2e8f0) !important;
+  background: var(--surface, #ffffff) !important;
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
@@ -6405,8 +6405,8 @@ div.app-container.theme-cashier .top-pos-cfd-btn:hover,
 
 .logout-modal-btn-cancel {
   padding: 0.65rem 1.15rem !important;
-  background: var(--surface, #FAF7F2) !important;
-  border: 1px solid var(--border, #D0C7B8) !important;
+  background: var(--surface, #ffffff) !important;
+  border: 1px solid var(--border, #e2e8f0) !important;
   color: var(--text-muted, #475569) !important;
   font-weight: 700 !important;
   font-size: 0.86rem !important;

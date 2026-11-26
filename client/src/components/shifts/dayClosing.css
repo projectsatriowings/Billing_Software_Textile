@@ -4,10 +4,10 @@
 
 :root,
 .day-closing-wrapper {
-  --dc-bg: var(--bg, #E8E1D5);
-  --dc-surface: var(--surface, #FAF7F2);
-  --dc-surface-inner: var(--surface-inner, #F3ECE1);
-  --dc-border: var(--border, #D0C7B8);
+  --dc-bg: var(--bg, #f8fafc);
+  --dc-surface: var(--surface, #ffffff);
+  --dc-surface-inner: var(--surface-inner, #f1f5f9);
+  --dc-border: var(--border, #e2e8f0);
   --dc-primary: var(--primary, #0F766E);
   --dc-primary-hover: var(--primary-hover, #115E59);
   --dc-primary-soft: var(--primary-soft, #E6F4F3);
@@ -24,10 +24,10 @@ body.theme-cashier .day-closing-wrapper,
 div.app-container.theme-cashier,
 body.theme-cashier,
 .theme-cashier {
-  --dc-bg: #E8E1D5 !important;
-  --dc-surface: #FAF7F2 !important;
-  --dc-surface-inner: #F3ECE1 !important;
-  --dc-border: #D0C7B8 !important;
+  --dc-bg: #f8fafc !important;
+  --dc-surface: #ffffff !important;
+  --dc-surface-inner: #f1f5f9 !important;
+  --dc-border: #e2e8f0 !important;
   --dc-primary: #0F766E !important;
   --dc-primary-hover: #115E59 !important;
   --dc-primary-soft: #E6F4F3 !important;
@@ -73,7 +73,7 @@ body.theme-cashier,
     0 6px 18px -2px rgba(15, 45, 46, 0.06),
     0 16px 32px -4px rgba(15, 45, 46, 0.08),
     inset 0 1px 0 0 rgba(255, 255, 255, 0.95),
-    inset 0 -1px 0 0 rgba(208, 199, 184, 0.35);
+    inset 0 -1px 0 0 rgba(226, 232, 240, 0.35);
   position: relative;
   transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease;
 }
@@ -1495,7 +1495,7 @@ body.theme-cashier .tender-kpi-card.credit .tender-header,
   justify-content: space-between;
   padding: 0.65rem 0;
   font-size: 0.835rem;
-  border-bottom: 1px solid rgba(208, 199, 184, 0.4);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.4);
   gap: 0.75rem;
 }
 
@@ -2222,7 +2222,7 @@ body.theme-cashier .detail-list-val.purple,
 
 .analytics-table td {
   padding: 0.8rem 1rem;
-  border-bottom: 1px solid rgba(208, 199, 184, 0.4);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.4);
   color: var(--dc-sidebar);
   white-space: nowrap;
 }

@@ -24,16 +24,16 @@ body:has(.cfd-root) {
   --primary-soft: #E6F4F3;
   --ring: #14B8A6;
   --sidebar: #0F2D2E;
-  --surface: #FAF7F2;
-  --bg: #E8E1D5;
-  --border: #D0C7B8;
+  --surface: #ffffff;
+  --bg: #f8fafc;
+  --border: #e2e8f0;
   --text-muted: #475569;
 
   height: 100vh;
   max-height: 100vh;
   width: 100vw;
   max-width: 100vw;
-  background: var(--bg, #E8E1D5);
+  background: var(--bg, #f8fafc);
   color: var(--sidebar, #0F2D2E);
   display: flex;
   flex-direction: column;
@@ -66,10 +66,10 @@ body:has(.cfd-root) {
   height: 48px;
   min-height: 48px;
   max-height: 48px;
-  background: var(--bg, #E8E1D5) !important;
-  background-color: var(--bg, #E8E1D5) !important;
+  background: var(--bg, #f8fafc) !important;
+  background-color: var(--bg, #f8fafc) !important;
   backdrop-filter: blur(12px);
-  border-bottom: 1.5px solid var(--border, #D0C7B8) !important;
+  border-bottom: 1.5px solid var(--border, #e2e8f0) !important;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -182,8 +182,8 @@ body:has(.cfd-root) {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  background: var(--surface, #FAF7F2);
-  border: 1.5px solid var(--border, #D0C7B8);
+  background: var(--surface, #ffffff);
+  border: 1.5px solid var(--border, #e2e8f0);
   padding: 0.25rem 0.65rem;
   border-radius: 8px;
   font-size: 0.74rem;
@@ -196,8 +196,8 @@ body:has(.cfd-root) {
   width: 30px;
   height: 30px;
   border-radius: 8px;
-  background: var(--surface, #FAF7F2);
-  border: 1.5px solid var(--border, #D0C7B8);
+  background: var(--surface, #ffffff);
+  border: 1.5px solid var(--border, #e2e8f0);
   color: var(--sidebar, #0F2D2E);
   display: flex;
   align-items: center;
@@ -240,8 +240,8 @@ body:has(.cfd-root) {
 
 /* ================= LEFT COLUMN: CART CARD ================= */
 .cfd-cart-card {
-  background: var(--surface, #FAF7F2);
-  border: 1.5px solid var(--border, #D0C7B8);
+  background: var(--surface, #ffffff);
+  border: 1.5px solid var(--border, #e2e8f0);
   border-radius: 14px;
   display: flex;
   flex-direction: column;
@@ -264,8 +264,8 @@ body:has(.cfd-root) {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1.5px solid var(--border, #D0C7B8);
-  background: var(--surface, #FAF7F2);
+  border-bottom: 1.5px solid var(--border, #e2e8f0);
+  background: var(--surface, #ffffff);
   flex-shrink: 0;
 }
 
@@ -361,7 +361,7 @@ body:has(.cfd-root) {
 .cfd-cat-strip {
   padding: 0.6rem 1.4rem;
   background: rgba(232, 225, 213, 0.4);
-  border-bottom: 1.5px solid var(--border, #D0C7B8);
+  border-bottom: 1.5px solid var(--border, #e2e8f0);
   display: flex;
   align-items: center;
   gap: 0.65rem;
@@ -389,7 +389,7 @@ body:has(.cfd-root) {
   align-items: center;
   gap: 0.45rem;
   background: #ffffff;
-  border: 1px solid var(--border, #D0C7B8);
+  border: 1px solid var(--border, #e2e8f0);
   padding: 0.28rem 0.7rem;
   border-radius: 9999px;
   font-size: 0.75rem;
@@ -450,13 +450,13 @@ body:has(.cfd-root) {
   color: var(--sidebar, #0F2D2E);
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  border-bottom: 1.5px solid var(--border, #D0C7B8);
+  border-bottom: 1.5px solid var(--border, #e2e8f0);
   z-index: 10;
 }
 
 .cfd-item-table td {
   padding: 0.55rem 0.85rem;
-  border-bottom: 1px solid rgba(208, 199, 184, 0.45);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.45);
   vertical-align: middle;
 }
 
@@ -497,7 +497,7 @@ body:has(.cfd-root) {
   align-items: center;
   gap: 0.35rem;
   background: rgba(232, 225, 213, 0.45);
-  border: 1px solid var(--border, #D0C7B8);
+  border: 1px solid var(--border, #e2e8f0);
   color: var(--sidebar, #0F2D2E);
   font-size: 0.72rem;
   font-weight: 650;
@@ -529,7 +529,7 @@ body:has(.cfd-root) {
   align-items: center;
   justify-content: center;
   background: #ffffff;
-  border: 1.5px solid var(--border, #D0C7B8);
+  border: 1.5px solid var(--border, #e2e8f0);
   color: var(--sidebar, #0F2D2E);
   font-size: 0.82rem;
   font-weight: 700;
@@ -608,7 +608,7 @@ body:has(.cfd-root) {
 
 .cfd-perk-card {
   background: rgba(255, 255, 255, 0.85);
-  border: 1.5px solid var(--border, #D0C7B8);
+  border: 1.5px solid var(--border, #e2e8f0);
   border-radius: 12px;
   padding: 0.85rem 0.75rem;
   display: flex;
@@ -643,8 +643,8 @@ body:has(.cfd-root) {
 
 /* 1. ORDER SUMMARY CARD */
 .cfd-summary-card {
-  background: var(--surface, #FAF7F2);
-  border: 1.5px solid var(--border, #D0C7B8);
+  background: var(--surface, #ffffff);
+  border: 1.5px solid var(--border, #e2e8f0);
   border-radius: 14px;
   padding: 0.65rem 0.85rem;
   box-shadow: 0 4px 16px -2px rgba(15, 45, 46, 0.05);
@@ -659,7 +659,7 @@ body:has(.cfd-root) {
   align-items: center;
   justify-content: space-between;
   padding-bottom: 0.35rem;
-  border-bottom: 1.5px solid var(--border, #D0C7B8);
+  border-bottom: 1.5px solid var(--border, #e2e8f0);
 }
 
 .cfd-summary-title {
@@ -713,7 +713,7 @@ body:has(.cfd-root) {
 /* GST Box */
 .cfd-gst-pill-box {
   background: rgba(232, 225, 213, 0.35);
-  border: 1.5px solid var(--border, #D0C7B8);
+  border: 1.5px solid var(--border, #e2e8f0);
   border-radius: 8px;
   padding: 0.3rem 0.55rem;
   display: flex;
@@ -824,8 +824,8 @@ body:has(.cfd-root) {
 
 /* ================= 2. INTERACTIVE PAYMENT & HUB ================= */
 .cfd-hub-card {
-  background: var(--surface, #FAF7F2);
-  border: 1.5px solid var(--border, #D0C7B8);
+  background: var(--surface, #ffffff);
+  border: 1.5px solid var(--border, #e2e8f0);
   border-radius: 14px;
   padding: 0.55rem 0.85rem;
   box-shadow: 0 4px 16px -2px rgba(15, 45, 46, 0.05);
@@ -879,7 +879,7 @@ body:has(.cfd-root) {
   background: #ffffff;
   padding: 0.35rem;
   border-radius: 10px;
-  border: 1.5px solid var(--border, #D0C7B8);
+  border: 1.5px solid var(--border, #e2e8f0);
   box-shadow: 0 3px 10px rgba(15, 45, 46, 0.06);
   display: inline-flex;
   align-items: center;
@@ -925,7 +925,7 @@ body:has(.cfd-root) {
   width: 100%;
   max-width: 260px;
   background: rgba(255, 255, 255, 0.92);
-  border: 1.5px solid var(--border, #D0C7B8);
+  border: 1.5px solid var(--border, #e2e8f0);
   border-radius: 8px;
   padding: 0.35rem 0.6rem;
   display: flex;
@@ -943,7 +943,7 @@ body:has(.cfd-root) {
 
 .cfd-split-tender-line.highlight-upi {
   padding-bottom: 0.2rem;
-  border-bottom: 1px dashed var(--border, #D0C7B8);
+  border-bottom: 1px dashed var(--border, #e2e8f0);
 }
 
 .cfd-tender-name {
@@ -1016,8 +1016,8 @@ body:has(.cfd-root) {
 }
 
 .cfd-invoice-chip {
-  background: var(--surface, #FAF7F2);
-  border: 1.5px solid var(--border, #D0C7B8);
+  background: var(--surface, #ffffff);
+  border: 1.5px solid var(--border, #e2e8f0);
   color: var(--sidebar, #0F2D2E);
   font-size: 0.74rem;
   font-weight: 800;
@@ -1122,7 +1122,7 @@ body:has(.cfd-root) {
 
 .cfd-badge-item {
   background: rgba(255, 255, 255, 0.85);
-  border: 1.5px solid var(--border, #D0C7B8);
+  border: 1.5px solid var(--border, #e2e8f0);
   border-radius: 8px;
   padding: 0.35rem 0.25rem;
   display: flex;
