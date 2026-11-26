@@ -40,12 +40,12 @@
   },
   "apk": {
     "fileName": "A2Z-Billing.apk",
-    "totalSize": 16354732,
-    "sha256": "8875a22f6805288983fe19e426aa09d9b9aaae0808e67f5e0f4ecb1aac35595d",
+    "totalSize": 16450800,
+    "sha256": "61b967e8fe3e0a97af42c8fb1f1ea2d366f28d6cd2cee6547463197a001447c2",
     "parts": [
       {
         "name": "a2z-apk.part1",
-        "size": 16354732
+        "size": 16450800
       }
     ]
   }
