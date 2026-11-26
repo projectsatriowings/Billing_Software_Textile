@@ -40,6 +40,47 @@ export function toPgPlaceholders(sql: string): string {
   return out;
 }
 
+/**
+ * Runs a READ-ONLY function with its queries sent to the database in parallel instead of one by one.
+ *
+ * The database is far away (every query waits ~0.3 s for the round trip), so a report that runs
+ * 20 queries in a row takes 6 s even though each query is fast. This helper:
+ *   1. does a dry run of `fn` with a recorder that answers every query with "no rows" and notes
+ *      each query (SQL + params),
+ *   2. sends all the noted queries at once,
+ *   3. runs `fn` for real, answering each query from those results.
+ * `fn`'s logic is untouched. A query the dry run did not foresee (because its SQL or params depend
+ * on an earlier result) simply runs normally at that point, so results are always correct.
+ * `fn` must not write: exec() is refused in the dry run.
+ */
+export async function runWithParallelReads<T>(db: Queryable, fn: (q: Queryable) => Promise<T>): Promise<T> {
+  type Call = { kind: 'one' | 'query'; sql: string; params: unknown[] | undefined };
+  const keyOf = (kind: string, sql: string, params?: unknown[]) => `${kind}\u0000${sql}\u0000${JSON.stringify(params ?? [])}`;
+  const planned = new Map<string, Call>();
+  const recorder: Queryable = {
+    query: async (sql, params) => { planned.set(keyOf('query', sql, params), { kind: 'query', sql, params }); return []; },
+    one: async (sql, params) => { planned.set(keyOf('one', sql, params), { kind: 'one', sql, params }); return undefined; },
+    exec: async () => { throw new Error('runWithParallelReads: writes are not allowed in a read-only function'); },
+  };
+  try {
+    await fn(recorder);
+  } catch {
+    // The dry run sees empty data; if the logic trips over that, we still use whatever it planned.
+  }
+  const inFlight = new Map<string, Promise<any>>();
+  for (const [key, c] of planned) {
+    const p = c.kind === 'one' ? db.one(c.sql, c.params) : db.query(c.sql, c.params);
+    p.catch(() => {}); // errors surface where the real run awaits this query
+    inFlight.set(key, p);
+  }
+  const replay: Queryable = {
+    query: (sql, params) => inFlight.get(keyOf('query', sql, params)) ?? db.query(sql, params),
+    one: (sql, params) => inFlight.get(keyOf('one', sql, params)) ?? db.one(sql, params),
+    exec: (sql, params) => db.exec(sql, params),
+  };
+  return fn(replay);
+}
+
 /** JSON columns: always pass JSON.stringify(value) so arrays are not mistaken for Postgres arrays. */
 export const j = (v: unknown): string => JSON.stringify(v ?? null);
 
@@ -117,14 +158,24 @@ export async function connectPg(url: string): Promise<DB> {
     const sep = connUrl.includes('?') ? '&' : '?';
     connUrl = `${connUrl}${sep}uselibpqcompat=true`;
   }
+  // Opening a new connection to the hosted database costs ~2 s (TLS + auth over a long distance),
+  // so connections are kept open for 10 minutes instead of being dropped after 10 s of quiet.
   const pool = new pg.Pool({
     connectionString: connUrl,
-    max: Number(process.env.DB_POOL_MAX ?? 10),
-    idleTimeoutMillis: 10_000,
+    max: Number(process.env.DB_POOL_MAX ?? 20),
+    idleTimeoutMillis: Number(process.env.DB_IDLE_TIMEOUT_MS ?? 600_000),
     connectionTimeoutMillis: 20_000,
     keepAlive: true,
     keepAliveInitialDelayMillis: 10_000,
   });
+  // While the app is in use, ping the database every 45 s so the pooled connection (and a
+  // scale-to-zero database) stays warm. Stops pinging after 10 minutes without any query.
+  let lastActivity = Date.now();
+  const warmTimer = setInterval(() => {
+    if (Date.now() - lastActivity > 600_000) return;
+    pool.query('SELECT 1').catch(() => {});
+  }, 45_000);
+  warmTimer.unref?.();
   pool.on('error', (e: Error) => {
     console.warn(JSON.stringify({ level: 'warn', msg: 'pg pool error (handled)', error: e.message }));
   });
@@ -135,6 +186,7 @@ export async function connectPg(url: string): Promise<DB> {
   });
   const raw: RawPool = {
     async connect() {
+      lastActivity = Date.now();
       const client = await pool.connect();
       return {
         async run(sql, params) {
@@ -144,7 +196,7 @@ export async function connectPg(url: string): Promise<DB> {
         release: () => client.release(),
       };
     },
-    end: () => pool.end(),
+    end: () => { clearInterval(warmTimer); return pool.end(); },
   };
   return createDB(raw, 'pg');
 }
